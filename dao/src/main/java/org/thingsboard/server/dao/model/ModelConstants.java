@@ -1,31 +1,20 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
+import org.thingsboard.server.common.data.mobile.app.StoreInfo;
 
 import java.util.UUID;
 
 public class ModelConstants {
 
-    private ModelConstants() {
-    }
+    private ModelConstants() {}
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
     public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
@@ -46,6 +35,7 @@ public class ModelConstants {
     public static final String TITLE_PROPERTY = "title";
     public static final String NAME_PROPERTY = "name";
     public static final String ALIAS_PROPERTY = "alias";
+    public static final String CONFIGURATION_PROPERTY = "configuration";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
@@ -59,6 +49,12 @@ public class ModelConstants {
     public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
     public static final String VERSION_COLUMN = "version";
 
+    public static final String OWNER_NAME_COLUMN = "owner_name";
+
+    public static final String OWNER_IDS_COLUMN = "owner_ids";
+
+    public static final String GROUPS_COLUMN = "groups";
+
     /**
      * User constants.
      */
@@ -70,6 +66,9 @@ public class ModelConstants {
     public static final String USER_FIRST_NAME_PROPERTY = "first_name";
     public static final String USER_LAST_NAME_PROPERTY = "last_name";
     public static final String USER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String USER_CUSTOM_MENU_ID_PROPERTY = "custom_menu_id";
+
+    public static final String USER_INFO_VIEW_TABLE_NAME = "user_info_view";
 
     /**
      * User_credentials constants.
@@ -79,8 +78,11 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_ENABLED_PROPERTY = "enabled";
     public static final String USER_CREDENTIALS_PASSWORD_PROPERTY = "password"; //NOSONAR, the constant used to identify password column name (not password value itself)
     public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY = "activate_token";
+    public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_EXP_TIME_PROPERTY = "activate_token_exp_time";
     public static final String USER_CREDENTIALS_RESET_TOKEN_PROPERTY = "reset_token";
-    public static final String USER_CREDENTIALS_ADDITIONAL_PROPERTY = "additional_info";
+    public static final String USER_CREDENTIALS_RESET_TOKEN_EXP_TIME_PROPERTY = "reset_token_exp_time";
+    public static final String USER_CREDENTIALS_LAST_LOGIN_TS_PROPERTY = "last_login_ts";
+    public static final String USER_CREDENTIALS_FAILED_LOGIN_ATTEMPTS_PROPERTY = "failed_login_attempts";
 
     /**
      * User settings constants.
@@ -89,6 +91,31 @@ public class ModelConstants {
     public static final String USER_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
     public static final String USER_SETTINGS_TYPE_PROPERTY = "type";
     public static final String USER_SETTINGS_SETTINGS = "settings";
+
+    /**
+     * White labeling settings constants.
+     */
+    public static final String WHITE_LABELING_TABLE_NAME = "white_labeling";
+    public static final String WHITE_LABELING_SETTINGS_TYPE = "type";
+    public static final String WHITE_LABELING_SETTINGS = "settings";
+    public static final String WHITE_LABELING_DOMAIN_ID = "domain_id";
+
+    /**
+     * Custom menu settings constants.
+     */
+    public static final String CUSTOM_MENU_TABLE_NAME = "custom_menu";
+    public static final String CUSTOM_MENU_NAME = "name";
+    public static final String CUSTOM_MENU_SCOPE = "scope";
+    public static final String CUSTOM_MENU_ASSIGNEE_TYPE = "assignee_type";
+    public static final String CUSTOM_MENU_CONFIG = "config";
+    public static final String CUSTOM_MENU_USER_GROUP_NAMES = "user_group_names";
+
+    /**
+     * Custom translation constants.
+     */
+    public static final String CUSTOM_TRANSLATION_TABLE_NAME = "custom_translation";
+    public static final String CUSTOM_TRANSLATION_LOCALE_CODE = "locale_code";
+    public static final String CUSTOM_TRANSLATION_VALUE = "value";
 
     /**
      * Admin_settings constants.
@@ -135,9 +162,18 @@ public class ModelConstants {
      */
     public static final String CUSTOMER_TABLE_NAME = "customer";
     public static final String CUSTOMER_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String CUSTOMER_PARENT_CUSTOMER_ID_PROPERTY = "parent_customer_id";
     public static final String CUSTOMER_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String CUSTOMER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String CUSTOMER_IS_PUBLIC_PROPERTY = "is_public";
+
+    public static final String CUSTOMER_INFO_VIEW_TABLE_NAME = "customer_info_view";
+
+    /**
+     * Owner view constants.
+     */
+    public static final String OWNER_INFO_VIEW_TABLE_NAME = "owner_info_view";
+    public static final String OWNER_INFO_VIEW_IS_PUBLIC_PROPERTY = "is_public";
 
     /**
      * Device constants.
@@ -154,9 +190,6 @@ public class ModelConstants {
     public static final String DEVICE_FIRMWARE_ID_PROPERTY = "firmware_id";
     public static final String DEVICE_SOFTWARE_ID_PROPERTY = "software_id";
 
-    public static final String DEVICE_CUSTOMER_TITLE_PROPERTY = "customer_title";
-    public static final String DEVICE_CUSTOMER_IS_PUBLIC_PROPERTY = "customer_is_public";
-    public static final String DEVICE_DEVICE_PROFILE_NAME_PROPERTY = "device_profile_name";
     public static final String DEVICE_ACTIVE_PROPERTY = "active";
 
     public static final String DEVICE_INFO_VIEW_TABLE_NAME = "device_info_view";
@@ -209,6 +242,8 @@ public class ModelConstants {
     public static final String ENTITY_VIEW_END_TS_PROPERTY = "end_ts";
     public static final String ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
+    public static final String ENTITY_VIEW_INFO_VIEW_TABLE_NAME = "entity_view_info_view";
+
     /**
      * Audit log constants.
      */
@@ -238,6 +273,150 @@ public class ModelConstants {
 
     public static final String ASSET_ASSET_PROFILE_ID_PROPERTY = "asset_profile_id";
 
+    public static final String ASSET_INFO_VIEW_TABLE_NAME = "asset_info_view";
+
+    /**
+     * Converter constants.
+     */
+    public static final String CONVERTER_TABLE_NAME = "converter";
+    public static final String CONVERTER_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String CONVERTER_NAME_PROPERTY = "name";
+    public static final String CONVERTER_TYPE_PROPERTY = "type";
+    public static final String CONVERTER_INTEGRATION_TYPE_PROPERTY = "integration_type";
+    public static final String CONVERTER_CONFIGURATION_PROPERTY = CONFIGURATION_PROPERTY;
+    public static final String CONVERTER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String CONVERTER_IS_EDGE_TEMPLATE_MODE_PROPERTY = "is_edge_template";
+    public static final String CONVERTER_VERSION_PROPERTY = "converter_version";
+
+    /**
+     * Integration constants.
+     */
+    public static final String INTEGRATION_TABLE_NAME = "integration";
+    public static final String INTEGRATION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String INTEGRATION_NAME_PROPERTY = "name";
+    public static final String INTEGRATION_SECRET_PROPERTY = "secret";
+    public static final String INTEGRATION_CONVERTER_ID_PROPERTY = "converter_id";
+    public static final String INTEGRATION_DOWNLINK_CONVERTER_ID_PROPERTY = "downlink_converter_id";
+    public static final String INTEGRATION_ROUTING_KEY_PROPERTY = "routing_key";
+    public static final String INTEGRATION_TYPE_PROPERTY = "type";
+    public static final String INTEGRATION_ENABLED_PROPERTY = "enabled";
+    public static final String INTEGRATION_IS_REMOTE_PROPERTY = "is_remote";
+    public static final String INTEGRATION_ALLOW_CREATE_DEVICES_OR_ASSETS = "allow_create_devices_or_assets";
+    public static final String INTEGRATION_CONFIGURATION_PROPERTY = CONFIGURATION_PROPERTY;
+    public static final String INTEGRATION_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String INTEGRATION_IS_EDGE_TEMPLATE_MODE_PROPERTY = "is_edge_template";
+
+    public static final String INTEGRATION_VIEW_NAME = "integration_info";
+    public static final String INTEGRATION_VIEW_STATUS_PROPERTY = "status";
+
+    /**
+     * Agent constants.
+     */
+    public static final String AGENT_TABLE_NAME = "agent";
+    public static final String AGENT_INFO_VIEW_TABLE_NAME = "agent_info_view";
+    public static final String AGENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String AGENT_NAME_PROPERTY = NAME_PROPERTY;
+    public static final String AGENT_DESCRIPTION_PROPERTY = "description";
+    public static final String AGENT_ROUTING_KEY_PROPERTY = "routing_key";
+    public static final String AGENT_SECRET_PROPERTY = "secret";
+    public static final String AGENT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String AGENT_CUSTOMER_TITLE_PROPERTY = "customer_title";
+    public static final String AGENT_CUSTOMER_IS_PUBLIC_PROPERTY = "customer_is_public";
+    public static final String AGENT_PROFILE_NAME_VIEW_PROPERTY = "agent_profile_name";
+
+    /**
+     * Agent application constants.
+     */
+    public static final String AGENT_APPLICATION_TABLE_NAME = "agent_application";
+    public static final String AGENT_APPLICATION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_APPLICATION_AGENT_ID_PROPERTY = "agent_id";
+    public static final String AGENT_APPLICATION_APP_TYPE_PROPERTY = "app_type";
+    public static final String AGENT_APPLICATION_NAME_PROPERTY = "name";
+    public static final String AGENT_APPLICATION_TEMPLATE_VERSION_PROPERTY = "template_version";
+    public static final String AGENT_APPLICATION_DESIRED_TEMPLATE_VERSION_PROPERTY = "desired_template_version";
+    public static final String AGENT_APPLICATION_CONFIG_PROPERTY = "config";
+    public static final String AGENT_APPLICATION_PROJECT_NAME_PROPERTY = "project_name";
+    public static final String AGENT_APPLICATION_PENDING_DELETION_PROPERTY = "pending_deletion";
+    public static final String AGENT_APPLICATION_ORIGIN_PROPERTY = "origin";
+
+    /**
+     * Agent bulk action constants.
+     */
+    public static final String AGENT_BULK_ACTION_TABLE_NAME = "agent_bulk_action";
+    public static final String AGENT_BULK_ACTION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_BULK_ACTION_AGENT_PROFILE_ID_PROPERTY = "agent_profile_id";
+    public static final String AGENT_BULK_ACTION_APPLICATION_PROFILE_ID_PROPERTY = "application_profile_id";
+    public static final String AGENT_BULK_ACTION_ACTION_TYPE_PROPERTY = "action_type";
+    public static final String AGENT_BULK_ACTION_STATUS_PROPERTY = "status";
+    public static final String AGENT_BULK_ACTION_ERROR_MSG_PROPERTY = "error_msg";
+    public static final String AGENT_BULK_ACTION_PROCESSING_STARTED_TIME_PROPERTY = "processing_started_time";
+    public static final String AGENT_BULK_ACTION_TOTAL_PROPERTY = "total";
+    public static final String AGENT_BULK_ACTION_SUBMITTED_PROPERTY = "submitted";
+    public static final String AGENT_BULK_ACTION_SKIP_COUNTS_PROPERTY = "skip_counts";
+
+    /**
+     * Agent app event constants.
+     */
+    public static final String AGENT_APP_EVENT_TABLE_NAME = "agent_app_event";
+    public static final String AGENT_APP_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_APP_EVENT_APPLICATION_ID_PROPERTY = "application_id";
+    public static final String AGENT_APP_EVENT_AGENT_ID_PROPERTY = "agent_id";
+    public static final String AGENT_APP_EVENT_APPLICATION_NAME_PROPERTY = "application_name";
+    public static final String AGENT_APP_EVENT_ACTION_TYPE_PROPERTY = "action_type";
+    public static final String AGENT_APP_EVENT_AGENT_SCOPED_PROPERTY = "agent_scoped";
+    public static final String AGENT_APP_EVENT_START_STATUS_PROPERTY = "start_status";
+    public static final String AGENT_APP_EVENT_PROCESSING_STATUS_PROPERTY = "processing_status";
+    public static final String AGENT_APP_EVENT_CURRENT_STEP_ID_PROPERTY = "current_step_id";
+    public static final String AGENT_APP_EVENT_CURRENT_ACTIVITY_PROPERTY = "current_activity";
+    public static final String AGENT_APP_EVENT_ERROR_MESSAGE_PROPERTY = "error_message";
+    public static final String AGENT_APP_EVENT_UPDATED_TIME_PROPERTY = "updated_time";
+    public static final String AGENT_APP_EVENT_STEP_STATES_PROPERTY = "step_states";
+    public static final String AGENT_APP_EVENT_BULK_ACTION_ID_PROPERTY = "bulk_action_id";
+    public static final String AGENT_APP_EVENT_RESOLVED_ARGUMENTS_PROPERTY = "resolved_arguments";
+    public static final String AGENT_APP_EVENT_WINNER_CONTAINER_ID_PROPERTY = "winner_container_id";
+    public static final String AGENT_APP_EVENT_FINALIZE_DEADLINE_TS_PROPERTY = "finalize_deadline_ts";
+    public static final String AGENT_APP_EVENT_CONTEXT_METADATA_PROPERTY = "context_metadata";
+
+    /**
+     * Agent app unit constants.
+     */
+    public static final String AGENT_APP_UNIT_TABLE_NAME = "agent_app_unit";
+    public static final String AGENT_APP_UNIT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_APP_UNIT_AGENT_APPLICATION_ID_PROPERTY = "agent_application_id";
+    public static final String AGENT_APP_UNIT_IDENTIFIER_PROPERTY = "identifier";
+    public static final String AGENT_APP_UNIT_TYPE_PROPERTY = "type";
+
+    /**
+     * Agent application profile constants.
+     */
+    public static final String AGENT_APP_PROFILE_TABLE_NAME = "agent_app_profile";
+    public static final String AGENT_APP_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_APP_PROFILE_NAME_PROPERTY = NAME_PROPERTY;
+    public static final String AGENT_APP_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String AGENT_APP_PROFILE_APP_TYPE_PROPERTY = "app_type";
+    public static final String AGENT_APP_PROFILE_TEMPLATE_VERSION_PROPERTY = "template_version";
+    public static final String AGENT_APP_PROFILE_CONFIG_PROPERTY = "config";
+
+    /**
+     * Agent profile constants.
+     */
+    public static final String AGENT_PROFILE_TABLE_NAME = "agent_profile";
+    public static final String AGENT_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AGENT_PROFILE_NAME_PROPERTY = NAME_PROPERTY;
+    public static final String AGENT_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String AGENT_PROFILE_PROVISION_KEY_PROPERTY = "provision_key";
+    public static final String AGENT_PROFILE_PROVISION_SECRET_PROPERTY = "provision_secret";
+    public static final String AGENT_PROFILE_PROVISION_TYPE_PROPERTY = "provision_type";
+    public static final String AGENT_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+
+    /**
+     * Agent additional FK columns.
+     */
+    public static final String AGENT_PROFILE_ID_PROPERTY = "agent_profile_id";
+    public static final String AGENT_APP_PROFILE_ID_PROPERTY = "application_profile_id";
+    public static final String AGENT_APPLICATION_PROFILE_CONFIG_VERSION_PROPERTY = "profile_config_version";
+
     /**
      * Alarm constants.
      */
@@ -253,6 +432,7 @@ public class ModelConstants {
     public static final String ALARM_ORIGINATOR_NAME_PROPERTY = "originator_name";
     public static final String ALARM_ORIGINATOR_LABEL_PROPERTY = "originator_label";
     public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY = "originator_display_name";
     public static final String ALARM_SEVERITY_PROPERTY = "severity";
     public static final String ALARM_ASSIGNEE_ID_PROPERTY = "assignee_id";
     public static final String ALARM_ASSIGNEE_FIRST_NAME_PROPERTY = "assignee_first_name";
@@ -267,6 +447,7 @@ public class ModelConstants {
     public static final String ALARM_ASSIGN_TS_PROPERTY = "assign_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
     public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
+    public static final String ALARM_PROPAGATE_TO_OWNER_HIERARCHY_PROPERTY = "propagate_to_owner_hierarchy";
     public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
@@ -288,6 +469,19 @@ public class ModelConstants {
     public static final String RELATION_TYPE_GROUP_PROPERTY = "relation_type_group";
 
     /**
+     * Entity group constants.
+     */
+    public static final String ENTITY_GROUP_TABLE_NAME = "entity_group";
+    public static final String ENTITY_GROUP_TYPE_PROPERTY = "type";
+    public static final String ENTITY_GROUP_NAME_PROPERTY = "name";
+    public static final String ENTITY_GROUP_OWNER_ID_PROPERTY = "owner_id";
+    public static final String ENTITY_GROUP_OWNER_TYPE_PROPERTY = "owner_type";
+    public static final String ENTITY_GROUP_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String ENTITY_GROUP_CONFIGURATION_PROPERTY = "configuration";
+
+    public static final String ENTITY_GROUP_INFO_VIEW_TABLE_NAME = "entity_group_info_view";
+
+    /**
      * Device_credentials constants.
      */
     public static final String DEVICE_CREDENTIALS_TABLE_NAME = "device_credentials";
@@ -307,6 +501,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_SCADA_PROPERTY = "scada";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
     public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
+    public static final String WIDGET_BUNDLES_PROPERTY = "bundles";
 
     /**
      * Widget_type constants.
@@ -341,12 +536,15 @@ public class ModelConstants {
      */
     public static final String DASHBOARD_TABLE_NAME = "dashboard";
     public static final String DASHBOARD_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String DASHBOARD_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String DASHBOARD_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
     public static final String DASHBOARD_MOBILE_HIDE_PROPERTY = "mobile_hide";
     public static final String DASHBOARD_MOBILE_ORDER_PROPERTY = "mobile_order";
+
+    public static final String DASHBOARD_INFO_VIEW_TABLE_NAME = "dashboard_info_view";
 
     /**
      * Plugin component metadata constants.
@@ -361,6 +559,7 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_CONFIGURATION_VERSION_PROPERTY = "configuration_version";
     public static final String COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY = "actions";
     public static final String COMPONENT_DESCRIPTOR_HAS_QUEUE_NAME_PROPERTY = "has_queue_name";
+    public static final String COMPONENT_DESCRIPTOR_HAS_SECRETS_PROPERTY = "has_secrets";
 
     /**
      * Event constants.
@@ -368,8 +567,12 @@ public class ModelConstants {
     public static final String ERROR_EVENT_TABLE_NAME = "error_event";
     public static final String LC_EVENT_TABLE_NAME = "lc_event";
     public static final String STATS_EVENT_TABLE_NAME = "stats_event";
+    public static final String RAW_DATA_EVENT_TABLE_NAME = "raw_data_event";
     public static final String RULE_NODE_DEBUG_EVENT_TABLE_NAME = "rule_node_debug_event";
     public static final String RULE_CHAIN_DEBUG_EVENT_TABLE_NAME = "rule_chain_debug_event";
+    public static final String CONVERTER_DEBUG_EVENT_TABLE_NAME = "converter_debug_event";
+    public static final String INTEGRATION_DEBUG_EVENT_TABLE_NAME = "integration_debug_event";
+    public static final String CALCULATED_FIELD_DEBUG_EVENT_TABLE_NAME = "cf_debug_event";
 
     public static final String EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EVENT_SERVICE_ID_PROPERTY = "service_id";
@@ -393,8 +596,21 @@ public class ModelConstants {
     public static final String EVENT_DATA_COLUMN_NAME = "e_data";
     public static final String EVENT_METADATA_COLUMN_NAME = "e_metadata";
     public static final String EVENT_MESSAGE_COLUMN_NAME = "e_message";
+    public static final String EVENT_MESSAGE_TYPE_COLUMN_NAME = "e_message_type";
+    public static final String EVENT_STATUS_COLUMN_NAME = "e_status";
+    public static final String EVENT_UUID_COLUMN_NAME = "e_uuid";
+
+    public static final String EVENT_IN_MSG_TYPE_COLUMN_NAME = "e_in_message_type";
+    public static final String EVENT_IN_MSG_COLUMN_NAME = "e_in_message";
+    public static final String EVENT_OUT_MSG_TYPE_COLUMN_NAME = "e_out_message_type";
+    public static final String EVENT_OUT_MSG_COLUMN_NAME = "e_out_message";
+
+    public static final String EVENT_CALCULATED_FIELD_ID_COLUMN_NAME = "cf_id";
+    public static final String EVENT_CALCULATED_FIELD_ARGUMENTS_COLUMN_NAME = "e_args";
+    public static final String EVENT_CALCULATED_FIELD_RESULT_COLUMN_NAME = "e_result";
 
     public static final String DEBUG_MODE = "debug_mode";
+    public static final String DEBUG_SETTINGS = "debug_settings";
     public static final String SINGLETON_MODE = "singleton_mode";
     public static final String QUEUE_NAME = "queue_name";
 
@@ -408,6 +624,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
     public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
+    public static final String RULE_CHAIN_NOTES_PROPERTY = "notes";
 
     /**
      * Rule node constants.
@@ -429,24 +646,138 @@ public class ModelConstants {
     public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
 
     /**
-     * OAuth2 client registration constants.
+     * Scheduler event constants.
      */
-    public static final String OAUTH2_PARAMS_TABLE_NAME = "oauth2_params";
-    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
-    public static final String OAUTH2_PARAMS_EDGE_ENABLED_PROPERTY = "edge_enabled";
-    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String SCHEDULER_EVENT_TABLE_NAME = "scheduler_event";
+    public static final String SCHEDULER_EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String SCHEDULER_EVENT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String SCHEDULER_EVENT_ORIGINATOR_ID_PROPERTY = "originator_id";
+    public static final String SCHEDULER_EVENT_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String SCHEDULER_EVENT_NAME_PROPERTY = "name";
+    public static final String SCHEDULER_EVENT_TYPE_PROPERTY = "type";
+    public static final String SCHEDULER_EVENT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String SCHEDULER_EVENT_CONFIGURATION_PROPERTY = CONFIGURATION_PROPERTY;
+    public static final String SCHEDULER_EVENT_SCHEDULE_PROPERTY = "schedule";
+    public static final String SCHEDULER_EVENT_ENABLED_PROPERTY = "enabled";
+    public static final String SCHEDULER_REPORT_EVENT_VIEW_NAME = "scheduled_reports_info_view";
+    public static final String SCHEDULER_REPORT_EVENT_TEMPLATE_ID_PROPERTY = "report_template_id";
+    public static final String SCHEDULER_REPORT_EVENT_TEMPLATE_NAME_PROPERTY = "report_template_name";
+    public static final String SCHEDULER_REPORT_EVENT_CUSTOMER_TTTLE_PROPERTY = "customer_title";
+    public static final String SCHEDULER_REPORT_EVENT_USER_ID_PROPERTY = "user_id";
+    public static final String SCHEDULER_REPORT_EVENT_USER_NAME_PROPERTY = "user_name";
 
-    public static final String OAUTH2_REGISTRATION_TABLE_NAME = "oauth2_registration";
-    public static final String OAUTH2_DOMAIN_TABLE_NAME = "oauth2_domain";
-    public static final String OAUTH2_MOBILE_TABLE_NAME = "oauth2_mobile";
-    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
-    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
-    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
+    /**
+     * Blob entity constants.
+     */
+    public static final String BLOB_ENTITY_TABLE_NAME = "blob_entity";
+    public static final String BLOB_ENTITY_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String BLOB_ENTITY_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String BLOB_ENTITY_NAME_PROPERTY = "name";
+    public static final String BLOB_ENTITY_TYPE_PROPERTY = "type";
+    public static final String BLOB_ENTITY_CONTENT_TYPE_PROPERTY = "content_type";
+    public static final String BLOB_ENTITY_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String BLOB_ENTITY_DATA_PROPERTY = "data";
 
+    /**
+     * Report constants.
+     */
+    public static final String REPORT_TEMPLATE_TABLE_NAME = "report_template";
+    public static final String REPORT_TEMPLATE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String REPORT_TEMPLATE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String REPORT_TEMPLATE_NAME_PROPERTY = "name";
+    public static final String REPORT_TEMPLATE_FORMAT_PROPERTY = "format";
+    public static final String REPORT_TEMPLATE_TYPE_PROPERTY = "type";
+    public static final String REPORT_TEMPLATE_DESCRIPTION_PROPERTY = "description";
+    public static final String REPORT_TEMPLATE_CONFIGURATION_PROPERTY = CONFIGURATION_PROPERTY;
+
+    public static final String REPORT_TEMPLATE_INFO_VIEW_TABLE_NAME = "report_template_info_view";
+
+    public static final String REPORT_TABLE_NAME = "report";
+    public static final String REPORT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String REPORT_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String REPORT_TEMPLATE_ID_PROPERTY = "template_id";
+    public static final String REPORT_FORMAT_PROPERTY = "format";
+    public static final String REPORT_NAME_PROPERTY = "name";
+    public static final String REPORT_USER_ID_PROPERTY = "user_id";
+    public static final String REPORT_PUBLIC_KEY_PROPERTY = "public_key";
+    public static final String REPORT_IS_PUBLIC_PROPERTY = "is_public";
+    public static final String REPORT_INFO_VIEW_NAME = "report_info_view";
+
+
+    /**
+     * Role constants.
+     */
+    public static final String ROLE_TABLE_NAME = "role";
+    public static final String ROLE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ROLE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ROLE_NAME_PROPERTY = DEVICE_NAME_PROPERTY;
+    public static final String ROLE_TYPE_PROPERTY = "type";
+    public static final String ROLE_PERMISSIONS_PROPERTY = "permissions";
+    public static final String ROLE_EXCLUDED_PERMISSIONS_PROPERTY = "excluded_permissions";
+
+    /**
+     * Group permission constants.
+     */
+    public static final String GROUP_PERMISSION_TABLE_NAME = "group_permission";
+    public static final String GROUP_PERMISSION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String GROUP_PERMISSION_ROLE_ID_PROPERTY = "role_id";
+    public static final String GROUP_PERMISSION_USER_GROUP_ID_PROPERTY = "user_group_id";
+    public static final String GROUP_PERMISSION_ENTITY_GROUP_ID_PROPERTY = "entity_group_id";
+    public static final String GROUP_PERMISSION_ENTITY_GROUP_TYPE_PROPERTY = "entity_group_type";
+    public static final String GROUP_PERMISSION_IS_PUBLIC_PROPERTY = "is_public";
+
+    /**
+     * Domain constants.
+     */
+    public static final String DOMAIN_TABLE_NAME = "domain";
+    public static final String DOMAIN_NAME_PROPERTY = "name";
+    public static final String DOMAIN_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+    public static final String DOMAIN_PROPAGATE_TO_EDGE_PROPERTY = "edge_enabled";
+
+    public static final String DOMAIN_OAUTH2_CLIENT_TABLE_NAME = "domain_oauth2_client";
+    public static final String DOMAIN_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
+    public static final String DOMAIN_OAUTH2_CLIENT_DOMAIN_ID_PROPERTY = "domain_id";
+
+    /**
+     * Mobile application constants.
+     */
+    public static final String MOBILE_APP_TABLE_NAME = "mobile_app";
+    public static final String MOBILE_APP_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String MOBILE_APP_TITLE_PROPERTY = "title";
+    public static final String MOBILE_APP_APP_SECRET_PROPERTY = "app_secret";
+    public static final String MOBILE_APP_PLATFORM_TYPE_PROPERTY = "platform_type";
+    public static final String MOBILE_APP_STATUS_PROPERTY = "status";
+    public static final String MOBILE_APP_VERSION_INFO_PROPERTY = "version_info";
+    public static final String MOBILE_APP_STORE_INFO_PROPERTY = "store_info";
+    public static final MobileAppVersionInfo MOBILE_APP_VERSION_INFO_EMPTY_OBJECT = new MobileAppVersionInfo();
+    public static final StoreInfo MOBILE_APP_STORE_INFO_EMPTY_OBJECT = new StoreInfo();
+
+    /**
+     * Mobile application bundle constants.
+     */
+    public static final String MOBILE_APP_BUNDLE_TABLE_NAME = "mobile_app_bundle";
+    public static final String MOBILE_APP_BUNDLE_TITLE_PROPERTY = "title";
+    public static final String MOBILE_APP_BUNDLE_DESCRIPTION_PROPERTY = "description";
+    public static final String MOBILE_APP_BUNDLE_ANDROID_APP_ID_PROPERTY = "android_app_id";
+    public static final String MOBILE_APP_BUNDLE_IOS_APP_ID_PROPERTY = "ios_app_id";
+    public static final String MOBILE_APP_BUNDLE_LAYOUT_CONFIG_PROPERTY = "layout_config";
+    public static final String MOBILE_APP_BUNDLE_SELF_REGISTRATION_CONFIG_PROPERTY = "self_registration_config";
+    public static final String MOBILE_APP_BUNDLE_TERMS_OF_USE_PROPERTY = "terms_of_use";
+    public static final String MOBILE_APP_BUNDLE_PRIVACY_POLICY_PROPERTY = "privacy_policy";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_TABLE_NAME = "mobile_app_bundle_oauth2_client";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_MOBILE_APP_BUNDLE_ID_PROPERTY = "mobile_app_bundle_id";
+
+
+    /**
+     * OAuth2 client constants.
+     */
+    public static final String OAUTH2_CLIENT_TABLE_NAME = "oauth2_client";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_TABLE_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
-    public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
-    public static final String OAUTH2_DOMAIN_SCHEME_PROPERTY = "domain_scheme";
+    public static final String OAUTH2_CLIENT_TITLE_PROPERTY = "title";
     public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
@@ -470,6 +801,8 @@ public class ModelConstants {
     public static final String OAUTH2_CUSTOMER_NAME_PATTERN_PROPERTY = "basic_customer_name_pattern";
     public static final String OAUTH2_DEFAULT_DASHBOARD_NAME_PROPERTY = "basic_default_dashboard_name";
     public static final String OAUTH2_ALWAYS_FULL_SCREEN_PROPERTY = "basic_always_full_screen";
+    public static final String OAUTH2_PARENT_CUSTOMER_NAME_PATTERN_PROPERTY = "basic_parent_customer_name_pattern";
+    public static final String OAUTH2_USER_GROUPS_NAME_PATTERN_PROPERTY = "basic_user_groups_name_pattern";
     public static final String OAUTH2_MAPPER_URL_PROPERTY = "custom_url";
     public static final String OAUTH2_MAPPER_USERNAME_PROPERTY = "custom_username";
     public static final String OAUTH2_MAPPER_PASSWORD_PROPERTY = "custom_password";
@@ -496,12 +829,16 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
     public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
+    public static final String API_USAGE_STATE_REPORT_EXEC_COLUMN = "report_exec";
+    public static final String API_USAGE_STATE_AI_COLUMN = "ai";
 
     /**
      * Resource constants.
      */
     public static final String RESOURCE_TABLE_NAME = "resource";
     public static final String RESOURCE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+
+    public static final String RESOURCE_CUSTOMER_ID_COLUMN = CUSTOMER_ID_PROPERTY;
     public static final String RESOURCE_TYPE_COLUMN = "resource_type";
     public static final String RESOURCE_SUB_TYPE_COLUMN = "resource_sub_type";
     public static final String RESOURCE_KEY_COLUMN = "resource_key";
@@ -534,6 +871,16 @@ public class ModelConstants {
     public static final String OTA_PACKAGE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
 
     /**
+     * Device group firmware constants.
+     */
+    public static final String DEVICE_GROUP_OTA_PACKAGE_TABLE_NAME = "device_group_ota_package";
+    public static final String DEVICE_GROUP_OTA_PACKAGE_ID = ID_PROPERTY;
+    public static final String DEVICE_GROUP_OTA_PACKAGE_GROUP_ID = "group_id";
+    public static final String DEVICE_GROUP_OTA_PACKAGE_FIRMWARE_TYPE = "ota_package_type";
+    public static final String DEVICE_GROUP_OTA_PACKAGE_FIRMWARE_ID = "ota_package_id";
+    public static final String DEVICE_GROUP_OTA_PACKAGE_FIRMWARE_UPDATE_TIME = "ota_package_update_time";
+
+    /**
      * Persisted RPC constants.
      */
     public static final String RPC_TABLE_NAME = "rpc";
@@ -544,6 +891,8 @@ public class ModelConstants {
     public static final String RPC_RESPONSE = "response";
     public static final String RPC_STATUS = "status";
     public static final String RPC_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
+    public static final String RPC_REQUEST_ID = "request_id";
+    public static final String RPC_ONEWAY = "oneway";
 
     /**
      * Edge constants.
@@ -559,6 +908,10 @@ public class ModelConstants {
 
     public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
     public static final String EDGE_SECRET_PROPERTY = "secret";
+    public static final String EDGE_LICENSE_KEY_PROPERTY = "edge_license_key";
+    public static final String EDGE_CLOUD_ENDPOINT_KEY_PROPERTY = "cloud_endpoint";
+
+    public static final String EDGE_INFO_VIEW_TABLE_NAME = "edge_info_view";
 
     /**
      * Edge queue constants.
@@ -572,8 +925,10 @@ public class ModelConstants {
     public static final String EDGE_EVENT_UID_PROPERTY = "edge_event_uid";
     public static final String EDGE_EVENT_ENTITY_ID_PROPERTY = "entity_id";
     public static final String EDGE_EVENT_BODY_PROPERTY = "body";
+    public static final String EDGE_EVENT_ENTITY_GROUP_ID_PROPERTY = "entity_group_id";
 
     public static final String EXTERNAL_ID_PROPERTY = "external_id";
+    public static final String CUSTOM_MENU_ID_PROPERTY = "custom_menu_id";
 
     /**
      * User auth settings constants.
@@ -666,14 +1021,95 @@ public class ModelConstants {
     public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
     public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
 
+    public static final String INSTANCE_REGISTRY_TABLE_NAME = "tb_instance_registry";
+    public static final String INSTANCE_REGISTRY_SERVICE_ID_PROPERTY = "service_id";
+    public static final String INSTANCE_REGISTRY_LAST_ACTIVITY_TS_PROPERTY = "last_activity_ts";
+
     /**
      * Mobile application settings constants.
      */
-    public static final String MOBILE_APP_SETTINGS_TABLE_NAME = "mobile_app_settings";
-    public static final String MOBILE_APP_SETTINGS_USE_DEFAULT_APP_PROPERTY = "use_default_app";
-    public static final String MOBILE_APP_SETTINGS_ANDROID_CONFIG_PROPERTY = "android_config";
-    public static final String MOBILE_APP_SETTINGS_IOS_CONFIG_PROPERTY = "ios_config";
-    public static final String MOBILE_APP_SETTINGS_QR_CODE_CONFIG_PROPERTY = "qr_code_config";
+    public static final String QR_CODE_SETTINGS_TABLE_NAME = "qr_code_settings";
+    public static final String QR_CODE_SETTINGS_USE_SYSTEM_SETTINGS_PROPERTY = "use_system_settings";
+    public static final String QR_CODE_SETTINGS_USE_DEFAULT_APP_PROPERTY = "use_default_app";
+    public static final String QR_CODE_SETTINGS_ANDROID_ENABLED_PROPERTY = "android_enabled";
+    public static final String QR_CODE_SETTINGS_IOS_ENABLED_PROPERTY = "ios_enabled";
+    public static final String QR_CODE_SETTINGS_BUNDLE_ID_PROPERTY = "mobile_app_bundle_id";
+    public static final String QR_CODE_SETTINGS_CONFIG_PROPERTY = "qr_code_config";
+
+    /**
+     * Calculated fields constants.
+     */
+    public static final String CALCULATED_FIELD_TABLE_NAME = "calculated_field";
+    public static final String CALCULATED_FIELD_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String CALCULATED_FIELD_ENTITY_TYPE = ENTITY_TYPE_COLUMN;
+    public static final String CALCULATED_FIELD_ENTITY_ID = ENTITY_ID_COLUMN;
+    public static final String CALCULATED_FIELD_TYPE = "type";
+    public static final String CALCULATED_FIELD_NAME = "name";
+    public static final String CALCULATED_FIELD_CONFIGURATION_VERSION = "configuration_version";
+    public static final String CALCULATED_FIELD_CONFIGURATION = "configuration";
+    public static final String CALCULATED_FIELD_VERSION = "version";
+    public static final String CALCULATED_FIELD_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
+
+    /**
+     * Secret constants.
+     */
+    public static final String SECRET_TABLE_NAME = "secret";
+    public static final String SECRET_NAME_COLUMN = "name";
+    public static final String SECRET_TYPE_COLUMN = "type";
+    public static final String SECRET_VALUE_COLUMN = "value";
+    public static final String SECRET_DESCRIPTION_COLUMN = "description";
+
+    /**
+     * Encryption key constants.
+     */
+    public static final String ENCRYPTION_KEY_TABLE_NAME = "encryption_key";
+    public static final String ENCRYPTION_KEY_PASSWORD_COLUMN = "password";
+    public static final String ENCRYPTION_KEY_SALT_COLUMN = "salt";
+
+    /**
+     * Job constants.
+     */
+    public static final String JOB_TABLE_NAME = "job";
+    public static final String JOB_TYPE_PROPERTY = "type";
+    public static final String JOB_KEY_PROPERTY = "key";
+    public static final String JOB_ENTITY_ID_PROPERTY = "entity_id";
+    public static final String JOB_ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String JOB_STATUS_PROPERTY = "status";
+    public static final String JOB_CONFIGURATION_PROPERTY = "configuration";
+    public static final String JOB_RESULT_PROPERTY = "result";
+
+    /**
+     * AI model constants.
+     */
+    public static final String AI_MODEL_TABLE_NAME = "ai_model";
+    public static final String AI_MODEL_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
+    public static final String AI_MODEL_NAME_COLUMN_NAME = NAME_PROPERTY;
+    public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
+
+    /**
+     * Api Key constants.
+     */
+    public static final String API_KEY_TABLE_NAME = "api_key";
+    public static final String API_KEY_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
+    public static final String API_KEY_USER_ID_COLUMN_NAME = USER_ID_PROPERTY;
+    public static final String API_KEY_VALUE_COLUMN_NAME = "value";
+    public static final String API_KEY_EXPIRATION_TIME_COLUMN_NAME = "expiration_time";
+    public static final String API_KEY_ENABLED_COLUMN_NAME = "enabled";
+    public static final String API_KEY_DESCRIPTION_COLUMN_NAME = "description";
+    public static final String API_KEY_INTERNAL_COLUMN_NAME = "internal";
+    public static final String API_KEY_PERMISSIONS_COLUMN_NAME = "permissions";
+
+    /**
+     * IoT Hub installed item constants.
+     */
+    public static final String IOT_HUB_INSTALLED_ITEM_TABLE_NAME = "iot_hub_installed_item";
+    public static final String IOT_HUB_INSTALLED_ITEM_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_ID_COLUMN = "item_id";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_VERSION_ID_COLUMN = "item_version_id";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_NAME_COLUMN = "item_name";
+    public static final String IOT_HUB_INSTALLED_ITEM_ITEM_TYPE_COLUMN = "item_type";
+    public static final String IOT_HUB_INSTALLED_ITEM_VERSION_COLUMN = "version";
+    public static final String IOT_HUB_INSTALLED_ITEM_DESCRIPTOR_COLUMN = "descriptor";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
@@ -721,5 +1157,15 @@ public class ModelConstants {
                 throw new RuntimeException("Aggregation type: " + aggregation + " is not supported!");
         }
     }
+
+    public static final String SUB_CUSTOMERS_QUERY = " e.tenant_id = :tenantId AND e.customer_id IN (WITH RECURSIVE customers_ids(id) AS " +
+            "(SELECT id id FROM customer ce WHERE ce.tenant_id = :tenantId and id = :customerId " +
+            "UNION SELECT ce1.id id FROM customer ce1, customers_ids parent WHERE ce1.tenant_id = :tenantId " +
+            "and ce1.parent_customer_id = parent.id) SELECT id FROM customers_ids) ";
+
+    public static final String CUSTOMERS_SUB_CUSTOMERS_QUERY = " e.tenant_id = :tenantId AND e.parent_customer_id IN (WITH RECURSIVE customers_ids(id) AS " +
+            "(SELECT id id FROM customer ce WHERE ce.tenant_id = :tenantId and id = :customerId " +
+            "UNION SELECT ce1.id id FROM customer ce1, customers_ids parent WHERE ce1.tenant_id = :tenantId " +
+            "and ce1.parent_customer_id = parent.id) SELECT id FROM customers_ids) ";
 
 }

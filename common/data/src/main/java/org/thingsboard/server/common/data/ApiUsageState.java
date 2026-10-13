@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +16,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId {
+public class ApiUsageState extends BaseData<ApiUsageStateId> implements TenantEntity, HasVersion {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -41,6 +30,9 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private ApiUsageStateValue reportExecState;
+    private ApiUsageStateValue aiState;
+    private Long version;
 
     public ApiUsageState() {
         super();
@@ -62,6 +54,9 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.reportExecState = ur.getReportExecState();
+        this.aiState = ur.getAiState();
+        this.version = ur.getVersion();
     }
 
     public boolean isTransportEnabled() {
@@ -84,15 +79,30 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         return !ApiUsageStateValue.DISABLED.equals(tbelExecState);
     }
 
-    public boolean isEmailSendEnabled(){
+    public boolean isEmailSendEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(emailExecState);
     }
 
-    public boolean isSmsSendEnabled(){
+    public boolean isSmsSendEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(smsExecState);
     }
 
     public boolean isAlarmCreationEnabled() {
         return alarmExecState != ApiUsageStateValue.DISABLED;
     }
+
+    public boolean isReportCreationEnabled() {
+        return reportExecState != ApiUsageStateValue.DISABLED;
+    }
+
+    public boolean isAiEnabled() {
+        return aiState != ApiUsageStateValue.DISABLED;
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.API_USAGE_STATE;
+    }
+
 }

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   Component,
   forwardRef,
@@ -34,7 +20,7 @@ import {
 import { IAliasController } from '@core/api/widget-api.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 @Injectable()
@@ -65,16 +51,17 @@ export class ColorSettingsComponentService {
 }
 
 @Component({
-  selector: 'tb-color-settings',
-  templateUrl: './color-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-color-settings',
+    templateUrl: './color-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
@@ -159,22 +146,25 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        colorSettings: this.modelValue,
-        settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this),
-        aliasController: this.aliasController,
-        dataKeyCallbacks: this.dataKeyCallbacks,
-        datasource: this.datasource,
-        rangeAdvancedMode: this.rangeAdvancedMode,
-        gradientAdvancedMode: this.gradientAdvancedMode,
-        minValue: this.minValue,
-        maxValue: this.maxValue
-      };
-      const colorSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorSettingsPanelComponent, 'left', true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const colorSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ColorSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
+        context: {
+          colorSettings: this.modelValue,
+          settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this),
+          aliasController: this.aliasController,
+          dataKeyCallbacks: this.dataKeyCallbacks,
+          datasource: this.datasource,
+          rangeAdvancedMode: this.rangeAdvancedMode,
+          gradientAdvancedMode: this.gradientAdvancedMode,
+          minValue: this.minValue,
+          maxValue: this.maxValue
+        },
+        isModal: true
+      });
       colorSettingsPanelPopover.tbComponentRef.instance.popover = colorSettingsPanelPopover;
       colorSettingsPanelPopover.tbComponentRef.instance.colorSettingsApplied.subscribe((colorSettings) => {
         colorSettingsPanelPopover.hide();

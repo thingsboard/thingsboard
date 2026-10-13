@@ -1,0 +1,54 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-form-field [appearance]="appearance" [class]="additionalClass"
+                [subscriptSizing]="subscriptSizing" style="width: 100%">
+  @if (label) {
+    <mat-label>{{label}}</mat-label>
+  }
+  <pre #highlightTextRef class="highlighted-text" [class.disabled]="disabled" [innerHTML]="highlightedHtml"></pre>
+  <input matInput #inputRef
+         class="input-field-highlight"
+         [formControl]="selectionFormControl"
+         [placeholder]="placeholderText"
+         (focusin)="onFocus()"
+         (focusout)="onBlur()">
+  @if (predefinedValuesButton) {
+    <button type="button"
+            matSuffix
+            mat-icon-button
+            [disabled]="disabled"
+            (click)="openValues($event)">
+      <tb-icon matButtonIcon="">mdi:variable</tb-icon>
+    </button>
+  }
+  @if (selectionFormControl.hasError('required') && !showInlineError) {
+    <mat-icon
+      matIconSuffix
+      [matTooltip]="errorText"
+      matTooltipPosition="above"
+      [matTooltipClass]="tooltipClass"
+      class="material-icons tb-suffix-show-always tb-error">
+      warning
+    </mat-icon>
+  }
+  @if (selectionFormControl.hasError('required') && showInlineError) {
+    <mat-error>
+      {{errorText}}
+    </mat-error>
+  }
+</mat-form-field>
+<ng-template #autocompleteTemplate>
+  <div role="listbox" class="mat-mdc-autocomplete-panel mat-mdc-autocomplete-visible tb-autocomplete tb-sting-pattern-autocomplete-panel">
+    @for(option of filteredOptions; track option; let i = $index) {
+      <mat-option (click)="optionSelected(option)"
+                  class="mdc-list-item" #optionItem
+                  [class.mat-mdc-option-active]="i === activeOptionIndex">
+        <span class="flex-1" [innerHTML]="option | highlight:searchText:false:'ig'"></span>
+      </mat-option>
+    }
+  </div>
+</ng-template>

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -43,7 +31,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -94,80 +81,76 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     private void sendLatestWsMsg(EntityId entityId, String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((k, v) -> {
-            Object[] data = (Object[]) v.get(0);
-            latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
+        subscriptionUpdate.getValues().forEach((key, values) -> {
+            latestUpdate.put(key, getLatest(values));
         });
         EntityData entityData = getDataForEntity(entityId);
         if (entityData != null && entityData.getLatest() != null) {
-            Map<String, TsValue> latestCtxValues = entityData.getLatest().get(keyType);
+            Map<String, TsValue> latestCtxValues = entityData.getLatest().computeIfAbsent(keyType, __ -> new HashMap<>());
             log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
-            if (latestCtxValues != null) {
-                latestCtxValues.forEach((k, v) -> {
-                    TsValue update = latestUpdate.get(k);
-                    if (update != null) {
-                        //Ignore notifications about deleted keys
-                        if (!(update.getTs() == 0 && (update.getValue() == null || update.getValue().isEmpty()))) {
-                            if (update.getTs() < v.getTs()) {
-                                log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                latestUpdate.remove(k);
-                            } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
-                                log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
-                                latestUpdate.remove(k);
-                            }
-                        } else {
-                            log.trace("[{}][{}][{}] Received deleted notification for: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k);
+            latestCtxValues.forEach((k, v) -> {
+                TsValue update = latestUpdate.get(k);
+                if (update != null) {
+                    //Ignore notifications about deleted keys
+                    if (!(update.getTs() == 0 && (update.getValue() == null || update.getValue().isEmpty()))) {
+                        if (update.getTs() < v.getTs()) {
+                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                            latestUpdate.remove(k);
+                        } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
+                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                            latestUpdate.remove(k);
                         }
+                    } else {
+                        log.trace("[{}][{}][{}] Received deleted notification for: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k);
                     }
-                });
-                //Setting new values
-                latestUpdate.forEach(latestCtxValues::put);
+                }
+            });
+            //Setting new values
+            latestCtxValues.putAll(latestUpdate);
+            if (!latestUpdate.isEmpty()) {
+                Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
+                entityData = new EntityData(entityId, entityData.isReadAttrs(), entityData.isReadTs(), latestMap, null);
+                sendWsMsg(new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
             }
-        }
-        if (!latestUpdate.isEmpty()) {
-            Map<EntityKeyType, Map<String, TsValue>> latestMap = Collections.singletonMap(keyType, latestUpdate);
-            entityData = new EntityData(entityId, latestMap, null);
-            sendWsMsg(new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
         }
     }
 
     private void sendTsWsMsg(EntityId entityId, String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate, EntityKeyType keyType) {
         Map<String, List<TsValue>> tsUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((k, v) -> {
-            Object[] data = (Object[]) v.get(0);
-            tsUpdate.computeIfAbsent(k, key -> new ArrayList<>()).add(new TsValue((Long) data[0], (String) data[1]));
+        subscriptionUpdate.getValues().forEach((key, values) -> {
+            tsUpdate.put(key, new ArrayList<>(values));
         });
         Map<String, TsValue> latestCtxValues = getLatestTsValuesForEntity(entityId);
         log.trace("[{}][{}][{}] Going to compare update with {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), latestCtxValues);
         if (latestCtxValues != null) {
-            latestCtxValues.forEach((k, v) -> {
-                List<TsValue> updateList = tsUpdate.get(k);
+            latestCtxValues.forEach((key, latest) -> {
+                List<TsValue> updateList = tsUpdate.get(key);
                 if (updateList != null) {
                     for (TsValue update : new ArrayList<>(updateList)) {
-                        if (update.getTs() < v.getTs()) {
-                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                        if (update.getTs() < latest.getTs()) {
+                            log.trace("[{}][{}][{}] Removed stale update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), key, update.getTs());
                             // Looks like this is redundant feature and our UI is ready to merge the updates.
                             //updateList.remove(update);
-                        } else if ((update.getTs() == v.getTs() && update.getValue().equals(v.getValue()))) {
-                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), k, update.getTs());
+                        } else if ((update.getTs() == latest.getTs() && update.getValue().equals(latest.getValue()))) {
+                            log.trace("[{}][{}][{}] Removed duplicate update for key: {} and ts: {}", sessionId, cmdId, subscriptionUpdate.getSubscriptionId(), key, update.getTs());
                             updateList.remove(update);
                         }
                         if (updateList.isEmpty()) {
-                            tsUpdate.remove(k);
+                            tsUpdate.remove(key);
                         }
                     }
                 }
             });
             //Setting new values
-            tsUpdate.forEach((k, v) -> {
-                Optional<TsValue> maxValue = v.stream().max(Comparator.comparingLong(TsValue::getTs));
-                maxValue.ifPresent(max -> latestCtxValues.put(k, max));
+            tsUpdate.forEach((key, values) -> {
+                values.stream().max(Comparator.comparingLong(TsValue::getTs))
+                        .ifPresent(latest -> latestCtxValues.put(key, latest));
             });
         }
         if (!tsUpdate.isEmpty()) {
             Map<String, TsValue[]> tsMap = new HashMap<>();
-            tsUpdate.forEach((key, tsValue) -> tsMap.put(key, tsValue.toArray(new TsValue[tsValue.size()])));
-            EntityData entityData = new EntityData(entityId, null, tsMap);
+            tsUpdate.forEach((key, values) -> tsMap.put(key, values.toArray(new TsValue[0])));
+            EntityData entityData = new EntityData(entityId, false, false, null, tsMap);
             sendWsMsg(new EntityDataUpdate(cmdId, null, Collections.singletonList(entityData), maxEntitiesPerDataSubscription));
         }
     }
@@ -225,7 +208,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
                 }
             }
         }
-        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
+        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId));
         subsToAdd.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
         sendWsMsg(new EntityDataUpdate(cmdId, data, null, maxEntitiesPerDataSubscription));
     }
@@ -237,6 +220,9 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     @Override
     protected EntityDataQuery buildEntityDataQuery() {
+        if (query.getPageLink().getPageSize() > maxEntitiesPerDataSubscription) {
+            query.getPageLink().setPageSize(maxEntitiesPerDataSubscription);
+        }
         return query;
     }
 

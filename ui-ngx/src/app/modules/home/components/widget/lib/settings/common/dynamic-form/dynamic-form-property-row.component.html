@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div [formGroup]="propertyRowFormGroup" class="tb-form-table-row tb-dynamic-form-property-row">
+  <mat-form-field class="tb-inline-field tb-id-field" appearance="outline" subscriptSizing="dynamic">
+    <input #idInput required matInput formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-name-field" appearance="outline" subscriptSizing="dynamic">
+    <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-type-field fixed-height" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="type">
+      @for (type of formPropertyTypes; track type) {
+        <mat-option [value]="type">
+          {{ formPropertyTypeTranslations.get(type) | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <div class="tb-form-table-row-cell-buttons">
+    <button type="button"
+            mat-icon-button
+            #editButton
+            (click)="editProperty($event, editButton)"
+            matTooltip="{{ 'dynamic-form.property.property-settings' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>settings</mat-icon>
+    </button>
+    @if (!disabled) {
+      <button
+        type="button"
+        mat-icon-button
+        (click)="propertyRemoved.emit()"
+        matTooltip="{{ 'dynamic-form.property.remove-property' | translate }}"
+        matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    }
+  </div>
+</div>

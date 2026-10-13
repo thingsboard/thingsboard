@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <g filter="url(#shadow-filter)">
+    <path class="marker-opacity" d="M 19,24.5 C 17.4075,27.4125 17,33 17,33 17,33 27.0858,32.1955 30.9992,27.4998 34,23.8992 31.9992,19 27.9992,19 23.9993,19 21.1929,20.4894 19,24.5 Z" fill="#000000" fill-opacity="0.24"/>
+  </g>
+  <path d="M 9.5,23 17,34 24.5,23 C 24.5,23 22,25.5 17,25.5 12,25.5 9.5,23 9.5,23 Z" style="filter:url(#filterLeg)"/>
+  <path d="M 27,13 C 27,18.5227 22.523,23 17,23 11.4773,23 7,18.523 7,13 7,7.47733 11.477,3 17,3 22.5227,3 27,7.47703 27,13 Z"/>
+  <path d="M 27,13 C 27,18.5227 22.523,23 17,23 11.4773,23 7,18.523 7,13 7,7.47733 11.477,3 17,3 22.5227,3 27,7.47703 27,13 Z" fill="url(#innerGradient)"/>
+  <path d="m 17,3.59375 c -5.195,0 -9.40625,4.21148 -9.40625,9.40625 0,5.195 4.21145,9.4062 9.40625,9.4062 5.195,0 9.4062,-4.2114 9.4062,-9.4062 C 26.4062,7.80497 22.1948,3.59375 17,3.59375 Z M 4.40625,13 C 4.40625,6.04489 10.0445,0.40625 17,0.40625 23.9551,0.40625 29.5938,6.0445 29.5938,13 29.5938,19.9551 23.9555,25.5938 17,25.5938 10.0449,25.5938 4.40625,19.9555 4.40625,13 Z"/>
+  <path d="m 17,3.59375 c -5.195,0 -9.40625,4.21148 -9.40625,9.40625 0,5.195 4.21145,9.4062 9.40625,9.4062 5.195,0 9.4062,-4.2114 9.4062,-9.4062 C 26.4062,7.80497 22.1948,3.59375 17,3.59375 Z M 4.40625,13 C 4.40625,6.04489 10.0445,0.40625 17,0.40625 23.9551,0.40625 29.5938,6.0445 29.5938,13 29.5938,19.9551 23.9555,25.5938 17,25.5938 10.0449,25.5938 4.40625,19.9555 4.40625,13 Z" fill="url(#radiusGradient)"/>
+  <defs>
+    <filter id="shadow-filter" x="12.75" y="14.75" width="23.9434" height="22.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="2.125"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_8817_262071"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_8817_262071" result="shape"/>
+      <feGaussianBlur stdDeviation="0.5" result="effect2_foregroundBlur_8817_262071"/>
+    </filter>
+    <radialGradient id="innerGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-7.5,10,-10.7,-8,21,6)">
+      <stop offset="0" stop-opacity="0.25"/>
+      <stop offset="1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="radiusGradient" x1="9.3" y1="20.7" x2="21.95" y2="3.1" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-opacity="0.25"/>
+      <stop offset="1" stop-opacity="0"/>
+    </linearGradient>
+    <filter color-interpolation-filters="sRGB" id="filterLeg" x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>

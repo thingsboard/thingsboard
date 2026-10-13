@@ -1,35 +1,25 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, ExportableEntity, HasId } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { HasTenantId } from '@shared/models/entity.models';
+import { WhiteLabeling } from '@shared/models/white-labeling.models';
 
 export enum ResourceType {
   LWM2M_MODEL = 'LWM2M_MODEL',
   PKCS_12 = 'PKCS_12',
   JKS = 'JKS',
-  JS_MODULE = 'JS_MODULE'
+  JS_MODULE = 'JS_MODULE',
+  GENERAL = 'GENERAL',
 }
 
 export enum ResourceSubType {
   IMAGE = 'IMAGE',
-  SCADA_SYMBOL = 'SCADA_SYMBOL'
+  SCADA_SYMBOL = 'SCADA_SYMBOL',
+  EXTENSION = 'EXTENSION',
+  MODULE = 'MODULE'
 }
 
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
@@ -55,26 +45,38 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
     [ResourceType.LWM2M_MODEL, 'resource.type.lwm2m-model'],
     [ResourceType.PKCS_12, 'resource.type.pkcs-12'],
     [ResourceType.JKS, 'resource.type.jks'],
-    [ResourceType.JS_MODULE, 'resource.type.js-module']
+    [ResourceType.JS_MODULE, 'resource.type.js-module'],
+    [ResourceType.GENERAL, 'resource.type.general'],
   ]
 );
 
-export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, HasTenantId, ExportableEntity<TbResourceId> {
+export const ResourceSubTypeTranslationMap = new Map<ResourceSubType, string>(
+  [
+    [ResourceSubType.IMAGE, 'resource.sub-type.image'],
+    [ResourceSubType.SCADA_SYMBOL, 'resource.sub-type.scada-symbol'],
+    [ResourceSubType.EXTENSION, 'resource.sub-type.extension'],
+    [ResourceSubType.MODULE, 'resource.sub-type.module']
+  ]
+);
+
+export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' | 'label'>, ExportableEntity<TbResourceId> {
   tenantId?: TenantId;
   resourceKey?: string;
   title?: string;
   resourceType: ResourceType;
   resourceSubType?: ResourceSubType;
-  fileName: string;
-  public: boolean;
+  fileName?: string;
+  public?: boolean;
   publicResourceKey?: string;
+  readonly link?: string;
+  readonly publicLink?: string;
   descriptor?: D;
 }
 
 export type ResourceInfo = TbResourceInfo<any>;
 
 export interface Resource extends ResourceInfo {
-  data: string;
+  data?: any;
   name?: string;
 }
 
@@ -87,10 +89,7 @@ export interface ImageDescriptor {
   previewDescriptor: ImageDescriptor;
 }
 
-export interface ImageResourceInfo extends TbResourceInfo<ImageDescriptor> {
-  link?: string;
-  publicLink?: string;
-}
+export type ImageResourceInfo = TbResourceInfo<ImageDescriptor>;
 
 export interface ImageResource extends ImageResourceInfo {
   base64?: string;
@@ -108,29 +107,41 @@ export interface ImageExportData {
 }
 
 export type ImageResourceType = 'tenant' | 'system';
+export type TBResourceScope = 'tenant' | 'system';
 
-export type ImageReferences = {[entityType: string]: Array<BaseData<HasId> & HasTenantId>};
+export type ResourceReferences = Array<BaseData<HasId> | WhiteLabeling>;
 
-export interface ImageResourceInfoWithReferences extends ImageResourceInfo {
-  references: ImageReferences;
+export interface ResourceInfoWithReferences extends ResourceInfo {
+  references: ResourceReferences;
 }
 
-export interface ImageDeleteResult {
-  image: ImageResourceInfo;
+export interface ResourceDeleteResult {
+  resource: TbResourceInfo<any>;
   success: boolean;
-  imageIsReferencedError?: boolean;
+  resourceIsReferencedError?: boolean;
   error?: any;
-  references?: ImageReferences;
+  references?: ResourceReferences;
 }
 
-export const toImageDeleteResult = (image: ImageResourceInfo, e?: any): ImageDeleteResult => {
+export const toResourceDeleteResult = (resource: ResourceInfo, e?: any): ResourceDeleteResult => {
   if (!e) {
-    return {image, success: true};
+    return {resource, success: true};
   } else {
-    const result: ImageDeleteResult = {image, success: false, error: e};
+    const result: ResourceDeleteResult = {resource, success: false, error: e};
     if (e?.status === 400 && e?.error?.success === false && e?.error?.references) {
-      const references: ImageReferences = e?.error?.references;
-      result.imageIsReferencedError = true;
+      const entityReferences: {[entityType: string]: Array<BaseData<HasId>>} = e?.error?.references;
+      const whiteLabelingList: Array<WhiteLabeling> = e?.error?.whiteLabelingList;
+      const references: ResourceReferences = [];
+      if (entityReferences) {
+        for (const entityTypeStr of Object.keys(entityReferences)) {
+          const entities = entityReferences[entityTypeStr];
+          references.push.apply(references, entities);
+        }
+      }
+      if (whiteLabelingList) {
+        references.push.apply(references, whiteLabelingList);
+      }
+      result.resourceIsReferencedError = true;
       result.references = references;
     }
     return result;
@@ -141,15 +152,19 @@ export const imageResourceType = (imageInfo: ImageResourceInfo): ImageResourceTy
   (!imageInfo.tenantId || imageInfo.tenantId?.id === NULL_UUID) ? 'system' : 'tenant';
 
 export const TB_IMAGE_PREFIX = 'tb-image;';
+export const TB_RESOURCE_PREFIX = 'tb-resource;';
 
 export const IMAGES_URL_REGEXP = /\/api\/images\/(tenant|system)\/(.*)/;
 export const IMAGES_URL_PREFIX = '/api/images';
+
+export const RESOURCES_URL_REGEXP = /\/api\/resource\/(js_module)\/(tenant|system)\/(.*)/;
 
 export const PUBLIC_IMAGES_URL_PREFIX = '/api/images/public';
 
 export const IMAGE_BASE64_URL_PREFIX = 'data:image/';
 
 export const removeTbImagePrefix = (url: string): string => url ? url.replace(TB_IMAGE_PREFIX, '') : url;
+export const removeTbResourcePrefix = (url: string): string => url ? url.replace(TB_RESOURCE_PREFIX, '') : url;
 
 export const removeTbImagePrefixFromUrls = (urls: string[]): string[] => urls ? urls.map(url => removeTbImagePrefix(url)) : [];
 
@@ -162,13 +177,32 @@ export const prependTbImagePrefix = (url: string): string => {
 
 export const prependTbImagePrefixToUrls = (urls: string[]): string[] => urls ? urls.map(url => prependTbImagePrefix(url)) : [];
 
+export const prependTbResourcePrefix = (url: string): string => {
+  if (url && !url.startsWith(TB_RESOURCE_PREFIX)) {
+    url = TB_RESOURCE_PREFIX + url;
+  }
+  return url;
+};
 
 export const isImageResourceUrl = (url: string): boolean => url && IMAGES_URL_REGEXP.test(url);
+
+export const isJSResourceUrl = (url: string): boolean => url && RESOURCES_URL_REGEXP.test(url);
+export const isJSResource = (url: string): boolean => url?.startsWith(TB_RESOURCE_PREFIX);
+export const isTbImage = (url: string): boolean => url?.startsWith(TB_IMAGE_PREFIX);
 
 export const extractParamsFromImageResourceUrl = (url: string): {type: ImageResourceType; key: string} => {
   const res = url.match(IMAGES_URL_REGEXP);
   if (res?.length > 2) {
     return {type: res[1] as ImageResourceType, key: res[2]};
+  } else {
+    return null;
+  }
+};
+
+export const extractParamsFromJSResourceUrl = (url: string): {type: ResourceType; scope: TBResourceScope; key: string} => {
+  const res = url.match(RESOURCES_URL_REGEXP);
+  if (res?.length > 3) {
+    return {type: (res[1]).toUpperCase() as ResourceType, scope: res[2] as TBResourceScope, key: res[3]};
   } else {
     return null;
   }

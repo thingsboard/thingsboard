@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetType } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -28,11 +14,13 @@ import {
   sliderWidgetDefaultSettings
 } from '@home/components/widget/lib/rpc/slider-widget.models';
 import { formatValue } from '@core/utils';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-slider-widget-settings',
-  templateUrl: './slider-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-slider-widget-settings',
+    templateUrl: './slider-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class SliderWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -67,7 +55,7 @@ export class SliderWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...sliderWidgetDefaultSettings};
+    return sliderWidgetDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -180,7 +168,7 @@ export class SliderWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.sliderWidgetSettingsForm.get('valueUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.sliderWidgetSettingsForm.get('valueUnits').value);
     const decimals: number = this.sliderWidgetSettingsForm.get('valueDecimals').value;
     return formatValue(48, decimals, units, false);
   }

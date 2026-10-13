@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.sql;
 
 import com.google.gson.JsonObject;
@@ -131,11 +118,13 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
 
     void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
         for (Device device : devices) {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST,
-                    device.getId(),
-                    getTbMsgMetadata(device.getName(), ts.get(idx)),
-                    TbMsgDataType.JSON,
-                    getTbMsgData(msgValue.get(idx)));
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(device.getId())
+                    .copyMetaData(getTbMsgMetadata(device.getName(), ts.get(idx)))
+                    .dataType(TbMsgDataType.JSON)
+                    .data(getTbMsgData(msgValue.get(idx)))
+                    .build();
             saveDeviceTsEntry(device.getId(), tbMsg, msgValue.get(idx));
             saveAssetTsEntry(asset, device.getName(), msgValue.get(idx), TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isUseServerTs()));
             idx++;

@@ -1,24 +1,10 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.base.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -54,12 +40,12 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
 
     protected abstract C loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
-    protected <I extends EntityId> AsyncFunction<I, I> checkIfEntityIsPresentOrThrow(String message) {
+    protected <I extends EntityId> Function<I, I> checkIfEntityIsPresentOrThrow(String message) {
         return id -> {
             if (id == null || id.isNullUid()) {
-                return Futures.immediateFailedFuture(new NoSuchElementException(message));
+                throw new NoSuchElementException(message);
             }
-            return Futures.immediateFuture(id);
+            return id;
         };
     }
 
@@ -82,9 +68,13 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
     protected TbMsg transformMessage(TbMsg msg, ObjectNode msgDataNode, TbMsgMetaData msgMetaData) {
         switch (fetchTo) {
             case DATA:
-                return TbMsg.transformMsgData(msg, JacksonUtil.toString(msgDataNode));
+                return msg.transform()
+                        .data(JacksonUtil.toString(msgDataNode))
+                        .build();
             case METADATA:
-                return TbMsg.transformMsgMetadata(msg, msgMetaData);
+                return msg.transform()
+                        .metaData(msgMetaData)
+                        .build();
             default:
                 log.debug("Unexpected FetchTo value: {}. Allowed values: {}", fetchTo, TbMsgSource.values());
                 return msg;

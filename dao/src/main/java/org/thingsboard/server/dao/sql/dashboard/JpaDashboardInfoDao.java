@@ -1,25 +1,16 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.dashboard;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -33,6 +24,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -56,12 +48,27 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     }
 
     @Override
+    public DashboardInfo findById(TenantId tenantId, UUID dashboardId) {
+        log.debug("Get entity by key {}", dashboardId);
+        return DaoUtil.getData(dashboardInfoRepository.findFullInfoById(dashboardId));
+    }
+
+    @Override
     public PageData<DashboardInfo> findDashboardsByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(dashboardInfoRepository
                 .findByTenantId(
                         tenantId,
                         pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findTenantDashboardsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findTenantDashboardsByTenantId(
+                        tenantId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap)));
     }
 
     @Override
@@ -75,7 +82,7 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
                 .findMobileByTenantId(
                         tenantId,
                         pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink, sortOrders)));
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap, sortOrders)));
     }
 
     @Override
@@ -85,7 +92,17 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
                         tenantId,
                         customerId,
                         pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerIdIncludingSubCustomers(UUID tenantId, UUID customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findByTenantIdAndCustomerIdIncludingSubCustomers(
+                        tenantId,
+                        customerId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap)));
     }
 
     @Override
@@ -100,18 +117,49 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
                         tenantId,
                         customerId,
                         pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink, sortOrders)));
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap, sortOrders)));
     }
 
     @Override
-    public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
-        log.debug("Try to find dashboards by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
+    public ListenableFuture<List<DashboardInfo>> findDashboardsByIdsAsync(UUID tenantId, List<UUID> dashboardIds) {
+        return service.submit(() -> DaoUtil.convertDataList(dashboardInfoRepository.findByIdIn(dashboardIds)));
+    }
+
+    @Override
+    public List<DashboardInfo> findDashboardsByIds(UUID tenantId, List<UUID> dashboardIds) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findByIdIn(dashboardIds));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByEntityGroupId(UUID groupId, PageLink pageLink) {
         return DaoUtil.toPageData(dashboardInfoRepository
-                .findByTenantIdAndEdgeId(
-                        tenantId,
-                        edgeId,
+                .findByEntityGroupId(
+                        groupId,
                         pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findDashboardsByEntityGroupIds(List<UUID> groupIds, PageLink pageLink) {
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findByEntityGroupIds(
+                        groupIds,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findMobileDashboardsByEntityGroupIds(List<UUID> groupIds, PageLink pageLink) {
+        List<SortOrder> sortOrders = new ArrayList<>();
+        sortOrders.add(new SortOrder("mobileOrder", SortOrder.Direction.ASC));
+        if (pageLink.getSortOrder() != null) {
+            sortOrders.add(pageLink.getSortOrder());
+        }
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findMobileByEntityGroupIds(
+                        groupIds,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink, DashboardInfoEntity.dashboardColumnMap, sortOrders)));
     }
 
     @Override
@@ -133,4 +181,15 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     public List<DashboardInfo> findByImageLink(String imageLink, int limit) {
         return DaoUtil.convertDataList(dashboardInfoRepository.findByImageLink(imageLink, limit));
     }
+
+    @Override
+    public List<EntityInfo> findByTenantIdAndResource(TenantId tenantId, String reference, int limit) {
+        return dashboardInfoRepository.findDashboardInfosByTenantIdAndResourceLink(tenantId.getId(), reference, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public List<EntityInfo> findByResource(String reference, int limit) {
+        return dashboardInfoRepository.findDashboardInfosByResourceLink(reference, PageRequest.of(0, limit));
+    }
+
 }

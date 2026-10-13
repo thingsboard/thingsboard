@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.RequiredArgsConstructor;
@@ -141,7 +128,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             }
             oldSession = client.getSession();
             TbLwM2MSecurityInfo securityInfo = securityStore.getTbLwM2MSecurityInfoByEndpoint(client.getEndpoint());
-            if (securityInfo.getSecurityMode() != null) {
+            if (securityInfo != null && securityInfo.getSecurityMode() != null) {
                 if (SecurityMode.X509.equals(securityInfo.getSecurityMode())) {
                     securityStore.registerX509(registration.getEndpoint(), registration.getId());
                 }
@@ -288,7 +275,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
-        Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
+        Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getRegistration());
+        if (profile == null) throw new IllegalArgumentException(keyName + " is not configured in the device profile! Device profile is null");
         for (Map.Entry<String, String> entry : profile.getObserveAttr().getKeyName().entrySet()) {
             String k = entry.getKey();
             String v = entry.getValue();
@@ -346,7 +334,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private PowerMode getPowerMode(LwM2mClient lwM2MClient) {
         PowerMode powerMode = lwM2MClient.getPowerMode();
         if (powerMode == null) {
-            Lwm2mDeviceProfileTransportConfiguration deviceProfile = getProfile(lwM2MClient.getProfileId());
+            Lwm2mDeviceProfileTransportConfiguration deviceProfile = getProfile(lwM2MClient.getRegistration());
+            if (deviceProfile == null) return null;
             powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
         }
         return powerMode;
@@ -358,27 +347,27 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public Lwm2mDeviceProfileTransportConfiguration getProfile(UUID profileId) {
-        return doGetAndCache(profileId);
-    }
-
-    @Override
     public Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration) {
         UUID profileId = getClientByEndpoint(registration.getEndpoint()).getProfileId();
-        return doGetAndCache(profileId);
+        return profileId != null ? doGetAndCache(profileId) : null;
     }
 
     private Lwm2mDeviceProfileTransportConfiguration doGetAndCache(UUID profileId) {
-
-        Lwm2mDeviceProfileTransportConfiguration result = profiles.get(profileId);
-        if (result == null) {
-            log.debug("Fetching profile [{}]", profileId);
-            DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
-            if (deviceProfile != null) {
-                result = profileUpdate(deviceProfile);
-            } else {
-                log.warn("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
+        Lwm2mDeviceProfileTransportConfiguration result;
+        if (profileId != null) {
+            result = profiles.get(profileId);
+            if (result == null) {
+                log.debug("Fetching profile [{}]", profileId);
+                DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
+                if (deviceProfile != null) {
+                    result = profileUpdate(deviceProfile);
+                } else {
+                    log.warn("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
+                }
             }
+        } else {
+            log.warn("Device profile not found! The device profile ID is null. Return Lwm2mDeviceProfileTransportConfiguration with null.");
+            result = null;
         }
         return result;
     }
@@ -412,7 +401,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         PowerMode powerMode = client.getPowerMode();
         OtherConfiguration profileSettings = null;
         if (powerMode == null && client.getProfileId() != null) {
-            var clientProfile = getProfile(client.getProfileId());
+            var clientProfile = getProfile(client.getRegistration());
+            if (clientProfile == null) return true;
             profileSettings = clientProfile.getClientLwM2mSettings();
             powerMode = profileSettings.getPowerMode();
         }
@@ -458,9 +448,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         PowerMode powerMode = client.getPowerMode();
         OtherConfiguration profileSettings = null;
         if (powerMode == null && client.getProfileId() != null) {
-            var clientProfile = getProfile(client.getProfileId());
-            profileSettings = clientProfile.getClientLwM2mSettings();
-            powerMode = profileSettings.getPowerMode();
+            var clientProfile = getProfile(client.getRegistration());
+            if (clientProfile != null) {
+                profileSettings = clientProfile.getClientLwM2mSettings();
+                powerMode = profileSettings.getPowerMode();
+            }
         }
         if (powerMode == null || PowerMode.DRX.equals(powerMode)) {
             client.updateLastUplinkTime();
@@ -514,10 +506,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (PowerMode.E_DRX.equals(client.getPowerMode()) && client.getEdrxCycle() != null) {
             timeout = client.getEdrxCycle();
         } else {
-            var clientProfile = getProfile(client.getProfileId());
-            OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
-            if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
-                timeout = clientLwM2mSettings.getEdrxCycle();
+            var clientProfile = getProfile(client.getRegistration());
+            if (clientProfile != null) {
+                OtherConfiguration clientLwM2mSettings = clientProfile.getClientLwM2mSettings();
+                if (PowerMode.E_DRX.equals(clientLwM2mSettings.getPowerMode())) {
+                    timeout = clientLwM2mSettings.getEdrxCycle();
+                }
             }
         }
         if (timeout == null || timeout == 0L) {

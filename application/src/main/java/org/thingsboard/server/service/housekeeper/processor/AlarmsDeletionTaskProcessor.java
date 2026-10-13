@@ -1,25 +1,15 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.housekeeper.AlarmsDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -27,7 +17,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.alarm.AlarmService;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -43,33 +35,39 @@ public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<Alarms
         EntityType entityType = entityId.getEntityType();
         TenantId tenantId = task.getTenantId();
 
-        if (entityType == EntityType.DEVICE || entityType == EntityType.ASSET) {
-            if (task.getAlarms() == null) {
-                AlarmId lastId = null;
-                long lastCreatedTime = 0;
-                while (true) {
-                    List<TbPair<UUID, Long>> alarms = alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, lastCreatedTime, lastId, 128);
-                    if (alarms.isEmpty()) {
-                        break;
-                    }
-
-                    housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream().map(TbPair::getFirst).toList()));
-
-                    TbPair<UUID, Long> last = alarms.get(alarms.size() - 1);
-                    lastId = new AlarmId(last.getFirst());
-                    lastCreatedTime = last.getSecond();
-                    log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
+        if (task.getAlarms() == null) {
+            AlarmId lastId = null;
+            long lastCreatedTime = 0;
+            while (true) {
+                List<TbPair<UUID, Long>> alarms = alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, lastCreatedTime, lastId, 128);
+                if (alarms.isEmpty()) {
+                    break;
                 }
-            } else {
-                for (UUID alarmId : task.getAlarms()) {
-                    alarmService.delAlarm(tenantId, new AlarmId(alarmId));
-                }
-                log.debug("[{}][{}][{}] Deleted {} alarms", tenantId, entityType, entityId, task.getAlarms().size());
+
+                housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream().map(TbPair::getFirst).toList()));
+
+                TbPair<UUID, Long> last = alarms.get(alarms.size() - 1);
+                lastId = new AlarmId(last.getFirst());
+                lastCreatedTime = last.getSecond();
+                log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
             }
+            int count = alarmService.deleteEntityAlarmRecords(tenantId, entityId);
+            log.debug("[{}][{}][{}] Deleted {} entity alarms", tenantId, entityType, entityId, count);
+        } else {
+            Set<String> alarmTypes = new HashSet<>();
+            for (UUID alarmId : task.getAlarms()) {
+                // entityId is the alarm originator; passing it routes the delete to the single owning shard instead of
+                // a cross-shard lookup-by-id. false = this bulk path batches the alarm-type and alarm-comment cleanup
+                // (below) once for the whole batch rather than emitting them per alarm.
+                AlarmApiCallResult result = alarmService.delAlarm(tenantId, entityId, new AlarmId(alarmId), false);
+                if (result.getAlarm() != null) {
+                    alarmTypes.add(result.getAlarm().getType());
+                }
+            }
+            alarmService.delAlarmTypes(tenantId, alarmTypes);
+            housekeeperClient.submitTask(HousekeeperTask.deleteAlarmComments(tenantId, entityId, task.getAlarms()));
+            log.debug("[{}][{}][{}] Deleted {} alarms", tenantId, entityType, entityId, task.getAlarms().size());
         }
-
-        int count = alarmService.deleteEntityAlarmRecords(tenantId, entityId);
-        log.debug("[{}][{}][{}] Deleted {} entity alarms", tenantId, entityType, entityId, count);
     }
 
     @Override

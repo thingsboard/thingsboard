@@ -1,21 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import {WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues} from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,15 +9,18 @@ import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-s
 import { aggregatedValueCardDefaultSettings } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 
 @Component({
-  selector: 'tb-aggregated-value-card-widget-settings',
-  templateUrl: './aggregated-value-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-aggregated-value-card-widget-settings',
+    templateUrl: './aggregated-value-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class AggregatedValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
 
   aggregatedValueCardWidgetSettingsForm: UntypedFormGroup;
 
   datePreviewFn = this._datePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private $injector: Injector,
@@ -44,7 +33,7 @@ export class AggregatedValueCardWidgetSettingsComponent extends WidgetSettingsCo
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...aggregatedValueCardDefaultSettings};
+    return aggregatedValueCardDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

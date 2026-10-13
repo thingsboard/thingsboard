@@ -13,182 +13,262 @@
     "firstNodeIndex": 0,
     "nodes": [
       {
-        "additionalInfo": {
-          "description": "Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \"Success\" relation type.",
-          "layoutX": 187,
-          "layoutY": 468
-        },
-        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
-        "name": "Device Profile Node",
-        "debugMode": false,
+        "type": "org.thingsboard.rule.engine.filter.TbOriginatorTypeFilterNode",
+        "name": "Is Entity Group",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
-          "persistAlarmRulesState": false,
-          "fetchAlarmRulesStateOnStart": false
+          "originatorTypes": [
+            "ENTITY_GROUP"
+          ]
         },
-        "externalId": null
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 250,
+          "layoutY": 370
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 823,
-          "layoutY": 157
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode",
+        "name": "Post attributes or RPC request",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "messageTypes": [
+            "POST_ATTRIBUTES_REQUEST",
+            "RPC_CALL_FROM_SERVER_TO_DEVICE"
+          ]
         },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 296,
+          "layoutY": 60
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupNode",
+        "name": "Duplicate To Group Entities",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "entityGroupId": null,
+          "entityGroupIsMessageOriginator": true
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 553,
+          "layoutY": 59
+        }
+      },
+      {
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
-        "externalId": null
-      },
-      {
         "additionalInfo": {
           "layoutX": 824,
-          "layoutY": 52
-        },
+          "layoutY": 265
+        }
+      },
+      {
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Client Attributes",
-        "debugMode": false,
-        "configurationVersion": 2,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
         "configuration": {
           "scope": "CLIENT_SCOPE",
           "notifyDevice": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
           "sendAttributesUpdatedNotification": false,
           "updateAttributesOnlyOnValueChange": true
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 823,
+          "layoutY": 153
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 347,
-          "layoutY": 149
-        },
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
         "name": "Message Type Switch",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "version": 0
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 480,
+          "layoutY": 266
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 825,
-          "layoutY": 266
-        },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
           "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 827,
+          "layoutY": 368
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 824,
-          "layoutY": 378
-        },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
           "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         },
-        "externalId": null
-      },
-      {
         "additionalInfo": {
           "layoutX": 824,
-          "layoutY": 466
-        },
+          "layoutY": 475
+        }
+      },
+      {
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "RPC Call Request",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "timeoutInSeconds": 60
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 827,
+          "layoutY": 575
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 1126,
-          "layoutY": 104
-        },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "scope": "SERVER_SCOPE"
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 1125,
+          "layoutY": 202
+        }
       },
       {
-        "additionalInfo": {
-          "layoutX": 826,
-          "layoutY": 601
-        },
         "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
         "name": "Push to cloud",
-        "debugMode": false,
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "scope": "SERVER_SCOPE"
         },
-        "externalId": null
+        "additionalInfo": {
+          "layoutX": 651,
+          "layoutY": 676
+        }
       }
     ],
     "connections": [
       {
         "fromIndex": 0,
-        "toIndex": 3,
-        "type": "Success"
+        "toIndex": 1,
+        "type": "True"
+      },
+      {
+        "fromIndex": 0,
+        "toIndex": 5,
+        "type": "False"
       },
       {
         "fromIndex": 1,
-        "toIndex": 7,
-        "type": "Success"
+        "toIndex": 2,
+        "type": "True"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 5,
+        "type": "False"
       },
       {
         "fromIndex": 2,
-        "toIndex": 7,
+        "toIndex": 5,
         "type": "Success"
       },
       {
         "fromIndex": 3,
-        "toIndex": 1,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 3,
         "type": "Post telemetry"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 2,
+        "fromIndex": 5,
+        "toIndex": 4,
         "type": "Post attributes"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 4,
+        "fromIndex": 5,
+        "toIndex": 6,
         "type": "RPC Request from Device"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 5,
+        "fromIndex": 5,
+        "toIndex": 7,
         "type": "Other"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 6,
+        "fromIndex": 5,
+        "toIndex": 8,
         "type": "RPC Request to Device"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 8,
+        "fromIndex": 5,
+        "toIndex": 10,
         "type": "Attributes Deleted"
       },
       {
-        "fromIndex": 3,
-        "toIndex": 8,
+        "fromIndex": 5,
+        "toIndex": 10,
         "type": "Attributes Updated"
       }
     ],

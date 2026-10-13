@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -28,7 +14,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   autoDateFormat,
   backgroundStyle,
@@ -37,11 +23,9 @@ import {
   getDataKey,
   overlayStyle,
   resolveCssSize,
-  simpleDateFormat,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
-import { WidgetComponent } from '@home/components/widget/widget.component';
-import { ResizeObserver } from '@juggle/resize-observer';
 import {
   valueChartCardDefaultSettings,
   ValueChartCardLayout,
@@ -64,10 +48,11 @@ const layoutHeight = 56;
 const valueRelativeWidth = 0.35;
 
 @Component({
-  selector: 'tb-value-chart-card-widget',
-  templateUrl: './value-chart-card-widget.component.html',
-  styleUrls: ['./value-chart-card-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-value-chart-card-widget',
+    templateUrl: './value-chart-card-widget.component.html',
+    styleUrls: ['./value-chart-card-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -106,15 +91,12 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   private valueKey: DataKey;
   private contentResize$: ResizeObserver;
 
-  private decimals = 0;
-  private units = '';
-
   private valueFontSize: number;
+  private valueFormat: ValueFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
 
@@ -123,19 +105,20 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.settings = {...valueChartCardDefaultSettings, ...this.ctx.settings};
 
     if (this.showValue) {
-      this.decimals = this.ctx.decimals;
-      this.units = this.ctx.units;
+      let decimals = this.ctx.decimals ?? 0;
+      let units = this.ctx.units ?? '';
       const dataKey = getDataKey(this.ctx.datasources);
       if (dataKey?.name && this.ctx.defaultSubscription.firstDatasource?.latestDataKeys?.length) {
         const dataKeys = this.ctx.defaultSubscription.firstDatasource?.latestDataKeys;
         this.valueKey = dataKeys?.find(k => k.name === dataKey.name);
         if (isDefinedAndNotNull(this.valueKey?.decimals)) {
-          this.decimals = this.valueKey.decimals;
+          decimals = this.valueKey.decimals;
         }
         if (this.valueKey?.units) {
-          this.units = dataKey.units;
+          units = dataKey.units;
         }
       }
+      this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units: units, decimals: decimals});
     }
 
     this.layout = this.settings.layout;
@@ -213,7 +196,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
       let value;
       if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
         value = tsValue[1];
-        this.valueText = formatValue(value, this.decimals, this.units, false);
+        this.valueText = this.valueFormat?.format(value);
       } else {
         this.valueText = 'N/A';
       }

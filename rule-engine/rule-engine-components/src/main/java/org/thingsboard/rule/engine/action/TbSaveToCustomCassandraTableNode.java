@@ -1,34 +1,18 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -38,6 +22,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
@@ -47,16 +32,16 @@ import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
-@RuleNode(type = ComponentType.ACTION,
+@RuleNode(
+        type = ComponentType.ACTION,
         name = "save to custom table",
         configClazz = TbSaveToCustomCassandraTableNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Node stores data from incoming Message payload to the Cassandra database into the predefined custom table" +
                 " that should have <b>cs_tb_</b> prefix, to avoid the data insertion to the common TB tables.<br>" +
                 "<b>Note:</b> rule node can be used only for Cassandra DB.",
@@ -65,10 +50,11 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "<b>Note:</b>If the mapping key is <b>$entity_id</b>, that is identified by the Message Originator, then to the appropriate column name(mapping value) will be write the message originator id.<br><br>" +
                 "If specified message field does not exist or is not a JSON Primitive, the outbound message will be routed via <b>failure</b> chain," +
                 " otherwise, the message will be routed via <b>success</b> chain.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCustomTableConfig",
         icon = "file_upload",
-        ruleChainTypes = RuleChainType.CORE)
+        ruleChainTypes = RuleChainType.CORE,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/save-to-custom-table/"
+)
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";
@@ -79,7 +65,6 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private CassandraCluster cassandraCluster;
     private ConsistencyLevel defaultWriteLevel;
     private PreparedStatement saveStmt;
-    private ExecutorService readResultsProcessingExecutor;
     private Map<String, String> fieldsMap;
 
     @Override
@@ -87,32 +72,28 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         config = TbNodeUtils.convert(configuration, TbSaveToCustomCassandraTableNodeConfiguration.class);
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
-            throw new RuntimeException("Unable to connect to Cassandra database");
-        } else {
-            startExecutor();
-            saveStmt = getSaveStmt();
+            throw new TbNodeException("Unable to connect to Cassandra database", true);
         }
+        if (!isTableExists()) {
+            throw new TbNodeException("Table '" + TABLE_PREFIX + config.getTableName() + "' does not exist in Cassandra cluster.");
+        }
+        saveStmt = getSaveStmt();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(save(msg, ctx), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
+        withCallback(save(msg, ctx), success -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
     }
 
     @Override
     public void destroy() {
-        stopExecutor();
         saveStmt = null;
     }
 
-    private void startExecutor() {
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
-    }
-
-    private void stopExecutor() {
-        if (readResultsProcessingExecutor != null) {
-            readResultsProcessingExecutor.shutdownNow();
-        }
+    private boolean isTableExists() {
+        var keyspaceMdOpt = getSession().getMetadata().getKeyspace(cassandraCluster.getKeyspaceName());
+        return keyspaceMdOpt.map(keyspaceMetadata ->
+                keyspaceMetadata.getTable(TABLE_PREFIX + config.getTableName()).isPresent()).orElse(false);
     }
 
     private PreparedStatement prepare(String query) {
@@ -127,10 +108,10 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         return session;
     }
 
-    private PreparedStatement getSaveStmt() {
+    private PreparedStatement getSaveStmt() throws TbNodeException {
         fieldsMap = config.getFieldsMapping();
         if (fieldsMap.isEmpty()) {
-            throw new RuntimeException("Fields(key,value) map is empty!");
+            throw new TbNodeException("Fields(key,value) map is empty!", true);
         } else {
             return prepareStatement(new ArrayList<>(fieldsMap.values()));
         }
@@ -163,16 +144,19 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 query.append("?, ");
             }
         }
+        if (config.getDefaultTtl() > 0) {
+            query.append(" USING TTL ?");
+        }
         return query.toString();
     }
 
-    private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
+    private TbResultSetFuture save(TbMsg msg, TbContext ctx) {
         JsonElement data = JsonParser.parseString(msg.getData());
         if (!data.isJsonObject()) {
-            throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
+            throw new IllegalStateException("Invalid message structure, it is not a JSON Object: " + data);
         } else {
             JsonObject dataAsObject = data.getAsJsonObject();
-            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(saveStmt.bind());
+            BoundStatementBuilder stmtBuilder = getStmtBuilder();
             AtomicInteger i = new AtomicInteger(0);
             fieldsMap.forEach((key, value) -> {
                 if (key.equals(ENTITY_ID)) {
@@ -197,15 +181,22 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     } else if (dataKeyElement.isJsonObject()) {
                         stmtBuilder.setString(i.get(), dataKeyElement.getAsJsonObject().toString());
                     } else {
-                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Object or JSON Primitive!");
+                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + dataKeyElement + "' is not a JSON Object or JSON Primitive!");
                     }
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
                 }
                 i.getAndIncrement();
             });
-            return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
+            if (config.getDefaultTtl() > 0) {
+                stmtBuilder.setInt(i.get(), config.getDefaultTtl());
+            }
+            return executeAsyncWrite(ctx, stmtBuilder.build());
         }
+    }
+
+    BoundStatementBuilder getStmtBuilder() {
+        return new BoundStatementBuilder(saveStmt.bind());
     }
 
     private TbResultSetFuture executeAsyncWrite(TbContext ctx, Statement statement) {
@@ -230,14 +221,20 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         }
     }
 
-    private <T> ListenableFuture<T> getFuture(TbResultSetFuture future, java.util.function.Function<AsyncResultSet, T> transformer) {
-        return Futures.transform(future, new Function<AsyncResultSet, T>() {
-            @Nullable
-            @Override
-            public T apply(@Nullable AsyncResultSet input) {
-                return transformer.apply(input);
-            }
-        }, readResultsProcessingExecutor);
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has("defaultTtl")) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put("defaultTtl", 0);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

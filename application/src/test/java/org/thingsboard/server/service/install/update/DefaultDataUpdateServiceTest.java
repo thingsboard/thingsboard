@@ -1,95 +1,137 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.install.update;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.integration.IntegrationService;
+import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
+import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
+import org.thingsboard.server.service.install.DbUpgradeExecutorService;
+import org.thingsboard.server.service.install.SystemDataLoaderService;
+import org.thingsboard.server.service.install.lts.LtsMigrationService;
 
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@ActiveProfiles("install")
-@SpringBootTest(classes = DefaultDataUpdateService.class)
+/**
+ * The CE-to-PE conversion is a step on the way to the package version, not an alternative to it: the LTS data
+ * migrations have to run on a converted CE database too, or the conversion silently skips every data migration
+ * between the CE source version and the package version.
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class DefaultDataUpdateServiceTest {
 
-    @MockBean
-    DefaultDataUpdateService service;
+    private static final String DB_VERSION = "4.3.1.4";
+    private static final String PACKAGE_VERSION = "4.4.0.0";
 
-    @BeforeEach
-    void setUp() {
-        willCallRealMethod().given(service).convertDeviceProfileAlarmRulesForVersion330(any());
-        willCallRealMethod().given(service).convertDeviceProfileForVersion330(any());
-    }
+    @Mock
+    private TenantService tenantService;
+    @Mock
+    private RelationService relationService;
+    @Mock
+    private RuleChainService ruleChainService;
+    @Mock
+    private IntegrationService integrationService;
+    @Mock
+    private EntityGroupService entityGroupService;
+    @Mock
+    private UserService userService;
+    @Mock
+    private WhiteLabelingService whiteLabelingService;
+    @Mock
+    private CustomerService customerService;
+    @Mock
+    private AssetService assetService;
+    @Mock
+    private DeviceService deviceService;
+    @Mock
+    private DashboardService dashboardService;
+    @Mock
+    private EntityViewService entityViewService;
+    @Mock
+    private EdgeService edgeService;
+    @Mock
+    private SystemDataLoaderService systemDataLoaderService;
+    @Mock
+    private ComponentDiscoveryService componentDiscoveryService;
+    @Mock
+    private DbUpgradeExecutorService executorService;
+    @Mock
+    private DatabaseSchemaSettingsService schemaSettingsService;
+    @Mock
+    private LtsMigrationService ltsMigrationService;
 
-    JsonNode readFromResource(String resourceName) throws IOException {
-        return JacksonUtil.OBJECT_MAPPER.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
+    @InjectMocks
+    private DefaultDataUpdateService service;
+
+    @Test
+    void ceToPeUpgradeRunsTheLtsDataMigrationsAfterTheConversion() throws Exception {
+        givenAnEmptyDatabase();
+
+        service.updateData(true);
+
+        InOrder inOrder = inOrder(tenantService, ltsMigrationService);
+        inOrder.verify(tenantService, atLeastOnce()).findTenants(any(PageLink.class));
+        inOrder.verify(ltsMigrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, false);
     }
 
     @Test
-    void convertDeviceProfileAlarmRulesForVersion330FirstRun() throws IOException {
-        JsonNode spec = readFromResource("update/330/device_profile_001_in.json");
-        JsonNode expected = readFromResource("update/330/device_profile_001_out.json");
+    void peUpgradeRunsOnlyTheLtsDataMigrations() throws Exception {
+        givenAnEmptyDatabase();
 
-        assertThat(service.convertDeviceProfileForVersion330(spec.get("profileData"))).isTrue();
-        assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString()); // use IDE feature <Click to see difference>
+        service.updateData(false);
+
+        verify(tenantService, never()).findTenants(any(PageLink.class));
+        verify(ltsMigrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, false);
     }
 
     @Test
-    void convertDeviceProfileAlarmRulesForVersion330SecondRun() throws IOException {
-        JsonNode spec = readFromResource("update/330/device_profile_001_out.json");
-        JsonNode expected = readFromResource("update/330/device_profile_001_out.json");
+    void aForcedReUpgradeIsCarriedIntoTheLtsMigrations() throws Exception {
+        // The only test that can tell the flag apart from a hard-coded false: everywhere else it is Mockito's
+        // default that the assertion reads back.
+        givenAnEmptyDatabase();
+        when(schemaSettingsService.isForcedReUpgrade()).thenReturn(true);
 
-        assertThat(service.convertDeviceProfileForVersion330(spec.get("profileData"))).isFalse();
-        assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString()); // use IDE feature <Click to see difference>
+        service.updateData(false);
+
+        verify(ltsMigrationService).runDataMigrations(DB_VERSION, PACKAGE_VERSION, true);
     }
 
-    @Test
-    void convertDeviceProfileAlarmRulesForVersion330EmptyJson() throws JsonProcessingException {
-        JsonNode spec = JacksonUtil.toJsonNode("{ }");
-        JsonNode expected = JacksonUtil.toJsonNode("{ }");
-
-        assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
-        assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
-    }
-
-    @Test
-    void convertDeviceProfileAlarmRulesForVersion330AlarmNodeNull() throws JsonProcessingException {
-        JsonNode spec = JacksonUtil.toJsonNode("{ \"alarms\" : null }");
-        JsonNode expected = JacksonUtil.toJsonNode("{ \"alarms\" : null }");
-
-        assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
-        assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
-    }
-
-    @Test
-    void convertDeviceProfileAlarmRulesForVersion330NoAlarmNode() throws JsonProcessingException {
-        JsonNode spec = JacksonUtil.toJsonNode("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
-        JsonNode expected = JacksonUtil.toJsonNode("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
-
-        assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
-        assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
+    private void givenAnEmptyDatabase() {
+        when(tenantService.findTenants(any(PageLink.class))).thenReturn(new PageData<Tenant>());
+        when(whiteLabelingService.findMailTemplatesByTenantId(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID))
+                .thenReturn(JacksonUtil.newObjectNode());
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn(DB_VERSION);
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn(PACKAGE_VERSION);
     }
 
 }

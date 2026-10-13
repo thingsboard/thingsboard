@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.common;
 
 import com.google.common.util.concurrent.Futures;
@@ -91,7 +79,6 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     @Override
     public void init() {
         queueAdmin.createTopicIfNotExists(responseTemplate.getTopic());
-        requestTemplate.init();
         responseTemplate.subscribe();
         executor.submit(this::mainLoop);
     }
@@ -167,18 +154,23 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void processResponse(Response response) {
         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
-        UUID requestId;
         if (requestIdHeader == null) {
             log.error("[{}] Missing requestId in header and body", response);
+            return;
+        }
+        UUID requestId = bytesToUuid(requestIdHeader);
+        log.trace("[{}] Response received: {}", requestId, response);
+        ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
+        if (expectedResponse == null) {
+            log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
+            return;
+        }
+        byte[] errorHeader = response.getHeaders().get(ERROR_MESSAGE_HEADER);
+        if (errorHeader == null) {
+            expectedResponse.future.set(response);
         } else {
-            requestId = bytesToUuid(requestIdHeader);
-            log.trace("[{}] Response received: {}", requestId, response);
-            ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
-            if (expectedResponse == null) {
-                log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
-            } else {
-                expectedResponse.future.set(response);
-            }
+            String msg = bytesToString(errorHeader);
+            expectedResponse.future.setException(new RuntimeException(msg));
         }
     }
 
@@ -211,6 +203,15 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     @Override
     public ListenableFuture<Response> send(Request request, long requestTimeoutNs) {
+        return send(request, requestTimeoutNs, null);
+    }
+
+    @Override
+    public ListenableFuture<Response> send(Request request, Integer partition) {
+        return send(request, this.maxRequestTimeoutNs, partition);
+    }
+
+    private ListenableFuture<Response> send(Request request, long requestTimeoutNs, Integer partition) {
         if (pendingRequests.mappingCount() >= maxPendingRequests) {
             log.warn("Pending request map is full [{}]! Consider to increase maxPendingRequests or increase processing performance. Request is {}", maxPendingRequests, request);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
@@ -227,7 +228,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
             log.warn("Pending request already exists [{}]!", maxPendingRequests);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request already exists !" + requestId));
         }
-        sendToRequestTemplate(request, requestId, future, responseMetaData);
+        sendToRequestTemplate(request, requestId, partition, future, responseMetaData);
         return future;
     }
 
@@ -246,12 +247,16 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
         return System.currentTimeMillis();
     }
 
-    void sendToRequestTemplate(Request request, UUID requestId, SettableFuture<Response> future, ResponseMetaData<Response> responseMetaData) {
+    void sendToRequestTemplate(Request request, UUID requestId, Integer partition, SettableFuture<Response> future, ResponseMetaData<Response> responseMetaData) {
         log.trace("[{}] Sending request, key [{}], expTime [{}], request {}", requestId, request.getKey(), responseMetaData.expTime, request);
         if (messagesStats != null) {
             messagesStats.incrementTotal();
         }
-        requestTemplate.send(TopicPartitionInfo.builder().topic(requestTemplate.getDefaultTopic()).build(), request, new TbQueueCallback() {
+        TopicPartitionInfo tpi = TopicPartitionInfo.builder()
+                .topic(requestTemplate.getDefaultTopic())
+                .partition(partition)
+                .build();
+        requestTemplate.send(tpi, request, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 if (messagesStats != null) {

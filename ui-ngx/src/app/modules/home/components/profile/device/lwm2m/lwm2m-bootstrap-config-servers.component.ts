@@ -1,28 +1,15 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  UntypedFormArray,
   UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR
+  NG_VALUE_ACCESSOR,
+  FormControl,
+  FormArray
 } from '@angular/forms';
 import { of, Subject } from 'rxjs';
 import { ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
@@ -30,25 +17,26 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
 import { Lwm2mBootstrapAddConfigServerDialogComponent } from '@home/components/profile/device/lwm2m/lwm2m-bootstrap-add-config-server-dialog.component';
-import { mergeMap, takeUntil } from 'rxjs/operators';
+import { filter, mergeMap, takeUntil } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
 @Component({
-  selector: 'tb-profile-lwm2m-bootstrap-config-servers',
-  templateUrl: './lwm2m-bootstrap-config-servers.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-profile-lwm2m-bootstrap-config-servers',
+    templateUrl: './lwm2m-bootstrap-config-servers.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mBootstrapConfigServersComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
@@ -103,8 +91,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     this.destroy$.complete();
   }
 
-  get serverConfigsFromArray(): UntypedFormArray {
-    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as UntypedFormArray;
+  get serverConfigsFromArray(): FormArray<FormControl> {
+    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as FormArray<FormControl>;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -135,10 +123,6 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     }
   }
 
-  trackByParams(index: number): number {
-    return index;
-  }
-
   removeServerConfig($event: Event, index: number) {
     if ($event) {
       $event.stopPropagation();
@@ -164,10 +148,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
       }).afterClosed();
     const addServerConfigObs = addDialogObs.pipe(
+      filter((isBootstrap) => isBootstrap !== null),
       mergeMap((isBootstrap) => {
-        if (isBootstrap === null) {
-          return of(null);
-        }
         return this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(isBootstrap, Lwm2mSecurityType.NO_SEC);
       })
     );

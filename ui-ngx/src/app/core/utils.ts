@@ -1,32 +1,31 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import _ from 'lodash';
-import { from, Observable, Subject } from 'rxjs';
-import { finalize, share } from 'rxjs/operators';
-import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
+import { Type } from '@angular/core';
+import { from, isObservable, Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { catchError, finalize, share } from 'rxjs/operators';
+import { DataKey, Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { httpStatusMessageMap, serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
+import {
+  CompiledTbFunction,
+  compileTbFunction,
+  GenericFunction,
+  isNotEmptyTbFunction,
+  TbFunction
+} from '@shared/models/js-function.models';
+import { DomSanitizer } from '@angular/platform-browser';
+import { SecurityContext } from '@angular/core';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 const varsRegex = /\${([^}]*)}/g;
+const emailRegex = /^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 export function onParentScrollOrWindowResize(el: Node): Observable<Event> {
   const scrollSubject = new Subject<Event>();
@@ -127,22 +126,34 @@ export function isString(value: any): boolean {
   return typeof value === 'string';
 }
 
+export function isArray(value: any): boolean {
+  return Array.isArray(value);
+}
+
 export function isLiteralObject(value: any) {
   return (!!value) && (value.constructor === Object);
 }
 
+export const isDate = (obj: any): boolean => {
+  return Object.prototype.toString.call(obj) === "[object Date]";
+}
+
+export const isFile = (obj: any): boolean => {
+  return Object.prototype.toString.call(obj) === "[object File]";
+}
+
 export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
-    (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
-    let formatted: string | number = Number(value);
+    (isDefinedAndNotNull(dec) || isNotEmptyStr(units) || Number(value).toString() === value)) {
+    let formatted = value;
     if (isDefinedAndNotNull(dec)) {
-      formatted = formatted.toFixed(dec);
+      formatted = Number(formatted).toFixed(dec);
     }
     if (!showZeroDecimals) {
       formatted = (Number(formatted));
     }
     formatted = formatted.toString();
-    if (isDefinedAndNotNull(units) && units.length > 0) {
+    if (isNotEmptyStr(units)) {
       formatted += ' ' + units;
     }
     return formatted;
@@ -174,9 +185,26 @@ export function deleteNullProperties(obj: any) {
       delete obj[propName];
     } else if (isObject(obj[propName])) {
       deleteNullProperties(obj[propName]);
-    } else if (obj[propName] instanceof Array) {
+    } else if (Array.isArray(obj[propName])) {
       (obj[propName] as any[]).forEach((elem) => {
         deleteNullProperties(elem);
+      });
+    }
+  });
+}
+
+export function deleteFalseProperties(obj: Record<string, any>): void  {
+  if (isUndefinedOrNull(obj)) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === false || isUndefinedOrNull(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteFalseProperties(obj[propName]);
+    } else if (Array.isArray(obj[propName])) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteFalseProperties(elem);
       });
     }
   });
@@ -190,24 +218,87 @@ export function objToBase64(obj: any): string {
     }));
 }
 
-export function base64toString(b64Encoded: string): string {
-  return decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+function utf8ToBinaryString(value: string): string {
+  return encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    });
 }
+
+export function stringToBase64(value: string): string {
+  return btoa(utf8ToBinaryString(value));
+}
+
+function binaryStringToHex(binary: string): string {
+  let hex = '';
+  for (let i = 0; i < binary.length; i++) {
+    hex += ('0' + binary.charCodeAt(i).toString(16)).slice(-2);
+  }
+  return hex;
+}
+
+export const stringToHex = (value: string): string => binaryStringToHex(utf8ToBinaryString(value));
+
+function binaryStringToUtf8(binary: string): string {
+  return decodeURIComponent(binary.split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+}
+
+const textDecoderUtf8 = new TextDecoder('UTF-8', { fatal: true });
+const textDecoderLatin1 = new TextDecoder('ISO-8859-1');
+
+export function bytesToString(bytes: Uint8Array): string {
+  try {
+    return textDecoderUtf8.decode(bytes);
+  } catch {
+    return textDecoderLatin1.decode(bytes);
+  }
+}
+
+export function base64toString(b64Encoded: string): string {
+  const binary = atob(b64Encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytesToString(bytes);
+}
+
+function hexToBinaryString(hex: string): string {
+  // Accept hex with optional escape/prefix notations and separators, e.g. "534e", "\x53\x4e", "0x53 0x4e", "53:4e".
+  const cleaned = hex.replace(/0x/gi, '').replace(/[^0-9a-fA-F]/g, '');
+  if (!cleaned) {
+    return '';
+  }
+  // Pad an odd number of hex digits with a trailing zero so the final nibble isn't silently dropped.
+  const normalized = cleaned.length % 2 === 0 ? cleaned : cleaned + '0';
+  let binary = '';
+  for (let i = 0; i < normalized.length; i += 2) {
+    binary += String.fromCharCode(parseInt(normalized.substring(i, i + 2), 16));
+  }
+  return binary;
+}
+
+export function hexToBase64(hex: string): string {
+  return btoa(hexToBinaryString(hex));
+}
+
+export const hexToString = (hex: string): string => binaryStringToUtf8(hexToBinaryString(hex));
+
+export const base64ToHex = (b64Encoded: string): string => binaryStringToHex(atob(b64Encoded));
 
 export function objToBase64URI(obj: any): string {
   return encodeURIComponent(objToBase64(obj));
 }
 
 export function base64toObj(b64Encoded: string): any {
-  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-  return JSON.parse(json);
+  return JSON.parse(base64toString(b64Encoded));
 }
 
-export function stringToBase64(value: string): string {
-  return btoa(encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
-    function toSolidBytes(match, p1) {
-      return String.fromCharCode(Number('0x' + p1));
-    }));
+export function checkNumericStringAndConvert(val: string): number | string {
+  if (val && isNumeric(val) && Number(val).toString() === val) {
+    return Number(val);
+  }
+  return val;
 }
 
 export const blobToBase64 = (blob: Blob): Observable<string> => from(new Promise<string>((resolve) => {
@@ -325,13 +416,15 @@ export function deepClone<T>(target: T, ignoreFields?: string[]): T {
   if (target === null) {
     return target;
   }
-  if (target instanceof Date) {
-    return new Date(target.getTime()) as any;
+  // Observables can't be cloned using the spread operator, because they have non-enumerable methods (like .pipe).
+  if (isObservable(target)) {
+    return target;
   }
-  if (target instanceof Array) {
-    const cp = [] as any[];
-    (target as any[]).forEach((v) => { cp.push(v); });
-    return cp.map((n: any) => deepClone<any>(n)) as any;
+  if (isDate(target)) {
+    return new Date((target as Date).getTime()) as T;
+  }
+  if (Array.isArray(target)) {
+    return (target as any[]).map((item) => deepClone(item)) as any;
   }
   if (typeof target === 'object') {
     const cp = {...(target as { [key: string]: any })} as { [key: string]: any };
@@ -383,7 +476,7 @@ export function mergeDeep<T>(target: T, ...sources: T[]): T {
 
 function ignoreArrayMergeFunc(target: any, sources: any) {
   if (_.isArray(target)) {
-    return sources;
+    return deepClone(sources);
   }
 }
 
@@ -399,6 +492,21 @@ export function guid(): string {
   }
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
     s4() + '-' + s4() + s4() + s4();
+}
+
+const PROP_METADATA = '__prop__metadata__';
+
+export function cloneMetadata<S, T>(sourceType: Type<S>, targetType: Type<T>) {
+  const sourceMeta = sourceType.prototype.constructor[PROP_METADATA];
+  const targetMeta = Object.defineProperty(targetType.prototype.constructor,
+    PROP_METADATA, { value: {} })[PROP_METADATA];
+  if (isDefinedAndNotNull(sourceMeta)) {
+    for (const field of Object.keys(sourceMeta)) {
+      if (sourceMeta.hasOwnProperty(field)) {
+        targetMeta[field] = sourceMeta[field];
+      }
+    }
+  }
 }
 
 const SNAKE_CASE_REGEXP = /[A-Z]/g;
@@ -485,11 +593,12 @@ export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEn
 
 export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
-export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
-  return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
+export function formattedDataFormDatasourceData<D extends Datasource = Datasource>(input: DatasourceData[], dataIndex?: number, ts?: number,
+                                                groupFunction: (el: DatasourceData) => any = (el) => el.datasource.entityName + el.datasource.entityType): FormattedData<D>[] {
+  return _(input).groupBy(groupFunction)
     .values().value().map((entityArray, i) => {
-      const datasource = entityArray[0].datasource;
-      const obj = formattedDataFromDatasource(datasource, i);
+      const datasource = entityArray[0].datasource as D;
+      const obj = formattedDataFromDatasource<D>(datasource, i);
       entityArray.filter(el => el.data.length).forEach(el => {
         const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
         const dataSet = isDefined(ts) ? el.data.find(data => data[0] === ts) : el.data[index];
@@ -505,18 +614,20 @@ export function formattedDataFormDatasourceData(input: DatasourceData[], dataInd
     });
 }
 
-export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): FormattedData[][] {
-  return _(input).groupBy(el => el.datasource.entityName)
+export function formattedDataArrayFromDatasourceData<D extends Datasource = Datasource>(input: DatasourceData[],
+                                                                                        groupFunction: (el: DatasourceData) => any =
+                                                                                        (el) => el.datasource.entityName + el.datasource.entityType): FormattedData<D>[][] {
+  return _(input).groupBy(groupFunction)
     .values().value().map((entityArray, dsIndex) => {
-      const timeDataMap: {[time: number]: FormattedData} = {};
+      const timeDataMap: {[time: number]: FormattedData<D>} = {};
       entityArray.filter(e => e.data.length).forEach(entity => {
         entity.data.forEach(tsData => {
           const time = tsData[0];
           const value = tsData[1];
           let data = timeDataMap[time];
           if (!data) {
-            const datasource = entity.datasource;
-            data = formattedDataFromDatasource(datasource, dsIndex);
+            const datasource = entity.datasource as D;
+            data = formattedDataFromDatasource<D>(datasource, dsIndex);
             data.time = time;
             timeDataMap[time] = data;
           }
@@ -531,7 +642,7 @@ export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): F
     });
 }
 
-export function formattedDataFromDatasource(datasource: Datasource, dsIndex: number): FormattedData {
+export function formattedDataFromDatasource<D extends Datasource = Datasource>(datasource: D, dsIndex: number): FormattedData<D> {
   return {
     entityName: datasource.entityName,
     deviceName: datasource.entityName,
@@ -673,11 +784,29 @@ export function parseFunction(source: any, params: string[] = ['def']): (...args
   return res;
 }
 
-export function safeExecute(func: (...args: any[]) => any, params = []) {
+export function parseTbFunction<T extends GenericFunction>(http: HttpClient, source: TbFunction, params: string[] = ['def']): Observable<CompiledTbFunction<T>> {
+  if (isNotEmptyTbFunction(source)) {
+    return compileTbFunction<T>(http, source, ...params).pipe(
+      catchError(() => {
+        return of(null);
+      }),
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnError: false,
+        resetOnComplete: false,
+        resetOnRefCountZero: false
+      })
+    );
+  } else {
+    return of(null);
+  }
+}
+
+export function safeExecuteTbFunction<T extends GenericFunction>(func: CompiledTbFunction<T>, params = []) {
   let res = null;
-  if (func && typeof (func) === 'function') {
+  if (func) {
     try {
-      res = func(...params);
+      res = func.execute(...params);
     }
     catch (err) {
       console.log('error in external function:', err);
@@ -704,6 +833,24 @@ export function padValue(val: any, dec: number): string {
   return strVal;
 }
 
+export function removeEmptyObjects(obj: object): object {
+  for (const key of Object.keys(obj)) {
+    if (obj[key] === null || obj[key] === undefined) {
+      delete obj[key];
+    } else if (Array.isArray(obj[key])) {
+        obj[key] = obj[key].filter(el => !!removeEmptyObjects(el));
+    } else if (typeof (obj[key]) === 'object') {
+        removeEmptyObjects(obj[key]);
+    }
+  }
+  if (Object.keys(obj).length) {
+    return obj;
+  } else {
+    return null;
+  }
+}
+
+
 export function baseUrl(): string {
   let url = window.location.protocol + '//' + window.location.hostname;
   const port = window.location.port;
@@ -711,6 +858,24 @@ export function baseUrl(): string {
     url += ':' + port;
   }
   return url;
+}
+
+export function coapBaseUrl(dtlsEnabled: boolean): string {
+  if (dtlsEnabled) {
+    return 'coaps:' + '//' + window.location.hostname;
+  }
+  return 'coap:' + '//' + window.location.hostname;
+}
+
+export function generateId(length: number): string {
+  if (!length || isNaN(length)) {
+    length = 1;
+  }
+  const str = Math.random().toString(36).substr(2, length > 10 ? 10 : length);
+  if (str.length >= length) {
+    return str;
+  }
+  return str.concat(generateId(length - str.length));
 }
 
 export function sortObjectKeys<T>(obj: T): T {
@@ -721,7 +886,7 @@ export function sortObjectKeys<T>(obj: T): T {
 }
 
 export function deepTrim<T>(obj: T): T {
-  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || obj instanceof File) {
+  if (isNumber(obj) || isUndefined(obj) || isString(obj) || obj === null || isFile(obj)) {
     return obj;
   }
   return Object.keys(obj).reduce((acc, curr) => {
@@ -734,6 +899,74 @@ export function deepTrim<T>(obj: T): T {
     }
     return acc;
   }, (Array.isArray(obj) ? [] : {}) as T);
+}
+
+const isValidValue = (value: any): boolean => {
+  return (
+    value !== undefined &&
+    value !== null &&
+    value !== '' &&
+    !Number.isNaN(value)
+  );
+};
+
+export function deepClean<T extends Record<string, any> | any[]>(obj: T, {
+  cleanKeys = [],
+  cleanOnlyKey = false
+} = {}): T {
+  const keysToRemove = new Set(cleanKeys);
+
+  const clean = (input: any): any => {
+    if (Array.isArray(input)) {
+      const result: any[] = [];
+      for (const item of input) {
+        const value = clean(item);
+
+        if (cleanOnlyKey) {
+          result.push(value);
+          continue;
+        }
+
+        if (isValidValue(value)) {
+          const isEmptyArray = Array.isArray(value) && value.length === 0;
+          const isEmptyObj = isLiteralObject(value) && Object.keys(value).length === 0;
+
+          if (!isEmptyArray && !isEmptyObj) {
+            result.push(value);
+          }
+        }
+      }
+      return result;
+    }
+
+    if (isLiteralObject(input)) {
+      const result: Record<string, any> = {};
+
+      for (const key in input) {
+        if (keysToRemove.has(key)) continue;
+
+        const value = clean(input[key]);
+
+        if (cleanOnlyKey) {
+          result[key] = value;
+          continue;
+        }
+
+        if (isValidValue(value)) {
+          const isEmptyArray = Array.isArray(value) && value.length === 0;
+          const isEmptyObj = isLiteralObject(value) && Object.keys(value).length === 0;
+
+          if (!isEmptyArray && !isEmptyObj) {
+            result[key] = value;
+          }
+        }
+      }
+      return result;
+    }
+    return input;
+  };
+
+  return clean(obj);
 }
 
 export function generateSecret(length?: number): string {
@@ -772,7 +1005,7 @@ export function getEntityDetailsPageURL(id: string, entityType: EntityType): str
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
-                                      translate: TranslateService, responseType?: string): {message: string; timeout: number} {
+                                      translate: TranslateService, responseType?: string, sanitizer?:DomSanitizer): {message: string; timeout: number} {
   let error = null;
   let errorMessage: string;
   let timeout = 0;
@@ -783,11 +1016,13 @@ export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
   } else {
     error = errorResponse.error;
   }
-  if (error && !error.message) {
-    errorMessage = prepareMessageFromData(error);
-  } else if (error && error.message) {
+  if (error && error.message) {
     errorMessage = error.message;
     timeout = error.timeout ? error.timeout : 0;
+  } else if (isProxyError(errorResponse)) {
+    errorMessage = httpStatusMessageMap.get(errorResponse.status);
+  } else if (error) {
+    errorMessage = prepareMessageFromData(error);
   } else {
     errorMessage = `Unhandled error code ${error ? error.status : '\'Unknown\''}`;
   }
@@ -799,6 +1034,9 @@ export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
     }
     errorText += errorKey ? translate.instant(errorKey) : errorResponse.statusText;
     errorMessage = errorText;
+  }
+  if(sanitizer) {
+    errorMessage = sanitizer.sanitize(SecurityContext.HTML,errorMessage);
   }
   return {message: errorMessage, timeout};
 }
@@ -821,7 +1059,38 @@ function prepareMessageFromData(data): string {
   }
 }
 
-export function genNextLabel(name: string, datasources: Datasource[]): string {
+function isProxyError(errorResponse: HttpErrorResponse): boolean {
+  if (!httpStatusMessageMap.has(errorResponse.status)) {
+    return false;
+  }
+  const error = errorResponse.error;
+  return !error || typeof error === 'string' || (typeof error === 'object' && !error.message);
+}
+
+export async function resolveSendErrorMessage(err: any,
+                                              translate: TranslateService): Promise<string> {
+  let body = err?.error;
+  if (typeof body === 'string' && body.trim().length) {
+    return body;
+  }
+  // A blob error body carries JSON that has to be read out before it can be inspected - download responses
+  // arrive this way.
+  if (body?.type === 'application/json') {
+    try {
+      const text = await body.text();
+      body = JSON.parse(text);
+    } catch { /* empty */ }
+  }
+  if (body && typeof body.message === 'string' && body.message.trim().length) {
+    return body.message;
+  }
+  if (typeof err?.message === 'string' && err.message.trim().length) {
+    return err.message;
+  }
+  return translate.instant('setup.errors.request-failed');
+}
+
+export const genNextLabel = (name: string, datasources: Datasource[]): string => {
   let label = name;
   let i = 1;
   let matches = false;
@@ -855,6 +1124,25 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
   return label;
 }
 
+export const genNextLabelForDataKeys = (name: string, dataKeys: DataKey[]): string => {
+  let label = name;
+  let i = 1;
+  let matches = false;
+  if (dataKeys) {
+    do {
+      matches = false;
+      dataKeys.forEach((dataKey) => {
+        if (dataKey?.label === label) {
+          i++;
+          label = name + ' ' + i;
+          matches = true;
+        }
+      });
+    } while (matches)
+  }
+  return label;
+}
+
 export const getOS = (): string => {
   const userAgent = window.navigator.userAgent.toLowerCase();
   const macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos|mac_powerpc)/i;
@@ -877,11 +1165,121 @@ export const getOS = (): string => {
   return os;
 };
 
+export const isSafari = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!chrome|android).)*safari/i.test(userAgent);
+};
+
+export const isFirefox = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!seamonkey).)*firefox/i.test(userAgent);
+};
+
+export const plainColorFromVariable = (variable: string): string => {
+  if (!variable || (!variable.startsWith('--') && !variable.startsWith('var('))) {
+    return variable;
+  }
+  if (variable.startsWith('var(')) {
+    variable = variable.substring(4, variable.length - 1);
+  }
+  return getComputedStyle(document.documentElement).getPropertyValue(variable);
+};
 
 export const camelCase = (str: string): string => {
   return _.camelCase(str);
 };
 
+export const capitalize = (str: string): string => {
+  return _.capitalize(str);
+};
+
 export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
   return _.mapKeys(obj, (value, key) => _.camelCase(key));
 };
+
+export const unwrapModule = (module: any) : any => {
+  if ('default' in module && Object.keys(module).length === 1) {
+    return module.default;
+  } else {
+    return module;
+  }
+};
+
+export const trimDefaultValues = (input: Record<string, any>, defaults: Record<string, any>): Record<string, any> => {
+  const result: Record<string, any> = {};
+
+  for (const key in input) {
+    if (!(key in defaults)) {
+      result[key] = input[key];
+    } else if (typeof defaults[key] === 'object' && defaults[key] !== null && typeof input[key] === 'object' && input[key] !== null) {
+      const subPatch = trimDefaultValues(input[key], defaults[key]);
+      if (Object.keys(subPatch).length > 0) {
+        result[key] = subPatch;
+      }
+    } else if (defaults[key] !== input[key]) {
+      result[key] = input[key];
+    }
+  }
+
+  for (const key in defaults) {
+    if (!(key in input)) {
+      delete result[key];
+    }
+  }
+
+  return result;
+}
+
+export const getFilenameFromHttpHeader = (headers: HttpHeaders): string  => {
+  if (!headers) {
+    return '';
+  }
+  const header = headers.get('content-disposition');
+  if (header) {
+    const filenameStarMatch = /filename\*=UTF-8''([^;]+)/i.exec(header);
+    if (filenameStarMatch && filenameStarMatch[1]) {
+      return decodeURIComponent(filenameStarMatch[1]);
+    }
+    const filenameMatch = /filename="([^"]+)"/i.exec(header);
+    if (filenameMatch && filenameMatch[1]) {
+      return filenameMatch[1];
+    }
+  }
+  return headers.get('x-filename') ?? '';
+}
+
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  return function(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(later, wait);
+  };
+}
+
+export const validateEmail = (control: AbstractControl): ValidationErrors | null => {
+  if (isUndefinedOrNull(control.value) || (typeof control.value === 'string' && control.value.length === 0)) {
+    return null;
+  }
+  return emailRegex.test(control.value) ? null : {email: true};
+};
+
+export const objectRequired = (): ValidatorFn => {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value && !isObject(value)) {
+      return { objectRequired: true };
+    }
+    return null;
+  };
+}

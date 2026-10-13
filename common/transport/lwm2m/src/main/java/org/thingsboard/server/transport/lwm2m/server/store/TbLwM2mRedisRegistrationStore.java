@@ -1,21 +1,7 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.Token;
 import org.eclipse.californium.core.network.RandomTokenGenerator;
@@ -25,18 +11,13 @@ import org.eclipse.californium.core.network.serialization.UdpDataSerializer;
 import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
-import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.ObservationIdentifier;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.peer.LwM2mIdentity;
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
-import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.eclipse.leshan.server.registration.Deregistration;
@@ -45,15 +26,13 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.eclipse.leshan.server.registration.UpdatedRegistration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
@@ -65,19 +44,13 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.leshan.core.californium.ObserveUtil.extractSerializedObservation;
-import static org.thingsboard.server.transport.lwm2m.server.store.TbInMemoryRegistrationStore.createSerializedSingleObservation;
-import static org.thingsboard.server.transport.lwm2m.server.store.TbInMemoryRegistrationStore.createSingleObservation;
 
 @Slf4j
 public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startable, Stoppable, Destroyable {
@@ -86,8 +59,6 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     public static final int DEFAULT_CLEAN_LIMIT = 500;
     /** Defaut Extra time for registration lifetime in seconds */
     public static final long DEFAULT_GRACE_PERIOD = 0;
-
-    private static final Logger LOG = LoggerFactory.getLogger(RedisRegistrationStore.class);
 
     // Redis key prefixes
     public static final String REG_EP = "REG:EP:"; // (Endpoint => Registration)
@@ -130,9 +101,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     }
 
     public TbLwM2mRedisRegistrationStore(LwM2MTransportServerConfig config, RedisConnectionFactory connectionFactory, long cleanPeriodInSec, long lifetimeGracePeriodInSec, int cleanLimit, LwM2mVersionedModelProvider modelProvider) {
-        this(config, connectionFactory, Executors.newScheduledThreadPool(1,
-                new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
-                cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit, modelProvider);
+        this(config, connectionFactory, ThingsBoardExecutors.newSingleThreadScheduledExecutor(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec)), cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit, modelProvider);
     }
 
     public TbLwM2mRedisRegistrationStore(LwM2MTransportServerConfig config, RedisConnectionFactory connectionFactory, ScheduledExecutorService schedExecutor, long cleanPeriodInSec,
@@ -181,15 +150,15 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                 lock.lock();
                 // add registration
                 byte[] k = toEndpointKey(registration.getEndpoint());
-                byte[] old = connection.getSet(k, serializeReg(registration));
+                byte[] old = connection.stringCommands().getSet(k, serializeReg(registration));
 
                 // add registration: secondary indexes
                 byte[] regid_idx = toRegIdKey(registration.getId());
-                connection.set(regid_idx, registration.getEndpoint().getBytes(UTF_8));
+                connection.stringCommands().set(regid_idx, registration.getEndpoint().getBytes(UTF_8));
                 byte[] addr_idx = toRegAddrKey(registration.getSocketAddress());
-                connection.set(addr_idx, registration.getEndpoint().getBytes(UTF_8));
+                connection.stringCommands().set(addr_idx, registration.getEndpoint().getBytes(UTF_8));
                 byte[] identity_idx = toRegIdentityKey(registration.getClientTransportData().getIdentity());
-                connection.set(identity_idx, registration.getEndpoint().getBytes(UTF_8));
+                connection.stringCommands().set(identity_idx, registration.getEndpoint().getBytes(UTF_8));
 
                 // Add or update expiration
                 addOrUpdateExpiration(connection, registration);
@@ -198,7 +167,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                     Registration oldRegistration = deserializeReg(old);
                     // remove old secondary index
                     if (!registration.getId().equals(oldRegistration.getId()))
-                        connection.del(toRegIdKey(oldRegistration.getId()));
+                        connection.keyCommands().del(toRegIdKey(oldRegistration.getId()));
                     if (!oldRegistration.getSocketAddress().equals(registration.getSocketAddress())) {
                         removeAddrIndex(connection, oldRegistration);
                     }
@@ -227,7 +196,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         try (var connection = connectionFactory.getConnection()) {
 
             // Fetch the registration ep by registration ID index
-            byte[] ep = connection.get(toRegIdKey(update.getRegistrationId()));
+            byte[] ep = connection.stringCommands().get(toRegIdKey(update.getRegistrationId()));
             if (ep == null) {
                 return null;
             }
@@ -238,7 +207,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                 lock.lock();
 
                 // Fetch the registration
-                byte[] data = connection.get(toEndpointKey(ep));
+                byte[] data = connection.stringCommands().get(toEndpointKey(ep));
                 if (data == null) {
                     return null;
                 }
@@ -248,7 +217,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                 Registration updatedRegistration = update.update(r);
 
                 // Store the new registration
-                connection.set(toEndpointKey(updatedRegistration.getEndpoint()), serializeReg(updatedRegistration));
+                connection.stringCommands().set(toEndpointKey(updatedRegistration.getEndpoint()), serializeReg(updatedRegistration));
 
                 // Add or update expiration
                 addOrUpdateExpiration(connection, updatedRegistration);
@@ -257,7 +226,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                  * If registration is already associated to this address we don't care as we only want to keep the most
                  * recent binding. */
                 byte[] addr_idx = toRegAddrKey(updatedRegistration.getSocketAddress());
-                connection.set(addr_idx, updatedRegistration.getEndpoint().getBytes(UTF_8));
+                connection.stringCommands().set(addr_idx, updatedRegistration.getEndpoint().getBytes(UTF_8));
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
                     removeAddrIndex(connection, r);
                 }
@@ -281,12 +250,13 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
             return getRegistration(connection, registrationId);
         }
     }
+
     private Registration getRegistration(RedisConnection connection, String registrationId) {
-        byte[] ep = connection.get(toRegIdKey(registrationId));
+        byte[] ep = connection.stringCommands().get(toRegIdKey(registrationId));
         if (ep == null) {
             return null;
         }
-        byte[] data = connection.get(toEndpointKey(ep));
+        byte[] data = connection.stringCommands().get(toEndpointKey(ep));
         if (data == null) {
             return null;
         }
@@ -298,7 +268,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     public Registration getRegistrationByEndpoint(String endpoint) {
         Validate.notNull(endpoint);
         try (var connection = connectionFactory.getConnection()) {
-            byte[] data = connection.get(toEndpointKey(endpoint));
+            byte[] data = connection.stringCommands().get(toEndpointKey(endpoint));
             if (data == null) {
                 return null;
             }
@@ -310,11 +280,11 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     public Registration getRegistrationByAdress(InetSocketAddress address) {
         Validate.notNull(address);
         try (var connection = connectionFactory.getConnection()) {
-            byte[] ep = connection.get(toRegAddrKey(address));
+            byte[] ep = connection.stringCommands().get(toRegAddrKey(address));
             if (ep == null) {
                 return null;
             }
-            byte[] data = connection.get(toEndpointKey(ep));
+            byte[] data = connection.stringCommands().get(toEndpointKey(ep));
             if (data == null) {
                 return null;
             }
@@ -326,11 +296,11 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     public Registration getRegistrationByIdentity(LwM2mIdentity identity) {
         Validate.notNull(identity);
         try (var connection = connectionFactory.getConnection()) {
-            byte[] ep = connection.get(toRegIdentityKey(identity));
+            byte[] ep = connection.stringCommands().get(toRegIdentityKey(identity));
             if (ep == null) {
                 return null;
             }
-            byte[] data = connection.get(toEndpointKey(ep));
+            byte[] data = connection.stringCommands().get(toEndpointKey(ep));
             if (data == null) {
                 return null;
             }
@@ -340,22 +310,24 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     @Override
     public Iterator<Registration> getAllRegistrations() {
-        try (var connection = connectionFactory.getConnection()) {
+        try (var scanConnection = connectionFactory.getConnection();
+             var getConnection = connectionFactory.getConnection()) {
             Collection<Registration> list = new LinkedList<>();
             ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(REG_EP + "*").build();
             List<Cursor<byte[]>> scans = new ArrayList<>();
-            if (connection instanceof RedisClusterConnection) {
-                ((RedisClusterConnection) connection).clusterGetNodes().forEach(node -> {
-                    scans.add(((RedisClusterConnection) connection).scan(node, scanOptions));
-                });
+            if (scanConnection instanceof RedisClusterConnection clusterConnection) {
+                clusterConnection.clusterGetNodes().forEach(node ->
+                        scans.add(clusterConnection.scan(node, scanOptions)));
             } else {
-                scans.add(connection.scan(scanOptions));
+                scans.add(scanConnection.keyCommands().scan(scanOptions));
             }
 
             scans.forEach(scan -> {
                 scan.forEachRemaining(key -> {
-                    byte[] element = connection.get(key);
-                    list.add(deserializeReg(element));
+                    byte[] element = getConnection.stringCommands().get(key);
+                    if (element != null) {
+                        list.add(deserializeReg(element));
+                    }
                 });
             });
             return list.iterator();
@@ -372,7 +344,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     private Deregistration removeRegistration(RedisConnection connection, String registrationId, boolean removeOnlyIfNotAlive) {
         // fetch the client ep by registration ID index
-        byte[] ep = connection.get(toRegIdKey(registrationId));
+        byte[] ep = connection.stringCommands().get(toRegIdKey(registrationId));
         if (ep == null) {
             return null;
         }
@@ -384,16 +356,16 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
             lock.lock();
 
             // fetch the client
-            byte[] data = connection.get(toEndpointKey(ep));
+            byte[] data = connection.stringCommands().get(toEndpointKey(ep));
             if (data == null) {
                 return null;
             }
             Registration r = deserializeReg(data);
 
             if (!removeOnlyIfNotAlive || !r.isAlive(gracePeriod)) {
-                long nbRemoved = connection.del(toRegIdKey(r.getId()));
+                long nbRemoved = connection.keyCommands().del(toRegIdKey(r.getId()));
                 if (nbRemoved > 0) {
-                    connection.del(toEndpointKey(r.getEndpoint()));
+                    connection.keyCommands().del(toEndpointKey(r.getEndpoint()));
                     Collection<Observation> obsRemoved = unsafeRemoveAllObservations(connection, r.getId());
                     removeAddrIndex(connection, r);
                     removeIdentityIndex(connection, r);
@@ -422,12 +394,12 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         // Watch the key to remove.
 //        connection.watch(indexKey);
 
-        byte[] epFromAddr = connection.get(indexKey);
+        byte[] epFromAddr = connection.stringCommands().get(indexKey);
         // Delete the key if needed.
         if (Arrays.equals(epFromAddr, endpointName.getBytes(UTF_8))) {
             // Try to delete the key
 //            connection.multi();
-            connection.del(indexKey);
+            connection.keyCommands().del(indexKey);
 //            connection.exec();
             // if transaction failed this is not an issue as the index is probably reused and we don't need to
             // delete it anymore.
@@ -438,11 +410,11 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     }
 
     private void addOrUpdateExpiration(RedisConnection connection, Registration registration) {
-        connection.zAdd(EXP_EP, registration.getExpirationTimeStamp(gracePeriod), registration.getEndpoint().getBytes(UTF_8));
+        connection.zSetCommands().zAdd(EXP_EP, registration.getExpirationTimeStamp(gracePeriod), registration.getEndpoint().getBytes(UTF_8));
     }
 
     private void removeExpiration(RedisConnection connection, Registration registration) {
-        connection.zRem(EXP_EP, registration.getEndpoint().getBytes(UTF_8));
+        connection.zSetCommands().zRem(EXP_EP, registration.getEndpoint().getBytes(UTF_8));
     }
 
     private byte[] toRegIdKey(String registrationId) {
@@ -494,31 +466,10 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
             Lock lock = null;
             String lockKey = toLockKey(ep);
-
             try {
                 lock = redisLock.obtain(lockKey);
                 lock.lock();
-                if (observation instanceof SingleObservation) {
-                    if (validateObserveResource(((SingleObservation)observation).getPath(), registrationId)) {
-                        updateSingleObservation(registrationId, (SingleObservation)observation, addIfAbsent, removed, connection);
-                        // cancel existing observations for the same path and registration id.
-                        cancelObservation(observation, registrationId, removed, connection);
-                    }
-                } else {
-                    ContentFormat ct = ((CompositeObservation) observation).getResponseContentFormat();
-                    Map<String, String> ctx = observation.getContext();
-                    String serializedObservation = extractSerializedObservation(observation);
-                    JsonNode nodeSerObs = JacksonUtil.toJsonNode(serializedObservation);
-                    ((CompositeObservation)observation).getPaths().forEach(path -> {
-                        if (validateObserveResource(path, registrationId)) {
-                            String serializedObs = createSerializedSingleObservation(nodeSerObs, path.toString());
-                            SingleObservation singleObservation = createSingleObservation(registrationId, path, ct, ctx, serializedObs, getTokenGenerator());
-                            updateSingleObservation(registrationId, singleObservation, addIfAbsent, removed, connection);
-                                // cancel existing observations for the same path and registration id.
-                            cancelObservation (singleObservation, registrationId, removed, connection);
-                        }
-                    });
-                }
+                updateObservation(registrationId, observation, addIfAbsent, removed, connection);
             } finally {
                 if (lock != null) {
                     lock.unlock();
@@ -527,43 +478,21 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         }
         return removed;
     }
-
-    private boolean validateObserveResource(LwM2mPath path, String registrationId){
-        // check if the resource is readable.
-        if (path.isResource() || path.isResourceInstance()) {
-            ObjectModel objectModel = modelProvider.getObjectModel(getRegistration(registrationId)).getObjectModel(path.getObjectId());
-            ResourceModel resourceModel = objectModel == null ? null : objectModel.resources.get(path.getResourceId());
-            if (resourceModel == null) {
-                return false;
-            } else if (!resourceModel.operations.isReadable()) {
-                return false;
-            } else if (path.isResourceInstance() && !resourceModel.multiple) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void updateSingleObservation (String registrationId, SingleObservation observation, boolean addIfAbsent,
-                                          List<Observation> removed, RedisConnection connection) {
+    private void updateObservation(String registrationId, Observation observation, boolean addIfAbsent,
+                                   List<Observation> removed, RedisConnection connection) {
 
         // Add and Get previous observation
         byte[] previousValue;
         byte[] key = toKey(OBS_TKN, observation.getId().getBytes());
         byte[] serializeObs = serializeObs(observation);
         // we analyze the present previous value
-        SingleObservation existingObservation = null;
-
-        if (addIfAbsent){
+        if (addIfAbsent) {
             previousValue = connection.stringCommands().get(key);
             if (previousValue == null) {
-                existingObservation = validateByAbsorptionExistingObservations(observation, connection);
-                if (existingObservation == null){
-                    connection.stringCommands().set(key, serializeObs);
-                } else if(!existingObservation.getPath().equals(observation.getPath())) {
-                    connection.stringCommands().set(key, serializeObs);
-                    previousValue = serializeObs(existingObservation);
-                }
+                connection.stringCommands().set(key, serializeObs);
+                previousValue = serializeObs;
+            } else {
+                connection.stringCommands().set(key, serializeObs);
             }
         } else {
             previousValue = connection.stringCommands().getSet(key, serializeObs);
@@ -573,25 +502,38 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         connection.listCommands().lPush(toKey(OBS_TKNS_REGID_IDX, registrationId), observation.getId().getBytes());
 
         // log any collisions
-        if (addIfAbsent && previousValue != null) {
-            if (!existingObservation.getPath().equals(observation.getPath())) {
-                Observation previousObservation = deserializeObs(previousValue);
-                removed.add(previousObservation);
-                LOG.warn("Token collision ? observation [{}] will be replaced by observation [{}], that this observation  includes input observation [{}]!",
-                        previousObservation, observation, observation);
-            } else {
-                LOG.warn("Token collision ? existing observation [{}] includes input observation [{}]",
-                        existingObservation, observation);
+        Observation previousObservation;
+        if (previousValue != null && previousValue.length != 0) {
+            previousObservation = deserializeObs(previousValue);
+            log.warn("Token collision ? observation [{}] will be replaced by observation [{}] ",
+                    previousObservation, observation);
+        }
+
+        // cancel existing observations for the same path and registration id.
+        for (Observation obs : getObservations(connection, registrationId)) {
+            if (areTheSamePaths(observation, obs) && !observation.getId().equals(obs.getId())) {
+                removed.add(obs);
+                unsafeRemoveObservation(connection, registrationId, obs.getId().getBytes());
             }
         }
     }
 
+    private boolean areTheSamePaths(Observation observation, Observation obs) {
+        if (observation instanceof SingleObservation && obs instanceof SingleObservation) {
+            return ((SingleObservation) observation).getPath().equals(((SingleObservation) obs).getPath());
+        }
+        if (observation instanceof CompositeObservation && obs instanceof CompositeObservation) {
+            return ((CompositeObservation) observation).getPaths().equals(((CompositeObservation) obs).getPaths());
+        }
+        return false;
+    }
     @Override
     public Collection<Observation> getObservations(String registrationId) {
         try (var connection = connectionFactory.getConnection()) {
             return getObservations(connection, registrationId);
         }
     }
+
     @Override
     public Observation getObservation(String registrationId, ObservationIdentifier observationId) {
         return getObservations(registrationId).stream().filter(
@@ -601,7 +543,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     @Override
     public Observation getObservation(ObservationIdentifier observationId) {
         try (var connection = connectionFactory.getConnection()) {
-            byte[] observationValue = connection.get(toKey(OBS_TKN, observationId.getBytes()));
+            byte[] observationValue = connection.stringCommands().get(toKey(OBS_TKN, observationId.getBytes()));
             return deserializeObs(observationValue);
         }
     }
@@ -615,7 +557,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         try (var connection = connectionFactory.getConnection()) {
 
             // fetch the client ep by registration ID index
-            byte[] ep = connection.get(toRegIdKey(registrationId));
+            byte[] ep = connection.stringCommands().get(toRegIdKey(registrationId));
             if (ep == null) {
                 return null;
             }
@@ -654,25 +596,6 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         return result;
     }
 
-    private SingleObservation validateByAbsorptionExistingObservations(SingleObservation observation, RedisConnection connection) {
-        LwM2mPath pathObservation = observation.getPath();
-        AtomicReference<SingleObservation> result = new AtomicReference<>();
-        Collection<Observation> observations = getObservations(connection, observation.getRegistrationId());
-        observations.stream().forEach(obs -> {
-            LwM2mPath pathObs = ((SingleObservation)obs).getPath();
-            if ((!pathObservation.equals(pathObs) && pathObs.startWith(pathObservation)) ||        // pathObs = "3/0/9"-> pathObservation = "3"
-                    (pathObservation.equals(pathObs) && !observation.getId().equals(obs.getId()))) {
-                result.set((SingleObservation)obs);
-            } else if (!pathObservation.equals(pathObs) && pathObservation.startWith(pathObs)) {    // pathObs = "3" -> pathObservation = "3/0/9"
-                result.set(observation);
-            }
-        });
-        return result.get();
-
-
-    }
-
-
     @Override
     public Collection<Observation> removeObservations(String registrationId) {
         try (var connection = connectionFactory.getConnection()) {
@@ -699,7 +622,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     public Observation get(Token token) {
         try (var connection = connectionFactory.getConnection()) {
-            byte[] obs = connection.get(toKey(OBS_TKN, token.getBytes()));
+            byte[] obs = connection.stringCommands().get(toKey(OBS_TKN, token.getBytes()));
             if (obs == null) {
                 return null;
             } else {
@@ -710,7 +633,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     /* *************** Observation utility functions **************** */
 
-    private TokenGenerator getTokenGenerator(){
+    private TokenGenerator getTokenGenerator() {
         if (this.tokenGenerator == null) {
             this.tokenGenerator = new RandomTokenGenerator(config.getCoapConfig());
         }
@@ -728,14 +651,14 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         byte[] regIdKey = toKey(OBS_TKNS_REGID_IDX, registrationId);
 
         // fetch all observations by token
-        for (byte[] token : connection.lRange(regIdKey, 0, -1)) {
-            byte[] obs = connection.get(toKey(OBS_TKN, token));
+        for (byte[] token : connection.listCommands().lRange(regIdKey, 0, -1)) {
+            byte[] obs = connection.stringCommands().get(toKey(OBS_TKN, token));
             if (obs != null) {
                 removed.add(deserializeObs(obs));
             }
-            connection.del(toKey(OBS_TKN, token));
+            connection.keyCommands().del(toKey(OBS_TKN, token));
         }
-        connection.del(regIdKey);
+        connection.keyCommands().del(regIdKey);
 
         return removed;
     }
@@ -751,8 +674,8 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     }
 
     private void cancelExistingObservation(RedisConnection connection, Observation observation, Observation obs, List<Observation> removed) {
-        LwM2mPath pathObservation = ((SingleObservation)observation).getPath();
-        LwM2mPath pathObs = ((SingleObservation)obs).getPath();
+        LwM2mPath pathObservation = ((SingleObservation) observation).getPath();
+        LwM2mPath pathObs = ((SingleObservation) obs).getPath();
         if ((!pathObservation.equals(pathObs) && pathObs.startWith(pathObservation)) ||        // pathObservation = "3", pathObs = "3/0/9"
                 (pathObservation.equals(pathObs) && !observation.getId().equals(obs.getId()))) {
             unsafeRemoveObservation(connection, obs.getRegistrationId(), obs.getId().getBytes());
@@ -803,7 +726,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
         try {
             schedExecutor.awaitTermination(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            LOG.warn("Destroying RedisRegistrationStore was interrupted.", e);
+            log.warn("Destroying RedisRegistrationStore was interrupted.", e);
         }
     }
 
@@ -816,15 +739,18 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                         System.currentTimeMillis(), 0, cleanLimit);
 
                 for (byte[] endpoint : endpointsExpired) {
-                    Registration r = deserializeReg(connection.get(toEndpointKey(endpoint)));
-                    if (!r.isAlive(gracePeriod)) {
-                        Deregistration dereg = removeRegistration(connection, r.getId(), true);
-                        if (dereg != null)
-                            expirationListener.registrationExpired(dereg.getRegistration(), dereg.getObservations());
+                    byte[] data = connection.stringCommands().get(toEndpointKey(endpoint));
+                    if (data != null && data.length > 0) {
+                        Registration r = deserializeReg(data);
+                        if (!r.isAlive(gracePeriod)) {
+                            Deregistration dereg = removeRegistration(connection, r.getId(), true);
+                            if (dereg != null)
+                                expirationListener.registrationExpired(dereg.getRegistration(), dereg.getObservations());
+                        }
                     }
                 }
             } catch (Exception e) {
-                LOG.warn("Unexpected Exception while registration cleaning", e);
+                log.warn("Unexpected Exception while registration cleaning", e);
             }
         }
     }

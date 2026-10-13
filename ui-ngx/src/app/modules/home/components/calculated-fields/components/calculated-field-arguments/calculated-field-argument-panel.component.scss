@@ -1,0 +1,25 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@use '../../../../../../../scss/constants' as constants;
+
+:host {
+  .limit-field-row {
+    @media screen and (max-width: 520px) {
+      display: flex;
+      flex-direction: column;
+
+      .fixed-title-width {
+        align-self: flex-start;
+        padding-top: 8px;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .time-interval-field {
+    .advanced-input {
+      flex-direction: column;
+    }
+  }
+}

@@ -8,7 +8,6 @@
       },
       "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
       "name": "msgTypeSwitch",
-      "debugMode": true,
       "configuration": {
         "version": 0
       }
@@ -20,7 +19,6 @@
       },
       "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
       "name": "formResponse",
-      "debugMode": true,
       "configuration": {
         "jsScript": "if (msg.method == \"getResponse\") {\n    return {msg: {\"response\": \"requestReceived\"}, metadata: metadata, msgType: msgType};\n}\n\nreturn {msg: msg, metadata: metadata, msgType: msgType};"
       }
@@ -32,7 +30,6 @@
       },
       "type": "org.thingsboard.rule.engine.rpc.TbSendRPCReplyNode",
       "name": "rpcReply",
-      "debugMode": true,
       "configuration": {
         "requestIdMetaDataAttribute": "requestId"
       }

@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +24,8 @@ import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -44,6 +35,12 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationRequestPreview;
+import org.thingsboard.server.common.data.notification.NotificationType;
+import org.thingsboard.server.common.data.notification.info.AddonAccessErrorNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.AddonAccessRequestNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.EntitiesLimitIncreaseRequestNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
+import org.thingsboard.server.common.data.notification.info.PlanUpgradeRequestNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
@@ -51,6 +48,7 @@ import org.thingsboard.server.common.data.notification.targets.NotificationRecip
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.NotificationTargetType;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilterType;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
@@ -58,17 +56,21 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.subscription.AddonType;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.translation.TranslationService;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,10 +78,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.permission.Resource.NOTIFICATION;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
@@ -90,7 +94,8 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DE
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.service.security.permission.Resource.NOTIFICATION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -105,6 +110,9 @@ public class NotificationController extends BaseController {
     private final NotificationTargetService notificationTargetService;
     private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
+    private final TranslationService translationService;
+    private final SystemSecurityService systemSecurityService;
+    private final SubscriptionService subscriptionService;
 
     @ApiOperation(value = "Get notifications (getNotifications)",
             notes = "Returns the page of notifications for current user." + NEW_LINE +
@@ -266,6 +274,12 @@ public class NotificationController extends BaseController {
         }
         notificationRequest.setTenantId(user.getTenantId());
         checkEntity(notificationRequest.getId(), notificationRequest, NOTIFICATION);
+        List<NotificationTargetId> targets = notificationRequest.getTargets().stream()
+                .map(NotificationTargetId::new)
+                .toList();
+        for (NotificationTargetId targetId : targets) {
+            checkNotificationTargetId(targetId, Operation.READ);
+        }
 
         notificationRequest.setOriginatorEntityId(user.getId());
         notificationRequest.setInfo(null);
@@ -274,6 +288,212 @@ public class NotificationController extends BaseController {
         notificationRequest.setStats(null);
 
         return doSaveAndLog(EntityType.NOTIFICATION_REQUEST, notificationRequest, (tenantId, request) -> notificationCenter.processNotificationRequest(tenantId, request, null));
+    }
+
+    @ApiOperation(value = "Send entity limit increase request notification to System/Tenant administrators (sendEntitiesLimitIncreaseRequest)",
+            notes = "Send entity limit increase request notification by Tenant Administrator or Customer User to System/Tenant administrators." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PostMapping("/notification/entitiesLimitIncreaseRequest/{entityType}")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    public void sendEntitiesLimitIncreaseRequest(@Parameter(description = "Entity type", required = true, schema = @Schema(allowableValues = {"DEVICE", "ASSET", "CUSTOMER", "USER", "DASHBOARD", "RULE_CHAIN", "EDGE", "INTEGRATION", "CONVERTER", "SCHEDULER_EVENT"}))
+                                                 @PathVariable("entityType") String strEntityType,
+                                                 @RequestParam(required = false, defaultValue = "false") boolean subscriptionViolation,
+                                                 @AuthenticationPrincipal SecurityUser user,
+                                                 HttpServletRequest request) throws Exception {
+        EntityType entityType = checkEnumParameter("entityType", strEntityType, EntityType::valueOf);
+        if (user.isTenantAdmin()) {
+            Optional<NotificationTarget> sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(TenantId.SYS_TENANT_ID, UsersFilterType.SYSTEM_ADMINISTRATORS)
+                    .stream().findFirst();
+            if (sysAdmins.isPresent()) {
+                NotificationTargetId notificationTargetId = sysAdmins.get().getId();
+                String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+                String actionLabel = subscriptionViolation ? "Manage license" : "Set new limit";
+                String actionLink = subscriptionViolation ? "/license" : "/tenants/" + user.getTenantId().toString();
+                NotificationInfo info = EntitiesLimitIncreaseRequestNotificationInfo.builder()
+                        .entityType(entityType)
+                        .userEmail(user.getEmail())
+                        .increaseLimitActionLabel(actionLabel)
+                        .increaseLimitLink(actionLink)
+                        .baseUrl(baseUrl)
+                        .build();
+                notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, notificationTargetId, NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST, info);
+            } else {
+                throw new IllegalArgumentException("Notification target for 'System administrators' not found");
+            }
+        } else {
+            Optional<NotificationTarget> tenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(user.getTenantId(), UsersFilterType.TENANT_ADMINISTRATORS)
+                    .stream().findFirst();
+            if (tenantAdmins.isPresent()) {
+                NotificationTargetId notificationTargetId = tenantAdmins.get().getId();
+                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), new CustomerId(EntityId.NULL_UUID), request);
+                NotificationInfo info = EntitiesLimitIncreaseRequestNotificationInfo.builder()
+                        .entityType(entityType)
+                        .userEmail(user.getEmail())
+                        .increaseLimitActionLabel("Request limit increase")
+                        .increaseLimitLink("/action/entitiesLimitIncreaseRequest?entityType=" + entityType.name() + "&subscriptionViolation=" + subscriptionViolation)
+                        .baseUrl(baseUrl)
+                        .build();
+                notificationCenter.sendSystemNotification(user.getTenantId(), notificationTargetId, NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST, info);
+            } else {
+                throw new IllegalArgumentException("Notification target for 'Tenant administrators' not found");
+            }
+        }
+    }
+
+    @ApiOperation(value = "Send add-on access request notification to System/Tenant administrators (sendAddonAccessRequest)",
+            notes = "Send add-on access request notification by Tenant Administrator or Customer User to System/Tenant administrators." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PostMapping("/notification/sendAddonAccessRequest/{addonType}")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    public void sendAddonAccessRequest(@Parameter(description = "Addon type", required = true, schema = @Schema(allowableValues = {"EDGE", "TRENDZ", "WHITE_LABELING", "PROFESSIONAL_UPGRADE"}))
+                                       @PathVariable("addonType") String strAddonType,
+                                       @AuthenticationPrincipal SecurityUser user,
+                                       HttpServletRequest request) throws Exception {
+        AddonType addonType = checkEnumParameter("addonType", strAddonType, AddonType::valueOf);
+        if (user.isTenantAdmin()) {
+            Optional<NotificationTarget> sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(TenantId.SYS_TENANT_ID, UsersFilterType.SYSTEM_ADMINISTRATORS)
+                    .stream().findFirst();
+            if (sysAdmins.isPresent()) {
+                NotificationTargetId notificationTargetId = sysAdmins.get().getId();
+                String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+                String actionLabel;
+                String actionLink;
+                if (addonType == AddonType.TRENDZ && subscriptionService.getLicenseVersion() < 2) {
+                    actionLabel = "Configure";
+                    actionLink = "/trendzSettings";
+                } else {
+                    actionLabel = switch (addonType) {
+                        case WHITE_LABELING -> "Upgrade plan";
+                        case PROFESSIONAL_UPGRADE -> "Add to license";
+                        default -> "Add to plan";
+                    };
+                    actionLink = "/license";
+                }
+                NotificationInfo info = AddonAccessRequestNotificationInfo.builder()
+                        .addonType(addonType)
+                        .userEmail(user.getEmail())
+                        .enableAddonActionLabel(actionLabel)
+                        .enableAddonLink(actionLink)
+                        .baseUrl(baseUrl)
+                        .build();
+                notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, notificationTargetId, NotificationType.ADDON_ACCESS_REQUEST, info);
+            } else {
+                throw new IllegalArgumentException("Notification target for 'System administrators' not found");
+            }
+        } else {
+            Optional<NotificationTarget> tenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(user.getTenantId(), UsersFilterType.TENANT_ADMINISTRATORS)
+                    .stream().findFirst();
+            if (tenantAdmins.isPresent()) {
+                NotificationTargetId notificationTargetId = tenantAdmins.get().getId();
+                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), new CustomerId(EntityId.NULL_UUID), request);
+                String addonNameOverride = null;
+                if (addonType == AddonType.TRENDZ && subscriptionService.whiteLabelingEnabled(user.getTenantId())) {
+                    var params = whiteLabelingService.getMergedTenantWhiteLabelingParams(getTenantId());
+                    if (params != null && params.getOverrideTrendzName() != null && params.getOverrideTrendzName()) {
+                        addonNameOverride = "Advanced Analytics";
+                    }
+                }
+                NotificationInfo info = AddonAccessRequestNotificationInfo.builder()
+                        .addonType(addonType)
+                        .addonNameOverride(addonNameOverride)
+                        .userEmail(user.getEmail())
+                        .enableAddonActionLabel("Request access")
+                        .enableAddonLink("/action/addonAccessRequest?addonType=" + addonType.name())
+                        .baseUrl(baseUrl)
+                        .build();
+                notificationCenter.sendSystemNotification(user.getTenantId(), notificationTargetId, NotificationType.ADDON_ACCESS_REQUEST, info);
+            } else {
+                throw new IllegalArgumentException("Notification target for 'Tenant administrators' not found");
+            }
+        }
+    }
+
+    @ApiOperation(value = "Send add-on access error notification to System/Tenant administrators (sendAddonAccessError)",
+            notes = "Send add-on access error notification by Tenant Administrator or Customer User to System/Tenant administrators." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PostMapping("/notification/sendAddonAccessError/{addonType}")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    public void sendAddonAccessError(@Parameter(description = "Addon type", required = true, schema = @Schema(allowableValues = {"EDGE", "TRENDZ", "WHITE_LABELING"}))
+                                     @PathVariable("addonType") String strAddonType,
+                                     @AuthenticationPrincipal SecurityUser user,
+                                     HttpServletRequest request) throws Exception {
+        AddonType addonType = checkEnumParameter("addonType", strAddonType, AddonType::valueOf);
+        if (user.isTenantAdmin()) {
+            Optional<NotificationTarget> sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(TenantId.SYS_TENANT_ID, UsersFilterType.SYSTEM_ADMINISTRATORS)
+                    .stream().findFirst();
+            if (sysAdmins.isPresent()) {
+                NotificationTargetId notificationTargetId = sysAdmins.get().getId();
+                String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+                String checkConfigurationActionLabel = "Check configuration";
+                String checkConfigurationLink = null;
+                if (addonType == AddonType.TRENDZ) {
+                    checkConfigurationLink = "/trendzSettings";
+                }
+
+                NotificationInfo info = AddonAccessErrorNotificationInfo.builder()
+                        .addonType(addonType)
+                        .userEmail(user.getEmail())
+                        .checkConfigurationActionLabel(checkConfigurationActionLabel)
+                        .checkConfigurationLink(checkConfigurationLink)
+                        .baseUrl(baseUrl)
+                        .build();
+                notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, notificationTargetId, NotificationType.ADDON_ACCESS_ERROR, info);
+            } else {
+                throw new IllegalArgumentException("Notification target for 'System administrators' not found");
+            }
+        } else {
+            Optional<NotificationTarget> tenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(user.getTenantId(), UsersFilterType.TENANT_ADMINISTRATORS)
+                    .stream().findFirst();
+            if (tenantAdmins.isPresent()) {
+                NotificationTargetId notificationTargetId = tenantAdmins.get().getId();
+                String baseUrl = systemSecurityService.getBaseUrl(user.getTenantId(), new CustomerId(EntityId.NULL_UUID), request);
+                String addonNameOverride = null;
+                if (addonType == AddonType.TRENDZ && subscriptionService.whiteLabelingEnabled(user.getTenantId())) {
+                    var params = whiteLabelingService.getMergedTenantWhiteLabelingParams(getTenantId());
+                    if (params != null && params.getOverrideTrendzName() != null && params.getOverrideTrendzName()) {
+                        addonNameOverride = "Advanced Analytics";
+                    }
+                }
+                NotificationInfo info = AddonAccessErrorNotificationInfo.builder()
+                        .addonType(addonType)
+                        .addonNameOverride(addonNameOverride)
+                        .userEmail(user.getEmail())
+                        .checkConfigurationActionLabel("Report issue")
+                        .checkConfigurationLink("/action/addonAccessError?addonType=" + addonType.name())
+                        .baseUrl(baseUrl)
+                        .build();
+                notificationCenter.sendSystemNotification(user.getTenantId(), notificationTargetId, NotificationType.ADDON_ACCESS_ERROR, info);
+            } else {
+                throw new IllegalArgumentException("Notification target for 'Tenant administrators' not found");
+            }
+        }
+    }
+
+    @ApiOperation(value = "Send plan upgrade request notification to System administrators (sendPlanUpgradeRequest)",
+            notes = "Send plan upgrade access request notification by Tenant Administrator to System administrators." +
+                    TENANT_AUTHORITY_PARAGRAPH)
+    @PostMapping("/notification/sendPlanUpgradeRequest/{planName}")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    public void sendPlanUpgradeRequest(@Parameter(description = "Plan name", required = true)
+                                       @PathVariable("planName") String planName,
+                                       @AuthenticationPrincipal SecurityUser user,
+                                       HttpServletRequest request) throws Exception {
+        checkParameter("planName", planName);
+        Optional<NotificationTarget> sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(TenantId.SYS_TENANT_ID, UsersFilterType.SYSTEM_ADMINISTRATORS)
+                .stream().findFirst();
+        if (sysAdmins.isPresent()) {
+            NotificationTargetId notificationTargetId = sysAdmins.get().getId();
+            String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+            NotificationInfo info = PlanUpgradeRequestNotificationInfo.builder()
+                    .planName(planName)
+                    .userEmail(user.getEmail())
+                    .upgradePlanLink("/license")
+                    .baseUrl(baseUrl)
+                    .build();
+            notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, notificationTargetId, NotificationType.PLAN_UPGRADE_REQUEST, info);
+        } else {
+            throw new IllegalArgumentException("Notification target for 'System administrators' not found");
+        }
     }
 
     @ApiOperation(value = "Get notification request preview (getNotificationRequestPreview)",
@@ -287,7 +507,7 @@ public class NotificationController extends BaseController {
                                                                     @Parameter(description = "Amount of the recipients to show in preview")
                                                                     @RequestParam(defaultValue = "20") int recipientsPreviewSize,
                                                                     @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // PE: generic permission
+        accessControlService.checkPermission(user, NOTIFICATION, Operation.WRITE);
         NotificationTemplate template;
         if (request.getTemplateId() != null) {
             template = checkEntityId(request.getTemplateId(), notificationTemplateService::findNotificationTemplateById, Operation.READ);
@@ -316,6 +536,8 @@ public class NotificationController extends BaseController {
         Map<String, Integer> recipientsCountByTarget = new LinkedHashMap<>();
         Map<NotificationTargetType, NotificationRecipient> firstRecipient = new HashMap<>();
         for (NotificationTarget target : targets) {
+            checkEntity(getCurrentUser(), target, Operation.READ);
+
             int recipientsCount;
             List<NotificationRecipient> recipientsPart;
             NotificationTargetType targetType = target.getConfiguration().getType();
@@ -371,6 +593,7 @@ public class NotificationController extends BaseController {
                 .deliveryMethods(deliveryMethods)
                 .template(template)
                 .settings(null)
+                .translationProvider(locale -> translationService.getFullTranslation(user.getTenantId(), null, locale))
                 .build();
         Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> processedTemplates = ctx.getDeliveryMethods().stream()
                 .collect(Collectors.toMap(m -> m, deliveryMethod -> {
@@ -409,7 +632,7 @@ public class NotificationController extends BaseController {
                                                                      @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                      @RequestParam(required = false) String sortOrder,
                                                                      @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // PE: generic permission
+        accessControlService.checkPermission(user, NOTIFICATION, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationRequestService.findNotificationRequestsInfosByTenantIdAndOriginatorType(user.getTenantId(), EntityType.USER, pageLink);
     }
@@ -447,9 +670,12 @@ public class NotificationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationSettings saveNotificationSettings(@RequestBody @Valid NotificationSettings notificationSettings,
                                                          @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.WRITE);
-        TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
-        notificationSettingsService.saveNotificationSettings(tenantId, notificationSettings);
+        if (user.isSystemAdmin()) {
+            accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.WRITE);
+        } else {
+            accessControlService.checkPermission(user, Resource.WHITE_LABELING, Operation.WRITE);
+        }
+        notificationSettingsService.saveNotificationSettings(user.getTenantId(), notificationSettings);
         return notificationSettings;
     }
 
@@ -459,9 +685,12 @@ public class NotificationController extends BaseController {
     @GetMapping("/notification/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public NotificationSettings getNotificationSettings(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
-        TenantId tenantId = user.isSystemAdmin() ? TenantId.SYS_TENANT_ID : user.getTenantId();
-        return notificationSettingsService.findNotificationSettings(tenantId);
+        if (user.isSystemAdmin()) {
+            accessControlService.checkPermission(user, Resource.ADMIN_SETTINGS, Operation.READ);
+        } else {
+            accessControlService.checkPermission(user, Resource.WHITE_LABELING, Operation.READ);
+        }
+        return notificationSettingsService.findNotificationSettings(user.getTenantId());
     }
 
     @ApiOperation(value = "Get available delivery methods (getAvailableDeliveryMethods)",
@@ -469,7 +698,7 @@ public class NotificationController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/notification/deliveryMethods")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+    public List<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         return notificationCenter.getAvailableDeliveryMethods(user.getTenantId());
     }
 
@@ -477,7 +706,8 @@ public class NotificationController extends BaseController {
     @PostMapping("/notification/settings/user")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public UserNotificationSettings saveUserNotificationSettings(@RequestBody @Valid UserNotificationSettings settings,
-                                                                 @AuthenticationPrincipal SecurityUser user) {
+                                                                 @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        accessControlService.checkPermission(user, Resource.PROFILE, Operation.WRITE);
         return notificationSettingsService.saveUserNotificationSettings(user.getTenantId(), user.getId(), settings);
     }
 

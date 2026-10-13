@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,10 +21,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.exception.RateLimitExceededException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -48,27 +37,34 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.dao.util.TenantRateLimitException;
 import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.log.LogStreamDispatcher;
+import org.thingsboard.server.service.log.sub.LogsSubscriptionUpdate;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
 import org.thingsboard.server.service.security.ValidationResultCode;
 import org.thingsboard.server.service.security.model.UserPrincipal;
-import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.subscription.TbAttributeSubscription;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 import org.thingsboard.server.service.subscription.TbEntityDataSubscriptionService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
+import org.thingsboard.server.service.subscription.TbLogsSubscription;
 import org.thingsboard.server.service.subscription.TbTimeSeriesSubscription;
+import org.thingsboard.server.service.telemetry.exception.ValidationException;
+import org.thingsboard.server.service.ws.log.cmd.LogsSubscriptionCmd;
+import org.thingsboard.server.service.ws.log.cmd.LogsUnsubscribeCmd;
 import org.thingsboard.server.service.ws.notification.NotificationCommandsHandler;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
@@ -77,10 +73,12 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.LogsUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
@@ -97,7 +95,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -105,6 +102,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.DataConstants.LATEST_TELEMETRY_SCOPE;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -132,10 +131,12 @@ public class DefaultWebSocketService implements WebSocketService {
     private final NotificationCommandsHandler notificationCmdsHandler;
     private final WebSocketMsgEndpoint msgEndpoint;
     private final AccessValidator accessValidator;
+    private final AccessControlService accessControlService;
     private final AttributesService attributesService;
     private final TimeseriesService tsService;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbTenantProfileCache tenantProfileCache;
+    private final LogStreamDispatcher logStreamDispatcher;
 
     @Value("${server.ws.ping_timeout:30000}")
     private long pingTimeout;
@@ -143,7 +144,7 @@ public class DefaultWebSocketService implements WebSocketService {
     private final ConcurrentMap<TenantId, Set<String>> tenantSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<CustomerId, Set<String>> customerSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<UserId, Set<String>> regularUserSubscriptionsMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UserId, Set<String>> publicUserSubscriptionsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, Set<String>> publicUserSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Map<Integer, Integer>> sessionCmdMap = new ConcurrentHashMap<>();
 
     private ExecutorService executor;
@@ -157,7 +158,7 @@ public class DefaultWebSocketService implements WebSocketService {
         serviceId = serviceInfoProvider.getServiceId();
         executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
 
-        pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
+        pingExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("telemetry-web-socket-ping");
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
@@ -168,15 +169,19 @@ public class DefaultWebSocketService implements WebSocketService {
         cmdsHandlers.put(WsCmdType.ALARM_DATA, newCmdHandler(this::handleWsAlarmDataCmd));
         cmdsHandlers.put(WsCmdType.ENTITY_COUNT, newCmdHandler(this::handleWsEntityCountCmd));
         cmdsHandlers.put(WsCmdType.ALARM_COUNT, newCmdHandler(this::handleWsAlarmCountCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_STATUS, newCmdHandler(this::handleWsAlarmsStatusCmd));
         cmdsHandlers.put(WsCmdType.ENTITY_DATA_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.ALARM_DATA_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.ENTITY_COUNT_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.ALARM_COUNT_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_STATUS_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.NOTIFICATIONS, newCmdHandler(notificationCmdsHandler::handleUnreadNotificationsSubCmd));
         cmdsHandlers.put(WsCmdType.NOTIFICATIONS_COUNT, newCmdHandler(notificationCmdsHandler::handleUnreadNotificationsCountSubCmd));
         cmdsHandlers.put(WsCmdType.MARK_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAsReadCmd));
         cmdsHandlers.put(WsCmdType.MARK_ALL_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAllAsReadCmd));
         cmdsHandlers.put(WsCmdType.NOTIFICATIONS_UNSUBSCRIBE, newCmdHandler(notificationCmdsHandler::handleUnsubCmd));
+        cmdsHandlers.put(WsCmdType.LOGS, newCmdHandler(this::handleWsLogsSubscriptionCmd));
+        cmdsHandlers.put(WsCmdType.LOGS_UNSUBSCRIBE, newCmdHandler(this::handleWsLogsUnsubscribeCmd));
     }
 
     @PreDestroy
@@ -193,17 +198,18 @@ public class DefaultWebSocketService implements WebSocketService {
     @Override
     public void handleSessionEvent(WebSocketSessionRef sessionRef, SessionEvent event) {
         String sessionId = sessionRef.getSessionId();
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
         log.debug(PROCESSING_MSG, sessionId, event);
         switch (event.getEventType()) {
             case ESTABLISHED:
                 wsSessionsMap.put(sessionId, new WsSessionMetaData(sessionRef));
                 break;
             case ERROR:
-                log.debug("[{}] Unknown websocket session error: ", sessionId,
+                log.debug("[{}][{}] Unknown websocket session error: ", tenantId, sessionId,
                         event.getError().orElse(new RuntimeException("No error specified")));
                 break;
             case CLOSED:
-                cleanupSessionById(sessionId);
+                cleanupSessionById(tenantId, sessionId);
                 processSessionClose(sessionRef);
                 break;
         }
@@ -227,6 +233,7 @@ public class DefaultWebSocketService implements WebSocketService {
             } catch (TbRateLimitsException e) {
                 log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
             } catch (Exception e) {
+                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, e.getMessage());
                 log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
             }
         }
@@ -245,6 +252,13 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void handleWsAlarmDataCmd(WebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
+        try {
+            accessControlService.checkPermission(sessionRef.getSecurityCtx(), Resource.ALARM, Operation.READ);
+        } catch (ThingsboardException e) {
+            sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.ACCESS_DENIED, "You don't have permission to view alarms");
+            return;
+        }
+
         if (validateSubscriptionCmd(sessionRef, cmd)) {
             entityDataSubService.handleCmd(sessionRef, cmd);
         }
@@ -260,10 +274,65 @@ public class DefaultWebSocketService implements WebSocketService {
         }
     }
 
+    private void handleWsAlarmsStatusCmd(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
+        if (validateCmd(sessionRef, cmd)) {
+            entityDataSubService.handleCmd(sessionRef, cmd);
+        }
+    }
+
+    private void handleWsLogsSubscriptionCmd(WebSocketSessionRef sessionRef, LogsSubscriptionCmd cmd) {
+        if (!validateCmd(sessionRef, cmd, () -> {
+            if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty() || cmd.getEntityType() == null || cmd.getEntityType().isEmpty()) {
+                throw new IllegalArgumentException("Entity id is empty!");
+            }
+        })) return;
+
+        EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
+        accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
+                on(r -> registerLogsSubscription(sessionRef, cmd, entityId),
+                        t -> sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.ACCESS_DENIED,
+                                t.getMessage() != null ? t.getMessage() : "Access denied")));
+    }
+
+    private void registerLogsSubscription(WebSocketSessionRef sessionRef, LogsSubscriptionCmd cmd, EntityId entityId) {
+        String sessionId = sessionRef.getSessionId();
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
+        int subscriptionId = registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId());
+
+        Consumer<LogsSubscriptionUpdate> emitUpdate = update ->
+                sendUpdateSync(sessionRef, cmd.getCmdId(),
+                        new LogsUpdate(cmd.getCmdId(), update.getLatestSeq(), update.getLines(),
+                                update.getDroppedLines(), update.getEvictedChunks()));
+
+        TbLogsSubscription sub = TbLogsSubscription.builder()
+                .serviceId(serviceId)
+                .sessionId(sessionId)
+                .subscriptionId(subscriptionId)
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .updateProcessor((_, subUpdate) ->
+                        emitUpdate.accept(subUpdate))
+                .build();
+
+        logStreamDispatcher.streamLogTail(tenantId, entityId, cmd.getLastSeenSeq(), emitUpdate,
+                () -> oldSubService.addSubscription(sub, sessionRef));
+    }
+
+    private void handleWsLogsUnsubscribeCmd(WebSocketSessionRef sessionRef, LogsUnsubscribeCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
+        Integer subId = sessionCmdMap.getOrDefault(sessionId, Collections.emptyMap()).remove(cmd.getCmdId());
+        if (subId == null) {
+            log.trace("[{}][{}][{}] Failed to lookup log subscription id mapping", tenantId, sessionId, cmd.getCmdId());
+            subId = cmd.getCmdId();
+        }
+        oldSubService.cancelSubscription(tenantId, sessionId, subId);
+    }
+
     @Override
     public void sendUpdate(String sessionId, int cmdId, TelemetrySubscriptionUpdate update) {
         // We substitute the subscriptionId with cmdId for old-style subscriptions.
-        doSendUpdate(sessionId, cmdId, update.copyWithNewSubscriptionId(cmdId));
+        doSendUpdate(sessionId, cmdId, update.withSubscriptionId(cmdId));
     }
 
     @Override
@@ -297,14 +366,14 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     @Override
-    public void cleanupIfStale(String sessionId) {
+    public void cleanupIfStale(TenantId tenantId, String sessionId) {
         if (!msgEndpoint.isOpen(sessionId)) {
             log.info("[{}] Cleaning up stale session ", sessionId);
-            cleanupSessionById(sessionId);
+            cleanupSessionById(tenantId, sessionId);
         }
     }
 
-    private void processSessionClose(WebSocketSessionRef sessionRef) {
+    void processSessionClose(WebSocketSessionRef sessionRef) {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration != null) {
             String sessionId = "[" + sessionRef.getSessionId() + "]";
@@ -329,7 +398,7 @@ public class DefaultWebSocketService implements WebSocketService {
                     }
                 }
                 if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
-                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
                         publicUserSessions.removeIf(subId -> subId.startsWith(sessionId));
                     }
@@ -338,7 +407,7 @@ public class DefaultWebSocketService implements WebSocketService {
         }
     }
 
-    private boolean processSubscription(WebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
+    boolean processSubscription(WebSocketSessionRef sessionRef, SubscriptionCmd cmd) {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration == null) return true;
 
@@ -390,9 +459,11 @@ public class DefaultWebSocketService implements WebSocketService {
                     }
                 }
                 if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
-                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
+                    Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
-                        if (publicUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser()) {
+                        if (cmd.isUnsubscribe()) {
+                            publicUserSessions.remove(subId);
+                        } else if (publicUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser()) {
                             publicUserSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max public user subscriptions limit reached"
@@ -420,7 +491,7 @@ public class DefaultWebSocketService implements WebSocketService {
             unsubscribe(sessionRef, cmd, sessionId);
         } else if (validateSubscriptionCmd(sessionRef, cmd)) {
             EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
-            log.debug("[{}] fetching latest attributes ({}) values for device: {}", sessionId, cmd.getKeys(), entityId);
+            log.debug("[{}] fetching telemetry attributes ({}) values for device: {}", sessionId, cmd.getKeys(), entityId);
             Optional<Set<String>> keysOptional = getKeys(cmd);
             if (keysOptional.isPresent()) {
                 List<String> keys = new ArrayList<>(keysOptional.get());
@@ -534,6 +605,7 @@ public class DefaultWebSocketService implements WebSocketService {
                     update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                             SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                 } else {
+                    log.error(FAILED_TO_FETCH_DATA + " Reason: " + e.getMessage(), e);
                     update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
                             FAILED_TO_FETCH_DATA);
                 }
@@ -641,7 +713,7 @@ public class DefaultWebSocketService implements WebSocketService {
         } else {
             List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
             startTs = System.currentTimeMillis();
-            log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
+            log.debug("[{}] fetching latest time-series data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
             final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, queryTs, startTs, keys);
             accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                     on(r -> Futures.addCallback(tsService.findLatest(sessionRef.getSecurityCtx().getTenantId(), entityId, keys), callback, executor), callback::onFailure));
@@ -658,24 +730,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
-                        .serviceId(serviceId)
-                        .sessionId(sessionId)
-                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
-                        .tenantId(sessionRef.getSecurityCtx().getTenantId())
-                        .entityId(entityId)
-                        .updateProcessor((subscription, update) -> {
-                            subLock.lock();
-                            try {
-                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
-                            } finally {
-                                subLock.unlock();
-                            }
-                        })
-                        .queryTs(queryTs)
-                        .allKeys(true)
-                        .keyStates(subState)
-                        .build();
+                TbTimeSeriesSubscription sub = getTsSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, true);
 
                 subLock.lock();
                 try {
@@ -693,6 +748,7 @@ public class DefaultWebSocketService implements WebSocketService {
                     update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                             SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                 } else {
+                    log.error(FAILED_TO_FETCH_DATA + " Reason: " + e.getMessage(), e);
                     update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
                             FAILED_TO_FETCH_DATA);
                 }
@@ -701,6 +757,28 @@ public class DefaultWebSocketService implements WebSocketService {
         };
         accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
                 on(r -> Futures.addCallback(tsService.findAllLatest(sessionRef.getSecurityCtx().getTenantId(), entityId), callback, executor), callback::onFailure));
+    }
+
+    private TbTimeSeriesSubscription getTsSubscription(Map<String, Long> subState, Lock subLock, String sessionId, WebSocketSessionRef sessionRef, TimeseriesSubscriptionCmd cmd, EntityId entityId, long queryTs, boolean allKeys) {
+        return TbTimeSeriesSubscription.builder()
+                .serviceId(serviceId)
+                .sessionId(sessionId)
+                .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
+                .tenantId(sessionRef.getSecurityCtx().getTenantId())
+                .entityId(entityId)
+                .updateProcessor((subscription, update) -> {
+                    subLock.lock();
+                    try {
+                        sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
+                    } finally {
+                        subLock.unlock();
+                    }
+                })
+                .queryTs(queryTs)
+                .allKeys(allKeys)
+                .keyStates(subState)
+                .latestValues(LATEST_TELEMETRY_SCOPE.equals(cmd.getScope()))
+                .build();
     }
 
     private FutureCallback<List<TsKvEntry>> getSubscriptionCallback(final WebSocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd,
@@ -713,24 +791,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 Lock subLock = new ReentrantLock();
-                TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
-                        .serviceId(serviceId)
-                        .sessionId(sessionId)
-                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
-                        .tenantId(sessionRef.getSecurityCtx().getTenantId())
-                        .entityId(entityId)
-                        .updateProcessor((subscription, update) -> {
-                            subLock.lock();
-                            try {
-                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
-                            } finally {
-                                subLock.unlock();
-                            }
-                        })
-                        .queryTs(queryTs)
-                        .allKeys(false)
-                        .keyStates(subState)
-                        .build();
+                TbTimeSeriesSubscription sub = getTsSubscription(subState, subLock, sessionId, sessionRef, cmd, entityId, queryTs, false);
 
                 subLock.lock();
                 try {
@@ -743,33 +804,61 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                if (e instanceof TenantRateLimitException || e.getCause() instanceof TenantRateLimitException) {
+                if (e instanceof RateLimitExceededException || e.getCause() instanceof RateLimitExceededException) {
                     log.trace("[{}] Tenant rate limit detected for subscription: [{}]:{}", sessionRef.getSecurityCtx().getTenantId(), entityId, cmd);
                 } else {
                     log.info(FAILED_TO_FETCH_DATA, e);
                 }
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_DATA);
+
+                SubscriptionErrorCode errorCode = SubscriptionErrorCode.INTERNAL_ERROR;
+
+                if (e instanceof ValidationException) {
+                    ValidationResultCode validationResultCode = ((ValidationException) e).getValidationResultCode();
+                    errorCode = validationResultToSubscriptionErrorCode(validationResultCode);
+                }
+
+                String message = errorCode.getDefaultMsg();
+                message += ": " + e.getMessage();
+                sendError(sessionRef, cmd.getCmdId(), errorCode, message);
             }
         };
     }
 
-    private void unsubscribe(WebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
-        if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
-            log.warn("[{}][{}] Cleanup session due to empty entity id.", sessionId, cmd.getCmdId());
-            cleanupSessionById(sessionId);
-        } else {
-            Integer subId = sessionCmdMap.getOrDefault(sessionId, Collections.emptyMap()).remove(cmd.getCmdId());
-            if (subId == null) {
-                log.trace("[{}][{}] Failed to lookup subscription id mapping", sessionId, cmd.getCmdId());
-                subId = cmd.getCmdId();
-            }
-            oldSubService.cancelSubscription(sessionId, subId);
+    private SubscriptionErrorCode validationResultToSubscriptionErrorCode(ValidationResultCode validationResultCode) {
+        switch (validationResultCode) {
+            case OK:
+                return SubscriptionErrorCode.NO_ERROR;
+            case UNAUTHORIZED:
+                return SubscriptionErrorCode.UNAUTHORIZED;
+            case ACCESS_DENIED:
+                return SubscriptionErrorCode.ACCESS_DENIED;
+            case ENTITY_NOT_FOUND:
+                return SubscriptionErrorCode.BAD_REQUEST;
+            case INTERNAL_ERROR:
+                return SubscriptionErrorCode.INTERNAL_ERROR;
+            default:
+                return SubscriptionErrorCode.INTERNAL_ERROR;
         }
     }
 
-    private void cleanupSessionById(String sessionId) {
+    private void unsubscribe(WebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
+        if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
+            log.warn("[{}][{}][{}] Cleanup session due to empty entity id.", tenantId, sessionId, cmd.getCmdId());
+            cleanupSessionById(tenantId, sessionId);
+        } else {
+            Integer subId = sessionCmdMap.getOrDefault(sessionId, Collections.emptyMap()).remove(cmd.getCmdId());
+            if (subId == null) {
+                log.trace("[{}][{}][{}] Failed to lookup subscription id mapping", tenantId, sessionId, cmd.getCmdId());
+                subId = cmd.getCmdId();
+            }
+            oldSubService.cancelSubscription(tenantId, sessionId, subId);
+        }
+    }
+
+    private void cleanupSessionById(TenantId tenantId, String sessionId) {
         wsSessionsMap.remove(sessionId);
-        oldSubService.cancelAllSessionSubscriptions(sessionId);
+        oldSubService.cancelAllSessionSubscriptions(tenantId, sessionId);
         sessionCmdMap.remove(sessionId);
         entityDataSubService.cancelAllSessionSubscriptions(sessionId);
     }
@@ -835,6 +924,15 @@ public class DefaultWebSocketService implements WebSocketService {
             return false;
         }
         return true;
+    }
+
+    private void sendUpdateSync(WebSocketSessionRef sessionRef, int cmdId, Object update) {
+        try {
+            String msg = JacksonUtil.OBJECT_MAPPER.writeValueAsString(update);
+            msgEndpoint.send(sessionRef, cmdId, msg);
+        } catch (IOException e) {
+            log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
+        }
     }
 
     private void sendUpdate(WebSocketSessionRef sessionRef, EntityDataUpdate update) {

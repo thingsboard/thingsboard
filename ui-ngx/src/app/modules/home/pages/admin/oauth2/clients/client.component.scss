@@ -1,0 +1,22 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+::ng-deep {
+  .mat-expansion-panel {
+    .mat-expansion-panel-header {
+      height: 48px;
+      padding: 0 12px;
+
+      &.mat-expanded {
+        height: 48px;
+      }
+    }
+
+    .mat-expansion-panel-body {
+      padding: 0 12px;
+    }
+
+    &.configuration-panel {
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+  }
+}

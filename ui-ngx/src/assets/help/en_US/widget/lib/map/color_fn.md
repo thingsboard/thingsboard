@@ -3,7 +3,7 @@
 <div class="divider"></div>
 <br/>
 
-*function (data, dsData, dsIndex): string*
+*function (data, dsData): string*
 
 A JavaScript function used to compute color of the marker.
 
@@ -21,22 +21,4 @@ In case no data is returned, color value from **Color** settings field will be u
 
 <div class="divider"></div>
 
-##### Examples
-
-* Calculate color depending on `temperature` telemetry value for `colorpin` device type:
-
-```javascript
-var type = data['Type'];
-if (type == 'colorpin') {
-  var temperature = data['temperature'];
-  if (typeof temperature !== undefined) {
-    var percent = (temperature + 60)/120 * 100;
-    return tinycolor.mix('blue', 'red', percent).toHexString();
-  }
-  return 'blue';
-}
-{:copy-code}
-```
-
-<br>
-<br>
+{% include widget/lib/map/color_fn_examples %}

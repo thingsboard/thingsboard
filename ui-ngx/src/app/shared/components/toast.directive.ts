@@ -1,22 +1,8 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit, ChangeDetectorRef,
-  Component, ComponentFactoryResolver, ComponentRef,
+  Component, ComponentRef,
   Directive,
   ElementRef, HostBinding,
   Inject,
@@ -38,7 +24,8 @@ import { MatButton } from '@angular/material/button';
 import Timeout = NodeJS.Timeout;
 
 @Directive({
-  selector: '[tb-toast]'
+    selector: '[tb-toast]',
+    standalone: false
 })
 export class ToastDirective implements AfterViewInit, OnDestroy {
 
@@ -57,7 +44,6 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
   constructor(private elementRef: ElementRef,
               private viewContainerRef: ViewContainerRef,
               private notificationService: ToastNotificationService,
-              private componentFactoryResolver: ComponentFactoryResolver,
               private snackBar: MatSnackBar,
               private ngZone: NgZone,
               private breakpointObserver: BreakpointObserver,
@@ -131,20 +117,21 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         panelClass.push('bottom');
       }
 
-      const componentFactory = this.componentFactoryResolver.resolveComponentFactory(TbSnackBarComponent);
       const data: ToastPanelData = {
         notification: notificationMessage,
         panelClass,
         destroyToastComponent: () => {
-          this.viewContainerRef.detach(0);
-          this.toastComponentRef.destroy();
+          if (this.toastComponentRef) {
+            this.viewContainerRef.detach(0);
+            this.toastComponentRef.destroy();
+          }
         }
       };
       const providers: StaticProvider[] = [
         {provide: MAT_SNACK_BAR_DATA, useValue: data}
       ];
       const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-      this.toastComponentRef = this.viewContainerRef.createComponent(componentFactory, 0, injector);
+      this.toastComponentRef = this.viewContainerRef.createComponent(TbSnackBarComponent, {index: 0, injector});
       this.cd.detectChanges();
 
       if (notificationMessage.duration && notificationMessage.duration > 0) {
@@ -274,10 +261,11 @@ export const toastAnimations: {
 export type ToastAnimationState = 'default' | 'opened' | 'closing';
 
 @Component({
-  selector: 'tb-snack-bar-component',
-  templateUrl: 'snack-bar-component.html',
-  styleUrls: ['snack-bar-component.scss'],
-  animations: [toastAnimations.showHideToast]
+    selector: 'tb-snack-bar-component',
+    templateUrl: 'snack-bar-component.html',
+    styleUrls: ['snack-bar-component.scss'],
+    animations: [toastAnimations.showHideToast],
+    standalone: false
 })
 export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 

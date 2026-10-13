@@ -1,25 +1,16 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -27,7 +18,8 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
+import org.thingsboard.server.exception.DataValidationException;
 
 @DaoSqlTest
 public class DeviceCredentialsServiceTest extends AbstractServiceTest {
@@ -36,6 +28,8 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
     DeviceCredentialsService deviceCredentialsService;
     @Autowired
     DeviceService deviceService;
+    @MockitoBean
+    ApplicationEventPublisher eventPublisher;
 
     @Test
     public void testCreateDeviceCredentials() {
@@ -122,6 +116,32 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveDeviceCredentialsWithDuplicateCredentialsId() {
+        Device firstDevice = new Device();
+        firstDevice.setName("First device");
+        firstDevice.setType("default");
+        firstDevice.setTenantId(tenantId);
+        firstDevice = deviceService.saveDevice(firstDevice);
+        Device secondDevice = new Device();
+        secondDevice.setName("Second device");
+        secondDevice.setType("default");
+        secondDevice.setTenantId(tenantId);
+        secondDevice = deviceService.saveDevice(secondDevice);
+        DeviceCredentials firstDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, firstDevice.getId());
+        DeviceCredentials secondDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, secondDevice.getId());
+        secondDeviceCredentials.setCredentialsId(firstDeviceCredentials.getCredentialsId());
+        try {
+            DataValidationException exception = Assertions.assertThrows(DataValidationException.class, () -> {
+                deviceCredentialsService.updateDeviceCredentials(tenantId, secondDeviceCredentials);
+            });
+            Assertions.assertEquals("Device credentials are already assigned to another device!", exception.getMessage());
+        } finally {
+            deviceService.deleteDevice(tenantId, firstDevice.getId());
+            deviceService.deleteDevice(tenantId, secondDevice.getId());
+        }
+    }
+
+    @Test
     public void testSaveDeviceCredentialsWithNonExistentDevice() {
         Device device = new Device();
         device.setName("My device");
@@ -185,5 +205,39 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
         Assert.assertEquals(deviceCredentials, foundDeviceCredentials);
         deviceService.deleteDevice(tenantId, savedDevice.getId());
     }
-}
 
+    @Test
+    public void testUpdateDeviceCredentialsWithSameValuesDoesNotPublishEvent() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = deviceService.saveDevice(device);
+
+        try {
+            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+            Assert.assertNotNull(deviceCredentials);
+
+            DeviceCredentials updatedCredentials = new DeviceCredentials(deviceCredentials.getId());
+            updatedCredentials.setDeviceId(deviceCredentials.getDeviceId());
+            updatedCredentials.setCredentialsType(deviceCredentials.getCredentialsType());
+            updatedCredentials.setCredentialsId(deviceCredentials.getCredentialsId());
+            updatedCredentials.setCredentialsValue(deviceCredentials.getCredentialsValue());
+
+            Mockito.reset(eventPublisher);
+
+            DeviceCredentials result = deviceCredentialsService.updateDeviceCredentials(tenantId, updatedCredentials);
+
+            Assert.assertEquals(deviceCredentials.getCredentialsId(), result.getCredentialsId());
+            Assert.assertEquals(deviceCredentials.getCredentialsType(), result.getCredentialsType());
+            Assert.assertEquals(deviceCredentials.getCredentialsValue(), result.getCredentialsValue());
+            Assert.assertEquals(deviceCredentials.getDeviceId(), result.getDeviceId());
+
+            Mockito.verify(eventPublisher, Mockito.never()).publishEvent(Mockito.any(ActionEntityEvent.class));
+
+        } finally {
+            deviceService.deleteDevice(tenantId, savedDevice.getId());
+        }
+    }
+
+}

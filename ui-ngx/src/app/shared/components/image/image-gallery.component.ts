@@ -1,25 +1,12 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ImageResourceInfo,
-  ImageResourceInfoWithReferences,
+  ResourceInfoWithReferences,
   imageResourceType,
   ResourceSubType,
-  toImageDeleteResult
+  toResourceDeleteResult
 } from '@shared/models/resource.models';
 import { forkJoin, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { ImageService } from '@core/http/image.service';
@@ -33,7 +20,7 @@ import {
   ElementRef,
   EventEmitter,
   HostBinding,
-  Input,
+  Input, NgZone,
   OnDestroy,
   OnInit,
   Output,
@@ -48,7 +35,6 @@ import { AppState } from '@core/core.state';
 import { DialogService } from '@core/services/dialog.service';
 import { FormBuilder } from '@angular/forms';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
@@ -68,9 +54,9 @@ import { ImageDialogComponent, ImageDialogData } from '@shared/components/image/
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import {
-  ImagesInUseDialogComponent,
-  ImagesInUseDialogData
-} from '@shared/components/image/images-in-use-dialog.component';
+  ResourcesInUseDialogComponent,
+  ResourcesInUseDialogData
+} from '@shared/components/resource/resources-in-use-dialog.component';
 import { ImagesDatasource } from '@shared/components/image/images-datasource';
 import { EmbedImageDialogComponent, EmbedImageDialogData } from '@shared/components/image/embed-image-dialog.component';
 
@@ -101,10 +87,11 @@ const dialogGridColumns: ScrollGridColumns = {
 };
 
 @Component({
-  selector: 'tb-image-gallery',
-  templateUrl: './image-gallery.component.html',
-  styleUrls: ['./image-gallery.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-image-gallery',
+    templateUrl: './image-gallery.component.html',
+    styleUrls: ['./image-gallery.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ImageGalleryComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -175,8 +162,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
 
   authUser = getCurrentAuthUser(this.store);
 
-  actionColumnWidth = '240px';
-
   get isScada() {
     return this.imageSubType === ResourceSubType.SCADA_SYMBOL;
   }
@@ -197,7 +182,8 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
               private importExportService: ImportExportService,
               private elementRef: ElementRef,
               private cd: ChangeDetectorRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
 
     this.gridImagesFetchFunction = (pageSize, page, filter) => {
@@ -205,7 +191,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         property: 'createdTime',
         direction: Direction.DESC
       });
-      return this.imageService.getImages(pageLink, this.imageSubType, filter.includeSystemImages);
+      return this.imageService.getImages(pageLink, filter.includeSystemImages, this.imageSubType);
     };
   }
 
@@ -244,9 +230,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if (this.mode === 'list') {
       this.dataSource = new ImagesDatasource(this.imageService, null,
           entity => this.deleteEnabled(entity));
-    }
-    if (this.isScada) {
-      this.actionColumnWidth = '192px';
     }
   }
 
@@ -333,11 +316,15 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     return this.authUser.authority === Authority.SYS_ADMIN;
   }
 
+  public get isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
+  }
+
   private computeDisplayedColumns(): string[] {
     let columns: string[];
     if (this.selectionMode) {
       columns = ['preview', 'title'];
-      if (!this.isSysAdmin && this.includeSystemImages) {
+      if (this.isTenantAdmin && this.includeSystemImages) {
         columns.push('system');
       }
       columns.push('imageSelect');
@@ -362,11 +349,13 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   private initListMode() {
     this.destroyListMode$ = new Subject<void>();
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
     if (this.pageMode) {
@@ -507,21 +496,30 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
       this.translate.instant('action.yes')).subscribe((result) => {
       if (result) {
         this.imageService.deleteImage(imageResourceType(image), image.resourceKey, false, {ignoreErrors: true}).pipe(
-          map(() => toImageDeleteResult(image)),
-          catchError((err) => of(toImageDeleteResult(image, err)))
+          map(() => toResourceDeleteResult(image)),
+          catchError((err) => of(toResourceDeleteResult(image, err)))
         ).subscribe(
           (deleteResult) => {
             if (deleteResult.success) {
               this.imageDeleted(itemIndex);
-            } else if (deleteResult.imageIsReferencedError) {
-              this.dialog.open<ImagesInUseDialogComponent, ImagesInUseDialogData,
-                ImageResourceInfo[]>(ImagesInUseDialogComponent, {
+            } else if (deleteResult.resourceIsReferencedError) {
+              const images = [{...image, ...{references: deleteResult.references}}];
+              const data = {
+                multiple: false,
+                resources: images,
+                configuration: {
+                  title: 'image.image-is-in-use',
+                  message: this.translate.instant('image.image-is-in-use-text', {title: images[0].title}),
+                  deleteText: 'image.delete-image-in-use-text',
+                  selectedText: 'image.selected-images',
+                  columns: ['select', 'preview', 'title', 'references']
+                }
+              };
+              this.dialog.open<ResourcesInUseDialogComponent, ResourcesInUseDialogData,
+                ImageResourceInfo[]>(ResourcesInUseDialogComponent, {
                 disableClose: true,
                 panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-                data: {
-                  multiple: false,
-                  images: [{...image, ...{references: deleteResult.references}}]
-                }
+                data
               }).afterClosed().subscribe((images) => {
                 if (images) {
                   this.imageService.deleteImage(imageResourceType(image), image.resourceKey, true).subscribe(
@@ -557,29 +555,38 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         if (result) {
           const tasks = selectedImages.map((image) =>
             this.imageService.deleteImage(imageResourceType(image), image.resourceKey, false, {ignoreErrors: true}).pipe(
-              map(() => toImageDeleteResult(image)),
-              catchError((err) => of(toImageDeleteResult(image, err)))
+              map(() => toResourceDeleteResult(image)),
+              catchError((err) => of(toResourceDeleteResult(image, err)))
             )
           );
           forkJoin(tasks).subscribe(
             (deleteResults) => {
               const anySuccess = deleteResults.some(res => res.success);
-              const referenceErrors = deleteResults.filter(res => res.imageIsReferencedError);
+              const referenceErrors = deleteResults.filter(res => res.resourceIsReferencedError);
               const otherError = deleteResults.find(res => !res.success);
               if (anySuccess) {
                 this.updateData();
               }
               if (referenceErrors?.length) {
-                const imagesWithReferences: ImageResourceInfoWithReferences[] =
-                  referenceErrors.map(ref => ({...ref.image, ...{references: ref.references}}));
-                this.dialog.open<ImagesInUseDialogComponent, ImagesInUseDialogData,
-                  ImageResourceInfo[]>(ImagesInUseDialogComponent, {
+                const imagesWithReferences: ResourceInfoWithReferences[] =
+                  referenceErrors.map(ref => ({...ref.resource, ...{references: ref.references}}));
+                const data = {
+                  multiple: true,
+                  resources: imagesWithReferences,
+                  configuration: {
+                    title: 'image.images-are-in-use',
+                    message: this.translate.instant('image.images-are-in-use-text'),
+                    deleteText: 'image.delete-image-in-use-text',
+                    selectedText: 'image.selected-images',
+                    columns: ['select', 'preview', 'title', 'references'],
+                    datasource: new ImagesDatasource(null, imagesWithReferences, entity => true)
+                  }
+                };
+                this.dialog.open<ResourcesInUseDialogComponent, ResourcesInUseDialogData,
+                  ImageResourceInfo[]>(ResourcesInUseDialogComponent, {
                   disableClose: true,
                   panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-                  data: {
-                    multiple: true,
-                    images: imagesWithReferences
-                  }
+                  data
                 }).afterClosed().subscribe((forceDeleteImages) => {
                   if (forceDeleteImages && forceDeleteImages.length) {
                     const forceDeleteTasks = forceDeleteImages.map((image) =>
@@ -639,11 +646,15 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   rowClick($event, image: ImageResourceInfo) {
-    if (this.selectionMode) {
-      this.selectImage($event, image);
+    if (this.isScada) {
+      this.editImage($event, image);
     } else {
-      if (this.deleteEnabled(image)) {
-        this.dataSource.selection.toggle(image);
+      if (this.selectionMode) {
+        this.selectImage($event, image);
+      } else {
+        if (this.deleteEnabled(image)) {
+          this.dataSource.selection.toggle(image);
+        }
       }
     }
   }

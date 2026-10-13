@@ -1,0 +1,46 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<section [formGroup]="slackConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block flex-1" appearance="outline">
+    <mat-label translate>rule-node-config.message-template</mat-label>
+    <input required matInput formControlName="messageTemplate">
+    @if (slackConfigForm.get('messageTemplate').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.message-template-required' | translate }}
+      </mat-error>
+    }
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-checkbox formControlName="useSystemSettings">
+    {{ 'rule-node-config.use-system-slack-settings' | translate }}
+  </mat-checkbox>
+  @if (!slackConfigForm.get('useSystemSettings').value) {
+    <tb-secret-key-input formControlName="botToken"
+                         required
+                         appearance="outline"
+                         class="mat-block flex-1"
+                         label="{{ 'rule-node-config.slack-api-token' | translate }}"
+                         requiredText="{{ 'rule-node-config.slack-api-token-required' | translate }}">
+    </tb-secret-key-input>
+  }
+  <label class="tb-title">{{ 'notification.slack-chanel-type' | translate }}</label>
+  <mat-radio-group formControlName="conversationType">
+    @for (slackChanelType of slackChanelTypes; track slackChanelType) {
+      <mat-radio-button [value]="slackChanelType">
+        {{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}
+      </mat-radio-button>
+    }
+  </mat-radio-group>
+  <tb-slack-conversation-autocomplete
+    appearance="outline"
+    formControlName="conversation"
+    required
+    [token]="slackConfigForm.get('useSystemSettings').value ? '' : slackConfigForm.get('botToken').value"
+    [slackChanelType]="slackConfigForm.get('conversationType').value">
+  </tb-slack-conversation-autocomplete>
+</section>

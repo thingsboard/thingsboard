@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { pieChartDefaultSettings, PieChartSettings } from '@home/components/widget/lib/chart/pie-chart.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
@@ -122,17 +108,10 @@ export class TbPieChart extends TbLatestChart<PieChartSettings> {
         seriesData.push(
           {id: dataItem.id, value: dataItem.value, name: dataItem.dataKey.label, itemStyle: {color: dataItem.dataKey.color}}
         );
-        if (this.settings.doughnut && enabledDataItems.length > 1) {
-          seriesData.push({
-            value: 0, name: '', itemStyle: {color: 'transparent'}, emphasis: {disabled: true}
-          });
-        }
       }
     }
     if (this.settings.doughnut) {
-      for (let i = 1; i < seriesData.length; i += 2) {
-        seriesData[i].value = this.total / 100;
-      }
+      this.latestChartOption.series[0].padAngle = enabledDataItems.length > 1 ? 2 : 0;
     }
     this.latestChartOption.series[0].data = seriesData;
   }

@@ -1,0 +1,35 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-form-panel no-padding no-border">
+  <div class="tb-form-table tb-additional-map-data-sources">
+    <div class="tb-form-table-header no-padding-right">
+      <div class="tb-form-table-header-cell tb-source-header" translate>widgets.maps.data-layer.source</div>
+      <div class="tb-form-table-header-cell tb-data-keys-header" translate>widgets.maps.data-layer.data-keys</div>
+      <div class="tb-form-table-header-cell tb-actions-header"></div>
+    </div>
+    @if (dataSourcesFormArray().controls.length) {
+      <div class="tb-form-table-body">
+        @for (dataSourceControl of dataSourcesFormArray().controls; track dataSourceControl) {
+          <div>
+            <tb-additional-map-data-source-row class="flex-1"
+                                               [context]="context"
+                                               [formControl]="dataSourceControl"
+                                               (dataSourceRemoved)="removeDataSource($index)">
+            </tb-additional-map-data-source-row>
+          </div>
+        }
+      </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.maps.data-layer.no-datasources' | translate }}</span>
+    }
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addDataSource()">
+      {{ 'widgets.maps.data-layer.add-datasource' | translate }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,85 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-widget-button-custom-style-panel" [formGroup]="customStyleFormGroup">
+  <div class="tb-widget-button-custom-style-title">{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
+  <div class="tb-widget-button-custom-style-panel-content">
+    <div class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide" formControlName="overrideMainColor">
+        {{ 'widgets.button.main' | translate }}
+      </mat-slide-toggle>
+      <tb-color-input asBoxInput
+                      formControlName="mainColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide" formControlName="overrideBackgroundColor">
+        {{ 'widgets.button.background' | translate }}
+      </mat-slide-toggle>
+      <tb-color-input asBoxInput
+                      formControlName="backgroundColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide" formControlName="overrideBorderColor">
+        {{ 'widgets.button.border' | translate }}
+      </mat-slide-toggle>
+      <tb-color-input asBoxInput
+                      formControlName="borderColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-widget-button-custom-style-preview">
+      <div class="tb-widget-button-custom-style-preview-title" translate>
+        widgets.button.preview
+      </div>
+      <tb-widget-button-toggle
+        #widgetButtonTogglePreview
+        [appearance]="previewAppearance"
+        [autoScale]="autoScale"
+        [value]="value"
+        disableEvents
+        [hovered]="state === WidgetButtonToggleState.hovered"
+        [disabled]="state === WidgetButtonToggleState.disabled">
+      </tb-widget-button-toggle>
+    </div>
+  </div>
+  <div class="tb-widget-button-custom-style-panel-buttons">
+    @if (copyFromStates?.length) {
+      <button
+        #copyStyleButton
+        class="tb-nowrap"
+        mat-stroked-button
+        color="primary"
+        type="button"
+        [matMenuTriggerFor]="styleSourcesMenu" [matMenuTriggerData]="{menuWidth: copyStyleButton._elementRef.nativeElement.clientWidth}">
+        {{ 'widgets.button.copy-style-from' | translate }}
+      </button>
+    }
+    <mat-menu #styleSourcesMenu="matMenu">
+      <ng-template matMenuContent let-menuWidth="menuWidth">
+        <div [style.min-width.px]="menuWidth">
+          @for (state of copyFromStates; track state) {
+            <button mat-menu-item (click)="copyStyle(state)">{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</button>
+          }
+        </div>
+      </ng-template>
+    </mat-menu>
+    <span class="flex-1"></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyCustomStyle()"
+            [disabled]="customStyleFormGroup.invalid || !customStyleFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

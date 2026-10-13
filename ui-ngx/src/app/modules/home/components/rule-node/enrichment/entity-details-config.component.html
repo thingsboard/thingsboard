@@ -1,0 +1,25 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="entityDetailsConfigForm">
+  <tb-string-items-list [predefinedValues]="predefinedValues"
+                        class="mat-block" required
+                        appearance="outline"
+                        [label]="'rule-node-config.select-details' | translate"
+                        [placeholder]="'rule-node-config.add-detail' | translate"
+                        [requiredText]="'rule-node-config.entity-details-list-empty' | translate"
+                        formControlName="detailsList">
+    <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+              color="primary"
+              matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.detail' | translate } }}">
+      help
+    </mat-icon>
+  </tb-string-items-list>
+  <tb-msg-metadata-chip
+    [labelText]="'rule-node-config.add-selected-details-to' | translate"
+    formControlName="fetchTo">
+  </tb-msg-metadata-chip>
+</section>

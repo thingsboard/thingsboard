@@ -1,0 +1,57 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../../../../../scss/constants';
+
+.tb-dynamic-form-property-settings-panel {
+  width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-lt-md} {
+    width: 90vw;
+  }
+  .tb-dynamic-form-property-settings-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+    margin: -10px;
+    padding: 10px;
+  }
+  .tb-dynamic-form-property-settings-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-dynamic-form-property-settings-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  .tb-form-row.tb-radios-property {
+    &.direction-column {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .mat-mdc-radio-group {
+      overflow: hidden;
+      .mat-mdc-radio-button {
+        overflow: hidden;
+        .mdc-form-field {
+          overflow: hidden;
+          width: 100%;
+          .mdc-label {
+            overflow: hidden;
+          }
+        }
+      }
+    }
+  }
+}

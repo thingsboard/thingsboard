@@ -1,0 +1,13 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="messageTypeConfigForm">
+  <tb-message-types-config
+    required
+    [label]="'rule-node-config.select-message-types' | translate"
+    formControlName="messageTypes">
+  </tb-message-types-config>
+</section>

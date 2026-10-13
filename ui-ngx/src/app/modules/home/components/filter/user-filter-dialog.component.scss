@@ -1,0 +1,17 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host ::ng-deep {
+  .numeric-field {
+    &.mat-mdc-form-field-has-icon-suffix.mat-form-field-hide-placeholder {
+      .mat-mdc-form-field-icon-suffix {
+        place-self: center;
+      }
+    }
+
+    &.mat-mdc-form-field-has-icon-suffix {
+      .mat-mdc-form-field-icon-suffix {
+        place-self: baseline;
+      }
+    }
+  }
+}

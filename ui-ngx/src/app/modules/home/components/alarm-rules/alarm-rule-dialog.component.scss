@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+.calculated-field-dialog-container {
+  width: 869px;
+  max-width: 100%;
+
+  .tb-disabled {
+    color: rgba(0, 0, 0, 0.38);
+  }
+}
+
+.clear-alarm-rule {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-left-width: 4px;
+  border-left-color: green;
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 0;
+}
+
+.button-icon {
+  color: rgba(0, 0, 0, 0.38);
+  min-width: 40px;
+}

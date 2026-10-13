@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AlarmAction,
   AlarmActionTranslationMap,
@@ -68,18 +55,21 @@ import {
 } from '@shared/models/api-usage.models';
 import { LimitedApi, LimitedApiTranslationMap } from '@shared/models/limited-api.models';
 import { StringItemsOption } from '@shared/components/string-items-list.component';
+import { IntegrationType, integrationTypeInfoMap } from '@shared/models/integration.models';
 import { EdgeConnectionEvent, EdgeConnectionEventTranslationMap } from '@shared/models/edge.models';
 
 export interface RuleNotificationDialogData {
   rule?: NotificationRule;
   isAdd?: boolean;
   isCopy?: boolean;
+  readonly?: boolean;
 }
 
 @Component({
-  selector: 'tb-rule-notification-dialog',
-  templateUrl: './rule-notification-dialog.component.html',
-  styleUrls: ['rule-notification-dialog.component.scss']
+    selector: 'tb-rule-notification-dialog',
+    templateUrl: './rule-notification-dialog.component.html',
+    styleUrls: ['rule-notification-dialog.component.scss'],
+    standalone: false
 })
 export class RuleNotificationDialogComponent extends
   DialogComponent<RuleNotificationDialogComponent, NotificationRule> implements OnDestroy {
@@ -97,11 +87,13 @@ export class RuleNotificationDialogComponent extends
   ruleEngineEventsTemplateForm: FormGroup;
   entitiesLimitTemplateForm: FormGroup;
   apiUsageLimitTemplateForm: FormGroup;
+  integrationEventsTemplateForm: FormGroup;
   newPlatformVersionTemplateForm: FormGroup;
   rateLimitsTemplateForm: FormGroup;
   edgeCommunicationFailureTemplateForm: FormGroup;
   edgeConnectionTemplateForm: FormGroup;
   taskProcessingFailureTemplateForm: FormGroup;
+  resourceUsageShortageTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[];
@@ -141,6 +133,9 @@ export class RuleNotificationDialogComponent extends
 
   limitedApis: StringItemsOption[];
 
+  integrationTypes: IntegrationType[] = Object.values(IntegrationType);
+  integrationTypeInfoMap = integrationTypeInfoMap;
+
   entityType = EntityType;
   isAdd = true;
 
@@ -150,7 +145,12 @@ export class RuleNotificationDialogComponent extends
     EntityType.CUSTOMER,
     EntityType.USER,
     EntityType.DASHBOARD,
-    EntityType.RULE_CHAIN
+    EntityType.RULE_CHAIN,
+    EntityType.INTEGRATION,
+    EntityType.CONVERTER,
+    EntityType.SCHEDULER_EVENT,
+    EntityType.AGENT,
+    EntityType.AGENT_APPLICATION
   ];
 
   selectedIndex = 0;
@@ -315,7 +315,7 @@ export class RuleNotificationDialogComponent extends
     this.entitiesLimitTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
         entityTypes: [],
-        threshold: [.8, [Validators.min(0), Validators.max(1)]]
+        threshold: [80, [Validators.min(0), Validators.max(100)]]
       })
     });
 
@@ -324,6 +324,28 @@ export class RuleNotificationDialogComponent extends
         apiFeatures: [[]],
         notifyOn: [[ApiUsageStateValue.WARNING], Validators.required]
       })
+    });
+
+    this.integrationEventsTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        filterByIntegration: [false],
+        integrationTypes: [[]],
+        integrations: [{value: null, disabled: true}],
+        notifyOn: [[ComponentLifecycleEvent.STOPPED], Validators.required],
+        onlyOnError: [false]
+      })
+    });
+
+    this.integrationEventsTemplateForm.get('triggerConfig.filterByIntegration').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.integrationEventsTemplateForm.get('triggerConfig.integrations').enable({emitEvent: false});
+        this.integrationEventsTemplateForm.get('triggerConfig.integrationTypes').disable({emitEvent: false});
+      } else {
+        this.integrationEventsTemplateForm.get('triggerConfig.integrationTypes').enable({emitEvent: false});
+        this.integrationEventsTemplateForm.get('triggerConfig.integrations').disable({emitEvent: false});
+      }
     });
 
     this.newPlatformVersionTemplateForm = this.fb.group({
@@ -344,6 +366,14 @@ export class RuleNotificationDialogComponent extends
       })
     });
 
+    this.resourceUsageShortageTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        cpuThreshold: [80, [Validators.min(0), Validators.max(100)]],
+        ramThreshold: [80, [Validators.min(0), Validators.max(100)]],
+        storageThreshold: [80, [Validators.min(0), Validators.max(100)]]
+      })
+    });
+
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],
       [TriggerType.ALARM_COMMENT, this.alarmCommentTemplateForm],
@@ -353,11 +383,13 @@ export class RuleNotificationDialogComponent extends
       [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, this.ruleEngineEventsTemplateForm],
       [TriggerType.ENTITIES_LIMIT, this.entitiesLimitTemplateForm],
       [TriggerType.API_USAGE_LIMIT, this.apiUsageLimitTemplateForm],
+      [TriggerType.INTEGRATION_LIFECYCLE_EVENT, this.integrationEventsTemplateForm],
       [TriggerType.NEW_PLATFORM_VERSION, this.newPlatformVersionTemplateForm],
       [TriggerType.RATE_LIMITS, this.rateLimitsTemplateForm],
       [TriggerType.EDGE_COMMUNICATION_FAILURE, this.edgeCommunicationFailureTemplateForm],
       [TriggerType.EDGE_CONNECTION, this.edgeConnectionTemplateForm],
-      [TriggerType.TASK_PROCESSING_FAILURE, this.taskProcessingFailureTemplateForm]
+      [TriggerType.TASK_PROCESSING_FAILURE, this.taskProcessingFailureTemplateForm],
+      [TriggerType.RESOURCES_SHORTAGE, this.resourceUsageShortageTemplateForm]
     ]);
 
     if (data.isAdd || data.isCopy) {
@@ -380,6 +412,24 @@ export class RuleNotificationDialogComponent extends
         this.deviceInactivityTemplateForm.get('triggerConfig.filterByDevice')
           .patchValue(!!this.ruleNotification.triggerConfig.devices, {onlySelf: true});
       }
+      if (this.ruleNotification.triggerType === TriggerType.ENTITIES_LIMIT) {
+        this.entitiesLimitTemplateForm.get('triggerConfig.threshold').patchValue(this.ruleNotification.triggerConfig.threshold * 100, {emitEvent: false});
+      }
+      if (this.ruleNotification.triggerType === TriggerType.RESOURCES_SHORTAGE) {
+        this.resourceUsageShortageTemplateForm.get('triggerConfig.cpuThreshold').patchValue(this.ruleNotification.triggerConfig.cpuThreshold * 100, {emitEvent: false});
+        this.resourceUsageShortageTemplateForm.get('triggerConfig.ramThreshold').patchValue(this.ruleNotification.triggerConfig.ramThreshold * 100, {emitEvent: false});
+        this.resourceUsageShortageTemplateForm.get('triggerConfig.storageThreshold').patchValue(this.ruleNotification.triggerConfig.storageThreshold * 100, {emitEvent: false});
+      }
+      if (this.ruleNotification.triggerType === TriggerType.INTEGRATION_LIFECYCLE_EVENT) {
+        this.integrationEventsTemplateForm.get('triggerConfig.filterByIntegration')
+          .patchValue(!!this.ruleNotification.triggerConfig.integrations, {onlySelf: true});
+      }
+    }
+
+    if(data?.readonly) {
+      this.dialogTitle = 'notification.view-rule';
+      this.ruleNotificationForm.disable({emitEvent: false});
+      Array.from(this.triggerTypeFormsMap.values()).map(form => form.disable({emitEvent: false}));
     }
   }
 
@@ -415,7 +465,7 @@ export class RuleNotificationDialogComponent extends
     return 'action.next';
   }
 
-  private get maxStepperIndex(): number {
+  get maxStepperIndex(): number {
     return this.addNotificationRule?._steps?.length - 1;
   }
 
@@ -427,6 +477,17 @@ export class RuleNotificationDialogComponent extends
       Object.assign(formValue, currentForm.value);
       if (triggerType === TriggerType.DEVICE_ACTIVITY) {
         delete formValue.triggerConfig.filterByDevice;
+      }
+      if (triggerType === TriggerType.ENTITIES_LIMIT) {
+        formValue.triggerConfig.threshold = formValue.triggerConfig.threshold / 100;
+      }
+      if (triggerType === TriggerType.RESOURCES_SHORTAGE) {
+        formValue.triggerConfig.cpuThreshold = formValue.triggerConfig.cpuThreshold / 100;
+        formValue.triggerConfig.ramThreshold = formValue.triggerConfig.ramThreshold / 100;
+        formValue.triggerConfig.storageThreshold = formValue.triggerConfig.storageThreshold / 100;
+      }
+      if (triggerType === TriggerType.INTEGRATION_LIFECYCLE_EVENT) {
+        delete formValue.triggerConfig.filterByIntegration;
       }
       formValue.recipientsConfig.triggerType = triggerType;
       formValue.triggerConfig.triggerType = triggerType;
@@ -483,8 +544,7 @@ export class RuleNotificationDialogComponent extends
   }
 
   formatLabel(value: number): string {
-    const formatValue = (value * 100).toFixed();
-    return `${formatValue}%`;
+    return `${value}%`;
   }
 
   private isSysAdmin(): boolean {
@@ -497,7 +557,8 @@ export class RuleNotificationDialogComponent extends
       TriggerType.API_USAGE_LIMIT,
       TriggerType.NEW_PLATFORM_VERSION,
       TriggerType.RATE_LIMITS,
-      TriggerType.TASK_PROCESSING_FAILURE
+      TriggerType.TASK_PROCESSING_FAILURE,
+      TriggerType.RESOURCES_SHORTAGE
     ]);
 
     if (this.isSysAdmin()) {
@@ -515,7 +576,12 @@ export class RuleNotificationDialogComponent extends
         EntityType.QUEUE,
         EntityType.NOTIFICATION,
         EntityType.NOTIFICATION_REQUEST,
-        EntityType.WIDGET_TYPE
+        EntityType.WIDGET_TYPE,
+        EntityType.GROUP_PERMISSION,
+        EntityType.AGENT_APPLICATION,
+        EntityType.AGENT_APP_EVENT,
+        EntityType.AGENT_APP_UNIT,
+        EntityType.AGENT_BULK_ACTION
       ]);
       this._allowEntityTypeForEntityAction = Object.values(EntityType).filter(type => !excludeEntityType.has(type));
     }

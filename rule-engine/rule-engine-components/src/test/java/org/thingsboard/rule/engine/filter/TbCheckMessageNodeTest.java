@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.filter;
 
 import org.junit.jupiter.api.AfterEach;
@@ -44,7 +31,12 @@ import static org.mockito.Mockito.verify;
 class TbCheckMessageNodeTest {
 
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
+            .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+            .originator(DEVICE_ID)
+            .copyMetaData(TbMsgMetaData.EMPTY)
+            .data(TbMsg.EMPTY_JSON_OBJECT)
+            .build();
 
     private TbCheckMessageNode node;
 
@@ -196,7 +188,12 @@ class TbCheckMessageNodeTest {
         metadata.putValue(DataConstants.DEVICE_NAME, "Test Device");
         metadata.putValue(DataConstants.DEVICE_TYPE, DataConstants.DEFAULT_DEVICE_TYPE);
         metadata.putValue("ts", String.valueOf(System.currentTimeMillis()));
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, metadata, data);
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metadata)
+                .data(data)
+                .build();
     }
 
 }

@@ -1,162 +1,134 @@
-Here is the list of commands, that can be used to quickly install ThingsBoard Edge on RHEL/CentOS 7/8 and connect to the server.
+Here is the list of commands that can be used to quickly install ThingsBoard Edge on RHEL/CentOS 9/10 and connect to the server.
+
+**Note:** OpenJDK 25 requires RHEL/CentOS 9+ or RHEL/CentOS 10+. Earlier versions (RHEL/CentOS 7, 8) are not supported.
 
 #### Prerequisites
-Before continue to installation execute the following commands in order to install necessary tools:
+Before continuing to installation, execute the following commands to install the necessary tools:
 
 ```bash
-sudo yum install -y nano wget
-sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-```
-
-#### Install Java 17 (OpenJDK)
-ThingsBoard service is running on Java 17. Follow these instructions to install OpenJDK 17:
-
-```bash
-sudo yum install java-17-openjdk
+sudo dnf install -y nano wget
 {:copy-code}
 ```
 
-Please don't forget to configure your operating system to use OpenJDK 17 by default.
-You can configure which version is the default using the following command:
+#### Step 1. Install Java 25 (OpenJDK)
+ThingsBoard service is running on Java 25. To install OpenJDK 25, follow these instructions:
+
+```bash
+sudo dnf install -y java-25-openjdk
+{:copy-code}
+```
+
+Configure your operating system to use OpenJDK 25 by default. You can configure the default version by running the following command:
 
 ```bash
 sudo update-alternatives --config java
 {:copy-code}
 ```
 
-You can check the installation using the following command:
+To check the installed Java version on your system, use the following command:
 
 ```bash
 java -version
 {:copy-code}
 ```
 
-Expected command output is:
+The expected result is:
 
 ```text
-openjdk version "17.x.xx"
+openjdk version "25.x.xx"
 OpenJDK Runtime Environment (...)
 OpenJDK 64-Bit Server VM (build ...)
 ```
 
-#### Configure PostgreSQL
-ThingsBoard Edge uses PostgreSQL database as a local storage.
-Instructions listed below will help you to install PostgreSQL.
+#### Step 2. Configure ThingsBoard Edge Database
+
+ThingsBoard Edge supports **SQL** and **hybrid** database configurations.
+In this guide, we'll use an **SQL** database.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/pe/edge/rhel/#step-2-configure-thingsboard-database" target="_blank">ThingsBoard documentation site</a>.
+
+To install the PostgreSQL database, run these commands:
+
+Update your system:
 
 ```bash
 # Update your system
-sudo yum update
+sudo dnf update
 {:copy-code}
 ```
 
-**For CentOS 7:**
+Install the repository RPM:
+
+* **For RHEL/CentOS 9:**
 
 ```bash
-# Install the repository RPM (for CentOS 7):
-sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-# Install packages
-sudo yum -y install epel-release yum-utils
-sudo yum-config-manager --enable pgdg15
-sudo yum install postgresql15-server postgresql15
-# Initialize your PostgreSQL DB
-sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
-sudo systemctl start postgresql-15
-# Optional: Configure PostgreSQL to start on boot
-sudo systemctl enable --now postgresql-15
-
+# Install the repository RPM (for RHEL/CentOS 9):
+sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 {:copy-code}
 ```
 
-**For CentOS 8:**
+* **For RHEL/CentOS 10:**
 
 ```bash
-# Install the repository RPM (for CentOS 8):
-sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-# Install packages
-sudo dnf -qy module disable postgresql
-sudo dnf -y install postgresql15 postgresql15-server
-# Initialize your PostgreSQL DB
-sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
-sudo systemctl start postgresql-15
-# Optional: Configure PostgreSQL to start on boot
-sudo systemctl enable --now postgresql-15
-
+# Install the repository RPM (for RHEL/CentOS 10):
+sudo dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 {:copy-code}
 ```
 
-Once PostgreSQL is installed you may want to create a new user or set the password for the main user.
-The instructions below will help to set the password for main PostgreSQL user:
-
-```text
-sudo su - postgres
-psql
-\password
-\q
-```
-
-Then, press "Ctrl+D" to return to main user console.
-
-After configuring the password, edit the pg_hba.conf to use MD5 authentication with the postgres user.
-
-Edit pg_hba.conf file:
+Install packages and initialize PostgreSQL. The PostgreSQL service will automatically start every time the system boots up.
 
 ```bash
-sudo nano /var/lib/pgsql/15/data/pg_hba.conf
+sudo dnf -qy module disable postgresql && \
+sudo dnf -y install postgresql16 postgresql16-server postgresql16-contrib && \
+sudo /usr/pgsql-16/bin/postgresql-16-setup initdb && \
+sudo systemctl enable --now postgresql-16
 {:copy-code}
 ```
 
-Locate the following lines:
+Once PostgreSQL is installed, it is recommended to set the password for the PostgreSQL main user.
 
-```text
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            ident
-```
-
-Replace `ident` with `md5`:
-
-```text
-host    all             all             127.0.0.1/32            md5
-```
-
-Finally, you should restart the PostgreSQL service to initialize the new configuration:
+The following command will switch the current user to the PostgreSQL user and set the password directly in PostgreSQL.
 
 ```bash
-sudo systemctl restart postgresql-15.service
+sudo -u postgres psql -c "\password"
 {:copy-code}
 ```
 
-Connect to the database to create ThingsBoard Edge DB:
+Then, enter and confirm the password.
+
+Since ThingsBoard Edge uses the PostgreSQL database for local storage, configuring MD5 authentication ensures that only authenticated users or applications can access the database, thus protecting your data.
+After configuring the password, edit the pg_hba.conf file to use MD5 hashing for authentication instead of the default method (ident) for local IPv4 connections.
+
+To replace ident with md5, run the following command:
 
 ```bash
-psql -U postgres -d postgres -h 127.0.0.1 -W
+sudo sed -i 's/^host\s\+all\s\+all\s\+127\.0\.0\.1\/32\s\+ident/host    all             all             127.0.0.1\/32            md5/' /var/lib/pgsql/16/data/pg_hba.conf
 {:copy-code}
 ```
 
-Execute create database statement:
+Then run the command that will restart the PostgreSQL service to apply configuration changes, connect to the database as a postgres user, and create the ThingsBoard Edge database (tb_edge). To connect to the PostgreSQL database, enter the PostgreSQL password.
 
 ```bash
-CREATE DATABASE tb_edge;
-\q
+sudo systemctl restart postgresql-16.service && psql -U postgres -d postgres -h 127.0.0.1 -W -c "CREATE DATABASE tb_edge;"
 {:copy-code}
 ```
 
-#### ThingsBoard Edge service installation
+#### Step 3. ThingsBoard Edge Service Installation
 Download installation package:
 
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.rpm
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.rpm
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}.rpm
+sudo rpm -Uvh tb-edge-${TB_EDGE_TAG}pe.rpm
 {:copy-code}
 ```
 
-#### Configure ThingsBoard Edge
-To configure ThingsBoard Edge, you  can use the following command to automatically update the configuration file with specific values:
+#### Step 4. Configure ThingsBoard Edge
+To configure ThingsBoard Edge, you can use the following command to automatically update the configuration file with specific values:
 
 ```bash
 sudo sh -c 'cat <<EOL >> /etc/tb-edge/conf/tb-edge.conf
@@ -169,27 +141,22 @@ EOL'
 {:copy-code}
 ```
 
-##### [Optional] Database Configuration
-In case you changed default PostgreSQL datasource settings (**postgres**/**postgres**) please update the configuration file (**/etc/tb-edge/conf/tb-edge.conf**) with your actual values:
+##### [Optional] Configure PostgreSQL Connection
+If you changed PostgreSQL default datasource settings, use the following command:
 
 ```bash
-sudo nano /etc/tb-edge/conf/tb-edge.conf
-{:copy-code}
-```
-
-Please update the following lines in your configuration file. Make sure **to replace**:
-- Replace 'postgres' with your actual PostgreSQL username;
-- Replace 'PUT_YOUR_POSTGRESQL_PASSWORD_HERE' with your actual PostgreSQL password.
-
-```bash
+sudo sh -c 'cat <<EOL >> /etc/tb-edge/conf/tb-edge.conf
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/tb_edge
 export SPRING_DATASOURCE_USERNAME=postgres
-export SPRING_DATASOURCE_PASSWORD=PUT_YOUR_POSTGRESQL_PASSWORD_HERE
+export SPRING_DATASOURCE_PASSWORD=<PUT_YOUR_POSTGRESQL_PASSWORD_HERE>
+EOL'
 {:copy-code}
 ```
 
-##### [Optional] Update bind ports
-If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update configuration parameters to avoid port collision between ThingsBoard server and ThingsBoard Edge.
+* **PUT_YOUR_POSTGRESQL_PASSWORD_HERE**: Replace with your actual **PostgreSQL user password**.
+
+##### [Optional] Update Bind Ports
+If ThingsBoard Edge runs on the same machine as the ThingsBoard Server, you need to update the port configuration to avoid conflicts between the two services.
 
 Please execute the following command to update ThingsBoard Edge configuration file (**/etc/tb-edge/conf/tb-edge.conf**):
 
@@ -200,32 +167,31 @@ export MQTT_BIND_PORT=11883
 export COAP_BIND_PORT=15683
 export LWM2M_ENABLED=false
 export SNMP_ENABLED=false
+export INTEGRATIONS_RPC_PORT=19090
 EOL'
 {:copy-code}
 ```
 
-Make sure that ports above (18080, 11883, 15683) are not used by any other application.
+Make sure that ports **18080**, **11883**, and **15683–15688** are not being used by any other applications.
 
-#### Run installation script
-Once ThingsBoard Edge is installed and configured please execute the following install script:
+#### Step 5. Run Installation Script
+
+Once ThingsBoard Edge is installed and configured, please execute the following install script:
 
 ```bash
 sudo /usr/share/tb-edge/bin/install/install.sh
 {:copy-code}
 ```
 
-#### Restart ThingsBoard Edge service
+#### Step 6. Start ThingsBoard Edge Service
 
 ```bash
-sudo service tb-edge restart
+sudo service tb-edge start
 {:copy-code}
 ```
 
-#### Open ThingsBoard Edge UI
+#### Step 7. Open ThingsBoard Edge UI
 
-Once started, you will be able to open **ThingsBoard Edge UI** using the following link http://localhost:8080.
+Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-###### NOTE: Edge HTTP bind port update
-
-Use next **ThingsBoard Edge UI** link **http://localhost:18080** if you updated HTTP 8080 bind port to **18080**.
-
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Cloud**.

@@ -1,0 +1,18 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="duplicateToGroupConfigForm" class="tb-form-panel stroked">
+  <div class="tb-form-row no-border no-padding"
+    tb-hint-tooltip-icon="{{ 'rule-node-config.entity-group-is-message-originator-hint' | translate }}">
+    <mat-slide-toggle class="mat-slide" formControlName="entityGroupIsMessageOriginator">
+      {{ 'rule-node-config.entity-group-is-message-originator' | translate }}
+    </mat-slide-toggle>
+  </div>
+  @if (!duplicateToGroupConfigForm.get('entityGroupIsMessageOriginator').value) {
+    <tb-target-entity
+    [isTypeSelected]="isTypeSelected" formControlName="entityGroupId"></tb-target-entity>
+  }
+</section>

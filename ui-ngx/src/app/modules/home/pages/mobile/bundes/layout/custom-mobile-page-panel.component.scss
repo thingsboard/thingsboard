@@ -1,0 +1,36 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../scss/constants';
+
+.tb-custom-mobile-page-panel {
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-lt-md} {
+    width: 90vw;
+  }
+  .tb-custom-mobile-page-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-custom-mobile-page-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+    margin: -10px;
+    padding: 10px;
+  }
+  .tb-custom-mobile-page-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+}

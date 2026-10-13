@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -20,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.7.1-SNAPSHOT</version>
+        <version>4.4.0.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -28,14 +18,13 @@
 
     <name>ThingsBoard Server Application</name>
     <url>https://thingsboard.io</url>
-    <description>Open-source IoT Platform - Device management, data collection, processing and visualization
+    <description>ThingsBoard: IoT Platform - Device management, data collection, processing and visualization
     </description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/..</main.dir>
         <pkg.type>java</pkg.type>
-        <pkg.disabled>false</pkg.disabled>
         <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.name>thingsboard</pkg.name>
@@ -58,6 +47,10 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
+            <artifactId>agent-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
             <artifactId>util</artifactId>
         </dependency>
         <dependency>
@@ -71,6 +64,58 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>version-control</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>integration-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>cluster-integration-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>http-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>mqtt-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>gcloud-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>aws-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>opcua-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>azure-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>kafka-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>rabbitmq-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>apache-pulsar</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>coap-integrations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common.integration</groupId>
+            <artifactId>tuya-integrations</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.rule-engine</groupId>
@@ -123,6 +168,22 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>edge-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>edqs</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>discovery-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>report</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.ai</groupId>
+            <artifactId>common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
@@ -178,8 +239,8 @@
             <artifactId>jjwt</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.freemarker</groupId>
-            <artifactId>freemarker</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-freemarker</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -286,6 +347,11 @@
         <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>rest-client</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.client</groupId>
+            <artifactId>thingsboard-pe-client</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -343,8 +409,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.javadelight</groupId>
-            <artifactId>delight-nashorn-sandbox</artifactId>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>netty-mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.fusesource.jansi</groupId>
+            <artifactId>jansi</artifactId>
+            <version>1.8</version>
         </dependency>
         <dependency>
             <groupId>org.passay</groupId>
@@ -355,8 +426,17 @@
             <artifactId>uap-java</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sqs</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.milo</groupId>
+            <artifactId>sdk-server</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -374,6 +454,55 @@
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-recaptchaenterprise</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.rocksdb</groupId>
+            <artifactId>rocksdbjni</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-azure-open-ai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-google-genai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-mistral-ai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-anthropic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-bedrock</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai-official</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -397,6 +526,10 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
@@ -406,6 +539,7 @@
                 <configuration>
                     <systemPropertyVariables>
                         <spring.config.name>thingsboard</spring.config.name>
+                        <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
                     <excludes>
                         <exclude>**/nosql/*Test.java</exclude>
@@ -419,10 +553,35 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <!-- extensions/ is on LOADER_PATH and must exist in every package; the marker file is
+                         what carries the otherwise empty directory into the deb, rpm and Windows artifacts. -->
+                    <execution>
+                        <id>copy-extensions</id>
+                        <phase>${pkg.process-resources.phase}</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/extensions</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/extensions</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-winsw-service</id>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -441,10 +600,6 @@
                 <artifactId>maven-assembly-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
             </plugin>
@@ -452,16 +607,132 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-    <repositories>
-        <repository>
-            <id>jenkins</id>
-            <name>Jenkins Repository</name>
-            <url>https://repo.jenkins-ci.org/releases</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+    <profiles>
+        <profile>
+            <id>openapi-spec</id>
+            <properties>
+                <pkg.disabled>true</pkg.disabled>
+                <pkg.package.phase>none</pkg.package.phase>
+                <pkg.process-resources.phase>none</pkg.process-resources.phase>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <!-- Reserve free ephemeral ports so concurrent openapi-spec builds (and orphaned
+                                 forks from prior failed builds) on the same CI agent don't collide on fixed ports. -->
+                            <execution>
+                                <id>reserve-openapi-ports</id>
+                                <phase>initialize</phase>
+                                <goals><goal>reserve-network-port</goal></goals>
+                                <configuration>
+                                    <portNames>
+                                        <portName>jmx.port</portName>
+                                        <portName>http.port</portName>
+                                    </portNames>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>org.thingsboard.server.ThingsboardServerApplication</mainClass>
+                            <jmxPort>${jmx.port}</jmxPort>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-info</id>
+                                <goals><goal>build-info</goal></goals>
+                                <configuration>
+                                    <skip>false</skip>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>openapi-start</id>
+                                <goals><goal>start</goal></goals>
+                                <configuration>
+                                    <skip>false</skip>
+                                    <useTestClasspath>true</useTestClasspath>
+                                    <jvmArguments>-Xmx1024m</jvmArguments>
+                                    <arguments>
+                                        <argument>--spring.config.name=thingsboard</argument>
+                                        <argument>--spring.profiles.active=openapi</argument>
+                                        <argument>--server.port=${http.port}</argument>
+                                    </arguments>
+                                    <maxAttempts>180</maxAttempts>
+                                    <wait>2000</wait>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>openapi-stop</id>
+                                <goals><goal>stop</goal></goals>
+                                <configuration>
+                                    <skip>false</skip>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.springdoc</groupId>
+                        <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <id>generate-openapi-spec</id>
+                                <goals><goal>generate</goal></goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <apiDocsUrl>http://localhost:${http.port}/v3/api-docs/thingsboard</apiDocsUrl>
+                            <outputFileName>openapi.json</outputFileName>
+                            <outputDir>${project.build.directory}</outputDir>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>verify-openapi-spec-generated</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireFilesExist>
+                                            <files>
+                                                <file>${project.build.directory}/openapi.json</file>
+                                            </files>
+                                            <message>OpenAPI spec was not generated — target/openapi.json is missing. The springdoc-openapi-maven-plugin logs HTTP failures but does not fail the build; scan the log above for "An error has occured" or a 5xx response from /v3/api-docs/thingsboard and fix the underlying issue (e.g. duplicate @Schema names rejected by SwaggerConfiguration).</message>
+                                        </requireFilesExist>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

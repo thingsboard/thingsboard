@@ -1,24 +1,11 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { TranslateService } from '@ngx-translate/core';
 
 export interface RateLimits {
-  value: string;
-  time: string;
+  value: number;
+  time: number;
 }
 
 export enum RateLimitsType {
@@ -37,15 +24,27 @@ export enum RateLimitsType {
   TENANT_SERVER_REST_LIMITS_CONFIGURATION = 'TENANT_SERVER_REST_LIMITS_CONFIGURATION',
   CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION = 'CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION',
   WS_UPDATE_PER_SESSION_RATE_LIMIT = 'WS_UPDATE_PER_SESSION_RATE_LIMIT',
-  CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION = 'CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION',
+  CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS = 'CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS',
+  CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS = 'CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS',
+  CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS = 'CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS',
+  CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS = 'CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS',
   TENANT_ENTITY_EXPORT_RATE_LIMIT = 'TENANT_ENTITY_EXPORT_RATE_LIMIT',
   TENANT_ENTITY_IMPORT_RATE_LIMIT = 'TENANT_ENTITY_IMPORT_RATE_LIMIT',
   TENANT_NOTIFICATION_REQUEST_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUEST_RATE_LIMIT',
   TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT',
+  INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT = 'INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT',
+  INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT = 'INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT',
+  INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT = 'INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT',
   EDGE_EVENTS_RATE_LIMIT = 'EDGE_EVENTS_RATE_LIMIT',
   EDGE_EVENTS_PER_EDGE_RATE_LIMIT = 'EDGE_EVENTS_PER_EDGE_RATE_LIMIT',
   EDGE_UPLINK_MESSAGES_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_RATE_LIMIT',
-  EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT'
+  EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT',
+  AGENT_EVENTS_RATE_LIMIT = 'AGENT_EVENTS_RATE_LIMIT',
+  AGENT_EVENTS_PER_AGENT_RATE_LIMIT = 'AGENT_EVENTS_PER_AGENT_RATE_LIMIT',
+  AGENT_LOG_CHUNKS_RATE_LIMIT = 'AGENT_LOG_CHUNKS_RATE_LIMIT',
+  AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT = 'AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT',
+  CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT = 'CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT',
+  AI_CHAT_REQUESTS = 'AI_CHAT_REQUESTS'
 }
 
 export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
@@ -65,15 +64,27 @@ export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
     [RateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rest-requests-for-tenant'],
     [RateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.customer-rest-limits'],
     [RateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT, 'tenant-profile.ws-limit-updates-per-session'],
-    [RateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION, 'tenant-profile.cassandra-tenant-limits-configuration'],
+    [RateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS, 'tenant-profile.cassandra-write-tenant-core-limits-configuration'],
+    [RateLimitsType.CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS, 'tenant-profile.cassandra-read-tenant-core-limits-configuration'],
+    [RateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS, 'tenant-profile.cassandra-write-tenant-rule-engine-limits-configuration'],
+    [RateLimitsType.CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS, 'tenant-profile.cassandra-read-tenant-rule-engine-limits-configuration'],
     [RateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT, 'tenant-profile.tenant-entity-export-rate-limit'],
     [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.tenant-entity-import-rate-limit'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT, 'tenant-profile.tenant-notification-request-rate-limit'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.tenant-notification-requests-per-rule-rate-limit'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT, 'tenant-profile.integration-msgs-per-tenant-rate-limit'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT, 'tenant-profile.integration-msgs-per-device-rate-limit'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT, 'tenant-profile.integration-msgs-per-asset-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-per-edge-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-per-edge-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.agent-events-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.agent-events-per-agent-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_RATE_LIMIT, 'tenant-profile.rate-limits.agent-log-chunks-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.agent-log-chunks-per-agent-rate-limit'],
+    [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.calculated-field-debug-event-rate-limit'],
+    [RateLimitsType.AI_CHAT_REQUESTS, 'tenant-profile.rate-limits.ai-chat-requests-rate-limit'],
   ]
 );
 
@@ -94,15 +105,27 @@ export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, strin
     [RateLimitsType.GATEWAY_DEVICE_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.edit-transport-gateway-device-telemetry-data-points-title'],
     [RateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.edit-customer-rest-limits-title'],
     [RateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT, 'tenant-profile.rate-limits.edit-ws-limit-updates-per-session-title'],
-    [RateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.edit-cassandra-tenant-limits-configuration-title'],
+    [RateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_CORE_RATE_LIMITS, 'tenant-profile.rate-limits.edit-cassandra-write-tenant-core-limits-configuration'],
+    [RateLimitsType.CASSANDRA_READ_QUERY_TENANT_CORE_RATE_LIMITS, 'tenant-profile.rate-limits.edit-cassandra-read-tenant-core-limits-configuration'],
+    [RateLimitsType.CASSANDRA_WRITE_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS, 'tenant-profile.rate-limits.edit-cassandra-write-tenant-rule-engine-limits-configuration'],
+    [RateLimitsType.CASSANDRA_READ_QUERY_TENANT_RULE_ENGINE_RATE_LIMITS, 'tenant-profile.rate-limits.edit-cassandra-read-tenant-rule-engine-limits-configuration'],
     [RateLimitsType.TENANT_ENTITY_EXPORT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-entity-export-rate-limit-title'],
     [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-entity-import-rate-limit-title'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-request-rate-limit-title'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-requests-per-rule-rate-limit-title'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_TENANT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-integration-msgs-per-tenant-rate-limit-title'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_DEVICE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-integration-msgs-per-device-rate-limit-title'],
+    [RateLimitsType.INTEGRATION_MSGS_PER_ASSET_RATE_LIMIT, 'tenant-profile.rate-limits.edit-integration-msgs-per-asset-rate-limit-title'],
     [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-per-edge-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-rate-limit'],
     [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-per-edge-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-events-rate-limit'],
+    [RateLimitsType.AGENT_EVENTS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-events-per-agent-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-log-chunks-rate-limit'],
+    [RateLimitsType.AGENT_LOG_CHUNKS_PER_AGENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-agent-log-chunks-per-agent-rate-limit'],
+    [RateLimitsType.CALCULATED_FIELD_DEBUG_EVENT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-calculated-field-debug-event-rate-limit'],
+    [RateLimitsType.AI_CHAT_REQUESTS, 'tenant-profile.rate-limits.edit-ai-chat-requests-rate-limit']
   ]
 );
 
@@ -110,11 +133,11 @@ export function stringToRateLimitsArray(rateLimits: string): Array<RateLimits> {
   const result: Array<RateLimits> = [];
   if (rateLimits?.length > 0) {
     const rateLimitsArrays = rateLimits.split(',');
-    for (let i = 0; i < rateLimitsArrays.length; i++) {
-      const [value, time] = rateLimitsArrays[i].split(':');
+    for (const limit of rateLimitsArrays) {
+      const [value, time] = limit.split(':');
       const rateLimitControl = {
-        value,
-        time
+        value: Number(value),
+        time: Number(time)
       };
       result.push(rateLimitControl);
     }
@@ -125,7 +148,7 @@ export function stringToRateLimitsArray(rateLimits: string): Array<RateLimits> {
 export function rateLimitsArrayToString(rateLimits: Array<RateLimits>): string {
   let result = '';
   for (let i = 0; i < rateLimits.length; i++) {
-    result = result.concat(rateLimits[i].value, ':', rateLimits[i].time);
+    result = result.concat(rateLimits[i].value.toString(), ':', rateLimits[i].time.toString());
     if ((rateLimits.length > 1) && (i !== rateLimits.length - 1)) {
       result = result.concat(',');
     }
@@ -140,8 +163,8 @@ export function rateLimitsArrayToHtml(translate: TranslateService, rateLimitsArr
   });
   let result: string;
   if (rateLimitsHtml.length > 1) {
-    const butLessThanText = translate.instant('tenant-profile.rate-limits.but-less-than');
-    result = rateLimitsHtml.join(' <span class="disabled">' + butLessThanText + '</span> ');
+    const andAlsoText = translate.instant('tenant-profile.rate-limits.and-also-less-than');
+    result = rateLimitsHtml.join(` <span class="disabled">${andAlsoText}</span> `);
   } else {
     result = rateLimitsHtml[0];
   }

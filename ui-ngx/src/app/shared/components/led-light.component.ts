@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { RaphaelElement, RaphaelPaper, RaphaelSet } from 'raphael';
@@ -24,9 +10,10 @@ interface CircleElement extends RaphaelElement {
 }
 
 @Component({
-  selector: 'tb-led-light',
-  templateUrl: './led-light.component.html',
-  styleUrls: []
+    selector: 'tb-led-light',
+    templateUrl: './led-light.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class LedLightComponent implements OnInit, AfterViewInit, OnChanges {
 
@@ -85,11 +72,11 @@ export class LedLightComponent implements OnInit, AfterViewInit, OnChanges {
     this.canvasSize = this.size;
     this.radius = this.canvasSize / 4;
     this.glowSize = this.radius / 5;
-    if (this.paper) {
-      this.paper.remove();
-    }
     import('raphael').then(
       (raphael) => {
+        if (this.paper) {
+          this.paper.remove();
+        }
         this.paper = raphael.default($('#canvas_container', this.elementRef.nativeElement)[0], this.canvasSize, this.canvasSize);
         const center = this.canvasSize / 2;
         this.circleElement = this.paper.circle(center, center, this.radius);

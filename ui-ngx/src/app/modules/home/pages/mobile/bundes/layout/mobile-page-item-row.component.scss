@@ -1,0 +1,72 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import "../scss/constants";
+@import '../scss/mixins';
+
+.tb-mobile-page-item-row-component-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tb-mobile-page-item-row-component {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  .mat-mdc-icon-button.mat-mdc-button-base {
+    &:not(.tb-drag-handle) {
+      @media #{$mat-xs} {
+        @include tb-mat-icon-button-size(24);
+      }
+      @media #{$mat-sm} {
+        @include tb-mat-icon-button-size(32);
+      }
+    }
+    &:not(:disabled) {
+      .mat-icon {
+        color: rgba(0, 0, 0, 0.54);
+      }
+    }
+    &:disabled {
+      .mat-icon {
+        color: rgba(0, 0, 0, 0.12);
+      }
+    }
+  }
+  .tb-form-row {
+    flex: 1;
+    min-width: 0;
+    .tb-mobile-page-item-start-block {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+    }
+    .tb-mobile-page-item-icon-name-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .tb-mobile-page-item-input-block {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+    }
+  }
+}
+
+.tb-mobile-page-item-info {
+  .mdc-text-field:not(.mdc-text-field--disabled) {
+    input.mdc-text-field__input {
+      cursor: default;
+      &::placeholder {
+        color: var(--tb-primary-500);
+      }
+      &:-ms-input-placeholder {
+        color: var(--tb-primary-500);
+      }
+    }
+  }
+}

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue.ruleengine;
 
 import com.google.protobuf.ProtocolStringList;
@@ -30,14 +17,20 @@ import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.DeleteQueueTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask.ConsumerKey;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
-import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategy;
@@ -62,26 +55,34 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
 
     private final TbRuleEngineConsumerContext ctx;
     private final TbRuleEngineConsumerStats stats;
+    private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public TbRuleEngineQueueConsumerManager(TbRuleEngineConsumerContext ctx,
                                             QueueKey queueKey,
                                             ExecutorService consumerExecutor,
                                             ScheduledExecutorService scheduler,
-                                            ExecutorService taskExecutor) {
-        super(queueKey, null, null, ctx.getQueueFactory()::createToRuleEngineMsgConsumer, consumerExecutor, scheduler, taskExecutor);
+                                            ExecutorService taskExecutor,
+                                            TbMsgPackProcessingContextFactory packProcessingContextFactory) {
+        super(queueKey, null, null,
+                (queueConfig, tpi) -> {
+                    Integer partitionId = tpi != null ? tpi.getPartition().orElse(-1) : null;
+                    return ctx.getQueueFactory().createToRuleEngineMsgConsumer(queueConfig, partitionId);
+                },
+                consumerExecutor, scheduler, taskExecutor, null);
         this.ctx = ctx;
         this.stats = new TbRuleEngineConsumerStats(queueKey, ctx.getStatsFactory());
+        this.packProcessingContextFactory = packProcessingContextFactory;
     }
 
     public void delete(boolean drainQueue) {
-        addTask(TbQueueConsumerManagerTask.delete(drainQueue));
+        addTask(new DeleteQueueTask(drainQueue));
     }
 
     @Override
     protected void processTask(TbQueueConsumerManagerTask task) {
-        if (task.getEvent() == QueueEvent.DELETE) {
-            doDelete(task.isDrainQueue());
+        if (task instanceof DeleteQueueTask deleteQueueTask) {
+            doDelete(deleteQueueTask.drainQueue());
         }
     }
 
@@ -118,12 +119,13 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
                                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
+                               ConsumerKey consumerKey,
                                Queue queue) throws Exception {
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);
         submitStrategy.init(msgs);
         while (!stopped && !consumer.isStopped()) {
-            TbMsgPackProcessingContext packCtx = new TbMsgPackProcessingContext(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
+            TbMsgPackProcessingContext packCtx = packProcessingContextFactory.create(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
             submitStrategy.submitAttempt((id, msg) -> submitMessage(packCtx, id, msg));
 
             final boolean timeout = !packCtx.await(queue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);
@@ -170,7 +172,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 new TbMsgPackCallback(id, tenantId, packCtx, stats.getTimer(tenantId, SUCCESSFUL_STATUS), stats.getTimer(tenantId, FAILED_STATUS)) :
                 new TbMsgPackCallback(id, tenantId, packCtx);
         try {
-            if (!toRuleEngineMsg.getTbMsg().isEmpty()) {
+            if (!toRuleEngineMsg.getTbMsg().isEmpty() || toRuleEngineMsg.hasTbMsgProto()) {
                 forwardToRuleEngineActor(config.getName(), tenantId, toRuleEngineMsg, callback);
             } else {
                 callback.onSuccess();
@@ -181,7 +183,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     }
 
     private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
-        TbMsg tbMsg = TbMsg.fromBytes(queueName, toRuleEngineMsg.getTbMsg().toByteArray(), callback);
+        TbMsg tbMsg = ProtoUtils.fromTbMsgProto(queueName, toRuleEngineMsg, callback);
         QueueToRuleEngineMsg msg;
         ProtocolStringList relationTypesList = toRuleEngineMsg.getRelationTypesList();
         Set<String> relationTypes;
@@ -199,7 +201,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         log.info("[{}] {} to process [{}] messages", queueKey, prefix, map.size());
         for (Map.Entry<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pending : map.entrySet()) {
             ToRuleEngineMsg tmp = pending.getValue().getValue();
-            TbMsg tmpMsg = TbMsg.fromBytes(config.getName(), tmp.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
+            TbMsg tmpMsg = ProtoUtils.fromTbMsgProto(config.getName(), tmp, TbMsgCallback.EMPTY);
             RuleNodeInfo ruleNodeInfo = ctx.getLastVisitedRuleNode(pending.getKey());
             if (printAll) {
                 log.trace("[{}][{}] {} to process message: {}, Last Rule Node: {}", queueKey, TenantId.fromUUID(new UUID(tmp.getTenantIdMSB(), tmp.getTenantIdLSB())), prefix, tmpMsg, ruleNodeInfo);
@@ -228,7 +230,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                     }
                     for (TbProtoQueueMsg<ToRuleEngineMsg> msg : msgs) {
                         try {
-                            MsgProtos.TbMsgProto tbMsgProto = MsgProtos.TbMsgProto.parseFrom(msg.getValue().getTbMsg().toByteArray());
+                            MsgProtos.TbMsgProto tbMsgProto = ProtoUtils.getTbMsgProto(msg.getValue());
                             EntityId originator = EntityIdFactory.getByTypeAndUuid(tbMsgProto.getEntityType(), new UUID(tbMsgProto.getEntityIdMSB(), tbMsgProto.getEntityIdLSB()));
 
                             TopicPartitionInfo tpi = ctx.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, config.getName(), TenantId.SYS_TENANT_ID, originator);

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import express from 'express';
 import config from 'config';
 import { _logger}  from './config/logger';
@@ -23,6 +9,7 @@ import httpProxy from 'http-proxy';
 import compression from 'compression';
 import historyApiFallback from 'connect-history-api-fallback';
 import { Socket } from 'net';
+import { RequestHandler } from 'serve-static';
 
 const logger = _logger('main');
 
@@ -59,6 +46,39 @@ let connections: Socket[] = [];
         const app = express();
         server = http.createServer(app);
 
+        // Build security headers map once at startup.
+        // node-config passes env var overrides as strings, so enabled can be boolean or string.
+        const isEnabled = (val: any) => val === true || val === 'true';
+        const securityHeaders: Record<string, string> = {};
+        const hc: any = config.get('security.headers');
+        if (isEnabled(hc['x-content-type-options']?.enabled)) {
+            securityHeaders['X-Content-Type-Options'] = 'nosniff';
+        }
+        if (isEnabled(hc['referrer-policy']?.enabled)) {
+            securityHeaders['Referrer-Policy'] = hc['referrer-policy']?.value || 'strict-origin-when-cross-origin';
+        }
+        if (isEnabled(hc['x-frame-options']?.enabled)) {
+            securityHeaders['X-Frame-Options'] = hc['x-frame-options']?.value || 'SAMEORIGIN';
+        }
+        if (isEnabled(hc['content-security-policy']?.enabled) && hc['content-security-policy']?.value) {
+            const csp = hc['content-security-policy'];
+            const name = isEnabled(csp['report-only'])
+                ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+            securityHeaders[name] = csp.value;
+        }
+        logger.info('Security headers: %s', JSON.stringify(securityHeaders));
+
+        const compressionEnabled = isEnabled(config.get('server.compression.enabled'));
+        logger.info('HTTP response compression enabled: %s', compressionEnabled);
+
+        // Apply security headers to all responses
+        app.use((_req, res, next) => {
+            for (const [name, value] of Object.entries(securityHeaders)) {
+                res.setHeader(name, value);
+            }
+            next();
+        });
+
         let apiProxy: httpProxy;
         if (useApiProxy) {
             apiProxy = httpProxy.createProxyServer({
@@ -80,12 +100,12 @@ let connections: Socket[] = [];
                     }
                 }
             });
-            app.all('/api/*', (req, res) => {
+            app.all('/api/*splat', (req, res) => {
               logger.debug(req.method + ' ' + req.originalUrl);
               apiProxy.web(req, res);
             });
 
-            app.all('/static/rulenode/*', (req, res) => {
+            app.all('/static/rulenode/*splat', (req, res) => {
               apiProxy.web(req, res);
             });
 
@@ -95,11 +115,25 @@ let connections: Socket[] = [];
         }
 
         app.use(historyApiFallback());
-        app.use(compression());
+        if (compressionEnabled) {
+            app.use(compression());
+        }
 
         const root = path.join(webDir, 'public');
 
-        app.use(express.static(root));
+        const staticServe = express.static(root);
+
+        const indexHtmlFallback: RequestHandler<any> = (req, res, next) => {
+          res.sendFile(path.join(root, 'index.html'));
+        };
+
+        app.use(staticServe);
+
+        const indexHtmlFallbackPaths = [
+          /^\/resources\/scada-symbols\/(?:system|tenant)\/[^/]+$/
+        ];
+
+        app.use(indexHtmlFallbackPaths, indexHtmlFallback);
 
         server.listen(bindPort, bindAddress, () => {
             logger.info('==> 🌎  Listening on port %s.', bindPort);

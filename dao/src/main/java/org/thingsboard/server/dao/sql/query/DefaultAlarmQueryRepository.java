@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +16,10 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.QueryContext;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
@@ -36,6 +28,7 @@ import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,6 +75,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         alarmFieldColumnMap.put(ASSIGNEE_FIRST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_FIRST_NAME_PROPERTY);
         alarmFieldColumnMap.put(ASSIGNEE_LAST_NAME_KEY, ModelConstants.ALARM_ASSIGNEE_LAST_NAME_PROPERTY);
         alarmFieldColumnMap.put(ASSIGNEE_EMAIL_KEY, ModelConstants.ALARM_ASSIGNEE_EMAIL_PROPERTY);
+        alarmFieldColumnMap.put("originatorDisplayName", ModelConstants.ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY);
     }
 
     private static final String FIELDS_SELECTION = "select a.id as id," +
@@ -96,6 +90,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.originator_type as originator_type," +
             " a.propagate as propagate," +
             " a.propagate_to_owner as propagate_to_owner," +
+            " a.propagate_to_owner_hierarchy as propagate_to_owner_hierarchy," +
             " a.propagate_to_tenant as propagate_to_tenant," +
             " a.severity as severity," +
             " a.start_ts as start_ts," +
@@ -105,30 +100,45 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.type as type, " +
             " a.originator_name as originator_name, " +
             " a.originator_label as originator_label, " +
+            " coalesce(a.originator_label, a.originator_name) as originator_display_name, " +
             " a.assignee_first_name as assignee_first_name, " +
             " a.assignee_last_name as assignee_last_name, " +
             " a.assignee_email as assignee_email, " +
             " a.cleared as cleared, " +
             " a.acknowledged as acknowledged, ";
 
-    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id ";
+    // Strict equality on originator_id (in addition to alarm_id) is required in both plain-PostgreSQL and Citus
+    // modes: on Citus it co-locates the join so it prunes to a single shard, and on plain PostgreSQL it keeps the
+    // predicate identical. The trade-off is that an entity_alarm row with a NULL originator_id -- written by a
+    // pre-4.3.1.4 node during a rolling upgrade -- is dropped by this inner join: entity-scoped
+    // (searchPropagatedAlarms) reads UNDER-REPORT such rows (missing from results, not merely returned slower)
+    // until they are repaired. The 4.3.1.4 migration (see V4_3_1_4Migration) backfills pre-existing rows once and
+    // logs detection/repair guidance for the sysadmin to run manually after the whole cluster is upgraded.
+    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id and a.originator_id = ea.originator_id ";
 
     protected final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
 
     private final DefaultQueryLogComponent queryLog;
+    private final CitusSettings citusSettings;
 
-    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate, DefaultQueryLogComponent queryLog) {
+    public DefaultAlarmQueryRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate,
+                                       DefaultQueryLogComponent queryLog, CitusSettings citusSettings) {
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
         this.queryLog = queryLog;
+        this.citusSettings = citusSettings;
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions,
+                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        if (!mergedUserPermissions.hasGenericPermission(Resource.ALARM, Operation.READ)) {
+            return PageData.emptyPageData();
+        }
         return transactionTemplate.execute(trStatus -> {
             AlarmDataPageLink pageLink = query.getPageLink();
-            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+            SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM, mergedUserPermissions, null), citusSettings.isEnabled());
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
             StringBuilder fromPart = new StringBuilder(" from alarm_info a ");
@@ -139,7 +149,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (pageLink.isSearchPropagatedAlarms()) {
                 selectPart.append(" ea.entity_id as entity_id ");
                 fromPart.append(JOIN_ENTITY_ALARMS);
-                wherePart.append(buildPermissionsQuery(tenantId, ctx));
+                wherePart.append(buildPermissionsQuery(tenantId, ctx, mergedUserPermissions));
                 addAnd = true;
             } else {
                 selectPart.append(" a.originator_id as entity_id ");
@@ -314,25 +324,45 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     @Override
-    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
-        QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
+        SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, customerId, EntityType.ALARM, mergedUserPermissions, null), citusSettings.isEnabled());
 
         if (query.isSearchPropagatedAlarms()) {
-            ctx.append("select count(distinct(a.id)) from alarm_info a ");
+            if (query.getEntityFilter() == null) {
+                ctx.append("select count(distinct(a.id)) from alarm_info a ");
+            } else {
+                ctx.append("select count(a.id) from alarm_info a ");
+            }
             ctx.append(JOIN_ENTITY_ALARMS);
-            ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId", tenantId.getId());
-            if (customerId != null && !customerId.isNullUid()) {
-                ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
-                ctx.addUuidParameter("customerId", customerId.getId());
+            if (orderedEntityIds != null) {
+                if (orderedEntityIds.isEmpty()) {
+                    return 0;
+                }
+                ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+                ctx.append("where ea.entity_id in (:entity_filter_entity_ids)");
+            } else {
+                ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
+                ctx.addUuidParameter("tenantId", tenantId.getId());
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                }
             }
         } else {
             ctx.append("select count(id) from alarm_info a ");
-            ctx.append("where a.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId", tenantId.getId());
-            if (customerId != null && !customerId.isNullUid()) {
-                ctx.append(" and a.customer_id = :customerId");
-                ctx.addUuidParameter("customerId", customerId.getId());
+            if (orderedEntityIds != null) {
+                if (orderedEntityIds.isEmpty()) {
+                    return 0;
+                }
+                ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
+                ctx.append("where a.originator_id in (:entity_filter_entity_ids)");
+            } else {
+                ctx.append("where a.tenant_id = :tenantId");
+                ctx.addUuidParameter("tenantId", tenantId.getId());
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.append(" and a.customer_id = :customerId");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                }
             }
         }
 
@@ -402,7 +432,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         });
     }
 
-    private String buildTextSearchQuery(QueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
+    private String buildTextSearchQuery(SqlQueryContext ctx, List<EntityKey> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && selectionMapping != null && !selectionMapping.isEmpty()) {
             String lowerSearchText = searchText.toLowerCase() + "%";
             List<String> searchPredicates = selectionMapping.stream()
@@ -420,7 +450,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
     }
 
-    private String buildPermissionsQuery(TenantId tenantId, QueryContext ctx) {
+    private String buildPermissionsQuery(TenantId tenantId, SqlQueryContext ctx, MergedUserPermissions mergedUserPermissions) {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");

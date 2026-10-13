@@ -1,22 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ComponentStyle, cssUnit, Font } from '@shared/models/widget-settings.models';
+import { ComponentStyle, cssUnit, Font, fontStyle, fontWeight } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { FontSettingsPanelComponent } from '@home/components/widget/lib/settings/common/font-settings-panel.component';
@@ -24,16 +11,17 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-font-settings',
-  templateUrl: './font-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FontSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-font-settings',
+    templateUrl: './font-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FontSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FontSettingsComponent implements OnInit, ControlValueAccessor {
 
@@ -57,6 +45,12 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
   @Input()
   @coerceBoolean()
   disabledLineHeight = false;
+
+  @Input()
+  allowedFontWeights: fontWeight[];
+
+  @Input()
+  allowedFontStyles: fontStyle[];
 
   @Input()
   forceSizeUnit: cssUnit;
@@ -101,7 +95,9 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
         clearButton: this.clearButton,
         autoScale: this.autoScale,
         disabledLineHeight: this.disabledLineHeight,
-        forceSizeUnit: this.forceSizeUnit
+        forceSizeUnit: this.forceSizeUnit,
+        allowedFontWeights: this.allowedFontWeights,
+        allowedFontStyles: this.allowedFontStyles
       };
       if (isDefinedAndNotNull(this.previewText)) {
         const previewText = typeof this.previewText === 'string' ? this.previewText : this.previewText();
@@ -109,12 +105,15 @@ export class FontSettingsComponent implements OnInit, ControlValueAccessor {
           ctx.previewText = previewText;
         }
       }
-      const fontSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, FontSettingsPanelComponent, 'left', true, null,
-        ctx,
-        {},
-        {}, {}, true);
-      fontSettingsPanelPopover.tbComponentRef.instance.popover = fontSettingsPanelPopover;
+      const fontSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: FontSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'left',
+        context: ctx,
+        isModal: true
+      });
       fontSettingsPanelPopover.tbComponentRef.instance.fontApplied.subscribe((font) => {
         fontSettingsPanelPopover.hide();
         this.modelValue = font;

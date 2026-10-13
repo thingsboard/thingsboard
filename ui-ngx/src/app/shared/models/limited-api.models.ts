@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 export enum LimitedApi {
   ENTITY_EXPORT = 'ENTITY_EXPORT',
   ENTITY_IMPORT = 'ENTITY_IMPORT',
@@ -22,7 +9,15 @@ export enum LimitedApi {
   REST_REQUESTS_PER_TENANT = 'REST_REQUESTS_PER_TENANT',
   REST_REQUESTS_PER_CUSTOMER = 'REST_REQUESTS_PER_CUSTOMER',
   WS_UPDATES_PER_SESSION = 'WS_UPDATES_PER_SESSION',
-  CASSANDRA_QUERIES = 'CASSANDRA_QUERIES',
+  CASSANDRA_WRITE_QUERIES_CORE = 'CASSANDRA_WRITE_QUERIES_CORE',
+  CASSANDRA_READ_QUERIES_CORE = 'CASSANDRA_READ_QUERIES_CORE',
+  CASSANDRA_WRITE_QUERIES_RULE_ENGINE = 'CASSANDRA_WRITE_QUERIES_RULE_ENGINE',
+  CASSANDRA_READ_QUERIES_RULE_ENGINE = 'CASSANDRA_READ_QUERIES_RULE_ENGINE',
+  CASSANDRA_WRITE_QUERIES_MONOLITH = 'CASSANDRA_WRITE_QUERIES_MONOLITH',
+  CASSANDRA_READ_QUERIES_MONOLITH = 'CASSANDRA_READ_QUERIES_MONOLITH',
+  INTEGRATION_MSGS_PER_TENANT = 'INTEGRATION_MSGS_PER_TENANT',
+  INTEGRATION_MSGS_PER_DEVICE = 'INTEGRATION_MSGS_PER_DEVICE',
+  REPORTS = 'REPORTS',
   TRANSPORT_MESSAGES_PER_TENANT = 'TRANSPORT_MESSAGES_PER_TENANT',
   TRANSPORT_MESSAGES_PER_DEVICE = 'TRANSPORT_MESSAGES_PER_DEVICE',
   TRANSPORT_MESSAGES_PER_GATEWAY = 'TRANSPORT_MESSAGES_PER_GATEWAY',
@@ -42,7 +37,15 @@ export const LimitedApiTranslationMap = new Map<LimitedApi, string>(
     [LimitedApi.REST_REQUESTS_PER_TENANT, 'api-limit.rest-api-requests'],
     [LimitedApi.REST_REQUESTS_PER_CUSTOMER, 'api-limit.rest-api-requests-per-customer'],
     [LimitedApi.WS_UPDATES_PER_SESSION, 'api-limit.ws-updates-per-session'],
-    [LimitedApi.CASSANDRA_QUERIES, 'api-limit.cassandra-queries'],
+    [LimitedApi.CASSANDRA_WRITE_QUERIES_CORE, 'api-limit.cassandra-write-queries-core'],
+    [LimitedApi.CASSANDRA_READ_QUERIES_CORE, 'api-limit.cassandra-read-queries-core'],
+    [LimitedApi.CASSANDRA_WRITE_QUERIES_RULE_ENGINE, 'api-limit.cassandra-write-queries-rule-engine'],
+    [LimitedApi.CASSANDRA_READ_QUERIES_RULE_ENGINE, 'api-limit.cassandra-read-queries-rule-engine'],
+    [LimitedApi.CASSANDRA_WRITE_QUERIES_MONOLITH, 'api-limit.cassandra-write-queries-monolith'],
+    [LimitedApi.CASSANDRA_READ_QUERIES_MONOLITH, 'api-limit.cassandra-read-queries-monolith'],
+    [LimitedApi.INTEGRATION_MSGS_PER_TENANT, 'api-limit.integration-messages'],
+    [LimitedApi.INTEGRATION_MSGS_PER_DEVICE, 'api-limit.integration-messages-per-device'],
+    [LimitedApi.REPORTS, 'api-limit.reports-generation'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_TENANT, 'api-limit.transport-messages'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE, 'api-limit.transport-messages-per-device'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY, 'api-limit.transport-messages-per-gateway'],

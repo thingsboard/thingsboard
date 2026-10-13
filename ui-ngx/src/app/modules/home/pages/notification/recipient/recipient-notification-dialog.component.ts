@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   NotificationTarget,
   NotificationTargetConfigType,
@@ -32,7 +19,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepTrim, isDefinedAndNotNull } from '@core/utils';
+import { deepTrim, isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
@@ -43,12 +30,15 @@ import { AuthUser } from '@shared/models/user.model';
 export interface RecipientNotificationDialogData {
   target?: NotificationTarget;
   isAdd?: boolean;
+  readonly?: boolean;
+  name?: string;
 }
 
 @Component({
-  selector: 'tb-target-notification-dialog',
-  templateUrl: './recipient-notification-dialog.component.html',
-  styleUrls: ['recipient-notification-dialog.component.scss']
+    selector: 'tb-target-notification-dialog',
+    templateUrl: './recipient-notification-dialog.component.html',
+    styleUrls: ['recipient-notification-dialog.component.scss'],
+    standalone: false
 })
 export class RecipientNotificationDialogComponent extends
   DialogComponent<RecipientNotificationDialogComponent, NotificationTarget> implements OnDestroy {
@@ -68,6 +58,7 @@ export class RecipientNotificationDialogComponent extends
 
   entityType = EntityType;
   isAdd = true;
+  dialogTitle = 'notification.add-notification-recipients-group';
 
   private readonly destroy$ = new Subject<void>();
   private userFilterFormControls: string[];
@@ -82,6 +73,9 @@ export class RecipientNotificationDialogComponent extends
 
     if (isDefinedAndNotNull(data.isAdd)) {
       this.isAdd = data.isAdd;
+      if (!this.isAdd) {
+        this.dialogTitle = 'notification.edit-notification-recipients-group';
+      }
     }
 
     this.targetNotificationForm = this.fb.group({
@@ -95,14 +89,21 @@ export class RecipientNotificationDialogComponent extends
           tenantProfilesIds: [{value: null, disabled: true}],
           customerId: [{value: null, disabled: true}, Validators.required],
           usersIds: [{value: null, disabled: true}, Validators.required],
+          groupsIds: [{value: null, disabled: true}, Validators.required],
+          rolesIds: [{value: null, disabled: true}, Validators.required]
         }),
         conversationType: [{value: SlackChanelType.PUBLIC_CHANNEL, disabled: true}],
         conversation: [{value: '', disabled: true}, Validators.required],
         webhookUrl: [{value: '', disabled: true}, Validators.required],
         channelName: [{value: '', disabled: true}, Validators.required],
+        useOldApi: [{value: !this.isAdd, disabled: true}],
         description: [null]
       })
     });
+
+    if (this.data.name) {
+      this.targetNotificationForm.get('name').patchValue(this.data.name, {emitEvent: false});
+    }
 
     this.targetNotificationForm.get('configuration.type').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -120,6 +121,7 @@ export class RecipientNotificationDialogComponent extends
         case NotificationTargetType.MICROSOFT_TEAMS:
           this.targetNotificationForm.get('configuration.webhookUrl').enable({emitEvent: false});
           this.targetNotificationForm.get('configuration.channelName').enable({emitEvent: false});
+          this.targetNotificationForm.get('configuration.useOldApi').enable({emitEvent: false});
           break;
       }
       this.targetNotificationForm.get('configuration.type').enable({emitEvent: false});
@@ -147,6 +149,12 @@ export class RecipientNotificationDialogComponent extends
         case NotificationTargetConfigType.CUSTOMER_USERS:
           this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
           break;
+        case NotificationTargetConfigType.USER_GROUP_LIST:
+          this.targetNotificationForm.get('configuration.usersFilter.groupsIds').enable({emitEvent: false});
+          break;
+        case NotificationTargetConfigType.USER_ROLE:
+          this.targetNotificationForm.get('configuration.usersFilter.rolesIds').enable({emitEvent: false});
+          break;
       }
     });
 
@@ -169,6 +177,15 @@ export class RecipientNotificationDialogComponent extends
         this.targetNotificationForm.get('configuration.usersFilter.filterByTenants')
           .patchValue(!Array.isArray(this.data.target.configuration.usersFilter.tenantProfilesIds), {onlySelf: true});
       }
+      if (data.target.configuration.type === NotificationTargetType.MICROSOFT_TEAMS
+        && isUndefinedOrNull(this.data.target.configuration.useOldApi)) {
+        this.targetNotificationForm.get('configuration.useOldApi').patchValue(true, {emitEvent: false});
+      }
+    }
+
+    if(data?.readonly) {
+      this.dialogTitle = 'notification.view-notification-recipients-group';
+      this.targetNotificationForm.disable({emitEvent: false});
     }
   }
 

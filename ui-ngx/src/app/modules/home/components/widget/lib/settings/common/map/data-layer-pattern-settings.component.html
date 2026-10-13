@@ -1,0 +1,92 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<ng-container [formGroup]="patternSettingsFormGroup">
+  <div class="tb-form-panel stroked tb-slide-toggle">
+    <mat-expansion-panel #expansionPanel class="tb-settings" [expanded]="settingsExpanded"
+                         [disabled]="!patternSettingsFormGroup.get('show').value">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
+        <mat-panel-title>
+          <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="show" (click)="$event.stopPropagation()">
+              {{ patternTitle ? patternTitle : ((patternType === 'label' ? 'widgets.maps.data-layer.label' : 'widgets.maps.data-layer.tooltip') | translate) }}
+            </mat-slide-toggle>
+            <tb-toggle-select [class.!hidden]="!expansionPanel.expanded" formControlName="type" (click)="$event.stopPropagation()">
+              <tb-toggle-option [value]="DataLayerPatternType.pattern">{{ 'widgets.maps.data-layer.pattern-type-pattern' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="DataLayerPatternType.function">{{ 'widgets.maps.data-layer.pattern-type-function' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        @if (patternSettingsFormGroup.get('type').value === DataLayerPatternType.pattern) {
+          <tb-html
+            formControlName="pattern"
+            required
+            minHeight="100px"
+            label="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-pattern' : 'widgets.maps.data-layer.tooltip-pattern') | translate }}">
+          </tb-html>
+        }
+        @if (patternSettingsFormGroup.get('type').value === DataLayerPatternType.function) {
+          <tb-js-func
+            formControlName="patternFunction"
+            required
+            withModules
+            [globalVariables]="functionScopeVariables"
+            [functionArgs]="['data', 'dsData', 'ctx']"
+            functionTitle="{{ (patternType === 'label' ? 'widgets.maps.data-layer.label-function' : 'widgets.maps.data-layer.tooltip-function') | translate }}"
+            [helpId]="helpId"
+            [helpPopupStyle]="{width: '900px'}">
+          </tb-js-func>
+        }
+        @if (patternType === 'tooltip') {
+          <div class="tb-form-row space-between column-xs">
+            <div translate>widgets.maps.data-layer.tooltip-trigger</div>
+            <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="trigger">
+                @for (trigger of dataLayerTooltipTriggers; track trigger) {
+                  <mat-option [value]="trigger">
+                    {{ dataLayerTooltipTriggerTranslationMap.get(trigger) | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="autoclose">
+              {{ 'widgets.maps.data-layer.auto-close-tooltips' | translate }}
+            </mat-slide-toggle>
+          </div>
+          @if (hasTooltipOffset) {
+            <div class="tb-form-row space-between column-lt-md">
+              <div translate>widgets.maps.data-layer.tooltip-offset</div>
+              <div class="flex flex-row items-center justify-start gap-2 xs:flex-1 xs:flex-col xs:items-stretch">
+                <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
+                  <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-horizontal</div>
+                  <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
+                    <input matInput formControlName="offsetX"
+                           type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                </div>
+                <div class="flex flex-row items-center justify-start gap-2 xs:flex-1">
+                  <div class="tb-small-label xs:min-w-20" translate>widgets.maps.data-layer.tooltip-offset-vertical</div>
+                  <mat-form-field appearance="outline" class="number xs:flex-1" subscriptSizing="dynamic">
+                    <input matInput formControlName="offsetY"
+                           type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          }
+          <tb-map-tooltip-tag-actions-panel
+            [context]="context"
+            formControlName="tagActions">
+          </tb-map-tooltip-tag-actions-panel>
+        }
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</ng-container>

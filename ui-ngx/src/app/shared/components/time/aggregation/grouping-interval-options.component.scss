@@ -1,0 +1,15 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../scss/constants';
+
+:host {
+  .agg-interval {
+    max-width: 180px;
+  }
+
+  @media #{$mat-xs} {
+    min-width: 0;
+    width: 100%;
+  }
+}
+

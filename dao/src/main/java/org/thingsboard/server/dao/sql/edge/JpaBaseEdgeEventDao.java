@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -44,7 +32,7 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -89,6 +77,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     private long edgeEventsTtl;
 
     private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_TABLE_NAME;
+    private static final List<SortOrder> SORT_ORDERS = Collections.singletonList(new SortOrder("seqId"));
 
     private TbSqlBlockingQueueWrapper<EdgeEventEntity, Void> queue;
 
@@ -134,7 +123,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
 
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
-        log.debug("Save edge event [{}] ", edgeEvent);
+        log.debug("Saving EdgeEvent [{}] ", edgeEvent);
         if (edgeEvent.getId() == null) {
             UUID timeBased = Uuids.timeBased();
             edgeEvent.setId(new EdgeEventId(timeBased));
@@ -156,7 +145,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     }
 
     private ListenableFuture<Void> save(EdgeEventEntity entity) {
-        log.debug("Save edge event [{}] ", entity);
+        log.debug("Saving EdgeEventEntity [{}] ", entity);
         if (entity.getTenantId() == null) {
             log.trace("Save system edge event with predefined id {}", systemTenantId);
             entity.setTenantId(systemTenantId);
@@ -175,11 +164,6 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
 
     @Override
     public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink) {
-        List<SortOrder> sortOrders = new ArrayList<>();
-        if (pageLink.getSortOrder() != null) {
-            sortOrders.add(pageLink.getSortOrder());
-        }
-        sortOrders.add(new SortOrder("seqId"));
         return DaoUtil.toPageData(
                 edgeEventRepository
                         .findEdgeEventsByTenantIdAndEdgeId(
@@ -190,7 +174,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
                                 pageLink.getEndTime(),
                                 seqIdStart,
                                 seqIdEnd,
-                                DaoUtil.toPageable(pageLink, sortOrders)));
+                                DaoUtil.toPageable(pageLink, SORT_ORDERS)));
     }
 
     @Override

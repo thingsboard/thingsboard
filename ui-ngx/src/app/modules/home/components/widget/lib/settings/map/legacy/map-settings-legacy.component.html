@@ -1,0 +1,44 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="tb-widget-settings" [formGroup]="mapSettingsFormGroup">
+  <tb-map-provider-settings
+    [aliasController]="aliasController"
+    formControlName="mapProviderSettings">
+  </tb-map-provider-settings>
+  <tb-common-map-settings
+    [widget]="widget"
+    [provider]="mapSettingsFormGroup.get('mapProviderSettings').value.provider"
+    formControlName="commonMapSettings">
+  </tb-common-map-settings>
+  <tb-markers-settings
+    [provider]="mapSettingsFormGroup.get('mapProviderSettings').value.provider"
+    formControlName="markersSettings">
+  </tb-markers-settings>
+  <tb-polygon-settings
+    [widget]="widget"
+    formControlName="polygonSettings">
+  </tb-polygon-settings>
+  <tb-circle-settings
+    [widget]="widget"
+    formControlName="circleSettings">
+  </tb-circle-settings>
+  @if (!routeMap) {
+    <tb-marker-clustering-settings
+      [class.!hidden]="mapSettingsFormGroup.get('mapProviderSettings').value.provider === mapProvider.image"
+      formControlName="markerClusteringSettings">
+    </tb-marker-clustering-settings>
+  }
+  @if (routeMap) {
+    <tb-route-map-settings
+      formControlName="routeMapSettings">
+    </tb-route-map-settings>
+  }
+  <tb-map-editor-settings
+    [class.!hidden]="!displayEditorSettings()"
+    formControlName="mapEditorSettings">
+  </tb-map-editor-settings>
+</section>

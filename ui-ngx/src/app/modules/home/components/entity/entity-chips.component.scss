@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0;
+  width: 0;
+  min-width: 100%;
+  a.tb-entity-chip {
+    max-width: 100%;
+    padding: 4px 8px;
+    border-radius: 12px;
+    line-height: 16px;
+    background: #e0e0e0;
+    color: #212121;
+    white-space: nowrap;
+    border: none;
+    &:hover {
+      background: #b7b7b7;
+    }
+  }
+}

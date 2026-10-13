@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +12,7 @@ import org.springframework.util.MultiValueMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -45,13 +32,13 @@ public class AppleOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
     private static final String EMAIL = "email";
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
-        OAuth2MapperConfig config = registration.getMapperConfig();
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client oAuth2Client) {
+        OAuth2MapperConfig config = oAuth2Client.getMapperConfig();
         Map<String, Object> attributes = updateAttributesFromRequestParams(request, token.getPrincipal().getAttributes());
         String email = BasicMapperUtils.getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
         OAuth2User oauth2User = BasicMapperUtils.getOAuth2User(email, attributes, config);
 
-        return getOrCreateSecurityUserFromOAuth2User(oauth2User, registration);
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, oAuth2Client);
     }
 
     private static Map<String, Object> updateAttributesFromRequestParams(HttpServletRequest request, Map<String, Object> attributes) {
@@ -79,9 +66,13 @@ public class AppleOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
                     }
                 }
                 if (user.has(EMAIL)) {
-                    JsonNode email = user.get(EMAIL);
-                    if (email != null && email.isTextual()) {
-                        updated.put(EMAIL, email.asText());
+                    JsonNode emailNode = user.get(EMAIL);
+                    if (emailNode != null && emailNode.isTextual()) {
+                        Object tokenEmail = attributes.get(EMAIL);
+                        if (tokenEmail != null && !emailNode.asText().equals(tokenEmail.toString())) {
+                            log.warn("Apple OAuth2 callback: ignoring email [{}] from user POST parameter " +
+                                    "that differs from validated ID token email [{}]", emailNode.asText(), tokenEmail);
+                        }
                     }
                 }
             }

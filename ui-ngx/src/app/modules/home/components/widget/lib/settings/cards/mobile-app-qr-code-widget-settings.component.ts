@@ -1,31 +1,23 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from "@angular/core";
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from "@angular/forms";
+import { UntypedFormBuilder, UntypedFormGroup } from "@angular/forms";
 import { WidgetSettings, WidgetSettingsComponent } from "@shared/models/widget.models";
 import { AppState } from '@core/core.state';
 import { Store } from "@ngrx/store";
 import { badgePositionTranslationsMap } from '@shared/models/mobile-app.models';
 import { mobileAppQrCodeWidgetDefaultSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { UserPermissionsService} from '@core/http/user-permissions.service';
+import { Operation, Resource} from "@shared/models/security.models";
 
 @Component({
-  selector: 'tb-mobile-app-qr-code-widget-settings',
-  templateUrl: './mobile-app-qr-code-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-mobile-app-qr-code-widget-settings',
+    templateUrl: './mobile-app-qr-code-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -33,9 +25,15 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
 
   badgePositionTranslationsMap = badgePositionTranslationsMap;
 
+  displayConfigurationHint = false;
+
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private userPermissionsService: UserPermissionsService) {
     super(store);
+    this.displayConfigurationHint = getCurrentAuthUser(this.store).authority !== Authority.CUSTOMER_USER &&
+      (this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.WRITE) ||
+      this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.READ));
   }
 
   protected settingsForm(): UntypedFormGroup {
@@ -43,7 +41,7 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...mobileAppQrCodeWidgetDefaultSettings};
+    return mobileAppQrCodeWidgetDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -80,6 +78,13 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
         this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
       }
     }
+  }
+
+  navigateToMobileAppSettings($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    window.open(window.location.origin + '/settings/mobile-app', '_blank');
   }
 
 }

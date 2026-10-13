@@ -1,28 +1,17 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -41,7 +30,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
-import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +50,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
     private final NotificationCenter notificationCenter;
     private final NotificationRequestService notificationRequestService;
     private final NotificationExecutorService notificationExecutor;
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("notification-scheduler"));
+    private final ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("notification-scheduler");
 
     private final Map<NotificationRequestId, ScheduledRequestMetadata> scheduledNotificationRequests = new ConcurrentHashMap<>();
 
@@ -75,9 +62,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
     @Override
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
-        PageDataIterable<NotificationRequest> notificationRequests = new PageDataIterable<>(pageLink -> {
-            return notificationRequestService.findScheduledNotificationRequests(pageLink);
-        }, 1000);
+        PageDataIterable<NotificationRequest> notificationRequests = new PageDataIterable<>(notificationRequestService::findScheduledNotificationRequests, 1000);
         for (NotificationRequest notificationRequest : notificationRequests) {
             TopicPartitionInfo requestPartition = partitionService.resolve(ServiceType.TB_CORE, notificationRequest.getTenantId(), notificationRequest.getId());
             if (addedPartitions.contains(requestPartition)) {
@@ -116,8 +101,11 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
                     notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
                 } catch (Exception e) {
                     log.error("Failed to process scheduled notification request {}", notificationRequest.getId(), e);
-                    NotificationRequestStats stats = new NotificationRequestStats();
-                    stats.setError(e.getMessage());
+                    NotificationRequestStats stats = notificationRequest.getStats();
+                    if (stats == null) {
+                        stats = new NotificationRequestStats();
+                    }
+                    stats.reportGeneralError(e);
                     notificationRequestService.updateNotificationRequest(tenantId, request.getId(), NotificationRequestStatus.SENT, stats);
                 }
             });

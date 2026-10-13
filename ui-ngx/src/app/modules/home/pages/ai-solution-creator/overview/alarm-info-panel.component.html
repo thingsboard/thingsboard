@@ -1,0 +1,47 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-info-panel">
+  <div class="tb-entity-info-title" translate>solution-creator.alarm-info</div>
+  <div class="tb-entity-info-panel-content">
+    <div class="property">
+      <span>{{ 'alarm.type' | translate }}</span>
+      <span>{{ alarm.alarmName }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property">
+      <span>{{ 'alarm-rule.severities' | translate }}</span>
+      <span class="font-medium">
+        @for (key of alarm.severities; track key; let last=$last) {
+          <span class="font-bold !not-italic" [style.color]="getAlarmSeverityColor(key)">
+            {{ key }}
+          </span>
+          @if(!last) {
+            <span>, </span>
+          }
+        }
+      </span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property">
+      <span>{{ 'solution-creator.entity-profiles' | translate }}</span>
+      <span class="text-justify">{{ alarm.profileNames.join(', ') }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property column">
+      <span>{{ 'solution-creator.condition' | translate }}</span>
+      <span class="condition-text">{{ alarm.condition }}</span>
+    </div>
+  </div>
+  <div class="flex h-10 items-end justify-end gap-4">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</div>

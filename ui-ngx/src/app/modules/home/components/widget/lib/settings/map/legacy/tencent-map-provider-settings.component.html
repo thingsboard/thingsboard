@@ -1,0 +1,22 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
+  <mat-form-field class="mat-block">
+    <mat-label translate>widgets.maps.tencent-maps-api-key</mat-label>
+    <input required matInput formControlName="tmApiKey">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>widgets.maps.default-map-type</mat-label>
+    <mat-select required formControlName="tmDefaultMapType">
+      @for (type of tencentMapTypes; track type) {
+        <mat-option [value]="type">
+          {{tencentMapTypeTranslations.get(type) | translate}}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</section>

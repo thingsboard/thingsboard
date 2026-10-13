@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -25,6 +11,7 @@ import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/op
 import { DataKey } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export declare type ValueSource = 'predefinedValue' | 'entityAttribute';
 
@@ -36,16 +23,17 @@ export interface ValueSourceProperty {
 }
 
 @Component({
-  selector: 'tb-value-source',
-  templateUrl: './value-source.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ValueSourceComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-value-source',
+    templateUrl: './value-source.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ValueSourceComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ValueSourceComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -84,7 +72,8 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
 
   constructor(protected store: Store<AppState>,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -95,10 +84,14 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
       attribute: [null, []],
       value: [null, []]
     });
-    this.valueSourceFormGroup.valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.valueSourceFormGroup.get('valueSource').valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.get('valueSource').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);

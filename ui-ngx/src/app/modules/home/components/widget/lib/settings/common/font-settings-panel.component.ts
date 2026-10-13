@@ -1,21 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -28,9 +16,9 @@ import { PageComponent } from '@shared/components/page.component';
 import {
   commonFonts,
   ComponentStyle, cssUnit,
-  Font,
+  Font, fontStyle,
   fontStyles,
-  fontStyleTranslations,
+  fontStyleTranslations, fontWeight,
   fontWeights,
   fontWeightTranslations, isFontPartiallySet,
   textStyle
@@ -42,13 +30,15 @@ import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-font-settings-panel',
-  templateUrl: './font-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./font-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-font-settings-panel',
+    templateUrl: './font-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./font-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class FontSettingsPanelComponent extends PageComponent implements OnInit {
 
@@ -77,7 +67,10 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   forceSizeUnit: cssUnit;
 
   @Input()
-  popover: TbPopoverComponent<FontSettingsPanelComponent>;
+  allowedFontWeights: fontWeight[];
+
+  @Input()
+  allowedFontStyles: fontStyle[];
 
   @Output()
   fontApplied = new EventEmitter<Font>();
@@ -101,11 +94,19 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   previewStyle: ComponentStyle = {};
 
   constructor(private fb: UntypedFormBuilder,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef,
+              private popover: TbPopoverComponent) {
     super(store);
   }
 
   ngOnInit(): void {
+    if (this.allowedFontWeights?.length) {
+      this.fontWeightsList = this.allowedFontWeights;
+    }
+    if (this.allowedFontStyles?.length) {
+      this.fontStylesList = this.allowedFontStyles;
+    }
     this.fontFormGroup = this.fb.group(
       {
         size: [{value: this.font?.size, disabled: this.autoScale}, [Validators.min(0)]],
@@ -118,7 +119,9 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
       }
     );
     this.updatePreviewStyle(this.font);
-    this.fontFormGroup.valueChanges.subscribe((font: Font) => {
+    this.fontFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((font: Font) => {
       if (this.fontFormGroup.valid) {
         this.updatePreviewStyle(font);
         setTimeout(() => {this.popover?.updatePosition();}, 0);

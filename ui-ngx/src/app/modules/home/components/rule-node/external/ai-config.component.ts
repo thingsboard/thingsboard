@@ -1,0 +1,136 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { MatDialog } from '@angular/material/dialog';
+import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-model/ai-model-dialog.component';
+import { AiModel, aiRuleNodeResponseFormats, ResponseFormat } from '@shared/models/ai-model.models';
+import { deepTrim } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
+import { Operation, Resource } from '@shared/models/security.models';
+import { jsonRequired } from '@shared/components/json-object-edit.component';
+import { Resource as ResourceModel, ResourceType } from "@shared/models/resource.models";
+import { ResourcesDialogComponent, ResourcesDialogData } from "@home/components/resources/resources-dialog.component";
+
+@Component({
+    selector: 'tb-external-node-ai-config',
+    templateUrl: './ai-config.component.html',
+    styleUrls: [],
+    standalone: false
+})
+export class AiConfigComponent extends RuleNodeConfigurationComponent {
+
+  aiConfigForm: UntypedFormGroup;
+
+  entityType = EntityType;
+
+  responseFormat = ResponseFormat;
+
+  allowedResponseFormats: ResponseFormat[] = [ResponseFormat.TEXT, ResponseFormat.JSON, ResponseFormat.JSON_SCHEMA];
+
+  EntityType = EntityType;
+  ResourceType = ResourceType;
+
+  readonly operation = Operation;
+  readonly resource = Resource;
+
+  constructor(private fb: UntypedFormBuilder,
+              private translate: TranslateService,
+              private dialog: MatDialog) {
+    super();
+  }
+
+  protected configForm(): UntypedFormGroup {
+    return this.aiConfigForm;
+  }
+
+  protected onConfigurationSet(configuration: RuleNodeConfiguration) {
+    this.aiConfigForm = this.fb.group({
+      modelId: [configuration?.modelId ?? null, [Validators.required]],
+      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      resourceIds: [configuration?.resourceIds ?? []],
+      responseFormat: this.fb.group({
+        type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
+        schema: [configuration?.responseFormat?.schema ?? null, [jsonRequired]],
+      }),
+      timeoutSeconds: [configuration?.timeoutSeconds ?? 60, []],
+      forceAck: [configuration?.forceAck ?? true, []]
+    });
+  }
+
+  protected validatorTriggers(): string[] {
+    return ['responseFormat.type'];
+  }
+
+  protected updateValidators(emitEvent: boolean) {
+    if (this.aiConfigForm.get('responseFormat.type').value === ResponseFormat.JSON_SCHEMA) {
+      this.aiConfigForm.get('responseFormat.schema').enable({emitEvent: false});
+    } else {
+      this.aiConfigForm.get('responseFormat.schema').disable({emitEvent: false});
+    }
+  }
+
+  protected prepareOutputConfig(): RuleNodeConfiguration {
+    const config = this.configForm().getRawValue();
+    if (!this.aiConfigForm.get('systemPrompt').value) {
+      delete config.systemPrompt;
+    }
+    if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.JSON_SCHEMA) {
+      delete config.responseFormat.schema;
+    }
+    return deepTrim(config);
+  }
+
+  onEntityChange($event: AiModel) {
+    this.allowedResponseFormats = $event
+      ? aiRuleNodeResponseFormats($event.configuration.provider)
+      : [ResponseFormat.TEXT, ResponseFormat.JSON, ResponseFormat.JSON_SCHEMA];
+    const typeControl = this.aiConfigForm.get('responseFormat.type');
+    if (!this.allowedResponseFormats.includes(typeControl.value)) {
+      typeControl.patchValue(this.allowedResponseFormats[0], {emitEvent: true});
+    }
+  }
+
+  get getResponseFormatHint() {
+    return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
+  }
+
+  createModelAi(name: string, formControl: string) {
+    this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        isAdd: true,
+        name
+      }
+    }).afterClosed()
+      .subscribe((model) => {
+        if (model) {
+          this.aiConfigForm.get(formControl).patchValue(model.id);
+          this.aiConfigForm.get(formControl).markAsDirty();
+        }
+      });
+  };
+
+  createAiResources(name: string, formControl: string) {
+    this.dialog.open<ResourcesDialogComponent, ResourcesDialogData, ResourceModel>(ResourcesDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        resources: {title: name, resourceType: ResourceType.GENERAL},
+        isAdd: true
+      }
+    }).afterClosed()
+      .subscribe((resource) => {
+        if (resource) {
+          const resourceIds = [...(this.aiConfigForm.get(formControl).value || []), resource.id.id];
+          this.aiConfigForm.get(formControl).patchValue(resourceIds);
+          this.aiConfigForm.get(formControl).markAsDirty();
+        }
+      });
+  }
+}

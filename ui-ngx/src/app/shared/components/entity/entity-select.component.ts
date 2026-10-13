@@ -1,41 +1,36 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { Operation } from '@shared/models/security.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { BaseData } from '@shared/models/base-data';
+import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 
 @Component({
-  selector: 'tb-entity-select',
-  templateUrl: './entity-select.component.html',
-  styleUrls: ['./entity-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntitySelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-select',
+    templateUrl: './entity-select.component.html',
+    styleUrls: ['./entity-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntitySelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
-export class EntitySelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntitySelectComponent implements ControlValueAccessor, OnInit {
+
+  @ViewChild('entityAutocompleteComponent') entityAutocompleteComponent!: EntityAutocompleteComponent;
 
   entitySelectFormGroup: UntypedFormGroup;
 
@@ -47,42 +42,68 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   useAliasEntityTypes: boolean;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  operation: Operation;
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  additionEntityTypes: {[entityType in string]: string} = {};
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
+
+  @Input()
+  filterAllowedEntityTypes = true;
+
+  @Input()
+  defaultEntityType: AliasEntityType | EntityType;
+
+  @Input()
+  entityTypeLabel: string;
+
+  @Output()
+  entityChanged = new EventEmitter<BaseData<EntityId>>();
 
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
 
-  private readonly defaultEntityType: EntityType | AliasEntityType = null;
+  entityTypeNullUUID = new Set<AliasEntityType | EntityType | string>([
+    AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
+  ]);
 
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
               public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
-                                                                         this.useAliasEntityTypes);
+                                                                         this.useAliasEntityTypes,
+                                                                         this.operation);
+
+    let defaultEntityType: EntityType | AliasEntityType = null;
     if (entityTypes.length === 1) {
       this.displayEntityTypeSelect = false;
-      this.defaultEntityType = entityTypes[0];
+      defaultEntityType = entityTypes[0];
     } else {
       this.displayEntityTypeSelect = true;
     }
 
     this.entitySelectFormGroup = this.fb.group({
-      entityType: [this.defaultEntityType],
+      entityType: [defaultEntityType],
       entityId: [null]
     });
   }
@@ -95,20 +116,38 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   }
 
   ngOnInit() {
-    this.entitySelectFormGroup.get('entityType').valueChanges.subscribe(
+    this.entitySelectFormGroup.get('entityType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         this.updateView(value, this.modelValue.id);
       }
     );
-    this.entitySelectFormGroup.get('entityId').valueChanges.subscribe(
+    this.entitySelectFormGroup.get('entityId').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         const id = value ? (typeof value === 'string' ? value : value.id) : null;
         this.updateView(this.modelValue.entityType, id);
       }
     );
-  }
+    const additionNullUIIDEntityTypes = Object.keys(this.additionEntityTypes) as string[];
+    if (additionNullUIIDEntityTypes.length > 0) {
+      additionNullUIIDEntityTypes.forEach((entityType) => this.entityTypeNullUUID.add(entityType));
+    }
 
-  ngAfterViewInit(): void {
+    if (this.filterAllowedEntityTypes === false) {
+      if (this.allowedEntityTypes?.length === 1) {
+        this.displayEntityTypeSelect = false;
+        this.entitySelectFormGroup.get('entityType').setValue(this.allowedEntityTypes[0]);
+      } else {
+        this.displayEntityTypeSelect = true;
+      }
+    }
+
+    if (this.defaultEntityType) {
+      this.entitySelectFormGroup.get('entityType').setValue(this.defaultEntityType);
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -133,7 +172,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
       };
     }
     this.entitySelectFormGroup.get('entityType').patchValue(this.modelValue.entityType, {emitEvent: false});
-    this.entitySelectFormGroup.get('entityId').patchValue(this.modelValue.id, {emitEvent: false});
+    this.entitySelectFormGroup.get('entityId').patchValue(this.modelValue, {emitEvent: false});
   }
 
   updateView(entityType: EntityType | AliasEntityType | null, entityId: string | null) {
@@ -143,9 +182,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         id: this.modelValue.entityType !== entityType ? null : entityId
       };
 
-      if (this.modelValue.entityType === AliasEntityType.CURRENT_TENANT
-        || this.modelValue.entityType === AliasEntityType.CURRENT_USER
-        || this.modelValue.entityType === AliasEntityType.CURRENT_USER_OWNER) {
+      if (this.entityTypeNullUUID.has(this.modelValue.entityType)) {
         this.modelValue.id = NULL_UUID;
       } else if (this.modelValue.entityType === AliasEntityType.CURRENT_CUSTOMER && !this.modelValue.id) {
         this.modelValue.id = NULL_UUID;
@@ -157,5 +194,13 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         this.propagateChange(null);
       }
     }
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityChanged.emit(entity);
+  }
+
+  entityAutocompleteMarkAsTouched() {
+    this.entityAutocompleteComponent.markAsTouched();
   }
 }

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,22 +21,31 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -64,6 +61,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;
+    private final String classNameCustomer = "Customer";
 
     @Autowired
     private CustomerDao customerDao;
@@ -116,7 +114,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
                 new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
 
@@ -129,7 +127,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         doPost("/api/customer", savedCustomer, Customer.class);
 
-        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
                 new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UPDATED);
 
@@ -152,20 +150,26 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        customer.setTenantId(savedTenant.getId());
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         customer.setTitle("Normal title");
         customer.setCity(StringUtils.randomAlphabetic(300));
         msgError = msgErrorFieldLength("city");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
         doPost("/api/customer", customer)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         customer.setCity("Normal city");
@@ -175,8 +179,10 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         customer.setCountry("Ukraine");
@@ -186,8 +192,10 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         customer.setPhone("+3892555554512");
@@ -197,8 +205,10 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         customer.setState("Normal state");
@@ -208,8 +218,10 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -225,11 +237,17 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         doPost("/api/customer", savedCustomer, Customer.class, status().isForbidden());
 
-        testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
+        testNotifyEntityEqualsOneTimeServiceNeverError(savedCustomer, savedDifferentTenant.getId(), savedDifferentTenantUser.getId(),
+                DIFFERENT_TENANT_ADMIN_EMAIL, ActionType.UPDATED,
+                new ThingsboardException(msgErrorPermissionWrite + classNameCustomer.toUpperCase(Locale.ENGLISH) + " '" + savedCustomer.getName() + "'!",
+                        ThingsboardErrorCode.PERMISSION_DENIED));
+
+        Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
+                .andExpect(statusReason(containsString(
+                        msgErrorPermissionDelete + classNameCustomer.toUpperCase(Locale.ENGLISH) + " '" + savedCustomer.getName() + "'!")));
 
         testNotifyEntityNever(savedCustomer.getId(), savedCustomer);
 
@@ -241,9 +259,9 @@ public class CustomerControllerTest extends AbstractControllerTest {
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedCustomer, savedCustomer.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedCustomer, savedCustomer.getId(),
                 savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
-                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
+                tenantAdmin.getEmail(), ActionType.DELETED, ActionType.DELETED, savedCustomer.getId().getId().toString());
     }
 
     @Test
@@ -261,6 +279,40 @@ public class CustomerControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindCustomersByIds() throws Exception {
+        List<Customer> savedCustomers = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Customer customer = new Customer();
+            customer.setTitle("My customer " + i);
+            savedCustomers.add(doPost("/api/customer", customer, Customer.class));
+        }
+
+        String idsParam = savedCustomers.stream()
+                .map(c -> c.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        Customer[] foundCustomers = doGet("/api/customers?customerIds=" + idsParam, Customer[].class);
+
+        Assert.assertNotNull(foundCustomers);
+        Assert.assertEquals(savedCustomers.size(), foundCustomers.length);
+
+        Map<UUID, Customer> foundById = Arrays.stream(foundCustomers)
+                .collect(Collectors.toMap(c -> c.getId().getId(), Function.identity()));
+
+        for (Customer savedCustomer : savedCustomers) {
+            UUID id = savedCustomer.getId().getId();
+            Customer foundCustomer = foundById.get(id);
+            Assert.assertNotNull("Customer not found for id " + id, foundCustomer);
+            Assert.assertEquals(savedCustomer, foundCustomer);
+        }
+
+        for (Customer savedCustomer : savedCustomers) {
+            doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     public void testDeleteCustomer() throws Exception {
         Customer customer = new Customer();
         customer.setTitle("My customer");
@@ -271,14 +323,14 @@ public class CustomerControllerTest extends AbstractControllerTest {
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityBroadcastEntityStateChangeEventOneTime(savedCustomer, savedCustomer.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedCustomer, savedCustomer.getId(),
                 savedCustomer.getId(), savedCustomer.getTenantId(), savedCustomer.getId(), tenantAdmin.getId(),
-                tenantAdmin.getEmail(), ActionType.DELETED, savedCustomer.getId().getId().toString());
+                tenantAdmin.getEmail(), ActionType.DELETED, ActionType.DELETED, savedCustomer.getId().getId().toString());
 
         String customerIdStr = savedCustomer.getId().getId().toString();
         doGet("/api/customer/" + customerIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound(classNameCustomer, customerIdStr))));
     }
 
     @Test
@@ -292,8 +344,10 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -309,8 +363,10 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -331,13 +387,13 @@ public class CustomerControllerTest extends AbstractControllerTest {
         }
         List<Customer> customers = Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Customer(), new Customer(),
+        testNotifyAddedManyCustomerManyTimeMsgToEdgeServiceEntityEqAny(new Customer(), new Customer(),
                 tenantId, tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity, cntEntity, cntEntity);
+                cntEntity, cntEntity, cntEntity);
 
         List<Customer> loadedCustomers = new ArrayList<>(135);
         PageLink pageLink = new PageLink(23);
-        PageData<Customer> pageData = null;
+        PageData<Customer> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
             loadedCustomers.addAll(pageData.getData());
@@ -433,7 +489,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
                 new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
 
@@ -460,6 +516,27 @@ public class CustomerControllerTest extends AbstractControllerTest {
     public void testDeleteCustomerExceptionWithRelationsTransactional() throws Exception {
         CustomerId customerId = createCustomer("Customer for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(customerDao, savedTenant.getId(), customerId, "/api/customer/" + customerId);
+    }
+
+    @Test
+    public void testSaveCustomerWithUniquifyStrategy() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("My unique customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        doPost("/api/customer?nameConflictPolicy=FAIL", customer).andExpect(status().isBadRequest());
+
+        Customer secondCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY", customer, Customer.class);
+        assertThat(secondCustomer.getName()).startsWith("My unique customer_");
+
+        Customer thirdCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", customer, Customer.class);
+        assertThat(thirdCustomer.getName()).startsWith("My unique customer-");
+
+        Customer fourthCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", customer, Customer.class);
+        assertThat(fourthCustomer.getName()).isEqualTo("My unique customer_1");
+
+        Customer fifthCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", customer, Customer.class);
+        assertThat(fifthCustomer.getName()).isEqualTo("My unique customer_2");
     }
 
     private Customer createCustomer(String title) {

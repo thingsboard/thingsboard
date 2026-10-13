@@ -1,24 +1,10 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import * as CanvasGauges from 'canvas-gauges';
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull, isUndefined, padValue } from '@core/utils';
-import { ColorProcessor, constantColor } from '@shared/models/widget-settings.models';
+import { ColorProcessor, constantColor, ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 import BaseGauge = CanvasGauges.BaseGauge;
 
@@ -73,6 +59,7 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   showTimestamp?: boolean;
 
   barColorProcessor: ColorProcessor;
+  valueFormat: ValueFormatProcessor;
 }
 
 const defaultDigitalGaugeOptions: CanvasDigitalGaugeOptions = { ...GenericOptions,
@@ -84,6 +71,7 @@ const defaultDigitalGaugeOptions: CanvasDigitalGaugeOptions = { ...GenericOption
 
     gaugeColor: '#777',
     barColorProcessor: ColorProcessor.fromSettings(constantColor('blue')),
+    valueFormat: null,
 
     symbol: '',
     hideValue: false,
@@ -558,8 +546,8 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
       bd.barRight = bd.origBaseX + w + /*bd.width*/ -options.fontMinMaxSize / 3 * bd.fontSizeFactor;
     } else {
       context.font = Drawings.font(options, 'MinMax', bd.fontSizeFactor);
-      const minTextWidth = context.measureText(options.minValue + '').width;
-      const maxTextWidth = context.measureText(options.maxValue + '').width;
+      const minTextWidth = context.measureText(options.valueFormat.format(options.minValue) + '').width;
+      const maxTextWidth = context.measureText(options.valueFormat.format(options.maxValue) + '').width;
       const maxW = Math.max(minTextWidth, maxTextWidth);
       bd.minX = bd.origBaseX + maxW / 2 + options.fontMinMaxSize / 3 * bd.fontSizeFactor;
       bd.maxX = bd.origBaseX + w + /*bd.width*/ -maxW / 2 - options.fontMinMaxSize / 3 * bd.fontSizeFactor;
@@ -752,8 +740,8 @@ function drawDigitalMinMax(context: DigitalGaugeCanvasRenderingContext2D, option
   context.textBaseline = fontMinMaxBaseline;
   context.font = Drawings.font(options, 'MinMax', fontSizeFactor);
   context.lineWidth = 0;
-  drawText(context, options, 'MinMax', options.minValue + '', minX, minY);
-  drawText(context, options, 'MinMax', options.maxValue + '', maxX, maxY);
+  drawText(context, options, 'MinMax', options.valueFormat.format(options.minValue) + '', minX, minY);
+  drawText(context, options, 'MinMax', options.valueFormat.format(options.maxValue) + '', maxX, maxY);
   context.restore();
 }
 
@@ -768,7 +756,7 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   const textX = Math.round(baseX + width / 2);
   const textY = valueY;
 
-  let text = options.valueText || padValue(value, options.valueDec);
+  let text = options.valueText || padValue(options.valueFormat.format(value), options.valueDec);
   text += options.symbol;
 
   context.save();

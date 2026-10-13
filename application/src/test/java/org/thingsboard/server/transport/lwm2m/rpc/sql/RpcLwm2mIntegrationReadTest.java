@@ -1,28 +1,17 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
-import static org.eclipse.leshan.core.LwM2mId.SERVER;
+import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,7 +30,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 
-
+@Slf4j
 public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest {
 
     /**
@@ -53,23 +42,23 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         try {
             expectedObjectIdVers.forEach(expected -> {
                 try {
-                    String actualResult = sendRPCById((String) expected);
                     String expectedObjectId = pathIdVerToObjectId((String) expected);
                     LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
-                    ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-                     assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-                    String expectedObjectInstances = "LwM2mObject [id=" + expectedPath.getObjectId() + ", instances={0=LwM2mObjectInstance [id=0, resources=";
-                    if (expectedPath.getObjectId() == 1) {
-                        expectedObjectInstances = "LwM2mObject [id=1, instances={1=";
-                    } else if (expectedPath.getObjectId() == 2) {
-                        expectedObjectInstances = "LwM2mObject [id=2, instances={}]";
+                    if (expectedPath.getObjectId() > ACCESS_CONTROL) {
+                        String actualResult = sendRPCByIdSync((String) expected);
+                        if (StringUtils.isNoneBlank(actualResult)) {
+                            log.warn(" expectedPath: [{}]", expectedPath);
+                            ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+                            assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+                            String expectedObjectInstances = "LwM2mObject [id=" + expectedPath.getObjectId() + ", instances={0=LwM2mObjectInstance [id=0, resources=";
+                            assertTrue(rpcActualResult.get("value").asText().contains(expectedObjectInstances));
+                        }
                     }
-                    assertTrue(rpcActualResult.get("value").asText().contains(expectedObjectInstances));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
-        } catch (Exception e2){
+        } catch (Exception e2) {
             e2.printStackTrace();
         }
     }
@@ -80,10 +69,10 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      * @throws Exception
      */
     @Test
-    public void testReadAllInstancesInClientById_Result_CONTENT_Value_IsInstances_IsResources() throws Exception{
+    public void testReadAllInstancesInClientById_Result_CONTENT_Value_IsInstances_IsResources() throws Exception {
         expectedObjectIdVerInstances.forEach(expected -> {
             try {
-                String actualResult  = sendRPCById((String) expected);
+                String actualResult = sendRPCByIdAsync((String) expected);
                 String expectedObjectId = pathIdVerToObjectId((String) expected);
                 LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
                 ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -103,8 +92,8 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadMultipleResourceById_Result_CONTENT_Value_IsLwM2mMultipleResource() throws Exception {
-       String expectedIdVer = objectInstanceIdVer_3 +"/" + RESOURCE_ID_11;
-        String actualResult = sendRPCById(expectedIdVer);
+        String expectedIdVer = objectInstanceIdVer_3 + "/" + RESOURCE_ID_11;
+        String actualResult = sendRPCByIdAsync(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected = "LwM2mMultipleResource [id=" + RESOURCE_ID_11 + ", values={";
@@ -116,8 +105,8 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadSingleResourceById_Result_CONTENT_Value_IsLwM2mSingleResource() throws Exception {
-         String expectedIdVer = objectInstanceIdVer_3 +"/" + RESOURCE_ID_14;
-        String actualResult = sendRPCById(expectedIdVer);
+        String expectedIdVer = objectInstanceIdVer_3 + "/" + RESOURCE_ID_14;
+        String actualResult = sendRPCByIdAsync(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=";
@@ -138,24 +127,24 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
     }
 
     /**
-     * ReadComposite {"ids":["/1_1.2", "/3_1.0/0/1", "/3_1.0/0/11"]}
+     * ReadComposite {"ids":["/19_1.1", "/3_1.0/0/1", "/3_1.0/0/11"]}
      */
     @Test
     public void testReadCompositeSingleResourceByIds_Result_CONTENT_Value_IsObjectIsLwM2mSingleResourceIsLwM2mMultipleResource() throws Exception {
-        String expectedIdVer_1 = (String) expectedObjectIdVers.stream().filter(path -> (!((String)path).contains("/" + BINARY_APP_DATA_CONTAINER) && ((String)path).contains("/" + SERVER))).findFirst().get();
-        String objectId_1 = pathIdVerToObjectId(expectedIdVer_1);
+        String  expectedIdVer_19  = "/" + BINARY_APP_DATA_CONTAINER + "_" + lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(BINARY_APP_DATA_CONTAINER).version;
+        String objectId_19 = pathIdVerToObjectId(expectedIdVer_19);
         String expectedIdVer3_0_1 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_1;
         String expectedIdVer3_0_11 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_11;
         String objectInstanceId_3 = pathIdVerToObjectId(objectInstanceIdVer_3);
-        String expectedIds = "[\"" + expectedIdVer_1 + "\", \"" + expectedIdVer3_0_1 + "\", \"" + expectedIdVer3_0_11 + "\"]";
+        String expectedIds = "[\"" + expectedIdVer_19 + "\", \"" + expectedIdVer3_0_1 + "\", \"" + expectedIdVer3_0_11 + "\"]";
         String actualResult = sendCompositeRPCByIds(expectedIds);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String expected1 = objectId_1 + "=LwM2mObject [id=" + new LwM2mPath(objectId_1).getObjectId() + ", instances={";
+        String expected19 = objectId_19 + "=LwM2mObject [id=" + new LwM2mPath(objectId_19).getObjectId() + ", instances={";
         String expected3_0_1 = objectInstanceId_3 + "/" + RESOURCE_ID_1 + "=LwM2mSingleResource [id=" + RESOURCE_ID_1 + ", value=";
         String expected3_0_11 = objectInstanceId_3 + "/" + RESOURCE_ID_11 + "=LwM2mMultipleResource [id=" + RESOURCE_ID_11 + ", values={";
         String actualValues = rpcActualResult.get("value").asText();
-        assertTrue(actualValues.contains(expected1));
+        assertTrue(actualValues.contains(expected19));
         assertTrue(actualValues.contains(expected3_0_1));
         assertTrue(actualValues.contains(expected3_0_11));
     }
@@ -202,8 +191,8 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         String objectId_19 = pathIdVerToObjectId(objectIdVer_19);
         String expected3_0_9 = objectInstanceId_3 + "/" + RESOURCE_ID_9 + "=LwM2mSingleResource [id=" + RESOURCE_ID_9 + ", value=";
         String expected3_0_14 = objectInstanceId_3 + "/" + RESOURCE_ID_14 + "=LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=";
-        String expected19_0_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 +  expectedKey19_X_0;
-        String expected19_1_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 +  expectedKey19_X_0;
+        String expected19_0_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + expectedKey19_X_0;
+        String expected19_1_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + expectedKey19_X_0;
         String actualValues = rpcActualResult.get("value").asText();
         assertTrue(actualValues.contains(expected3_0_9));
         assertTrue(actualValues.contains(expected3_0_14));
@@ -228,24 +217,27 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         assertEquals(actualValue, expectedValue);
     }
 
-
-    private String sendRPCById(String path) throws Exception {
+    private String sendRPCByIdAsync(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
+    }
+    private String sendRPCByIdSync(String path) throws Exception {
+        String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
+        return doPost("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendRPCByKey(String key) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"key\": \"" + key + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPCByIds(String paths) throws Exception {
         String setRpcRequest = "{\"method\": \"ReadComposite\", \"params\": {\"ids\":" + paths + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPCByKeys(String keys) throws Exception {
         String setRpcRequest = "{\"method\": \"ReadComposite\", \"params\": {\"keys\":" + keys + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 }

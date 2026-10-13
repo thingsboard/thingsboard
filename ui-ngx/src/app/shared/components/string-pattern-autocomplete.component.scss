@@ -1,0 +1,84 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+:host {
+  .highlighted-text {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    z-index: 1;
+    pointer-events: none;
+    padding-top: var(--mat-form-field-filled-with-label-container-padding-top);
+    padding-bottom: var(--mat-form-field-filled-with-label-container-padding-bottom);
+    font: inherit;
+    letter-spacing: inherit;
+    text-decoration: inherit;
+    text-transform: inherit;
+    overflow: hidden;
+    color: var(--mat-form-field-filled-input-text-color, var(--mat-app-on-surface));
+
+    &.disabled {
+      color: var(--mat-form-field-filled-disabled-input-text-color);
+    }
+  }
+
+  .input-field-highlight {
+    position: relative;
+    background: transparent;
+    z-index: 2;
+    color: transparent;
+    width: 100%;
+  }
+}
+
+:host ::ng-deep {
+
+  .mdc-text-field--outlined .mat-mdc-form-field-infix {
+    .highlighted-text {
+      padding-top: var(--mat-form-field-container-vertical-padding);
+      padding-bottom: var(--mat-form-field-container-vertical-padding);
+    }
+  }
+
+  .highlighted-text {
+    .highlight {
+      color: var(--tb-primary-600);
+      text-shadow: 0 0 0.5px var(--tb-primary-600, var(--mat-app-on-surface));
+    }
+
+    &.disabled {
+      .highlight {
+        color: var(--tb-primary-300);
+        text-shadow: 0 0 0.5px var(--tb-primary-300, var(--mat-form-field-filled-disabled-input-text-color));
+      }
+    }
+  }
+}
+
+::ng-deep {
+  div.tb-sting-pattern-autocomplete-panel {
+    width: 100%;
+    max-height: 256px;
+    visibility: visible;
+    transform-origin: center top;
+    overflow: auto;
+    padding: 8px 0;
+    box-sizing: border-box;
+    position: static;
+    border-radius: var(--mat-autocomplete-container-shape, var(--mat-app-corner-extra-small));
+    box-shadow: var(--mat-autocomplete-container-elevation-shadow);
+    background-color: var(--mat-autocomplete-background-color, var(--mat-app-surface-container))
+  }
+
+  .cdk-overlay-pane:not(.mat-mdc-autocomplete-panel-above) & {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .mat-mdc-autocomplete-panel-above & {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    transform-origin: center bottom;
+  }
+
+}

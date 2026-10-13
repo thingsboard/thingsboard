@@ -1,46 +1,30 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.timeseries;
+
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+@Getter
 public enum NoSqlTsPartitionDate {
 
     MINUTES("yyyy-MM-dd-HH-mm", ChronoUnit.MINUTES), HOURS("yyyy-MM-dd-HH", ChronoUnit.HOURS), DAYS("yyyy-MM-dd", ChronoUnit.DAYS), MONTHS("yyyy-MM", ChronoUnit.MONTHS), YEARS("yyyy", ChronoUnit.YEARS),INDEFINITE("",ChronoUnit.FOREVER);
 
     private final String pattern;
     private final transient TemporalUnit truncateUnit;
+    private final transient long durationMs;
     public final static LocalDateTime EPOCH_START = LocalDateTime.ofEpochSecond(0,0, ZoneOffset.UTC);
 
     NoSqlTsPartitionDate(String pattern, TemporalUnit truncateUnit) {
         this.pattern = pattern;
         this.truncateUnit = truncateUnit;
-    }
-
-
-    public String getPattern() {
-        return pattern;
-    }
-
-    public TemporalUnit getTruncateUnit() {
-        return truncateUnit;
+        this.durationMs = TimeUnit.SECONDS.toMillis(this.truncateUnit.getDuration().getSeconds());
     }
 
     public LocalDateTime truncatedTo(LocalDateTime time) {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewChecked,
   AfterViewInit,
@@ -26,6 +13,7 @@ import {
   OnInit,
   QueryList,
   Renderer2,
+  SecurityContext,
   SkipSelf,
   ViewChild,
   ViewChildren,
@@ -50,7 +38,6 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { DialogService } from '@core/services/dialog.service';
-import { AuthService } from '@core/auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   inputNodeComponent,
@@ -62,9 +49,12 @@ import {
 } from '@shared/models/rule-chain.models';
 import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart';
 import {
+  FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE,
+  FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR,
   FcRuleEdge,
   FcRuleNode,
   FcRuleNodeType,
+  FcRuleNote,
   getRuleNodeHelpLink,
   LinkLabel,
   outputNodeClazz,
@@ -77,12 +67,13 @@ import {
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
+import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject, throwError } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, guid, isDefinedAndNotNull } from '@core/utils';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
+import { RuleNoteEditorComponent } from './rule-note-editor.component';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
@@ -93,13 +84,22 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
 import { MatDrawer } from '@angular/material/sidenav';
+import { HttpStatusCode } from '@angular/common/http';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import Timeout = NodeJS.Timeout;
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { DomSanitizer } from '@angular/platform-browser';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
+import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
 
 @Component({
-  selector: 'tb-rulechain-page',
-  templateUrl: './rulechain-page.component.html',
-  styleUrls: ['./rulechain-page.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-rulechain-page',
+    templateUrl: './rulechain-page.component.html',
+    styleUrls: ['./rulechain-page.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class RuleChainPageComponent extends PageComponent
   implements AfterViewInit, OnInit, OnDestroy, HasDirtyFlag, ISearchableComponent, AfterViewChecked {
@@ -124,13 +124,15 @@ export class RuleChainPageComponent extends PageComponent
 
   @ViewChild('drawer') drawer: MatDrawer;
 
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.RULE_CHAIN, Operation.WRITE);
+
   eventTypes = EventType;
 
   debugEventTypes = DebugEventType;
 
   ruleChainMenuPosition = { x: '0px', y: '0px' };
 
-  contextMenuEvent: MouseEvent;
+  contextMenuEvent: TbContextMenuEvent;
 
   ruleNodeTypeDescriptorsMap = ruleNodeTypeDescriptors;
   ruleNodeTypesLibraryArray = ruleNodeTypesLibrary;
@@ -155,10 +157,15 @@ export class RuleChainPageComponent extends PageComponent
 
   @ViewChild('tbRuleNode') ruleNodeComponent: RuleNodeDetailsComponent;
   @ViewChild('tbRuleNodeLink') ruleNodeLinkComponent: RuleNodeLinkComponent;
+  @ViewChild('tbRuleNote') ruleNoteComponent: RuleNoteEditorComponent;
 
   editingRuleNodeLink: FcRuleEdge = null;
   isEditingRuleNodeLink = false;
   editingRuleNodeLinkIndex = -1;
+
+  editingNote: FcRuleNote = null;
+  isEditingNote = false;
+  editingNoteIndex = -1;
 
   hotKeys: Hotkey[] = [];
 
@@ -172,22 +179,23 @@ export class RuleChainPageComponent extends PageComponent
 
   ruleChainModel: FcRuleNodeModel = {
     nodes: [],
-    edges: []
+    edges: [],
+    notes: []
   };
   selectedObjects = [];
 
   editCallbacks: UserCallbacks = {
-    edgeDoubleClick: (event, edge) => {
+    edgeDoubleClick: (_event, edge) => {
       this.openLinkDetails(edge);
     },
-    edgeEdit: (event, edge) => {
+    edgeEdit: (_event, edge) => {
       this.openLinkDetails(edge);
     },
     nodeCallbacks: {
-      doubleClick: (event, node: FcRuleNode) => {
+      doubleClick: (_event, node: FcRuleNode) => {
         this.openNodeDetails(node);
       },
-      nodeEdit: (event, node: FcRuleNode) => {
+      nodeEdit: (_event, node: FcRuleNode) => {
         this.openNodeDetails(node);
       },
       mouseEnter: this.displayNodeDescriptionTooltip.bind(this),
@@ -196,7 +204,7 @@ export class RuleChainPageComponent extends PageComponent
     },
     isValidEdge: (source, destination) =>
       source.type === FlowchartConstants.rightConnectorType && destination.type === FlowchartConstants.leftConnectorType,
-    createEdge: (event, edge: FcRuleEdge) => {
+    createEdge: (_event, edge: FcRuleEdge) => {
       const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source) as FcRuleNode;
       if (sourceNode.component.type === RuleNodeType.INPUT) {
         const found = this.ruleChainModel.edges.find(theEdge => theEdge.source === (this.inputConnectorId + ''));
@@ -230,8 +238,19 @@ export class RuleChainPageComponent extends PageComponent
         }
       }
     },
-    dropNode: (event, node: FcRuleNode) => {
+    dropNode: (_event, node: FcRuleNode) => {
       this.addRuleNode(node);
+    },
+    noteCallbacks: {
+      noteEdit: (_event, note) => {
+        this.openNoteDetails(note);
+      },
+      doubleClick: (_event, note) => {
+        this.openNoteDetails(note);
+      }
+    },
+    noteRemoved: (_note) => {
+      this.isDirty = true;
     }
   };
 
@@ -259,21 +278,21 @@ export class RuleChainPageComponent extends PageComponent
 
   private tooltipTimeout: Timeout;
 
-  constructor(protected store: Store<AppState>,
-              private route: ActivatedRoute,
+  constructor(private route: ActivatedRoute,
               private router: Router,
               private ruleChainService: RuleChainService,
-              private authService: AuthService,
               private translate: TranslateService,
               private itembuffer: ItemBufferService,
+              private userPermissionsService: UserPermissionsService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private changeDetector: ChangeDetectorRef,
+              private sanitizer:DomSanitizer,
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: FormBuilder) {
-    super(store);
+    super();
     this.route.data.pipe(
       takeUntil(this.destroy$)
     ).subscribe(
@@ -285,13 +304,15 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   ngOnInit() {
-    this.ruleNodeTypeSearch.valueChanges.pipe(
-      debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
-      takeUntil(this.destroy$)
-    ).subscribe(() => this.updateRuleChainLibrary());
+    if (!this.readonly) {
+      this.ruleNodeTypeSearch.valueChanges.pipe(
+        debounceTime(150),
+        startWith(''),
+        distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
+        skip(1),
+        takeUntil(this.destroy$)
+      ).subscribe(() => this.updateRuleChainLibrary());
+    }
   }
 
   ngAfterViewChecked(){
@@ -299,6 +320,15 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   ngAfterViewInit() {
+    if (this.readonly) {
+      this.ruleChainCanvas.modelService.isEditable = () => false;
+      this.ruleChainCanvas.modelService.edges.handleEdgeMouseClick = (edge) => {
+        this.openLinkDetails(edge);
+      };
+      const canvas = $(this.ruleChainCanvas.modelService.canvasHtmlElement);
+      const connectorElements  = $('.fc-connector', canvas);
+      connectorElements.attr('draggable', 'false');
+    }
     this.ruleChainCanvas.adjustCanvasSize(true);
   }
 
@@ -312,7 +342,7 @@ export class RuleChainPageComponent extends PageComponent
     if (this.ruleChainType === RuleChainType.CORE) {
       this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
     } else {
-      this.router.navigateByUrl(`edgeManagement/ruleChains/${ruleChainId}`);
+      this.router.navigateByUrl(`edgeManagement/templates/ruleChains/${ruleChainId}`);
     }
   }
 
@@ -354,19 +384,22 @@ export class RuleChainPageComponent extends PageComponent
     this.selectedObjects = [];
     this.ruleChainModel.nodes = [];
     this.ruleChainModel.edges = [];
+    this.ruleChainModel.notes = [];
     this.ruleNodeTypesModel = {};
     if (this.ruleChainCanvas) {
       this.ruleChainCanvas.adjustCanvasSize(true);
     }
     this.isEditingRuleNode = false;
     this.isEditingRuleNodeLink = false;
+    this.isEditingNote = false;
+    this.editingNote = null;
     this.updateRuleNodesHighlight();
   }
 
   private initHotKeys(): void {
     if (!this.hotKeys.length) {
       this.hotKeys.push(
-        new Hotkey('ctrl+a', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+a', 'meta+a'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.ruleChainCanvas.modelService.selectAll();
@@ -377,10 +410,10 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.select-all-objects'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+c', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+c', 'meta+c'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
-              this.copyRuleNodes();
+              this.copyRuleChainObjects();
               return false;
             }
             return true;
@@ -388,11 +421,11 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.copy-selected'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+v', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+v', 'meta+v'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
-              if (this.itembuffer.hasRuleNodes()) {
-                this.pasteRuleNodes();
+              if (this.itembuffer.hasRuleChainObjects()) {
+                this.pasteRuleChainObjects();
               }
               return false;
             }
@@ -413,7 +446,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.deselect-all-objects'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+s', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+s', 'meta+s'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.saveRuleChain();
@@ -424,7 +457,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('action.apply'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+z', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+z', 'meta+z'], (event: KeyboardEvent) => {
             if (this.enableHotKeys) {
               event.preventDefault();
               this.revertRuleChain();
@@ -446,7 +479,7 @@ export class RuleChainPageComponent extends PageComponent
           this.translate.instant('rulenode.delete-selected-objects'))
       );
       this.hotKeys.push(
-        new Hotkey('ctrl+r', (event: KeyboardEvent) => {
+        new Hotkey(['ctrl+r', 'meta+r'], (event: KeyboardEvent) => {
             if (this.enableHotKeys && this.canCreateNestedRuleChain()) {
               event.preventDefault();
               this.createNestedRuleChain();
@@ -455,6 +488,17 @@ export class RuleChainPageComponent extends PageComponent
             return true;
           }, ['INPUT', 'SELECT', 'TEXTAREA'],
           this.translate.instant('rulenode.create-nested-rulechain'))
+      );
+      this.hotKeys.push(
+        new Hotkey('alt+n', (event: KeyboardEvent) => {
+            if (this.enableHotKeys) {
+              event.preventDefault();
+              this.addNote();
+              return false;
+            }
+            return true;
+          }, ['INPUT', 'SELECT', 'TEXTAREA'],
+          this.translate.instant('rulechain.add-note'))
       );
     }
   }
@@ -512,9 +556,9 @@ export class RuleChainPageComponent extends PageComponent
       }
       model.nodes.push(node);
     });
-    if (this.expansionPanels) {
+    if (this.expansionPanels && !this.readonly) {
       for (let i = 0; i < ruleNodeTypesLibrary.length; i++) {
-        const panel = this.expansionPanels.find((item, index) => index === i);
+        const panel = this.expansionPanels.find((_item, index) => index === i);
         if (panel) {
           const type = ruleNodeTypesLibrary[i];
           if (!this.ruleNodeTypesModel[type].model.nodes.length) {
@@ -573,7 +617,7 @@ export class RuleChainPageComponent extends PageComponent
         additionalInfo: ruleNode.additionalInfo,
         configuration: ruleNode.configuration,
         configurationVersion: isDefinedAndNotNull(ruleNode.configurationVersion) ? ruleNode.configurationVersion : 0,
-        debugMode: ruleNode.debugMode,
+        debugSettings: ruleNode.debugSettings,
         singletonMode: ruleNode.singletonMode,
         queueName: ruleNode.queueName,
         x: Math.round(ruleNode.additionalInfo.layoutX),
@@ -603,6 +647,7 @@ export class RuleChainPageComponent extends PageComponent
         );
       }
       nodes.push(node);
+      node.readonly = this.readonly;
       this.ruleChainModel.nodes.push(node);
     });
     if (this.ruleChainMetaData.firstNodeIndex > -1) {
@@ -648,6 +693,7 @@ export class RuleChainPageComponent extends PageComponent
         }
       });
     }
+    this.ruleChainModel.notes = deepClone(this.ruleChainMetaData.notes) || [];
     if (this.ruleChainCanvas) {
       this.ruleChainCanvas.adjustCanvasSize(true);
     }
@@ -656,8 +702,8 @@ export class RuleChainPageComponent extends PageComponent
     this.validate();
   }
 
-  openRuleChainContextMenu($event: MouseEvent) {
-    if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey) {
+  openRuleChainContextMenu($event: TbContextMenuEvent) {
+    if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey && !this.readonly) {
       const x = $event.clientX;
       const y = $event.clientY;
       const item = this.ruleChainCanvas.modelService.getItemInfoAtPoint(x, y);
@@ -679,10 +725,12 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   private prepareContextMenu(item: FcItemInfo): RuleChainMenuContextInfo {
-    if (this.objectsSelected() || (!item.node && !item.edge)) {
+    if (this.objectsSelected() || (!item.node && !item.edge && !item.note)) {
       return this.prepareRuleChainContextMenu();
     } else if (item.node) {
       return this.prepareRuleNodeContextMenu(item.node);
+    } else if (item.note) {
+      return this.prepareNoteContextMenu(item.note);
     } else if (item.edge) {
       return this.prepareEdgeContextMenu(item.edge);
     }
@@ -696,11 +744,12 @@ export class RuleChainPageComponent extends PageComponent
       subtitle: this.translate.instant('rulechain.rulechain'),
       menuItems: []
     };
-    if (this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length) {
+    if (this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length ||
+          this.ruleChainCanvas.modelService.notes.getSelectedNotes().length) {
       contextInfo.menuItems.push(
         {
           action: () => {
-            this.copyRuleNodes();
+            this.copyRuleChainObjects();
           },
           enabled: true,
           value: 'rulenode.copy-selected',
@@ -712,12 +761,23 @@ export class RuleChainPageComponent extends PageComponent
     contextInfo.menuItems.push(
       {
         action: ($event) => {
-          this.pasteRuleNodes($event);
+          this.pasteRuleChainObjects($event);
         },
-        enabled: this.itembuffer.hasRuleNodes(),
+        enabled: this.itembuffer.hasRuleChainObjects(),
         value: 'action.paste',
         icon: 'content_paste',
         shortcut: 'M-V'
+      }
+    );
+    contextInfo.menuItems.push(
+      {
+        action: ($event) => {
+          this.addNote($event);
+        },
+        enabled: true,
+        value: 'rulechain.add-note',
+        icon: 'sticky_note_2',
+        shortcut: 'A-N'
       }
     );
     contextInfo.menuItems.push(
@@ -898,7 +958,7 @@ export class RuleChainPageComponent extends PageComponent
           toIndexSet.add(toIndex);
         }
       });
-      const noInputNodes = selectedNodes.filter((node, index) => !toIndexSet.has(index));
+      const noInputNodes = selectedNodes.filter((_node, index) => !toIndexSet.has(index));
       return noInputNodes.filter((node: FcRuleNode) => node.component.configurationDescriptor.nodeDefinition.inEnabled).length <= 1;
     }
     return false;
@@ -916,11 +976,13 @@ export class RuleChainPageComponent extends PageComponent
       }
     }).afterClosed().subscribe((ruleChain) => {
       if (ruleChain) {
+        const selectedNotes: FcRuleNote[] = this.ruleChainCanvas.modelService.notes.getSelectedNotes();
         this.ruleChainCanvas.modelService.deselectAll();
         const ruleChainMetaData: RuleChainMetaData = {
           ruleChainId: ruleChain.id,
           nodes: [],
-          connections: []
+          connections: [],
+          notes: deepClone(selectedNotes)
         };
         let outputEdges: FcRuleEdge[] = [];
         let minX: number = null;
@@ -934,7 +996,7 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: deepClone(node.configuration),
             additionalInfo: node.additionalInfo ? deepClone(node.additionalInfo) : {},
-            debugMode: node.debugMode,
+            debugSettings: node.debugSettings,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };
@@ -984,7 +1046,7 @@ export class RuleChainPageComponent extends PageComponent
             }
           }
         });
-        const noInputNodes = selectedNodes.filter((node, index) => !toIndexSet.has(index));
+        const noInputNodes = selectedNodes.filter((_node, index) => !toIndexSet.has(index));
         const possibleInputNodes = noInputNodes.filter((node: FcRuleNode) =>
           node.component.configurationDescriptor.nodeDefinition.inEnabled);
         let inputEdges: FcRuleEdge[] = [];
@@ -1007,7 +1069,6 @@ export class RuleChainPageComponent extends PageComponent
             name: outputEdge.label,
             configuration: {},
             additionalInfo: {},
-            debugMode: false,
             singletonMode: false
           };
           outputNode.additionalInfo.layoutX = Math.round(destNode.x);
@@ -1031,6 +1092,10 @@ export class RuleChainPageComponent extends PageComponent
           node.additionalInfo.layoutX -= deltaX;
           node.additionalInfo.layoutY -= deltaY;
         });
+        ruleChainMetaData.notes?.forEach((note) => {
+          note.x -= deltaX;
+          note.y -= deltaY;
+        });
         this.ruleChainService.saveRuleChainMetadata(ruleChainMetaData).subscribe(() => {
           const component = this.ruleChainService.getRuleNodeComponentByClazz(this.ruleChainType, ruleChainNodeClazz);
           const descriptor = ruleNodeTypeDescriptors.get(component.type);
@@ -1053,7 +1118,6 @@ export class RuleChainPageComponent extends PageComponent
             configuration: {
               ruleChainId: ruleChain.id.id
             },
-            debugMode: false,
             singletonMode: false,
             x: Math.round(ruleChainNodeX),
             y: Math.round(ruleChainNodeY),
@@ -1083,6 +1147,9 @@ export class RuleChainPageComponent extends PageComponent
           selectedNodes.forEach((node) => {
             this.ruleChainCanvas.modelService.nodes.delete(node);
           });
+          selectedNotes.forEach((note) => {
+            this.ruleChainCanvas.modelService.notes.delete(note);
+          });
           this.onModelChanged();
           this.updateRuleNodesHighlight();
         });
@@ -1091,8 +1158,10 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   onModelChanged() {
-    this.isDirtyValue = true;
-    this.validate();
+    if (!this.readonly) {
+      this.isDirtyValue = true;
+      this.validate();
+    }
   }
 
   helpLinkIdForRuleNodeType(): string {
@@ -1139,12 +1208,15 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   private copyNode(node: FcRuleNode) {
-    this.itembuffer.copyRuleNodes([node], []);
+    this.itembuffer.copyRuleChainObjects([node], [], []);
   }
 
-  private copyRuleNodes() {
+  private copyRuleChainObjects() {
     const nodes: FcRuleNode[] = this.ruleChainCanvas.modelService.nodes.getSelectedNodes();
     const edges: FcRuleEdge[] = this.ruleChainCanvas.modelService.edges.getSelectedEdges();
+    const notes: FcRuleNote[] = (this.ruleChainModel.notes || []).filter(
+      note => this.ruleChainCanvas.modelService.notes.isSelected(note)
+    );
     const connections: RuleNodeConnection[] = [];
     edges.forEach((edge) => {
       const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
@@ -1163,10 +1235,10 @@ export class RuleChainPageComponent extends PageComponent
         connections.push(connection);
       }
     });
-    this.itembuffer.copyRuleNodes(nodes, connections);
+    this.itembuffer.copyRuleChainObjects(nodes, connections, notes);
   }
 
-  private pasteRuleNodes(event?: MouseEvent) {
+  private pasteRuleChainObjects(event?: MouseEvent) {
     const canvas = $(this.ruleChainCanvas.modelService.canvasHtmlElement);
     let x: number;
     let y: number;
@@ -1181,11 +1253,11 @@ export class RuleChainPageComponent extends PageComponent
       x = scrollLeft + scrollParent.width() / 2;
       y = scrollTop + scrollParent.height() / 2;
     }
-    const ruleNodes = this.itembuffer.pasteRuleNodes(x, y);
-    if (ruleNodes) {
+    const ruleChainObjects = this.itembuffer.pasteRuleChainObjects(x, y);
+    if (ruleChainObjects) {
       this.ruleChainCanvas.modelService.deselectAll();
       const nodes: FcRuleNode[] = [];
-      ruleNodes.nodes.forEach((node) => {
+      ruleChainObjects.nodes.forEach((node) => {
         node.id = 'rule-chain-node-' + this.nextNodeID++;
         const component = node.component;
         if (component.configurationDescriptor.nodeDefinition.inEnabled) {
@@ -1208,7 +1280,7 @@ export class RuleChainPageComponent extends PageComponent
         this.ruleChainModel.nodes.push(node);
         this.ruleChainCanvas.modelService.nodes.select(node);
       });
-      ruleNodes.connections.forEach((connection) => {
+      ruleChainObjects.connections.forEach((connection) => {
         const sourceNode = nodes[connection.fromIndex];
         const destNode = nodes[connection.toIndex];
         if ( (connection.isInputSource || sourceNode) &&  destNode ) {
@@ -1244,15 +1316,142 @@ export class RuleChainPageComponent extends PageComponent
           }
         }
       });
+      if (ruleChainObjects.notes?.length) {
+        if (!this.ruleChainModel.notes) {
+          this.ruleChainModel.notes = [];
+        }
+        ruleChainObjects.notes.forEach((note) => {
+          note.id = guid();
+          this.ruleChainModel.notes.push(note);
+          this.ruleChainCanvas.modelService.notes.select(note);
+        });
+      }
       this.updateRuleNodesHighlight();
       this.validate();
       this.onModelChanged();
     }
   }
 
+  addNote(event?: MouseEvent): void {
+    this.dialog.open<AddNoteDialogComponent, FcRuleNote, Partial<FcRuleNote>>(AddNoteDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        id: '', x: 0, y: 0, width: 200, height: 120,
+        content: '',
+        backgroundColor: FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR,
+        applyDefaultMarkdownStyle: FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE,
+        markdownCss: ''
+      }
+    }).afterClosed().subscribe((noteData) => {
+      if (noteData !== undefined) {
+        const canvas = $(this.ruleChainCanvas.modelService.canvasHtmlElement);
+        let x: number;
+        let y: number;
+        if (event) {
+          const offset = canvas.offset();
+          x = Math.round(event.clientX - offset.left);
+          y = Math.round(event.clientY - offset.top);
+        } else {
+          const scrollParent = canvas.parent();
+          x = scrollParent.scrollLeft() + scrollParent.width() / 2;
+          y = scrollParent.scrollTop() + scrollParent.height() / 2;
+        }
+        const note: FcRuleNote = {
+          id: guid(),
+          x,
+          y,
+          width: 200,
+          height: 120,
+          ...noteData
+        };
+        if (!this.ruleChainModel.notes) {
+          this.ruleChainModel.notes = [];
+        }
+        this.ruleChainModel.notes.push(note);
+        this.isDirty = true;
+      }
+    });
+  }
+
+  private prepareNoteContextMenu(note: FcRuleNote): RuleChainMenuContextInfo {
+    const contextInfo: RuleChainMenuContextInfo = {
+      headerClass: 'tb-rulechain-header',
+      icon: 'sticky_note_2',
+      title: this.translate.instant('rulechain.note'),
+      menuItems: []
+    };
+    if (!note.readonly) {
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.openNoteDetails(note);
+          },
+          enabled: true,
+          value: 'action.edit',
+          icon: 'edit'
+        }
+      );
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.itembuffer.copyRuleChainObjects([], [], [note]);
+          },
+          enabled: true,
+          value: 'action.copy',
+          icon: 'content_copy'
+        }
+      );
+      contextInfo.menuItems.push(
+        {
+          action: () => {
+            this.ruleChainCanvas.modelService.notes.delete(note);
+          },
+          enabled: true,
+          value: 'action.delete',
+          icon: 'clear',
+          shortcut: 'Del'
+        }
+      );
+    }
+    return contextInfo;
+  }
+
+  private openNoteDetails(note: FcRuleNote): void {
+    this.enableHotKeys = false;
+    this.updateErrorTooltips(true);
+    this.isEditingRuleNode = false;
+    this.editingRuleNode = null;
+    this.isEditingRuleNodeLink = false;
+    this.editingRuleNodeLink = null;
+    this.isEditingNote = true;
+    this.editingNoteIndex = this.ruleChainModel.notes.indexOf(note);
+    this.editingNote = deepClone(note);
+  }
+
+  saveNote(): void {
+    this.ruleNoteComponent.noteForm.markAsPristine();
+    Object.assign(this.editingNote, this.ruleNoteComponent.noteForm.value);
+    this.ruleChainModel.notes[this.editingNoteIndex] = this.editingNote;
+    this.editingNote = deepClone(this.editingNote);
+    this.onModelChanged();
+  }
+
+  onRevertNoteEdit(): void {
+    this.ruleNoteComponent.noteForm.markAsPristine();
+    const note =  this.ruleChainModel.notes[this.editingNoteIndex];
+    this.editingNote = deepClone(note);
+  }
+
+  onEditNoteClosed(): void {
+    this.editingNote = null;
+    this.isEditingNote = false;
+  }
+
   onDetailsDrawerClosed() {
     this.onEditRuleNodeClosed();
     this.onEditRuleNodeLinkClosed();
+    this.onEditNoteClosed();
     this.enableHotKeys = true;
     this.updateErrorTooltips(false);
   }
@@ -1282,7 +1481,9 @@ export class RuleChainPageComponent extends PageComponent
   onDebugEventSelected(debugEventBody: DebugRuleNodeEventBody) {
     const ruleNodeConfigComponent = this.ruleNodeComponent.ruleNodeConfigComponent;
     const ruleNodeConfigDefinedComponent = ruleNodeConfigComponent.definedConfigComponent;
-    if (ruleNodeConfigComponent.useDefinedDirective() && ruleNodeConfigDefinedComponent.hasScript && ruleNodeConfigDefinedComponent.testScript) {
+    if (ruleNodeConfigComponent.useDefinedDirective()
+      && ruleNodeConfigDefinedComponent.hasScript
+      && ruleNodeConfigDefinedComponent.testScript) {
       ruleNodeConfigDefinedComponent.testScript(debugEventBody);
     }
   }
@@ -1357,9 +1558,13 @@ export class RuleChainPageComponent extends PageComponent
         name = node.name;
         desc = this.translate.instant(ruleNodeTypeDescriptors.get(node.component.type).name) + ' - ' + node.component.name;
         if (node.additionalInfo) {
-          details = node.additionalInfo.description;
+          details = this.sanitizer.sanitize(SecurityContext.HTML, node.additionalInfo.description);
         }
       }
+
+      name = this.sanitizer.sanitize(SecurityContext.HTML, name);
+      desc = this.sanitizer.sanitize(SecurityContext.HTML, desc);
+
       let tooltipContent = '<div class="tb-rule-node-tooltip">' +
         '<div id="tb-node-content">' +
         '<div class="tb-node-title">' + name + '</div>' +
@@ -1406,29 +1611,37 @@ export class RuleChainPageComponent extends PageComponent
 
   objectsSelected(): boolean {
     return this.ruleChainCanvas.modelService.nodes.getSelectedNodes().length > 0 ||
-      this.ruleChainCanvas.modelService.edges.getSelectedEdges().length > 0;
+      this.ruleChainCanvas.modelService.edges.getSelectedEdges().length > 0 ||
+      this.ruleChainCanvas.modelService.notes.getSelectedNotes().length > 0;
   }
 
   deleteSelected() {
     this.ruleChainCanvas.modelService.deleteSelected();
   }
 
-  isDebugModeEnabled(): boolean {
-    const res = this.ruleChainModel.nodes.find((node) => node.debugMode);
+  isDebugSettingsEnabled(): boolean {
+    const res = this.ruleChainModel.nodes.find((node) => node?.debugSettings && this.isDebugSettingsActive(node.debugSettings));
     return typeof res !== 'undefined';
   }
 
-  resetDebugModeInAllNodes() {
+  resetDebugSettingsInAllNodes(): void {
     let changed = false;
     this.ruleChainModel.nodes.forEach((node) => {
       if (node.component.type !== RuleNodeType.INPUT) {
-        changed = changed || node.debugMode;
-        node.debugMode = false;
+        const nodeHasActiveDebugSettings = node?.debugSettings && this.isDebugSettingsActive(node.debugSettings);
+        changed = changed || nodeHasActiveDebugSettings;
+        if (nodeHasActiveDebugSettings) {
+          node.debugSettings = { allEnabled: false, failuresEnabled: false, allEnabledUntil: 0 };
+        }
       }
     });
     if (changed) {
       this.onModelChanged();
     }
+  }
+
+  private isDebugSettingsActive(debugSettings: EntityDebugSettings): boolean {
+    return debugSettings.allEnabled || debugSettings.failuresEnabled || debugSettings.allEnabledUntil > new Date().getTime();
   }
 
   validate() {
@@ -1456,7 +1669,9 @@ export class RuleChainPageComponent extends PageComponent
       const ruleChainMetaData: RuleChainMetaData = {
         ruleChainId: this.ruleChain.id,
         nodes: [],
-        connections: []
+        connections: [],
+        notes: deepClone(this.ruleChainModel.notes) || [],
+        version: ruleChain.version
       };
       const nodes: FcRuleNode[] = [];
       this.ruleChainModel.nodes.forEach((node) => {
@@ -1465,10 +1680,12 @@ export class RuleChainPageComponent extends PageComponent
             id: node.ruleNodeId,
             type: node.component.clazz,
             name: node.name,
-            configurationVersion: isDefinedAndNotNull(node.configurationVersion) ? node.configurationVersion : node.component.configurationVersion,
+            configurationVersion: isDefinedAndNotNull(node.configurationVersion)
+              ? node.configurationVersion
+              : node.component.configurationVersion,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
-            debugMode: node.debugMode,
+            debugSettings: node.debugSettings,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };
@@ -1500,20 +1717,33 @@ export class RuleChainPageComponent extends PageComponent
           });
         }
       });
-      this.ruleChainService.saveRuleChainMetadata(ruleChainMetaData).subscribe((savedRuleChainMetaData) => {
-        this.ruleChainMetaData = savedRuleChainMetaData;
-        if (this.isImport) {
-          this.isDirtyValue = false;
-          this.isImport = false;
-          if (this.ruleChainType !== RuleChainType.EDGE) {
-            this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
-          } else {
-            this.router.navigateByUrl(`edgeManagement/ruleChains/${this.ruleChain.id.id}`);
+      this.ruleChainService.saveRuleChainMetadata(ruleChainMetaData)
+        .pipe(
+          catchError(err => {
+            if (err.status === HttpStatusCode.Conflict) {
+              return this.ruleChainService.getRuleChainMetadata(ruleChainMetaData.ruleChainId.id);
+            }
+            return throwError(() => err);
+          })
+        )
+        .subscribe((savedRuleChainMetaData) => {
+          this.ruleChain.version = savedRuleChainMetaData.version;
+          this.ruleChainMetaData = savedRuleChainMetaData;
+          if (!this.ruleChainMetaData.notes) {
+            this.ruleChainMetaData.notes = deepClone(this.ruleChainModel.notes) || [];
           }
-        } else {
-          this.createRuleChainModel();
-        }
-        saveResult.next();
+          if (this.isImport) {
+            this.isDirtyValue = false;
+            this.isImport = false;
+            if (this.ruleChainType !== RuleChainType.EDGE) {
+              this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
+            } else {
+              this.router.navigateByUrl(`edgeManagement/templates/ruleChains/${this.ruleChain.id.id}`);
+            }
+          } else {
+            this.createRuleChainModel();
+          }
+          saveResult.next();
       });
     });
     return saveResult;
@@ -1626,6 +1856,39 @@ export class RuleChainPageComponent extends PageComponent
     }
   }
 
+  get additionalActionConfig (): AdditionalDebugActionConfig {
+    return {
+      title: this.translate.instant('action.see-debug-events'),
+      action: this.switchToEventsTab.bind(this)
+    }
+  }
+
+  private switchToEventsTab() {
+    if(!this.ruleNodeComponent.ruleNodeFormGroup.dirty) {
+      this.selectedRuleNodeTabIndex = 1;
+    } else {
+      this.openDebugEventsDialog();
+    }
+  }
+
+  private openDebugEventsDialog(): void {
+    this.dialog.open<EventsDialogComponent>(EventsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        title: 'rulenode.events',
+        debugEventTypes: [DebugEventType.DEBUG_RULE_NODE],
+        defaultEventType: DebugEventType.DEBUG_RULE_NODE,
+        tenantId: this.ruleChain.tenantId.id,
+        entityId: this.editingRuleNode.ruleNodeId,
+        functionTestButtonLabel: this.ruleNodeTestButtonLabel,
+        onDebugEventSelected: this.onDebugEventSelected.bind(this)
+      }
+    })
+      .afterClosed()
+      .subscribe();
+  }
+
   private updateNodeErrorTooltip(node: FcRuleNode) {
     if (node.error) {
       const element = $('#' + node.id);
@@ -1723,13 +1986,14 @@ export interface AddRuleNodeLinkDialogData {
 }
 
 @Component({
-  selector: 'tb-add-rule-node-link-dialog',
-  templateUrl: './add-rule-node-link-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeLinkDialogComponent}],
-  styleUrls: ['./add-rule-node-link-dialog.component.scss']
+    selector: 'tb-add-rule-node-link-dialog',
+    templateUrl: './add-rule-node-link-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddRuleNodeLinkDialogComponent }],
+    styleUrls: ['./add-rule-node-link-dialog.component.scss'],
+    standalone: false
 })
 export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeLinkDialogComponent, FcRuleEdge>
-  implements OnInit, ErrorStateMatcher {
+  implements ErrorStateMatcher {
 
   ruleNodeLinkFormGroup: UntypedFormGroup;
 
@@ -1759,9 +2023,6 @@ export class AddRuleNodeLinkDialogComponent extends DialogComponent<AddRuleNodeL
     );
   }
 
-  ngOnInit(): void {
-  }
-
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
@@ -1787,13 +2048,14 @@ export interface AddRuleNodeDialogData {
 }
 
 @Component({
-  selector: 'tb-add-rule-node-dialog',
-  templateUrl: './add-rule-node-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent}],
-  styleUrls: ['./add-rule-node-dialog.component.scss']
+    selector: 'tb-add-rule-node-dialog',
+    templateUrl: './add-rule-node-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AddRuleNodeDialogComponent }],
+    styleUrls: ['./add-rule-node-dialog.component.scss'],
+    standalone: false
 })
 export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialogComponent, FcRuleNode>
-  implements OnInit, ErrorStateMatcher {
+  implements ErrorStateMatcher {
 
   @ViewChild('tbRuleNode', {static: true}) ruleNodeDetailsComponent: RuleNodeDetailsComponent;
 
@@ -1813,9 +2075,6 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
     this.ruleNode = this.data.ruleNode;
     this.ruleChainId = this.data.ruleChainId;
     this.ruleChainType = this.data.ruleChainType;
-  }
-
-  ngOnInit(): void {
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -1847,10 +2106,11 @@ export interface CreateNestedRuleChainDialogData {
 }
 
 @Component({
-  selector: 'tb-create-nested-rulechain-dialog',
-  templateUrl: './create-nested-rulechain-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: CreateNestedRuleChainDialogComponent}],
-  styleUrls: []
+    selector: 'tb-create-nested-rulechain-dialog',
+    templateUrl: './create-nested-rulechain-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: CreateNestedRuleChainDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class CreateNestedRuleChainDialogComponent extends DialogComponent<CreateNestedRuleChainDialogComponent, RuleChain>
   implements OnInit, ErrorStateMatcher {
@@ -1911,3 +2171,30 @@ export class CreateNestedRuleChainDialogComponent extends DialogComponent<Create
   }
 }
 
+@Component({
+    selector: 'tb-add-note-dialog',
+    templateUrl: './add-note-dialog.component.html',
+    styleUrls: ['./add-note-dialog.component.scss'],
+    standalone: false
+})
+export class AddNoteDialogComponent extends DialogComponent<AddNoteDialogComponent, Partial<FcRuleNote>> {
+
+  @ViewChild('tbRuleNote') ruleNoteComponent: RuleNoteEditorComponent;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: FcRuleNote,
+              public dialogRef: MatDialogRef<AddNoteDialogComponent, Partial<FcRuleNote>>) {
+    super(store, router, dialogRef);
+  }
+
+  cancel(): void {
+    this.dialogRef.close(undefined);
+  }
+
+  save(): void {
+    if (this.ruleNoteComponent.noteForm.valid) {
+      this.dialogRef.close(this.ruleNoteComponent.noteForm.value);
+    }
+  }
+}

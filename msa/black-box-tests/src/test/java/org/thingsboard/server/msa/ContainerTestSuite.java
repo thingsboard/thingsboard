@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +17,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,26 +26,35 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
+import static org.thingsboard.server.msa.TestUtils.addComposeVersion;
 
 @Slf4j
 public class ContainerTestSuite {
-    final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
-    final static boolean IS_REDIS_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
-    final static boolean IS_REDIS_SSL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSsl"));
+    final static boolean IS_VALKEY_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
+    final static boolean IS_VALKEY_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
+    final static boolean IS_VALKEY_SSL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSsl"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
-    final static String QUEUE_TYPE = System.getProperty("blackBoxTests.queue", "kafka");
-    private static final String SOURCE_DIR = "./../../docker/";
+    final static boolean IS_CITUS = Boolean.parseBoolean(System.getProperty("blackBoxTests.citus"));
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
+    private static final String TB_IE_LOG_REGEXP = ".*Started ThingsboardIntegrationExecutorApplication.*";
     private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
     private static final String TB_VC_LOG_REGEXP = TRANSPORTS_LOG_REGEXP;
+    private static final String INTEGRATION_LOG_REGEXP = ".*Sending a connect request to the TB!.*";
     private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
+    private static final String TB_EDQS_LOG_REGEXP = ".*All partitions processed.*";
+    private static final String TB_REPORT_LOG_REGEXP = ".*Going to recalculate partitions.*";
+    private static final String TRENDZ_LOG_REGEXP = ".*Started TrendzApplication.*";
+    private static final String TRENDZ_PYTHON_EXECUTOR_LOG_REGEXP = ".*Started PythonExecutorApplication.*";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
-    private  DockerComposeContainer<?> testContainer;
-    private  ThingsBoardDbInstaller installTb;
+    private DockerComposeContainerImpl testContainer;
+    private ThingsBoardDbInstaller installTb;
     private boolean isActive;
 
     private static ContainerTestSuite containerTestSuite;
+
+    private ContainerTestSuite() {
+    }
 
     public boolean isActive() {
         return isActive;
@@ -66,9 +62,6 @@ public class ContainerTestSuite {
 
     public void setActive(boolean active) {
         isActive = active;
-    }
-
-    private ContainerTestSuite() {
     }
 
     public static ContainerTestSuite getInstance() {
@@ -79,146 +72,169 @@ public class ContainerTestSuite {
     }
 
     public void start() {
-        installTb = new ThingsBoardDbInstaller();
-        installTb.createVolumes();
-        log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
-        log.info("System property of blackBoxTests.redisSentinel is {}", IS_REDIS_SENTINEL);
-        log.info("System property of blackBoxTests.redisSsl is {}", IS_REDIS_SSL);
+        log.info("System property of blackBoxTests.redisCluster is {}", IS_VALKEY_CLUSTER);
+        log.info("System property of blackBoxTests.redisSentinel is {}", IS_VALKEY_SENTINEL);
+        log.info("System property of blackBoxTests.redisSsl is {}", IS_VALKEY_SSL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
+        log.info("System property of blackBoxTests.citus is {}", IS_CITUS);
+        if (IS_CITUS && IS_HYBRID_MODE) {
+            throw new IllegalStateException("blackBoxTests.citus and blackBoxTests.hybridMode are mutually exclusive: Citus is a distributed-PostgreSQL layout and cannot run with the Cassandra-backed hybrid mode.");
+        }
         boolean skipTailChildContainers = Boolean.parseBoolean(System.getProperty("blackBoxTests.skipTailChildContainers"));
         try {
             final String targetDir = FileUtils.getTempDirectoryPath() + "/" + "ContainerTestSuite-" + UUID.randomUUID() + "/";
             log.info("targetDir {}", targetDir);
-            FileUtils.copyDirectory(new File(SOURCE_DIR), new File(targetDir));
-            replaceInFile(targetDir + "docker-compose.yml", "    container_name: \"${LOAD_BALANCER_NAME}\"", "", "container_name");
-
+            // The lock must span the copy, not just the checkout: a concurrent run resets the cache tree in place.
+            try (ComposeRepository.Checkout compose = ComposeRepository.checkout()) {
+                FileUtils.copyDirectory(compose.getPath().toFile(), new File(targetDir), file -> !".git".equals(file.getName()));
+            }
+            // The compose branch this runs against still names the images tb-pe-*, which nothing builds any more.
+            // Renaming them here is the whole difference between that branch and the 4.4 one; it becomes a no-op
+            // once tb.compose.ref points at a branch that carries the new names.
+            replaceInFile(targetDir, ".env", Map.of("tb-pe-", "tb-"));
+            replaceInFile(targetDir + "advanced/docker-compose.yml", "    container_name: \"${LOAD_BALANCER_NAME}\"", "", "container_name");
             FileUtils.copyDirectory(new File("src/test/resources"), new File(targetDir));
 
-            class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
-                public DockerComposeContainerImpl(List<File> composeFiles) {
-                    super(composeFiles);
-                }
+            installTb = new ThingsBoardDbInstaller(targetDir);
+            // Marked active before the volumes exist, not after the containers are up: the teardown that saves
+            // the container logs and removes the volumes is guarded on this flag, and everything from here on
+            // can fail - so a bring-up failure is exactly when those logs are needed, and when the volumes and
+            // the half-started compose project would otherwise be left behind.
+            setActive(true);
+            installTb.createVolumes();
 
-                @Override
-                public void stop() {
-                    super.stop();
-                    tryDeleteDir(targetDir);
-                }
-            }
-
-            if (IS_REDIS_SSL) {
-                addToFile(targetDir, "cache-redis.env",
+            if (IS_VALKEY_SSL) {
+                addToFile(targetDir, "cache-valkey.env",
                         Map.of("TB_REDIS_SSL_ENABLED", "true",
-                                "TB_REDIS_SSL_PEM_CERT", "/redis/certs/redisCA.crt"));
+                                "TB_REDIS_SSL_PEM_CERT", "/valkey/certs/valkeyCA.crt"));
             }
 
             List<File> composeFiles = new ArrayList<>(Arrays.asList(
-                    new File(targetDir + "docker-compose.yml"),
-                    new File(targetDir + "docker-compose.volumes.yml"),
-                    new File(targetDir + "docker-compose.mosquitto.yml"),
-                    new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
+                    new File(targetDir + "advanced/docker-compose.yml"),
+                    new File(targetDir + "advanced/docker-compose.edqs.yml"),
+                    new File(targetDir + "advanced/docker-compose.edqs.volumes.yml"),
+                    new File(targetDir + "advanced/docker-compose.volumes.yml"),
+                    new File(targetDir + "advanced/" + (IS_HYBRID_MODE ? "docker-compose.hybrid.yml" : "docker-compose.postgres.yml")),
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
-                    new File(targetDir + "docker-compose.postgres.volumes.yml"),
-                    new File(targetDir + "docker-compose." + QUEUE_TYPE + ".yml"),
-                    new File(targetDir + resolveRedisComposeFile()),
-                    new File(targetDir + resolveRedisComposeVolumesFile()),
+                    new File(targetDir + "advanced/docker-compose.postgres.volumes.yml"),
+                    new File(targetDir + "docker-compose.integration.yml"),
+                    new File(targetDir + "docker-compose.mosquitto.yml"),
+                    new File(targetDir + "docker-compose.opc-ua.yml"),
+                    new File(targetDir + "advanced/docker-compose.kafka.yml"),
+                    new File(targetDir + "advanced/docker-compose.trendz.yml"),
+                    new File(targetDir + "advanced/" + resolveValkeyComposeFile()),
+                    new File(targetDir + "advanced/" + resolveValkeyComposeVolumesFile()),
                     new File(targetDir + ("docker-selenium.yml"))
             ));
-
-            Map<String, String> queueEnv = new HashMap<>();
-            queueEnv.put("TB_QUEUE_TYPE", QUEUE_TYPE);
-            switch (QUEUE_TYPE) {
-                case "kafka":
-                    composeFiles.add(new File(targetDir + "docker-compose.kafka.yml"));
-                    break;
-                case "aws-sqs":
-                    replaceInFile(targetDir, "queue-aws-sqs.env",
-                            Map.of("YOUR_KEY", getSysProp("blackBoxTests.awsKey"),
-                                    "YOUR_SECRET", getSysProp("blackBoxTests.awsSecret"),
-                                    "YOUR_REGION", getSysProp("blackBoxTests.awsRegion")));
-                    break;
-                case "rabbitmq":
-                    composeFiles.add(new File(targetDir + "docker-compose.rabbitmq-server.yml"));
-                    replaceInFile(targetDir, "queue-rabbitmq.env",
-                            Map.of("localhost", "rabbitmq"));
-                    break;
-                case "service-bus":
-                    replaceInFile(targetDir, "queue-service-bus.env",
-                            Map.of("YOUR_NAMESPACE_NAME", getSysProp("blackBoxTests.serviceBusNamespace"),
-                                    "YOUR_SAS_KEY_NAME", getSysProp("blackBoxTests.serviceBusSASPolicy")));
-                    replaceInFile(targetDir, "queue-service-bus.env",
-                            Map.of("YOUR_SAS_KEY", getSysProp("blackBoxTests.serviceBusPrimaryKey")));
-                    break;
-                case "pubsub":
-                    replaceInFile(targetDir, "queue-pubsub.env",
-                            Map.of("YOUR_PROJECT_ID", getSysProp("blackBoxTests.pubSubProjectId"),
-                                    "YOUR_SERVICE_ACCOUNT", getSysProp("blackBoxTests.pubSubServiceAccount")));
-                    break;
-                default:
-                    throw new RuntimeException("Unsupported queue type: " + QUEUE_TYPE);
+            if (IS_CITUS) {
+                composeFiles.add(new File(targetDir + "advanced/docker-compose.citus.yml"));
             }
+            addToFile(targetDir, "queue-kafka.env", Map.of("TB_QUEUE_PREFIX", "test"));
+            addToFile(targetDir, "tb-edqs.env", Map.of("TB_QUEUE_PREFIX", "test"));
+            // Keyless: no licence key, no licence server, no identity to keep out of a public repo. The secret
+            // has to be emptied rather than left alone, because any non-empty value wins over the flag - so
+            // this uses the verifying form, which fails the run rather than quietly leaving the placeholder
+            // in place should a later compose branch write the assignment differently.
+            replaceInFile(targetDir + "tb-node.env", "TB_LICENSE_SECRET=YOUR_LICENSE_KEY_HERE",
+                    "TB_LICENSE_SECRET=", "YOUR_LICENSE_KEY_HERE");
+            addToFile(targetDir, "tb-node.env", Map.of("NON_PRODUCTION_USE", "true"));
 
             if (IS_HYBRID_MODE) {
-                composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
+                composeFiles.add(new File(targetDir + "advanced/docker-compose.cassandra.volumes.yml"));
             }
 
-            testContainer = new DockerComposeContainerImpl<>(composeFiles)
+            addComposeVersion(composeFiles, "3.0");
+
+            testContainer = new DockerComposeContainerImpl(targetDir, composeFiles)
                     .withPull(false)
                     .withLocalCompose(true)
                     .withOptions("--compatibility")
                     .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
-                    .withEnv(queueEnv)
+                    .withEnv("TB_QUEUE_TYPE", "kafka")
                     .withEnv("LOAD_BALANCER_NAME", "")
                     .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .withExposedService("tb-http-integration", 8082)
+                    .withExposedService("tb-integration-executor1", 8082)
+                    .withExposedService("tb-mqtt-integration", 8082)
                     .withExposedService("broker", 1883)
                     .waitingFor("tb-core1", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-core2", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-rule-engine1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-rule-engine2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-http-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-http-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-coap-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-lwm2m-transport", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-mqtt-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-http-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-tcp-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-udp-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-coap-integration", Wait.forLogMessage(INTEGRATION_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-integration-executor1", Wait.forLogMessage(TB_IE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-integration-executor2", Wait.forLogMessage(TB_IE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-vc-executor1", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-vc-executor2", Wait.forLogMessage(TB_VC_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
-                    .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
+                    .waitingFor("tb-js-executor", Wait.forLogMessage(TB_JS_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-edqs1", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-edqs2", Wait.forLogMessage(TB_EDQS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-report1", Wait.forLogMessage(TB_REPORT_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("tb-report2", Wait.forLogMessage(TB_REPORT_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("trendz", Wait.forLogMessage(TRENDZ_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
+                    .waitingFor("trendz-python-executor", Wait.forLogMessage(TRENDZ_PYTHON_EXECUTOR_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT));
             testContainer.start();
-            setActive(true);
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            // Throwable, not Exception: the verifying replaceInFile above asserts, and an AssertionError from
+            // it would otherwise leave the suite without the teardown that removes the volumes it created.
             log.error("Failed to create test container", e);
-            fail("Failed to create test container");
+            fail("Failed to create test container", e);
         }
     }
 
-    private static String resolveRedisComposeFile() {
-        if (IS_REDIS_CLUSTER) {
-            return "docker-compose.redis-cluster.yml";
+    private static String resolveValkeyComposeFile() {
+        if (IS_VALKEY_CLUSTER) {
+            return "docker-compose.valkey-cluster.yml";
         }
-        if (IS_REDIS_SENTINEL) {
-            return "docker-compose.redis-sentinel.yml";
+        if (IS_VALKEY_SENTINEL) {
+            return "docker-compose.valkey-sentinel.yml";
         }
-        if (IS_REDIS_SSL) {
-            return "docker-compose.redis-ssl.yml";
+        if (IS_VALKEY_SSL) {
+            return "docker-compose.valkey-ssl.yml";
         }
-        return "docker-compose.redis.yml";
+        return "docker-compose.valkey.yml";
     }
 
-    private static String resolveRedisComposeVolumesFile() {
-        if (IS_REDIS_CLUSTER) {
-            return "docker-compose.redis-cluster.volumes.yml";
+    private static String resolveValkeyComposeVolumesFile() {
+        if (IS_VALKEY_CLUSTER) {
+            return "docker-compose.valkey-cluster.volumes.yml";
         }
-        if (IS_REDIS_SENTINEL) {
-            return "docker-compose.redis-sentinel.volumes.yml";
+        if (IS_VALKEY_SENTINEL) {
+            return "docker-compose.valkey-sentinel.volumes.yml";
         }
-        if (IS_REDIS_SSL) {
-            return "docker-compose.redis-ssl.volumes.yml";
+        if (IS_VALKEY_SSL) {
+            return "docker-compose.valkey-ssl.volumes.yml";
         }
-        return "docker-compose.redis.volumes.yml";
+        return "docker-compose.valkey.volumes.yml";
     }
 
     public void stop() {
-        if (isActive) {
-            testContainer.stop();
-            installTb.savaLogsAndRemoveVolumes();
+        if (!isActive) {
+            return;
+        }
+        try {
+            // Null when the bring-up failed before the compose container was built. The volumes exist by then -
+            // the flag is set alongside them - so the cleanup below still has work to do.
+            if (testContainer != null) {
+                testContainer.stop();
+            }
+        } finally {
+            // In a finally: a stop that throws must not be what leaves the volumes of this run behind.
+            installTb.saveLogsAndRemoveVolumes();
+            if (testContainer != null) {
+                testContainer.cleanup();
+            }
             setActive(false);
         }
     }
@@ -254,7 +270,7 @@ public class ContainerTestSuite {
             log.info("Trying to delete temp dir {}", targetDir);
             FileUtils.deleteDirectory(new File(targetDir));
         } catch (IOException e) {
-            log.error("Can't delete temp directory " + targetDir, e);
+            log.error("Can't delete temp directory {}", targetDir, e);
         }
     }
 
@@ -277,12 +293,31 @@ public class ContainerTestSuite {
             FileUtils.writeStringToFile(file, outputContent, StandardCharsets.UTF_8);
             assertThat(FileUtils.readFileToString(file, StandardCharsets.UTF_8), is(outputContent));
         } catch (IOException e) {
-            log.error("failed to update file " + sourceFilename, e);
-            fail("failed to update file");
+            log.error("failed to update file {}", sourceFilename, e);
+            fail("failed to update file", e);
         }
     }
 
     public DockerComposeContainer<?> getTestContainer() {
         return testContainer;
+    }
+
+    static class DockerComposeContainerImpl extends DockerComposeContainer<DockerComposeContainerImpl> {
+
+        private final String targetDir;
+
+        public DockerComposeContainerImpl(String targetDir, List<File> composeFiles) {
+            super(composeFiles);
+            this.targetDir = targetDir;
+        }
+
+        @Override
+        public void stop() {
+            super.stop();
+        }
+
+        public void cleanup() {
+            tryDeleteDir(this.targetDir);
+        }
     }
 }

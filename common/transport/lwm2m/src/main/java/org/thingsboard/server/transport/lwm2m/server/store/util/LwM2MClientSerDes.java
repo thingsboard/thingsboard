@@ -1,23 +1,9 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server.store.util;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -57,7 +43,7 @@ public class LwM2MClientSerDes {
 
     @SneakyThrows
     public static byte[] serialize(LwM2mClient client) {
-        JsonObject o =  new JsonObject();
+        JsonObject o = new JsonObject();
         o.addProperty("nodeId", client.getNodeId());
         o.addProperty("endpoint", client.getEndpoint());
 
@@ -111,14 +97,7 @@ public class LwM2MClientSerDes {
         o.addProperty("defaultObjectIDVer", client.getDefaultObjectIDVer().toString());
 
         if (client.getRegistration() != null) {
-            String registrationAddress = client.getRegistration().getAddress().toString();
             JsonNode registrationNode = registrationSerDes.jSerialize(client.getRegistration());
-            if (!registrationAddress.equals(registrationNode.get("transportdata").get("address").asText())){
-                ObjectNode actualRegAddress = (ObjectNode)registrationNode.get("transportdata");
-                actualRegAddress.put("address", registrationAddress);
-                ObjectNode actualIdentity =  (ObjectNode) actualRegAddress.get("identity");
-                actualIdentity.put("address", registrationAddress);
-            }
             o.addProperty("registration", registrationNode.toString());
         }
         o.addProperty("asleep", client.isAsleep());
@@ -188,7 +167,7 @@ public class LwM2MClientSerDes {
             case STRING:
                 return value.getAsString();
             case TIME:
-                return Instant.ofEpochMilli(value.getAsLong());
+                return new Date(value.getAsLong());
             case OBJLNK:
                 return ObjectLink.decodeFromString(value.getAsString());
             case UNSIGNED_INTEGER:
@@ -249,7 +228,7 @@ public class LwM2MClientSerDes {
                 o.addProperty(VALUE, ((ObjectLink) value).encodeToString());
                 break;
             case UNSIGNED_INTEGER:
-                o.addProperty(VALUE, Integer.toUnsignedString((int)value));
+                o.addProperty(VALUE, Integer.toUnsignedString((int) value));
                 break;
             default:
                 throw new LwM2mNodeException(String.format("Type %s is not supported", type.name()));
@@ -297,7 +276,7 @@ public class LwM2MClientSerDes {
         if (tenantId != null) {
             Field tenantIdField = lwM2mClientClass.getDeclaredField("tenantId");
             tenantIdField.setAccessible(true);
-            tenantIdField.set(lwM2mClient, new TenantId(UUID.fromString(tenantId.getAsString())));
+            tenantIdField.set(lwM2mClient, TenantId.fromUUID(UUID.fromString(tenantId.getAsString())));
         }
 
         JsonElement deviceId = o.get("deviceId");

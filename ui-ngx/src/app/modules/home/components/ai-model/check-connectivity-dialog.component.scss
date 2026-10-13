@@ -1,0 +1,54 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  width: 560px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: grid;
+
+  .transparent {
+    background-color: transparent;
+  }
+
+  .connection-status {
+    font-weight: 500;
+    letter-spacing: 0.25px;
+    text-align: center;
+  }
+
+  .connection-icon {
+    height: 32px;
+    font-size: 32px;
+    width: 32px;
+    margin-bottom: 4px;
+  }
+
+  .error_msg {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 130%;
+    letter-spacing: 0.25px;
+    opacity: 0.9;
+  }
+
+  .success {
+    color: #198038;
+  }
+
+  .error {
+    color: #D12730;
+  }
+
+  ::ng-deep {
+    .json-editor {
+      .tb-json-object-toolbar {
+        display: none;
+      }
+      .tb-json-panel {
+        margin: 0;
+      }
+    }
+  }
+}

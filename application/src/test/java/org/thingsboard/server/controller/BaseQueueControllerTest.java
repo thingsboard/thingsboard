@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,10 +12,11 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -73,7 +62,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -94,15 +85,15 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
     private RuleEngineStatisticsService ruleEngineStatisticsService;
     @Autowired
     private StatsFactory statsFactory;
-    @SpyBean
-    private TimeseriesDao timeseriesDao;
     @Autowired
     private QueueStatsService queueStatsService;
-    @SpyBean
+    @MockitoSpyBean
+    private TimeseriesDao timeseriesDao;
+    @MockitoSpyBean
     private PartitionService partitionService;
-    @SpyBean
+    @MockitoSpyBean
     private TimeseriesService timeseriesService;
-    @SpyBean
+    @MockitoSpyBean
     private ActorSystemContext actorSystemContext;
 
     @Test
@@ -234,7 +225,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         when(testProcessingResult.getFailedMap()).thenReturn(new ConcurrentHashMap<>());
         when(testProcessingResult.getPendingMap()).thenReturn(new ConcurrentHashMap<>());
 
-        String largeExceptionMessage = RandomStringUtils.randomAlphabetic(150);
+        String largeExceptionMessage = RandomStringUtils.secure().nextAlphabetic(150);
         RuleEngineException ruleEngineException = new RuleEngineException(largeExceptionMessage);
         when(testProcessingResult.getExceptionsMap()).thenReturn(new ConcurrentHashMap<>(Map.of(
                 tenantId, ruleEngineException
@@ -299,7 +290,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(timeseriesService, times(partitions)).save(eq(tenantId), eq(device.getId()),
-                    argThat(ts -> ts.size() == 1 && ts.get(0).getKey().equals("test")), anyLong());
+                    argThat(ts -> ts.size() == 1 && ts.get(0).getKey().equals("test")), anyLong(), anyBoolean());
 
             ArgumentCaptor<TbActorMsg> msgCaptor = ArgumentCaptor.forClass(TbActorMsg.class);
             verify(actorSystemContext, atLeastOnce()).tell(msgCaptor.capture());
@@ -323,6 +314,59 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         });
 
         doDelete("/api/queues/" + queue.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testQueueWithReservedName() throws Exception {
+        loginSysAdmin();
+
+        // create queue
+        Queue queue = new Queue();
+        queue.setName(DataConstants.CF_QUEUE_NAME);
+        queue.setTopic("tb_rule_engine.calculated_fields");
+        queue.setPollInterval(25);
+        queue.setPartitions(10);
+        queue.setTenantId(TenantId.SYS_TENANT_ID);
+        queue.setConsumerPerPartition(false);
+        queue.setPackProcessingTimeout(2000);
+        SubmitStrategy submitStrategy = new SubmitStrategy();
+        submitStrategy.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
+        queue.setSubmitStrategy(submitStrategy);
+        ProcessingStrategy processingStrategy = new ProcessingStrategy();
+        processingStrategy.setType(ProcessingStrategyType.RETRY_ALL);
+        processingStrategy.setRetries(3);
+        processingStrategy.setFailurePercentage(0.7);
+        processingStrategy.setPauseBetweenRetries(3);
+        processingStrategy.setMaxPauseBetweenRetries(5);
+        queue.setProcessingStrategy(processingStrategy);
+
+        doPost("/api/queues?serviceType=" + "TB-RULE-ENGINE", queue)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(String.format("The queue name '%s' is not allowed. This name is reserved for internal use. Please choose a different name.", DataConstants.CF_QUEUE_NAME))));
+
+        // create queue
+        Queue queue2 = new Queue();
+        queue2.setName(DataConstants.CF_STATES_QUEUE_NAME);
+        queue2.setTopic("tb_rule_engine.calculated_fields");
+        queue2.setPollInterval(25);
+        queue2.setPartitions(10);
+        queue2.setTenantId(TenantId.SYS_TENANT_ID);
+        queue2.setConsumerPerPartition(false);
+        queue2.setPackProcessingTimeout(2000);
+        SubmitStrategy submitStrategy2 = new SubmitStrategy();
+        submitStrategy2.setType(SubmitStrategyType.SEQUENTIAL_BY_ORIGINATOR);
+        queue2.setSubmitStrategy(submitStrategy);
+        ProcessingStrategy processingStrategy2 = new ProcessingStrategy();
+        processingStrategy2.setType(ProcessingStrategyType.RETRY_ALL);
+        processingStrategy2.setRetries(3);
+        processingStrategy2.setFailurePercentage(0.7);
+        processingStrategy2.setPauseBetweenRetries(3);
+        processingStrategy2.setMaxPauseBetweenRetries(5);
+        queue2.setProcessingStrategy(processingStrategy);
+
+        doPost("/api/queues?serviceType=" + "TB-RULE-ENGINE", queue2)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString(String.format("The queue name '%s' is not allowed. This name is reserved for internal use. Please choose a different name.", DataConstants.CF_STATES_QUEUE_NAME))));
     }
 
     private Queue saveQueue(Queue queue) {

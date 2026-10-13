@@ -1,0 +1,16 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<button type="button"
+        mat-stroked-button
+        class="tb-box-button"
+        [disabled]="disabled"
+        #matButton
+        (click)="openStripeSettingsPopup($event, matButton)">
+  <img matButtonIcon width="24px" height="24px"
+       style="object-fit: contain; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.12);"
+       [src]="stripePreviewUrl" [class.disabled]="disabled"/>
+</button>

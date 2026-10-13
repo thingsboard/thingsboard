@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.action;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -21,15 +8,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -42,7 +29,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
@@ -52,7 +38,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.INACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "copy to view",
@@ -61,18 +46,14 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
         nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +
                 "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration. \n" +
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
-        icon = "content_copy"
+        icon = "content_copy",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/copy-to-view/"
 )
 public class TbCopyAttributesToEntityViewNode implements TbNode {
 
-    EmptyNodeConfiguration config;
-
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
-    }
+    public void init(TbContext ctx, TbNodeConfiguration configuration) {}
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -105,15 +86,24 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                         List<String> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr, entityView)).collect(Collectors.toList());
                                         if (!filteredAttributes.isEmpty()) {
-                                            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                    getFutureCallback(ctx, msg, entityView));
+                                            ctx.getTelemetryService().deleteAttributes(AttributesDeleteRequest.builder()
+                                                    .tenantId(ctx.getTenantId())
+                                                    .entityId(entityView.getId())
+                                                    .scope(scope)
+                                                    .keys(filteredAttributes)
+                                                    .callback(getFutureCallback(ctx, msg, entityView))
+                                                    .build());
                                         }
                                     } else {
-                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
-                                        List<AttributeKvEntry> filteredAttributes =
-                                                attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
-                                        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                getFutureCallback(ctx, msg, entityView));
+                                        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData())).stream()
+                                                .filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).toList();
+                                        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
+                                                .tenantId(ctx.getTenantId())
+                                                .entityId(entityView.getId())
+                                                .scope(scope)
+                                                .entries(attributes)
+                                                .callback(getFutureCallback(ctx, msg, entityView))
+                                                .build());
                                     }
                                 }
                             }
@@ -129,14 +119,14 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
     }
 
     private FutureCallback<Void> getFutureCallback(TbContext ctx, TbMsg msg, EntityView entityView) {
-        return new FutureCallback<Void>() {
+        return new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 transformAndTellNext(ctx, msg, entityView);
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(@NonNull Throwable t) {
                 ctx.tellFailure(msg, t);
             }
         };
@@ -148,18 +138,11 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
 
     private boolean attributeContainsInEntityView(AttributeScope scope, String attrKey, EntityView entityView) {
         AttributesEntityView attributesEntityView = entityView.getKeys().getAttributes();
-        List<String> keys = null;
-        switch (scope) {
-            case CLIENT_SCOPE:
-                keys = attributesEntityView.getCs();
-                break;
-            case SERVER_SCOPE:
-                keys = attributesEntityView.getSs();
-                break;
-            case SHARED_SCOPE:
-                keys = attributesEntityView.getSh();
-                break;
-        }
+        List<String> keys = switch (scope) {
+            case CLIENT_SCOPE -> attributesEntityView.getCs();
+            case SERVER_SCOPE -> attributesEntityView.getSs();
+            case SHARED_SCOPE -> attributesEntityView.getSh();
+        };
         return CollectionsUtil.contains(keys, attrKey);
     }
 

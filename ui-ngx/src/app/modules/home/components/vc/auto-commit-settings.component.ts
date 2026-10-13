@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
@@ -25,14 +12,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
-import { EntityTypeVersionCreateConfig, exportableEntityTypes } from '@shared/models/vc.models';
+import {
+  EntityTypeVersionCreateConfig,
+  exportableEntityTypes,
+  typesWithCalculatedFields,
+  overrideEntityTypeTranslations
+} from '@shared/models/vc.models';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
-  selector: 'tb-auto-commit-settings',
-  templateUrl: './auto-commit-settings.component.html',
-  styleUrls: ['./auto-commit-settings.component.scss', './../../pages/admin/settings-card.scss']
+    selector: 'tb-auto-commit-settings',
+    templateUrl: './auto-commit-settings.component.html',
+    styleUrls: ['./auto-commit-settings.component.scss', './../../pages/admin/settings-card.scss'],
+    standalone: false
 })
 export class AutoCommitSettingsComponent extends PageComponent implements OnInit {
 
@@ -43,11 +38,19 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
 
   isReadOnly: Observable<boolean>;
 
+  overrideEntityTypeTranslationsMap = overrideEntityTypeTranslations;
+
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.VERSION_CONTROL, Operation.WRITE);
+  allowDelete = this.userPermissionsService.hasGenericPermission(Resource.VERSION_CONTROL, Operation.DELETE);
+
+  readonly typesWithCalculatedFields = typesWithCalculatedFields;
+
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
               private dialogService: DialogService,
               private sanitizer: DomSanitizer,
               private translate: TranslateService,
+              private userPermissionsService: UserPermissionsService,
               public fb: UntypedFormBuilder) {
     super(store);
   }
@@ -72,6 +75,9 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
         this.settings = settings;
         this.autoCommitSettingsForm.setControl('entityTypes',
           this.prepareEntityTypesFormArray(settings), {emitEvent: false});
+        if (this.readonly) {
+          this.autoCommitSettingsForm.disable({emitEvent: false});
+        }
       });
     this.isReadOnly = this.adminService.getRepositorySettingsInfo().pipe(map(settings => settings.readOnly));
   }
@@ -82,10 +88,6 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
 
   entityTypesFormGroupExpanded(entityTypeControl: AbstractControl): boolean {
     return !!(entityTypeControl as any).expanded;
-  }
-
-  public trackByEntityType(index: number, entityTypeControl: AbstractControl): any {
-    return entityTypeControl;
   }
 
   public removeEntityType(index: number) {
@@ -104,7 +106,10 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
       branch: null,
       saveAttributes: true,
       saveRelations: false,
-      saveCredentials: true
+      saveCredentials: true,
+      saveCalculatedFields: true,
+      savePermissions: true,
+      saveGroupEntities: true
     };
     const allowed = this.allowedEntityTypes();
     let entityType: EntityType = null;
@@ -128,7 +133,8 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
   entityTypeText(entityTypeControl: AbstractControl): SafeHtml {
     const entityType: EntityType = entityTypeControl.get('entityType').value;
     const config: AutoVersionCreateConfig = entityTypeControl.get('config').value;
-    let message = entityType ? this.translate.instant(entityTypeTranslations.get(entityType).typePlural) : 'Undefined';
+    let message = entityType ? this.translate.instant(entityType === EntityType.USER ? 'entity-group.user-groups'
+      : entityTypeTranslations.get(entityType).typePlural) : 'Undefined';
     let branchName;
     if (config.branch) {
       branchName = config.branch;
@@ -206,7 +212,10 @@ export class AutoCommitSettingsComponent extends PageComponent implements OnInit
           branch: [config.branch, []],
           saveRelations: [config.saveRelations, []],
           saveAttributes: [config.saveAttributes, []],
-          saveCredentials: [config.saveCredentials, []]
+          saveCredentials: [config.saveCredentials, []],
+          saveCalculatedFields: [config.saveCalculatedFields, []],
+          savePermissions: [config.savePermissions, []],
+          saveGroupEntities: [config.saveGroupEntities, []]
         })
       }
     );

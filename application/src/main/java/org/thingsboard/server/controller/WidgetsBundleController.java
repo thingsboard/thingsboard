@@ -1,31 +1,22 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -34,6 +25,8 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
@@ -41,20 +34,22 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
@@ -79,8 +74,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Get Widget Bundle (getWidgetsBundleById)",
             notes = "Get the Widget Bundle based on the provided Widget Bundle Id. " + WIDGET_BUNDLE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetsBundle/{widgetsBundleId}")
     public WidgetsBundle getWidgetsBundleById(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId,
@@ -90,7 +84,7 @@ public class WidgetsBundleController extends BaseController {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         var result = checkWidgetsBundleId(widgetsBundleId, Operation.READ);
         if (inlineImages) {
-            imageService.inlineImage(result);
+            result = imageService.inlineImage(result);
         }
         return result;
     }
@@ -106,8 +100,7 @@ public class WidgetsBundleController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Widgets Bundle entity." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/widgetsBundle")
     public WidgetsBundle saveWidgetsBundle(
             @Parameter(description = "A JSON value representing the Widget Bundle.", required = true)
             @RequestBody WidgetsBundle widgetsBundle) throws Exception {
@@ -119,14 +112,13 @@ public class WidgetsBundleController extends BaseController {
         }
 
         checkEntity(widgetsBundle.getId(), widgetsBundle, Resource.WIDGETS_BUNDLE);
-
         return tbWidgetsBundleService.save(widgetsBundle, currentUser);
     }
 
     @ApiOperation(value = "Update widgets bundle widgets types list (updateWidgetsBundleWidgetTypes)",
             notes = "Updates widgets bundle widgets list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes", method = RequestMethod.POST)
+    @PostMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes")
     @ResponseStatus(value = HttpStatus.OK)
     public void updateWidgetsBundleWidgetTypes(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
@@ -135,6 +127,7 @@ public class WidgetsBundleController extends BaseController {
             @RequestBody List<String> strWidgetTypeIds) throws Exception {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkWidgetsBundleId(widgetsBundleId, Operation.WRITE);
         checkNotNull(strWidgetTypeIds);
         Set<WidgetTypeId> widgetTypeIds = new LinkedHashSet<>();
         var currentUser = getCurrentUser();
@@ -152,7 +145,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Update widgets bundle widgets list from widget type FQNs list (updateWidgetsBundleWidgetFqns)",
             notes = "Updates widgets bundle widgets list from widget type FQNs list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns", method = RequestMethod.POST)
+    @PostMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns")
     @ResponseStatus(value = HttpStatus.OK)
     public void updateWidgetsBundleWidgetFqns(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
@@ -161,6 +154,7 @@ public class WidgetsBundleController extends BaseController {
             @RequestBody List<String> widgetTypeFqns) throws Exception {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
+        checkWidgetsBundleId(widgetsBundleId, Operation.WRITE);
         checkNotNull(widgetTypeFqns);
         var currentUser = getCurrentUser();
         tbWidgetsBundleService.updateWidgetsBundleWidgetFqns(widgetsBundleId, widgetTypeFqns, currentUser);
@@ -169,7 +163,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
             notes = "Deletes the widget bundle. Referencing non-existing Widget Bundle Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/widgetsBundle/{widgetsBundleId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetsBundle(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
@@ -184,8 +178,7 @@ public class WidgetsBundleController extends BaseController {
             notes = "Returns a page of Widget Bundle objects available for current user. " + WIDGET_BUNDLE_DESCRIPTION + " " +
                     PAGE_DATA_PARAMETERS + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetsBundles", params = {"pageSize", "page"})
     public PageData<WidgetsBundle> getWidgetsBundles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -203,6 +196,7 @@ public class WidgetsBundleController extends BaseController {
             @RequestParam(required = false) Boolean fullSearch,
             @Parameter(description = SCADA_FIRST_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean scadaFirst) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         WidgetsBundleFilter widgetsBundleFilter = WidgetsBundleFilter.builder()
                 .tenantId(getTenantId())
@@ -220,18 +214,51 @@ public class WidgetsBundleController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get all Widget Bundles (getWidgetsBundles)",
-            notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", method = RequestMethod.GET)
-    @ResponseBody
-    public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
+    @GetMapping(value = "/widgetsBundles")
+    public List<WidgetsBundle> getWidgetsBundlesV1() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
         } else {
             TenantId tenantId = getCurrentUser().getTenantId();
             return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         }
+    }
+
+    @ApiOperation(value = "Get all Widget Bundles (getAllWidgetsBundles)",
+            notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles/all")
+    public List<WidgetsBundle> getAllWidgetsBundles() throws ThingsboardException {
+        return getWidgetsBundlesV1();
+    }
+
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles", params = {"widgetsBundleIds"})
+    public List<WidgetsBundle> getWidgetsBundlesByIds(
+            @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
+        if (!accessControlService.hasPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ)) {
+            return Collections.emptyList();
+        }
+        List<WidgetsBundleId> widgetsBundleIds = new ArrayList<>();
+        for (UUID widgetsBundleUUID : widgetsBundleUUIDs) {
+            widgetsBundleIds.add(new WidgetsBundleId(widgetsBundleUUID));
+        }
+        return widgetsBundleService.findSystemOrTenantWidgetsBundlesByIds(getTenantId(), widgetsBundleIds);
+    }
+
+    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesList)",
+            notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
+                    NEW_LINE + RBAC_READ_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles/list")
+    public List<WidgetsBundle> getWidgetsBundlesList(
+            @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("widgetsBundleIds") Set<UUID> widgetsBundleUUIDs) throws ThingsboardException {
+        return getWidgetsBundlesByIds(widgetsBundleUUIDs);
     }
 
 }

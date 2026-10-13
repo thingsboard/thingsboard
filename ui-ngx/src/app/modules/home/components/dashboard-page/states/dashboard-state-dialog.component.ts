@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -34,6 +20,7 @@ import { DashboardState } from '@app/shared/models/dashboard.models';
 import { DashboardStateInfo } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface DashboardStateDialogData {
   states: {[id: string]: DashboardState };
@@ -42,10 +29,11 @@ export interface DashboardStateDialogData {
 }
 
 @Component({
-  selector: 'tb-dashboard-state-dialog',
-  templateUrl: './dashboard-state-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: DashboardStateDialogComponent}],
-  styleUrls: []
+    selector: 'tb-dashboard-state-dialog',
+    templateUrl: './dashboard-state-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: DashboardStateDialogComponent }],
+    styleUrls: [],
+    standalone: false
 })
 export class DashboardStateDialogComponent extends
   DialogComponent<DashboardStateDialogComponent, DashboardStateInfo>
@@ -89,11 +77,15 @@ export class DashboardStateDialogComponent extends
       root: [this.state.root, []],
     });
 
-    this.stateFormGroup.get('name').valueChanges.subscribe((name: string) => {
+    this.stateFormGroup.get('name').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((name: string) => {
       this.checkStateName(name);
     });
 
-    this.stateFormGroup.get('id').valueChanges.subscribe((id: string) => {
+    this.stateFormGroup.get('id').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((id: string) => {
       this.stateIdTouched = true;
     });
   }

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -30,9 +16,10 @@ import {
 } from '@home/components/widget/lib/multiple-input-widget.component';
 
 @Component({
-  selector: 'tb-update-multiple-attributes-key-settings',
-  templateUrl: './update-multiple-attributes-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-update-multiple-attributes-key-settings',
+    templateUrl: './update-multiple-attributes-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettingsComponent {
 
@@ -60,6 +47,9 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
       slideToggleLabelPosition: 'after',
       selectOptions: [],
+      radioColor: null,
+      radioColumns: 1,
+      radioLabelPosition: 'after',
       step: 1,
       minValue: null,
       maxValue: null,
@@ -104,9 +94,15 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
 
       slideToggleLabelPosition: [settings.slideToggleLabelPosition, []],
 
-      // Select options
+      // Select/Radio options
 
       selectOptions: this.prepareSelectOptionsFormArray(settings.selectOptions),
+
+      // Radio settings
+
+      radioColor: [settings.radioColor, []],
+      radioColumns: [settings.radioColumns, []],
+      radioLabelPosition: [settings.radioLabelPosition, []],
 
       // Numeric field settings
 
@@ -183,6 +179,11 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
         this.updateMultipleAttributesKeySettingsForm.get('slideToggleLabelPosition').enable({emitEvent: false});
       } else if (dataKeyValueType === 'select') {
         this.updateMultipleAttributesKeySettingsForm.get('selectOptions').enable({emitEvent: false});
+      } else if (dataKeyValueType === 'radio') {
+        this.updateMultipleAttributesKeySettingsForm.get('selectOptions').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('radioColor').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('radioColumns').enable({emitEvent: false});
+        this.updateMultipleAttributesKeySettingsForm.get('radioLabelPosition').enable({emitEvent: false});
       } else if (dataKeyValueType === 'integer' || dataKeyValueType === 'double') {
         this.updateMultipleAttributesKeySettingsForm.get('step').enable({emitEvent: false});
         this.updateMultipleAttributesKeySettingsForm.get('minValue').enable({emitEvent: false});
@@ -241,8 +242,8 @@ export class UpdateMultipleAttributesKeySettingsComponent extends WidgetSettings
     return this.updateMultipleAttributesKeySettingsForm.get('selectOptions') as UntypedFormArray;
   }
 
-  public trackBySelectOption(index: number, selectOptionControl: AbstractControl): any {
-    return selectOptionControl;
+  get typedSelectOptions() {
+    return this.selectOptionsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public removeSelectOption(index: number) {

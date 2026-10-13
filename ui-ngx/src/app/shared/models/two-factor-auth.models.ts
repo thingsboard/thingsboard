@@ -1,20 +1,10 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { UsersFilter } from '@shared/models/notification.models';
 
 export interface TwoFactorAuthSettings {
+  enforceTwoFa: boolean;
+  enforcedUsersFilter: UsersFilter;
   maxVerificationFailuresBeforeUserLockout: number;
   providers: Array<TwoFactorAuthProviderConfig>;
   totalAllowedTimeForVerification: number;
@@ -24,10 +14,16 @@ export interface TwoFactorAuthSettings {
 }
 
 export interface TwoFactorAuthSettingsForm extends TwoFactorAuthSettings{
+  enforceTwoFa: boolean;
+  enforcedUsersFilter: UsersFilterWithFilterByTenant;
   providers: Array<TwoFactorAuthProviderConfigForm>;
   verificationCodeCheckRateLimitEnable: boolean;
   verificationCodeCheckRateLimitNumber: number;
   verificationCodeCheckRateLimitTime: number;
+}
+
+export interface UsersFilterWithFilterByTenant extends UsersFilter{
+  filterByTenants?: boolean;
 }
 
 export type TwoFactorAuthProviderConfig = Partial<TotpTwoFactorAuthProviderConfig | SmsTwoFactorAuthProviderConfig |
@@ -180,6 +176,64 @@ export const twoFactorAuthProvidersLoginData = new Map<TwoFactorAuthProviderType
         placeholder: 'login.backup-code-auth-placeholder',
         icon: 'mdi:lock-outline'
       }
+    ]
+  ]
+);
+
+export const twoFactorAuthProvidersEnterCodeCardTranslate = new Map<TwoFactorAuthProviderType, Omit<TwoFactorAuthProviderData, 'activatedHint'>>(
+  [
+    [
+      TwoFactorAuthProviderType.TOTP, {
+      name: 'login.enable-authenticator-app',
+      description: 'login.enable-authenticator-app-description'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.SMS, {
+      name: 'login.enable-authenticator-sms',
+      description: 'login.enable-authenticator-sms-description'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.EMAIL, {
+      name: 'login.enable-authenticator-email',
+      description: 'login.enable-authenticator-email-description'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.BACKUP_CODE, {
+      name: 'security.2fa.provider.backup_code',
+      description: 'login.backup-code-auth-description'
+    }
+    ]
+  ]
+);
+
+export const twoFactorAuthProvidersSuccessCardTranslate = new Map<TwoFactorAuthProviderType, Omit<TwoFactorAuthProviderData, 'activatedHint'>>(
+  [
+    [
+      TwoFactorAuthProviderType.TOTP, {
+      name: 'login.authenticator-app-success',
+      description: 'login.authenticator-app-success-description'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.SMS, {
+      name: 'login.authenticator-sms-success',
+      description: 'login.authenticator-sms-success-description'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.EMAIL, {
+      name: 'login.authenticator-email-success',
+      description: 'login.authenticator-email-success-description'
+    }
+    ],
+    [
+      TwoFactorAuthProviderType.BACKUP_CODE, {
+      name: 'login.authenticator-backup-code-success',
+      description: 'login.authenticator-backup-code-success-description'
+    }
     ]
   ]
 );

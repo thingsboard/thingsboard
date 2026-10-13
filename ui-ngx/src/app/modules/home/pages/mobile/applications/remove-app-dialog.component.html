@@ -1,0 +1,41 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border justify-between">
+  <h2 translate>mobile.delete-application</h2>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate">
+  </mat-progress-bar>
+} @else {
+  <div></div>
+}
+<div mat-dialog-content class="flex flex-col gap-4">
+  <div class="select-none" [innerHTML]="deleteApplicationText"></div>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <input matInput [formControl]="deleteVerification" placeholder="{{ 'mobile.type-here' | translate }}"/>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions class="justify-end">
+  <button mat-button color="primary"
+          type="button"
+          [disabled]="(isLoading$ | async)"
+          (click)="suspend()" cdkFocusInitial>
+    {{ 'action.suspend' | translate }}
+  </button>
+  <button mat-button mat-raised-button color="warn"
+          type="button"
+          (click)="delete()"
+          [disabled]="(isLoading$ | async) || deleteVerification.invalid || deleteVerification.value !== deleteVerificationText">
+    {{ 'mobile.delete-application-button-text' | translate }}
+  </button>
+</div>

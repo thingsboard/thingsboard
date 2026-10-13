@@ -1,0 +1,53 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+
+  .see-example {
+    display: inline-block;
+  }
+
+  .description-block {
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    border: 1px solid #EAEAEA;
+
+    .description-icon {
+      font-size: 24px;
+      height: 24px;
+      min-height: 24px;
+      width: 24px;
+      min-width: 24px;
+      line-height: 24px;
+      color: #D9D9D9;
+      margin: 4px;
+    }
+
+    .description-text {
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: 0.25px;
+      margin: 6px;
+    }
+
+    &.error {
+      color: var(--mat-theme-error, #f44336);
+
+      .description-icon {
+        color: var(--mat-theme-error, #f44336);
+      }
+    }
+  }
+  .item-center {
+    align-items: center;
+
+    .fetch-mod-toggle {
+      width: 100%;
+    }
+  }
+
+  .hint-container {
+    width: 100%;
+  }
+}
+

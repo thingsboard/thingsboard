@@ -1,25 +1,14 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityType } from '@shared/models/entity-type.models';
-import { AttributeData } from './telemetry/telemetry.models';
+import { AttributeData, AttributeScope } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { RuleChainMetaData } from '@shared/models/rule-chain.models';
+import { isLiteralObject } from '@core/utils';
 
 export interface EntityInfo {
   name?: string;
@@ -57,6 +46,8 @@ export interface ImportEntityData {
 export interface EdgeImportEntityData extends ImportEntityData {
   secret: string;
   routingKey: string;
+  cloudEndpoint: string;
+  edgeLicenseKey: string;
 }
 
 export interface ImportEntitiesResultInfo {
@@ -83,6 +74,18 @@ export interface EntitiesKeysByQuery {
   attribute: Array<string>;
   timeseries: Array<string>;
   entityTypes: EntityType[];
+}
+
+export interface EntityKeySample {
+  key: string;
+  sample?: { ts: number; value: any };
+}
+
+export interface EntitiesKeysByQueryV2 {
+  totalEntities: number;
+  entityTypes: EntityType[];
+  timeseries: EntityKeySample[];
+  attributes: Partial<Record<AttributeScope, EntityKeySample[]>>;
 }
 
 export const entityFields: {[fieldName: string]: EntityField} = {
@@ -162,6 +165,31 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     name: 'entity-field.label',
     value: 'label'
   },
+  displayName: {
+    keyName: 'displayName',
+    name: 'entity-field.name',
+    value: 'name'
+  },
+  configuration: {
+    keyName: 'configuration',
+    name: 'entity-field.configuration',
+    value: 'configuration'
+  },
+  schedule: {
+    keyName: 'schedule',
+    name: 'entity-field.schedule',
+    value: 'schedule'
+  },
+  originatorId: {
+    keyName: 'originatorId',
+    name: 'entity-field.originatorId',
+    value: 'originatorId'
+  },
+  originatorType: {
+    keyName: 'originatorType',
+    name: 'entity-field.originatorType',
+    value: 'originatorType'
+  },
   queueName: {
     keyName: 'queueName',
     name: 'entity-field.queue-name',
@@ -181,6 +209,16 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     keyName: 'ownerType',
     name: 'entity-field.owner-type',
     value: 'ownerType'
+  },
+  additionalInfo: {
+    keyName: 'additionalInfo',
+    name: 'entity-field.additional-info',
+    value: 'additionalInfo'
+  },
+  format: {
+    keyName: 'format',
+    name: 'entity-field.format',
+    value: 'format'
   }
 };
 
@@ -190,4 +228,55 @@ export interface HasTenantId {
 
 export interface HasVersion {
   version?: number;
+}
+
+export interface HasEntityDebugSettings {
+  debugSettings?: EntityDebugSettings;
+}
+
+export interface EntityDebugSettings {
+  failuresEnabled?: boolean;
+  allEnabled?: boolean;
+  allEnabledUntil?: number;
+}
+
+export interface EntityTestScriptResult {
+  output: string;
+  error: string;
+}
+
+export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;
+
+export enum NameConflictPolicy {
+  FAIL = 'FAIL',
+  UNIQUIFY = 'UNIQUIFY',
+}
+
+export enum UniquifyStrategy {
+  RANDOM = 'RANDOM',
+  INCREMENTAL = 'INCREMENTAL'
+}
+
+export interface SaveEntityParams {
+  nameConflictPolicy?: NameConflictPolicy;
+  uniquifyStrategy?: UniquifyStrategy;
+  uniquifySeparator?: string;
+}
+
+export interface SaveEntityWithGroupParams extends SaveEntityParams {
+  entityGroupId?: string;
+  entityGroupIds?: string[];
+}
+
+export function toSaveParams<T extends SaveEntityWithGroupParams>(params: string | string[] | T ): T {
+  if (!params) {
+    return undefined;
+  }
+  if (isLiteralObject(params) && !Array.isArray(params)) {
+    return params as T;
+  }
+  if (Array.isArray(params)) {
+    return { entityGroupIds: params } as T;
+  }
+  return { entityGroupId: params } as T;
 }

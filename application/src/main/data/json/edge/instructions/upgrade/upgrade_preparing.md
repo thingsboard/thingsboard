@@ -1,6 +1,6 @@
-Here is the list of commands, that can be used to quickly upgrade ThingsBoard Edge on ${OS}
+Here is the list of commands that can be used to quickly upgrade ThingsBoard Edge on ${OS}
 
-#### Prepare for upgrading ThingsBoard Edge
+#### Prepare for Upgrading ThingsBoard Edge
 
 Stop ThingsBoard Edge service:
 
@@ -33,4 +33,4 @@ sudo -Hiu postgres pg_dump tb_edge > tb_edge.sql.bak
 {:copy-code}
 ```
 
-Check backup file created successfully.
+Check the backup file created successfully.

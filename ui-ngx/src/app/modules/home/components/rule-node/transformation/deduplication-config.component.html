@@ -1,0 +1,113 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="deduplicationConfigForm">
+  <mat-form-field class="mat-block" appearance="outline">
+    <mat-label>{{'rule-node-config.interval' | translate}}</mat-label>
+    <input type='number' required matInput formControlName="interval">
+    @if (deduplicationConfigForm.get('interval').hasError('required')) {
+      <mat-error>
+        {{'rule-node-config.interval-required' | translate}}
+      </mat-error>
+    }
+    @if (deduplicationConfigForm.get('interval').hasError('min')) {
+      <mat-error>
+        {{'rule-node-config.interval-min-error' | translate}}
+      </mat-error>
+    }
+    <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+              color="primary"
+    matTooltip="{{ 'rule-node-config.interval-hint' | translate }}">help</mat-icon>
+  </mat-form-field>
+  <div class="tb-form-panel no-padding no-border">
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title  tb-required" translate>rule-node-config.strategy</div>
+      <tb-toggle-select class="fetch-to-data-toggle" formControlName="strategy" appearance="fill">
+        @for (strategy of deduplicationStrategies; track strategy) {
+          <tb-toggle-option [value]="strategy">
+            {{ deduplicationStrategiesTranslations.get(strategy) | translate }}
+          </tb-toggle-option>
+        }
+      </tb-toggle-select>
+      @if (deduplicationConfigForm.get('strategy').value === 'ALL') {
+        <tb-example-hint [hintText]="'rule-node-config.strategy-all-hint'">
+        </tb-example-hint>
+      }
+      @if (deduplicationConfigForm.get('strategy').value === 'FIRST') {
+        <tb-example-hint [hintText]="'rule-node-config.strategy-first-hint'"
+                         textAlign="'center'">
+        </tb-example-hint>
+      }
+      @if (deduplicationConfigForm.get('strategy').value === 'LAST') {
+        <tb-example-hint [hintText]="'rule-node-config.strategy-last-hint'"
+                         textAlign="'center'">
+        </tb-example-hint>
+      }
+      @if (deduplicationConfigForm.get('strategy').value === deduplicationStrategie.ALL) {
+        <div>
+          <tb-output-message-type-autocomplete
+            required
+            appearance="outline"
+            formControlName="outMsgType">
+          </tb-output-message-type-autocomplete>
+        </div>
+      }
+    </div>
+    <section class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings">
+        <mat-expansion-panel-header>
+          <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="tb-form-row no-border no-padding tb-standard-fields">
+          <mat-form-field class="flex" appearance="outline">
+            <mat-label>{{'rule-node-config.max-pending-msgs' | translate}}</mat-label>
+            <input type = 'number' required matInput formControlName="maxPendingMsgs">
+            @if (deduplicationConfigForm.get('maxPendingMsgs').hasError('required')) {
+              <mat-error>
+                {{'rule-node-config.max-pending-msgs-required' | translate}}
+              </mat-error>
+            }
+            @if (deduplicationConfigForm.get('maxPendingMsgs').hasError('max')) {
+              <mat-error>
+                {{'rule-node-config.max-pending-msgs-max-error' | translate}}
+              </mat-error>
+            }
+            @if (deduplicationConfigForm.get('maxPendingMsgs').hasError('min')) {
+              <mat-error>
+                {{'rule-node-config.max-pending-msgs-min-error' | translate}}
+              </mat-error>
+            }
+            <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+                      color="primary"
+            matTooltip="{{ 'rule-node-config.max-pending-msgs-hint' | translate }}">help</mat-icon>
+          </mat-form-field>
+          <mat-form-field class="flex" appearance="outline">
+            <mat-label>{{'rule-node-config.max-retries' | translate}}</mat-label>
+            <input type = 'number' required matInput formControlName="maxRetries">
+            @if (deduplicationConfigForm.get('maxRetries').hasError('required')) {
+              <mat-error>
+                {{'rule-node-config.max-retries-required' | translate}}
+              </mat-error>
+            }
+            @if (deduplicationConfigForm.get('maxRetries').hasError('max')) {
+              <mat-error>
+                {{'rule-node-config.max-retries-max-error' | translate}}
+              </mat-error>
+            }
+            @if (deduplicationConfigForm.get('maxRetries').hasError('min')) {
+              <mat-error>
+                {{'rule-node-config.max-retries-min-error' | translate}}
+              </mat-error>
+            }
+            <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+                      color="primary"
+            matTooltip="{{ 'rule-node-config.max-retries-hint' | translate }}">help</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-expansion-panel>
+    </section>
+  </div>
+</section>

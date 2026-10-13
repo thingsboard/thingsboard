@@ -1,22 +1,8 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
@@ -28,7 +14,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "push to cloud",
@@ -46,10 +31,10 @@ import java.util.UUID;
                 "<br><code>ALARM</code><br><br>" +
                 "Message will be routed via <b>Failure</b> route if node was not able to save cloud event to database or unsupported originator type/message type arrived. " +
                 "In case successful storage cloud event to database message will be routed via <b>Success</b> route.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodePushToCloudConfig",
         icon = "cloud_upload",
-        ruleChainTypes = RuleChainType.EDGE
+        ruleChainTypes = RuleChainType.EDGE,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/push-to-cloud/"
 )
 public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloudNodeConfiguration, Object, Object> {
 
@@ -81,7 +66,6 @@ public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloud
     }
 
     @Override
-    void processMsg(TbContext ctx, TbMsg msg) {
-    }
+    void processMsg(TbContext ctx, TbMsg msg) {}
 
 }

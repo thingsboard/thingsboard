@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.entitiy.alarm;
 
 import lombok.AllArgsConstructor;
@@ -30,9 +17,11 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.COMMENT_DELETED;
+
 @Service
 @AllArgsConstructor
-public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService{
+public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService {
 
     @Autowired
     private AlarmCommentService alarmCommentService;
@@ -59,13 +48,15 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
         if (alarmComment.getType() == AlarmCommentType.OTHER) {
             alarmComment.setType(AlarmCommentType.SYSTEM);
             alarmComment.setUserId(null);
-            alarmComment.setComment(JacksonUtil.newObjectNode().put("text",
-                    String.format("User %s deleted his comment",
-                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
+            alarmComment.setComment(JacksonUtil.newObjectNode()
+                    .put("text", String.format(COMMENT_DELETED.getText(), user.getTitle()))
+                    .put("subtype", COMMENT_DELETED.name())
+                    .put("userName", user.getTitle()));
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment));
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), ActionType.DELETED_COMMENT, user, savedAlarmComment);
         } else {
             throw new ThingsboardException("System comment could not be deleted", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
+
 }

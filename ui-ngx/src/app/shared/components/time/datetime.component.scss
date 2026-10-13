@@ -1,0 +1,47 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../scss/constants';
+
+:host-context(.tb-form-row) {
+  :host {
+    display: flex;
+  }
+  .mat-mdc-form-field {
+    &.tb-datetime-field {
+      width: 185px;
+      &.with-clear {
+        width: 225px;
+      }
+    }
+    &.tb-date-field {
+      width: 140px;
+      &.with-clear {
+        width: 180px;
+      }
+    }
+    &.tb-time-field {
+      width: 100px;
+      &.with-clear {
+        width: 140px;
+      }
+    }
+  }
+}
+
+:host-context(.tb-form-row.column-xs) {
+  @media #{$mat-xs} {
+    .mat-mdc-form-field {
+      &.tb-datetime-field, &.tb-date-field, &.tb-time-field {
+        width: auto;
+        flex: 1;
+      }
+    }
+  }
+}
+
+:host {
+  .mat-mdc-form-field-icon-suffix,
+  .mat-datetimepicker-toggle {
+    color: rgba(0, 0, 0, 0.38);
+  }
+}

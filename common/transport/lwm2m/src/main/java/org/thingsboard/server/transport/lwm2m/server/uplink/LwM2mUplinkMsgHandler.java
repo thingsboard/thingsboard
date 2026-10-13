@@ -1,24 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server.uplink;
 
+import org.eclipse.leshan.core.node.TimestampedLwM2mNodes;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CreateRequest;
-import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
@@ -48,9 +35,10 @@ public interface LwM2mUplinkMsgHandler {
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response);
 
     void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response);
+
     void onErrorObservation(Registration registration, String errorMsg);
 
-    void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest);
+    void onUpdateValueWithSendRequest(Registration registration, TimestampedLwM2mNodes data);
 
     void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile);
 
@@ -66,7 +54,7 @@ public interface LwM2mUplinkMsgHandler {
 
     void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request, int code);
 
-    void onCreateResponseOk(LwM2mClient client, String path, CreateRequest request);
+    void onCreatebjectInstancesResponseOk(LwM2mClient client, String path, CreateRequest request);
 
     void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request, int code);
 

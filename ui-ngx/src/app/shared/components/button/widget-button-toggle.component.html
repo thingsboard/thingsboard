@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div #toggleGroupContainer class="tb-toggle-container">
+  <mat-button-toggle-group #widgetButton
+                           class="tb-toggle-header"
+                           [ngModel]="value"
+                           (change)="clicked.emit($event)"
+                           [style.border-radius]="computedBorderRadius"
+                           [style.border-color]="disabled ? 'rgba(0,0,0,0.38)': computedBorderColor"
+                           [style.border-width]="computedBorderWidth"
+                           [class.tb-pointer-events]="disableEvents"
+                           [class.tb-disabled-state]="disabled"
+                           [class.tb-disabled]="disabled">
+    <mat-button-toggle [value]="true" [disabled]="disabled" [class.tb-hover-state]="hovered">
+      @if (appearance.leftAppearance.showIcon || appearance.leftAppearance.showLabel) {
+        <div #leftButtonContent class="tb-widget-button-content">
+          @if (appearance.leftAppearance.showIcon) {
+            <tb-icon matButtonIcon [style]="leftIconStyle">{{ appearance.leftAppearance.icon }}</tb-icon>
+          }
+          @if (appearance.leftAppearance.showLabel) {
+            <span [style]="leftLabelStyle" class="tb-widget-button-label">{{ leftLabel$ | async }}</span>
+          }
+        </div>
+      }
+    </mat-button-toggle>
+    <mat-button-toggle [value]="false" [disabled]="disabled" [class.tb-hover-state]="hovered">
+      @if (appearance.rightAppearance.showIcon || appearance.rightAppearance.showLabel) {
+        <div #rightButtonContent class="tb-widget-button-content">
+          @if (appearance.rightAppearance.showIcon) {
+            <tb-icon matButtonIcon [style]="rightIconStyle">{{ appearance.rightAppearance.icon }}</tb-icon>
+          }
+          @if (appearance.rightAppearance.showLabel) {
+            <span [style]="rightLabelStyle" class="tb-widget-button-label">{{ rightLabel$ | async }}</span>
+          }
+        </div>
+      }
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+</div>

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -44,30 +31,39 @@ import { DeviceProfile, DeviceProfileInfo, DeviceProfileType, DeviceTransportTyp
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
 import { MatAutocomplete } from '@angular/material/autocomplete';
+import { Operation, Resource } from '@shared/models/security.models';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 @Component({
-  selector: 'tb-device-profile-autocomplete',
-  templateUrl: './device-profile-autocomplete.component.html',
-  styleUrls: ['./device-profile-autocomplete.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-device-profile-autocomplete',
+    templateUrl: './device-profile-autocomplete.component.html',
+    styleUrls: ['./device-profile-autocomplete.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class DeviceProfileAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
+
+  resource = Resource;
+
+  operation = Operation;
 
   selectDeviceProfileFormGroup: UntypedFormGroup;
 
   modelValue: DeviceProfileId | null;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
@@ -105,6 +101,10 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   hint: string;
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
 
   @Output()
   deviceProfileUpdated = new EventEmitter<DeviceProfileId>();

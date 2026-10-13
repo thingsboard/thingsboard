@@ -1,0 +1,25 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-segmented-button-widget">
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-segmented-button-container">
+    <tb-widget-button-toggle
+      class="tb-widget-button-toggle"
+      [appearance]="appearance"
+      [autoScale]="autoScale"
+      [disabled]="disabled || (loading$ | async)"
+      [disableEvents]="ctx.isEdit"
+      [value]="value"
+      [ctx]="ctx"
+      (clicked)="onClick($event)">
+    </tb-widget-button-toggle>
+  </div>
+  @if (loading$ | async) {
+    <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate"></mat-progress-bar>
+  }
+</div>
+

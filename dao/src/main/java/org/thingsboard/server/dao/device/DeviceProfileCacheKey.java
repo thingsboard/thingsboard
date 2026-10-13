@@ -1,30 +1,19 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.device;
 
 import lombok.Data;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.io.Serializable;
+import java.io.Serial;
 
 @Data
-public class DeviceProfileCacheKey implements Serializable {
+public class DeviceProfileCacheKey implements VersionedCacheKey {
 
+    @Serial
     private static final long serialVersionUID = 8220455917177676472L;
 
     private final TenantId tenantId;
@@ -71,4 +60,10 @@ public class DeviceProfileCacheKey implements Serializable {
         }
         return tenantId + "_" + name;
     }
+
+    @Override
+    public boolean isVersioned() {
+        return deviceProfileId != null;
+    }
+
 }

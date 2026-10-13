@@ -1,0 +1,29 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-svg-xml flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'no-label': noLabel}"
+     tb-fullscreen
+     [fullscreen]="fullscreen">
+  <div style="min-height: 40px;" class="tb-svg-xml-toolbar flex flex-row items-center justify-start">
+    @if (!noLabel) {
+      <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
+    }
+    <span class="flex-1"></span>
+    <fieldset style="width: initial">
+      <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           (click)="fullscreen = !fullscreen">
+        <button type='button' mat-icon-button class="tb-mat-32">
+          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </fieldset>
+  </div>
+  <div id="tb-svg-xml-panel" class="tb-svg-xml-content-panel flex flex-col">
+    <div #svgXmlEditor id="tb-svg-xml-input" [style]="fillHeight ? {} : {minHeight: minHeight}" [class.fill-height]="fillHeight"></div>
+  </div>
+</div>

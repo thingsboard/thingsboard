@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="originatorFieldsConfigForm" class="tb-form-panel no-padding no-border">
+  <tb-sv-map-config
+    required
+    [selectOptions]="originatorFields"
+    targetKeyPrefix="originator"
+    formControlName="dataMapping"
+    [requiredText]="'rule-node-config.attr-mapping-required' | translate"
+    [labelText]="'rule-node-config.originator-fields-mapping' | translate"
+    [selectText]="'rule-node-config.source-field' | translate"
+    [selectRequiredText]="'rule-node-config.source-field-required' | translate"
+    [valText]="'rule-node-config.target-key' | translate"
+    [valRequiredText]="'rule-node-config.target-key-required' | translate"
+    [hintText]="'rule-node-config.originator-fields-sv-map-hint' | translate"
+    popupHelpLink="rulenode/originator_fields_node_fields_templatization">
+  </tb-sv-map-config>
+  <tb-msg-metadata-chip [labelText]="'rule-node-config.add-mapped-originator-fields-to' | translate"
+                        formControlName="fetchTo">
+  </tb-msg-metadata-chip>
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.skip-empty-fields-tooltip' | translate }}" class="tb-form-row same-padding">
+    <mat-slide-toggle class="mat-slide margin" formControlName="ignoreNullStrings">
+      {{ 'rule-node-config.skip-empty-fields' | translate }}
+    </mat-slide-toggle>
+  </div>
+</section>

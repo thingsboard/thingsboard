@@ -1,0 +1,39 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  pointer-events: auto;
+  &:has(section) {
+    height: 100%;
+  }
+  --mat-button-outlined-horizontal-padding: 8px;
+  --mat-button-outlined-container-height: 30px;
+  --mat-button-outlined-label-text-size: 12px;
+  --mat-button-outlined-hover-state-layer-opacity: 0;
+  --mat-icon-button-hover-state-layer-opacity: 0;
+
+  .group {
+    .mdc-button {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    &:hover {
+      .mdc-button {
+        background-color: rgba(255, 255, 255, 0.20);
+      }
+    }
+
+    .mdc-icon-button {
+      --mat-icon-color: #fff;
+      background-color: #162C41;
+
+      &:hover {
+        background-color: #DD2C00;
+      }
+    }
+  }
+
+  .button-label {
+    height: 28px;
+    --mat-divider-color: var(--mat-button-outlined-label-text-color);
+  }
+}

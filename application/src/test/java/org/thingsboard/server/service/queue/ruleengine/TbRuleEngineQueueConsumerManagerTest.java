@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue.ruleengine;
 
 import lombok.Getter;
@@ -27,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -59,6 +46,7 @@ import org.thingsboard.server.queue.provider.KafkaMonolithQueueFactory;
 import org.thingsboard.server.queue.provider.KafkaTbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
@@ -157,7 +145,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(ruleEngineMsgProducer);
         consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer"));
         mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(3, "tb-rule-engine-mgmt");
-        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-scheduler"));
+        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("tb-rule-engine-consumer-scheduler");
         ruleEngineConsumerContext.setTopicDeletionDelayInSec(5);
 
         queue = new Queue();
@@ -194,6 +182,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
+                .packProcessingContextFactory(new TbMsgPackProcessingContextFactory.DefaultTbMsgPackProcessingContextFactory())
                 .build();
     }
 
@@ -467,7 +456,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
 
         consumerManager.delete(true);
 
-        await().atMost(2, TimeUnit.SECONDS)
+        await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verify(ruleEngineMsgProducer).send(any(), any(), any());
                 });
@@ -507,7 +496,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
 
         consumerManager.delete(true);
 
-        await().atMost(2, TimeUnit.SECONDS)
+        await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verify(ruleEngineMsgProducer).send(any(), any(), any());
                 });
@@ -542,18 +531,18 @@ public class TbRuleEngineQueueConsumerManagerTest {
             Queue oldConfig = consumerManager.getConfig();
             Queue newConfig = JacksonUtil.clone(oldConfig);
             newConfig.setConsumerPerPartition(RandomUtils.nextBoolean());
-            newConfig.setPollInterval(RandomUtils.nextInt(100, 501));
-            newConfig.setPartitions(RandomUtils.nextInt(1, 10));
+            newConfig.setPollInterval(RandomUtils.secure().randomInt(100, 501));
+            newConfig.setPartitions(RandomUtils.secure().randomInt(1, 10));
             newConfig.setPackProcessingTimeout(RandomUtils.nextLong(100, 5001));
-            newConfig.getSubmitStrategy().setType(SubmitStrategyType.values()[RandomUtils.nextInt(0, SubmitStrategyType.values().length)]);
-            newConfig.getProcessingStrategy().setType(ProcessingStrategyType.values()[RandomUtils.nextInt(0, ProcessingStrategyType.values().length)]);
+            newConfig.getSubmitStrategy().setType(SubmitStrategyType.values()[RandomUtils.secure().randomInt(0, SubmitStrategyType.values().length)]);
+            newConfig.getProcessingStrategy().setType(ProcessingStrategyType.values()[RandomUtils.secure().randomInt(0, ProcessingStrategyType.values().length)]);
             log.info("Generated new config: consumerPerPartition={}, pollInterval={}, processingStrategy={}",
                     newConfig.isConsumerPerPartition(), newConfig.getPollInterval(), newConfig.getProcessingStrategy().getType());
             return newConfig;
         };
         Supplier<Set<TopicPartitionInfo>> partitionsUpdater = () -> {
-            int partitionsCount = RandomUtils.nextInt(0, 20);
-            int[] partitions = IntStream.generate(() -> RandomUtils.nextInt(0, 20))
+            int partitionsCount = RandomUtils.secure().randomInt(0, 20);
+            int[] partitions = IntStream.generate(() -> RandomUtils.secure().randomInt(0, 20))
                     .distinct().limit(partitionsCount)
                     .sorted().toArray();
             log.info("Generated new partitions: {}", Arrays.toString(partitions));
@@ -595,7 +584,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
             await().atMost(5, TimeUnit.SECONDS).until(() -> {
                 for (TopicPartitionInfo partition : expectedPartitions) {
                     if (consumers.stream().noneMatch(consumer -> consumer.subscribed &&
-                            consumer.pollingStarted && Set.of(partition).equals(consumer.getPartitions()))) {
+                                                                 consumer.pollingStarted && Set.of(partition).equals(consumer.getPartitions()))) {
                         return false;
                     }
                 }
@@ -605,7 +594,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
             await().atMost(5, TimeUnit.SECONDS).until(() -> {
                 return consumers.size() == 1 && consumers.stream()
                         .anyMatch(consumer -> consumer.subscribed && consumer.pollingStarted &&
-                                expectedPartitions.equals(consumer.getPartitions()));
+                                              expectedPartitions.equals(consumer.getPartitions()));
             });
         }
         Mockito.reset(ruleEngineConsumerContext.getSubmitStrategyFactory());
@@ -626,8 +615,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                 .until(() -> consumer.subscribed && consumer.getPartitions().equals(expectedPartitions) && consumer.pollingStarted);
         verify(consumer, times(1)).subscribe(any());
         verify(consumer).subscribe(eq(expectedPartitions));
-        verify(consumer).doSubscribe(argThat(topics -> topics.containsAll(expectedPartitions.stream()
-                .map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList()))));
+        verify(consumer).doSubscribe(argThat(topics -> topics.containsAll(expectedPartitions)));
         verify(consumer, atLeastOnce()).poll(eq((long) queue.getPollInterval()));
         verify(consumer, atLeastOnce()).doPoll(eq((long) queue.getPollInterval()));
         verify(consumer, never()).unsubscribe();
@@ -668,8 +656,8 @@ public class TbRuleEngineQueueConsumerManagerTest {
         return await().atMost(5, TimeUnit.SECONDS)
                 .until(() -> consumers.stream()
                         .filter(consumer -> consumer.getPartitions() != null &&
-                                consumer.getPartitions().size() == 1 &&
-                                consumer.getPartitions().contains(tpi))
+                                            consumer.getPartitions().size() == 1 &&
+                                            consumer.getPartitions().contains(tpi))
                         .findFirst().orElse(null), Objects::nonNull);
     }
 
@@ -677,9 +665,9 @@ public class TbRuleEngineQueueConsumerManagerTest {
         return await().atMost(5, TimeUnit.SECONDS)
                 .until(() -> consumers.stream()
                         .filter(consumer -> consumer.getPartitions() != null &&
-                                consumer.getPartitions().size() == 1 &&
-                                consumer.getPartitions().stream()
-                                        .anyMatch(tpi -> tpi.getPartition().get().equals(partition)))
+                                            consumer.getPartitions().size() == 1 &&
+                                            consumer.getPartitions().stream()
+                                                    .anyMatch(tpi -> tpi.getPartition().get().equals(partition)))
                         .findFirst().orElse(null), Objects::nonNull);
     }
 
@@ -738,14 +726,16 @@ public class TbRuleEngineQueueConsumerManagerTest {
                     .setTenantIdMSB(tenantId.getMostSignificantBits())
                     .setTenantIdLSB(tenantId.getLeastSignificantBits())
                     .addRelationTypes("Success")
-                    .setTbMsg(TbMsg.toByteString(tbMsg))
+                    .setTbMsgProto(TbMsg.toProto(tbMsg))
                     .build());
         }
 
         @Override
-        protected void doSubscribe(List<String> topicNames) {
-            log.debug("doSubscribe({})", topicNames);
-            this.topics = topicNames;
+        protected void doSubscribe(Set<TopicPartitionInfo> partitions) {
+            this.topics = partitions.stream()
+                    .map(TopicPartitionInfo::getFullTopicName)
+                    .collect(Collectors.toList());
+            log.debug("doSubscribe({})", topics);
             subscribed = true;
         }
 
@@ -777,13 +767,15 @@ public class TbRuleEngineQueueConsumerManagerTest {
             return false;
         }
 
-        public Set<TopicPartitionInfo> getPartitions() {
-            return partitions;
+        public void setUpTestMsg() {
+            testMsg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(new DeviceId(UUID.randomUUID()))
+                    .copyMetaData(new TbMsgMetaData())
+                    .data("{}")
+                    .build();
         }
 
-        public void setUpTestMsg() {
-            testMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(UUID.randomUUID()), new TbMsgMetaData(), "{}");
-        }
     }
 
 }

@@ -1,0 +1,60 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-js-func-modules-panel">
+  <div class="tb-js-func-modules-panel-title" translate>js-func.modules</div>
+  <div class="tb-js-func-modules-panel-content">
+    <div class="tb-form-panel no-border no-padding tb-js-func-modules">
+      <div class="tb-form-table">
+        <div class="tb-form-table-header">
+          <div class="tb-form-table-header-cell tb-alias-header" translate>js-func.module-alias</div>
+          <div class="tb-form-table-header-cell tb-module-link-header" translate>js-func.module-resource</div>
+          <div class="tb-form-table-header-cell tb-actions-header"></div>
+        </div>
+        @if (modulesFormArray().controls.length) {
+          <div class="tb-form-table-body">
+            @for (moduleControl of modulesFormArray().controls; track moduleControl) {
+              <div>
+                <tb-js-func-module-row class="flex"
+                                       [index]="$index"
+                                       [formControl]="moduleControl"
+                                       (moduleRemoved)="removeModule($index)">
+                </tb-js-func-module-row>
+              </div>
+            }
+          </div>
+        } @else {
+          <span class="tb-prompt flex items-center justify-center">{{ 'js-func.no-modules' | translate }}</span>
+        }
+        @if (modulesFormGroup.hasError('moduleAliasNotUnique')) {
+          <tb-error
+          noMargin [error]="'js-func.not-unique-module-aliases-error' | translate" style="padding-left: 12px;"></tb-error>
+        }
+      </div>
+      <div>
+        <button type="button" mat-stroked-button color="primary" (click)="addModule()">
+          {{ 'js-func.add-module' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="tb-js-func-modules-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyModules()"
+            [disabled]="modulesFormGroup.invalid || !modulesFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>
+

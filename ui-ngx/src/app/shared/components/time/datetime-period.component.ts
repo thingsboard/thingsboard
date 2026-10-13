@@ -1,58 +1,79 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, forwardRef, Input } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { DAY, FixedWindow, MINUTE } from '@shared/models/time/time.models';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged } from 'rxjs/operators';
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { FixedWindow } from '@shared/models/time/time.models';
+interface DateTimePeriod {
+  startDate: Date;
+  endDate: Date;
+}
 
 @Component({
-  selector: 'tb-datetime-period',
-  templateUrl: './datetime-period.component.html',
-  styleUrls: ['./datetime-period.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatetimePeriodComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-datetime-period',
+    templateUrl: './datetime-period.component.html',
+    styleUrls: ['./datetime-period.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DatetimePeriodComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
-export class DatetimePeriodComponent implements OnInit, ControlValueAccessor {
+export class DatetimePeriodComponent implements ControlValueAccessor {
 
   @Input() disabled: boolean;
 
-  modelValue: FixedWindow;
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
-  startDate: Date;
-  endDate: Date;
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
-  endTime: any;
+  private modelValue: FixedWindow;
 
   maxStartDate: Date;
-  minEndDate: Date;
   maxEndDate: Date;
 
-  changePending = false;
+  private maxStartDateTs: number;
+  private minEndDateTs: number;
+  private maxStartTs: number;
+  private maxEndTs: number;
+
+  private timeShiftMs = MINUTE;
+
+  dateTimePeriodFormGroup = this.fb.group({
+    startDate: this.fb.control<Date>(null),
+    endDate: this.fb.control<Date>(null)
+  });
+
+  private changePending = false;
 
   private propagateChange = null;
 
-  constructor() {
-  }
+  constructor(private fb: FormBuilder) {
+    this.dateTimePeriodFormGroup.valueChanges.pipe(
+      distinctUntilChanged((prevDateTimePeriod, dateTimePeriod) =>
+        prevDateTimePeriod.startDate === dateTimePeriod.startDate && prevDateTimePeriod.endDate === dateTimePeriod.endDate),
+      takeUntilDestroyed()
+    ).subscribe((dateTimePeriod: DateTimePeriod) => {
+      this.updateMinMaxDates(dateTimePeriod);
+      this.updateView();
+    });
 
-  ngOnInit(): void {
+    this.dateTimePeriodFormGroup.get('startDate').valueChanges.pipe(
+      distinctUntilChanged(),
+      takeUntilDestroyed()
+    ).subscribe(startDate => this.onStartDateChange(startDate));
+    this.dateTimePeriodFormGroup.get('endDate').valueChanges.pipe(
+      distinctUntilChanged(),
+      takeUntilDestroyed()
+    ).subscribe(endDate => this.onEndDateChange(endDate));
   }
 
   registerOnChange(fn: any): void {
@@ -68,35 +89,38 @@ export class DatetimePeriodComponent implements OnInit, ControlValueAccessor {
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.dateTimePeriodFormGroup.disable({emitEvent: false});
+    } else {
+      this.dateTimePeriodFormGroup.enable({emitEvent: false});
+    }
   }
 
   writeValue(datePeriod: FixedWindow): void {
     this.modelValue = datePeriod;
     if (this.modelValue) {
-      this.startDate = new Date(this.modelValue.startTimeMs);
-      this.endDate = new Date(this.modelValue.endTimeMs);
+      this.dateTimePeriodFormGroup.patchValue({
+        startDate: new Date(this.modelValue.startTimeMs),
+        endDate: new Date(this.modelValue.endTimeMs)
+      }, {emitEvent: false});
     } else {
       const date = new Date();
-      this.startDate = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate() - 1,
-        date.getHours(),
-        date.getMinutes(),
-        date.getSeconds(),
-        date.getMilliseconds());
-      this.endDate = date;
+      this.dateTimePeriodFormGroup.patchValue({
+        startDate: new Date(date.getTime() - DAY),
+        endDate: date
+      }, {emitEvent: false});
       this.updateView();
     }
-    this.updateMinMaxDates();
+    this.updateMinMaxDates(this.dateTimePeriodFormGroup.value);
   }
 
-  updateView() {
+  private updateView() {
     let value: FixedWindow = null;
-    if (this.startDate && this.endDate) {
+    const dateTimePeriod = this.dateTimePeriodFormGroup.value;
+    if (dateTimePeriod.startDate && dateTimePeriod.endDate) {
       value = {
-        startTimeMs: this.startDate.getTime(),
-        endTimeMs: this.endDate.getTime()
+        startTimeMs: dateTimePeriod.startDate.getTime(),
+        endTimeMs: dateTimePeriod.endDate.getTime()
       };
     }
     this.modelValue = value;
@@ -107,32 +131,44 @@ export class DatetimePeriodComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  updateMinMaxDates() {
-    this.maxStartDate = new Date(this.endDate.getTime() - 1000);
-    this.minEndDate = new Date(this.startDate.getTime() + 1000);
+  private updateMinMaxDates(dateTimePeriod: Partial<DateTimePeriod>) {
     this.maxEndDate = new Date();
+    this.maxEndTs = this.maxEndDate.getTime();
+    this.maxStartTs = this.maxEndTs - this.timeShiftMs;
+    this.maxStartDate = new Date(this.maxStartTs);
+
+    if (dateTimePeriod.endDate) {
+      this.maxStartDateTs = dateTimePeriod.endDate.getTime() - this.timeShiftMs;
+    }
+    if (dateTimePeriod.startDate) {
+      this.minEndDateTs = dateTimePeriod.startDate.getTime() + this.timeShiftMs;
+    }
   }
 
-  onStartDateChange() {
-    if (this.startDate) {
-      if (this.startDate.getTime() > this.maxStartDate.getTime()) {
-        this.startDate = new Date(this.maxStartDate.getTime());
+  private onStartDateChange(startDate: Date) {
+    if (startDate) {
+      let startDateTs = startDate.getTime();
+      if (startDateTs > this.maxStartTs) {
+        startDateTs = this.maxStartTs;
+        this.dateTimePeriodFormGroup.get('startDate').patchValue(new Date(startDateTs), { emitEvent: false });
       }
-      this.updateMinMaxDates();
+      if (startDateTs > this.maxStartDateTs) {
+        this.dateTimePeriodFormGroup.get('endDate').patchValue(new Date(startDateTs + this.timeShiftMs), { emitEvent: false });
+      }
     }
-    this.updateView();
   }
 
-  onEndDateChange() {
-    if (this.endDate) {
-      if (this.endDate.getTime() < this.minEndDate.getTime()) {
-        this.endDate = new Date(this.minEndDate.getTime());
-      } else if (this.endDate.getTime() > this.maxEndDate.getTime()) {
-        this.endDate = new Date(this.maxEndDate.getTime());
+  private onEndDateChange(endDate: Date) {
+    if (endDate) {
+      let endDateTs = endDate.getTime();
+      if (endDateTs > this.maxEndTs) {
+        endDateTs = this.maxEndTs;
+        this.dateTimePeriodFormGroup.get('endDate').patchValue(new Date(endDateTs), { emitEvent: false });
       }
-      this.updateMinMaxDates();
+      if (endDateTs < this.minEndDateTs) {
+        this.dateTimePeriodFormGroup.get('startDate').patchValue(new Date(endDateTs - this.timeShiftMs), { emitEvent: false });
+      }
     }
-    this.updateView();
   }
 
 }

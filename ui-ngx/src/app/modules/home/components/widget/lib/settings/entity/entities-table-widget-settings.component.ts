@@ -1,34 +1,25 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
 
 @Component({
-  selector: 'tb-entities-table-widget-settings',
-  templateUrl: './entities-table-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-entities-table-widget-settings',
+    templateUrl: './entities-table-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
   entitiesTableWidgetSettingsForm: UntypedFormGroup;
+  pageStepSizeValues = [];
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -54,10 +45,18 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
       displayEntityType: true,
       displayPagination: true,
       defaultPageSize: 10,
+      pageStepIncrement: null,
+      pageStepCount: 3,
       defaultSortOrder: 'entityName',
       useRowStyleFunction: false,
       rowStyleFunction: ''
     };
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
+    this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
+    return settings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -76,6 +75,9 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
       displayEntityType: [settings.displayEntityType, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
+      pageStepCount: [settings.pageStepCount ?? 3, [Validators.min(1), Validators.max(100),
+        Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepIncrement: [settings.pageStepIncrement, [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       defaultSortOrder: [settings.defaultSortOrder, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]]
@@ -83,38 +85,45 @@ export class EntitiesTableWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   protected validatorTriggers(): string[] {
-    return ['useRowStyleFunction', 'displayPagination', 'displayEntityName', 'displayEntityLabel'];
+    return ['useRowStyleFunction', 'displayPagination', 'displayEntityName', 'displayEntityLabel', 'pageStepCount',
+      'pageStepIncrement'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
+  protected updateValidators(emitEvent: boolean, trigger: string) {
+    if (trigger === 'pageStepCount' || trigger === 'pageStepIncrement') {
+      this.entitiesTableWidgetSettingsForm.get('defaultPageSize').reset();
+      this.pageStepSizeValues = buildPageStepSizeValues(this.entitiesTableWidgetSettingsForm.get('pageStepCount').value,
+        this.entitiesTableWidgetSettingsForm.get('pageStepIncrement').value);
+      return;
+    }
     const useRowStyleFunction: boolean = this.entitiesTableWidgetSettingsForm.get('useRowStyleFunction').value;
     const displayPagination: boolean = this.entitiesTableWidgetSettingsForm.get('displayPagination').value;
     const displayEntityName: boolean = this.entitiesTableWidgetSettingsForm.get('displayEntityName').value;
     const displayEntityLabel: boolean = this.entitiesTableWidgetSettingsForm.get('displayEntityLabel').value;
     if (useRowStyleFunction) {
-      this.entitiesTableWidgetSettingsForm.get('rowStyleFunction').enable();
+      this.entitiesTableWidgetSettingsForm.get('rowStyleFunction').enable({emitEvent});
     } else {
-      this.entitiesTableWidgetSettingsForm.get('rowStyleFunction').disable();
+      this.entitiesTableWidgetSettingsForm.get('rowStyleFunction').disable({emitEvent});
     }
     if (displayPagination) {
-      this.entitiesTableWidgetSettingsForm.get('defaultPageSize').enable();
+      this.entitiesTableWidgetSettingsForm.get('defaultPageSize').enable({emitEvent});
+      this.entitiesTableWidgetSettingsForm.get('pageStepCount').enable({emitEvent: false});
+      this.entitiesTableWidgetSettingsForm.get('pageStepIncrement').enable({emitEvent: false});
     } else {
-      this.entitiesTableWidgetSettingsForm.get('defaultPageSize').disable();
+      this.entitiesTableWidgetSettingsForm.get('defaultPageSize').disable({emitEvent});
+      this.entitiesTableWidgetSettingsForm.get('pageStepCount').disable({emitEvent: false});
+      this.entitiesTableWidgetSettingsForm.get('pageStepIncrement').disable({emitEvent: false});
     }
     if (displayEntityName) {
-      this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').enable();
+      this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').enable({emitEvent});
     } else {
-      this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').disable();
+      this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').disable({emitEvent});
     }
     if (displayEntityLabel) {
-      this.entitiesTableWidgetSettingsForm.get('entityLabelColumnTitle').enable();
+      this.entitiesTableWidgetSettingsForm.get('entityLabelColumnTitle').enable({emitEvent});
     } else {
-      this.entitiesTableWidgetSettingsForm.get('entityLabelColumnTitle').disable();
+      this.entitiesTableWidgetSettingsForm.get('entityLabelColumnTitle').disable({emitEvent});
     }
-    this.entitiesTableWidgetSettingsForm.get('rowStyleFunction').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetSettingsForm.get('defaultPageSize').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetSettingsForm.get('entityNameColumnTitle').updateValueAndValidity({emitEvent});
-    this.entitiesTableWidgetSettingsForm.get('entityLabelColumnTitle').updateValueAndValidity({emitEvent});
   }
 
 }

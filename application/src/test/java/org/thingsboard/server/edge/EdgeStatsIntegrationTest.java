@@ -1,0 +1,126 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+package org.thingsboard.server.edge;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
+import org.thingsboard.server.dao.edge.stats.MsgCounters;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.edge.stats.EdgeStatsService;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
+
+@DaoSqlTest
+@Slf4j
+public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
+
+    private static final String STATISTICS_DEVICE_PROFILE = "STATISTICS";
+
+    private static final long EXPECTED_MSGS_ADDED = 7L;
+    private static final long EXPECTED_MSGS_PUSHED = 7L;
+    private static final long EXPECTED_MSGS_PERMANENTLY_FAILED = 0L;
+    private static final long EXPECTED_MSGS_TMP_FAILED = 0L;
+
+    @Autowired
+    private EdgeStatsService edgeStatsService;
+    @Autowired
+    private EdgeStatsCounterService statsCounterService;
+
+    @Test
+    public void testReportStats() throws Exception {
+        // GIVEN
+        simulateEdgeEventsAddedDownlinkPushed();
+
+        // Await Edge Counters Updated
+        await().atMost(10, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            MsgCounters counters = statsCounterService.getMsgCountersByEdge().get(edge.getId());
+            assertEquals(EXPECTED_MSGS_ADDED, counters.getMsgsAdded().get());
+            assertEquals(EXPECTED_MSGS_PUSHED, counters.getMsgsPushed().get());
+            assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, counters.getMsgsPermanentlyFailed().get());
+            assertEquals(EXPECTED_MSGS_TMP_FAILED, counters.getMsgsTmpFailed().get());
+        });
+
+        // WHEN
+        edgeStatsService.reportStats();
+
+        // THEN
+        await().atMost(10, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            List<TsKvEntry> actualStats = fetchLatestStats();
+            assertEquals(EXPECTED_MSGS_ADDED, getStatsLongValue(actualStats, DOWNLINK_MSGS_ADDED));
+            assertEquals(EXPECTED_MSGS_PUSHED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PUSHED));
+            assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PERMANENTLY_FAILED));
+            assertEquals(EXPECTED_MSGS_TMP_FAILED, getStatsLongValue(actualStats, DOWNLINK_MSGS_TMP_FAILED));
+        });
+    }
+
+    private long getStatsLongValue(List<TsKvEntry> stats, EdgeStatsKey key) {
+        return stats.stream().filter(e -> e.getKey().equals(key.getKey())).findFirst().get().getLongValue().orElse(0L);
+    }
+
+    private List<TsKvEntry> fetchLatestStats() throws ExecutionException, InterruptedException {
+        return tsService.findLatest(
+                tenantId,
+                edge.getId(),
+                Arrays.stream(EdgeStatsKey.values()).map(EdgeStatsKey::getKey).toList()).get();
+    }
+
+    private void simulateEdgeEventsAddedDownlinkPushed() throws Exception {
+        statsCounterService.clear(edge.getId());
+
+        log.error("Simulating edge events added downlink pushed");
+
+        // Save device entity group and assign to edge
+        // Save device and add to entity group
+        // 3 DOWNLINK_MSGS_ADDED, EdgeEvents: [{ENTITY_GROUP: ASSIGNED_TO_EDGE}, {DEVICE_PROFILE: ADDED}, {DEVICE: ADDED_TO_ENTITY_GROUP}]
+        // 3 DOWNLINK_MSGS_PUSHED, Downlinks: [{entityGroupUpdateMsg}, {deviceProfileUpdateMsg}, {deviceUpdateMsg, deviceProfileUpdateMsg, deviceCredentialsUpdateMsg}]
+        EntityGroup deviceEntityGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "DeviceGroup", tenantId);
+        edgeImitator.expectMessageAmount(2);
+        Device savedDevice = saveDevice("Edge Device", STATISTICS_DEVICE_PROFILE, deviceEntityGroup.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // Save asset entity group and assign to edge
+        // Save asset and add to entity group
+        // 3 DOWNLINK_MSGS_ADDED, EdgeEvents: [{ENTITY_GROUP: ASSIGNED_TO_EDGE}, {ASSET_PROFILE: ADDED}, {ASSET: ADDED_TO_ENTITY_GROUP}]
+        // 3 DOWNLINK_MSGS_PUSHED, Downlinks: [{entityGroupUpdateMsg}, {assetProfileUpdateMsg}, {assetUpdateMsg, assetProfileUpdateMsg}]
+        EntityGroup assetEntityGroup = createEntityGroupAndAssignToEdge(EntityType.ASSET, "AssetGroup", tenantId);
+        edgeImitator.expectMessageAmount(3);
+        Asset savedAsset = saveAsset("Edge Asset", "Building", assetEntityGroup.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // Send device telemetry downlink for the device
+        // 1 DOWNLINK_MSGS_ADDED, EdgeEvents: [{DEVICE: TIMESERIES_UPDATED}]
+        // 1 DOWNLINK_MSGS_PUSHED, Downlinks: [{entityData}]
+        edgeImitator.expectMessageAmount(1);
+        String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
+        JsonNode timeseriesEntityData = JacksonUtil.toJsonNode(timeseriesData);
+        EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED, savedDevice.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
+        edgeEventService.saveAsync(edgeEvent).get();
+        Assert.assertTrue(edgeImitator.waitForMessages());
+    }
+}

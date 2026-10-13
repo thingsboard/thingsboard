@@ -1,68 +1,59 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
+  HostBinding,
   Input,
   OnDestroy,
   OnInit,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
-  UntypedFormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator,
-  AbstractControl, ValidationErrors
+  UntypedFormControl,
+  ValidationErrors,
+  Validator
 } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { getAce } from '@shared/models/ace/ace.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 export const jsonRequired = (control: AbstractControl): ValidationErrors | null => !control.value ? {required: true} : null;
 
 @Component({
-  selector: 'tb-json-object-edit',
-  templateUrl: './json-object-edit.component.html',
-  styleUrls: ['./json-object-edit.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => JsonObjectEditComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => JsonObjectEditComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-json-object-edit',
+    templateUrl: './json-object-edit.component.html',
+    styleUrls: ['./json-object-edit.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => JsonObjectEditComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => JsonObjectEditComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
+
+  @HostBinding('style.position') position = 'relative';
 
   @ViewChild('jsonEditor', {static: true})
   jsonEditorElmRef: ElementRef;

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.kafka;
 
 import lombok.Builder;
@@ -54,7 +41,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     private final TbQueueAdmin admin;
 
-    private final Set<TopicPartitionInfo> topics;
+    private final Set<String> topics;
 
     @Getter
     private final String clientId;
@@ -75,10 +62,6 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         topics = ConcurrentHashMap.newKeySet();
     }
 
-    @Override
-    public void init() {
-    }
-
     void addAnalyticHeaders(List<Header> headers) {
         headers.add(new RecordHeader("_producerId", getClientId().getBytes(StandardCharsets.UTF_8)));
         headers.add(new RecordHeader("_threadName", Thread.currentThread().getName().getBytes(StandardCharsets.UTF_8)));
@@ -97,16 +80,21 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
+        send(tpi, msg.getKey().toString(), msg, callback);
+    }
+
+    public void send(TopicPartitionInfo tpi, String key, T msg, TbQueueCallback callback) {
         try {
-            createTopicIfNotExist(tpi);
-            String key = msg.getKey().toString();
+            String topic = tpi.getFullTopicName();
+            createTopicIfNotExist(topic);
             byte[] data = msg.getData();
             ProducerRecord<String, byte[]> record;
             List<Header> headers = msg.getHeaders().getData().entrySet().stream().map(e -> new RecordHeader(e.getKey(), e.getValue())).collect(Collectors.toList());
             if (log.isDebugEnabled()) {
                 addAnalyticHeaders(headers);
             }
-            record = new ProducerRecord<>(tpi.getFullTopicName(), null, key, data, headers);
+            Integer partition = tpi.isUseInternalPartition() ? tpi.getPartition().orElse(null) : null;
+            record = new ProducerRecord<>(topic, partition, key, data, headers);
             producer.send(record, (metadata, exception) -> {
                 if (exception == null) {
                     if (callback != null) {
@@ -116,7 +104,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
                     if (callback != null) {
                         callback.onFailure(exception);
                     } else {
-                        log.warn("Producer template failure: {}", exception.getMessage(), exception);
+                        log.warn("Producer template failure", exception);
                     }
                 }
             });
@@ -130,12 +118,12 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         }
     }
 
-    private void createTopicIfNotExist(TopicPartitionInfo tpi) {
-        if (topics.contains(tpi)) {
+    private void createTopicIfNotExist(String topic) {
+        if (topics.contains(topic)) {
             return;
         }
-        admin.createTopicIfNotExists(tpi.getFullTopicName());
-        topics.add(tpi);
+        admin.createTopicIfNotExists(topic);
+        topics.add(topic);
     }
 
     @Override
@@ -144,4 +132,5 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
             producer.close();
         }
     }
+
 }

@@ -1,27 +1,17 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.support.NullValue;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.connection.jedis.JedisClusterConnection;
 import org.springframework.data.redis.connection.jedis.JedisConnection;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -56,10 +46,32 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     @Getter
     private final JedisConnectionFactory connectionFactory;
     private final RedisSerializer<String> keySerializer = StringRedisSerializer.UTF_8;
+    // Combined prefix (configured key prefix + cache name) prepended to every raw Redis key; precomputed once.
+    private final String rawKeyPrefix;
     private final TbRedisSerializer<K, V> valueSerializer;
     protected final Expiration evictExpiration;
     protected final Expiration cacheTtl;
     protected final boolean cacheEnabled;
+
+    static final byte[] EVICT_BY_PREFIX_LUA_SCRIPT = StringRedisSerializer.UTF_8.serialize("""
+            local prefix = ARGV[1]
+            local count = tonumber(ARGV[2]) or 1000
+            local cursor = "0"
+            local keysToDelete = {}
+            repeat
+                local result = redis.call("SCAN", cursor, "MATCH", prefix .. "*", "COUNT", count)
+                cursor = result[1]
+                for i, key in ipairs(result[2]) do
+                    table.insert(keysToDelete, key)
+                end
+            until cursor == "0"
+            if #keysToDelete > 0 then
+                redis.call("DEL", unpack(keysToDelete))
+            end
+            return #keysToDelete
+            """);
+
+    static final byte[] EVICT_BY_PREFIX_SHA = StringRedisSerializer.UTF_8.serialize("837605bb2289f85b0ebf1c10fa8cbd5833bea3ac");
 
     public RedisTbTransactionalCache(String cacheName,
                                      CacheSpecsMap cacheSpecsMap,
@@ -68,13 +80,16 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                                      TbRedisSerializer<K, V> valueSerializer) {
         this.cacheName = cacheName;
         this.connectionFactory = (JedisConnectionFactory) connectionFactory;
+        String configuredKeyPrefix = configuration.getKeyPrefix() == null ? "" : configuration.getKeyPrefix();
+        this.rawKeyPrefix = configuredKeyPrefix + cacheName;
         this.valueSerializer = valueSerializer;
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
         this.cacheTtl = Optional.ofNullable(cacheSpecsMap)
                 .map(CacheSpecsMap::getSpecs)
-                .map(x -> x.get(cacheName))
+                .map(specs -> specs.get(cacheName))
                 .map(CacheSpecs::getTimeToLiveInMinutes)
-                .map(t -> Expiration.from(t, TimeUnit.MINUTES))
+                .filter(ttl -> !ttl.equals(0))
+                .map(ttl -> Expiration.from(ttl, TimeUnit.MINUTES))
                 .orElseGet(Expiration::persistent);
         this.cacheEnabled = Optional.ofNullable(cacheSpecsMap)
                 .map(CacheSpecsMap::getSpecs)
@@ -86,17 +101,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public TbCacheValueWrapper<V> get(K key) {
-        return get(key, false);
-    }
-
-    @Override
-    public TbCacheValueWrapper<V> get(K key, boolean transactionMode) {
         if (!cacheEnabled) {
             return null;
         }
         try (var connection = connectionFactory.getConnection()) {
-            byte[] rawKey = getRawKey(key);
-            byte[] rawValue = doGet(connection, rawKey, transactionMode);
+            byte[] rawValue = doGet(key, connection);
             if (rawValue == null || rawValue.length == 0) {
                 return null;
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
@@ -113,8 +122,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         }
     }
 
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
-        return connection.stringCommands().get(rawKey);
+    protected byte[] doGet(K key, RedisConnection connection) {
+        return connection.stringCommands().get(getRawKey(key));
     }
 
     @Override
@@ -123,11 +132,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return;
         }
         try (var connection = connectionFactory.getConnection()) {
-            put(key, value, connection, false);
+            put(key, value, connection);
         }
     }
 
-    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
+    public void put(K key, V value, RedisConnection connection) {
         put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
     }
 
@@ -181,6 +190,18 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     @Override
+    public void evictByPrefix(String prefix) {
+        if (!cacheEnabled) {
+            return;
+        }
+        byte[] rawPrefix = StringRedisSerializer.UTF_8.serialize(rawKeyPrefix + prefix);
+        byte[] rawBatchSize = StringRedisSerializer.UTF_8.serialize(String.valueOf(1000));
+        try (var connection = getConnection(rawPrefix)) {
+            executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
+        }
+    }
+
+    @Override
     public TbCacheTransaction<K, V> newTransactionForKey(K key) {
         byte[][] rawKey = new byte[][]{getRawKey(key)};
         RedisConnection connection = watch(rawKey);
@@ -229,7 +250,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     protected byte[] getRawKey(K key) {
-        String keyString = cacheName + key.toString();
+        String keyString = rawKeyPrefix + key.toString();
         byte[] rawKey;
         try {
             rawKey = keySerializer.serialize(keyString);
@@ -272,6 +293,26 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public void put(RedisConnection connection, byte[] rawKey, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawValue = getRawValue(value);
         connection.stringCommands().set(rawKey, rawValue, this.cacheTtl, setOption);
+    }
+
+    protected void executeScript(RedisConnection connection, byte[] scriptSha, byte[] luaScript, ReturnType returnType, int numKeys, byte[]... keysAndArgs) {
+        try {
+            connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
+        } catch (InvalidDataAccessApiUsageException ignored) {
+            log.debug("Loading LUA with expected SHA [{}], connection [{}]", new String(scriptSha), connection.getNativeConnection());
+            String actualSha = connection.scriptingCommands().scriptLoad(luaScript);
+            if (!Arrays.equals(scriptSha, StringRedisSerializer.UTF_8.serialize(actualSha))) {
+                String message = String.format("SHA for LUA script wrong! Expected [%s], but actual [%s], connection [%s]",
+                        new String(scriptSha), actualSha, connection.getNativeConnection());
+                throw new IllegalStateException(message);
+            }
+            try {
+                connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
+            } catch (InvalidDataAccessApiUsageException exception) {
+                log.warn("Slowly executing eval instead of fast evalSha", exception);
+                connection.scriptingCommands().eval(luaScript, returnType, numKeys, keysAndArgs);
+            }
+        }
     }
 
 }

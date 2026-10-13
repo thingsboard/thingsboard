@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, InjectionToken } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
@@ -35,9 +22,10 @@ export interface FilterEntityColumn {
 
 
 @Component({
-  selector: 'tb-event-filter-panel',
-  templateUrl: './event-filter-panel.component.html',
-  styleUrls: ['./event-filter-panel.component.scss']
+    selector: 'tb-event-filter-panel',
+    templateUrl: './event-filter-panel.component.html',
+    styleUrls: ['./event-filter-panel.component.scss'],
+    standalone: false
 })
 export class EventFilterPanelComponent {
 
@@ -48,6 +36,7 @@ export class EventFilterPanelComponent {
 
   private msgDirectionTypes = ['IN', 'OUT'];
   private statusTypes = ['Success', 'Failure'];
+  private msgTypes = ['Uplink', 'Downlink'];
   private entityTypes = Object.keys(EntityType);
 
   showColumns: FilterEntityColumn[] = [];
@@ -71,7 +60,7 @@ export class EventFilterPanelComponent {
   }
 
   isSelector(key: string): string {
-    return ['msgDirectionType', 'status', 'entityName'].includes(key) ? key : '';
+    return ['msgDirectionType', 'status', 'type', 'entityName'].includes(key) ? key : '';
   }
 
   isNumberFields(key: string): string {
@@ -84,6 +73,8 @@ export class EventFilterPanelComponent {
         return this.msgDirectionTypes;
       case 'status':
         return this.statusTypes;
+      case 'type':
+        return this.msgTypes;
       case 'entityName':
         return this.entityTypes;
     }

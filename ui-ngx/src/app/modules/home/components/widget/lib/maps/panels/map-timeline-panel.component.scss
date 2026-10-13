@@ -1,0 +1,44 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+.tb-map-timeline-panel {
+  height: 100px;
+  padding: 4px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  &.col {
+    height: 156px;
+    .tb-timeline-controls {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+  .tb-timeline-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .tb-map-timeline-timestamp {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(0,0,0,0.76);
+    }
+    .tb-timeline-buttons {
+      .mat-mdc-mini-fab.mat-primary {
+        --mat-fab-small-container-color:  rgba(0,0,0,0);
+        --mat-fab-small-foreground-color: rgba(0,0,0,0.54);
+        --mat-fab-small-container-elevation-shadow: 4px 4px 4px 0px rgba(0, 0, 0, 0.15);
+        &:before {
+          opacity: 0.1;
+        }
+      }
+      .tb-timeline-button-32 {
+        width: 32px;
+        height: 32px;
+      }
+    }
+  }
+  .tb-map-timeline-no-data {
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(0,0,0,0.76);
+  }
+}

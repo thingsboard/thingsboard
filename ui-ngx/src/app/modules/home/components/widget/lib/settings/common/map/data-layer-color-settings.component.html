@@ -1,0 +1,20 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<button type="button"
+        mat-stroked-button
+        class="tb-box-button"
+        [disabled]="disabled"
+        #matButton
+        (click)="openColorSettingsPopup($event, matButton)">
+  @if (modelValue?.type === DataLayerColorType.function) {
+    <tb-icon matButtonIcon>mdi:function-variant</tb-icon>
+  } @else {
+    <div class="tb-color-preview box" [class.disabled]="disabled">
+      <div class="tb-color-result" [style]="colorStyle"></div>
+    </div>
+  }
+</button>

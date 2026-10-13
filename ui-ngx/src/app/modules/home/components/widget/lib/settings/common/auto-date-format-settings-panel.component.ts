@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
   AutoDateFormatSettings, defaultAutoDateFormatSettings,
@@ -27,13 +13,15 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-auto-date-format-settings-panel',
-  templateUrl: './auto-date-format-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./auto-date-format-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-auto-date-format-settings-panel',
+    templateUrl: './auto-date-format-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./auto-date-format-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class AutoDateFormatSettingsPanelComponent extends PageComponent implements OnInit {
 
@@ -59,7 +47,8 @@ export class AutoDateFormatSettingsPanelComponent extends PageComponent implemen
 
   constructor(private date: DatePipe,
               private fb: UntypedFormBuilder,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -68,7 +57,9 @@ export class AutoDateFormatSettingsPanelComponent extends PageComponent implemen
     for (const unit of formatTimeUnits) {
       this.autoDateFormatFormGroup.addControl(unit,
         this.fb.control(this.autoDateFormatSettings[unit] || this.defaultValues[unit], [Validators.required]));
-      this.autoDateFormatFormGroup.get(unit).valueChanges.subscribe((value: string) => {
+      this.autoDateFormatFormGroup.get(unit).valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe((value: string) => {
         this.previewText[unit] = this.date.transform(Date.now(), value);
       });
       this.previewText[unit] = this.date.transform(Date.now(), this.autoDateFormatSettings[unit] || this.defaultValues[unit]);

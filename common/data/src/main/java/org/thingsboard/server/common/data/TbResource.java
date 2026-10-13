@@ -1,21 +1,9 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -23,14 +11,17 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TbResourceId;
 
+import java.io.Serial;
 import java.util.Base64;
 import java.util.Optional;
 
+@Schema
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TbResource extends TbResourceInfo {
 
+    @Serial
     private static final long serialVersionUID = 7379609705527272306L;
 
     private byte[] data;
@@ -84,8 +75,14 @@ public class TbResource extends TbResourceInfo {
                 .orElse(null);
     }
 
+    @JsonIgnore
+    public TbResourceDataInfo toResourceDataInfo() {
+        return new TbResourceDataInfo(data, getDescriptor());
+    }
+
     @Override
     public String toString() {
         return super.toString();
     }
+
 }

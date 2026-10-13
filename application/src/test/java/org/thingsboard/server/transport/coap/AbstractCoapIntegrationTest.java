@@ -1,22 +1,12 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -40,20 +30,39 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
+import org.thingsboard.server.utils.PortFinder;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @TestPropertySource(properties = {
-        "coap.enabled=true",
+        "coap.server.enabled=true",
         "service.integrations.supported=ALL",
         "transport.coap.enabled=true",
 })
 @Slf4j
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
 
+    public static final String COAP_HOST = "localhost";
+    public static final int COAP_PORT = PortFinder.findAvailableUdpPort();
+    public static final String COAP_BASE_URL = "coap://" + COAP_HOST + ":" + COAP_PORT + "/api/v1/";
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("coap.bind_port = {}", COAP_PORT);
+        registry.add("coap.bind_port", () -> COAP_PORT);
+    }
+
     protected final byte[] EMPTY_PAYLOAD = new byte[0];
     protected CoapTestClient client;
+    protected static final String PAYLOAD_VALUES_STR = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
+            " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
+    protected static final String PAYLOAD_VALUES_STR_01 = "{\"key2\":\"value2\", \"key3\":false, \"key4\": 4.0, \"key5\": 5," +
+            " \"key6\": {\"someNumber_02\": 52, \"someArray_02\": [1,2,3,4], \"someNestedObject_02\": {\"key_02\": \"value_02\"}}}";
+
+    protected void processBeforeTest() throws Exception {
+        loginTenantAdmin();
+    }
 
     protected void processAfterTest() throws Exception {
         if (client != null) {

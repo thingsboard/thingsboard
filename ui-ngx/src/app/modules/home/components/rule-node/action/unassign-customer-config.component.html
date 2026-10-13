@@ -1,0 +1,32 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="unassignCustomerConfigForm" class="flex flex-col">
+  <div class="tb-form-panel no-padding no-border">
+
+    <div class="tb-form-panel stroked" [class.no-padding-bottom]="unassignCustomerConfigForm.get('unassignFromCustomer').value">
+      <div tb-hint-tooltip-icon="{{ 'rule-node-config.unassign-from-customer-tooltip' | translate }}"
+           class="tb-form-row no-border no-padding">
+        <mat-slide-toggle class="mat-slide" formControlName="unassignFromCustomer">
+          {{ 'rule-node-config.unassign-from-customer' | translate }}
+        </mat-slide-toggle>
+      </div>
+      @if (unassignCustomerConfigForm.get('unassignFromCustomer').value) {
+        <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
+          <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
+          <input required matInput formControlName="customerNamePattern">
+          @if (unassignCustomerConfigForm.get('customerNamePattern').hasError('required') ||
+            unassignCustomerConfigForm.get('customerNamePattern').hasError('pattern')) {
+            <mat-error>
+              {{ 'rule-node-config.customer-name-pattern-required' | translate }}
+            </mat-error>
+          }
+          <mat-hint translate>rule-node-config.customer-name-pattern-hint</mat-hint>
+        </mat-form-field>
+      }
+    </div>
+  </div>
+</section>

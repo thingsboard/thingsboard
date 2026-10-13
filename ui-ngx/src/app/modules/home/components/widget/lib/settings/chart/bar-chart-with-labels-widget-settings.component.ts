@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import {
   Datasource,
@@ -25,16 +11,19 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
+import { formatValue } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
-  barChartWithLabelsDefaultSettings, BarChartWithLabelsWidgetSettings
+  barChartWithLabelsDefaultSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
+import { updateLatestDataKeys } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
-  selector: 'tb-bar-chart-with-labels-widget-settings',
-  templateUrl: './bar-chart-with-labels-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-bar-chart-with-labels-widget-settings',
+    templateUrl: './bar-chart-with-labels-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -68,13 +57,14 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings, barChartWithLabelsDefaultSettings);
+    return barChartWithLabelsDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.barChartWidgetSettingsForm = this.fb.group({
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
 
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
@@ -121,17 +111,29 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
     });
   }
 
+  protected onSettingsChanged(updated: WidgetSettings) {
+    updateLatestDataKeys([updated.yAxis], this.datasource, this.dataKeyCallbacks);
+    super.onSettingsChanged(updated);
+  }
+
   protected validatorTriggers(): string[] {
-    return ['showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['dataZoom', 'showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
+    const dataZoom: boolean = this.barChartWidgetSettingsForm.get('dataZoom').value;
     const showBarLabel: boolean = this.barChartWidgetSettingsForm.get('showBarLabel').value;
     const showBarValue: boolean = this.barChartWidgetSettingsForm.get('showBarValue').value;
     const showBarBorder: boolean = this.barChartWidgetSettingsForm.get('showBarBorder').value;
     const showLegend: boolean = this.barChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.barChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.barChartWidgetSettingsForm.get('tooltipShowDate').value;
+
+    if (dataZoom) {
+      this.barChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.barChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (showBarLabel) {
       this.barChartWidgetSettingsForm.get('barLabelFont').enable();
@@ -200,7 +202,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   private _tooltipValuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, false);
   }

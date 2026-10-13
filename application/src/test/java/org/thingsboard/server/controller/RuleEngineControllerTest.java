@@ -1,25 +1,13 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -56,13 +44,18 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
     private final String REQUEST_BODY = "{\"request\":\"download\"}";
     private final String RESPONSE_BODY = "{\"response\":\"downloadOk\"}";
 
-    @SpyBean
+    @MockitoSpyBean
     private RuleEngineCallService ruleEngineCallService;
 
     @Test
     public void testHandleRuleEngineRequestWithMsgOriginatorUser() throws Exception {
         loginSysAdmin();
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, currentUserId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(currentUserId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/", REQUEST_BODY, new TypeReference<>() {
@@ -86,7 +79,12 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId(), REQUEST_BODY, new TypeReference<>() {
@@ -110,7 +108,12 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId() + "/15000", REQUEST_BODY, new TypeReference<>() {
@@ -156,7 +159,13 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.newMsg(DataConstants.HP_QUEUE_NAME, TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .queueName(DataConstants.HP_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId() + "/HighPriority/1000", REQUEST_BODY, new TypeReference<>() {
@@ -192,10 +201,16 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        assignDeviceToCustomer(deviceId, customerId);
-        loginCustomerUser();
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + deviceId.getId());
+        loginCustomerAdminUser();
 
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, customerId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .customerId(customerId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId(), REQUEST_BODY, new TypeReference<>() {
@@ -210,7 +225,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         assertThat(requestMsgCaptorValue.getOriginator()).isEqualTo(deviceId);
         assertThat(requestMsgCaptorValue.getCustomerId()).isEqualTo(customerId);
         checkMetadataProperties(requestMsgCaptorValue.getMetaData());
-        testLogEntityAction(null, deviceId, tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL,
+        testLogEntityAction(null, deviceId, tenantId, customerId, customerAdminUserId, CUSTOMER_ADMIN_EMAIL,
                 ActionType.REST_API_RULE_ENGINE_CALL, 1, REQUEST_BODY, RESPONSE_BODY);
     }
 
@@ -222,7 +237,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
 
         doPostAsync("/api/rule-engine/DEVICE/" + device.getId().getId(), (Object) REQUEST_BODY, -1L)
                 .andExpect(status().isForbidden())
-                .andExpect(content().string("You don't have permission to perform this operation!"));
+                .andExpect(content().string("You don't have permission to perform 'WRITE' operation with DEVICE 'test'!"));
 
         verifyNoInteractions(ruleEngineCallService);
     }

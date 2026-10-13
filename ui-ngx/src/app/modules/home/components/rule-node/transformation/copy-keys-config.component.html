@@ -1,0 +1,26 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="copyKeysConfigForm" class="tb-form-panel no-padding no-border">
+  <tb-msg-metadata-chip
+    [labelText]="('rule-node-config.key-val.copy-key-values-from' | translate)"
+    [translation]="translation"
+    formControlName="copyFrom">
+  </tb-msg-metadata-chip>
+  <tb-string-items-list class="mat-block"
+                        required
+                        appearance="outline"
+                        [label]="'rule-node-config.keys' | translate"
+                        [placeholder]="'rule-node-config.add-key' | translate"
+                        [requiredText]="'rule-node-config.key-val.at-least-one-key-error' | translate"
+                        formControlName="keys">
+    <mat-icon matSuffix class="help-icon m-2 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+              color="primary"
+              matTooltip="{{ 'rule-node-config.use-regular-expression-hint' | translate }}">
+      help
+    </mat-icon>
+  </tb-string-items-list>
+</section>

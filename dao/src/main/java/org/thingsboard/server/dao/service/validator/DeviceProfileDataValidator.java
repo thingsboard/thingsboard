@@ -1,24 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.service.validator;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.util.SecurityUtil;
+import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -43,6 +30,7 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.Abstrac
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -51,11 +39,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
@@ -67,6 +55,10 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isNotLwm2mServer;
 
 @Slf4j
 @Component
@@ -94,6 +86,18 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     private RuleChainService ruleChainService;
     @Autowired
     private DashboardService dashboardService;
+
+    @Value("${transport.lwm2m.server.bind_port:5685}")
+    private Integer lwm2mPort;
+
+    @Value("${transport.lwm2m.server.security.bind_port:5686}")
+    private Integer lwm2mSecurePort;
+
+    @Value("${transport.lwm2m.bootstrap.bind_port:5687}")
+    private Integer lwm2mBootstrapPort;
+
+    @Value("${transport.lwm2m.bootstrap.security.bind_port:5688}")
+    private Integer lwm2mBootstrapSecurePort;
 
     @Value("${security.java_cacerts.path:}")
     private String javaCacertsPath;
@@ -165,10 +169,12 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
             if (lwM2MBootstrapServersConfigurations != null) {
                 validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations,
-                        ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable());
+                        ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable(), deviceProfile);
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                 }
+                // call setProfileData after validation to ensure 'profileData' and 'profileDataBytes' fields are synchronized and ProtoUtils.toProto is not broken
+                deviceProfile.setProfileData(deviceProfile.getProfileData());
             }
         }
 
@@ -188,13 +194,11 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
 
         if (deviceProfile.getDefaultRuleChainId() != null) {
-            RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, deviceProfile.getDefaultRuleChainId());
-            if (ruleChain == null) {
-                throw new DataValidationException("Can't assign non-existent rule chain!");
-            }
-            if (!ruleChain.getTenantId().equals(deviceProfile.getTenantId())) {
-                throw new DataValidationException("Can't assign rule chain from different tenant!");
-            }
+            validateRuleChain(tenantId, deviceProfile.getTenantId(), deviceProfile.getDefaultRuleChainId());
+        }
+
+        if (deviceProfile.getDefaultEdgeRuleChainId() != null) {
+            validateRuleChain(tenantId, deviceProfile.getTenantId(), deviceProfile.getDefaultEdgeRuleChainId());
         }
 
         if (deviceProfile.getDefaultDashboardId() != null) {
@@ -208,6 +212,16 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
 
         validateOtaPackage(tenantId, deviceProfile, deviceProfile.getId());
+    }
+
+    private void validateRuleChain(TenantId tenantId, TenantId deviceProfileTenantId, RuleChainId ruleChainId) {
+        RuleChain ruleChain = ruleChainService.findRuleChainById(tenantId, ruleChainId);
+        if (ruleChain == null) {
+            throw new DataValidationException("Can't assign non-existent rule chain!");
+        }
+        if (!ruleChain.getTenantId().equals(deviceProfileTenantId)) {
+            throw new DataValidationException("Can't assign rule chain from different tenant!");
+        }
     }
 
     @Override
@@ -319,43 +333,74 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
         }
     }
 
-    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
+    /**
+         Validates the list of LwM2M / Bootstrap Server configurations for client transport.
+         OMA LwM2M Specification Compliance & Validation Rules:
+         - OMA LwM2M Core TS 1.1.1 (Object 0 - LwM2M Security, Resource 10 Short Server ID):
+           According to section 3.2 and Object 0 Resource 10 specification, Short Server ID (range 1..65534)
+           identifies a regular LwM2M Server Account and links Object 0 to Object 1.
+           It MUST be set when Bootstrap-Server is false, but is NOT applicable to a
+           Bootstrap Server Account (Bootstrap-Server = true) as there is no associated Object 1 Instance.
+           See: http://www.openmobilealliance.org/release/LightweightM2M/V1_1_1-20190617-A/OMA-TS-LightweightM2M_Core-V1_1_1-20190617-A.pdf
+         - Backward Compatibility (ThingsBoard <= 4.2):
+           Non-null shortServerId on Bootstrap Server is normalized to null with a warning.
+         - Single Bootstrap Server Constraint:
+           Only one Bootstrap Server configuration is allowed per transport setup.
+    */
+    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations,
+                                                                boolean isBootstrapServerUpdateEnable, DeviceProfile deviceProfile) {
         Set<String> uris = new HashSet<>();
         Set<Integer> shortServerIds = new HashSet<>();
+        boolean hasBootstrapServer = false;
+
         for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
             AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
 
-            if (serverConfig.getShortServerId() != null) {
-                if (serverConfig.isBootstrapServerIs()){
-                    if(serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535){
-                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+            if (serverConfig.isBootstrapServerIs()) {
+                // 1. Only one Bootstrap Server configuration is allowed
+                if (hasBootstrapServer) {
+                    throw new DeviceCredentialsValidationException("Only one Bootstrap Server configuration is allowed!");
+                }
+
+                // 2. Normalize legacy shortServerId to null for backward compatibility
+                if (serverConfig.getShortServerId() != null) {
+                    log.warn("[{}] [{}] Ignoring Short Server ID [{}] on the Bootstrap Server entry: cleared to null for backward compatibility (ThingsBoard <= 4.2).",
+                            deviceProfile.getTenantId(), deviceProfile.getName(), serverConfig.getShortServerId());
+
+                    serverConfig.setShortServerId(null);
+                }
+                hasBootstrapServer = true;
+            } else {
+                // Validate regular LwM2M (DM) Server
+                if (serverConfig.getShortServerId() != null) {
+                    if (isNotLwm2mServer(serverConfig.getShortServerId())) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!");
                     }
                 } else {
-                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
-                    }
+                    throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be null!");
                 }
-            } else {
-                String serverName = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-                throw new DeviceCredentialsValidationException(serverName + " ShortServerId must not be null!");
+
+                if (!shortServerIds.add(serverConfig.getShortServerId())) {
+                    throw new DeviceCredentialsValidationException("LwM2M Server \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
+                }
             }
 
+            // Check Host + Port uniqueness
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-            if (!shortServerIds.add(serverConfig.getShortServerId())) {
-                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
-            }
             String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
             if (!uris.add(uri)) {
                 throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
             }
+
+            // Check port compliance with security mode
             int port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
-                port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
+                port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapPort : lwm2mPort;
             } else {
-                port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
+                port = serverConfig.isBootstrapServerIs() ? lwm2mBootstrapSecurePort : lwm2mSecurePort;
             }
             if (serverConfig.getPort() == null || serverConfig.getPort() != port) {
                 throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
@@ -423,4 +468,5 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     private String getCertificateString(X509Certificate cert) throws CertificateEncodingException {
         return EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()));
     }
+
 }

@@ -1,20 +1,15 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewEncapsulation
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
   backgroundStyle,
@@ -30,13 +25,15 @@ import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-background-settings-panel',
-  templateUrl: './background-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./background-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-background-settings-panel',
+    templateUrl: './background-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./background-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BackgroundSettingsPanelComponent extends PageComponent implements OnInit {
 
@@ -64,7 +61,8 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               protected store: Store<AppState>,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -81,13 +79,19 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
         })
       }
     );
-    this.backgroundSettingsFormGroup.get('type').valueChanges.subscribe(() => {
+    this.backgroundSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
-    this.backgroundSettingsFormGroup.get('overlay').get('enabled').valueChanges.subscribe(() => {
+    this.backgroundSettingsFormGroup.get('overlay').get('enabled').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
-    this.backgroundSettingsFormGroup.valueChanges.subscribe(() => {
+    this.backgroundSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateBackgroundStyle();
     });
     this.updateValidators();

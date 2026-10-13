@@ -1,43 +1,28 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
 import { ComponentDescriptor } from '@shared/models/component-descriptor.models';
-import { FcEdge, FcNode } from 'ngx-flowchart';
+import { FcEdge, FcNode, FcNote } from 'ngx-flowchart';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, EventEmitter, Inject, OnInit, Directive } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
-import { TranslateService } from '@ngx-translate/core';
+import { EntityTestScriptResult, HasEntityDebugSettings } from '@shared/models/entity.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
 }
 
-export interface RuleNode extends BaseData<RuleNodeId> {
+export interface RuleNode extends BaseData<RuleNodeId>, HasEntityDebugSettings {
   ruleChainId?: RuleChainId;
   type: string;
   name: string;
-  debugMode: boolean;
   singletonMode: boolean;
   queueName?: string;
   configurationVersion?: number;
@@ -103,6 +88,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   private configurationSet = false;
   private disabledValue = false;
+  protected destroyRef = inject(DestroyRef);
 
   set disabled(value: boolean) {
     if (this.disabledValue !== value) {
@@ -133,8 +119,8 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
   configurationChanged = this.configurationChangedEmiter.asObservable();
 
-  protected constructor(@Inject(Store) protected store: Store<AppState>) {
-    super(store);
+  protected constructor(...args: unknown[]) {
+    super();
   }
 
   ngOnInit() {}
@@ -160,11 +146,15 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
       for (const part of path) {
         control = control.get(part);
       }
-      control.valueChanges.subscribe(() => {
+      control.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true, trigger);
       });
     }
-    this.configForm().valueChanges.subscribe((updated: RuleNodeConfiguration) => {
+    this.configForm().valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((updated: RuleNodeConfiguration) => {
       this.onConfigurationChanged(updated);
     });
   }
@@ -216,6 +206,7 @@ export enum RuleNodeType {
   ENRICHMENT = 'ENRICHMENT',
   TRANSFORMATION = 'TRANSFORMATION',
   ACTION = 'ACTION',
+  ANALYTICS = 'ANALYTICS',
   EXTERNAL = 'EXTERNAL',
   FLOW = 'FLOW',
   UNKNOWN = 'UNKNOWN',
@@ -227,6 +218,7 @@ export const ruleNodeTypesLibrary = [
   RuleNodeType.ENRICHMENT,
   RuleNodeType.TRANSFORMATION,
   RuleNodeType.ACTION,
+  RuleNodeType.ANALYTICS,
   RuleNodeType.EXTERNAL,
   RuleNodeType.FLOW,
 ];
@@ -283,6 +275,16 @@ export const ruleNodeTypeDescriptors = new Map<RuleNodeType, RuleNodeTypeDescrip
       }
     ],
     [
+      RuleNodeType.ANALYTICS,
+      {
+        value: RuleNodeType.ANALYTICS,
+        name: 'rulenode.type-analytics',
+        details: 'rulenode.type-analytics-details',
+        nodeClass: 'tb-analytics-type',
+        icon: 'timeline'
+      }
+    ],
+    [
       RuleNodeType.EXTERNAL,
       {
         value: RuleNodeType.EXTERNAL,
@@ -332,7 +334,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
-export interface FcRuleNodeType extends FcNode {
+export interface FcRuleNodeType extends FcNode, HasEntityDebugSettings {
   component?: RuleNodeComponentDescriptor;
   singletonMode?: boolean;
   queueName?: string;
@@ -345,7 +347,6 @@ export interface FcRuleNode extends FcRuleNodeType {
   ruleNodeId?: RuleNodeId;
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
-  debugMode?: boolean;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
@@ -354,6 +355,19 @@ export interface FcRuleNode extends FcRuleNodeType {
 
 export interface FcRuleEdge extends FcEdge {
   labels?: string[];
+}
+
+export const FC_RULE_NOTE_DEFAULT_BACKGROUND_COLOR = '#FFF9C4';
+export const FC_RULE_NOTE_DEFAULT_BORDER_WIDTH = 1;
+export const FC_RULE_NOTE_DEFAULT_APPLY_MARKDOWN_STYLE = true;
+
+export interface FcRuleNote extends FcNote {
+  content?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  applyDefaultMarkdownStyle?: boolean;
+  markdownCss?: string;
 }
 
 export enum ScriptLanguage {
@@ -370,10 +384,7 @@ export interface TestScriptInputParams {
   msgType: string;
 }
 
-export interface TestScriptResult {
-  output: string;
-  error: string;
-}
+export type TestScriptResult = EntityTestScriptResult;
 
 export enum MessageType {
   POST_ATTRIBUTES_REQUEST = 'POST_ATTRIBUTES_REQUEST',
@@ -405,10 +416,20 @@ export enum MessageType {
   ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
   COMMENT_CREATED = 'COMMENT_CREATED',
   COMMENT_UPDATED = 'COMMENT_UPDATED',
+  ADDED_TO_GROUP = 'ADDED_TO_GROUP',
+  REMOVED_FROM_GROUP = 'REMOVED_FROM_GROUP',
   ENTITY_ASSIGNED_FROM_TENANT = 'ENTITY_ASSIGNED_FROM_TENANT',
   ENTITY_ASSIGNED_TO_TENANT = 'ENTITY_ASSIGNED_TO_TENANT',
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
-  TIMESERIES_DELETED = 'TIMESERIES_DELETED'
+  TIMESERIES_DELETED = 'TIMESERIES_DELETED',
+  ADDED_TO_ENTITY_GROUP = 'ADDED_TO_ENTITY_GROUP',
+  REMOVED_FROM_ENTITY_GROUP = 'REMOVED_FROM_ENTITY_GROUP',
+  REST_API_REQUEST = 'REST_API_REQUEST',
+  FIRMWARE_UPDATED = 'FIRMWARE_UPDATED',
+  SOFTWARE_UPDATED = 'SOFTWARE_UPDATED',
+  generateReport = 'generateReport',
+  generateDashboardReport = 'generateDashboardReport',
+  OWNER_CHANGED = 'OWNER_CHANGED'
 }
 
 export const messageTypeNames = new Map<MessageType, string>(
@@ -442,10 +463,20 @@ export const messageTypeNames = new Map<MessageType, string>(
     [MessageType.ALARM_UNASSIGNED, 'Alarm Unassigned'],
     [MessageType.COMMENT_CREATED, 'Comment Created'],
     [MessageType.COMMENT_UPDATED, 'Comment Updated'],
+    [MessageType.ADDED_TO_GROUP, 'Added to Group'],
+    [MessageType.REMOVED_FROM_GROUP, 'Removed from Group'],
     [MessageType.ENTITY_ASSIGNED_FROM_TENANT, 'Entity Assigned From Tenant'],
     [MessageType.ENTITY_ASSIGNED_TO_TENANT, 'Entity Assigned To Tenant'],
     [MessageType.TIMESERIES_UPDATED, 'Timeseries Updated'],
-    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted']
+    [MessageType.TIMESERIES_DELETED, 'Timeseries Deleted'],
+    [MessageType.ADDED_TO_ENTITY_GROUP, 'Added to Group'],
+    [MessageType.REMOVED_FROM_ENTITY_GROUP, 'Removed from Group'],
+    [MessageType.REST_API_REQUEST, 'REST API request'],
+    [MessageType.FIRMWARE_UPDATED, 'Firmware Update'],
+    [MessageType.SOFTWARE_UPDATED, 'Software Update'],
+    [MessageType.generateReport, 'Generate Report'],
+    [MessageType.generateDashboardReport, 'Generate Dashboard Report'],
+    [MessageType.OWNER_CHANGED, 'Owner Changed'],
   ]
 );
 
@@ -470,20 +501,31 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.metadata.TbGetTelemetryNode': 'ruleNodeOriginatorTelemetry',
   'org.thingsboard.rule.engine.metadata.TbGetCustomerAttributeNode': 'ruleNodeCustomerAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetCustomerDetailsNode': 'ruleNodeCustomerDetails',
+  'org.thingsboard.rule.engine.metadata.TbFetchDeviceCredentialsNode': 'ruleNodeFetchDeviceCredentials',
   'org.thingsboard.rule.engine.metadata.TbGetDeviceAttrNode': 'ruleNodeDeviceAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetRelatedAttributeNode': 'ruleNodeRelatedAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetTenantAttributeNode': 'ruleNodeTenantAttributes',
   'org.thingsboard.rule.engine.metadata.TbGetTenantDetailsNode': 'ruleNodeTenantDetails',
   'org.thingsboard.rule.engine.metadata.CalculateDeltaNode': 'ruleNodeCalculateDelta',
   'org.thingsboard.rule.engine.transform.TbChangeOriginatorNode': 'ruleNodeChangeOriginator',
+  'org.thingsboard.rule.engine.transform.TbCopyKeysNode': 'ruleNodeCopyKeyValuePairs',
+  'org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode': 'ruleNodeDeduplication',
+  'org.thingsboard.rule.engine.transform.TbDeleteKeysNode': 'ruleNodeDeleteKeyValuePairs',
+  'org.thingsboard.rule.engine.transform.TbJsonPathNode': 'ruleNodeJsonPath',
+  'org.thingsboard.rule.engine.transform.TbRenameKeysNode': 'ruleNodeRenameKeys',
   'org.thingsboard.rule.engine.transform.TbTransformMsgNode': 'ruleNodeTransformMsg',
+  'org.thingsboard.rule.engine.transform.TbSplitArrayMsgNode': 'ruleNodeSplitArrayMsg',
   'org.thingsboard.rule.engine.mail.TbMsgToEmailNode': 'ruleNodeMsgToEmail',
   'org.thingsboard.rule.engine.action.TbAssignToCustomerNode': 'ruleNodeAssignToCustomer',
   'org.thingsboard.rule.engine.action.TbUnassignFromCustomerNode': 'ruleNodeUnassignFromCustomer',
+  'org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode': 'ruleNodeCalculatedFields',
   'org.thingsboard.rule.engine.action.TbClearAlarmNode': 'ruleNodeClearAlarm',
   'org.thingsboard.rule.engine.action.TbCreateAlarmNode': 'ruleNodeCreateAlarm',
+  'org.thingsboard.rule.engine.action.TbCopyAttributesToEntityViewNode': 'ruleNodeCopyToView',
   'org.thingsboard.rule.engine.action.TbCreateRelationNode': 'ruleNodeCreateRelation',
   'org.thingsboard.rule.engine.action.TbDeleteRelationNode': 'ruleNodeDeleteRelation',
+  'org.thingsboard.rule.engine.action.TbDeviceStateNode': 'ruleNodeDeviceState',
+  'org.thingsboard.rule.engine.action.TbMsgCountNode': 'ruleNodeMessageCount',
   'org.thingsboard.rule.engine.delay.TbMsgDelayNode': 'ruleNodeMsgDelay',
   'org.thingsboard.rule.engine.debug.TbMsgGeneratorNode': 'ruleNodeMsgGenerator',
   'org.thingsboard.rule.engine.geo.TbGpsGeofencingActionNode': 'ruleNodeGpsGeofencingEvents',
@@ -491,36 +533,58 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.rpc.TbSendRPCReplyNode': 'ruleNodeRpcCallReply',
   'org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode': 'ruleNodeRpcCallRequest',
   'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode': 'ruleNodeSaveAttributes',
+  'org.thingsboard.rule.engine.telemetry.TbMsgDeleteAttributesNode': 'ruleNodeDeleteAttributes',
   'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode': 'ruleNodeSaveTimeseries',
   'org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode': 'ruleNodeSaveToCustomTable',
-  'org.thingsboard.rule.engine.aws.lambda.TbLambdaNode': 'ruleNodeAwsLambda',
+  'org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode': 'ruleNodeAwsLambda',
+  'org.thingsboard.rule.engine.ai.TbAiNode': 'ruleNodeAiRequest',
   'org.thingsboard.rule.engine.aws.sns.TbSnsNode': 'ruleNodeAwsSns',
   'org.thingsboard.rule.engine.aws.sqs.TbSqsNode': 'ruleNodeAwsSqs',
   'org.thingsboard.rule.engine.kafka.TbKafkaNode': 'ruleNodeKafka',
   'org.thingsboard.rule.engine.mqtt.TbMqttNode': 'ruleNodeMqtt',
   'org.thingsboard.rule.engine.mqtt.azure.TbAzureIotHubNode': 'ruleNodeAzureIotHub',
+  'org.thingsboard.rule.engine.gcp.pubsub.TbPubSubNode': 'ruleNodeGcpPubSub',
   'org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode': 'ruleNodeRabbitMq',
   'org.thingsboard.rule.engine.rest.TbRestApiCallNode': 'ruleNodeRestApiCall',
   'org.thingsboard.rule.engine.mail.TbSendEmailNode': 'ruleNodeSendEmail',
   'org.thingsboard.rule.engine.sms.TbSendSmsNode': 'ruleNodeSendSms',
   'org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode': 'ruleNodePushToCloud',
   'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge',
+  'org.thingsboard.rule.engine.profile.TbDeviceProfileNode': 'ruleNodeDeviceProfile',
+  'org.thingsboard.rule.engine.integration.TbIntegrationDownlinkNode': 'ruleNodeIntegrationDownlink',
+  'org.thingsboard.rule.engine.action.TbAddToGroupNode': 'ruleNodeAddToGroup',
+  'org.thingsboard.rule.engine.action.TbRemoveFromGroupNode': 'ruleNodeRemoveFromGroup',
+  'org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupNode': 'ruleNodeDuplicateToGroup',
+  'org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupByNameNode': 'ruleNodeDuplicateToGroupByName',
+  'org.thingsboard.rule.engine.transform.TbDuplicateMsgToRelatedNode': 'ruleNodeDuplicateToRelated',
+  'org.thingsboard.rule.engine.action.TbChangeOwnerNode': 'ruleNodeChangeOwner',
+  'org.thingsboard.rule.engine.report.TbGenerateReportNode': 'ruleNodeGenerateDashboardReport',
+  'org.thingsboard.rule.engine.report.TbGenerateReportV2Node': 'ruleNodeGenerateReport',
+  'org.thingsboard.rule.engine.analytics.latest.telemetry.TbAggLatestTelemetryNodeV2': 'ruleNodeAggregateLatest',
+  'org.thingsboard.rule.engine.analytics.latest.telemetry.TbAggLatestTelemetryNode': 'ruleNodeAggregateLatestDeprecated',
+  'org.thingsboard.rule.engine.analytics.incoming.TbSimpleAggMsgNode': 'ruleNodeAggregateStream',
+  'org.thingsboard.rule.engine.analytics.latest.alarm.TbAlarmsCountNodeV2': 'ruleNodeAlarmsCount',
+  'org.thingsboard.rule.engine.analytics.latest.alarm.TbAlarmsCountNode': 'ruleNodeAlarmsCountDeprecated',
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
+  'org.thingsboard.rule.engine.flow.TbAckNode': 'ruleNodeAcknowledge',
+  'org.thingsboard.rule.engine.flow.TbCheckpointNode': 'ruleNodeCheckpoint',
   'org.thingsboard.rule.engine.math.TbMathNode': 'ruleNodeMath',
   'org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode': 'ruleNodeRestCallReply',
+  'org.thingsboard.rule.engine.notification.TbNotificationNode': 'ruleNodeSendNotification',
+  'org.thingsboard.rule.engine.notification.TbSlackNode': 'ruleNodeSendSlack',
+  'org.thingsboard.rule.engine.pe.twilio.TbTwilioSmsNode': 'ruleNodeTwilioSms',
+  'org.thingsboard.rule.engine.pe.twilio.voice.TbTwilioVoiceNode': 'ruleNodeTwilioVoice'
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {
   if (component) {
-    if (component.configurationDescriptor &&
+    if (component.clazz && ruleNodeClazzHelpLinkMap[component.clazz]) {
+      return ruleNodeClazzHelpLinkMap[component.clazz];
+    } else if (component.configurationDescriptor &&
       component.configurationDescriptor.nodeDefinition &&
       component.configurationDescriptor.nodeDefinition.docUrl) {
       return component.configurationDescriptor.nodeDefinition.docUrl;
-    } else if (component.clazz) {
-      if (ruleNodeClazzHelpLinkMap[component.clazz]) {
-        return ruleNodeClazzHelpLinkMap[component.clazz];
-      }
     }
   }
   return 'ruleEngine';

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.snmp.service;
 
 import com.google.common.util.concurrent.Futures;
@@ -50,7 +37,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TbTransportService;
@@ -68,6 +54,7 @@ import org.thingsboard.server.transport.snmp.session.DeviceSessionContext;
 import org.thingsboard.server.transport.snmp.session.ScheduledTask;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,7 +63,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -99,8 +85,10 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
     private final Map<SnmpCommunicationSpec, ResponseDataMapper> responseDataMappers = new EnumMap<>(SnmpCommunicationSpec.class);
     private final Map<SnmpCommunicationSpec, ResponseProcessor> responseProcessors = new EnumMap<>(SnmpCommunicationSpec.class);
 
-    @Value("${transport.snmp.bind_port:1620}")
+    @Value("${transport.snmp.bind_port:0}")
     private Integer snmpBindPort;
+    @Value("${transport.snmp.bind_address:0.0.0.0}")
+    private String snmpBindAddress;
     @Value("${transport.snmp.response_processing.parallelism_level:4}")
     private int responseProcessingThreadPoolSize;
     @Value("${transport.snmp.scheduler_thread_pool_size:4}")
@@ -112,7 +100,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
 
     @PostConstruct
     private void init() throws IOException {
-        scheduler = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(schedulerThreadPoolSize, ThingsBoardThreadFactory.forName("snmp-querying")));
+        scheduler = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newScheduledThreadPool(schedulerThreadPoolSize, "snmp-querying"));
         executor = ThingsBoardExecutors.newWorkStealingPool(responseProcessingThreadPoolSize, "snmp-response-processing");
 
         initializeSnmp();
@@ -136,10 +124,10 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
         TransportMapping<?> transportMapping;
         switch (snmpUnderlyingProtocol) {
             case "udp":
-                transportMapping = new DefaultUdpTransportMapping(new UdpAddress(snmpBindPort));
+                transportMapping = new DefaultUdpTransportMapping(new UdpAddress(InetAddress.getByName(snmpBindAddress), snmpBindPort));
                 break;
             case "tcp":
-                transportMapping = new DefaultTcpTransportMapping(new TcpAddress(snmpBindPort));
+                transportMapping = new DefaultTcpTransportMapping(new TcpAddress(InetAddress.getByName(snmpBindAddress), snmpBindPort));
                 break;
             default:
                 throw new IllegalArgumentException("Underlying protocol " + snmpUnderlyingProtocol + " for SNMP is not supported");
@@ -148,6 +136,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
         snmp.addNotificationListener(transportMapping, transportMapping.getListenAddress(), this);
         snmp.listen();
 
+        SecurityProtocols.getInstance().addPredefinedProtocolSet(SecurityProtocols.SecurityProtocolSet.maxCompatibility);
         USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
         SecurityModels.getInstance().addSecurityModel(usm);
     }
@@ -162,7 +151,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
                     ScheduledTask scheduledTask = new ScheduledTask();
                     scheduledTask.init(() -> {
                         try {
-                            if (sessionContext.isActive()) {
+                            if (sessionContext.isActive() && sessionContext.isConnected()) {
                                 return sendRequest(sessionContext, repeatingCommunicationConfig);
                             }
                         } catch (Exception e) {
@@ -388,7 +377,11 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
 
         JsonObject responseData = responseDataMappers.get(requestContext.getCommunicationSpec()).map(response, requestContext);
         if (responseData.size() == 0) {
-            log.warn("[{}] No values in the response", sessionContext.getDeviceId());
+            log.warn("[{}] No values in the response for spec {}. Response PDUs count: {}, Mappings count: {}",
+                    sessionContext.getDeviceId(), requestContext.getCommunicationSpec(),
+                    response.size(), requestContext.getResponseMappings().size());
+            log.debug("[{}] No values in the response for spec {}. Response PDUs: {}",
+                    sessionContext.getDeviceId(), requestContext.getCommunicationSpec(), response);
             throw new IllegalArgumentException("No values in the response");
         }
 

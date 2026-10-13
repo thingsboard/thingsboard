@@ -1,21 +1,8 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   Component,
+  DestroyRef,
   forwardRef,
   HostBinding,
   Input,
@@ -42,27 +29,29 @@ import {
   ScadaSymbolMetadataTagComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const tagIsEmpty = (tag: ScadaSymbolTag): boolean =>
   !tag.stateRenderFunction && !tag.actions?.click?.actionFunction;
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-tags',
-  templateUrl: './scada-symbol-metadata-tags.component.html',
-  styleUrls: ['./scada-symbol-metadata-tags.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-tags',
+    templateUrl: './scada-symbol-metadata-tags.component.html',
+    styleUrls: ['./scada-symbol-metadata-tags.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, OnInit, Validator, OnChanges {
 
@@ -90,7 +79,8 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -100,7 +90,9 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     const tagsResult = this.setupTags();
     this.tagsFormGroup.setControl('tags', this.prepareTagsFormArray(tagsResult.tags), {emitEvent: false});
 
-    this.tagsFormGroup.valueChanges.subscribe(
+    this.tagsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let value: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
         if (value) {
@@ -167,10 +159,6 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   tagsFormArray(): UntypedFormArray {
     return this.tagsFormGroup.get('tags') as UntypedFormArray;
-  }
-
-  trackByTag(_index: number, tagControl: AbstractControl): any {
-    return tagControl;
   }
 
   editTagStateRenderFunction(tag: string): void {

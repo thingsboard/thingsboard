@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
+  <mat-form-field class="mat-block">
+    <mat-label translate>widgets.maps.openstreet-provider</mat-label>
+    <mat-select required formControlName="mapProvider">
+      @for (provider of mapProviders; track provider) {
+        <mat-option [value]="provider">
+          {{openStreetMapProviderTranslations.get(provider) | translate}}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-expansion-panel class="tb-settings" [expanded]="providerSettingsFormGroup.get('useCustomProvider').value">
+    <mat-expansion-panel-header class="flex-wrap">
+      <mat-panel-title>
+        <mat-slide-toggle formControlName="useCustomProvider" (click)="$event.stopPropagation()">
+          {{ 'widgets.maps.use-custom-provider' | translate }}
+        </mat-slide-toggle>
+      </mat-panel-title>
+      <mat-panel-description class="justify-end xs:!hidden" translate>
+        widget-config.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <mat-form-field class="mat-block">
+        <mat-label translate>widgets.maps.custom-provider-tile-url</mat-label>
+        <input required matInput formControlName="customProviderTileUrl">
+      </mat-form-field>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

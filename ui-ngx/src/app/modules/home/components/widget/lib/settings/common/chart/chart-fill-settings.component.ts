@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -30,18 +16,20 @@ import {
   chartFillTypes,
   chartFillTypeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-chart-fill-settings',
-  templateUrl: './chart-fill-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ChartFillSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-chart-fill-settings',
+    templateUrl: './chart-fill-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ChartFillSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor {
 
@@ -67,7 +55,8 @@ export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor 
   public fillSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -79,10 +68,14 @@ export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor 
         end: [null, [Validators.min(0), Validators.max(100)]]
       })
     });
-    this.fillSettingsFormGroup.valueChanges.subscribe(() => {
+    this.fillSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.fillSettingsFormGroup.get('type').valueChanges.subscribe(() => {
+    this.fillSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
     for (const type of chartFillTypes) {

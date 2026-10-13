@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +24,6 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
-    private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
     private final OtaPackageDataCache otaPackageDataCache;
 
@@ -142,16 +128,17 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             log.debug("Read ota data (length): [{}]", otaData.length);
             response.setPayload(otaData);
             if (exchange.getRequestOptions().getBlock2() != null) {
-                int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
+                int szx = exchange.getRequestOptions().getBlock2().getSzx();
+                int chunkSize = exchange.getRequestOptions().getBlock2().getSize();
                 boolean lastFlag = otaData.length <= chunkSize;
-                response.getOptions().setBlock2(chunkSize, lastFlag, 0);
-                log.trace("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), otaData.length, chunkSize, lastFlag);
+                response.getOptions().setBlock2(szx, lastFlag, 0);
+                log.trace("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], szx [{}], moreFlag [{}]", currentId, otaData.length, chunkSize, szx, lastFlag);
             } else {
-                log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId.toString(), otaData.length);
+                log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId, otaData.length);
             }
             exchange.respond(response);
         } else {
-            log.trace("Ota packaged currentId: [{}] is not found.", currentId.toString());
+            log.trace("Ota packaged currentId: [{}] is not found.", currentId);
         }
     }
 

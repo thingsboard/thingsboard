@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.resource;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +11,8 @@ import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -39,6 +29,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 
 @Slf4j
 @Component
@@ -81,20 +73,38 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
         if (CollectionsUtil.isEmpty(resourceTypes)) {
             resourceTypes = EnumSet.allOf(ResourceType.class);
         }
+        var resourceTypesList = resourceTypes.stream().map(Enum::name).collect(Collectors.toList());
         Set<ResourceSubType> resourceSubTypes = filter.getResourceSubTypes();
-        return DaoUtil.toPageData(resourceInfoRepository
-                .findTenantResourcesByTenantId(
-                        filter.getTenantId().getId(),
-                        resourceTypes.stream().map(Enum::name).collect(Collectors.toList()),
-                        CollectionsUtil.isEmpty(resourceSubTypes) ? null :
-                                resourceSubTypes.stream().map(Enum::name).collect(Collectors.toList()),
-                        pageLink.getTextSearch(),
-                        DaoUtil.toPageable(pageLink)));
+        var resourceSubTypesList = CollectionsUtil.isEmpty(resourceSubTypes) ? null :
+                resourceSubTypes.stream().map(Enum::name).collect(Collectors.toList());
+        if (filter.getCustomerId() != null) {
+            return DaoUtil.toPageData(resourceInfoRepository
+                    .findTenantResourcesByCustomerId(
+                            filter.getTenantId().getId(),
+                            filter.getCustomerId().getId(),
+                            resourceTypesList,
+                            resourceSubTypesList,
+                            pageLink.getTextSearch(),
+                            DaoUtil.toPageable(pageLink)));
+        } else {
+            return DaoUtil.toPageData(resourceInfoRepository
+                    .findTenantResourcesByTenantId(
+                            filter.getTenantId().getId(),
+                            resourceTypesList,
+                            resourceSubTypesList,
+                            pageLink.getTextSearch(),
+                            DaoUtil.toPageable(pageLink)));
+        }
     }
 
     @Override
     public TbResourceInfo findByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey) {
         return DaoUtil.getData(resourceInfoRepository.findByTenantIdAndResourceTypeAndResourceKey(tenantId.getId(), resourceType.name(), resourceKey));
+    }
+
+    @Override
+    public TbResourceInfo findByTenantIdAndCustomerIdAndKey(TenantId tenantId, CustomerId customerId, ResourceType resourceType, String resourceKey) {
+        return DaoUtil.getData(resourceInfoRepository.findByTenantIdAndCustomerIdAndResourceTypeAndResourceKey(tenantId.getId(), customerId.getId(), resourceType.name(), resourceKey));
     }
 
     @Override
@@ -113,8 +123,13 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     }
 
     @Override
-    public TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, ResourceType resourceType, String etag) {
-        return DaoUtil.getData(resourceInfoRepository.findSystemOrTenantImageByEtag(tenantId.getId(), resourceType.name(), etag));
+    public TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag) {
+        return DaoUtil.getData(resourceInfoRepository.findSystemOrTenantResourceByEtag(tenantId.getId(), resourceType.name(), etag));
+    }
+
+    @Override
+    public TbResourceInfo findSystemOrCustomerImageByEtag(TenantId tenantId, CustomerId customerId, ResourceType resourceType, String etag) {
+        return DaoUtil.getData(resourceInfoRepository.findSystemOrCustomerImageByEtag(tenantId.getId(), customerId.getId(), resourceType.name(), etag));
     }
 
     @Override
@@ -125,5 +140,10 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     @Override
     public TbResourceInfo findPublicResourceByKey(ResourceType resourceType, String publicResourceKey) {
         return DaoUtil.getData(resourceInfoRepository.findByResourceTypeAndPublicResourceKeyAndIsPublicTrue(resourceType.name(), publicResourceKey));
+    }
+
+    @Override
+    public List<TbResourceInfo> findSystemOrTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
+        return DaoUtil.convertDataList(resourceInfoRepository.findSystemOrTenantResourcesByIdIn(tenantId.getId(), TenantId.NULL_UUID, toUUIDs(resourceIds)));
     }
 }

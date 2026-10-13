@@ -1,0 +1,19 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+@if (entity) {
+  <mat-tab label="{{ 'calculated-fields.events' | translate }}" #eventsTab="matTab">
+    <tb-event-table [defaultEventType]="DebugEventType.DEBUG_CALCULATED_FIELD"
+                    [disabledEventTypes]="[EventType.LC_EVENT, EventType.ERROR, EventType.STATS]"
+                    [debugEventTypes]="[DebugEventType.DEBUG_CALCULATED_FIELD]"
+                    [active]="eventsTab.isActive"
+                    [tenantId]="entity.tenantId.id"
+                    [entityId]="entity.id"
+                    [disableDebugEventAction]="debugActionDisabled"
+                    (debugEventSelected)="onDebugEventSelected($event)"
+    ></tb-event-table>
+  </mat-tab>
+}

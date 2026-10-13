@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -47,11 +34,12 @@ export interface AlarmDetailsDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-details-dialog',
-  templateUrl: './alarm-details-dialog.component.html',
-  styleUrls: ['./alarm-details-dialog.component.scss']
+    selector: 'tb-alarm-details-dialog',
+    templateUrl: './alarm-details-dialog.component.html',
+    styleUrls: ['./alarm-details-dialog.component.scss'],
+    standalone: false
 })
-export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> implements OnInit {
+export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> {
 
   alarmId: string;
   alarmFormGroup: UntypedFormGroup;
@@ -128,23 +116,26 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
       this.alarmFormGroup.get('startTime')
         .patchValue(this.datePipe.transform(alarm.startTs, 'yyyy-MM-dd HH:mm:ss'));
     }
-    if (alarm.startTs || alarm.endTs) {
+    if (alarm.startTs || alarm.clearTs) {
       let duration = '';
-      if (alarm.startTs && (alarm.status === AlarmStatus.ACTIVE_ACK || alarm.status === AlarmStatus.ACTIVE_UNACK)) {
+      if (alarm.startTs && !alarm.cleared) {
         duration = this.millisecondsToTimeStringPipe.transform(Date.now() - alarm.startTs);
-      }
-      if (alarm.endTs && (alarm.status === AlarmStatus.CLEARED_ACK || alarm.status === AlarmStatus.CLEARED_UNACK)) {
-        duration = this.millisecondsToTimeStringPipe.transform(alarm.endTs - alarm.startTs);
+      } else if (alarm.clearTs && alarm.cleared) {
+        duration = this.millisecondsToTimeStringPipe.transform(alarm.clearTs - alarm.startTs);
       }
       this.alarmFormGroup.get('duration').patchValue(duration);
     }
     this.alarmFormGroup.get('type').patchValue(this.utils.customTranslation(alarm.type, alarm.type));
     this.alarmFormGroup.get('alarmStatus')
       .patchValue(this.translate.instant(alarmStatusTranslations.get(alarm.status)));
-    this.alarmFormGroup.get('alarmDetails').patchValue(alarm.details);
-  }
-
-  ngOnInit(): void {
+    if (alarm.details) {
+      let stringDetails = JSON.stringify(alarm.details, undefined, 2);
+      stringDetails = this.utils.customTranslation(stringDetails, stringDetails);
+      const details = JSON.parse(stringDetails);
+      this.alarmFormGroup.get('alarmDetails').patchValue(details);
+    } else {
+      this.alarmFormGroup.get('alarmDetails').patchValue(null);
+    }
   }
 
   close(): void {

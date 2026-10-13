@@ -1,0 +1,48 @@
+{
+  "type": "PROPAGATION",
+  "name": "Propagate thresholds to moisture sensors",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "0d58a217-f0d9-4ab6-b8be-d7d41fb36437"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "PROPAGATION",
+    "arguments": {
+      "maxMoistureThreshold": {
+        "refEntityKey": {
+          "key": "maxMoistureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": ""
+      },
+      "minMoistureThreshold": {
+        "refEntityKey": {
+          "key": "minMoistureThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": null,
+    "output": {
+      "type": "ATTRIBUTES",
+      "scope": "SERVER_SCOPE",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    },
+    "relation": {
+      "direction": "FROM",
+      "relationType": "FieldToMoistureSensor"
+    },
+    "applyExpressionToResolvedArguments": false
+  }
+}

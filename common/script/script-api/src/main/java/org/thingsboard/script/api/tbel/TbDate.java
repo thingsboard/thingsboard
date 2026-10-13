@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.script.api.tbel;
 
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -37,6 +24,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class TbDate implements Serializable, Cloneable {
 
@@ -479,6 +467,43 @@ public class TbDate implements Serializable, Cloneable {
     // Milliseconds since Jan 1, 1970, 00:00:00.000 GMT
     public void setTime(long dateMilliSecond) {
         instant = Instant.ofEpochMilli(dateMilliSecond);
+    }
+
+    public void addDays(int days) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusDays(days));
+    }
+
+    public void addYears(int years) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusYears(years));
+    }
+
+    public void addMonths(int months) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusMonths(months));
+    }
+
+    public void addWeeks(int weeks) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusWeeks(weeks));
+    }
+
+    public void addHours(int hours) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusHours(hours));
+    }
+
+    public void addMinutes(int minutes) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusMinutes(minutes));
+    }
+
+    public void addSeconds(int seconds) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusSeconds(seconds));
+    }
+
+    public void addNanos(long nanos) {
+        adjustTime(zonedDateTime -> zonedDateTime.plusNanos(nanos));
+    }
+
+    private void adjustTime(Function<ZonedDateTime, ZonedDateTime> adjuster) {
+        ZonedDateTime zonedDateTime = adjuster.apply(getZonedDateTime());
+        this.instant = zonedDateTime.toInstant();
     }
 
     public ZoneOffset getLocaleZoneOffset(Instant... instants){

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { AfterViewInit, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, Subscription, throwError } from 'rxjs';
 import { map, mergeMap, startWith, tap, share } from 'rxjs/operators';
@@ -26,16 +13,18 @@ import { BroadcastService } from '@app/core/services/broadcast.service';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { isNotEmptyStr } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-entity-subtype-select',
-  templateUrl: './entity-subtype-select.component.html',
-  styleUrls: ['./entity-subtype-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntitySubTypeSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-subtype-select',
+    templateUrl: './entity-subtype-select.component.html',
+    styleUrls: ['./entity-subtype-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntitySubTypeSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 
@@ -80,7 +69,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               private broadcast: BroadcastService,
               public translate: TranslateService,
               private fb: UntypedFormBuilder,
-              private entityService: EntityService) {
+              private entityService: EntityService,
+              private destroyRef: DestroyRef) {
     this.subTypeFormGroup = this.fb.group({
       subType: ['']
     });
@@ -112,18 +102,18 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
           this.subTypesOptionsSubject.next('');
         });
         break;
-      case EntityType.EDGE:
-        this.entitySubtypeTitle = 'edge.edge-type';
-        this.entitySubtypeRequiredText = 'edge.edge-type-required';
-        this.broadcastSubscription = this.broadcast.on('edgeSaved',() => {
-          this.subTypes = null;
-          this.subTypesOptionsSubject.next('');
-        });
-        break;
       case EntityType.ENTITY_VIEW:
         this.entitySubtypeTitle = 'entity-view.entity-view-type';
         this.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
         this.broadcastSubscription = this.broadcast.on('entityViewSaved', () => {
+          this.subTypes = null;
+          this.subTypesOptionsSubject.next('');
+        });
+        break;
+      case EntityType.EDGE:
+        this.entitySubtypeTitle = 'edge.edge-type';
+        this.entitySubtypeRequiredText = 'edge.edge-type-required';
+        this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.subTypes = null;
           this.subTypesOptionsSubject.next('');
         });
@@ -135,7 +125,9 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
       mergeMap(() => this.getSubTypes())
     );
 
-    this.subTypeFormGroup.get('subType').valueChanges.subscribe(
+    this.subTypeFormGroup.get('subType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         let modelValue;
         if (!value || value === '') {

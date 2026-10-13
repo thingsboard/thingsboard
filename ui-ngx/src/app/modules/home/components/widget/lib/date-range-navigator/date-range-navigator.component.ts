@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   Component,
   Inject,
@@ -41,7 +27,7 @@ import {
   getFormattedDate
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.models';
 import { KeyValue } from '@angular/common';
-import * as _moment from 'moment';
+import _moment from 'moment';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { MatSelect } from '@angular/material/select';
@@ -50,9 +36,10 @@ import { HistoryWindowType, TimewindowType } from '@shared/models/time/time.mode
 import { isDefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-date-range-navigator-widget',
-  templateUrl: './date-range-navigator.component.html',
-  styleUrls: ['./date-range-navigator.component.scss']
+    selector: 'tb-date-range-navigator-widget',
+    templateUrl: './date-range-navigator.component.html',
+    styleUrls: ['./date-range-navigator.component.scss'],
+    standalone: false
 })
 export class DateRangeNavigatorWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -126,7 +113,7 @@ export class DateRangeNavigatorWidgetComponent extends PageComponent implements 
       $event.stopPropagation();
     }
     this.datePickerSelect.close();
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;
@@ -276,10 +263,11 @@ export interface DateRangeNavigatorPanelData {
 }
 
 @Component({
-  selector: 'tb-date-range-navigator-panel',
-  templateUrl: './date-range-navigator-panel.component.html',
-  styleUrls: ['./date-range-navigator-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-date-range-navigator-panel',
+    templateUrl: './date-range-navigator-panel.component.html',
+    styleUrls: ['./date-range-navigator-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DateRangeNavigatorPanelComponent {
 

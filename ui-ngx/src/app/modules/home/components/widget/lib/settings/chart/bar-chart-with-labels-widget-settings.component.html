@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <ng-container [formGroup]="barChartWidgetSettingsForm">
@@ -23,8 +12,13 @@
         {{ 'widgets.time-series-chart.data-zoom' | translate }}
       </mat-slide-toggle>
     </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="dataZoomUpdateTimewindow">
+        {{ 'widgets.time-series-chart.data-zoom-update-timewindow' | translate }}
+      </mat-slide-toggle>
+    </div>
     <tb-time-series-chart-grid-settings
-        formControlName="grid">
+      formControlName="grid">
     </tb-time-series-chart-grid-settings>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
@@ -32,7 +26,7 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarLabel">
           {{ 'widgets.bar-chart.label-on-bar' | translate }}
         </mat-slide-toggle>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <tb-font-settings formControlName="barLabelFont"
                             disabledLineHeight
                             forceSizeUnit="px"
@@ -48,7 +42,7 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarValue">
           {{ 'widgets.bar-chart.value-on-bar' | translate }}
         </mat-slide-toggle>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <tb-font-settings formControlName="barValueFont"
                             disabledLineHeight
                             forceSizeUnit="px"
@@ -78,47 +72,49 @@
         </mat-form-field>
       </div>
       <tb-chart-fill-settings
-          formControlName="barBackgroundSettings"
-          titleText="widgets.chart.background"
-          fillNoneTitle="widgets.chart.fill-type-solid">
+        formControlName="barBackgroundSettings"
+        titleText="widgets.chart.background"
+        fillNoneTitle="widgets.chart.fill-type-solid">
       </tb-chart-fill-settings>
       <tb-time-series-no-aggregation-bar-width-settings
-          stroked
-          formControlName="noAggregationBarWidthSettings">
+        stroked
+        formControlName="noAggregationBarWidthSettings">
       </tb-time-series-no-aggregation-bar-width-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.y-axis</div>
       <tb-time-series-chart-axis-settings
-          formControlName="yAxis"
-          axisType="yAxis"
-          advanced
-          hideUnits
-          hideDecimals>
+        formControlName="yAxis"
+        [aliasController]="aliasController"
+        [dataKeyCallbacks]="callbacks"
+        [datasource]="datasource"
+        axisType="yAxis"
+        advanced
+        hideUnits
+        hideDecimals>
       </tb-time-series-chart-axis-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
       <tb-time-series-chart-axis-settings
-          formControlName="xAxis"
-          axisType="xAxis"
-          advanced>
+        formControlName="xAxis"
+        axisType="xAxis"
+        advanced>
       </tb-time-series-chart-axis-settings>
     </div>
     <tb-time-series-chart-thresholds-panel
-        formControlName="thresholds"
-        [aliasController]="aliasController"
-        [dataKeyCallbacks]="dataKeyCallbacks"
-        [datasource]="datasource"
-        [widgetConfig]="widgetConfig?.config"
-        hideYAxis>
+      formControlName="thresholds"
+      [aliasController]="aliasController"
+      [dataKeyCallbacks]="dataKeyCallbacks"
+      [datasource]="datasource"
+      [widgetConfig]="widgetConfig?.config"
+      hideYAxis>
     </tb-time-series-chart-thresholds-panel>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetSettingsForm.get('showLegend').value" [disabled]="!barChartWidgetSettingsForm.get('showLegend').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
               {{ 'widget-config.legend' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -128,15 +124,17 @@
             <div>{{ 'legend.position' | translate }}</div>
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="legendPosition">
-                <mat-option *ngFor="let pos of legendPositions" [value]="pos">
-                  {{ legendPositionTranslationMap.get(pos) | translate }}
-                </mat-option>
+                @for (pos of legendPositions; track pos) {
+                  <mat-option [value]="pos">
+                    {{ legendPositionTranslationMap.get(pos) | translate }}
+                  </mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
           <div class="tb-form-row space-between">
             <div>{{ 'legend.label' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="legendLabelFont"
                                 previewText="20 - 30">
               </tb-font-settings>
@@ -151,10 +149,9 @@
     </div>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetSettingsForm.get('showTooltip').value" [disabled]="!barChartWidgetSettingsForm.get('showTooltip').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
               {{ 'widget-config.tooltip' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -162,7 +159,7 @@
         <ng-template matExpansionPanelContent>
           <div class="tb-form-row space-between">
             <div>{{ 'tooltip.label' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="tooltipLabelFont"
                                 [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipLabelColor').value }"
                                 previewText="Temperature">
@@ -175,7 +172,7 @@
           </div>
           <div class="tb-form-row space-between">
             <div>{{ 'tooltip.value' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="tooltipValueFont"
                                 [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipValueColor').value }"
                                 [previewText]="tooltipValuePreviewFn">
@@ -190,9 +187,9 @@
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
               {{ 'tooltip.date' | translate }}
             </mat-slide-toggle>
-            <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-              <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
-                                     formControlName="tooltipDateFormat"></tb-date-format-select>
+            <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+              <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
+              formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipDateColor').value }"
                                 [previewText]="tooltipDatePreviewFn">
@@ -228,7 +225,7 @@
       </mat-expansion-panel>
     </div>
     <tb-chart-animation-settings
-        formControlName="animation">
+      formControlName="animation">
     </tb-chart-animation-settings>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>

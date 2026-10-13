@@ -1,0 +1,14 @@
+#
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-License-Identifier: Apache-2.0
+#
+
+services:
+  valkey:
+    volumes:
+      - valkey-data:/bitnami/valkey/data
+
+volumes:
+  valkey-data:
+    external:
+      name: ${VALKEY_DATA_VOLUME}

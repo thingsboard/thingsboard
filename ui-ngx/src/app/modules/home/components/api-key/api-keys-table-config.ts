@@ -1,0 +1,205 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import {
+  DateEntityTableColumn,
+  EntityTableColumn,
+  EntityTableConfig,
+  CellActionDescriptor,
+  defaultEntityTablePermissions
+} from '@home/models/entity/entities-table-config.models';
+import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { Direction } from '@shared/models/page/sort-order';
+import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { Injectable, Renderer2, ViewContainerRef } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Observable } from 'rxjs';
+import { ApiKeyInfo, ApiKey } from '@shared/models/api-key.models';
+import { ApiKeyService } from '@core/http/api-key.service';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { map } from 'rxjs/operators';
+import { UserId } from '@shared/models/id/user-id';
+import { AddApiKeyDialogComponent } from '@home/components/api-key/add-api-key-dialog.component';
+import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/edit-api-key-description-panel.component';
+import { ApiKeysTableDialogData } from '@home/components/api-key/api-keys-table-dialog.component';
+import {
+  ApiKeyGeneratedDialogComponent,
+  ApiKeyGeneratedDialogData
+} from '@home/components/api-key/api-key-generated-dialog.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Resource, Operation } from '@shared/models/security.models';
+
+@Injectable()
+export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
+
+  constructor(
+    private apiKeyService: ApiKeyService,
+    private translate: TranslateService,
+    private customTranslate: CustomTranslatePipe,
+    private dialog: MatDialog,
+    private datePipe: DatePipe,
+    private popoverService: TbPopoverService,
+    private renderer: Renderer2,
+    private viewContainerRef: ViewContainerRef,
+    private userId: UserId,
+    private userPermissionsService: UserPermissionsService,
+  ) {
+    super();
+
+    this.entityType = EntityType.API_KEY;
+    this.detailsPanelEnabled = false;
+    this.pageMode = false;
+
+    this.entityTranslations = entityTypeTranslations.get(EntityType.API_KEY);
+    this.entityResources = {} as EntityTypeResource<ApiKeyInfo>;
+    this.tableTitle = this.translate.instant('api-key.api-keys');
+    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+
+    this.entitiesFetchFunction = pageLink => this.apiKeyService.getUserApiKeys(this.userId.id, pageLink);
+    this.addEntity = () => this.addApiKey();
+
+    this.deleteEntityTitle = entity => this.translate.instant('api-key.delete-api-key-title', {name: entity.description});
+    this.deleteEntityContent = () => this.translate.instant('api-key.delete-api-key-text');
+    this.deleteEntitiesTitle = count => this.translate.instant('api-key.delete-api-keys-title', {count});
+    this.deleteEntitiesContent = () => this.translate.instant('api-key.delete-api-keys-text');
+    this.deleteEntity = id => this.apiKeyService.deleteApiKey(id.id);
+
+    defaultEntityTablePermissions(this.userPermissionsService, this);
+    const readonly = !this.userPermissionsService.hasGenericPermission(Resource.API_KEY, Operation.WRITE);
+    this.cellActionDescriptors = this.configureCellActions(readonly);
+    this.columns.push(
+      new DateEntityTableColumn<ApiKeyInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
+      new EntityTableColumn<ApiKeyInfo>('description', 'api-key.description', '100%',
+        (entity) => this.customTranslate.transform(entity?.description), () => ({}), true, () => ({}),
+        (entity) => entity?.description.length > 40 ? this.customTranslate.transform(entity.description) : undefined, false,
+        {
+          name: this.translate.instant('api-key.edit-description'),
+          icon: 'edit',
+          isEnabled: () => !readonly,
+          onAction: ($event, entity) => this.updateApiKeyDescription($event, entity)
+        }),
+      new EntityTableColumn<ApiKeyInfo>('active', 'api-key.status', '80px',
+        entity => this.apiKeyStatus(entity), entity => this.apiKeyStatusStyle(entity), false),
+      new EntityTableColumn<ApiKeyInfo>('expirationTime', 'api-key.expiration-time', '120px',
+        (entity) => entity.expirationTime != 0 ?
+          this.datePipe.transform(entity.expirationTime, 'dd/MM/yyyy, HH:mm') :
+          this.translate.instant('api-key.expiration-time-never'),
+        ),
+    );
+  }
+
+  private configureCellActions(readonly: boolean): Array<CellActionDescriptor<ApiKeyInfo>> {
+    const actions: Array<CellActionDescriptor<ApiKeyInfo>> = [];
+    if (!readonly) {
+      actions.push(
+        {
+          name: '',
+          nameFunction: (entity) => this.translate.instant(entity.enabled ? 'api-key.disable' : 'api-key.enable'),
+          icon: 'mdi:toggle-switch',
+          isEnabled: (entity) => !entity.expired,
+          iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+          onAction: ($event, entity) => this.toggleEnableMode($event, entity)
+        }
+      )
+    }
+    return actions;
+  }
+
+  private addApiKey(): Observable<ApiKey> {
+    return this.dialog.open<AddApiKeyDialogComponent, ApiKeysTableDialogData, ApiKey>(AddApiKeyDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        userId: this.userId
+      }
+    }).afterClosed().pipe(map(res => {
+      if (res) {
+        this.apiKeyGenerated(res);
+      } else {
+        return null;
+      }
+    }));
+  }
+
+  private apiKeyGenerated(apiKey: ApiKey) {
+    this.dialog.open<ApiKeyGeneratedDialogComponent, ApiKeyGeneratedDialogData>(ApiKeyGeneratedDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        apiKey
+      }
+    }).afterClosed()
+      .subscribe(() => {
+        this.updateData();
+      });
+  }
+
+  private toggleEnableMode($event: Event, entity: ApiKeyInfo): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.apiKeyService.enableApiKey(entity.id.id, !entity.enabled, {ignoreLoading: true})
+      .subscribe(
+        () => this.updateData()
+      );
+  }
+
+  private apiKeyStatus(apiKey: ApiKeyInfo): string {
+    let translateKey = 'api-key.status-active';
+    let backgroundColor = 'rgba(25, 128, 56, 0.08)';
+    if (apiKey.expired) {
+      translateKey = 'api-key.status-expired';
+      backgroundColor = 'rgba(0, 0, 0, 0.04)';
+    } else if (!apiKey.enabled) {
+      translateKey = 'api-key.status-inactive';
+      backgroundColor = 'rgba(209, 39, 48, 0.08)';
+    }
+    return `<div class="status" style="border-radius: 16px; height: 32px;
+                line-height: 32px; padding: 0 12px; width: fit-content; background-color: ${backgroundColor}">
+                ${this.translate.instant(translateKey)}
+            </div>`;
+  }
+
+  private apiKeyStatusStyle(apiKey: ApiKeyInfo): object {
+    const styleObj = {
+      fontSize: '14px',
+      color: '#198038',
+      cursor: 'pointer'
+    };
+    if (apiKey.expired) {
+      styleObj.color = 'rgba(0, 0, 0, 0.54)';
+    } else if (!apiKey.enabled) {
+      styleObj.color = '#d12730';
+    }
+    return styleObj;
+  }
+
+  private updateApiKeyDescription($event: Event, entity: ApiKeyInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const editSecretDescriptionPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: EditApiKeyDescriptionPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['right', 'bottom', 'top'],
+        context: {
+          apiKeyId: entity.id.id,
+          description: entity.description
+        },
+        isModal: true
+      });
+      editSecretDescriptionPanelPopover.tbComponentRef.instance.descriptionApplied.subscribe(() => {
+        editSecretDescriptionPanelPopover.hide();
+        this.updateData();
+      });
+    }
+  }
+}

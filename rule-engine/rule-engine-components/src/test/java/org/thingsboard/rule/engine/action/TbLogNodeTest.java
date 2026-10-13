@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +37,12 @@ public class TbLogNodeTest {
         TbLogNode node = new TbLogNode();
         String data = "{\"key\": \"value\"}";
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of("mdKey1", "mdValue1", "mdKey2", "23"));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -66,7 +58,12 @@ public class TbLogNodeTest {
     void givenEmptyDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
         TbMsgMetaData metaData = new TbMsgMetaData(Collections.emptyMap());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, "");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(metaData)
+                .data("")
+                .build();
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -82,7 +79,12 @@ public class TbLogNodeTest {
     void givenNullDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
         TbMsgMetaData metaData = new TbMsgMetaData(Collections.emptyMap());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, null);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(metaData)
+                .data(null)
+                .build();
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);

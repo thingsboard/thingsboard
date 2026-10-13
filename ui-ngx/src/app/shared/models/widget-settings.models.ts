@@ -1,20 +1,15 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import {
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isNumber,
+  isNumeric,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import {
   DataEntry,
   DataKey,
@@ -35,7 +30,17 @@ import { EMPTY, Observable, of } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
-import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
+import {
+  AVG_MONTH,
+  calculateTsOffset,
+  DAY,
+  HOUR,
+  Interval,
+  IntervalMath,
+  MINUTE,
+  SECOND,
+  YEAR
+} from '@shared/models/time/time.models';
 import moment from 'moment';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -45,14 +50,16 @@ import {
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
+import { UnitService } from '@core/services/unit.service';
+import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
-export const cssUnits = ['px', 'em', '%', 'rem', 'pt', 'pc', 'in', 'cm', 'mm', 'ex', 'ch', 'vw', 'vh', 'vmin', 'vmax'] as const;
+export const cssUnits = ['px', 'em', '%', 'rem', 'pt', 'pc', 'in', 'cm', 'mm', 'ex', 'ch', 'vw', 'vh', 'vmin', 'vmax'];
 type cssUnitTuple = typeof cssUnits;
 export type cssUnit = cssUnitTuple[number];
 
-export const fontWeights = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900'] as const;
+export const fontWeights = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
 type fontWeightTuple = typeof fontWeights;
 export type fontWeight = fontWeightTuple[number];
 
@@ -65,7 +72,7 @@ export const fontWeightTranslations = new Map<fontWeight, string>(
   ]
 );
 
-export const fontStyles = ['normal', 'italic', 'oblique'] as const;
+export const fontStyles = ['normal', 'italic', 'oblique'];
 type fontStyleTuple = typeof fontStyles;
 export type fontStyle = fontStyleTuple[number];
 
@@ -78,6 +85,37 @@ export const fontStyleTranslations = new Map<fontStyle, string>(
 );
 
 export const commonFonts = ['Roboto', 'monospace', 'sans-serif', 'serif'];
+
+export const alignments = ['left', 'center', 'right', 'justify', 'top', 'middle', 'bottom'];
+type alignmentTuple = typeof alignments;
+export type alignment = alignmentTuple[number];
+
+export const alignmentTranslations = new Map<alignment, string>(
+  [
+    ['left', 'widgets.alignment.align-left'],
+    ['center', 'widgets.alignment.align-center'],
+    ['right', 'widgets.alignment.align-right'],
+    ['justify', 'widgets.alignment.justify'],
+    ['top', 'widgets.alignment.align-top'],
+    ['middle', 'widgets.alignment.align-middle'],
+    ['bottom', 'widgets.alignment.align-bottom']
+  ]
+);
+
+export const alignmentIcons = new Map<alignment, string>(
+  [
+    ['left', 'format_align_left'],
+    ['center', 'format_align_center'],
+    ['right', 'format_align_right'],
+    ['justify', 'format_align_justify'],
+    ['top', 'mdi:format-align-top'],
+    ['middle', 'mdi:format-align-middle'],
+    ['bottom', 'mdi:format-align-bottom']
+  ]
+);
+
+export const horizontalAlignments: alignment[] = ['left', 'center', 'right', 'justify'];
+export const verticalAlignments: alignment[] = ['top', 'middle', 'bottom'];
 
 export interface Font {
   size: number;
@@ -329,11 +367,9 @@ export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
   }
   let resolvedUnit: cssUnit;
   let resolvedSize = strSize;
-  for (const unit of cssUnits) {
-    if (strSize.endsWith(unit)) {
-      resolvedUnit = unit;
-      break;
-    }
+  const unitMatch = strSize.match(new RegExp(`(${cssUnits.join('|')})$`));
+  if (unitMatch) {
+    resolvedUnit = unitMatch[0] as cssUnit;
   }
   if (resolvedUnit) {
     resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);
@@ -711,6 +747,19 @@ export const customDateFormat = (format: string): DateFormatSettings => ({
   auto: false
 });
 
+export const toDateFormatSettings = (strFormat: string): DateFormatSettings => {
+  if (strFormat === 'milliseconds') {
+    return millisecondsDateFormat();
+  }
+  const found = dateFormats.filter(format => !!format.format && !format.custom)
+                                              .find(format => format.format === strFormat);
+  if (found) {
+    return found;
+  } else {
+    return customDateFormat(strFormat);
+  }
+}
+
 export const defaultAutoDateFormatSettings: AutoDateFormatSettings = {
   millisecond: 'MMM dd yyyy HH:mm:ss.SSS',
   second: 'MMM dd yyyy HH:mm:ss',
@@ -728,6 +777,8 @@ export const autoDateFormat = (): DateFormatSettings => ({
   auto: true,
   autoDateFormatSettings: {}
 });
+
+export const millisecondsDateFormat = (): DateFormatSettings => simpleDateFormat('milliseconds');
 
 export const dateFormats = ['MMM yyyy', 'MMM dd yyyy', 'MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'dd MMM yyyy HH:mm:ss',
   'yyyy MMM dd HH:mm', 'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'MMM dd yyyy HH:mm:ss', 'yyyy/MM/dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss',
@@ -752,6 +803,13 @@ export const compareDateFormats = (df1: DateFormatSettings, df2: DateFormatSetti
   }
   return false;
 };
+
+export const dateFormatPreview = (date: DatePipe, format: string, timezone?: string): string => {
+  if (timezone) {
+    timezone = moment.tz(timezone).zoneAbbr();
+  }
+  return format === 'milliseconds' ? `${Date.now()}` : date.transform(Date.now(), format, timezone);
+}
 
 export abstract class DateFormatProcessor {
 
@@ -852,6 +910,104 @@ export class AutoDateFormatProcessor extends DateFormatProcessor {
     }
     return this.formatted;
   }
+}
+
+export interface ValueFormatSettings {
+  decimals?: number;
+  units?: TbUnit;
+  showZeroDecimals?: boolean;
+  ignoreUnitSymbol?: boolean;
+}
+
+export abstract class ValueFormatProcessor {
+
+  protected isDefinedDecimals: boolean;
+  protected hideZeroDecimals: boolean;
+  protected unitSymbol: string;
+
+  static fromSettings($injector: Injector, settings: ValueFormatSettings): ValueFormatProcessor;
+  static fromSettings(unitService: UnitService, settings: ValueFormatSettings): ValueFormatProcessor;
+  static fromSettings(unitServiceOrInjector: Injector | UnitService, settings: ValueFormatSettings): ValueFormatProcessor {
+    if (settings.units !== null && typeof settings.units === 'object') {
+      return new UnitConverterValueFormatProcessor(unitServiceOrInjector, settings)
+    }
+    return new SimpleValueFormatProcessor(settings);
+  }
+
+  protected constructor(protected settings: ValueFormatSettings) {
+  }
+
+  abstract format(value: any): string;
+
+  protected formatValue(value: number): string {
+    let formatted: number | string = value;
+    if (this.isDefinedDecimals) {
+      formatted = formatted.toFixed(this.settings.decimals);
+    }
+    if (this.hideZeroDecimals) {
+      formatted = Number(formatted);
+    }
+    formatted = formatted.toString();
+    if (this.unitSymbol) {
+      formatted += ` ${this.unitSymbol}`;
+    }
+    return formatted;
+  }
+}
+
+export class SimpleValueFormatProcessor extends ValueFormatProcessor {
+
+  constructor(protected settings: ValueFormatSettings) {
+    super(settings);
+    this.unitSymbol = !settings.ignoreUnitSymbol && isNotEmptyStr(settings.units) ? (settings.units as string) : null;
+    this.isDefinedDecimals = isDefinedAndNotNull(settings.decimals);
+    this.hideZeroDecimals = !settings.showZeroDecimals;
+  }
+
+  format(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value) && (this.isDefinedDecimals || this.unitSymbol || Number(value).toString() === value)) {
+      return this.formatValue(Number(value));
+    }
+    return value ?? '';
+  }
+}
+
+export class UnitConverterValueFormatProcessor extends ValueFormatProcessor {
+
+  private readonly unitConverter: TbUnitConverter;
+
+  constructor(protected unitServiceOrInjector: Injector | UnitService,
+              protected settings: ValueFormatSettings) {
+    super(settings);
+    const unitService = this.unitServiceOrInjector instanceof UnitService ? this.unitServiceOrInjector : this.unitServiceOrInjector.get(UnitService);
+    const unit = settings.units;
+    this.unitSymbol = settings.ignoreUnitSymbol ? null : unitService.getTargetUnitSymbol(unit);
+    this.unitConverter = unitService.geUnitConverter(unit);
+
+    this.isDefinedDecimals = isDefinedAndNotNull(settings.decimals);
+    this.hideZeroDecimals = !settings.showZeroDecimals;
+  }
+
+  format(value: any): string {
+    if (isDefinedAndNotNull(value) && isNumeric(value)) {
+      const formatted = this.unitConverter(Number(value));
+      return this.formatValue(formatted);
+    }
+    return value ?? '';
+  }
+}
+
+export const createValueFormatterFromSettings = (ctx: WidgetContext): ValueFormatProcessor => {
+  let decimals = ctx.decimals;
+  let units = ctx.units;
+  const dataKey = getDataKey(ctx.datasources);
+  if (isDefinedAndNotNull(dataKey?.decimals)) {
+    decimals = dataKey.decimals;
+  }
+  if (dataKey?.units) {
+    units = dataKey.units;
+  }
+  return ValueFormatProcessor.fromSettings(ctx.$injector, {units: units, decimals: decimals});
 }
 
 const intervalToFormatTimeUnit = (interval: Interval): FormatTimeUnit => {

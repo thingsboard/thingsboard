@@ -1,0 +1,84 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { ChangeDetectorRef, Component, forwardRef, Input, Renderer2, ViewContainerRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { ShapeFillImageSettings, ShapeFillImageType } from '@shared/models/widget/maps/map.models';
+import {
+  ShapeFillImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings-panel.component';
+
+@Component({
+    selector: 'tb-shape-fill-image-settings',
+    templateUrl: './shape-fill-image-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ShapeFillImageSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
+})
+export class ShapeFillImageSettingsComponent implements ControlValueAccessor {
+
+  @Input()
+  disabled: boolean;
+
+  ShapeFillImageType = ShapeFillImageType;
+
+  modelValue: ShapeFillImageSettings;
+
+  private propagateChange: (v: any) => void = () => { };
+
+  constructor(private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private cd: ChangeDetectorRef,
+              private viewContainerRef: ViewContainerRef) {}
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(_fn: any): void {
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+
+  writeValue(value: ShapeFillImageSettings): void {
+    if (value) {
+      this.modelValue = value;
+    }
+  }
+
+  openImageSettingsPopup($event: Event, matButton: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = matButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ShapeFillImageSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'leftOnly',
+        context: {
+          shapeFillImageSettings: this.modelValue,
+        },
+        isModal: true,
+        overlayStyle: {padding: '10px'}
+      }).tbComponentRef.instance.shapeFillImageSettingsApplied.subscribe((shapeFillImageSettings) => {
+        this.modelValue = shapeFillImageSettings;
+        this.propagateChange(this.modelValue);
+        this.cd.detectChanges();
+      });
+    }
+  }
+}

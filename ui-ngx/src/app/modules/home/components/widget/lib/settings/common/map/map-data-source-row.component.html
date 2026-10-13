@@ -1,0 +1,57 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div [formGroup]="dataSourceFormGroup" class="tb-form-table-row tb-map-data-source-row">
+  <div class="tb-source-field">
+    <mat-form-field class="tb-ds-type-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="dsType">
+        @for (type of datasourceTypes; track type) {
+          <mat-option [value]="type">
+            {{ datasourceTypesTranslations.get(type) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.device) {
+      <tb-entity-autocomplete
+        class="tb-device-field"
+        required
+        inlineField
+        placeholder="{{ 'device.select-device' | translate }}"
+        [entityType]="EntityType.DEVICE"
+        formControlName="dsDeviceId">
+      </tb-entity-autocomplete>
+    }
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.entity) {
+      <tb-entity-alias-select
+        class="tb-entity-alias-field"
+        inlineField
+        tbRequired
+        [aliasController]="context.aliasController"
+        formControlName="dsEntityAliasId"
+        [callbacks]="context.callbacks">
+      </tb-entity-alias-select>
+    }
+  </div>
+  <tb-filter-select
+    class="tb-filter-field"
+    inlineField
+    [aliasController]="context.aliasController"
+    formControlName="dsFilterId"
+    [callbacks]="context.callbacks">
+  </tb-filter-select>
+  <div class="tb-form-table-row-cell-buttons">
+    <div class="tb-remove-button">
+      <button type="button"
+              mat-icon-button
+              (click)="dataSourceRemoved.emit()"
+              matTooltip="{{ 'widgets.maps.data-layer.remove-datasource' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -27,6 +13,7 @@ import { MatChipInputEvent, MatChipGrid } from '@angular/material/chips';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { map, mergeMap, share, startWith } from 'rxjs/operators';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
 
 interface DisplayColumn {
   name: string;
@@ -34,9 +21,10 @@ interface DisplayColumn {
 }
 
 @Component({
-  selector: 'tb-persistent-table-widget-settings',
-  templateUrl: './persistent-table-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-persistent-table-widget-settings',
+    templateUrl: './persistent-table-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class PersistentTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -56,6 +44,8 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
   separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
 
   persistentTableWidgetSettingsForm: UntypedFormGroup;
+
+  pageStepSizeValues = [];
 
   filteredDisplayColumns: Observable<Array<DisplayColumn>>;
 
@@ -94,10 +84,18 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
 
       displayPagination: true,
       defaultPageSize: 10,
+      pageStepIncrement: null,
+      pageStepCount: 3,
 
       defaultSortOrder: '-createdTime',
       displayColumns: ['rpcId', 'messageType', 'status', 'method', 'createdTime', 'expirationTime']
     };
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
+    this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
+    return settings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -110,6 +108,9 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
       displayDetails: [settings.displayDetails, []],
       displayPagination: [settings.displayPagination, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],
+      pageStepCount: [settings.pageStepCount ?? 3, [Validators.min(1), Validators.max(100),
+        Validators.required, Validators.pattern(/^\d*$/)]],
+      pageStepIncrement: [settings.pageStepIncrement, [Validators.min(1), Validators.required, Validators.pattern(/^\d*$/)]],
       defaultSortOrder: [settings.defaultSortOrder, []],
       displayColumns: [settings.displayColumns, [Validators.required]]
     });
@@ -122,17 +123,26 @@ export class PersistentTableWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['displayPagination'];
+    return ['displayPagination', 'pageStepCount', 'pageStepIncrement'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
+  protected updateValidators(emitEvent: boolean, trigger: string) {
+    if (trigger === 'pageStepCount' || trigger === 'pageStepIncrement') {
+      this.persistentTableWidgetSettingsForm.get('defaultPageSize').reset();
+      this.pageStepSizeValues = buildPageStepSizeValues(this.persistentTableWidgetSettingsForm.get('pageStepCount').value,
+        this.persistentTableWidgetSettingsForm.get('pageStepIncrement').value);
+      return;
+    }
     const displayPagination: boolean = this.persistentTableWidgetSettingsForm.get('displayPagination').value;
     if (displayPagination) {
-      this.persistentTableWidgetSettingsForm.get('defaultPageSize').enable();
+      this.persistentTableWidgetSettingsForm.get('defaultPageSize').enable({emitEvent});
+      this.persistentTableWidgetSettingsForm.get('pageStepCount').enable({emitEvent: false});
+      this.persistentTableWidgetSettingsForm.get('pageStepIncrement').enable({emitEvent: false});
     } else {
-      this.persistentTableWidgetSettingsForm.get('defaultPageSize').disable();
+      this.persistentTableWidgetSettingsForm.get('defaultPageSize').disable({emitEvent});
+      this.persistentTableWidgetSettingsForm.get('pageStepCount').disable({emitEvent: false});
+      this.persistentTableWidgetSettingsForm.get('pageStepIncrement').disable({emitEvent: false});
     }
-    this.persistentTableWidgetSettingsForm.get('defaultPageSize').updateValueAndValidity({emitEvent});
   }
 
   private fetchColumns(searchText?: string): Observable<Array<DisplayColumn>> {

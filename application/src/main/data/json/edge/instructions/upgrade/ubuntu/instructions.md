@@ -1,15 +1,14 @@
-#### Upgrading to ${TB_EDGE_VERSION}EDGE
+#### Upgrading to ${TB_EDGE_VERSION}EDGEPE
 
-**ThingsBoard Edge package download:**
+ThingsBoard Edge package download:
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.deb
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.deb
 {:copy-code}
 ```
-##### ThingsBoard Edge service upgrade
-
 Install package:
 ```bash
-sudo dpkg -i tb-edge-${TB_EDGE_TAG}.deb
+sudo dpkg -i tb-edge-${TB_EDGE_TAG}pe.deb
 {:copy-code}
 ```
+
 ${UPGRADE_DB}

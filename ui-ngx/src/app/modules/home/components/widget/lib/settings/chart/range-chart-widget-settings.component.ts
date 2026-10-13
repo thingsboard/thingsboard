@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import {
   Datasource,
@@ -25,15 +11,12 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeepIgnoreArray } from '@core/utils';
-import {
-  rangeChartDefaultSettings,
-  RangeChartWidgetSettings
-} from '@home/components/widget/lib/chart/range-chart-widget.models';
+import { formatValue } from '@core/utils';
+import { rangeChartDefaultSettings } from '@home/components/widget/lib/chart/range-chart-widget.models';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
   lineSeriesStepTypes,
-  lineSeriesStepTypeTranslations
+  lineSeriesStepTypeTranslations, updateLatestDataKeys
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import {
   chartLabelPositions,
@@ -43,11 +26,13 @@ import {
   chartShapes,
   chartShapeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-range-chart-widget-settings',
-  templateUrl: './range-chart-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-range-chart-widget-settings',
+    templateUrl: './range-chart-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -99,7 +84,7 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeepIgnoreArray<RangeChartWidgetSettings>({} as RangeChartWidgetSettings, rangeChartDefaultSettings);
+    return rangeChartDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -270,14 +255,19 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
     }
   }
 
+  protected onSettingsChanged(updated: WidgetSettings) {
+    updateLatestDataKeys([updated.yAxis], this.datasource, this.dataKeyCallbacks);
+    super.onSettingsChanged(updated);
+  }
+
   private _pointLabelPreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, false);
   }
 
   private _tooltipValuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, false);
   }

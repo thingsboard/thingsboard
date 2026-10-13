@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <g filter="url(#shadow-filter)">
+    <path class="marker-opacity" d="M19 24.5C17.4075 27.4125 17 33 17 33C17 33 27.0858 32.1955 30.9992 27.4998C34 23.8992 31.9992 19 27.9992 19C23.9993 19 21.1929 20.4894 19 24.5Z" fill="black" fill-opacity="0.24"/>
+  </g>
+  <circle cx="17" cy="13" r="13" fill="white"/>
+  <g class="marker-icon-container" transform="translate(17,13)">
+  </g>
+  <path d="M9 25L17 34L25 25C25 25 23 27 17 27C11 27 9 25 9 25Z" style="filter:url(#stroke-filter)"/>
+  <path d="M30 13C30 20.1797 24.1797 26 17 26C9.8203 26 4 20.1797 4 13C4 5.8203 9.8203 0 17 0C24.1797 0 30 5.8203 30 13ZM7.9989 13C7.9989 17.9712 12.0288 22.0011 17 22.0011C21.9712 22.0011 26.0011 17.9712 26.0011 13C26.0011 8.02883 21.9712 3.9989 17 3.9989C12.0288 3.9989 7.9989 8.02883 7.9989 13Z" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M17 25C23.6274 25 29 19.6274 29 13C29 6.37258 23.6274 1 17 1C10.3726 1 5 6.37258 5 13C5 19.6274 10.3726 25 17 25ZM17 23.0011C11.4765 23.0011 6.9989 18.5235 6.9989 13C6.9989 7.47654 11.4765 2.9989 17 2.9989C22.5235 2.9989 27.0011 7.47654 27.0011 13C27.0011 18.5235 22.5235 23.0011 17 23.0011ZM17 26C24.1797 26 30 20.1797 30 13C30 5.8203 24.1797 0 17 0C9.8203 0 4 5.8203 4 13C4 20.1797 9.8203 26 17 26ZM17 22.0011C12.0288 22.0011 7.9989 17.9712 7.9989 13C7.9989 8.02883 12.0288 3.9989 17 3.9989C21.9712 3.9989 26.0011 8.02883 26.0011 13C26.0011 17.9712 21.9712 22.0011 17 22.0011Z" style="filter:url(#stroke-filter)" />
+  <defs>
+    <filter id="shadow-filter" x="12.75" y="14.75" width="23.9434" height="22.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="2.125"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_8817_262071"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_8817_262071" result="shape"/>
+      <feGaussianBlur stdDeviation="0.5" result="effect2_foregroundBlur_8817_262071"/>
+    </filter>
+    <filter
+      id="stroke-filter"
+      style="color-interpolation-filters:sRGB"
+      x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>

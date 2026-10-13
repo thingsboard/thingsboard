@@ -1,58 +1,60 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CellActionDescriptor,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
-import { NotificationTemplate, NotificationTemplateTypeTranslateMap } from '@shared/models/notification.models';
+import {
+  notificationAiAssistantConfig,
+  NotificationTemplate,
+  NotificationTemplateTypeTranslateMap,
+  singleNotificationTypeTemplate
+} from '@shared/models/notification.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { NotificationService } from '@core/http/notification.service';
-import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
 import {
   TemplateNotificationDialogComponent,
   TemplateNotificationDialogData
 } from '@home/pages/notification/template/template-notification-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { TemplateTableHeaderComponent } from '@home/pages/notification/template/template-table-header.component';
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { Observable } from 'rxjs';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Authority } from '@shared/models/authority.enum';
 
 @Injectable()
-export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<NotificationTemplate>> {
+export class TemplateTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationTemplate> = new EntityTableConfig<NotificationTemplate>();
 
-  constructor(private notificationService: NotificationService,
+  constructor(private store: Store<AppState>,
+              private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private userPermissionsService: UserPermissionsService) {
 
     this.config.entityType = EntityType.NOTIFICATION_TEMPLATE;
     this.config.detailsPanelEnabled = false;
-    this.config.addEnabled = false;
     this.config.rowPointer = true;
 
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TEMPLATE);
     this.config.entityResources = {} as EntityTypeResource<NotificationTemplate>;
+
+    this.config.addEntity = () => this.notificationTemplateDialog(null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
 
@@ -64,8 +66,7 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
 
     this.config.cellActionDescriptors = this.configureCellActions();
 
-    this.config.headerComponent = TemplateTableHeaderComponent;
-    this.config.onEntityAction = action => this.onTemplateAction(action);
+    this.config.entitySelectionEnabled = () => this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
 
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
@@ -80,9 +81,20 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
         (template) => this.translate.instant(NotificationTemplateTypeTranslateMap.get(template.notificationType).name)),
       new EntityTableColumn<NotificationTemplate>('name', 'notification.template', '80%')
     );
+
+    this.config.aiAssistantConfig = notificationAiAssistantConfig(
+      this.store, this.userPermissionsService, this.translate, AiAssistantViewType.NOTIFICATION_TEMPLATE_LIST);
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTemplate> {
+  resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTemplate> {
+    const authority = getCurrentAuthUser(this.store).authority;
+    if (authority === Authority.SYS_ADMIN) {
+      this.config.deleteEnabled = (template) =>
+        this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE) &&
+          !singleNotificationTypeTemplate(template.notificationType);
+    } else {
+      defaultEntityTablePermissions(this.userPermissionsService, this.config);
+    }
     return this.config;
   }
 
@@ -91,40 +103,31 @@ export class TemplateTableConfigResolver implements Resolve<EntityTableConfig<No
       {
         name: this.translate.instant('notification.copy-template'),
         icon: 'content_copy',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.editTemplate($event, entity, false, true)
+        isEnabled: (template) => {
+          return this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE)
+            && !singleNotificationTypeTemplate(template.notificationType)
+        },
+        onAction: ($event, entity) => this.editTemplate($event, entity, true)
       }
     ];
   }
 
-  private editTemplate($event: Event, template: NotificationTemplate, isAdd = false, isCopy = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
+  private editTemplate($event: Event, template: NotificationTemplate, isCopy = false) {
+    $event?.stopPropagation();
+    this.notificationTemplateDialog(template, false, isCopy).subscribe((res) => res ? this.config.updateData() : null);
+  }
+
+  private notificationTemplateDialog(template: NotificationTemplate, isAdd = false, isCopy = false): Observable<NotificationTemplate> {
+    return this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
       NotificationTemplate>(TemplateNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
         isCopy,
-        template
+        template,
+        readonly: !this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE)
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
+    }).afterClosed();
   }
-
-  private onTemplateAction(action: EntityAction<NotificationTemplate>): boolean {
-    switch (action.action) {
-      case 'add':
-        this.editTemplate(action.event, action.entity, true);
-        return true;
-    }
-    return false;
-  }
-
 }

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.script.api.tbel;
 
 import com.google.common.collect.Lists;
@@ -28,6 +15,7 @@ import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
+import org.mvel2.execution.ExecutionLinkedHashSet;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -35,13 +23,23 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import static java.lang.Character.MAX_RADIX;
 import static java.lang.Character.MIN_RADIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public class TbUtilsTest {
@@ -145,6 +143,101 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void parseBytesToInt_doesNotChangeInputData() {
+        byte[] data = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD};
+        byte[] copy = data.clone();
+        TbUtils.parseBytesToInt(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToInt(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToUnsignedInt(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToUnsignedInt(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToLong(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToLong(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToFloat(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToFloat(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesIntToFloat(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesIntToFloat(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesToDouble(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesToDouble(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        TbUtils.parseBytesLongToDouble(data, 0, 4, true);
+        Assertions.assertArrayEquals(copy, data);
+        TbUtils.parseBytesLongToDouble(data, 0, 4, false);
+        Assertions.assertArrayEquals(copy, data);
+
+        List<Byte> listData = toList(new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD});
+        List<Byte> listCopy = new ArrayList<>(listData);
+        TbUtils.parseBytesToInt(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToInt(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToUnsignedInt(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToUnsignedInt(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToLong(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToLong(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToFloat(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToFloat(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesIntToFloat(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesIntToFloat(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesToDouble(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesToDouble(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+
+        TbUtils.parseBytesLongToDouble(listData, 0, 4, true);
+        Assertions.assertEquals(listCopy, listData);
+        TbUtils.parseBytesLongToDouble(listData, 0, 4, false);
+        Assertions.assertEquals(listCopy, listData);
+    }
+
+    @Test
+    public void compare_parseBytesToInt_and_parseBytesToUnsignedInt() {
+        byte[] data = new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+
+        // 4 bytes: parseBytesToInt returns -1, parseBytesToUnsignedInt returns 4294967295L
+        Assertions.assertEquals(-1, TbUtils.parseBytesToInt(data, 0, 4, true));
+        Assertions.assertEquals(4294967295L, TbUtils.parseBytesToUnsignedInt(data, 0, 4, true));
+
+        // 2 bytes (0xFFFF): both return 65535 (no sign extension for parseBytesToInt when length < 4)
+        Assertions.assertEquals(65535, TbUtils.parseBytesToInt(data, 0, 2, true));
+        Assertions.assertEquals(65535L, TbUtils.parseBytesToUnsignedInt(data, 0, 2, true));
+
+        // 2 bytes with high bit set (0x8000)
+        byte[] data2 = new byte[]{(byte) 0x80, (byte) 0x00};
+        Assertions.assertEquals(32768, TbUtils.parseBytesToInt(data2, 0, 2, true));
+        Assertions.assertEquals(32768L, TbUtils.parseBytesToUnsignedInt(data2, 0, 2, true));
+    }
+
+    @Test
     public void toFlatMap() {
         ExecutionHashMap<String, Object> inputMap = new ExecutionHashMap<>(16, ctx);
         inputMap.put("name", "Alice");
@@ -212,6 +305,7 @@ public class TbUtilsTest {
 
         Assertions.assertEquals((Integer) 0, TbUtils.parseInt("0"));
         Assertions.assertEquals((Integer) 0, TbUtils.parseInt("-0"));
+        Assertions.assertEquals((Integer) 0, TbUtils.parseInt("+0"));
         Assertions.assertEquals(java.util.Optional.of(473).get(), TbUtils.parseInt("473"));
         Assertions.assertEquals(java.util.Optional.of(-255).get(), TbUtils.parseInt("-0xFF"));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("-0xFF123"));
@@ -268,13 +362,6 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void toFixedFloat() {
-        float actualF = TbUtils.toFixed(floatVal, 3);
-        Assertions.assertEquals(1, Float.compare(floatVal, actualF));
-        Assertions.assertEquals(0, Float.compare(29.298f, actualF));
-    }
-
-    @Test
     public void parseBytesToFloat() {
         byte[] floatValByte = {0x0A};
         Assertions.assertEquals(0, Float.compare(1.4E-44f, TbUtils.parseBytesToFloat(floatValByte)));
@@ -313,7 +400,7 @@ public class TbUtilsTest {
             TbUtils.parseBytesToFloat(floatValByte, 0, 4, true);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains(message));
+            assertTrue(e.getMessage().contains(message));
         }
 
         // "01752B0367FA000500010488 FFFFFFFF FFFFFFFF 33";
@@ -323,15 +410,15 @@ public class TbUtilsTest {
             TbUtils.parseBytesToFloat(floatValList, 12, 4, false);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains(message));
+            assertTrue(e.getMessage().contains(message));
         }
     }
 
     @Test
     public void parseBytesIntToFloat() {
         byte[] intValByte = {0x00, 0x00, 0x00, 0x0A};
-        Float valueExpected = 10.0f;
-        Float valueActual = TbUtils.parseBytesIntToFloat(intValByte, 3, 1, true);
+        float valueExpected = 10.0f;
+        float valueActual = TbUtils.parseBytesIntToFloat(intValByte, 3, 1, true);
         Assertions.assertEquals(valueExpected, valueActual);
         valueActual = TbUtils.parseBytesIntToFloat(intValByte, 3, 1, false);
         Assertions.assertEquals(valueExpected, valueActual);
@@ -345,20 +432,23 @@ public class TbUtilsTest {
         valueExpected = 10.0f;
         valueActual = TbUtils.parseBytesIntToFloat(intValByte, 0, 4, true);
         Assertions.assertEquals(valueExpected, valueActual);
-        valueExpected = 1.6777216E8f;
-        valueActual = TbUtils.parseBytesIntToFloat(intValByte, 0, 4, false);
+        valueExpected = 167772.16f;
+        double factor = 1e3;
+        valueActual = (float) (TbUtils.parseBytesIntToFloat(intValByte, 0, 4, false) / factor);
+
         Assertions.assertEquals(valueExpected, valueActual);
 
         String dataAT101 = "0x01756403671B01048836BF7701F000090722050000";
         List<Byte> byteAT101 = TbUtils.hexToBytes(ctx, dataAT101);
         float latitudeExpected = 24.62495f;
         int offset = 9;
-        valueActual = TbUtils.parseBytesIntToFloat(byteAT101, offset, 4, false);
-        Assertions.assertEquals(latitudeExpected, valueActual / 1000000);
+        factor = 1e6;
+        valueActual = (float) (TbUtils.parseBytesIntToFloat(byteAT101, offset, 4, false) / factor);
+        Assertions.assertEquals(latitudeExpected, valueActual);
 
         float longitudeExpected = 118.030576f;
-        valueActual = TbUtils.parseBytesIntToFloat(byteAT101, offset + 4, 4, false);
-        Assertions.assertEquals(longitudeExpected, valueActual / 1000000);
+        valueActual = (float) (TbUtils.parseBytesIntToFloat(byteAT101, offset + 4, 4, false) / factor);
+        Assertions.assertEquals(longitudeExpected, valueActual);
 
         valueExpected = 9.185175E8f;
         valueActual = TbUtils.parseBytesIntToFloat(byteAT101, offset);
@@ -380,7 +470,7 @@ public class TbUtilsTest {
             TbUtils.parseBytesIntToFloat(byteAT101, byteAT101.size() + 1);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains("is out of bounds for array with length:"));
+            assertTrue(e.getMessage().contains("is out of bounds for array with length:"));
         }
     }
 
@@ -437,19 +527,13 @@ public class TbUtilsTest {
 
     @Test
     public void parsDouble() {
-        String doubleValStr = "1729.1729";
-        Assertions.assertEquals(java.util.Optional.of(doubleVal).get(), TbUtils.parseDouble(doubleValStr));
+        String doubleValStr = "1.1428250947E8";
+        Assertions.assertEquals(Double.parseDouble(doubleValStr), TbUtils.parseDouble(doubleValStr));
+        doubleValStr = "1729.1729";
         Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseHexToDouble(longValHex)));
         Assertions.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseHexToDouble(longValHex, false)));
         Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBigEndianHexToDouble(longValHex)));
         Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseLittleEndianHexToDouble(longValHexRev)));
-    }
-
-    @Test
-    public void toFixedDouble() {
-        double actualD = TbUtils.toFixed(doubleVal, 3);
-        Assertions.assertEquals(-1, Double.compare(doubleVal, actualD));
-        Assertions.assertEquals(0, Double.compare(1729.173, actualD));
     }
 
     @Test
@@ -493,7 +577,7 @@ public class TbUtilsTest {
             TbUtils.parseBytesToDouble(doubleValByte, 0, 8, true);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains(message));
+            assertTrue(e.getMessage().contains(message));
         }
     }
 
@@ -520,6 +604,18 @@ public class TbUtilsTest {
         valueExpected = 7.2057594037927936E17d;
         valueActual = TbUtils.parseBytesLongToDouble(longValByte, 0, 8, false);
         Assertions.assertEquals(valueExpected, valueActual);
+
+        String dataPalacKiyv = "0x32D009423F23B300B0106E08D96B6C00";
+        List<Byte> byteAT101 = TbUtils.hexToBytes(ctx, dataPalacKiyv);
+        double latitudeExpected = 50.422775429058610d;
+        int offset = 0;
+        double factor = 1e15;
+        valueActual = TbUtils.parseBytesLongToDouble(byteAT101, offset, 8, false);
+        Assertions.assertEquals(latitudeExpected, valueActual / factor);
+
+        double longitudeExpected = 30.517877378257072d;
+        valueActual = TbUtils.parseBytesLongToDouble(byteAT101, offset + 8, 8, false);
+        Assertions.assertEquals(longitudeExpected, valueActual / factor);
     }
 
     @Test
@@ -583,20 +679,20 @@ public class TbUtilsTest {
         String actualStr = TbUtils.bytesToString(listHex);
         byte[] actualBytes = actualStr.getBytes();
         Assertions.assertArrayEquals(expectedBytes, actualBytes);
-        Assertions.assertTrue(actualStr.isBlank());
+        assertTrue(actualStr.isBlank());
         listHex = new ArrayList<>(Arrays.asList("0x21", "0x21"));
         expectedBytes = new byte[]{33, 33};
         actualStr = TbUtils.bytesToString(listHex);
         actualBytes = actualStr.getBytes();
         Assertions.assertArrayEquals(expectedBytes, actualBytes);
-        Assertions.assertFalse(actualStr.isBlank());
+        assertFalse(actualStr.isBlank());
         Assertions.assertEquals("!!", actualStr);
         listHex = new ArrayList<>(Arrays.asList("21", "0x21"));
         expectedBytes = new byte[]{21, 33};
         actualStr = TbUtils.bytesToString(listHex);
         actualBytes = actualStr.getBytes();
         Assertions.assertArrayEquals(expectedBytes, actualBytes);
-        Assertions.assertFalse(actualStr.isBlank());
+        assertFalse(actualStr.isBlank());
         Assertions.assertEquals("!", actualStr.substring(1));
         Assertions.assertEquals('\u0015', actualStr.charAt(0));
         Assertions.assertEquals(21, actualStr.charAt(0));
@@ -610,7 +706,7 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listHex);
             Assertions.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("Value: \"FG\" is not numeric or hexDecimal format!"));
+            assertTrue(e.getMessage().contains("Value: \"FG\" is not numeric or hexDecimal format!"));
         }
 
         List<String> listIntString = new ArrayList<>();
@@ -619,7 +715,7 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listIntString);
             Assertions.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
+            assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
                     "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
         }
 
@@ -628,7 +724,7 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listIntString);
             Assertions.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
+            assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
                     "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
         }
 
@@ -638,7 +734,7 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listIntBytes);
             Assertions.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
+            assertTrue(e.getMessage().contains("The value '-129' could not be correctly converted to a byte. " +
                     "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
         }
 
@@ -647,7 +743,7 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listIntBytes);
             Assertions.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
+            assertTrue(e.getMessage().contains("The value '256' could not be correctly converted to a byte. " +
                     "Integer to byte conversion requires the use of only 8 bits (with a range of min/max = -128/255)!"));
         }
 
@@ -659,7 +755,7 @@ public class TbUtilsTest {
             TbUtils.bytesToString(listObjects);
             Assertions.fail("Should throw NumberFormatException");
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("The value '[0xFD]' could not be correctly converted to a byte. " +
+            assertTrue(e.getMessage().contains("The value '[0xFD]' could not be correctly converted to a byte. " +
                     "Must be a HexDecimal/String/Integer/Byte format !"));
         }
     }
@@ -720,27 +816,27 @@ public class TbUtilsTest {
 
     @Test
     public void numberToString_Test() {
-        Assertions.assertEquals("00111010", TbUtils.intLongToString(58L, MIN_RADIX));
-        Assertions.assertEquals("0000000010011110", TbUtils.intLongToString(158L, MIN_RADIX));
-        Assertions.assertEquals("00000000000000100000001000000001", TbUtils.intLongToString(131585L, MIN_RADIX));
-        Assertions.assertEquals("0111111111111111111111111111111111111111111111111111111111111111", TbUtils.intLongToString(Long.MAX_VALUE, MIN_RADIX));
-        Assertions.assertEquals("1000000000000000000000000000000000000000000000000000000000000001", TbUtils.intLongToString(-Long.MAX_VALUE, MIN_RADIX));
-        Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToString(-102L, MIN_RADIX));
-        Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToString(-13158L, MIN_RADIX));
-        Assertions.assertEquals("777777777777777777777", TbUtils.intLongToString(Long.MAX_VALUE, 8));
-        Assertions.assertEquals("1000000000000000000000", TbUtils.intLongToString(Long.MIN_VALUE, 8));
-        Assertions.assertEquals("9223372036854775807", TbUtils.intLongToString(Long.MAX_VALUE));
-        Assertions.assertEquals("-9223372036854775808", TbUtils.intLongToString(Long.MIN_VALUE));
-        Assertions.assertEquals("3366", TbUtils.intLongToString(13158L, 16));
-        Assertions.assertEquals("FFCC9A", TbUtils.intLongToString(-13158L, 16));
-        Assertions.assertEquals("0xFFCC9A", TbUtils.intLongToString(-13158L, 16, true, true));
+        Assertions.assertEquals("00111010", TbUtils.intLongToRadixString(58L, MIN_RADIX));
+        Assertions.assertEquals("0000000010011110", TbUtils.intLongToRadixString(158L, MIN_RADIX));
+        Assertions.assertEquals("00000000000000100000001000000001", TbUtils.intLongToRadixString(131585L, MIN_RADIX));
+        Assertions.assertEquals("0111111111111111111111111111111111111111111111111111111111111111", TbUtils.intLongToRadixString(Long.MAX_VALUE, MIN_RADIX));
+        Assertions.assertEquals("1000000000000000000000000000000000000000000000000000000000000001", TbUtils.intLongToRadixString(-Long.MAX_VALUE, MIN_RADIX));
+        Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToRadixString(-102L, MIN_RADIX));
+        Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToRadixString(-13158L, MIN_RADIX));
+        Assertions.assertEquals("777777777777777777777", TbUtils.intLongToRadixString(Long.MAX_VALUE, 8));
+        Assertions.assertEquals("1000000000000000000000", TbUtils.intLongToRadixString(Long.MIN_VALUE, 8));
+        Assertions.assertEquals("9223372036854775807", TbUtils.intLongToRadixString(Long.MAX_VALUE));
+        Assertions.assertEquals("-9223372036854775808", TbUtils.intLongToRadixString(Long.MIN_VALUE));
+        Assertions.assertEquals("3366", TbUtils.intLongToRadixString(13158L, 16));
+        Assertions.assertEquals("FFCC9A", TbUtils.intLongToRadixString(-13158L, 16));
+        Assertions.assertEquals("0xFFCC9A", TbUtils.intLongToRadixString(-13158L, 16, true, true));
 
-        Assertions.assertEquals("0x0400", TbUtils.intLongToString(1024L, 16, true, true));
-        Assertions.assertNotEquals("400", TbUtils.intLongToString(1024L, 16));
-        Assertions.assertEquals("0xFFFC00", TbUtils.intLongToString(-1024L, 16, true, true));
-        Assertions.assertNotEquals("0xFC00", TbUtils.intLongToString(-1024L, 16, true, true));
+        Assertions.assertEquals("0x0400", TbUtils.intLongToRadixString(1024L, 16, true, true));
+        Assertions.assertNotEquals("400", TbUtils.intLongToRadixString(1024L, 16));
+        Assertions.assertEquals("0xFFFC00", TbUtils.intLongToRadixString(-1024L, 16, true, true));
+        Assertions.assertNotEquals("0xFC00", TbUtils.intLongToRadixString(-1024L, 16, true, true));
 
-        Assertions.assertEquals("hazelnut", TbUtils.intLongToString(1356099454469L, MAX_RADIX));
+        Assertions.assertEquals("hazelnut", TbUtils.intLongToRadixString(1356099454469L, MAX_RADIX));
     }
 
     @Test
@@ -770,25 +866,35 @@ public class TbUtilsTest {
     public void hexToBytes_Test() {
         String input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF33";
         byte[] expected = {1, 117, 43, 3, 103, -6, 0, 5, 0, 1, 4, -120, -1, -1, -1, -1, -1, -1, -1, -1, 51};
-        List<Byte> actual = TbUtils.hexToBytes(ctx, input);
-        Assertions.assertEquals(toList(expected), actual);
+        List<Byte> actualList = TbUtils.hexToBytes(ctx, input);
+        Assertions.assertEquals(toList(expected), actualList);
+        String validInput = "AABBCCDDEE";
+        expected = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE};
+        byte[] actualBytes = TbUtils.hexToBytesArray(validInput);
+        Assertions.assertArrayEquals(expected, actualBytes);
         try {
             input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF3";
             TbUtils.hexToBytes(ctx, input);
         } catch (IllegalArgumentException e) {
-            Assertions.assertTrue(e.getMessage().contains("Hex string must be even-length."));
+            assertTrue(e.getMessage().contains("Hex string must be even-length."));
         }
         try {
             input = "0x01752B0367KA000500010488FFFFFFFFFFFFFFFF33";
             TbUtils.hexToBytes(ctx, input);
         } catch (NumberFormatException e) {
-            Assertions.assertTrue(e.getMessage().contains("Value: \"" + input + "\" is not numeric or hexDecimal format!"));
+            assertTrue(e.getMessage().contains("Value: \"" + input + "\" is not numeric or hexDecimal format!"));
         }
         try {
             input = "";
             TbUtils.hexToBytes(ctx, input);
         } catch (IllegalArgumentException e) {
-            Assertions.assertTrue(e.getMessage().contains("Hex string must be not empty"));
+            assertTrue(e.getMessage().contains("Hex string must be not empty"));
+        }
+        try {
+            input = null;
+            TbUtils.hexToBytes(ctx, input);
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("Hex string must be not empty"));
         }
     }
 
@@ -870,19 +976,21 @@ public class TbUtilsTest {
 
     @Test
     public void raiseError_Test() {
-        String message = "frequency_weighting_type must be 0, 1 or 2.";
         Object value = 4;
-        try {
-            TbUtils.raiseError(message, value);
-            Assertions.fail("Should throw NumberFormatException");
-        } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. for value 4"));
-        }
+        String message = "frequency_weighting_type must be 0, 1 or 2. A value of " + value.toString() + " is invalid.";
+
         try {
             TbUtils.raiseError(message);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2."));
+            assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. A value of 4 is invalid."));
+        }
+        message = "frequency_weighting_type must be 0, 1 or 2.";
+        try {
+            TbUtils.raiseError(message);
+            Assertions.fail("Should throw NumberFormatException");
+        } catch (RuntimeException e) {
+            assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2."));
         }
     }
 
@@ -901,7 +1009,13 @@ public class TbUtilsTest {
     @Test
     public void isDecimal_Test() {
         Assertions.assertEquals(10, TbUtils.isDecimal("4567039"));
+        Assertions.assertEquals(10, TbUtils.isDecimal("1.1428250947E8"));
+        Assertions.assertEquals(10, TbUtils.isDecimal("123.45"));
+        Assertions.assertEquals(10, TbUtils.isDecimal("-1.23E-4"));
+        Assertions.assertEquals(10, TbUtils.isDecimal("1E5"));
         Assertions.assertEquals(-1, TbUtils.isDecimal("C100110"));
+        Assertions.assertEquals(-1, TbUtils.isDecimal("abc"));
+        Assertions.assertEquals(-1, TbUtils.isDecimal(null));
     }
 
     @Test
@@ -1068,8 +1182,138 @@ public class TbUtilsTest {
         Assertions.assertEquals(expected, actual);
     }
 
+    @Test
+    void base64ToBytesList_Test() {
+        String validInput = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5});
+        ExecutionArrayList<Byte> actual = TbUtils.base64ToBytesList(ctx, validInput);
+        ExecutionArrayList<Byte> expected = new ExecutionArrayList<>(ctx);
+        expected.addAll(List.of((byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5));
+        Assertions.assertEquals(expected, actual);
+
+        String emptyInput = Base64.getEncoder().encodeToString(new byte[]{});
+        actual = TbUtils.base64ToBytesList(ctx, emptyInput);
+        assertTrue(actual.isEmpty());
+        String invalidInput = "NotAValidBase64String";
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            TbUtils.base64ToBytesList(ctx, invalidInput);
+        });
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            TbUtils.base64ToBytesList(ctx, null);
+        });
+    }
+
+    @Test
+    public void bytesToHex_Test() {
+        byte[] bb = {(byte) 0xBB, (byte) 0xAA};
+        String expected = "BBAA";
+        String actual = TbUtils.bytesToHex(bb);
+        Assertions.assertEquals(expected, actual);
+        ExecutionArrayList<Integer> expectedList = new ExecutionArrayList<>(ctx);
+        expectedList.addAll(List.of(-69, 83));
+        expected = "BB53";
+        actual = TbUtils.bytesToHex(expectedList);
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void isInsidePolygon() {
+        // outside the polygon
+        String perimeter = "[[[50.75581142688204,29.097910166341073],[50.16785158177623,29.35066098977171],[50.164329922384674,29.773743889862114],[50.16785158177623,30.801230932938843],[50.459245308833495,30.92760634465418],[50.486522489629564,30.68548421850448],[50.703612031034005,30.872660513473573]],[[50.606017492632766,29.36165015600782],[50.54317104075835,29.762754723626013],[50.41021974600505,29.455058069014804]]]";
+        assertFalse(TbUtils.isInsidePolygon(50.50869555168039, 30.80123093293884, perimeter));
+        // inside the polygon
+        assertTrue(TbUtils.isInsidePolygon(50.50520628167696, 30.339685951022016, perimeter));
+        // inside the hole
+        assertFalse(TbUtils.isInsidePolygon(50.52265651287081, 29.488025567723156, perimeter));
+    }
+
+    @Test
+    public void isInsideCircle() {
+        // outside the circle
+        String perimeter = "{\"latitude\":50.32254778825905,\"longitude\":28.207787701215757,\"radius\":47477.33130420423}";
+        assertFalse(TbUtils.isInsideCircle(50.81490715736681, 28.05943395702824, perimeter));
+        // inside the circle
+        assertTrue(TbUtils.isInsideCircle(50.599397971892444, 28.086906872618542, perimeter));
+    }
+
+    @Test
+    public void isMap() throws ExecutionException, InterruptedException {
+        LinkedHashMap<String, Object> msg = new LinkedHashMap<>(Map.of("temperature", 42, "nested", "508"));
+        assertTrue(TbUtils.isMap(msg));
+        assertFalse(TbUtils.isList(msg));
+    }
+
+    @Test
+    public void isList() throws ExecutionException, InterruptedException {
+        List<Integer> list = List.of(0x35);
+        assertTrue(TbUtils.isList(list));
+        assertFalse(TbUtils.isMap(list));
+        assertFalse(TbUtils.isArray(list));
+        assertFalse(TbUtils.isSet(list));
+    }
+
+    @Test
+    public void isArray() throws ExecutionException, InterruptedException {
+        byte [] array = new byte[]{1, 2, 3};
+        assertTrue(TbUtils.isArray(array));
+        assertFalse(TbUtils.isList(array));
+        assertFalse(TbUtils.isSet(array));
+    }
+
+    @Test
+    public void isSet() throws ExecutionException, InterruptedException {
+        Set<Byte> set = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
+        assertTrue(TbUtils.isSet(set));
+        assertFalse(TbUtils.isList(set));
+        assertFalse(TbUtils.isArray(set));
+    }
+    @Test
+    public void setTest() throws ExecutionException, InterruptedException {
+        Set<Byte> actual = TbUtils.newSet(ctx);
+        Set<Byte> expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xCC});
+        actual.add((byte) 0xDD);
+        actual.add((byte) 0xCC);
+        actual.add((byte) 0xCC);
+        assertTrue(expected.containsAll(actual));
+        List<Byte> list = toList(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
+        actual.addAll(list);
+        assertEquals(4, actual.size());
+        assertTrue(actual.containsAll(expected));
+        actual = TbUtils.toSet(ctx, list);
+        expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xDA});
+        actual.add((byte) 0xDA);
+        actual.remove((byte) 0xBB);
+        actual.remove((byte) 0xAA);
+        assertTrue(expected.containsAll(actual));
+        assertEquals(actual.size(), 3);
+        actual.clear();
+        assertTrue(actual.isEmpty());
+        actual = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone_asc = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone_desc = TbUtils.toSet(ctx, list);
+        ((ExecutionLinkedHashSet<?>)actualClone).sort();
+        ((ExecutionLinkedHashSet<?>)actualClone_asc).sort(true);
+        ((ExecutionLinkedHashSet<?>)actualClone_desc).sort(false);
+        assertEquals(list.toString(), actual.toString());
+        assertNotEquals(list.toString(), actualClone.toString());
+        Collections.sort(list);
+        assertEquals(list.toString(), actualClone.toString());
+        assertEquals(list.toString(), actualClone_asc.toString());
+        Collections.sort(list, Collections.reverseOrder());
+        assertNotEquals(list.toString(), actualClone_asc.toString());
+        assertEquals(list.toString(), actualClone_desc.toString());
+    }
+
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);
+        for (Byte b : data) {
+            result.add(b);
+        }
+        return result;
+    }
+
+    private static Set<Byte> toSet(byte[] data) {
+        Set<Byte> result = new LinkedHashSet<>();
         for (Byte b : data) {
             result.add(b);
         }

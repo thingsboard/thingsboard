@@ -1,21 +1,10 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.notification.rule.trigger;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -27,6 +16,9 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Alarm
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
@@ -46,10 +38,10 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
             if (triggerConfig.getNotifyOn().contains(AlarmAction.CREATED)) {
                 return severityMatches(alarm, triggerConfig);
             }
-        }  else if (alarmUpdate.isSeverityChanged()) {
+        } else if (alarmUpdate.isSeverityChanged()) {
             if (triggerConfig.getNotifyOn().contains(AlarmAction.SEVERITY_CHANGED)) {
                 return severityMatches(alarmUpdate.getOld(), triggerConfig) || severityMatches(alarm, triggerConfig);
-            }  else {
+            } else {
                 // if we haven't yet sent notification about the alarm
                 return !severityMatches(alarmUpdate.getOld(), triggerConfig) && severityMatches(alarm, triggerConfig);
             }
@@ -106,13 +98,25 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
                         alarmUpdate.isDeleted() ? "deleted" : null)
                 .alarmOriginator(alarmInfo.getOriginator())
                 .alarmOriginatorName(alarmInfo.getOriginatorName())
+                .alarmOriginatorLabel(alarmInfo.getOriginatorLabel())
                 .alarmSeverity(alarmInfo.getSeverity())
                 .alarmStatus(alarmInfo.getStatus())
                 .acknowledged(alarmInfo.isAcknowledged())
                 .cleared(alarmInfo.isCleared())
                 .alarmCustomerId(alarmInfo.getCustomerId())
                 .dashboardId(alarmInfo.getDashboardId())
+                .details(toDetailsTemplateMap(alarmInfo.getDetails()))
                 .build();
+    }
+
+    private Map<String, String> toDetailsTemplateMap(JsonNode details) {
+        Map<String, String> infoMap = JacksonUtil.toFlatMap(details);
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, String> entry : infoMap.entrySet()) {
+            String key = "details." + entry.getKey();
+            result.put(key, entry.getValue());
+        }
+        return result;
     }
 
     @Override

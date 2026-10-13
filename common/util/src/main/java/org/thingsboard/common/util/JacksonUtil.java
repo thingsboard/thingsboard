@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.common.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
@@ -28,33 +17,41 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.thingsboard.server.common.data.Views;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
-/**
- * Created by Valerii Sosliuk on 5/12/2017.
- */
 @Slf4j
 public class JacksonUtil {
 
@@ -75,6 +72,20 @@ public class JacksonUtil {
     public static final ObjectMapper IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER = JsonMapper.builder()
             .addModule(new Jdk8Module())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .build();
+    public static final ObjectMapper IGNORE_UNKNOWN_PROPERTIES_AND_ENUMS_JSON_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL)
+            .build();
+    public static final ObjectMapper CANONICAL_JSON_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+            .serializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+            .build();
+    public static final ObjectMapper OBJECT_MAPPER_INCLUDE_NOT_NULL = JsonMapper.builder()
+            .serializationInclusion(JsonInclude.Include.NON_NULL)
             .build();
 
     public static ObjectMapper getObjectMapperWithJavaTimeModule() {
@@ -100,11 +111,17 @@ public class JacksonUtil {
         }
     }
 
+    @Contract("null, _ -> null") // so that IDE doesn't show NPE warning when input is not null
     public static <T> T fromString(String string, Class<T> clazz) {
+        return fromString(string, clazz, "The given string value cannot be transformed to Json object: " + string);
+    }
+
+    @Contract("null, _, _ -> null") // so that IDE doesn't show NPE warning when input is not null
+    public static <T> T fromString(String string, Class<T> clazz, String errorMsg) {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + string, e);
+            throw new IllegalArgumentException(errorMsg, e);
         }
     }
 
@@ -173,6 +190,19 @@ public class JacksonUtil {
         }
     }
 
+    public static String writeValueAsViewIgnoringNullFields(Object value, Class<Views.Public> serializationView) throws JsonProcessingException {
+        return value == null ? "" : OBJECT_MAPPER_INCLUDE_NOT_NULL.writerWithView(serializationView).writeValueAsString(value);
+    }
+
+    public static String writeValueAsStringWithDefaultPrettyPrinter(Object value) {
+        try {
+            return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("The given Json object value: "
+                    + value + " cannot be transformed to a String", e);
+        }
+    }
+
     public static String toPrettyString(Object o) {
         try {
             return PRETTY_SORTED_JSON_MAPPER.writeValueAsString(o);
@@ -195,9 +225,42 @@ public class JacksonUtil {
         return data;
     }
 
+    public static String toCanonicalString(Object value) {
+        try {
+            if (value == null) {
+                return null;
+            }
+
+            if (value instanceof JsonNode) {
+                Object pojo = CANONICAL_JSON_MAPPER.convertValue(value, Object.class);
+                return CANONICAL_JSON_MAPPER.writeValueAsString(pojo);
+            }
+
+            return CANONICAL_JSON_MAPPER.writeValueAsString(value);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("The given Json object value cannot be transformed to a canonical String: " + value, e);
+        }
+    }
+
     public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
         try {
             return OBJECT_MAPPER.treeToValue(node, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
+        }
+    }
+
+    public static <T> T treeToValue(JsonNode node, TypeReference<T> type) {
+        try {
+            return OBJECT_MAPPER.treeToValue(node, type);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
+        }
+    }
+
+    public static <T> T treeToValueIgnoringUnknown(JsonNode node, Class<T> clazz) {
+        try {
+            return IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER.treeToValue(node, clazz);
         } catch (IOException e) {
             throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
         }
@@ -223,6 +286,14 @@ public class JacksonUtil {
             return OBJECT_MAPPER.readValue(file, clazz);
         } catch (IOException e) {
             throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static <T> T readValue(String object, TypeReference<T> clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(object, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read object: " + object, e);
         }
     }
 
@@ -255,6 +326,15 @@ public class JacksonUtil {
             return value != null ? OBJECT_MAPPER.readTree(value) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given File object value: "
+                    + value + " cannot be transformed to a JsonNode", e);
+        }
+    }
+
+    public static JsonNode toJsonNode(InputStream value) {
+        try {
+            return value != null ? OBJECT_MAPPER.readTree(value) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given InputStream value: "
                     + value + " cannot be transformed to a JsonNode", e);
         }
     }
@@ -382,10 +462,8 @@ public class JacksonUtil {
 
     private static void toFlatMap(JsonNode node, String currentPath, Map<String, String> map) {
         if (node.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
             currentPath = currentPath.isEmpty() ? "" : currentPath + ".";
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> entry = fields.next();
+            for (Map.Entry<String, JsonNode> entry : node.properties()) {
                 toFlatMap(entry.getValue(), currentPath + entry.getKey(), map);
             }
         } else if (node.isValueNode()) {
@@ -415,6 +493,285 @@ public class JacksonUtil {
         } else {
             entityNode.put(key, kvEntry.getValueAsString());
         }
+    }
+
+    public static Set<String> extractKeys(JsonNode jsonNode) {
+        Set<String> keyPaths = new HashSet<>();
+        extractKeyPathsRecursively("", jsonNode, keyPaths);
+        return keyPaths;
+    }
+
+    private static void extractKeyPathsRecursively(String currentPath, JsonNode jsonNode, Set<String> keyPaths) {
+        if (jsonNode.isObject()) {
+            ObjectNode objectNode = (ObjectNode) jsonNode;
+            Iterator<String> fieldNames = objectNode.fieldNames();
+            while (fieldNames.hasNext()) {
+                String fieldName = fieldNames.next();
+                String newPath = currentPath.isEmpty() ? fieldName : currentPath + "." + fieldName;
+                extractKeyPathsRecursively(newPath, objectNode.get(fieldName), keyPaths);
+            }
+        } else if (jsonNode.isArray()) {
+            for (int i = 0; i < jsonNode.size(); i++) {
+                String newPath = currentPath.isEmpty() ? "[" + i + "]" : currentPath + "[" + i + "]";
+                extractKeyPathsRecursively(newPath, jsonNode.get(i), keyPaths);
+            }
+        } else {
+            keyPaths.add(currentPath);
+        }
+    }
+
+    public static JsonNode update(JsonNode mainNode, JsonNode updateNode) {
+        Iterator<String> fieldNames = updateNode.fieldNames();
+        while (fieldNames.hasNext()) {
+            String fieldExpression = fieldNames.next();
+            String[] fieldPath = fieldExpression.trim().split("\\.");
+            var node = (ObjectNode) mainNode;
+            for (int i = 0; i < fieldPath.length; i++) {
+                var fieldName = fieldPath[i];
+                var last = i == (fieldPath.length - 1);
+                if (last) {
+                    node.set(fieldName, updateNode.get(fieldExpression));
+                } else {
+                    if (!node.has(fieldName)) {
+                        node.set(fieldName, JacksonUtil.newObjectNode());
+                    }
+                    if (!node.get(fieldName).isObject()) {
+                        String finalPath = String.join(".", Arrays.copyOfRange(fieldPath, 0, i + 1));
+                        throw new IllegalArgumentException("Can't update terminal key: " + finalPath);
+                    }
+                    node = (ObjectNode) node.get(fieldName);
+                }
+            }
+        }
+        return mainNode;
+    }
+
+    public static JsonNode merge(JsonNode mainNode, JsonNode updateNode) {
+        mergeNodes(mainNode, updateNode);
+        return mainNode;
+    }
+
+    public static void mergeNodes(JsonNode mainNode, JsonNode updateNode) {
+        Iterator<String> fieldNames = updateNode.fieldNames();
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            JsonNode jsonNode = mainNode.get(fieldName);
+            if (jsonNode != null) {
+                if (jsonNode.isObject()) {
+                    mergeNodes(jsonNode, updateNode.get(fieldName));
+                } else if (jsonNode.isArray()) {
+                    for (int i = 0; i < jsonNode.size(); i++) {
+                        mergeNodes(jsonNode.get(i), updateNode.get(fieldName).get(i));
+                    }
+                } else {
+                    ((ObjectNode) mainNode).set(fieldName, updateNode.get(fieldName));
+                }
+            } else {
+                if (mainNode instanceof ObjectNode) {
+                    // Overwrite field
+                    JsonNode value = updateNode.get(fieldName);
+                    if (value.isNull()) {
+                        continue;
+                    }
+                    ((ObjectNode) mainNode).set(fieldName, value);
+                }
+            }
+        }
+    }
+
+    public static JsonNode deleteByKeyPath(JsonNode mainNode, String keyPath) {
+        String[] fieldPath = keyPath.trim().split("\\.");
+        var node = (ObjectNode) mainNode;
+        for (int i = 0; i < fieldPath.length; i++) {
+            var fieldName = fieldPath[i];
+            var last = i == (fieldPath.length - 1);
+            if (last) {
+                node.remove(fieldName);
+            } else {
+                if (!node.has(fieldName)) {
+                    break;
+                }
+                node = (ObjectNode) node.get(fieldName);
+            }
+        }
+        if (node.isEmpty() && keyPath.contains(".")) {
+            deleteByKeyPath(mainNode, keyPath.substring(0, keyPath.lastIndexOf(".")));
+        }
+        return mainNode;
+    }
+
+    public static JsonNode getByKeyPath(JsonNode node, String keyPath) {
+        return node.at('/' + keyPath.replace('.', '/'));
+    }
+
+    public static void replaceAll(JsonNode root, String pathPrefix, BiFunction<String, String, String> processor) {
+        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
+        tasks.add(new JsonNodeProcessingTask(pathPrefix, root));
+        while (!tasks.isEmpty()) {
+            JsonNodeProcessingTask task = tasks.poll();
+            JsonNode node = task.getNode();
+            if (node == null) {
+                continue;
+            }
+            String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
+            if (node.isObject()) {
+                ObjectNode on = (ObjectNode) node;
+                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
+                    String childName = it.next();
+                    JsonNode childValue = on.get(childName);
+                    if (childValue.isTextual()) {
+                        on.put(childName, processor.apply(currentPath + childName, childValue.asText()));
+                    } else if (childValue.isObject() || childValue.isArray()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
+                    }
+                }
+            } else if (node.isArray()) {
+                ArrayNode childArray = (ArrayNode) node;
+                for (int i = 0; i < childArray.size(); i++) {
+                    JsonNode element = childArray.get(i);
+                    if (element.isObject()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
+                    } else if (element.isTextual()) {
+                        childArray.set(i, processor.apply(currentPath + "." + i, element.asText()));
+                    }
+                }
+            }
+        }
+    }
+
+    public static void replaceAllByMapping(JsonNode jsonNode, Map<String, String> mapping, Map<String, String> templateParams, BiFunction<String, String, String> processor) {
+        replaceByMapping(jsonNode, mapping, templateParams, (name, value) -> {
+            if (value.isTextual()) {
+                return new TextNode(processor.apply(name, value.asText()));
+            } else if (value.isArray()) {
+                ArrayNode array = (ArrayNode) value;
+                for (int i = 0; i < array.size(); i++) {
+                    String arrayElementName = name.replace("$index", Integer.toString(i));
+                    array.set(i, processor.apply(arrayElementName, array.get(i).asText()));
+                }
+                return array;
+            }
+            return value;
+        });
+    }
+
+    public static void replaceByMapping(JsonNode jsonNode, Map<String, String> mapping, Map<String, String> templateParams, BiFunction<String, JsonNode, JsonNode> processor) {
+        for (var entry : mapping.entrySet()) {
+            String expression = entry.getValue();
+            Queue<JsonPathProcessingTask> tasks = new LinkedList<>();
+            tasks.add(new JsonPathProcessingTask(entry.getKey().split("\\."), templateParams, jsonNode));
+            while (!tasks.isEmpty()) {
+                JsonPathProcessingTask task = tasks.poll();
+                String token = task.currentToken();
+                JsonNode node = task.getNode();
+                if (node == null) {
+                    continue;
+                }
+                if (token.equals("*") || token.startsWith("$")) {
+                    String variableName = token.startsWith("$") ? token.substring(1) : null;
+                    if (node.isArray()) {
+                        ArrayNode childArray = (ArrayNode) node;
+                        for (JsonNode element : childArray) {
+                            tasks.add(task.next(element));
+                        }
+                    } else if (node.isObject()) {
+                        ObjectNode on = (ObjectNode) node;
+                        for (Map.Entry<String, JsonNode> kv : on.properties()) {
+                            if (variableName != null) {
+                                tasks.add(task.next(kv.getValue(), variableName, kv.getKey()));
+                            } else {
+                                tasks.add(task.next(kv.getValue()));
+                            }
+                        }
+                    }
+                } else {
+                    String variableName = null;
+                    String variableValue = null;
+                    if (token.contains("[$")) {
+                        variableName = StringUtils.substringBetween(token, "[$", "]");
+                        token = StringUtils.substringBefore(token, "[$");
+                    }
+                    if (node.has(token)) {
+                        JsonNode value = node.get(token);
+                        if (variableName != null && value.has(variableName) && value.get(variableName).isTextual()) {
+                            variableValue = value.get(variableName).asText();
+                        }
+                        if (task.isLast()) {
+                            String name = expression;
+                            for (var replacement : task.getVariables().entrySet()) {
+                                name = name.replace("$" + replacement.getKey(), Strings.nullToEmpty(replacement.getValue()));
+                            }
+                            ((ObjectNode) node).set(token, processor.apply(name, value));
+                        } else {
+                            if (StringUtils.isNotEmpty(variableName)) {
+                                tasks.add(task.next(value, variableName, variableValue));
+                            } else {
+                                tasks.add(task.next(value));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Data
+    public static class JsonNodeProcessingTask {
+        private final String path;
+        private final JsonNode node;
+
+        public JsonNodeProcessingTask(String path, JsonNode node) {
+            this.path = path;
+            this.node = node;
+        }
+
+    }
+
+    @Data
+    public static class JsonPathProcessingTask {
+        private final String[] tokens;
+        private final Map<String, String> variables;
+        private final JsonNode node;
+
+        public JsonPathProcessingTask(String[] tokens, Map<String, String> variables, JsonNode node) {
+            this.tokens = tokens;
+            this.variables = variables;
+            this.node = node;
+        }
+
+        public boolean isLast() {
+            return tokens.length == 1;
+        }
+
+        public String currentToken() {
+            return tokens[0];
+        }
+
+        public JsonPathProcessingTask next(JsonNode next) {
+            return new JsonPathProcessingTask(
+                    Arrays.copyOfRange(tokens, 1, tokens.length),
+                    variables,
+                    next);
+        }
+
+        public JsonPathProcessingTask next(JsonNode next, String key, String value) {
+            Map<String, String> variables = new HashMap<>(this.variables);
+            variables.put(key, value);
+            return new JsonPathProcessingTask(
+                    Arrays.copyOfRange(tokens, 1, tokens.length),
+                    variables,
+                    next);
+        }
+
+        @Override
+        public String toString() {
+            return "JsonPathProcessingTask{" +
+                    "tokens=" + Arrays.toString(tokens) +
+                    ", variables=" + variables +
+                    ", node=" + node.toString().substring(0, 20) +
+                    '}';
+        }
+
     }
 
 }

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.service.install.sql;
 
 import org.assertj.core.api.Assertions;
@@ -35,8 +22,10 @@ public class EntitiesSchemaSqlTest extends AbstractServiceTest {
 
     @Value("${classpath:sql/schema-entities.sql}")
     private Path installEntitiesPath;
-    @Value("${classpath:sql/schema-views-and-functions.sql}")
+    @Value("${classpath:sql/schema-views.sql}")
     private Path installViewsPath;
+    @Value("${classpath:sql/schema-functions.sql}")
+    private Path installFunctionsPath;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -45,10 +34,12 @@ public class EntitiesSchemaSqlTest extends AbstractServiceTest {
     public void testRepeatedInstall() throws IOException {
         String entitiesScript = Files.readString(installEntitiesPath);
         String viewsScript = Files.readString(installViewsPath);
+        String functionsScript = Files.readString(installFunctionsPath);
         try {
             for (int i = 1; i <= 2; i++) {
                 jdbcTemplate.execute(entitiesScript);
                 jdbcTemplate.execute(viewsScript);
+                jdbcTemplate.execute(functionsScript);
             }
         } catch (Exception e) {
             Assertions.fail("Failed to execute reinstall", e);

@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.service.housekeeper.processor;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class CalculatedFieldsDeletionTaskProcessor extends HousekeeperTaskProcessor<HousekeeperTask> {
+
+    private final CalculatedFieldService calculatedFieldService;
+
+    @Override
+    public void process(HousekeeperTask task) throws Exception {
+        int deletedCount = calculatedFieldService.deleteAllCalculatedFieldsByEntityId(task.getTenantId(), task.getEntityId());
+        log.debug("[{}][{}][{}] Deleted {} calculated fields", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), deletedCount);
+    }
+
+    @Override
+    public HousekeeperTaskType getTaskType() {
+        return HousekeeperTaskType.DELETE_CALCULATED_FIELDS;
+    }
+
+}

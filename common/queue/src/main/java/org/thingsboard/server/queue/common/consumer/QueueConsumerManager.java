@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.common.consumer;
 
 import lombok.Builder;
@@ -25,7 +12,12 @@ import org.thingsboard.server.queue.TbQueueMsg;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -36,20 +28,24 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     private final long pollInterval;
     private final ExecutorService consumerExecutor;
     private final String threadPrefix;
+    /** Optional poll gate: while {@code false} the loop skips polling so the position doesn't advance; {@code null} = always ready (default). */
+    private final BooleanSupplier readinessCheck;
 
     @Getter
     private final TbQueueConsumer<M> consumer;
+    private Future<?> consumerTask;
     private volatile boolean stopped;
 
     @Builder
     public QueueConsumerManager(String name, MsgPackProcessor<M> msgPackProcessor,
                                 long pollInterval, Supplier<TbQueueConsumer<M>> consumerCreator,
-                                ExecutorService consumerExecutor, String threadPrefix) {
+                                ExecutorService consumerExecutor, String threadPrefix, BooleanSupplier readinessCheck) {
         this.name = name;
         this.pollInterval = pollInterval;
         this.msgPackProcessor = msgPackProcessor;
         this.consumerExecutor = consumerExecutor;
         this.threadPrefix = threadPrefix;
+        this.readinessCheck = readinessCheck;
         this.consumer = consumerCreator.get();
     }
 
@@ -63,7 +59,7 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
 
     public void launch() {
         log.info("[{}] Launching consumer", name);
-        consumerExecutor.submit(() -> {
+        consumerTask = consumerExecutor.submit(() -> {
             if (threadPrefix != null) {
                 ThingsBoardThreadFactory.addThreadNamePrefix(threadPrefix);
             }
@@ -79,6 +75,12 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     private void consumerLoop(TbQueueConsumer<M> consumer) {
         while (!stopped && !consumer.isStopped()) {
             try {
+                if (!isReadyToProcess()) {
+                    if (!awaitNextReadinessCheck()) {
+                        return;
+                    }
+                    continue;
+                }
                 List<M> msgs = consumer.poll(pollInterval);
                 if (msgs.isEmpty()) {
                     continue;
@@ -97,10 +99,36 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
         }
     }
 
+    private boolean isReadyToProcess() {
+        return readinessCheck == null || readinessCheck.getAsBoolean();
+    }
+
+    /**
+     * Waits one poll interval before readiness is re-checked. Returns {@code false} if interrupted, which is treated as
+     * a stop signal so the consumer loop exits.
+     */
+    private boolean awaitNextReadinessCheck() {
+        log.trace("[{}] Consumer is not ready to process messages yet, skipping poll iteration", name);
+        try {
+            Thread.sleep(pollInterval);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
     public void stop() {
         log.debug("[{}] Stopping consumer", name);
         stopped = true;
         consumer.unsubscribe();
+        try {
+            if (consumerTask != null) {
+                consumerTask.get(10, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            log.error("[{}] Failed to await consumer loop stop", name, e);
+        }
     }
 
     public interface MsgPackProcessor<M extends TbQueueMsg> {

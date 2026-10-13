@@ -1,21 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
+  DestroyRef,
   forwardRef,
   Input,
   OnChanges,
@@ -49,30 +37,32 @@ import {
   elementStateRenderFunctionCompletions,
   generalStateRenderFunctionCompletions,
   scadaSymbolContextCompletion,
-  scadaSymbolGeneralStateRenderHighlightRules,
-  scadaSymbolGeneralStateRenderPropertiesHighlightRules
+  scadaSymbolGeneralStateHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
-  selector: 'tb-scada-symbol-metadata',
-  templateUrl: './scada-symbol-metadata.component.html',
-  styleUrls: ['./scada-symbol-metadata.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolMetadataComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolMetadataComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata',
+    templateUrl: './scada-symbol-metadata.component.html',
+    styleUrls: ['./scada-symbol-metadata.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolMetadataComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolMetadataComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolMetadataComponent extends PageComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
@@ -91,7 +81,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   @Input()
   tags: string[];
 
-  private modelValue: ScadaSymbolMetadata;
+  modelValue: ScadaSymbolMetadata;
 
   private propagateChange = null;
 
@@ -122,14 +112,14 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   elementStateRenderFunctionCompleter: TbEditorCompleter;
   clickActionFunctionCompleter: TbEditorCompleter;
 
-  scadaSymbolGeneralStateRenderHighlightRules = scadaSymbolGeneralStateRenderHighlightRules;
-
-  scadaSymbolGeneralStateRenderPropertiesHighlightRules = scadaSymbolGeneralStateRenderPropertiesHighlightRules;
+  highlightRules = scadaSymbolGeneralStateHighlightRules;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private translate: TranslateService,
-              private customTranslate: CustomTranslatePipe) {
+              private customTranslate: CustomTranslatePipe,
+              private destroyRef: DestroyRef,
+              private wl: WhiteLabelingService) {
     super(store);
   }
 
@@ -147,7 +137,9 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     });
     this.updateFunctionCompleters(emptyMetadata());
 
-    this.metadataFormGroup.valueChanges.subscribe(() => {
+    this.metadataFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
@@ -224,7 +216,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   }
 
   private updateFunctionCompleters(metadata: ScadaSymbolMetadata) {
-    const contextCompleter = scadaSymbolContextCompletion(metadata, this.tags, this.customTranslate);
+    const contextCompleter = scadaSymbolContextCompletion(metadata, this.tags, this.customTranslate, this.wl);
     const generalStateRender = generalStateRenderFunctionCompletions(contextCompleter);
     if (!this.generalStateRenderFunctionCompleter) {
       this.generalStateRenderFunctionCompleter = new TbEditorCompleter(generalStateRender);

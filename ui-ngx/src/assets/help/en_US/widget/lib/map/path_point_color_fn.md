@@ -3,9 +3,9 @@
 <div class="divider"></div>
 <br/>
 
-*function (data, dsData, dsIndex): string*
+*function (data, dsData): string*
 
-A JavaScript function used to compute color of the trip path point.
+A JavaScript function used to compute color of the path point.
 
 **Parameters:**
 
@@ -15,29 +15,10 @@ A JavaScript function used to compute color of the trip path point.
 
 **Returns:**
 
-Should return string value presenting color of the trip path point.
+Should return string value presenting color of the path point.
 
-In case no data is returned, color value from **Point color** settings field will be used.
+In case no data is returned, color value from **Color** settings field will be used.
 
 <div class="divider"></div>
 
-##### Examples
-
-* Calculate color depending on `temperature` telemetry value for `colorpin` device type:
-
-```javascript
-var type = data['Type'];
-if (type == 'colorpin') {
-  var temperature = data['temperature'];
-  if (typeof temperature !== undefined) {
-    var percent = (temperature + 60)/120 * 100;
-    return tinycolor.mix('blue', 'red', percent).toHexString();
-  }
-  return 'blue';
-}
-{:copy-code}
-```
-
-<br>
-<br>
-
+{% include widget/lib/map/color_fn_examples %}

@@ -1,0 +1,1024 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+package org.thingsboard.server.system;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.io.Resources;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
+import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.system.SystemPatchApplier;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class SystemPatchApplierTest {
+
+    @Mock
+    private JdbcTemplate jdbcTemplate;
+
+    @Mock
+    private InstallScripts installScripts;
+
+    @Mock
+    private DatabaseSchemaSettingsService schemaSettingsService;
+
+    @Mock
+    private WidgetTypeService widgetTypeService;
+
+    @Mock
+    private WidgetsBundleService widgetsBundleService;
+
+    @Mock
+    private ImageService imageService;
+
+    @Mock
+    private LtsMigrationService ltsMigrationService;
+
+    @InjectMocks
+    private SystemPatchApplier reconciler;
+
+    @TempDir
+    Path tempDir;
+
+    @Test
+    void whenLockIsNotAcquired_thenAcquiredIsSuccess() {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Boolean acquired = ReflectionTestUtils.invokeMethod(reconciler, "acquireAdvisoryLock");
+
+        assertEquals(Boolean.TRUE, acquired);
+        verify(jdbcTemplate).queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong());
+    }
+
+    @Test
+    void whenLockIsAlreadyAcquired_thenAcquiredIsFailed() {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Boolean.class), anyLong())).thenReturn(false);
+
+        Boolean acquired = ReflectionTestUtils.invokeMethod(reconciler, "acquireAdvisoryLock");
+
+        assertNotEquals(Boolean.TRUE, acquired);
+    }
+
+    @Test
+    void testReleaseAdvisoryLock() {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Boolean.class), anyLong()))
+                .thenReturn(true);
+
+        ReflectionTestUtils.invokeMethod(reconciler, "releaseAdvisoryLock");
+
+        verify(jdbcTemplate).queryForObject(
+                contains("pg_advisory_unlock"), eq(Boolean.class), anyLong());
+    }
+
+    @Test
+    void whenWidgetNotFound_thenCreateNewWidget() throws Exception {
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails fileWidget = createTestWidgetType("new_widget", "New Widget");
+        String json = JacksonUtil.toString(fileWidget);
+        assertNotNull(json);
+        Files.writeString(widgetTypesDir.resolve("new_widget.json"), json);
+
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "new_widget")).thenReturn(null);
+
+        SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+
+        assertNotNull(stats);
+        assertEquals(1, stats.created());
+        assertEquals(0, stats.updated());
+        verify(widgetTypeService).saveWidgetType(argThat(w -> "new_widget".equals(w.getFqn())));
+    }
+
+    @Test
+    void whenFqnIsBlank_thenThrowException() throws Exception {
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails brokenWidget = createTestWidgetType("", "Broken Widget");
+        String json = JacksonUtil.toString(brokenWidget);
+        assertNotNull(json);
+        Files.writeString(widgetTypesDir.resolve("broken.json"), json);
+
+        assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes"));
+        verify(widgetTypeService, never()).saveWidgetType(any());
+    }
+
+    @Test
+    void whenMixOfCreatedAndUpdated_thenStatsAreCorrect() throws Exception {
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails newFileWidget = createTestWidgetType("widget_new", "Widget New");
+        Files.writeString(widgetTypesDir.resolve("widget_new.json"), JacksonUtil.toString(newFileWidget));
+
+        WidgetTypeDetails changedFileWidget = createTestWidgetType("widget_changed", "Widget Changed New Name");
+        Files.writeString(widgetTypesDir.resolve("widget_changed.json"), JacksonUtil.toString(changedFileWidget));
+
+        WidgetTypeDetails sameFileWidget = createTestWidgetType("widget_same", "Widget Same");
+        Files.writeString(widgetTypesDir.resolve("widget_same.json"), JacksonUtil.toString(sameFileWidget));
+
+        WidgetTypeDetails existingChanged = createTestWidgetType("widget_changed", "Widget Changed Old Name");
+        existingChanged.setId(new WidgetTypeId(UUID.randomUUID()));
+
+        WidgetTypeDetails existingSame = createTestWidgetType("widget_same", "Widget Same");
+        existingSame.setId(new WidgetTypeId(UUID.randomUUID()));
+
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "widget_new")).thenReturn(null);
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "widget_changed")).thenReturn(existingChanged);
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "widget_same")).thenReturn(existingSame);
+
+        SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+
+        assertNotNull(stats);
+        assertEquals(1, stats.created());
+        assertEquals(1, stats.updated());
+        verify(widgetTypeService, times(2)).saveWidgetType(any());
+    }
+
+    @Test
+    void whenDescriptorChanged_thenUpdateTheExistingWidget() throws Exception {
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails fileWidget = createTestWidgetType("test_widget", "Test Widget");
+        fileWidget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":2}"));
+        String json = JacksonUtil.toString(fileWidget);
+        assertNotNull(json);
+        Files.writeString(widgetTypesDir.resolve("test_widget.json"), json);
+
+        WidgetTypeDetails existingWidget = createTestWidgetType("test_widget", "Test Widget");
+        existingWidget.setId(new WidgetTypeId(UUID.randomUUID()));
+        existingWidget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":1}"));
+
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "test_widget"))
+                .thenReturn(existingWidget);
+
+        SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+
+        assertNotNull(stats);
+        assertEquals(0, stats.created());
+        assertEquals(1, stats.updated());
+        verify(widgetTypeService).saveWidgetType(argThat(w ->
+                w.getDescriptor().get("version").asInt() == 2
+        ));
+    }
+
+    @Test
+    void whenNameChanged_thenUpdateTheExistingWidget() throws Exception {
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails fileWidget = createTestWidgetType("test_widget", "New Name");
+        String json = JacksonUtil.toString(fileWidget);
+        assertNotNull(json);
+        Files.writeString(widgetTypesDir.resolve("test_widget.json"), json);
+
+        WidgetTypeDetails existingWidget = createTestWidgetType("test_widget", "Old Name");
+        existingWidget.setId(new WidgetTypeId(UUID.randomUUID()));
+
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "test_widget"))
+                .thenReturn(existingWidget);
+
+        SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+
+        assertNotNull(stats);
+        assertEquals(0, stats.created());
+        assertEquals(1, stats.updated());
+        verify(widgetTypeService).saveWidgetType(argThat(w -> "New Name".equals(w.getName())));
+    }
+
+    @Test
+    void whenNothingChanged_thenSkipTheUpdateOfTheExistingWidget() throws Exception {
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails fileWidget = createTestWidgetType("test_widget", "Test Widget");
+        String json = JacksonUtil.toString(fileWidget);
+        assertNotNull(json);
+        Files.writeString(widgetTypesDir.resolve("test_widget.json"), json);
+
+        WidgetTypeDetails existingWidget = createTestWidgetType("test_widget", "Test Widget");
+        existingWidget.setId(new WidgetTypeId(UUID.randomUUID()));
+
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "test_widget"))
+                .thenReturn(existingWidget);
+
+        SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+
+        assertNotNull(stats);
+        assertEquals(0, stats.created());
+        assertEquals(0, stats.updated());
+        verify(widgetTypeService, never()).saveWidgetType(any());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("provideDescriptorComparisonTestCases")
+    void testIfDescriptorsAreEqual(String testName, JsonNode desc1, JsonNode desc2, boolean expectedEqual) {
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isDescriptorEqual", desc1, desc2);
+        assertEquals(expectedEqual, result, testName);
+    }
+
+    @Test
+    void whenDescriptorChanged_thenReturnWidgetTypeChanged() {
+        WidgetTypeDetails existing = createTestWidgetType("test", "Test");
+        existing.setDescriptor(JacksonUtil.toJsonNode("{\"version\":1}"));
+
+        WidgetTypeDetails file = createTestWidgetType("test", "Test");
+        file.setDescriptor(JacksonUtil.toJsonNode("{\"version\":2}"));
+
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(reconciler, "isWidgetTypeChanged", existing, file));
+        assertTrue(result);
+    }
+
+    @Test
+    void whenNameChanged_thenReturnWidgetTypeChanged() {
+        WidgetTypeDetails existing = createTestWidgetType("test", "Old Name");
+        WidgetTypeDetails file = createTestWidgetType("test", "New Name");
+
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(reconciler, "isWidgetTypeChanged", existing, file));
+        assertTrue(result);
+    }
+
+    @Test
+    void whenDescriptionChanged_thenReturnWidgetTypeChanged() {
+        WidgetTypeDetails existing = createTestWidgetType("test", "Test");
+        existing.setDescription("Old description");
+
+        WidgetTypeDetails file = createTestWidgetType("test", "Test");
+        file.setDescription("New description");
+
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(reconciler, "isWidgetTypeChanged", existing, file));
+        assertTrue(result);
+    }
+
+    @Test
+    void whenWidgetTypeAreIdentical_thenNoUpdateIsPerformed() {
+        WidgetTypeDetails existing = createTestWidgetType("test", "Test");
+        WidgetTypeDetails file = createTestWidgetType("test", "Test");
+
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(reconciler, "isWidgetTypeChanged", existing, file));
+        assertFalse(result);
+    }
+
+    @Test
+    void whenLockIsHeldByOneThread_thenSecondThreadCannotAcquireLock() throws Exception {
+        CountDownLatch lockAcquired = new CountDownLatch(1);
+        CountDownLatch startSecondThread = new CountDownLatch(1);
+        CountDownLatch testComplete = new CountDownLatch(1);
+
+        AtomicBoolean firstThreadAcquiredLock = new AtomicBoolean(false);
+        AtomicBoolean secondThreadAcquiredLock = new AtomicBoolean(false);
+        AtomicBoolean firstThreadSavedWidget = new AtomicBoolean(false);
+        AtomicBoolean secondThreadSavedWidget = new AtomicBoolean(false);
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        WidgetTypeDetails fileWidget = createTestWidgetType("test_widget", "Test Widget");
+        fileWidget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":2}"));
+        String toString = JacksonUtil.toCanonicalString(fileWidget);
+        assertNotNull(toString);
+        Files.writeString(widgetTypesDir.resolve("test_widget.json"), toString);
+
+        WidgetTypeDetails existingWidget = createTestWidgetType("test_widget", "Test Widget");
+        existingWidget.setId(new WidgetTypeId(UUID.randomUUID()));
+        existingWidget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":1}"));
+
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "test_widget")).thenReturn(existingWidget);
+
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong()))
+                .thenReturn(true)
+                .thenReturn(false);
+
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong()))
+                .thenReturn(true);
+
+        // The first thread-acquires lock and performs update
+        Thread firstThread = new Thread(() -> {
+            try {
+                Boolean acquired = ReflectionTestUtils.invokeMethod(reconciler, "acquireAdvisoryLock");
+                firstThreadAcquiredLock.set(Boolean.TRUE.equals(acquired));
+
+                if (firstThreadAcquiredLock.get()) {
+                    lockAcquired.countDown();
+                    startSecondThread.await(5, TimeUnit.SECONDS);
+
+                    // Simulate work while holding lock
+                    Thread.sleep(100);
+
+                    SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+                    firstThreadSavedWidget.set(stats != null && stats.updated() > 0);
+
+                    ReflectionTestUtils.invokeMethod(reconciler, "releaseAdvisoryLock");
+                }
+            } catch (Exception ignored) {
+            } finally {
+                testComplete.countDown();
+            }
+        });
+
+        // Second thread - attempts to acquire lock but fails
+        Thread secondThread = new Thread(() -> {
+            try {
+                lockAcquired.await(5, TimeUnit.SECONDS);
+                startSecondThread.countDown();
+
+                Boolean acquired = ReflectionTestUtils.invokeMethod(reconciler, "acquireAdvisoryLock");
+                secondThreadAcquiredLock.set(Boolean.TRUE.equals(acquired));
+
+                if (secondThreadAcquiredLock.get()) {
+                    SystemPatchApplier.WidgetTypeStats stats = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetTypes");
+                    secondThreadSavedWidget.set(stats != null && stats.updated() > 0);
+
+                    ReflectionTestUtils.invokeMethod(reconciler, "releaseAdvisoryLock");
+                }
+            } catch (Exception ignored) {}
+        });
+
+        firstThread.start();
+        secondThread.start();
+
+        assertTrue(testComplete.await(10, TimeUnit.SECONDS), "Test should complete within timeout");
+        firstThread.join(1000);
+        secondThread.join(1000);
+
+        assertTrue(firstThreadAcquiredLock.get(), "First thread should acquire lock");
+        assertFalse(secondThreadAcquiredLock.get(), "Second thread should NOT acquire lock");
+        assertTrue(firstThreadSavedWidget.get(), "First thread should save widget");
+        assertFalse(secondThreadSavedWidget.get(), "Second thread should NOT save widget");
+
+        verify(widgetTypeService, times(1)).saveWidgetType(any());
+    }
+
+    // --- isVersionChanged tests ---
+
+    @Test
+    void whenVersionIncreased_thenVersionChangedReturnsTrue() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertTrue(result);
+    }
+
+    @Test
+    void whenVersionNotIncreased_thenVersionChangedReturnsFalse() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void whenVersionUnparseable_thenVersionChangedReturnsFalse() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("invalid");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertFalse(result);
+    }
+
+    @Test
+    void whenDbVersionUnparseable_thenVersionChangedReturnsFalse() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("bad");
+
+        Boolean result = ReflectionTestUtils.invokeMethod(reconciler, "isVersionChanged");
+
+        assertFalse(result);
+    }
+
+    // --- applyPatchIfNeeded flow tests ---
+
+    @Test
+    void whenVersionIncreased_thenSyncsWidgetTypeBundleAndImageDataAfterMigrationsAndBeforeRecordingVersions() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        // Widget-type leg: a new widget type the DB does not have yet.
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        WidgetTypeDetails fileWidget = createTestWidgetType("new_widget", "New Widget");
+        Files.writeString(widgetTypesDir.resolve("new_widget.json"), JacksonUtil.toString(fileWidget));
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "new_widget")).thenReturn(null);
+
+        // Bundle leg: an existing bundle whose title the file changes. widgetTypeFqns is left empty so this leg's
+        // signal stays on widgetsBundleService alone, distinct from the widget-type leg on widgetTypeService.
+        Path widgetBundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(widgetBundlesDir);
+        Files.writeString(widgetBundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"New Title\"},\"widgetTypeFqns\":[]}");
+        when(installScripts.getWidgetBundlesDir()).thenReturn(widgetBundlesDir);
+        WidgetsBundle existingBundle = createTestBundle("charts", "Old Title");
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+
+        // Image leg: a system image the DB does not have yet.
+        Path dataDir = tempDir.resolve("data");
+        Path imagesDir = dataDir.resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        byte[] imageBytes = new byte[]{7, 7, 7};
+        Files.write(imagesDir.resolve("new_icon.svg"), imageBytes);
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        // applyMigrations is mocked and its callback argument is deliberately left uninvoked: if the sync were
+        // nested back inside that callback (round-1's defect), none of the three calls below would happen at all,
+        // so this also proves the legs are NOT reached through it.
+        List<String> appliedVersions = List.of("4.3.1.0");
+        when(ltsMigrationService.applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any())).thenReturn(appliedVersions);
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        // The severity fix under test: the widget-type, bundle and image legs run strictly after the applyMigrations
+        // call returns and strictly before recordVersions and the final stamp, so a sync failure still blocks the
+        // stamp instead of racing past it. Each leg's signal sits on a different mock, so one InOrder pins all three
+        // at once.
+        InOrder inOrder = inOrder(ltsMigrationService, widgetTypeService, widgetsBundleService, imageService, schemaSettingsService);
+        inOrder.verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any());
+        inOrder.verify(widgetTypeService).saveWidgetType(argThat(w -> "new_widget".equals(w.getFqn())));
+        inOrder.verify(widgetsBundleService).saveWidgetsBundle(argThat(b -> "New Title".equals(b.getTitle())));
+        inOrder.verify(imageService).createOrUpdateSystemImage(eq("new_icon.svg"), eq(imageBytes));
+        inOrder.verify(ltsMigrationService).recordVersions(appliedVersions);
+        inOrder.verify(schemaSettingsService).updateSchemaVersion();
+    }
+
+    @Test
+    void whenVersionIncreased_thenReplaysViewsThenFunctionsOnlyWhenTheBetweenPhasesCallbackRuns() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types_missing"));
+        when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        // applyMigrations is mocked, so its callback argument is NOT auto-run: capture it and drive it by hand.
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        ArgumentCaptor<Runnable> betweenPhases = ArgumentCaptor.forClass(Runnable.class);
+        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), betweenPhases.capture());
+
+        String schemaViewsSql = Resources.toString(Resources.getResource("sql/schema-views.sql"), StandardCharsets.UTF_8);
+        String schemaFunctionsSql = Resources.toString(Resources.getResource("sql/schema-functions.sql"), StandardCharsets.UTF_8);
+
+        // The replay happens ONLY once the callback runs: with it not yet run, neither script has executed.
+        verify(jdbcTemplate, never()).execute(schemaViewsSql);
+        verify(jdbcTemplate, never()).execute(schemaFunctionsSql);
+
+        betweenPhases.getValue().run();
+        InOrder inOrder = inOrder(jdbcTemplate);
+        inOrder.verify(jdbcTemplate).execute(schemaViewsSql);
+        inOrder.verify(jdbcTemplate).execute(schemaFunctionsSql);
+    }
+
+    /**
+     * When the sync fails, nothing is stamped, so the next startup still sees a version change and retries the
+     * whole patch - including the backfills, which applyAfterCommit() must tolerate.
+     */
+    @Test
+    void whenSystemDataSyncFails_thenNoVersionIsRecorded() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        Files.writeString(widgetTypesDir.resolve("broken.json"),
+                JacksonUtil.toString(createTestWidgetType("", "Broken Widget")));
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded"));
+
+        verify(ltsMigrationService, never()).recordVersions(any());
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+    }
+
+    @Test
+    void whenVersionNotIncreased_thenSkipsEverything() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        // No lock acquired
+        verify(jdbcTemplate, never()).queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong());
+        // No schema update
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+    }
+
+    @Test
+    void whenLockNotAcquired_thenSkipsPatchApplication() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(false);
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+        verify(jdbcTemplate, never()).execute(anyString());
+    }
+
+    @Test
+    void whenMaintenanceVersionIncreased_thenAppliesPatch() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.2.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.1.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        InOrder inOrder = inOrder(ltsMigrationService, schemaSettingsService);
+        inOrder.verify(ltsMigrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), eq(false), any());
+        inOrder.verify(schemaSettingsService).updateSchemaVersion();
+    }
+
+    @Test
+    void whenDifferentLtsFamily_thenSkipsPatch() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.4.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(jdbcTemplate, never()).queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong());
+        verify(schemaSettingsService, never()).updateSchemaVersion();
+    }
+
+    private static Stream<Arguments> provideDescriptorComparisonTestCases() {
+        return Stream.of(
+                Arguments.of("Both null", null, null, true),
+                Arguments.of("First null", null, JacksonUtil.newObjectNode(), false),
+                Arguments.of("Second null", JacksonUtil.newObjectNode(), null, false),
+                Arguments.of("Same content",
+                        JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":1}"),
+                        JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":1}"),
+                        true),
+                Arguments.of("Different content",
+                        JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":1}"),
+                        JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":2}"),
+                        false),
+                Arguments.of("Different key order but same content",
+                        JacksonUtil.toJsonNode("{\"version\":1,\"type\":\"latest\"}"),
+                        JacksonUtil.toJsonNode("{\"type\":\"latest\",\"version\":1}"),
+                        true),
+                Arguments.of("Empty objects",
+                        JacksonUtil.toJsonNode("{}"),
+                        JacksonUtil.toJsonNode("{}"),
+                        true)
+        );
+    }
+
+    private WidgetTypeDetails createTestWidgetType(String fqn, String name) {
+        WidgetTypeDetails widget = new WidgetTypeDetails();
+        widget.setFqn(fqn);
+        widget.setName(name);
+        widget.setDescription("Test description");
+        widget.setTenantId(TenantId.SYS_TENANT_ID);
+        widget.setDescriptor(JacksonUtil.toJsonNode("{\"type\":\"latest\"}"));
+        return widget;
+    }
+
+    // --- createMissingSystemImages tests ---
+
+    @Test
+    void whenImagesDirDoesNotExist_thenReturnsZeroAndDoesNotCallImageService() {
+        Path dataDir = tempDir.resolve("data");
+        // Intentionally do not create resources/images dir
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService, never()).getAllImageKeysByTenantId(any());
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenImagesDirIsEmpty_thenReturnsZeroAndDoesNotCallImageService() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenSystemImageDoesNotExistInDb_thenCreateIt() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] imageBytes = new byte[]{1, 2, 3, 4, 5};
+        Files.write(imagesDir.resolve("gateway.png"), imageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("gateway.png"), eq(imageBytes));
+    }
+
+    @Test
+    void whenSystemImageExistsInDb_thenSkipIt() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("gateway.png"), new byte[]{1, 2, 3});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Set.of("gateway.png"));
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(0, created);
+        verify(imageService).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    @Test
+    void whenMixOfNewAndExistingImages_thenOnlyCreateMissingOnes() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] newImageBytes = new byte[]{9, 9, 9};
+        byte[] existingImageBytes = new byte[]{1, 1, 1};
+        Files.write(imagesDir.resolve("new.png"), newImageBytes);
+        Files.write(imagesDir.resolve("existing.svg"), existingImageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Set.of("existing.svg"));
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService, times(1)).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("new.png"), eq(newImageBytes));
+        verify(imageService, never()).createOrUpdateSystemImage(eq("existing.svg"), any(byte[].class));
+    }
+
+    @Test
+    void whenImagesDirContainsSubdirectory_thenSubdirectoryIsIgnored() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        Files.createDirectories(imagesDir.resolve("nested"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        byte[] imageBytes = new byte[]{5, 6, 7};
+        Files.write(imagesDir.resolve("logo.png"), imageBytes);
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(1, created);
+        verify(imageService).createOrUpdateSystemImage(eq("logo.png"), eq(imageBytes));
+        verify(imageService, never()).createOrUpdateSystemImage(eq("nested"), any(byte[].class));
+    }
+
+    @Test
+    void whenMultipleNewImages_thenCreatesAll() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("a.png"), new byte[]{1});
+        Files.write(imagesDir.resolve("b.svg"), new byte[]{2});
+        Files.write(imagesDir.resolve("c.jpg"), new byte[]{3});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        Integer created = ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages");
+
+        assertEquals(3, created);
+        verify(imageService, times(1)).getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID);
+        verify(imageService).createOrUpdateSystemImage(eq("a.png"), any(byte[].class));
+        verify(imageService).createOrUpdateSystemImage(eq("b.svg"), any(byte[].class));
+        verify(imageService).createOrUpdateSystemImage(eq("c.jpg"), any(byte[].class));
+    }
+
+    @Test
+    void whenImageServiceThrows_thenWrapsAndPropagates() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("broken.png"), new byte[]{1, 2});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+        when(imageService.createOrUpdateSystemImage(eq("broken.png"), any(byte[].class)))
+                .thenThrow(new RuntimeException("DB error"));
+
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+                () -> ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages"));
+        assertTrue(thrown.getMessage().contains("broken.png"));
+    }
+
+    @Test
+    void whenExistingKeysLookupFails_thenDoesNotCreateImage() throws Exception {
+        Path imagesDir = tempDir.resolve("data").resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        Files.write(imagesDir.resolve("img.png"), new byte[]{1});
+
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID))
+                .thenThrow(new RuntimeException("lookup failed"));
+
+        assertThrows(RuntimeException.class,
+                () -> ReflectionTestUtils.invokeMethod(reconciler, "createMissingSystemImages"));
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    // --- applyPatchIfNeeded integration with createMissingSystemImages ---
+    // (the image leg's ordering guarantee is pinned together with the widget-type and bundle legs by
+    // whenVersionIncreased_thenSyncsWidgetTypeBundleAndImageDataAfterMigrationsAndBeforeRecordingVersions above)
+
+    @Test
+    void whenVersionNotIncreased_thenImagesAreNotTouched() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.0.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(imageService, never()).getAllImageKeysByTenantId(any());
+        verify(imageService, never()).createOrUpdateSystemImage(anyString(), any(byte[].class));
+    }
+
+    // --- updateWidgetBundles tests ---
+
+    @Test
+    void whenWidgetBundlesDirDoesNotExist_thenReturnsZero() {
+        when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("missing_bundles"));
+
+        Integer updated = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles");
+
+        assertEquals(0, updated);
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+        verify(widgetTypeService, never()).updateWidgetsBundleWidgetFqns(any(), any(), any());
+    }
+
+    @Test
+    void whenBundleNotInDb_thenSkipWithoutCreation() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"Charts\",\"order\":10}," +
+                        "\"widgetTypeFqns\":[\"line_chart\"]}");
+
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(null);
+
+        Integer updated = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles");
+
+        assertEquals(0, updated);
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+        verify(widgetTypeService, never()).updateWidgetsBundleWidgetFqns(any(), any(), any());
+    }
+
+    @Test
+    void whenBundleExistsAndHasNewFqn_thenMergeFqns() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"Charts\",\"description\":\"d\",\"order\":10}," +
+                        "\"widgetTypeFqns\":[\"line_chart\",\"bar_chart\",\"new_chart\"]}");
+
+        WidgetsBundle existingBundle = createTestBundle("charts", "Charts");
+        existingBundle.setDescription("d");
+        existingBundle.setOrder(10);
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+        when(widgetTypeService.findWidgetFqnsByWidgetsBundleId(TenantId.SYS_TENANT_ID, existingBundle.getId()))
+                .thenReturn(List.of("line_chart", "bar_chart"));
+
+        Integer updated = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles");
+
+        assertEquals(1, updated);
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+        verify(widgetTypeService).updateWidgetsBundleWidgetFqns(
+                eq(TenantId.SYS_TENANT_ID),
+                eq(existingBundle.getId()),
+                argThat(fqns -> fqns.size() == 3
+                        && fqns.get(0).equals("line_chart")
+                        && fqns.get(1).equals("bar_chart")
+                        && fqns.get(2).equals("new_chart"))
+        );
+    }
+
+    @Test
+    void whenBundleExistsAndAllFqnsAlreadyLinked_thenNoLinkUpdate() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"Charts\",\"description\":\"d\",\"order\":10}," +
+                        "\"widgetTypeFqns\":[\"line_chart\",\"bar_chart\"]}");
+
+        WidgetsBundle existingBundle = createTestBundle("charts", "Charts");
+        existingBundle.setDescription("d");
+        existingBundle.setOrder(10);
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+        when(widgetTypeService.findWidgetFqnsByWidgetsBundleId(TenantId.SYS_TENANT_ID, existingBundle.getId()))
+                .thenReturn(List.of("line_chart", "bar_chart"));
+
+        Integer updated = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles");
+
+        assertEquals(0, updated);
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+        verify(widgetTypeService, never()).updateWidgetsBundleWidgetFqns(any(), any(), any());
+    }
+
+    @Test
+    void whenOnlyBundleImageFormatDiffers_thenNoUpdate() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        // File carries a base64 data URI; DB has the resolved system-image URL — same content, different format.
+        Files.writeString(bundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"Charts\",\"description\":\"d\",\"order\":10," +
+                        "\"image\":\"data:image/png;base64,iVBORw0KGgo\"}," +
+                        "\"widgetTypeFqns\":[]}");
+
+        WidgetsBundle existingBundle = createTestBundle("charts", "Charts");
+        existingBundle.setDescription("d");
+        existingBundle.setOrder(10);
+        existingBundle.setImage("tb-image;/api/images/system/charts.png");
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+        when(widgetTypeService.findWidgetFqnsByWidgetsBundleId(TenantId.SYS_TENANT_ID, existingBundle.getId()))
+                .thenReturn(List.of());
+
+        Integer updated = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles");
+
+        assertEquals(0, updated);
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+        verify(widgetTypeService, never()).updateWidgetsBundleWidgetFqns(any(), any(), any());
+    }
+
+    @Test
+    void whenBundleMetadataChanged_thenUpdateBundle() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"New Title\",\"description\":\"new\",\"order\":20}," +
+                        "\"widgetTypeFqns\":[\"line_chart\"]}");
+
+        WidgetsBundle existingBundle = createTestBundle("charts", "Old Title");
+        existingBundle.setDescription("old");
+        existingBundle.setOrder(10);
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+        when(widgetTypeService.findWidgetFqnsByWidgetsBundleId(TenantId.SYS_TENANT_ID, existingBundle.getId()))
+                .thenReturn(List.of("line_chart"));
+
+        Integer updated = ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles");
+
+        assertEquals(1, updated);
+        verify(widgetsBundleService).saveWidgetsBundle(argThat(b ->
+                "New Title".equals(b.getTitle()) && "new".equals(b.getDescription()) && b.getOrder() == 20
+        ));
+        verify(widgetTypeService, never()).updateWidgetsBundleWidgetFqns(any(), any(), any());
+    }
+
+    @Test
+    void whenBundleAliasIsBlank_thenThrowException() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("broken.json"),
+                "{\"widgetsBundle\":{\"alias\":\"\",\"title\":\"Broken\"}}");
+
+        assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles"));
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+    }
+
+    @Test
+    void whenBundleJsonMissingWidgetsBundleField_thenThrowException() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("broken.json"), "{\"foo\":\"bar\"}");
+
+        assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles"));
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+    }
+
+    @Test
+    void whenBundleHasInlineWidgetTypes_thenThrowException() throws Exception {
+        Path bundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(bundlesDir);
+        when(installScripts.getWidgetBundlesDir()).thenReturn(bundlesDir);
+
+        Files.writeString(bundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"Charts\",\"description\":\"d\",\"order\":10}," +
+                        "\"widgetTypes\":[" +
+                        "{\"fqn\":\"inline_chart\",\"name\":\"Inline\",\"descriptor\":{\"type\":\"latest\"}}" +
+                        "]}");
+
+        WidgetsBundle existingBundle = createTestBundle("charts", "Charts");
+        existingBundle.setDescription("d");
+        existingBundle.setOrder(10);
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+
+        assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "updateWidgetBundles"));
+        verify(widgetTypeService, never()).saveWidgetType(any());
+        verify(widgetTypeService, never()).updateWidgetsBundleWidgetFqns(any(), any(), any());
+        verify(widgetsBundleService, never()).saveWidgetsBundle(any());
+    }
+
+    private WidgetsBundle createTestBundle(String alias, String title) {
+        WidgetsBundle bundle = new WidgetsBundle();
+        bundle.setId(new WidgetsBundleId(UUID.randomUUID()));
+        bundle.setAlias(alias);
+        bundle.setTitle(title);
+        bundle.setTenantId(TenantId.SYS_TENANT_ID);
+        return bundle;
+    }
+
+}

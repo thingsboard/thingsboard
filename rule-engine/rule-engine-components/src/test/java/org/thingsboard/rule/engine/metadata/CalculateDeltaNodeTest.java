@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
@@ -30,10 +17,10 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -91,7 +78,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.fromString("2ba3ded4-882b-40cf-999a-89da9ccd58f9"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("3842e740-0d89-43a9-8d52-ae44023847ba"));
-    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
 
     private static final int RULE_DISPATCHER_POOL_SIZE = 2;
     private static final int DB_CALLBACK_POOL_SIZE = 3;
@@ -169,7 +156,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
         node.init(ctxMock, nodeConfiguration);
         var msgData = "{\"pulseCounter\": 42}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -184,7 +176,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenInvalidMsgDataType_whenOnMsg_thenShouldTellNextOther() throws TbNodeException {
         // GIVEN
         node.init(ctxMock, nodeConfiguration);
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_ARRAY)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -200,7 +197,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenInputKeyIsNotPresent_whenOnMsg_thenShouldTellNextOther() throws TbNodeException {
         // GIVEN
         node.init(ctxMock, nodeConfiguration);
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -224,7 +226,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", 40.5)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -254,7 +261,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("temperature", 40L)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -284,7 +296,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("temperature", "40.0")));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -318,7 +335,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
         var firstMsgMetaData = new TbMsgMetaData();
         firstMsgMetaData.putValue("ts", String.valueOf(3L));
-        var firstMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, firstMsgMetaData, msgData);
+        var firstMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(firstMsgMetaData)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, firstMsg);
@@ -344,7 +366,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
         var secondMsgMetaData = new TbMsgMetaData();
         secondMsgMetaData.putValue("ts", String.valueOf(6L));
-        var secondMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, secondMsgMetaData, msgData);
+        var secondMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(secondMsgMetaData)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, secondMsg);
@@ -375,7 +402,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry("temperature", null)));
 
         var msgData = "{\"temperature\": 42,\"airPressure\":123}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -403,7 +435,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("pulseCounter", 200L)));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -435,7 +472,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry("pulseCounter", 200L)));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -459,7 +501,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("pulseCounter", "high")));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -484,7 +531,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry("pulseCounter", false)));
 
         var msgData = "{\"pulseCounter\":true}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -509,7 +561,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new JsonDataEntry("pulseCounter", "{\"isActive\":false}")));
 
         var msgData = "{\"pulseCounter\":{\"isActive\":true}}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -552,7 +609,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
         List<TbMsg> tbMsgList = IntStream.range(0, RULE_DISPATCHER_POOL_SIZE * 2).mapToObj(x -> {
             var msgData = "{\"pulseCounter\":" + 2 + "}";
-            return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+            return TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(DUMMY_DEVICE_ORIGINATOR)
+                    .copyMetaData(TbMsgMetaData.EMPTY)
+                    .data(msgData)
+                    .build();
         }).toList();
 
         CountDownLatch processingLatch = new CountDownLatch(tbMsgList.size());
@@ -597,7 +659,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         mockFindLatestAsync(new BasicTsKvEntry(1L, new DoubleDataEntry("temperature", testConfig.prevValue())));
 
         var msgData = "{\"temperature\":" + testConfig.currentValue() + ",\"airPressure\":123}";
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DUMMY_DEVICE_ORIGINATOR)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);

@@ -1,35 +1,25 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   IWidgetSubscription,
   SubscriptionEntityInfo,
   SubscriptionMessage,
+  WidgetDataGenerationOptions,
   WidgetSubscriptionCallbacks,
   WidgetSubscriptionContext,
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import {
-  DataKey, DataKeySettingsWithComparison,
+  DataKey,
+  DataKeySettingsWithComparison,
   DataSet,
   DataSetHolder,
   Datasource,
   DatasourceData,
   datasourcesHasAggregation,
-  DatasourceType, isDataKeySettingsWithComparison,
+  DatasourceType,
+  isDataKeySettingsWithComparison,
   LegendConfig,
   LegendData,
   LegendKey,
@@ -51,19 +41,25 @@ import {
   Timewindow,
   timewindowTypeChanged,
   toHistoryTimewindow,
+  toUtcDate,
   WidgetTimewindow
 } from '@app/shared/models/time/time.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { alarmFields } from '@shared/models/alarm.models';
 import {
   createLabelFromPattern,
   deepClone,
   flatFormattedData,
   formattedDataFormDatasourceData,
+  getDescendantProp,
+  isDefined,
   isDefinedAndNotNull,
-  isEqual, isUndefined,
-  parseHttpErrorMessage
+  isEqual,
+  isUndefined,
+  parseHttpErrorMessage,
+  plainColorFromVariable
 } from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import moment_ from 'moment';
@@ -72,6 +68,7 @@ import { EntityDataListener } from '@core/api/entity-data.service';
 import {
   AlarmData,
   AlarmDataPageLink,
+  dataKeyTypeToEntityKeyType,
   EntityData,
   EntityDataPageLink,
   entityDataToEntityInfo,
@@ -81,9 +78,11 @@ import {
 } from '@shared/models/query/query.models';
 import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
+import { DataKeyType, NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 import { RpcStatus } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
-import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
+import { isNotEmptyTbUnits, TbUnit } from '@shared/models/unit.models';
+import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 const moment = moment_;
 
@@ -162,6 +161,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   pageSize: number;
   warnOnPageDataOverflow: boolean;
   ignoreDataUpdateOnIntervalTick: boolean;
+  dataGenerationOptions: WidgetDataGenerationOptions;
 
   get firstDatasource(): Datasource {
     if (this.type === widgetType.alarm) {
@@ -189,7 +189,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   stateData: boolean;
   datasourcesOptional: boolean;
   decimals: number;
-  units: string;
+  units: TbUnit;
   comparisonEnabled: boolean;
   timeForComparison: ComparisonDuration;
   comparisonCustomIntervalValue: number;
@@ -321,6 +321,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.pageSize = options.pageSize;
       this.warnOnPageDataOverflow = options.warnOnPageDataOverflow;
       this.ignoreDataUpdateOnIntervalTick = options.ignoreDataUpdateOnIntervalTick;
+      this.dataGenerationOptions = options.dataGenerationOptions;
       this.datasourcePages = [];
       this.datasources = [];
       this.dataPages = [];
@@ -545,7 +546,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         updateRealtimeSubscription: () => this.updateRealtimeSubscription(),
         setRealtimeSubscription: (subscriptionTimewindow) => {
           this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
-        }
+        },
+        dataGenerationOptions: this.dataGenerationOptions
       };
       this.entityDataListeners.push(listener);
       return this.ctx.entityDataService.prepareSubscription(listener, this.ignoreDataUpdateOnIntervalTick);
@@ -619,7 +621,7 @@ export class WidgetSubscription implements IWidgetSubscription {
                 if (additionalInfoJson && additionalInfoJson.description) {
                   entityDescription = additionalInfoJson.description;
                 }
-              } catch (e) {}
+              } catch (e) {/**/}
             }
           }
         }
@@ -866,7 +868,8 @@ export class WidgetSubscription implements IWidgetSubscription {
                 return timer(initialTimeout, pollingInterval).pipe(
                   switchMap(() => this.ctx.deviceService.getPersistedRpc(response.rpcId, true)),
                   filter(persistentRespons =>
-                    persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED),
+                    (oneWayElseTwoWay && persistentRespons.status === RpcStatus.DELIVERED) ||
+                    (persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED)),
                   switchMap(persistentResponse => {
                     if ([RpcStatus.TIMEOUT, RpcStatus.EXPIRED].includes(persistentResponse.status)) {
                       return throwError(() => ({status: 504}));
@@ -1004,7 +1007,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         updateRealtimeSubscription: () => this.updateRealtimeSubscription(),
         setRealtimeSubscription: (subscriptionTimewindow) => {
           this.updateRealtimeSubscription(deepClone(subscriptionTimewindow));
-        }
+        },
+        dataGenerationOptions: this.dataGenerationOptions
       };
       this.entityDataListeners[datasourceIndex] = entityDataListener;
       return this.ctx.entityDataService.subscribeForPaginatedData(entityDataListener, pageLink, keyFilters,
@@ -1255,6 +1259,125 @@ export class WidgetSubscription implements IWidgetSubscription {
     return this.hasResolvedData;
   }
 
+  exportData(): {[key: string]: any}[] {
+    const timestampColumnTitle = this.ctx.translate.instant('widgets.table.timestamp-column-name');
+    const exportedData: {[key: string]: any}[] = [];
+    if (this.type === widgetType.timeseries || this.type === widgetType.latest) {
+      if (this.data.length) {
+        const tsRows: {[ts: string]: {[key: string]: any}} = {};
+        const allKeys: {[key: string]: boolean} = {};
+        const latest: {[datasourceName: string]: {[key: string]: any}} = {};
+        if (this.latestData.length) {
+          this.latestData.forEach(latestRow => {
+            if (!latest[latestRow.datasource.name]) {
+              latest[latestRow.datasource.name] = {};
+            }
+            latest[latestRow.datasource.name][latestRow.dataKey.label] = latestRow.data[0][1];
+            if (!allKeys[latestRow.dataKey.label]) {
+              allKeys[latestRow.dataKey.label] = true;
+            }
+          });
+        }
+        this.data.forEach((datasourceData) => {
+          datasourceData.data.forEach((row) => {
+            let key = datasourceData.dataKey.label;
+            const ts = row[0];
+            let tsKey = ts.toString();
+            if (this.type ===  widgetType.timeseries && this.datasources.length > 1) {
+              tsKey += '_' + datasourceData.datasource.entityName;
+            }
+            const value = row[1];
+            let tsRow = tsRows[tsKey];
+            if (!tsRow) {
+              tsRow = (this.latestData.length && latest[datasourceData.datasource.name]) ? deepClone(latest[datasourceData.datasource.name]) : {};
+              tsRow[timestampColumnTitle] = toUtcDate(ts);
+              tsRow['Entity Name'] = datasourceData.datasource.entityName;
+              tsRows[tsKey] = tsRow;
+            }
+            key = this.checkProperty(tsRow, key);
+            if (!allKeys[key]) {
+              allKeys[key] = true;
+            }
+            tsRow[key] = value;
+          });
+        });
+        const timestamps = Object.keys(tsRows);
+        const rowKeys = Object.keys(allKeys);
+        timestamps.sort();
+        rowKeys.sort();
+        timestamps.forEach((timestamp) => {
+          const tsRow = tsRows[timestamp];
+          const dataObj: {[key: string]: any} = {};
+          dataObj[timestampColumnTitle] = tsRow[timestampColumnTitle];
+          if (this.type === widgetType.timeseries && this.datasources.length > 1) {
+            dataObj['Entity Name'] = tsRow['Entity Name'];
+          }
+          rowKeys.forEach((key) => {
+            if (isDefined(tsRow[key])) {
+              dataObj[key] = tsRow[key];
+            } else {
+              dataObj[key] = null;
+            }
+          });
+          exportedData.push(dataObj);
+        });
+        if (!exportedData.length) {
+          const dataObj: {[key: string]: any} = {};
+          dataObj[timestampColumnTitle] = null;
+          this.data.forEach((datasourceData) => {
+            const key = datasourceData.dataKey.label;
+            dataObj[this.checkProperty(dataObj, key)] = null;
+          });
+          exportedData.push(dataObj);
+        }
+      }
+    } else if (this.type === widgetType.alarm) {
+      this.alarms.data.forEach((alarm) => {
+        const dataObj: {[key: string]: any} = {};
+        this.alarmSource.dataKeys.forEach((dataKey) => {
+          const key = dataKey.title;
+          if (dataKey.type === DataKeyType.alarm) {
+            const alarmField = alarmFields[dataKey.name];
+            const value = getDescendantProp(alarm, alarmField ? alarmField.value : dataKey.name);
+            dataObj[key] = this.ctx.utils.defaultAlarmFieldContent(dataKey, value);
+          } else {
+            const type = dataKeyTypeToEntityKeyType(dataKey.type);
+            let value = '';
+            if (type) {
+              if (alarm.latest && alarm.latest[type]) {
+                const tsVal = alarm.latest[type][dataKey.name];
+                if (tsVal) {
+                  value = tsVal.value;
+                }
+              }
+            }
+            dataObj[key] = value;
+          }
+        });
+        exportedData.push(dataObj);
+      });
+      if (!exportedData.length) {
+        const dataObj: {[key: string]: any} = {};
+        this.alarmSource.dataKeys.forEach((dataKey) => {
+          const key = dataKey.title;
+          dataObj[key] = null;
+        });
+        exportedData.push(dataObj);
+      }
+    }
+    return exportedData;
+  }
+
+  private checkProperty(dataObj: any, key: string): string {
+    let toCheck = key;
+    let count = 1;
+    while (Object.prototype.hasOwnProperty.call(dataObj, toCheck)) {
+      count++;
+      toCheck = key + count;
+    }
+    return toCheck;
+  }
+
   destroy(): void {
     this.unsubscribe();
     this.widgetTimewindowChangedSubject.complete();
@@ -1412,9 +1535,13 @@ export class WidgetSubscription implements IWidgetSubscription {
               this.data.push(datasourceData);
               this.hiddenData.push({data: []});
               if (this.displayLegend) {
+                const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals : this.decimals;
+                const units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : this.units;
+                const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.unitService, {decimals, units})
                 const legendKey: LegendKey = {
                   dataKey,
-                  dataIndex: dataKeyIndex
+                  dataIndex: dataKeyIndex,
+                  valueFormat
                 };
                 this.legendData.keys.push(legendKey);
                 const legendKeyData: LegendKeyData = {
@@ -1447,20 +1574,18 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.datasources.forEach((datasource) => {
       datasource.dataKeys.forEach((dataKey) => {
         if (datasource.generated || datasource.isAdditional) {
-          dataKey._hash = Math.random();
           dataKey.color = this.ctx.utils.getMaterialColor(index);
         }
         index++;
       });
-      if (datasource.latestDataKeys) {
-        datasource.latestDataKeys.forEach((dataKey) => {
-          if (datasource.generated || datasource.isAdditional) {
-            dataKey._hash = Math.random();
-            // dataKey.color = this.ctx.utils.getMaterialColor(index);
-          }
-          // index++;
-        });
-      }
+      // if (datasource.latestDataKeys) {
+      //   datasource.latestDataKeys.forEach((dataKey) => {
+      //     if (datasource.generated || datasource.isAdditional) {
+      //       // dataKey.color = this.ctx.utils.getMaterialColor(index);
+      //     }
+      //     // index++;
+      //   });
+      // }
     });
     if (this.comparisonEnabled) {
       this.datasourcePages.forEach(datasourcePage => {
@@ -1470,7 +1595,7 @@ export class WidgetSubscription implements IWidgetSubscription {
             datasource.dataKeys.forEach((dataKey) => {
               const settings: DataKeySettingsWithComparison = dataKey.settings;
               if (settings.comparisonSettings.color) {
-                dataKey.color = dataKey.settings.comparisonSettings.color;
+                dataKey.color = plainColorFromVariable(dataKey.settings.comparisonSettings.color);
               }
               const origDataKey = origDatasource.dataKeys[dataKey.origDataKeyIndex];
               (origDataKey.settings as DataKeySettingsWithComparison).comparisonSettings.color = dataKey.color;
@@ -1490,10 +1615,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   private entityDataToDatasourceData(datasource: Datasource, data: Array<DataSetHolder>): Array<DatasourceData> {
     let datasourceDataArray: Array<DatasourceData> = [];
     datasourceDataArray = datasourceDataArray.concat(datasource.dataKeys.map((dataKey, keyIndex) => {
-      dataKey.hidden = !!dataKey.settings.hideDataByDefault;
-      dataKey.inLegend = dataKey.settings.showInLegend ||
-        (isUndefined(dataKey.settings.showInLegend) && !dataKey.settings.removeFromLegend);
+      dataKey.hidden = !!dataKey.settings?.hideDataByDefault;
+      dataKey.inLegend = dataKey.settings?.showInLegend ||
+        (isUndefined(dataKey.settings?.showInLegend) && !dataKey.settings?.removeFromLegend);
       dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
+      dataKey.color = plainColorFromVariable(dataKey.color);
       const datasourceData: DatasourceData = {
         datasource,
         dataKey,
@@ -1507,6 +1633,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (datasource.latestDataKeys) {
       datasourceDataArray = datasourceDataArray.concat(datasource.latestDataKeys.map((dataKey, latestKeyIndex) => {
         dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
+        dataKey.color = plainColorFromVariable(dataKey.color);
         const datasourceData: DatasourceData = {
           datasource,
           dataKey,
@@ -1644,24 +1771,22 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private updateLegend(dataIndex: number, data: DataSet, detectChanges: boolean) {
-    const dataKey = this.legendData.keys.find(key => key.dataIndex === dataIndex).dataKey;
-    const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals : this.decimals;
-    const units = dataKey.units && dataKey.units.length ? dataKey.units : this.units;
+    const valueFormat = this.legendData.keys.find(key => key.dataIndex === dataIndex).valueFormat;
     const legendKeyData = this.legendData.data[dataIndex];
     if (this.legendConfig.showMin) {
-      legendKeyData.min = this.ctx.widgetUtils.formatValue(calculateMin(data), decimals, units);
+      legendKeyData.min = valueFormat.format(calculateMin(data));
     }
     if (this.legendConfig.showMax) {
-      legendKeyData.max = this.ctx.widgetUtils.formatValue(calculateMax(data), decimals, units);
+      legendKeyData.max = valueFormat.format(calculateMax(data));
     }
     if (this.legendConfig.showAvg) {
-      legendKeyData.avg = this.ctx.widgetUtils.formatValue(calculateAvg(data), decimals, units);
+      legendKeyData.avg = valueFormat.format(calculateAvg(data));
     }
     if (this.legendConfig.showTotal) {
-      legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), decimals, units);
+      legendKeyData.total = valueFormat.format(calculateTotal(data));
     }
     if (this.legendConfig.showLatest) {
-      legendKeyData.latest = this.ctx.widgetUtils.formatValue(calculateLatest(data), decimals, units);
+      legendKeyData.latest = valueFormat.format(calculateLatest(data));
     }
     this.callbacks.legendDataUpdated(this, detectChanges !== false);
   }

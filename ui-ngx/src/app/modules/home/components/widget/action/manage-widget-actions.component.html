@@ -1,34 +1,66 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-entity-table-content">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
+<div class="tb-entity-table tb-absolute-fill" [class.mat-padding]="outlinedBorder">
+  <div class="tb-entity-table-content flex flex-1 flex-col" [class.tb-outlined-border]="outlinedBorder">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
       <div class="mat-toolbar-tools">
         <span class="tb-entity-table-title" translate>widget-config.actions</span>
-        <span fxFlex></span>
-        <button mat-icon-button [disabled]="isLoading$ | async"
+        <span class="flex-1"></span>
+        <button mat-icon-button [disabled]="(isLoading$ | async) || disabled"
+                type="button"
+                [matMenuTriggerFor]="actionsToolbarMenu"
+                matTooltip="{{ 'action.more' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #actionsToolbarMenu="matMenu">
+          <ng-template matMenuContent>
+            <button mat-menu-item type="button"
+                    [disabled]="!hasActions"
+                    (click)="copyAllActions(null)">
+              <mat-icon matMenuItemIcon>copy_all</mat-icon>
+              <span translate>widget-config.copy-all-actions</span>
+            </button>
+            <button mat-menu-item type="button"
+                    [disabled]="!hasActionsInBuffer"
+                    (click)="pasteActions(null)">
+              <mat-icon matMenuItemIcon>content_paste</mat-icon>
+              <span translate>widget-config.paste-actions</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item type="button"
+                    (click)="importActions(null)">
+              <tb-icon matMenuItemIcon>mdi:file-import</tb-icon>
+              <span translate>widget-config.import-actions</span>
+            </button>
+            <button mat-menu-item type="button"
+                    [disabled]="!hasActions"
+                    (click)="exportActions(null)">
+              <tb-icon matMenuItemIcon>mdi:file-export</tb-icon>
+              <span translate>widget-config.export-actions</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item type="button"
+                    [disabled]="!hasActions"
+                    (click)="clearActions(null)">
+              <tb-icon matMenuItemIcon>mdi:broom</tb-icon>
+              <span translate>widget-config.clear-actions</span>
+            </button>
+          </ng-template>
+        </mat-menu>
+        <button mat-icon-button [disabled]="(isLoading$ | async) || disabled"
                 type="button"
                 (click)="addAction($event)"
                 matTooltip="{{ 'widget-config.add-action' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
         </button>
-        <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
+        <button mat-icon-button [disabled]="(isLoading$ | async) || disabled" (click)="enterFilterMode()"
                 type="button"
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
@@ -36,7 +68,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 type="button"
@@ -44,7 +76,7 @@
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [(ngModel)]="pageLink.textSearch"
@@ -58,7 +90,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="table-container">
+    <div class="table-container flex-1">
       <table mat-table
              [dataSource]="dataSource"
              matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear
@@ -106,18 +138,46 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
+          <mat-header-cell *matHeaderCellDef style="min-width: 120px; max-width: 120px; width: 120px">
           </mat-header-cell>
           <mat-cell *matCellDef="let action">
-            <div fxFlex fxLayout="row" fxLayoutAlign="end">
-              <button mat-icon-button [disabled]="isLoading$ | async"
+            <div class="flex flex-1 flex-row items-stretch justify-end">
+              <button mat-icon-button [disabled]="(isLoading$ | async) || disabled"
+                      type="button"
+                      [matMenuTriggerFor]="actionRowMenu"
+                      matTooltip="{{ 'action.more' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #actionRowMenu="matMenu">
+                <ng-template matMenuContent>
+                  <button mat-menu-item type="button"
+                          (click)="copyAction(null, action)">
+                    <mat-icon matMenuItemIcon>copy_all</mat-icon>
+                    <span translate>widget-config.copy-action</span>
+                  </button>
+                  @if (actionSources[action.actionSourceId]?.multiple) {
+                    <button mat-menu-item type="button"
+                            (click)="duplicateAction(null, action)">
+                      <mat-icon matMenuItemIcon>content_copy</mat-icon>
+                      <span translate>widget-config.duplicate-action</span>
+                    </button>
+                  }
+                  <button mat-menu-item type="button"
+                          (click)="exportAction(null, action)">
+                    <tb-icon matMenuItemIcon>mdi:file-export</tb-icon>
+                    <span translate>widget-config.export-action</span>
+                  </button>
+                </ng-template>
+              </mat-menu>
+              <button mat-icon-button [disabled]="(isLoading$ | async) || disabled"
                       type="button"
                       matTooltip="{{ 'widget-config.edit-action' | translate }}"
                       matTooltipPosition="above"
                       (click)="editAction($event, action)">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button [disabled]="isLoading$ | async"
+              <button mat-icon-button [disabled]="(isLoading$ | async) || disabled"
                       type="button"
                       matTooltip="{{ 'widget-config.delete-action' | translate }}"
                       matTooltipPosition="above"
@@ -132,9 +192,8 @@
                  *matRowDef="let action; columns: displayedColumns;"
                  cdkDrag [cdkDragData]="action"></mat-row>
       </table>
-      <span [fxShow]="dataSource.isEmpty() | async"
-            fxLayoutAlign="center center"
-            class="no-data-found" translate>{{ 'widget-config.no-actions-text' }}</span>
+      <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
+            class="no-data-found flex items-center justify-center" translate>{{ 'widget-config.no-actions-text' }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -32,24 +18,26 @@ import {
   CountWidgetSettings, entityCountCardLayoutImages
 } from '@home/components/widget/lib/count/count-widget.models';
 import {PageComponent} from '@shared/components/page.component';
-import {Component, forwardRef, Input, OnInit} from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   valueCardLayoutImages,
   valueCardLayoutTranslations
 } from '@home/components/widget/lib/cards/value-card-widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-count-widget-settings',
-  templateUrl: './count-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CountWidgetSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-count-widget-settings',
+    templateUrl: './count-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CountWidgetSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CountWidgetSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -60,6 +48,9 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
   @Input()
   alarmElseEntity: boolean;
 
+  @Input()
+  predefinedValues: string[];
+  
   private propagateChange = null;
 
   countCardLayouts = countCardLayouts;
@@ -68,9 +59,9 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
   countCardLayoutImageMap: Map<CountCardLayout, string>;
 
   countWidgetConfigForm: UntypedFormGroup;
-
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -104,7 +95,9 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
       chevronSizeUnit: [null, []],
       chevronColor: [null, []],
     });
-    this.countWidgetConfigForm.valueChanges.subscribe(() => {
+    this.countWidgetConfigForm.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     for (const trigger of ['showLabel', 'showIcon', 'showIconBackground', 'showChevron']) {
@@ -113,7 +106,9 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
       for (const part of path) {
         control = this.countWidgetConfigForm.get(part);
       }
-      control.valueChanges.subscribe(() => {
+      control.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators();
       });
     }

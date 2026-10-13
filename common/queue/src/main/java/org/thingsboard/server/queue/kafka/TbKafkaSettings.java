@@ -1,42 +1,32 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
+import org.thingsboard.server.queue.util.TbKafkaComponent;
 
-import javax.annotation.PreDestroy;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -45,7 +35,7 @@ import java.util.Properties;
  * Created by ashvayka on 25.09.18.
  */
 @Slf4j
-@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+@TbKafkaComponent
 @ConfigurationProperties(prefix = "queue.kafka")
 @Component
 public class TbKafkaSettings {
@@ -111,6 +101,7 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.fetch_max_bytes:134217728}")
     private int fetchMaxBytes;
 
+    @Getter
     @Value("${queue.kafka.request.timeout.ms:30000}")
     private int requestTimeoutMs;
 
@@ -135,17 +126,41 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.confluent.security.protocol:}")
     private String securityProtocol;
 
+    @Value("${queue.kafka.confluent.oauth.client-id:}")
+    private String oauthClientId;
+
+    @Value("${queue.kafka.confluent.oauth.client-secret:}")
+    private String oauthClientSecret;
+
+    @Value("${queue.kafka.confluent.oauth.endpoint-url:}")
+    private String oauthEndpointUrl;
+
+    @Value("${queue.kafka.confluent.oauth.scope:}")
+    private String oauthScope;
+
     @Value("${queue.kafka.other-inline:}")
     private String otherInline;
+
+    @Value("${queue.kafka.consumer-properties-per-topic-inline:}")
+    private String consumerPropertiesPerTopicInline;
+
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
 
     @Deprecated
     @Setter
     private List<TbProperty> other;
 
     @Setter
-    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
+    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = new HashMap<>();
 
-    private volatile AdminClient adminClient;
+    @PostConstruct
+    public void initInlineTopicProperties() {
+        Map<String, List<TbProperty>> inlineProps = parseTopicPropertyList(consumerPropertiesPerTopicInline);
+        if (!inlineProps.isEmpty()) {
+            consumerPropertiesPerTopic.putAll(inlineProps);
+        }
+    }
 
     public Properties toConsumerProps(String topic) {
         Properties props = toProps();
@@ -161,9 +176,20 @@ public class TbKafkaSettings {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
-        consumerPropertiesPerTopic
-                .getOrDefault(topic, Collections.emptyList())
-                .forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+        if (topic != null) {
+            List<TbProperty> properties = consumerPropertiesPerTopic.get(topic);
+            if (properties == null) {
+                for (Map.Entry<String, List<TbProperty>> entry : consumerPropertiesPerTopic.entrySet()) {
+                    if (topic.startsWith(entry.getKey())) {
+                        properties = entry.getValue();
+                        break;
+                    }
+                }
+            }
+            if (properties != null) {
+                properties.forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+            }
+        }
         return props;
     }
 
@@ -188,9 +214,13 @@ public class TbKafkaSettings {
 
         if (useConfluent) {
             props.put("ssl.endpoint.identification.algorithm", sslAlgorithm);
-            props.put("sasl.mechanism", saslMechanism);
-            props.put("sasl.jaas.config", saslConfig);
+            props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+            if ("OAUTHBEARER".equalsIgnoreCase(saslMechanism)) {
+                applyOauthBearerProps(props);
+            } else {
+                props.put(SaslConfigs.SASL_JAAS_CONFIG, saslConfig);
+            }
         }
 
         props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
@@ -205,6 +235,34 @@ public class TbKafkaSettings {
         return props;
     }
 
+    private void applyOauthBearerProps(Properties props) {
+        if (StringUtils.isBlank(oauthClientId) || StringUtils.isBlank(oauthClientSecret) || StringUtils.isBlank(oauthEndpointUrl)) {
+            throw new IllegalStateException("Kafka SASL mechanism is OAUTHBEARER but "
+                    + "queue.kafka.confluent.oauth.client-id / client-secret / endpoint-url are not all set");
+        }
+        if (!oauthEndpointUrl.regionMatches(true, 0, "https://", 0, "https://".length())) {
+            log.warn("Kafka OAuth token endpoint URL is not HTTPS ({}); client credentials will be sent unencrypted",
+                    oauthEndpointUrl);
+        }
+        StringBuilder jaasConfig = new StringBuilder(
+                "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required"
+                        + " clientId=\"" + escapeJaasValue(oauthClientId) + "\""
+                        + " clientSecret=\"" + escapeJaasValue(oauthClientSecret) + "\"");
+        if (StringUtils.isNotBlank(oauthScope)) {
+            // Some IdPs (e.g. Azure AD's ".default") require a scope for the client-credentials grant.
+            jaasConfig.append(" scope=\"").append(escapeJaasValue(oauthScope)).append("\"");
+        }
+        jaasConfig.append(";");
+        props.put(SaslConfigs.SASL_JAAS_CONFIG, jaasConfig.toString());
+        props.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS,
+                "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler");
+        props.put(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL, oauthEndpointUrl);
+    }
+
+    private static String escapeJaasValue(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
     void configureSSL(Properties props) {
         if (sslEnabled) {
             props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
@@ -216,15 +274,12 @@ public class TbKafkaSettings {
         }
     }
 
-    public AdminClient getAdminClient() {
-        if (adminClient == null) {
-            synchronized (this) {
-                if (adminClient == null) {
-                    adminClient = AdminClient.create(toAdminProps());
-                }
-            }
-        }
-        return adminClient;
+    /*
+     * Temporary solution to avoid major code changes.
+     * FIXME: use single instance of Kafka queue admin, don't create a separate one for each consumer/producer
+     * */
+    public KafkaAdmin getAdmin() {
+        return kafkaAdmin;
     }
 
     protected Properties toAdminProps() {
@@ -234,11 +289,25 @@ public class TbKafkaSettings {
         return props;
     }
 
-    @PreDestroy
-    private void destroy() {
-        if (adminClient != null) {
-            adminClient.close();
-        }
+    private Map<String, List<TbProperty>> parseTopicPropertyList(String inlineProperties) {
+        Map<String, List<String>> grouped = PropertyUtils.getGroupedProps(inlineProperties);
+        Map<String, List<TbProperty>> result = new HashMap<>();
+
+        grouped.forEach((topic, entries) -> {
+            Map<String, String> merged = new LinkedHashMap<>();
+            for (String entry : entries) {
+                String[] kv = entry.split("=", 2);
+                if (kv.length == 2) {
+                    merged.put(kv[0].trim(), kv[1].trim());
+                }
+            }
+            List<TbProperty> props = merged.entrySet().stream()
+                    .map(e -> new TbProperty(e.getKey(), e.getValue()))
+                    .toList();
+            result.put(topic, props);
+        });
+
+        return result;
     }
 
 }

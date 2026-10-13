@@ -1,0 +1,104 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.rule.engine.ai;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.langchain4j.model.chat.request.ResponseFormat;
+import dev.langchain4j.model.chat.request.ResponseFormatType;
+import jakarta.validation.constraints.NotNull;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.validation.ValidJsonSchema;
+
+import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
+import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonSchemaResponseFormat;
+import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbTextResponseFormat;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TbTextResponseFormat.class, name = "TEXT"),
+        @JsonSubTypes.Type(value = TbJsonResponseFormat.class, name = "JSON"),
+        @JsonSubTypes.Type(value = TbJsonSchemaResponseFormat.class, name = "JSON_SCHEMA")
+})
+public sealed interface TbResponseFormat permits TbTextResponseFormat, TbJsonResponseFormat, TbJsonSchemaResponseFormat {
+
+    TbResponseFormatType type();
+
+    boolean isSupportedBy(AiChatModelConfig<?> modelConfig);
+
+    ResponseFormat toLangChainResponseFormat();
+
+    enum TbResponseFormatType {
+
+        TEXT,
+        JSON,
+        JSON_SCHEMA
+
+    }
+
+    record TbTextResponseFormat() implements TbResponseFormat {
+
+        @Override
+        public TbResponseFormatType type() {
+            return TbResponseFormatType.TEXT;
+        }
+
+        @Override
+        public boolean isSupportedBy(AiChatModelConfig<?> modelConfig) {
+            return true;
+        }
+
+        @Override
+        public ResponseFormat toLangChainResponseFormat() {
+            return ResponseFormat.TEXT;
+        }
+
+    }
+
+    record TbJsonResponseFormat() implements TbResponseFormat {
+
+        @Override
+        public TbResponseFormatType type() {
+            return TbResponseFormatType.JSON;
+        }
+
+        @Override
+        public boolean isSupportedBy(AiChatModelConfig<?> modelConfig) {
+            return modelConfig.supportsSchemalessJsonOutput();
+        }
+
+        @Override
+        public ResponseFormat toLangChainResponseFormat() {
+            return ResponseFormat.JSON;
+        }
+
+    }
+
+    record TbJsonSchemaResponseFormat(@NotNull @ValidJsonSchema ObjectNode schema) implements TbResponseFormat {
+
+        @Override
+        public TbResponseFormatType type() {
+            return TbResponseFormatType.JSON_SCHEMA;
+        }
+
+        @Override
+        public boolean isSupportedBy(AiChatModelConfig<?> modelConfig) {
+            return modelConfig.supportsJsonSchemaOutput();
+        }
+
+        @Override
+        public ResponseFormat toLangChainResponseFormat() {
+            return ResponseFormat.builder()
+                    .type(ResponseFormatType.JSON)
+                    .jsonSchema(Langchain4jJsonSchemaAdapter.fromObjectNode(schema))
+                    .build();
+        }
+
+    }
+
+}

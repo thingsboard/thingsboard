@@ -1,0 +1,68 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
+  <tb-gallery-image-input label="{{ 'widgets.maps.image-map-background' | translate }}"
+                          formControlName="mapImageUrl">
+  </tb-gallery-image-input>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.maps.image-map-background-from-entity-attribute</legend>
+    <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
+      <mat-form-field class="flex-1">
+        <mat-label translate>widgets.maps.image-url-source-entity-alias</mat-label>
+        <input matInput type="text"
+               placeholder="{{ 'entity.entity-alias' | translate }}"
+               #entityAliasInput
+               (focusin)="onEntityAliasFocus()"
+               formControlName="imageEntityAlias"
+               [matAutocomplete]="entityAliasAutocomplete">
+        @if (providerSettingsFormGroup.get('imageEntityAlias').value && !providerSettingsFormGroup.get('imageEntityAlias').disabled) {
+          <button
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clearEntityAlias()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+        }
+        <mat-autocomplete
+          class="tb-autocomplete"
+          #entityAliasAutocomplete="matAutocomplete">
+          @for (entityAlias of filteredEntityAliases | async; track entityAlias) {
+            <mat-option [value]="entityAlias">
+              <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      <mat-form-field class="flex-1">
+        <mat-label translate>widgets.maps.image-url-source-entity-attribute</mat-label>
+        <input matInput type="text"
+               placeholder="{{ 'entity.key-name' | translate }}"
+               #keyInput
+               (focusin)="onKeyFocus()"
+               formControlName="imageUrlAttribute"
+               [matAutocomplete]="keyAutocomplete">
+        @if (providerSettingsFormGroup.get('imageUrlAttribute').value && !providerSettingsFormGroup.get('imageUrlAttribute').disabled) {
+          <button
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clearKey()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+        }
+        <mat-autocomplete
+          class="tb-autocomplete"
+          #keyAutocomplete="matAutocomplete">
+          @for (key of filteredKeys | async; track key) {
+            <mat-option [value]="key">
+              <span [innerHTML]="key | highlight:keySearchText"></span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+    </section>
+  </fieldset>
+</section>

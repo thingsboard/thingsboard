@@ -1,24 +1,11 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   checkBoxCell,
-  DateEntityTableColumn,
+  DateEntityTableColumn, defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig,
   HeaderActionDescriptor
@@ -28,27 +15,28 @@ import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { DialogService } from '@core/services/dialog.service';
-import { MatDialog } from '@angular/material/dialog';
 import { ImportExportService } from '@shared/import-export/import-export.service';
-import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { AssetProfile } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileComponent } from '@home/components/profile/asset-profile.component';
 import { AssetProfileTabsComponent } from './asset-profile-tabs.component';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
-export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConfig<AssetProfile>> {
+export class AssetProfilesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<AssetProfile> = new EntityTableConfig<AssetProfile>();
 
   constructor(private assetProfileService: AssetProfileService,
               private importExport: ImportExportService,
-              private homeDialogs: HomeDialogsService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
               private router: Router,
-              private dialog: MatDialog) {
+              private customTranslate: CustomTranslatePipe) {
 
     this.config.entityType = EntityType.ASSET_PROFILE;
     this.config.entityComponent = AssetProfileComponent;
@@ -61,7 +49,8 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
     this.config.columns.push(
       new DateEntityTableColumn<AssetProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<AssetProfile>('name', 'asset-profile.name', '50%'),
-      new EntityTableColumn<AssetProfile>('description', 'asset-profile.description', '50%'),
+      new EntityTableColumn<AssetProfile>('description', 'asset-profile.description', '50%',
+          entity => this.customTranslate.transform(entity.description || '')),
       new EntityTableColumn<AssetProfile>('isDefault', 'asset-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);
@@ -78,7 +67,8 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
       {
         name: this.translate.instant('asset-profile.set-default'),
         icon: 'flag',
-        isEnabled: (assetProfile) => !assetProfile.default,
+        isEnabled: (assetProfile) => !assetProfile.default  &&
+          this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.WRITE),
         onAction: ($event, entity) => this.setDefaultAssetProfile($event, entity)
       }
     );
@@ -94,14 +84,18 @@ export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConf
     this.config.saveEntity = assetProfile => this.assetProfileService.saveAssetProfile(assetProfile);
     this.config.deleteEntity = id => this.assetProfileService.deleteAssetProfile(id.id);
     this.config.onEntityAction = action => this.onAssetProfileAction(action);
-    this.config.deleteEnabled = (assetProfile) => assetProfile && !assetProfile.default;
-    this.config.entitySelectionEnabled = (assetProfile) => assetProfile && !assetProfile.default;
+    this.config.deleteEnabled = (assetProfile) => assetProfile && !assetProfile.default &&
+      this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.DELETE);
+    this.config.entitySelectionEnabled = (assetProfile) => assetProfile && !assetProfile.default &&
+      this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.DELETE);
+    this.config.detailsReadonly = (assetProfile) =>
+      !this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.WRITE);
     this.config.addActionDescriptors = this.configureAddActions();
   }
 
   resolve(): EntityTableConfig<AssetProfile> {
     this.config.tableTitle = this.translate.instant('asset-profile.asset-profiles');
-
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

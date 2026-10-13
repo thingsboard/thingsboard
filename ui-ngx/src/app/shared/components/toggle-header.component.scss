@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../scss/constants";
 
 :host {
@@ -21,6 +9,9 @@
   grid-template-columns: min-content minmax(auto, 1fr) min-content;
   .tb-toggle-header-pagination-button {
     display: none;
+    &.fill-height {
+      height: 100%;
+    }
   }
   &.tb-toggle-header-pagination-controls-enabled {
     .tb-toggle-header-pagination-button {
@@ -40,9 +31,34 @@
   .tb-toggle-header {
     transition: transform 500ms cubic-bezier(0.35, 0, 0.25, 1);
   }
+
+  .tb-error-icon {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
+  }
 }
 
 :host ::ng-deep {
+  .tb-toggle-container {
+    &.fill-height {
+      .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+        height: 100%;
+        .mat-button-toggle.mat-button-toggle-appearance-standard {
+          .mat-button-toggle-button {
+            height: 100%;
+          }
+        }
+      }
+    }
+    &.extra-padding {
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        .mat-button-toggle-label-content {
+          padding: 0 20px;
+        }
+      }
+    }
+  }
   .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
     overflow: visible;
     width: 100%;
@@ -51,6 +67,18 @@
     padding: 2px;
     border: none;
     background: rgba(0, 0, 0, 0.06);
+    &.tb-primary-fill {
+      background: none;
+      &:before {
+        border-radius: 100px;
+      }
+    }
+    .tb-toggle-button-error {
+      .mat-button-toggle-button {
+        border: 1px solid rgb(221, 44, 0);
+        border-radius: 20px;
+      }
+    }
     .mat-button-toggle + .mat-button-toggle {
       border-left: none;
     }
@@ -58,6 +86,7 @@
       flex: 1;
       color: rgba(0, 0, 0, 0.38);
       background: transparent;
+      position: relative;
 
       .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
         border-radius: 20px;
@@ -69,15 +98,30 @@
           font-weight: 400;
           font-size: 14px;
           letter-spacing: 0.2px;
+          .mat-pseudo-checkbox {
+            display: none;
+          }
         }
       }
       &.mat-button-toggle-checked {
         .mat-button-toggle-button {
-          background: #F3F6FA;
-          color: $tb-primary-color;
-          border: 1px solid $tb-primary-color;
+          position: relative;
+          background: #fff;
+          color: var(--tb-primary-500);
+          border: 1px solid var(--tb-primary-500);
           border-radius: 20px;
-
+          &:before {
+            content: "";
+            display: block;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-radius: 20px;
+            background: var(--tb-primary-500);
+            opacity: 0.04;
+          }
           .mat-button-toggle-label-content {
             font-weight: 500;
             line-height: 24px;
@@ -89,18 +133,21 @@
       .mat-button-toggle.mat-button-toggle-appearance-standard {
         &.mat-button-toggle-checked {
           .mat-button-toggle-button {
-            background: $tb-primary-color;
+            background: var(--tb-primary-500);
             color: #FFFFFF;
+            &:before {
+              content: none;
+            }
           }
         }
       }
       &.tb-invert {
         .mat-button-toggle.mat-button-toggle-appearance-standard {
-          color: rgba(255, 255, 255, 0.8);
+          color: color-mix(in srgb, currentColor 80%, transparent);
           &.mat-button-toggle-checked {
             .mat-button-toggle-button {
               background: #FFFFFF;
-              color: $tb-primary-color;
+              color: var(--tb-primary-500);
             }
           }
         }
@@ -119,6 +166,10 @@
             color: rgba(0, 0, 0, 0.38);
             border-color: rgba(0, 0, 0, 0.38);
           }
+        }
+
+        .mat-button-toggle-focus-overlay {
+          opacity: 0;
         }
       }
       &.tb-fill {
@@ -161,6 +212,16 @@
     &.mat-mdc-form-field {
       line-height: 16px;
       font-size: 12px;
+      &.fill-height {
+        .mat-mdc-text-field-wrapper {
+          .mat-mdc-form-field-flex {
+            margin: auto;
+          }
+        }
+        .mat-mdc-form-field-subscript-wrapper {
+          display: none;
+        }
+      }
     }
     .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
       min-height: 0;
@@ -200,6 +261,20 @@
         right: 0;
         bottom: 0;
         color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}
+
+:host-context(.mat-primary) {
+  ::ng-deep {
+    .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+      &.tb-fill {
+        &.tb-invert {
+          .mat-button-toggle.mat-button-toggle-appearance-standard {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
       }
     }
   }

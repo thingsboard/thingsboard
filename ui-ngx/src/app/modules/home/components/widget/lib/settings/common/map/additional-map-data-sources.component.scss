@@ -1,0 +1,40 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../../../../../scss/constants';
+
+.tb-additional-map-data-sources {
+  .tb-form-table-header-cell {
+    &.tb-source-header {
+      flex: 1 1 50%;
+    }
+    &.tb-data-keys-header {
+      flex: 1 1 50%;
+    }
+    &.tb-actions-header {
+      width: 40px;
+      min-width: 40px;
+    }
+    @media #{$mat-lt-lg} {
+      &.tb-source-header {
+        flex: 1 1 30%;
+      }
+      &.tb-data-keys-header {
+        flex: 1 1 70%;
+      }
+      @media #{$mat-lt-md} {
+        &.tb-source-header {
+          flex: 1 1 50%;
+        }
+        &.tb-data-keys-header {
+          flex: 1 1 50%;
+        }
+      }
+    }
+  }
+
+  .tb-form-table-body {
+    tb-additional-map-data-source-row {
+      overflow: hidden;
+    }
+  }
+}

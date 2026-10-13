@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.partition;
 
 import com.google.common.util.concurrent.Futures;
@@ -22,7 +10,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.DonAsynchron;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -40,7 +28,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 
 @Slf4j
 public abstract class AbstractPartitionBasedService<T extends EntityId> extends TbApplicationEventListener<PartitionChangeEvent> {
@@ -67,7 +54,7 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
 
     protected void init() {
         // Should be always single threaded due to absence of locks.
-        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getSchedulerExecutorName())));
+        scheduledExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newSingleThreadScheduledExecutor(getSchedulerExecutorName()));
     }
 
     protected ServiceType getServiceType() {
@@ -88,15 +75,15 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
      * Any locks or delays in this module will affect DiscoveryService and entire system
      */
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
+    public void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         log.debug("onTbApplicationEvent, processing event: {}", partitionChangeEvent);
-        subscribeQueue.add(partitionChangeEvent.getPartitions());
+        subscribeQueue.add(partitionChangeEvent.getCorePartitions());
         scheduledExecutor.submit(this::pollInitStateFromDB);
     }
 
     @Override
     protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
-        return getServiceType().equals(event.getServiceType());
+        return event.getServiceType() == getServiceType();
     }
 
     protected void pollInitStateFromDB() {

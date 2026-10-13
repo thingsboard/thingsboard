@@ -1,0 +1,28 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-custom-mobile-page-panel">
+  <div class="tb-custom-mobile-page-title" translate>mobile.edit-custom-page</div>
+  <div class="tb-custom-mobile-page-panel-content">
+    <tb-mobile-page-item [formControl]="mobilePageControl">
+    </tb-mobile-page-item>
+  </div>
+  <div class="tb-custom-mobile-page-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="apply()"
+            [disabled]="mobilePageControl.invalid || !mobilePageControl.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

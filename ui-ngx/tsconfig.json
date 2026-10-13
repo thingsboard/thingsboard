@@ -6,16 +6,15 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
+    "esModuleInterop": true,
     "declaration": false,
-    "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "ES2022",
     "module": "es2020",
     "emitDecoratorMetadata": true,
-    "allowSyntheticDefaultImports": true,
-    "jsx": "react",
+    "resolveJsonModule": true,
     "typeRoots": [
       "node_modules/@types",
       "src/typings"
@@ -44,6 +43,9 @@
       ],
       "ace": [
         "node_modules/ace-builds/src-noconflict/ace.js"
+      ],
+      "exceljs-hardened": [
+        "node_modules/exceljs-hardened/dist/exceljs.min.js"
       ],
       "jquery": [
         "node_modules/jquery/dist/jquery.min.js"

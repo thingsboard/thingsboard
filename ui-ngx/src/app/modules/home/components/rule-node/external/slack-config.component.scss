@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  .tb-title {
+    display: block;
+    padding-bottom: 6px;
+  }
+}
+
+:host ::ng-deep {
+  .mat-mdc-radio-group {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 22px;
+    gap: 12px;
+
+    .mat-mdc-radio-button {
+      flex: 1 1 100%;
+      padding: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+    }
+  }
+
+  @media screen and (max-width: 599px) {
+    .mat-mdc-radio-group {
+      flex-direction: column;
+    }
+  }
+}

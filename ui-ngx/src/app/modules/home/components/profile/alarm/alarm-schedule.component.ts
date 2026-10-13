@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -40,20 +26,22 @@ import {
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-alarm-schedule',
-  templateUrl: './alarm-schedule.component.html',
-  styleUrls: ['./alarm-schedule.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AlarmScheduleComponent),
-    multi: true
-  }, {
-    provide: NG_VALIDATORS,
-    useExisting: forwardRef(() => AlarmScheduleComponent),
-    multi: true
-  }]
+    selector: 'tb-alarm-schedule',
+    templateUrl: './alarm-schedule.component.html',
+    styleUrls: ['./alarm-schedule.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmScheduleComponent),
+            multi: true
+        }, {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmScheduleComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AlarmScheduleComponent implements ControlValueAccessor, Validator, OnInit {
   @Input()
@@ -61,7 +49,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   alarmScheduleForm: UntypedFormGroup;
 
-  alarmScheduleTypes = Object.keys(AlarmScheduleType);
+  alarmScheduleTypes = Object.values(AlarmScheduleType);
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
   dayOfWeekTranslationsArray = dayOfWeekTranslations;
@@ -80,7 +68,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -94,13 +83,17 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       dynamicValue: [null]
     });
 
-    this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
+    this.alarmScheduleForm.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((type) => {
       const defaultTimezone = getDefaultTimezone();
       this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: defaultTimezone}, {emitEvent: false});
       this.updateValidators(type, true);
       this.alarmScheduleForm.updateValueAndValidity();
     });
-    this.alarmScheduleForm.valueChanges.subscribe(() => {
+    this.alarmScheduleForm.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

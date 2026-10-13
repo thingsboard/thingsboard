@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-form-panel no-padding no-border">
+  <div class="tb-form-table tb-map-layers">
+    <div class="tb-form-table-header no-padding-right">
+      <div class="tb-form-table-header-cell tb-label-header" translate>widgets.maps.layer.label</div>
+      <div class="tb-form-table-header-cell tb-provider-header" translate>widgets.maps.layer.provider.provider</div>
+      <div class="tb-form-table-header-cell tb-layer-header" translate>widgets.maps.layer.layer</div>
+      <div class="tb-form-table-header-cell tb-actions-header"></div>
+    </div>
+    @if (layersFormArray().controls.length) {
+      <div class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
+           cdkDropList cdkDropListOrientation="vertical"
+           [cdkDropListDisabled]="!dragEnabled"
+           (cdkDropListDropped)="layerDrop($event)">
+        @for (layerControl of layersFormArray().controls; track layerControl) {
+          <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+               class="tb-draggable-form-table-row"
+               >
+            <tb-map-layer-row class="flex-1"
+                              [formControl]="layerControl"
+            (layerRemoved)="removeLayer($index)"></tb-map-layer-row>
+            <div class="tb-form-table-row-cell-buttons">
+              <button [class.tb-hidden]="!dragEnabled"
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <span class="tb-prompt flex items-center justify-center">{{ 'widgets.maps.layer.no-layers' | translate }}</span>
+    }
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addLayer()">
+      {{ 'widgets.maps.layer.add-layer' | translate }}
+    </button>
+  </div>
+</div>

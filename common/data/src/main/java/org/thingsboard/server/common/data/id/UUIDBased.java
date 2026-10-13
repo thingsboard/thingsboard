@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.id;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,6 +13,9 @@ public abstract class UUIDBased implements HasUUID, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /** Cache the hash code */
+    private transient int hash; // Default to 0. The hash code calculated for this object likely never be zero
+
     private final UUID id;
 
     public UUIDBased() {
@@ -36,6 +27,7 @@ public abstract class UUIDBased implements HasUUID, Serializable {
         this.id = id;
     }
 
+    @Override
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     public UUID getId() {
         return id;
@@ -43,10 +35,12 @@ public abstract class UUIDBased implements HasUUID, Serializable {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
+        if (hash == 0) {
+            final int prime = 31;
+            int result = 1;
+            hash = prime * result + ((id == null) ? 0 : id.hashCode());
+        }
+        return hash;
     }
 
     @Override

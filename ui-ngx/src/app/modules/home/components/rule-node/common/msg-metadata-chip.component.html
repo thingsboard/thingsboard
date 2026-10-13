@@ -1,0 +1,17 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div [formGroup]="chipControlGroup" class="tb-form-row space-between">
+  <div class="fixed-title-width">{{ labelText }}</div>
+  <mat-chip-listbox formControlName="chipControl">
+    @for (option of selectOptions; track option) {
+      <mat-chip-option
+        selectable="{{ chipControlGroup.get('chipControl').value !== option.value }}"
+        color="primary"
+      [value]="option.value">{{ option.name }}</mat-chip-option>
+    }
+  </mat-chip-listbox>
+</div>

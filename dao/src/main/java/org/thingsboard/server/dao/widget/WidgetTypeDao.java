@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.widget;
 
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,14 +16,16 @@ import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.ImageContainerDao;
+import org.thingsboard.server.dao.ResourceContainerDao;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * The Interface WidgetTypeDao.
  */
-public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo> {
+public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo>, ResourceContainerDao<WidgetTypeInfo> {
 
     /**
      * Save or update widget type object
@@ -55,6 +45,8 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     WidgetType findWidgetTypeById(TenantId tenantId, UUID widgetTypeId);
 
     boolean existsByTenantIdAndId(TenantId tenantId, UUID widgetTypeId);
+
+    WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, UUID widgetTypeId);
 
     PageData<WidgetTypeInfo> findSystemWidgetTypes(WidgetTypeFilter widgetTypeFilter, PageLink pageLink);
 
@@ -95,15 +87,6 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
 
     WidgetTypeDetails findDetailsByTenantIdAndFqn(UUID tenantId, String fqn);
 
-    /**
-     * Find widget types infos by tenantId and resourceId in descriptor.
-     *
-     * @param tenantId the tenantId
-     * @param tbResourceId the resourceId
-     * @return the list of widget types infos objects
-     */
-    List<WidgetTypeDetails> findWidgetTypesInfosByTenantIdAndResourceId(UUID tenantId, UUID tbResourceId);
-
     List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns);
 
     List<WidgetsBundleWidget> findWidgetsBundleWidgetsByWidgetsBundleId(UUID tenantId, UUID widgetsBundleId);
@@ -113,5 +96,7 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId);
 
     PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink);
+
+    void labelWidgetTypesAsDeprecatedByFqns(Set<String> fqns);
 
 }

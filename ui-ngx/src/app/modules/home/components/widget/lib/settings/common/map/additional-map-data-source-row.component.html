@@ -1,0 +1,74 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div [formGroup]="dataSourceFormGroup" class="tb-form-table-row tb-additional-map-data-source-row">
+  <div class="tb-source-field">
+    <mat-form-field class="tb-ds-type-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="dsType">
+        @for (type of datasourceTypes; track type) {
+          <mat-option [value]="type">
+            {{ datasourceTypesTranslations.get(type) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.function) {
+      <mat-form-field
+        class="tb-label-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="dsLabel" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    }
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.device) {
+      <tb-entity-autocomplete
+        class="tb-device-field"
+        required
+        inlineField
+        placeholder="{{ 'device.select-device' | translate }}"
+        [entityType]="EntityType.DEVICE"
+        formControlName="dsDeviceId">
+      </tb-entity-autocomplete>
+    }
+    @if (dataSourceFormGroup.get('dsType').value === DatasourceType.entity) {
+      <tb-entity-alias-select
+        class="tb-entity-alias-field"
+        inlineField
+        tbRequired
+        [aliasController]="context.aliasController"
+        formControlName="dsEntityAliasId"
+        [callbacks]="context.callbacks">
+      </tb-entity-alias-select>
+    }
+  </div>
+  <tb-data-keys
+    class="tb-data-keys-field"
+    formControlName="dataKeys"
+    inlineField
+    hideDataKeyColor
+    hideDataKeyDecimals
+    hideDataKeyUnits
+    disableDrag
+    [required]="true"
+    [widgetType]="widgetType.latest"
+    [widget]="context.widget"
+    [datasourceType]="dataSourceFormGroup.get('dsType').value"
+    [entityAliasId]="dataSourceFormGroup.get('dsEntityAliasId').value"
+    [deviceId]="dataSourceFormGroup.get('dsDeviceId').value"
+    [aliasController]="context.aliasController"
+    [callbacks]="context.callbacks"
+    [generateKey]="generateAdditionalDataKey">
+  </tb-data-keys>
+  <div class="tb-form-table-row-cell-buttons">
+    <div class="tb-remove-button">
+      <button type="button"
+              mat-icon-button
+              (click)="dataSourceRemoved.emit()"
+              matTooltip="{{ 'widgets.maps.data-layer.remove-datasource' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

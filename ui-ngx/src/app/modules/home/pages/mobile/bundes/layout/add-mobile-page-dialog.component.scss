@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  width: 600px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: grid;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+
+  .mobile-page-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}

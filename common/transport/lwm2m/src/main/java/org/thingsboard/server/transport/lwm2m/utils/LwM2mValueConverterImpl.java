@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.utils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,15 +9,19 @@ import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.core.util.datatype.ULong;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.NONE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
 
 @Slf4j
 public class LwM2mValueConverterImpl implements LwM2mValueConverter {
@@ -52,12 +43,13 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             return value;
         }
 
-        if (currentType == expectedType) {
-            /** expected type */
-            return value;
-        }
         if (currentType == null) {
             currentType = OPAQUE;
+        }
+
+        if (currentType == expectedType || currentType == NONE || currentType == TIME) {
+            /** expected type */
+            return value;
         }
 
         switch (expectedType) {
@@ -69,6 +61,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         if ((double) value == longValue.doubleValue()) {
                             return longValue;
                         }
+                        break;
                     case STRING:
                         log.debug("Trying to convert String value [{}] to Integer", value);
                         return Long.parseLong((String) value);
@@ -76,6 +69,28 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         break;
                 }
                 break;
+            case UNSIGNED_INTEGER:
+                    switch (currentType) {
+                        case INTEGER:
+                            if (value instanceof Integer) {
+                                log.debug("Trying to convert Integer value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf(Integer.toUnsignedLong((Integer) value));
+                            } else if (value instanceof Long) {
+                                log.debug("Trying to convert Long value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf((Long) value);
+                            } else if (value instanceof BigInteger) {
+                                log.debug("Trying to convert Biginteger value [{}] to Unsigned Integer", value);
+                                return ULong.valueOf((BigInteger) value);
+                            }
+                            throw new IllegalArgumentException("Trying to convert value [" + value + "] to Unsigned Integer. Unsupported value type: " + value.getClass());
+                        case FLOAT:
+                            log.debug("Trying to convert float value [{}] to Unsigned Integer", value);
+                            return ULong.valueOf(((Float) value).longValue());
+                        case STRING:
+                            log.debug("Trying to convert string value [{}] to Unsigned Integer", value);
+                            return ULong.valueOf((String) value);
+                    }
+                    break;
             case FLOAT:
                 switch (currentType) {
                     case INTEGER:
@@ -132,7 +147,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                              **/
                         } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
-                            throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
+                            throw new CodecException("Unable to convert string (%s) to %s for resource %s", value, TIME.name(),
                                     resourcePath);
                         }
                     default:
@@ -146,7 +161,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case FLOAT:
                         return String.valueOf(value);
                     case TIME:
-                        String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                        String DATE_FORMAT = "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]";
                         Long timeValue;
                         try {
                             timeValue = ((Date) value).getTime();
@@ -165,7 +180,19 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 }
                 break;
             case OPAQUE:
-                if (currentType == Type.STRING) {
+                if (currentType == Type.INTEGER) {
+                    if (value instanceof Integer) {
+                        return ByteBuffer.allocate(4).putInt((Integer) value).array();
+                    } else {
+                        return ByteBuffer.allocate(8).putLong((Long) value).array();
+                    }
+                } else if (currentType == Type.FLOAT) {
+                    if (value instanceof Float) {
+                        return ByteBuffer.allocate(4).putFloat((Float) value).array();
+                    } else {
+                        return ByteBuffer.allocate(8).putDouble((Double) value).array();
+                    }
+                } else if (currentType == Type.STRING) {
                     /** let's assume we received an hexadecimal string */
                     log.debug("Trying to convert hexadecimal/base64 string [{}] to byte array", value);
                     try {
@@ -178,6 +205,8 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                                     value, resourcePath);
                         }
                     }
+                } else if (currentType == Type.BOOLEAN) {
+                    return  new byte[] {(byte)((boolean)value ? 1 : 0)};
                 }
                 break;
             case OBJLNK:

@@ -1,25 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -41,10 +27,6 @@ import java.util.List;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
         name = "check relation presence",
@@ -56,8 +38,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "Otherwise, the rule node checks the presence of a relation to any entity. " +
                 "In both cases, relation lookup is based on configured direction and type.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeCheckRelationConfig")
+        configDirective = "tbFilterNodeCheckRelationConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/check-relation-presence/"
+)
 public class TbCheckRelationNode implements TbNode {
 
     private TbCheckRelationNodeConfiguration config;

@@ -1,34 +1,21 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
-  ComponentFactory, ComponentRef,
+  ComponentRef,
   Directive, EventEmitter, Injector,
   Input,
   OnChanges, Output, Renderer2,
   SimpleChange,
   SimpleChanges,
-  TemplateRef,
+  Type,
   ViewContainerRef
 } from '@angular/core';
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tbComponentOutlet]',
-  exportAs: 'tbComponentOutlet'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tbComponentOutlet]',
+    exportAs: 'tbComponentOutlet',
+    standalone: false
 })
 export class TbComponentOutletDirective<_T = unknown> implements OnChanges {
   private componentRef: ComponentRef<any> | null = null;
@@ -36,13 +23,11 @@ export class TbComponentOutletDirective<_T = unknown> implements OnChanges {
   @Input() tbComponentOutletContext: any | null = null;
   @Input() tbComponentStyle: { [klass: string]: any } | null = null;
   @Input() tbComponentInjector: Injector | null = null;
-  @Input() tbComponentOutlet: ComponentFactory<any> = null;
+  @Input() tbComponentOutlet: Type<any> = null;
   @Output() componentChange = new EventEmitter<ComponentRef<any>>();
 
   static ngTemplateContextGuard<T>(
-    // eslint-disable-next-line @typescript-eslint/naming-convention,no-underscore-dangle,id-blacklist,id-match
     _dir: TbComponentOutletDirective<T>,
-    // eslint-disable-next-line @typescript-eslint/naming-convention, no-underscore-dangle, id-blacklist, id-match
     _ctx: any
   ): _ctx is TbComponentOutletContext {
     return true;
@@ -50,7 +35,7 @@ export class TbComponentOutletDirective<_T = unknown> implements OnChanges {
 
   private recreateComponent(): void {
     this.viewContainer.clear();
-    this.componentRef = this.viewContainer.createComponent(this.tbComponentOutlet, 0, this.tbComponentInjector);
+    this.componentRef = this.viewContainer.createComponent(this.tbComponentOutlet, {index: 0, injector: this.tbComponentInjector});
     this.componentChange.next(this.componentRef);
     if (this.tbComponentOutletContext) {
       for (const propName of Object.keys(this.tbComponentOutletContext)) {
@@ -85,8 +70,8 @@ export class TbComponentOutletDirective<_T = unknown> implements OnChanges {
         if (tbComponentOutlet.firstChange) {
           shouldOutletRecreate = true;
         } else {
-          const isPreviousOutletTemplate = tbComponentOutlet.previousValue instanceof ComponentFactory;
-          const isCurrentOutletTemplate = tbComponentOutlet.currentValue instanceof ComponentFactory;
+          const isPreviousOutletTemplate = tbComponentOutlet.previousValue instanceof Type;
+          const isCurrentOutletTemplate = tbComponentOutlet.currentValue instanceof Type;
           shouldOutletRecreate = isPreviousOutletTemplate || isCurrentOutletTemplate;
         }
       }

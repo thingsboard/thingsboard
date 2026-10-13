@@ -1,0 +1,19 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-form-field class="flex flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+  <mat-label translate>device-profile.mqtt-protocol-version</mat-label>
+  <mat-select [required]="required"
+              [disabled]="disabled"
+              [(ngModel)]="modelValue"
+              (ngModelChange)="mqttVersionChanged()">
+    @for (version of mqttVersions; track version) {
+      <mat-option [value]="version">
+        {{ mqttVersionTranslation.get(version) }}
+      </mat-option>
+    }
+  </mat-select>
+</mat-form-field>

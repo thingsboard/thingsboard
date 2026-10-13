@@ -1,22 +1,10 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AuthPayload, AuthState } from './auth.models';
 import { AuthActions, AuthActionTypes } from './auth.actions';
 import { initialUserSettings, UserSettings } from '@shared/models/user-settings.models';
+import { environment as env } from '@env/environment';
 import { unset } from '@core/utils';
 
 const emptyUserAuthState: AuthPayload = {
@@ -24,14 +12,38 @@ const emptyUserAuthState: AuthPayload = {
   userDetails: null,
   userTokenAccessEnabled: false,
   forceFullscreen: false,
-  allowedDashboardIds: [],
   edgesSupportEnabled: false,
+  whiteLabelingAllowed: false,
+  customerWhiteLabelingAllowed: false,
   hasRepository: false,
   tbelEnabled: false,
   persistDeviceStateToTelemetry: false,
   mobileQrEnabled: false,
   maxResourceSize: 0,
-  userSettings: initialUserSettings
+  maxArgumentsPerCF: 0,
+  minAllowedDeduplicationIntervalInSecForCF: 0,
+  minAllowedAggregationIntervalInSecForCF: 0,
+  minAllowedScheduledUpdateIntervalInSecForCF: 0,
+  maxRelationLevelPerCfArgument: 0,
+  maxRelatedEntitiesToReturnPerCfArgument: 0,
+  maxDataPointsPerRollingArg: 0,
+  maxDebugModeDurationMinutes: 0,
+  intermediateAggregationIntervalInSecForCF: 0,
+  userSettings: initialUserSettings,
+  allowedDashboardIds: [],
+  availableLocales: env.supportedLangs,
+  aiEnabled: false,
+  allowKeyFiltersOrConditions: true,
+  nullsOrderStrategy: 'default',
+  edqsEnabled: false,
+  iotHubBaseUrl: '',
+  licenseVersion: 0,
+  edgeEnabled: false,
+  trendzEnabled: false,
+  integrationsEnabled: true,
+  schedulerEnabled: true,
+  reportingEnabled: true,
+  communityGrantLicense: false
 };
 
 export const initialState: AuthState = {
@@ -93,6 +105,8 @@ export const authReducer = (
       userSettings = {...state.userSettings};
       action.payload.forEach(path => unset(userSettings, path));
       return { ...state, ...{ userSettings }};
+    case AuthActionTypes.UPDATE_LICENSE_PARAMS:
+      return { ...state, ...action.payload};
 
     default:
       return state;

@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { ChangeDetectorRef, Component, DestroyRef, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -43,11 +29,13 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { RuleChainType } from '@shared/models/rule-chain.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile',
-  templateUrl: './device-profile.component.html',
-  styleUrls: []
+    selector: 'tb-device-profile',
+    templateUrl: './device-profile.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
@@ -83,7 +71,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
               @Optional() @Inject('entity') protected entityValue: DeviceProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceProfile>,
               protected fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -129,10 +118,14 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
         description: [entity ? entity.description : '', []],
       }
     );
-    form.get('type').valueChanges.subscribe(() => {
+    form.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.deviceProfileTypeChanged(form);
     });
-    form.get('transportType').valueChanges.subscribe(() => {
+    form.get('transportType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.deviceProfileTransportTypeChanged(form);
     });
     this.checkIsNewDeviceProfile(entity, form);

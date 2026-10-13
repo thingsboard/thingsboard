@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
   ColorSettings,
@@ -32,15 +18,17 @@ import { WidgetService } from '@core/http/widget.service';
 import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-color-settings-panel',
-  templateUrl: './color-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./color-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-color-settings-panel',
+    templateUrl: './color-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./color-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ColorSettingsPanelComponent extends PageComponent implements OnInit {
 
@@ -91,7 +79,8 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
 
   constructor(private fb: UntypedFormBuilder,
               private widgetService: WidgetService,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -105,9 +94,31 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
-    this.colorSettingsFormGroup.get('type').valueChanges.subscribe(() => {
+    this.colorSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
+    this.updateValidators();
+  }
+
+  updateValidators() {
+    const type: ColorType = this.colorSettingsFormGroup.get('type').value;
+    this.colorSettingsFormGroup.get('gradient').disable({emitEvent: false});
+    this.colorSettingsFormGroup.get('rangeList').disable({emitEvent: false});
+    this.colorSettingsFormGroup.get('colorFunction').disable({emitEvent: false});
+    switch (type) {
+      case ColorType.gradient:
+        this.colorSettingsFormGroup.get('gradient').enable({emitEvent: false});
+        break;
+      case ColorType.range:
+        this.colorSettingsFormGroup.get('rangeList').enable({emitEvent: false});
+        break;
+      case ColorType.function:
+        this.colorSettingsFormGroup.get('colorFunction').enable({emitEvent: false});
+        break;
+    }
   }
 
   copyColorSettings(comp: ColorSettingsComponent) {
@@ -127,7 +138,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   }
 
   applyColorSettings() {
-    const colorSettings = this.colorSettingsFormGroup.value;
+    const colorSettings: ColorSettings = this.colorSettingsFormGroup.getRawValue();
     this.colorSettingsApplied.emit(colorSettings);
   }
 

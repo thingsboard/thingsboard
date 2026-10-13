@@ -1,0 +1,54 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="scriptConfigForm">
+  @if (tbelEnabled) {
+    <tb-script-lang formControlName="scriptLang"></tb-script-lang>
+  }
+  @if (scriptConfigForm.get('scriptLang').value === scriptLanguage.JS) {
+    <tb-js-func
+      #jsFuncComponent
+      formControlName="jsScript"
+      functionName="Transform"
+      helpId="rulenode/transformation_node_script_fn"
+      [functionArgs]="['msg', 'metadata', 'msgType']"
+      noValidate="true">
+      <button toolbarSuffixButton
+              mat-icon-button
+              matTooltip="{{ testScriptLabel | translate }}"
+              matTooltipPosition="above"
+              class="tb-mat-32"
+              (click)="testScript()">
+        <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+      </button>
+    </tb-js-func>
+  }
+  @if (scriptConfigForm.get('scriptLang').value === scriptLanguage.TBEL) {
+    <tb-js-func
+      #tbelFuncComponent
+      formControlName="tbelScript"
+      functionName="Transform"
+      helpId="rulenode/tbel/transformation_node_script_fn"
+      [functionArgs]="['msg', 'metadata', 'msgType']"
+      [disableUndefinedCheck]="true"
+      [scriptLanguage]="scriptLanguage.TBEL"
+      noValidate="true">
+      <button toolbarSuffixButton
+              mat-icon-button
+              matTooltip="{{ testScriptLabel | translate }}"
+              matTooltipPosition="above"
+              class="tb-mat-32"
+              (click)="testScript()">
+        <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+      </button>
+    </tb-js-func>
+  }
+  <div>
+    <button mat-button mat-raised-button color="primary" (click)="testScript()">
+      {{ testScriptLabel | translate }}
+    </button>
+  </div>
+</section>

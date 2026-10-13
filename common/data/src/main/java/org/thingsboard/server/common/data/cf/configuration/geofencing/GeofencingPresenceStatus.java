@@ -1,0 +1,12 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.common.data.cf.configuration.geofencing;
+
+import lombok.Getter;
+
+@Getter
+public enum GeofencingPresenceStatus implements GeofencingEvent {
+
+    INSIDE, OUTSIDE;
+
+}

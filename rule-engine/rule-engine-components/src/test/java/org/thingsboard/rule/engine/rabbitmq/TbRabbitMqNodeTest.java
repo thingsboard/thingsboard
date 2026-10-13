@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.rabbitmq;
 
 
@@ -36,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -78,7 +65,7 @@ public class TbRabbitMqNodeTest {
     );
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("b3d6f9dd-15cc-4e61-acc0-13197a090406"));
-    private final ListeningExecutor executor = new TestDbCallbackExecutor();
+    private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
     private TbRabbitMqNode node;
     private TbRabbitMqNodeConfiguration config;
@@ -103,7 +90,7 @@ public class TbRabbitMqNodeTest {
         assertThat(config.getExchangeNamePattern()).isEqualTo("");
         assertThat(config.getRoutingKeyPattern()).isEqualTo("");
         assertThat(config.getMessageProperties()).isNull();
-        assertThat(config.getHost()).isEqualTo(ConnectionFactory.DEFAULT_HOST);
+        assertThat(config.getHost()).isNull();
         assertThat(config.getPort()).isEqualTo(ConnectionFactory.DEFAULT_AMQP_PORT);
         assertThat(config.getVirtualHost()).isEqualTo(ConnectionFactory.DEFAULT_VHOST);
         assertThat(config.getUsername()).isEqualTo(ConnectionFactory.DEFAULT_USER);
@@ -147,7 +134,12 @@ public class TbRabbitMqNodeTest {
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should().ack(msg);
@@ -178,7 +170,12 @@ public class TbRabbitMqNodeTest {
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should(never()).ack(any(TbMsg.class));
@@ -201,7 +198,12 @@ public class TbRabbitMqNodeTest {
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should(forceAck ? times(1) : never()).ack(any(TbMsg.class));
@@ -212,7 +214,9 @@ public class TbRabbitMqNodeTest {
                 () -> then(ctxMock).should().tellFailure(actualMsg.capture(), throwable.capture());
         verifyTellFailure.run();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
         assertThat(throwable.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
     }

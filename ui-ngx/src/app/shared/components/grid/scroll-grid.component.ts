@@ -1,23 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit, ChangeDetectorRef,
   Component,
-  Input,
+  Input, NgZone,
   OnChanges, OnDestroy,
   OnInit,
   Renderer2,
@@ -34,7 +20,6 @@ import {
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { isObject } from '@app/core/utils';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { ResizeObserver } from '@juggle/resize-observer';
 
 export type ItemSizeFunction = (itemWidth: number) => number;
 
@@ -44,10 +29,11 @@ export interface ItemSizeStrategy {
 }
 
 @Component({
-  selector: 'tb-scroll-grid',
-  templateUrl: './scroll-grid.component.html',
-  styleUrls: ['./scroll-grid.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scroll-grid',
+    templateUrl: './scroll-grid.component.html',
+    styleUrls: ['./scroll-grid.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 
@@ -91,7 +77,8 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   constructor(private breakpointObserver: BreakpointObserver,
               private cd: ChangeDetectorRef,
-              private renderer: Renderer2) {
+              private renderer: Renderer2,
+              private zone: NgZone) {
   }
 
   ngOnInit(): void {
@@ -110,7 +97,9 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
     this.renderer.setStyle(this.viewport._contentWrapper.nativeElement, 'padding', this.gap + 'px');
     if (!(typeof this.itemSize === 'number')) {
       this.contentResize$ = new ResizeObserver(() => {
-        this.onContentResize();
+        this.zone.run(() => {
+          this.onContentResize();
+        });
       });
       this.contentResize$.observe(this.viewport._contentWrapper.nativeElement);
     }
@@ -137,10 +126,6 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   trackByItemsRow(index: number, itemsRow: T[]): number {
     return index;
-  }
-
-  trackByItem(index: number, item: T): T {
-    return item;
   }
 
   public update() {

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -24,7 +10,6 @@ import { isDefined } from '@core/utils';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 
 type RetrieveValueMethod = 'rpc' | 'attribute' | 'timeseries';
 
@@ -43,9 +28,10 @@ interface RoundSwitchSettings {
 }
 
 @Component({
-  selector: 'tb-round-switch',
-  templateUrl: './round-switch.component.html',
-  styleUrls: ['./round-switch.component.scss']
+    selector: 'tb-round-switch',
+    templateUrl: './round-switch.component.html',
+    styleUrls: ['./round-switch.component.scss'],
+    standalone: false
 })
 export class RoundSwitchComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -331,11 +317,16 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isDefined(attrValue)) {
-          let parsed = null;
+          let valueToParse = attrValue;
           try {
-            parsed = this.parseValueFunction(JSON.parse(attrValue));
-          } catch (e){/**/}
-          value = !!parsed;
+            valueToParse = JSON.parse(attrValue);
+          } catch (e) {/**/}
+
+          try {
+            value = !!this.parseValueFunction(valueToParse);
+          } catch (e) {
+            value = false;
+          }
         }
       }
     }

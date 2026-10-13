@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
@@ -21,9 +8,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   AbstractControl,
+  FormGroupDirective,
   UntypedFormBuilder,
-  UntypedFormGroup, FormGroupDirective,
-  NgForm,
+  UntypedFormGroup,
   ValidationErrors,
   ValidatorFn,
   Validators
@@ -48,15 +35,23 @@ import {
 import { authenticationDialogMap } from '@home/pages/security/authentication-dialog/authentication-dialog.map';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Observable, of, Subject } from 'rxjs';
-import { isDefinedAndNotNull, isEqual } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { AuthService } from '@core/auth/auth.service';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import {
+  ApiKeysTableDialogComponent,
+  ApiKeysTableDialogData
+} from '@home/components/api-key/api-keys-table-dialog.component';
+import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
 
 @Component({
-  selector: 'tb-security',
-  templateUrl: './security.component.html',
-  styleUrls: ['./security.component.scss']
+    selector: 'tb-security',
+    templateUrl: './security.component.html',
+    styleUrls: ['./security.component.scss'],
+    standalone: false
 })
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -83,11 +78,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     return localStorage.getItem('jwt_token_expiration');
   }
 
-  get expirationJwtData(): string {
-    const expirationData = this.datePipe.transform(this.jwtTokenExpiration, 'yyyy-MM-dd HH:mm:ss');
-    return this.translate.instant('profile.valid-till', { expirationData });
-  }
-
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private translate: TranslateService,
@@ -96,6 +86,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               public dialogService: DialogService,
               public fb: UntypedFormBuilder,
               private datePipe: DatePipe,
+              private userPermissionsService: UserPermissionsService,
               private authService: AuthService,
               private clipboardService: ClipboardService) {
     super(store);
@@ -136,7 +127,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   private twoFactorLoad(providers: TwoFactorAuthProviderType[]) {
-    if (providers.length) {
+    if (providers.length && this.userPermissionsService.hasGenericPermission(Resource.PROFILE, Operation.WRITE)) {
       this.twoFaService.getAccountTwoFaSettings().subscribe(data => this.processTwoFactorAuthConfig(data));
       Object.values(TwoFactorAuthProviderType).forEach(type => {
         if (providers.includes(type)) {
@@ -164,7 +155,12 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.changePassword = this.fb.group({
       currentPassword: [''],
       newPassword: ['', Validators.required],
-      newPassword2: ['', this.samePasswordValidation(false, 'newPassword')]
+      newPassword2: ['']
+    }, {
+      validators: [
+        this.passwordNotSameAsOld(),
+        passwordsMatchValidator('newPassword', 'newPassword2'),
+      ]
     });
   }
 
@@ -172,69 +168,37 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.authService.getUserPasswordPolicy().subscribe(policy => {
       this.passwordPolicy = policy;
       this.changePassword.get('newPassword').setValidators([
-        this.passwordStrengthValidator(),
-        this.samePasswordValidation(true, 'currentPassword'),
+        passwordStrengthValidator(this.passwordPolicy),
         Validators.required
       ]);
       this.changePassword.get('newPassword').updateValueAndValidity({emitEvent: false});
     });
   }
 
-  private passwordStrengthValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      const errors: any = {};
+  passwordNotSameAsOld(): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const currentPassControl = group.get('currentPassword');
+      const newPassControl = group.get('newPassword');
 
-      if (this.passwordPolicy.minimumUppercaseLetters > 0 &&
-        !new RegExp(`(?:.*?[A-Z]){${this.passwordPolicy.minimumUppercaseLetters}}`).test(value)) {
-        errors.notUpperCase = true;
+
+      const current = currentPassControl?.value ?? '';
+      const newPass = newPassControl?.value ?? '';
+
+      if (current && newPass && current === newPass) {
+        newPassControl?.setErrors({
+          ...newPassControl.errors,
+          passwordSameAsOld: true
+        });
+        return { passwordSameAsOld: true };
+      } else {
+        const currentErrors = newPassControl?.errors;
+        if (currentErrors?.passwordSameAsOld) {
+          const { passwordSameAsOld, ...rest } = currentErrors;
+          newPassControl.setErrors(Object.keys(rest).length ? rest : null);
+        }
+        return null;
       }
-
-      if (this.passwordPolicy.minimumLowercaseLetters > 0 &&
-        !new RegExp(`(?:.*?[a-z]){${this.passwordPolicy.minimumLowercaseLetters}}`).test(value)) {
-        errors.notLowerCase = true;
-      }
-
-      if (this.passwordPolicy.minimumDigits > 0
-        && !new RegExp(`(?:.*?\\d){${this.passwordPolicy.minimumDigits}}`).test(value)) {
-        errors.notNumeric = true;
-      }
-
-      if (this.passwordPolicy.minimumSpecialCharacters > 0 &&
-        !new RegExp(`(?:.*?[\\W_]){${this.passwordPolicy.minimumSpecialCharacters}}`).test(value)) {
-        errors.notSpecial = true;
-      }
-
-      if (!this.passwordPolicy.allowWhitespaces && /\s/.test(value)) {
-        errors.hasWhitespaces = true;
-      }
-
-      if (this.passwordPolicy.minimumLength > 0 && value.length < this.passwordPolicy.minimumLength) {
-        errors.minLength = true;
-      }
-
-      if (!value.length || this.passwordPolicy.maximumLength > 0 && value.length > this.passwordPolicy.maximumLength) {
-        errors.maxLength = true;
-      }
-
-      return isEqual(errors, {}) ? null : errors;
     };
-  }
-
-  private samePasswordValidation(isSame: boolean, key: string): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      const keyValue = control.parent?.value[key];
-
-      if (isSame) {
-        return value === keyValue ? {samePassword: true} : null;
-      }
-      return value !== keyValue ? {differencePassword: true} : null;
-    };
-  }
-
-  trackByProvider(i: number, provider: TwoFactorAuthProviderType) {
-    return provider;
   }
 
   copyToken() {
@@ -351,22 +315,24 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   onChangePassword(form: FormGroupDirective): void {
     if (this.changePassword.valid) {
       this.authService.changePassword(this.changePassword.get('currentPassword').value,
-        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe(() => {
-          this.discardChanges(form);
-        },
-        (error) => {
-          if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
-            this.changePassword.get('currentPassword').setErrors({differencePassword: true});
-          } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
-            this.loadPasswordPolicy();
-          } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
-            this.changePassword.get('newPassword').setErrors({alreadyUsed: error.error.message});
-          } else {
-            this.store.dispatch(new ActionNotificationShow({
-              message: error.error.message,
-              type: 'error',
-              target: 'changePassword'
-            }));
+        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe({
+          next: () => {
+            this.discardChanges(form);
+          },
+          error: (error) => {
+            if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
+              this.changePassword.get('currentPassword').setErrors({ differencePassword: true });
+            } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
+              this.loadPasswordPolicy();
+            } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
+              this.changePassword.get('newPassword').setErrors({ alreadyUsed: error.error.message });
+            } else {
+              this.store.dispatch(new ActionNotificationShow({
+                message: error.error.message,
+                type: 'error',
+                target: 'changePassword'
+              }));
+            }
           }
         });
     } else {
@@ -383,5 +349,16 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
       newPassword: '',
       newPassword2: ''
     });
+  }
+
+  openApiKeysTable() {
+    this.dialog.open<ApiKeysTableDialogComponent, ApiKeysTableDialogData>(
+      ApiKeysTableDialogComponent, {
+        disableClose: false,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          userId: this.user.id,
+        }
+      }).afterClosed().subscribe();
   }
 }

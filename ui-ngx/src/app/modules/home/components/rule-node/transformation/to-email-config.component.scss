@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  .input-bottom-double-hint {
+    display: inline-flex;
+
+    & .see-example {
+      flex-shrink: 0;
+      padding-right: 16px;
+    }
+  }
+
+  textarea.tb-enable-vertical-resize {
+    resize: vertical;
+  }
+}

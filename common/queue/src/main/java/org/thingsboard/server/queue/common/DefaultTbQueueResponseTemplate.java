@@ -1,22 +1,12 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.common;
 
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ExceptionUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.MessagesStats;
@@ -27,9 +17,8 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,7 +31,6 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
 
     private final TbQueueConsumer<Request> requestTemplate;
     private final TbQueueProducer<Response> responseTemplate;
-    private final ConcurrentMap<UUID, String> pendingRequests;
     private final ExecutorService loopExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final ExecutorService callbackExecutor;
@@ -57,7 +45,6 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
     @Builder
     public DefaultTbQueueResponseTemplate(TbQueueConsumer<Request> requestTemplate,
                                           TbQueueProducer<Response> responseTemplate,
-                                          TbQueueHandler<Request, Response> handler,
                                           long pollInterval,
                                           long requestTimeout,
                                           int maxPendingRequests,
@@ -65,20 +52,27 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                                           MessagesStats stats) {
         this.requestTemplate = requestTemplate;
         this.responseTemplate = responseTemplate;
-        this.pendingRequests = new ConcurrentHashMap<>();
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
         this.requestTimeout = requestTimeout;
         this.callbackExecutor = executor;
         this.stats = stats;
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-queue-response-template-timeout-" + requestTemplate.getTopic()));
+        this.timeoutExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("tb-queue-response-template-timeout-" + requestTemplate.getTopic());
         this.loopExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-queue-response-template-loop-" + requestTemplate.getTopic()));
     }
 
     @Override
-    public void init(TbQueueHandler<Request, Response> handler) {
-        this.responseTemplate.init();
+    public void subscribe() {
         requestTemplate.subscribe();
+    }
+
+    @Override
+    public void subscribe(Set<TopicPartitionInfo> partitions) {
+        requestTemplate.subscribe(partitions);
+    }
+
+    @Override
+    public void launch(TbQueueHandler<Request, Response> handler) {
         loopExecutor.submit(() -> {
             while (!stopped) {
                 try {
@@ -114,11 +108,12 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                             try {
                                 pendingRequestCount.getAndIncrement();
                                 stats.incrementTotal();
+                                TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(responseTopic).build();
                                 AsyncCallbackTemplate.withCallbackAndTimeout(handler.handle(request),
                                         response -> {
                                             pendingRequestCount.decrementAndGet();
                                             response.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
-                                            responseTemplate.send(TopicPartitionInfo.builder().topic(responseTopic).build(), response, null);
+                                            responseTemplate.send(tpi, response, null);
                                             stats.incrementSuccessful();
                                         },
                                         e -> {
@@ -128,6 +123,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                                             } else {
                                                 log.trace("[{}] Failed to process the request: {}", requestId, request, e);
                                             }
+                                            sendErrorResponse(handler, requestId, tpi, request, e);
                                             stats.incrementFailed();
                                         },
                                         requestTimeout,
@@ -151,6 +147,16 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                 }
             }
         });
+    }
+
+    private void sendErrorResponse(TbQueueHandler<Request, Response> handler, UUID requestId, TopicPartitionInfo tpi, Request request, Throwable cause) {
+        Response errorResponseMsg = handler.constructErrorResponseMsg(request, cause);
+
+        if (errorResponseMsg != null) {
+            errorResponseMsg.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
+            errorResponseMsg.getHeaders().put(ERROR_MESSAGE_HEADER, stringToBytes(ExceptionUtil.getMessage(cause)));
+            responseTemplate.send(tpi, errorResponseMsg, null);
+        }
     }
 
     public void stop() {

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.instructions;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,9 +53,8 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
             dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
-        String edgeVersion = appVersion + "EDGE";
-        edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
-        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
+        String edgeVersion = platformEdgeVersion.replace("-SNAPSHOT", "").replace("PE", "");
+        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + "EDGEPE");
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
         return new EdgeInstructions(dockerInstallInstructions);
     }
@@ -76,9 +63,8 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
         String ubuntuInstallInstructions = readFile(resolveFile(os, "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
-        String edgeVersion = appVersion.replace("-SNAPSHOT", "");
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
+        String edgeVersion = platformEdgeVersion.replace("-SNAPSHOT", "").replace("PE", "pe");
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion).replace("pe", ""));
         return new EdgeInstructions(ubuntuInstallInstructions);
     }
 
@@ -94,4 +80,5 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
     protected String getBaseDirName() {
         return INSTALL_DIR;
     }
+
 }

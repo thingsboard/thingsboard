@@ -1,29 +1,18 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { columnExportOptions } from '@home/components/widget/lib/table-widget.models';
 
 @Component({
-  selector: 'tb-timeseries-table-latest-key-settings',
-  templateUrl: './timeseries-table-latest-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-timeseries-table-latest-key-settings',
+    templateUrl: './timeseries-table-latest-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsComponent {
 
@@ -44,9 +33,12 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
+      useCellContentFunctionOnExport: true,
       cellContentFunction: '',
       defaultColumnVisibility: 'visible',
-      columnSelectionToDisplay: 'enabled'
+      columnSelectionToDisplay: 'enabled',
+      columnExportOption: columnExportOptions.onlyVisible,
+      disableSorting: false
     };
   }
 
@@ -57,9 +49,12 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
+      useCellContentFunctionOnExport: [settings.useCellContentFunctionOnExport, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
       defaultColumnVisibility: [settings.defaultColumnVisibility, []],
       columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
+      columnExportOption: [settings.columnExportOption, []],
+      disableSorting: [settings.disableSorting, []]
     });
   }
 
@@ -82,14 +77,17 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       }
       if (useCellContentFunction) {
         this.timeseriesTableLatestKeySettingsForm.get('cellContentFunction').enable();
+        this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunctionOnExport').enable();
       } else {
         this.timeseriesTableLatestKeySettingsForm.get('cellContentFunction').disable();
+        this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunctionOnExport').disable();
       }
     } else {
       this.timeseriesTableLatestKeySettingsForm.get('order').disable();
       this.timeseriesTableLatestKeySettingsForm.get('useCellStyleFunction').disable({emitEvent: false});
       this.timeseriesTableLatestKeySettingsForm.get('cellStyleFunction').disable();
       this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunction').disable({emitEvent: false});
+      this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunctionOnExport').disable();
       this.timeseriesTableLatestKeySettingsForm.get('cellContentFunction').disable();
     }
     this.timeseriesTableLatestKeySettingsForm.get('order').updateValueAndValidity({emitEvent});

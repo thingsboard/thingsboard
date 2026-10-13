@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="flex flex-col" [formGroup]="relationsQueryFormGroup">
+  <mat-checkbox formControlName="fetchLastLevelOnly">
+    {{ 'alias.last-level-relation' | translate }}
+  </mat-checkbox>
+  <div class="flex flex-row gap-2">
+    <mat-form-field class="mat-block" style="min-width: 100px;">
+      <mat-label translate>relation.direction</mat-label>
+      <mat-select required matInput formControlName="direction">
+        @for (type of directionTypes; track type) {
+          <mat-option [value]="type">
+            {{ directionTypeTranslations.get(type) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field floatLabel="always" class="mat-block flex-1">
+      <mat-label translate>rule-node-config.max-relation-level</mat-label>
+      <input matInput
+             type="number"
+             min="1"
+             step="1"
+             placeholder="{{ 'rule-node-config.unlimited-level' | translate }}"
+             formControlName="maxLevel">
+    </mat-form-field>
+  </div>
+  <div class="mat-caption" style="color: #6e6e6e;" translate>relation.relation-filters</div>
+  <tb-relation-filters
+    formControlName="filters"
+  ></tb-relation-filters>
+</section>

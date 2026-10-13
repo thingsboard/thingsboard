@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-edit-api-key-description-panel">
+  <div class="tb-edit-api-key-description-title">{{ 'api-key.edit-description' | translate }}</div>
+  <mat-form-field class="mat-block" appearance="outline">
+    <mat-label translate>api-key.description</mat-label>
+    <textarea #input cdkTextareaAutosize matInput [formControl]="descriptionFormControl" rows="2" maxLength="255"></textarea>
+    @if (descriptionFormControl.hasError('required')) {
+      <mat-error>
+        {{ 'asset.description-required' | translate }}
+      </mat-error>
+    }
+    <mat-hint align="end">{{ input.value?.length || 0 }}/255</mat-hint>
+  </mat-form-field>
+  <div class="tb-edit-api-key-description-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyDescription()"
+            [disabled]="descriptionFormControl.invalid || !descriptionFormControl.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</div>

@@ -1,24 +1,12 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -36,23 +24,24 @@ import { PageLink } from '@shared/models/page/page-link';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { OtaUpdateTabsComponent } from '@home/pages/ota-update/ota-update-tabs.component';
 
 @Injectable()
-export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>> {
+export class OtaUpdateTableConfigResolve  {
 
   private readonly config: EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo> =
     new EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>();
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
-              private store: Store<AppState>,
               private otaPackageService: OtaPackageService,
+              private userPermissionsService: UserPermissionsService,
               private router: Router,
               private fileSize: FileSizePipe) {
     this.config.entityType = EntityType.OTA_PACKAGE;
     this.config.entityComponent = OtaUpdateComponent;
+    this.config.entityTabsComponent = OtaUpdateTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.OTA_PACKAGE);
     this.config.entityResources = entityTypeResources.get(EntityType.OTA_PACKAGE);
 
@@ -68,7 +57,9 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
       }),
       new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.direct-url', '20%', entity => {
           return entity.url ? (entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : entity.url) : '';
-        }, () => ({}), true, () => ({}), () => undefined, false,
+        }, () => ({
+          'text-wrap': 'nowrap'
+        }), true, () => ({}), () => undefined, false,
         {
           name: this.translate.instant('ota-update.copy-direct-url'),
           icon: 'content_paste',
@@ -78,7 +69,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
             color: 'rgba(0,0,0,.87)'
           },
           isEnabled: (otaPackage) => !!otaPackage.url,
-          onAction: ($event, entity) => entity.url,
+          onAction: (_$event, entity) => entity.url,
           type: CellActionDescriptorType.COPY_BUTTON
         }),
       new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '20%'),
@@ -86,20 +77,22 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
         return entity.dataSize ? this.fileSize.transform(entity.dataSize) : '';
       }),
       new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '220px', entity => {
-        return entity.checksum ? this.checksumText(entity) : '';
-      }, () => ({}), true, () => ({}), () => undefined, false,
-      {
-        name: this.translate.instant('ota-update.copy-checksum'),
-        icon: 'content_paste',
-        style: {
-          padding: '4px',
-          'font-size': '16px',
-          color: 'rgba(0,0,0,.87)'
-        },
-        isEnabled: (otaPackage) => !!otaPackage.checksum,
-        onAction: ($event, entity) => entity.checksum,
-        type: CellActionDescriptorType.COPY_BUTTON
-      })
+          return entity.checksum ? this.checksumText(entity) : '';
+        }, () => ({
+          'text-wrap': 'nowrap'
+        }), true, () => ({}), () => undefined, false,
+        {
+          name: this.translate.instant('ota-update.copy-checksum'),
+          icon: 'content_paste',
+          style: {
+            padding: '4px',
+            'font-size': '16px',
+            color: 'rgba(0,0,0,.87)'
+          },
+          isEnabled: (otaPackage) => !!otaPackage.checksum,
+          onAction: (_$event, entity) => entity.checksum,
+          type: CellActionDescriptorType.COPY_BUTTON
+        })
     );
 
     this.config.cellActionDescriptors.push(
@@ -127,6 +120,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
 
   resolve(): EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo> {
     this.config.tableTitle = this.translate.instant('ota-update.packages-repository');
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 
@@ -149,7 +143,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
     }
   }
 
-  checksumText(entity): string {
+  checksumText(entity: OtaPackageInfo): string {
     let text = `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
     if (text.length > 20) {
       text = `${text.slice(0, 20)}…`;

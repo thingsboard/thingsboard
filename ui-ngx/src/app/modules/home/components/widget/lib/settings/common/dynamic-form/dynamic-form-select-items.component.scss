@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+.tb-dynamic-form-select-items {
+  flex: 1;
+  .tb-form-table-header-cell {
+    &.tb-value-header {
+      flex: 1 1 70%;
+    }
+    &.tb-label-header {
+      flex: 1 1 30%;
+    }
+    &.tb-actions-header {
+      width: 80px;
+      min-width: 80px;
+      &.disabled {
+        width: 0;
+        min-width: 0;
+      }
+    }
+  }
+  .tb-form-table {
+    overflow: hidden;
+  }
+  .tb-form-table-body {
+    overflow: auto;
+    tb-dynamic-form-select-item-row {
+      overflow: hidden;
+    }
+  }
+}

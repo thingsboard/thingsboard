@@ -1,19 +1,9 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
+
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -27,8 +17,6 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     TbCacheValueWrapper<V> get(K key);
 
-    TbCacheValueWrapper<V> get(K key, boolean transactionMode);
-
     void put(K key, V value);
 
     void putIfAbsent(K key, V value);
@@ -38,6 +26,8 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
     void evict(Collection<K> keys);
 
     void evictOrPut(K key, V value);
+
+    void evictByPrefix(String prefix);
 
     TbCacheTransaction<K, V> newTransactionForKey(K key);
 
@@ -53,7 +43,7 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
         if (putToCache) {
             return getAndPutInTransaction(key, dbCall, cacheNullValue);
         } else {
-            TbCacheValueWrapper<V> cacheValueWrapper = get(key, true);
+            TbCacheValueWrapper<V> cacheValueWrapper = get(key);
             if (cacheValueWrapper != null) {
                 return cacheValueWrapper.get();
             }
@@ -66,7 +56,7 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
     }
 
     default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
-        TbCacheValueWrapper<V> cacheValueWrapper = get(key, true);
+        TbCacheValueWrapper<V> cacheValueWrapper = get(key);
         if (cacheValueWrapper != null) {
             V cacheValue = cacheValueWrapper.get();
             return cacheValue != null ? cacheValueToResult.apply(cacheValue) : null;
@@ -92,7 +82,7 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
         if (putToCache) {
             return getAndPutInTransaction(key, dbCall, cacheValueToResult, dbValueToCacheValue, cacheNullValue);
         } else {
-            TbCacheValueWrapper<V> cacheValueWrapper = get(key, true);
+            TbCacheValueWrapper<V> cacheValueWrapper = get(key);
             if (cacheValueWrapper != null) {
                 var cacheValue = cacheValueWrapper.get();
                 return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);

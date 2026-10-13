@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.rule;
 
 import lombok.RequiredArgsConstructor;
@@ -35,6 +23,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger.DeduplicationStrategy;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -54,7 +43,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,8 +55,8 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     private final NotificationDeduplicationService deduplicationService;
     private final PartitionService partitionService;
     private final RateLimitService rateLimitService;
-    @Autowired @Lazy
-    private NotificationCenter notificationCenter;
+    @Lazy
+    private final NotificationCenter notificationCenter;
     private final NotificationExecutorService notificationExecutor;
 
     private final Map<NotificationRuleTriggerType, NotificationRuleTriggerProcessor> triggerProcessors = new EnumMap<>(NotificationRuleTriggerType.class);
@@ -83,14 +71,11 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 if (enabledRules.isEmpty()) {
                     return;
                 }
-                if (trigger.deduplicate()) {
-                    enabledRules = new ArrayList<>(enabledRules);
-                    enabledRules.removeIf(rule -> deduplicationService.alreadyProcessed(trigger, rule));
-                }
-                final List<NotificationRule> rules = enabledRules;
-                for (NotificationRule rule : rules) {
+
+                List<NotificationRule> rulesToProcess = filterNotificationRules(trigger, enabledRules);
+                for (NotificationRule rule : rulesToProcess) {
                     try {
-                        processNotificationRule(rule, trigger);
+                        processNotificationRule(rule, trigger, DeduplicationStrategy.ONLY_MATCHING.equals(trigger.getDeduplicationStrategy()));
                     } catch (Throwable e) {
                         log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
                     }
@@ -101,32 +86,34 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         });
     }
 
-    private void processNotificationRule(NotificationRule rule, NotificationRuleTrigger trigger) {
+    private List<NotificationRule> filterNotificationRules(NotificationRuleTrigger trigger, List<NotificationRule> enabledRules) {
+        List<NotificationRule> rulesToProcess = new ArrayList<>(enabledRules);
+        rulesToProcess.removeIf(rule -> switch (trigger.getDeduplicationStrategy()) {
+            case ONLY_MATCHING -> {
+                boolean matched = matchesFilter(trigger, rule.getTriggerConfig());
+                yield !matched || deduplicationService.alreadyProcessed(trigger, rule);
+            }
+            case ALL -> deduplicationService.alreadyProcessed(trigger, rule);
+            default -> false;
+        });
+        return rulesToProcess;
+    }
+
+    private void processNotificationRule(NotificationRule rule, NotificationRuleTrigger trigger, boolean alreadyMatched) {
         NotificationRuleTriggerConfig triggerConfig = rule.getTriggerConfig();
         log.debug("Processing notification rule '{}' for trigger type {}", rule.getName(), rule.getTriggerType());
 
         if (matchesClearRule(trigger, triggerConfig)) {
-            List<NotificationRequest> notificationRequests = findAlreadySentNotificationRequests(rule, trigger);
-            if (notificationRequests.isEmpty()) {
-                return;
-            }
-
-            List<UUID> targets = notificationRequests.stream()
-                    .filter(NotificationRequest::isSent)
-                    .flatMap(notificationRequest -> notificationRequest.getTargets().stream())
-                    .distinct().collect(Collectors.toList());
-            NotificationInfo notificationInfo = constructNotificationInfo(trigger, triggerConfig);
-            submitNotificationRequest(targets, rule, trigger.getOriginatorEntityId(), notificationInfo, 0);
-
-            notificationRequests.forEach(notificationRequest -> {
-                if (notificationRequest.isScheduled()) {
-                    notificationCenter.deleteNotificationRequest(rule.getTenantId(), notificationRequest.getId());
-                }
+            List<NotificationRequest> scheduledRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityIdAndStatus(
+                    rule.getTenantId(), rule.getId(), trigger.getOriginatorEntityId(), NotificationRequestStatus.SCHEDULED
+            );
+            scheduledRequests.forEach(notificationRequest -> {
+                notificationCenter.deleteNotificationRequest(rule.getTenantId(), notificationRequest.getId());
             });
             return;
         }
 
-        if (matchesFilter(trigger, triggerConfig)) {
+        if (alreadyMatched || matchesFilter(trigger, triggerConfig)) {
             if (!rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, rule.getTenantId(), rule.getId())) {
                 log.debug("[{}] Rate limit for notification requests per rule was exceeded (rule '{}')", rule.getTenantId(), rule.getName());
                 return;
@@ -137,10 +124,6 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 submitNotificationRequest(targets, rule, trigger.getOriginatorEntityId(), notificationInfo, delay);
             });
         }
-    }
-
-    private List<NotificationRequest> findAlreadySentNotificationRequests(NotificationRule rule, NotificationRuleTrigger trigger) {
-        return notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(rule.getTenantId(), rule.getId(), trigger.getOriginatorEntityId());
     }
 
     private void submitNotificationRequest(List<UUID> targets, NotificationRule rule,
@@ -182,7 +165,7 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     @EventListener(ComponentLifecycleMsg.class)
     public void onNotificationRuleDeleted(ComponentLifecycleMsg componentLifecycleMsg) {
         if (componentLifecycleMsg.getEvent() != ComponentLifecycleEvent.DELETED ||
-                componentLifecycleMsg.getEntityId().getEntityType() != EntityType.NOTIFICATION_RULE) {
+            componentLifecycleMsg.getEntityId().getEntityType() != EntityType.NOTIFICATION_RULE) {
             return;
         }
 

@@ -1,44 +1,58 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.util;
 
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.AgentAppEventId;
+import org.thingsboard.server.common.data.id.AgentAppProfileId;
+import org.thingsboard.server.common.data.id.AgentAppUnitId;
+import org.thingsboard.server.common.data.id.AgentApplicationId;
+import org.thingsboard.server.common.data.id.AgentBulkActionId;
+import org.thingsboard.server.common.data.id.AgentId;
+import org.thingsboard.server.common.data.id.AgentProfileId;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.BlobEntityId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.GroupPermissionId;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.JobId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.QueueStatsId;
+import org.thingsboard.server.common.data.id.ReportId;
+import org.thingsboard.server.common.data.id.ReportTemplateId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.SchedulerEventId;
+import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -58,7 +72,7 @@ public class TenantIdLoader {
         HasTenantId tenantEntity;
         switch (entityType) {
             case TENANT:
-                return new TenantId(id);
+                return TenantId.fromUUID(id);
             case CUSTOMER:
                 tenantEntity = ctx.getCustomerService().findCustomerById(ctxTenantId, new CustomerId(id));
                 break;
@@ -138,12 +152,94 @@ public class TenantIdLoader {
                 tenantEntity = ctx.getNotificationRequestService().findNotificationRequestById(ctxTenantId, new NotificationRequestId(id));
                 break;
             case NOTIFICATION:
+            case ADMIN_SETTINGS:
                 return ctxTenantId;
             case NOTIFICATION_RULE:
                 tenantEntity = ctx.getNotificationRuleService().findNotificationRuleById(ctxTenantId, new NotificationRuleId(id));
                 break;
+            //PE Entities
+            case ENTITY_GROUP:
+                EntityGroup entityGroup = ctx.getPeContext().getEntityGroupService().findEntityGroupById(ctxTenantId, new EntityGroupId(id));
+                if (entityGroup != null) {
+                    return findTenantId(ctx, entityGroup.getOwnerId());
+                } else {
+                    tenantEntity = null;
+                }
+                break;
+            case CONVERTER:
+                tenantEntity = ctx.getPeContext().getConverterService().findConverterById(ctxTenantId, new ConverterId(id));
+                break;
+            case INTEGRATION:
+                tenantEntity = ctx.getPeContext().getIntegrationService().findIntegrationById(ctxTenantId, new IntegrationId(id));
+                break;
+            case SCHEDULER_EVENT:
+                tenantEntity = ctx.getPeContext().getSchedulerEventService().findSchedulerEventById(ctxTenantId, new SchedulerEventId(id));
+                break;
+            case BLOB_ENTITY:
+                tenantEntity = ctx.getPeContext().getBlobEntityService().findBlobEntityById(ctxTenantId, new BlobEntityId(id));
+                break;
+            case REPORT_TEMPLATE:
+                tenantEntity = ctx.getPeContext().getReportTemplateService().findReportTemplateById(ctxTenantId, new ReportTemplateId(id));
+                break;
+            case REPORT:
+                tenantEntity = ctx.getPeContext().getReportService().findReportById(ctxTenantId, new ReportId(id));
+                break;
+            case ROLE:
+                tenantEntity = ctx.getPeContext().getRoleService().findRoleById(ctxTenantId, new RoleId(id));
+                break;
+            case GROUP_PERMISSION:
+                tenantEntity = ctx.getPeContext().getGroupPermissionService().findGroupPermissionById(ctxTenantId, new GroupPermissionId(id));
+                break;
+            case SECRET:
+                tenantEntity = ctx.getPeContext().getSecretService().findSecretInfoById(ctxTenantId, new SecretId(id));
+                break;
             case QUEUE_STATS:
                 tenantEntity = ctx.getQueueStatsService().findQueueStatsById(ctxTenantId, new QueueStatsId(id));
+                break;
+            case OAUTH2_CLIENT:
+                tenantEntity = ctx.getOAuth2ClientService().findOAuth2ClientById(ctxTenantId, new OAuth2ClientId(id));
+                break;
+            case DOMAIN:
+                tenantEntity = ctx.getDomainService().findDomainById(ctxTenantId, new DomainId(id));
+                break;
+            case MOBILE_APP:
+                tenantEntity = ctx.getMobileAppService().findMobileAppById(ctxTenantId, new MobileAppId(id));
+                break;
+            case MOBILE_APP_BUNDLE:
+                tenantEntity = ctx.getMobileAppBundleService().findMobileAppBundleById(ctxTenantId, new MobileAppBundleId(id));
+                break;
+            case CALCULATED_FIELD:
+                tenantEntity = ctx.getCalculatedFieldService().findById(ctxTenantId, new CalculatedFieldId(id));
+                break;
+            case JOB:
+                tenantEntity = ctx.getJobService().findJobById(ctxTenantId, new JobId(id));
+                break;
+            case AI_MODEL:
+                tenantEntity = ctx.getAiModelService().findAiModelById(ctxTenantId, new AiModelId(id)).orElse(null);
+                break;
+            case API_KEY:
+                tenantEntity = ctx.getApiKeyService().findApiKeyById(ctxTenantId, new ApiKeyId(id));
+                break;
+            case AGENT:
+                tenantEntity = ctx.getPeContext().getAgentService().findAgentById(ctxTenantId, new AgentId(id));
+                break;
+            case AGENT_APPLICATION:
+                tenantEntity = ctx.getPeContext().getAgentApplicationService().findById(ctxTenantId, new AgentApplicationId(id));
+                break;
+            case AGENT_APP_EVENT:
+                tenantEntity = ctx.getPeContext().getAgentAppEventService().findById(ctxTenantId, new AgentAppEventId(id));
+                break;
+            case AGENT_APP_UNIT:
+                tenantEntity = ctx.getPeContext().getAgentAppUnitService().findAgentAppUnitById(ctxTenantId, new AgentAppUnitId(id));
+                break;
+            case AGENT_APP_PROFILE:
+                tenantEntity = ctx.getPeContext().getAgentAppProfileService().findProfileById(ctxTenantId, new AgentAppProfileId(id));
+                break;
+            case AGENT_PROFILE:
+                tenantEntity = ctx.getPeContext().getAgentProfileService().findProfileById(ctxTenantId, new AgentProfileId(id));
+                break;
+            case AGENT_BULK_ACTION:
+                tenantEntity = ctx.getPeContext().getAgentBulkActionService().findById(ctxTenantId, new AgentBulkActionId(id));
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());

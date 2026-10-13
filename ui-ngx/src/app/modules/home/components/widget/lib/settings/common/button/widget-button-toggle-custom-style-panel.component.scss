@@ -1,0 +1,55 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../../../../../scss/constants';
+
+.tb-widget-button-custom-style-panel {
+  width: 530px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-lt-md} {
+    width: 90vw;
+  }
+  .tb-widget-button-custom-style-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+  }
+  .tb-widget-button-custom-style-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-widget-button-custom-style-preview {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px 24px 16px;
+    align-items: center;
+    gap: 12px;
+    .tb-widget-button-custom-style-preview-title {
+      align-self: stretch;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 24px;
+      color: rgba(0, 0, 0, 0.38);
+    }
+    tb-widget-button {
+      width: 200px;
+      height: 60px;
+    }
+  }
+  .tb-widget-button-custom-style-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+}

@@ -1,26 +1,17 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,15 +28,19 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.asset.profile.TbAssetProfileService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID_PARAM_DESCRIPTION;
@@ -57,6 +52,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -88,7 +84,7 @@ public class AssetProfileController extends BaseController {
         AssetProfileId assetProfileId = new AssetProfileId(toUUID(strAssetProfileId));
         var result = checkAssetProfileId(assetProfileId, Operation.READ);
         if (inlineImages) {
-            imageService.inlineImage(result);
+            result = imageService.inlineImage(result);
         }
         return result;
     }
@@ -104,7 +100,11 @@ public class AssetProfileController extends BaseController {
             @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId) throws ThingsboardException {
         checkParameter(ASSET_PROFILE_ID, strAssetProfileId);
         AssetProfileId assetProfileId = new AssetProfileId(toUUID(strAssetProfileId));
-        return new AssetProfileInfo(checkAssetProfileId(assetProfileId, Operation.READ));
+        AssetProfileInfo assetProfileInfo = checkNotNull(assetProfileService.findAssetProfileInfoById(getTenantId(), assetProfileId));
+        if (!getTenantId().equals(assetProfileInfo.getTenantId())) {
+            throw permissionDenied();
+        }
+        return assetProfileInfo;
     }
 
     @ApiOperation(value = "Get Default Asset Profile (getDefaultAssetProfileInfo)",
@@ -114,6 +114,7 @@ public class AssetProfileController extends BaseController {
     @RequestMapping(value = "/assetProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
     public AssetProfileInfo getDefaultAssetProfileInfo() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ);
         return checkNotNull(assetProfileService.findDefaultAssetProfileInfo(getTenantId()));
     }
 
@@ -170,8 +171,7 @@ public class AssetProfileController extends BaseController {
             notes = "Returns a page of asset profile objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/assetProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfiles")
     public PageData<AssetProfile> getAssetProfiles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -183,6 +183,7 @@ public class AssetProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(assetProfileService.findAssetProfiles(getTenantId(), pageLink));
     }
@@ -191,8 +192,7 @@ public class AssetProfileController extends BaseController {
             notes = "Returns a page of asset profile info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + ASSET_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assetProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfileInfos")
     public PageData<AssetProfileInfo> getAssetProfileInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -204,8 +204,39 @@ public class AssetProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(assetProfileService.findAssetProfileInfos(getTenantId(), pageLink));
+    }
+
+    @Hidden
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/assetProfileInfos", params = {"assetProfileIds"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<AssetProfileInfo> getAssetProfilesByIdsV1(
+            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        if (!accessControlService.hasPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ)) {
+            return Collections.emptyList();
+        }
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<AssetProfileId> assetProfileIds = new ArrayList<>();
+        for (UUID assetProfileUUID : assetProfileUUIDs) {
+            assetProfileIds.add(new AssetProfileId(assetProfileUUID));
+        }
+        return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
+    }
+
+    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIds)",
+            notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE + RBAC_READ_CHECK)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/assetProfileInfos/list")
+    public List<AssetProfileInfo> getAssetProfilesByIds(
+            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        return getAssetProfilesByIdsV1(assetProfileUUIDs);
     }
 
     @ApiOperation(value = "Get Asset Profile names (getAssetProfileNames)",
@@ -219,6 +250,7 @@ public class AssetProfileController extends BaseController {
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
+        accessControlService.checkPermission(user, Resource.ASSET_PROFILE, Operation.READ);
         return checkNotNull(assetProfileService.findAssetProfileNamesByTenantId(tenantId, activeOnly));
     }
 

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -20,21 +8,31 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.relation.RelationWriteLock;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,8 +40,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.common.data.relation.EntityRelation.USES_TYPE;
+import static org.thingsboard.server.dao.rule.BaseRuleChainService.TB_RULE_CHAIN_INPUT_NODE;
 
 /**
  * Created by igor on 3/13/18.
@@ -55,6 +61,18 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     EdgeService edgeService;
     @Autowired
     RuleChainService ruleChainService;
+    @Autowired
+    RelationService relationService;
+    @Autowired
+    DeviceProfileService deviceProfileService;
+    @Autowired
+    AssetProfileService assetProfileService;
+
+    @MockitoBean
+    SecretConfigurationService secretConfigurationService;
+
+    @MockitoSpyBean
+    RelationWriteLock relationWriteLock;
 
     private IdComparator<RuleChain> idComparator = new IdComparator<>();
     private IdComparator<RuleNode> ruleNodeIdComparator = new IdComparator<>();
@@ -123,6 +141,42 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
         foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNull(foundRuleChain);
+    }
+
+    @Test
+    public void testDeleteRuleChainReferencedAsDeviceProfileDefault() {
+        // Pins the fk_default_rule_chain_device_profile constraint-violation translation to the friendly message.
+        // The Citus rerun (CitusRuleChainServiceTest) additionally exercises the shard-suffixed constraint name
+        // arriving from a worker, which DaoUtil.constraintNameMatches must still recognize.
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Device profile default rule chain");
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId, "Device profile referencing rule chain");
+        deviceProfile.setDefaultRuleChainId(savedRuleChain.getId());
+        deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        assertThatThrownBy(() -> ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("The rule chain referenced by the device profiles cannot be deleted!");
+    }
+
+    @Test
+    public void testDeleteRuleChainReferencedAsAssetProfileDefault() {
+        // Same as the device-profile case above, for fk_default_rule_chain_asset_profile.
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Asset profile default rule chain");
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        AssetProfile assetProfile = createAssetProfile(tenantId, "Asset profile referencing rule chain");
+        assetProfile.setDefaultRuleChainId(savedRuleChain.getId());
+        assetProfileService.saveAssetProfile(assetProfile);
+
+        assertThatThrownBy(() -> ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("The rule chain referenced by the asset profiles cannot be deleted!");
     }
 
     @Test
@@ -265,12 +319,32 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testRuleChainGraphMutationsRunUnderCoveringLock() throws Exception {
+        // saveRuleChainMetaData (the value-returning Supplier overload) and rule-chain deletion (the Runnable overload,
+        // which delegates to the Supplier overload) must both wrap their relation mutations in a covering advisory lock
+        // scoped to the rule chain id. On plain PG the lock is a no-op, but the spy still records the calls.
+        // This pins the WIRING only (that the covering lock is invoked with the rule chain id). The behavioral guarantee
+        // it documents — covering lock acquired before the rule_chain row write, inner endpoint locks suppressed, no
+        // replica divergence — is exercised against a real cluster by CitusRelationWriteSerializationTest.
+        RuleChainMetaData savedRuleChainMetaData = createRuleChainMetadata();
+        RuleChainId ruleChainId = savedRuleChainMetaData.getRuleChainId();
+
+        // createRuleChainMetadata() called saveRuleChainMetaData once -> Supplier overload with this rule chain id.
+        verify(relationWriteLock, atLeastOnce()).withCoveringLock(eq(ruleChainId), any(Supplier.class));
+
+        ruleChainService.deleteRuleChainById(tenantId, ruleChainId);
+
+        // Deletion wraps deleteRuleNodes via the Runnable overload (scoped to the same rule chain id).
+        verify(relationWriteLock, atLeastOnce()).withCoveringLock(eq(ruleChainId), any(Runnable.class));
+    }
+
+    @Test
     public void testUpdateRuleChainMetaData() throws Exception {
         RuleChainMetaData savedRuleChainMetaData = createRuleChainMetadata();
 
         List<RuleNode> ruleNodes = savedRuleChainMetaData.getNodes();
         int name3Index = -1;
-        for (int i=0;i<ruleNodes.size();i++) {
+        for (int i = 0; i < ruleNodes.size(); i++) {
             if ("name3".equals(ruleNodes.get(i).getName())) {
                 name3Index = i;
                 break;
@@ -354,6 +428,80 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         Assert.assertTrue(ruleChainById.isRoot());
     }
 
+    @Test
+    public void testSaveRuleChainWithInputNode() {
+        RuleChain fromRuleChain = new RuleChain();
+        fromRuleChain.setName("From RuleChain");
+        fromRuleChain.setTenantId(tenantId);
+        fromRuleChain = ruleChainService.saveRuleChain(fromRuleChain);
+        RuleChainId fromRuleChainId = fromRuleChain.getId();
+
+        RuleChain toRuleChain1 = new RuleChain();
+        toRuleChain1.setName("To Rule Chain 1");
+        toRuleChain1.setTenantId(tenantId);
+        toRuleChain1 = ruleChainService.saveRuleChain(toRuleChain1);
+        RuleChainId toRuleChain1Id = toRuleChain1.getId();
+
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(fromRuleChainId);
+
+        RuleNode toRuleChain1Node = new RuleNode();
+        toRuleChain1Node.setName("To Rule Chain 1");
+        toRuleChain1Node.setType(TB_RULE_CHAIN_INPUT_NODE);
+        toRuleChain1Node.setConfiguration(JacksonUtil.newObjectNode()
+                .put("ruleChainId", toRuleChain1Id.toString()));
+
+        RuleNode toRuleChain1Node2 = new RuleNode();
+        toRuleChain1Node2.setName("To Rule Chain 1");
+        toRuleChain1Node2.setType(TB_RULE_CHAIN_INPUT_NODE);
+        toRuleChain1Node2.setConfiguration(JacksonUtil.newObjectNode()
+                .put("ruleChainId", toRuleChain1Id.toString()));
+
+        List<RuleNode> ruleNodes = new ArrayList<>();
+        ruleNodes.add(toRuleChain1Node);
+        ruleNodes.add(toRuleChain1Node2);
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity());
+
+        List<EntityRelation> relations = relationService.findByFromAndType(tenantId, fromRuleChainId, USES_TYPE, RelationTypeGroup.COMMON);
+        assertThat(relations).singleElement().satisfies(relationToRuleChain1 -> {
+            assertThat(relationToRuleChain1.getFrom()).isEqualTo(fromRuleChainId);
+            assertThat(relationToRuleChain1.getTo()).isEqualTo(toRuleChain1Id);
+        });
+
+        RuleChain toRuleChain2 = new RuleChain();
+        toRuleChain2.setName("To Rule Chain 2");
+        toRuleChain2.setTenantId(tenantId);
+        toRuleChain2 = ruleChainService.saveRuleChain(toRuleChain2);
+        RuleChainId toRuleChain2Id = toRuleChain2.getId();
+
+        RuleNode toRuleChain2Node = new RuleNode();
+        toRuleChain2Node.setName("To Rule Chain 2");
+        toRuleChain2Node.setType(TB_RULE_CHAIN_INPUT_NODE);
+        toRuleChain2Node.setConfiguration(JacksonUtil.newObjectNode()
+                .put("ruleChainId", toRuleChain2Id.toString()));
+
+        List<RuleNode> newRuleNodes = new ArrayList<>();
+        newRuleNodes.add(toRuleChain2Node);
+        newRuleNodes.add(toRuleChain1Node);
+        ruleChainMetaData = ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
+        ruleChainMetaData.setNodes(newRuleNodes);
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity());
+
+        List<EntityRelation> newRelations = relationService.findByFromAndType(tenantId, fromRuleChainId, USES_TYPE, RelationTypeGroup.COMMON);
+        assertThat(newRelations).hasSize(2);
+        assertThat(newRelations).anySatisfy(relationToRuleChain1 -> {
+            assertThat(relationToRuleChain1.getFrom()).isEqualTo(fromRuleChainId);
+            assertThat(relationToRuleChain1.getTo()).isEqualTo(toRuleChain1Id);
+        });
+        assertThat(newRelations).anySatisfy(relationToRuleChain2 -> {
+            assertThat(relationToRuleChain2.getFrom()).isEqualTo(fromRuleChainId);
+            assertThat(relationToRuleChain2.getTo()).isEqualTo(toRuleChain2Id);
+        });
+    }
+
     private RuleChainId saveRuleChainAndSetAutoAssignToEdge(String name) {
         RuleChain edgeRuleChain = new RuleChain();
         edgeRuleChain.setTenantId(tenantId);
@@ -395,9 +543,9 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.setFirstNodeIndex(0);
         ruleChainMetaData.setNodes(ruleNodes);
 
-        ruleChainMetaData.addConnectionInfo(0,1,"success");
-        ruleChainMetaData.addConnectionInfo(0,2,"fail");
-        ruleChainMetaData.addConnectionInfo(1,2,"success");
+        ruleChainMetaData.addConnectionInfo(0, 1, "success");
+        ruleChainMetaData.addConnectionInfo(0, 2, "fail");
+        ruleChainMetaData.addConnectionInfo(1, 2, "success");
 
         Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity()).isSuccess());
         return ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
@@ -434,10 +582,10 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.setFirstNodeIndex(0);
         ruleChainMetaData.setNodes(ruleNodes);
 
-        ruleChainMetaData.addConnectionInfo(0,1,"success");
-        ruleChainMetaData.addConnectionInfo(0,2,"fail");
-        ruleChainMetaData.addConnectionInfo(1,2,"success");
-        ruleChainMetaData.addConnectionInfo(2,2,"success");
+        ruleChainMetaData.addConnectionInfo(0, 1, "success");
+        ruleChainMetaData.addConnectionInfo(0, 2, "fail");
+        ruleChainMetaData.addConnectionInfo(1, 2, "success");
+        ruleChainMetaData.addConnectionInfo(2, 2, "success");
 
         return ruleChainMetaData;
     }
@@ -473,10 +621,10 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainMetaData.setFirstNodeIndex(0);
         ruleChainMetaData.setNodes(ruleNodes);
 
-        ruleChainMetaData.addConnectionInfo(0,1,"success");
-        ruleChainMetaData.addConnectionInfo(0,2,"fail");
-        ruleChainMetaData.addConnectionInfo(1,2,"success");
-        ruleChainMetaData.addConnectionInfo(2,0,"success");
+        ruleChainMetaData.addConnectionInfo(0, 1, "success");
+        ruleChainMetaData.addConnectionInfo(0, 2, "fail");
+        ruleChainMetaData.addConnectionInfo(1, 2, "success");
+        ruleChainMetaData.addConnectionInfo(2, 0, "success");
 
         return ruleChainMetaData;
     }
@@ -582,16 +730,17 @@ public class RuleChainServiceTest extends AbstractServiceTest {
 
     private RuleChain getRuleChain() {
         String ruleChainStr = "{\n" +
-                "  \"name\": \"Root Rule Chain\",\n" +
-                "  \"type\": \"CORE\",\n" +
-                "  \"firstRuleNodeId\": {\n" +
-                "    \"entityType\": \"RULE_NODE\",\n" +
-                "    \"id\": \"91ad0b00-e779-11ee-9cf0-15d8b6079fdb\"\n" +
-                "  },\n" +
-                "  \"debugMode\": false,\n" +
-                "  \"configuration\": null,\n" +
-                "  \"additionalInfo\": null\n" +
-                "}";
+                              "  \"name\": \"Root Rule Chain\",\n" +
+                              "  \"type\": \"CORE\",\n" +
+                              "  \"firstRuleNodeId\": {\n" +
+                              "    \"entityType\": \"RULE_NODE\",\n" +
+                              "    \"id\": \"91ad0b00-e779-11ee-9cf0-15d8b6079fdb\"\n" +
+                              "  },\n" +
+                              "  \"debugMode\": false,\n" +
+                              "  \"configuration\": null,\n" +
+                              "  \"additionalInfo\": null\n" +
+                              "}";
         return JacksonUtil.fromString(ruleChainStr, RuleChain.class);
     }
+
 }

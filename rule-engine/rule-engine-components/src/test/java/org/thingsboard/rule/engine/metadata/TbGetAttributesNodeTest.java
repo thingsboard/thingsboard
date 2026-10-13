@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
@@ -246,7 +233,12 @@ public class TbGetAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenFetchLatestTimeseriesToDataAndDataIsNotJsonObject_whenOnMsg_thenException() throws Exception {
         // GIVEN
         node = initNode(TbMsgSource.DATA, true, true);
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(ORIGINATOR_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_ARRAY)
+                .build();
 
         // WHEN
         var exception = assertThrows(IllegalArgumentException.class, () -> node.onMsg(ctxMock, msg));
@@ -342,7 +334,12 @@ public class TbGetAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         msgMetaData.putValue("client_attr_metadata", "client_attr_3");
         msgMetaData.putValue("server_attr_metadata", "server_attr_3");
 
-        return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, entityId, msgMetaData, JacksonUtil.toString(msgData));
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(entityId)
+                .copyMetaData(msgMetaData)
+                .data(JacksonUtil.toString(msgData))
+                .build();
     }
 
     private List<String> getAttributeNames(String prefix) {

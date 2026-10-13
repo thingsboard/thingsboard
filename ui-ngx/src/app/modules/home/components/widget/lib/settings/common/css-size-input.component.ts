@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -28,23 +15,25 @@ import {
 import { cssUnit, resolveCssSize } from '@shared/models/widget-settings.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-css-size-input',
-  templateUrl: './css-size-input.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CssSizeInputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CssSizeInputComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-css-size-input',
+    templateUrl: './css-size-input.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CssSizeInputComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CssSizeInputComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -69,6 +58,9 @@ export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Vali
   requiredText: string;
 
   @Input()
+  allowedCssUnits: cssUnit[];
+
+  @Input()
   @coerceBoolean()
   allowEmptyUnit = false;
 
@@ -82,14 +74,17 @@ export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Vali
 
   private propagateChange = null;
 
-  constructor(private fb: UntypedFormBuilder) {}
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.cssSizeFormGroup = this.fb.group({
       size: [null, this.required ? [Validators.required, Validators.min(0)] : [Validators.min(0)]],
       unit: [null, []]
     });
-    this.cssSizeFormGroup.valueChanges.subscribe((value: {size: number; unit: cssUnit}) => {
+    this.cssSizeFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value: {size: number; unit: cssUnit}) => {
       this.updateModel(value);
     });
   }

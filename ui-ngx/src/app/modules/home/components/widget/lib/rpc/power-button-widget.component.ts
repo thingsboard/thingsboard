@@ -1,24 +1,11 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
   ElementRef,
+  NgZone,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -28,7 +15,6 @@ import {
 import { BasicActionWidgetComponent, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
@@ -39,12 +25,14 @@ import {
   PowerButtonWidgetSettings
 } from '@home/components/widget/lib/rpc/power-button-widget.models';
 import { SVG, Svg } from '@svgdotjs/svg.js';
+import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
-  selector: 'tb-power-button-widget',
-  templateUrl: './power-button-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './power-button-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-power-button-widget',
+    templateUrl: './power-button-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './power-button-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PowerButtonWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -73,7 +61,9 @@ export class PowerButtonWidgetComponent extends
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              protected cd: ChangeDetectorRef) {
+              private iconRegistry: MatIconRegistry,
+              protected cd: ChangeDetectorRef,
+              protected zone: NgZone) {
     super(cd);
   }
 
@@ -179,8 +169,10 @@ export class PowerButtonWidgetComponent extends
     this.renderer.setStyle(this.svgShape.node, 'overflow', 'visible');
     this.renderer.setStyle(this.svgShape.node, 'user-select', 'none');
 
-    this.powerButtonSvgShape = PowerButtonShape.fromSettings(this.ctx, this.svgShape,
-      this.settings, this.value, this.disabledState, () => this.onClick());
+    this.zone.run(() => {
+      this.powerButtonSvgShape = PowerButtonShape.fromSettings(this.ctx, this.svgShape, this.iconRegistry,
+        this.settings, this.value, this.disabledState, () => this.onClick());
+    });
 
     this.shapeResize$ = new ResizeObserver(() => {
       this.onResize();

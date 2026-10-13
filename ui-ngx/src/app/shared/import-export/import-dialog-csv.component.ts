@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, Renderer2, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -36,22 +23,26 @@ import {
   CsvToJsonResult,
   ImportEntityColumnType
 } from '@shared/import-export/import-export.models';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
 import { Ace } from 'ace-builds';
-import { getAce } from '@shared/models/ace/ace.models';
+import { getAce, updateEditorSize } from '@shared/models/ace/ace.models';
 
 export interface ImportDialogCsvData {
   entityType: EntityType;
+  customerId: CustomerId;
   importTitle: string;
   importFileLabel: string;
+  entityGroupId: string;
 }
 
 @Component({
-  selector: 'tb-import-csv-dialog',
-  templateUrl: './import-dialog-csv.component.html',
-  providers: [],
-  styleUrls: ['./import-dialog-csv.component.scss']
+    selector: 'tb-import-csv-dialog',
+    templateUrl: './import-dialog-csv.component.html',
+    providers: [],
+    styleUrls: ['./import-dialog-csv.component.scss'],
+    standalone: false
 })
 export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvComponent, boolean>
   implements AfterViewInit, OnDestroy {
@@ -67,6 +58,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   entityType: EntityType;
   importTitle: string;
   importFileLabel: string;
+  customerId: CustomerId;
+  entityGroupId: string;
 
   delimiters: { key: CSVDelimiter; value: string }[] = [{
     key: ',',
@@ -109,6 +102,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     this.entityType = data.entityType;
     this.importTitle = data.importTitle;
     this.importFileLabel = data.importFileLabel;
+    this.customerId = data.customerId;
+    this.entityGroupId = data.entityGroupId;
 
     this.selectFileFormGroup = this.fb.group(
       {
@@ -225,6 +220,8 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   private addEntities() {
     const entitiesData: BulkImportRequest = {
       file: this.selectFileFormGroup.get('importData').value,
+      customerId: this.customerId,
+      entityGroupId: this.entityGroupId,
       mapping: {
         columns: this.processingColumnsParams(),
         delimiter: this.importParametersFormGroup.get('delim').value,
@@ -283,21 +280,9 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
         this.aceEditor = ace.edit(editorElement, editorOptions);
         this.aceEditor.session.setUseWrapMode(false);
         this.aceEditor.setValue(content, -1);
-        this.updateEditorSize(editorElement, content, this.aceEditor);
+        updateEditorSize(editorElement, content, this.aceEditor, this.renderer, {setMinHeight: true, ignoreWidth: true});
       }
     );
-  }
-
-  private updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
-    let newHeight = 200;
-    if (content && content.length > 0) {
-      const lines = content.split('\n');
-      newHeight = 16 * lines.length + 24;
-    }
-    const minHeight = Math.min(200, newHeight);
-    this.renderer.setStyle(editorElement, 'minHeight', minHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-    editor.resize();
   }
 
 }

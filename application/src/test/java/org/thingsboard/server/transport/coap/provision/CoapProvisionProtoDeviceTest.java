@@ -1,20 +1,8 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.coap.provision;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResponse;
 import org.junit.After;
@@ -22,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.CoapDeviceType;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -75,6 +64,11 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     @Test
+    public void testProvisioningCreateNewGatewayDevice() throws Exception {
+        processTestProvisioningCreateNewGatewayDevice();
+    }
+
+    @Test
     public void testProvisioningCreateNewDeviceWithAccessToken() throws Exception {
         processTestProvisioningCreateNewDeviceWithAccessToken();
     }
@@ -117,6 +111,35 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
+
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
+
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().name());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.getStatus().name());
+    }
+
+    private void processTestProvisioningCreateNewGatewayDevice() throws Exception {
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
+        byte[] testsProvisionMessage = createTestsProvisionMessage(null, null, true);
+        ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(createCoapClientAndPublish(testsProvisionMessage));
+
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
+
+        Assert.assertNotNull(createdDevice);
+
+        JsonNode additionalInfo = createdDevice.getAdditionalInfo();
+        Assert.assertNotNull(additionalInfo);
+        Assert.assertTrue(additionalInfo.has(DataConstants.GATEWAY_PARAMETER)
+                && additionalInfo.get(DataConstants.GATEWAY_PARAMETER).isBoolean());
+        Assert.assertTrue(additionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
@@ -233,6 +256,10 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     private byte[] createTestsProvisionMessage(CredentialsType credentialsType, CredentialsDataProto credentialsData) throws Exception {
+        return createTestsProvisionMessage(credentialsType, credentialsData, false);
+    }
+
+    private byte[] createTestsProvisionMessage(CredentialsType credentialsType, CredentialsDataProto credentialsData, boolean isGateway) throws Exception {
         return ProvisionDeviceRequestMsg.newBuilder()
                 .setDeviceName("Test Provision device")
                 .setCredentialsType(credentialsType != null ? credentialsType : CredentialsType.ACCESS_TOKEN)
@@ -241,7 +268,9 @@ public class CoapProvisionProtoDeviceTest extends AbstractCoapIntegrationTest {
                         ProvisionDeviceCredentialsMsg.newBuilder()
                                 .setProvisionDeviceKey("testProvisionKey")
                                 .setProvisionDeviceSecret("testProvisionSecret")
-                ).build()
+                )
+                .setGateway(isGateway)
+                .build()
                 .toByteArray();
     }
 

@@ -1,9 +1,9 @@
-#### Point as anchor function
+#### Location snap filter function
 
 <div class="divider"></div>
 <br/>
 
-*function (data, dsData, dsIndex): boolean*
+*function (data, dsData): boolean*
 
 A JavaScript function evaluating whether to use trip point as time anchor used in time selector.
 

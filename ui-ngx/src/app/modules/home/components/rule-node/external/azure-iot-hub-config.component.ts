@@ -1,0 +1,102 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
+import {
+  AzureIotHubCredentialsType,
+  azureIotHubCredentialsTypes,
+  azureIotHubCredentialsTypeTranslations
+} from '@home/components/rule-node/rule-node-config.models';
+import { MqttVersion } from '@shared/models/mqtt.models';
+
+@Component({
+    selector: 'tb-external-node-azure-iot-hub-config',
+    templateUrl: './azure-iot-hub-config.component.html',
+    styleUrls: ['./mqtt-config.component.scss'],
+    standalone: false
+})
+export class AzureIotHubConfigComponent extends RuleNodeConfigurationComponent {
+
+  azureIotHubConfigForm: UntypedFormGroup;
+
+  allAzureIotHubCredentialsTypes = azureIotHubCredentialsTypes;
+  azureIotHubCredentialsTypeTranslationsMap = azureIotHubCredentialsTypeTranslations;
+  MqttVersion = MqttVersion;
+
+  constructor(private fb: UntypedFormBuilder) {
+    super();
+  }
+
+  protected configForm(): UntypedFormGroup {
+    return this.azureIotHubConfigForm;
+  }
+
+  protected onConfigurationSet(configuration: RuleNodeConfiguration) {
+    this.azureIotHubConfigForm = this.fb.group({
+      topicPattern: [configuration ? configuration.topicPattern : null, [Validators.required]],
+      host: [configuration ? configuration.host : null, [Validators.required]],
+      port: [configuration ? configuration.port : null, [Validators.required, Validators.min(1), Validators.max(65535)]],
+      connectTimeoutSec: [configuration ? configuration.connectTimeoutSec : null,
+        [Validators.required, Validators.min(1), Validators.max(200)]],
+      clientId: [configuration ? configuration.clientId : null, [Validators.required]],
+      cleanSession: [configuration ? configuration.cleanSession : false, []],
+      ssl: [configuration ? configuration.ssl : false, []],
+      protocolVersion: [configuration ? configuration.protocolVersion : null, []],
+      credentials: this.fb.group(
+        {
+          type: [configuration && configuration.credentials ? configuration.credentials.type : null, [Validators.required]],
+          sasKey: [configuration && configuration.credentials ? configuration.credentials.sasKey : null, []],
+          caCert: [configuration && configuration.credentials ? configuration.credentials.caCert : null, []],
+          caCertFileName: [configuration && configuration.credentials ? configuration.credentials.caCertFileName : null, []],
+          privateKey: [configuration && configuration.credentials ? configuration.credentials.privateKey : null, []],
+          privateKeyFileName: [configuration && configuration.credentials ? configuration.credentials.privateKeyFileName : null, []],
+          cert: [configuration && configuration.credentials ? configuration.credentials.cert : null, []],
+          certFileName: [configuration && configuration.credentials ? configuration.credentials.certFileName : null, []],
+          password: [configuration && configuration.credentials ? configuration.credentials.password : null, []],
+        }
+      )
+    });
+  }
+
+  protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+    const credentialsType: AzureIotHubCredentialsType = configuration.credentials.type;
+      if (credentialsType === 'sas') {
+        configuration.credentials = {
+          type: credentialsType,
+          sasKey: configuration.credentials.sasKey,
+          caCert: configuration.credentials.caCert,
+          caCertFileName: configuration.credentials.caCertFileName
+        };
+    }
+    return configuration;
+  }
+
+  protected validatorTriggers(): string[] {
+    return ['credentials.type'];
+  }
+
+  protected updateValidators(emitEvent: boolean) {
+    const credentialsControl = this.azureIotHubConfigForm.get('credentials');
+    const credentialsType: AzureIotHubCredentialsType = credentialsControl.get('type').value;
+    if (emitEvent) {
+      credentialsControl.reset({ type: credentialsType }, {emitEvent: false});
+    }
+    credentialsControl.get('sasKey').setValidators([]);
+    credentialsControl.get('privateKey').setValidators([]);
+    credentialsControl.get('cert').setValidators([]);
+    switch (credentialsType) {
+      case 'sas':
+        credentialsControl.get('sasKey').setValidators([Validators.required]);
+        break;
+      case 'cert.PEM':
+        credentialsControl.get('privateKey').setValidators([Validators.required]);
+        credentialsControl.get('cert').setValidators([Validators.required]);
+        break;
+    }
+    credentialsControl.get('sasKey').updateValueAndValidity({emitEvent});
+    credentialsControl.get('privateKey').updateValueAndValidity({emitEvent});
+    credentialsControl.get('cert').updateValueAndValidity({emitEvent});
+  }
+}

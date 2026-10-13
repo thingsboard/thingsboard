@@ -1,0 +1,184 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
+import {
+  AbstractControl,
+  ControlValueAccessor,
+  FormArray,
+  FormBuilder,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormArray,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
+import { AlarmSeverity, alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { AlarmRule } from "@shared/models/alarm-rule.models";
+import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { coerceBoolean } from "@shared/decorators/coercion";
+import { Observable } from "rxjs";
+
+@Component({
+    selector: 'tb-create-cf-alarm-rules',
+    templateUrl: './create-cf-alarm-rules.component.html',
+    styleUrls: ['./create-cf-alarm-rules.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CreateCfAlarmRulesComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CreateCfAlarmRulesComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
+})
+export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Validator {
+
+  @Input()
+  @coerceBoolean()
+  disabled: boolean;
+
+  @Input()
+  arguments: Record<string, CalculatedFieldArgument>;
+
+  @Input({required: true})
+  testScript: (expression: string) => Observable<string>;
+
+  alarmSeverities = Object.keys(AlarmSeverity);
+  alarmSeverityEnum = AlarmSeverity;
+  alarmSeverityTranslationMap = alarmSeverityTranslations;
+
+  AlarmSeverityNotificationColors = alarmSeverityColors;
+
+  createAlarmRulesFormGroup = this.fb.group({
+    createAlarmRules: this.fb.array<{severity: AlarmSeverity, alarmRule: AlarmRule}>([])
+  });
+
+  private usedSeverities: AlarmSeverity[] = [];
+
+  private propagateChange = (v: any) => { };
+  private onValidatorChange = () => { };
+
+  constructor(private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
+    this.createAlarmRulesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.updateModel());
+    this.createAlarmRulesFormGroup.statusChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.onValidatorChange());
+  }
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+  }
+
+  registerOnValidatorChange(fn: () => void): void {
+    this.onValidatorChange = fn;
+  }
+
+  createAlarmRulesFormArray(): UntypedFormArray {
+    return this.createAlarmRulesFormGroup.get('createAlarmRules') as UntypedFormArray;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+    if (this.disabled) {
+      this.createAlarmRulesFormGroup.disable({emitEvent: false});
+    } else {
+      this.createAlarmRulesFormGroup.enable({emitEvent: false});
+    }
+  }
+
+  writeValue(createAlarmRules: Record<AlarmSeverity, AlarmRule>): void {
+    const createAlarmRulesControls: Array<AbstractControl> = [];
+    if (createAlarmRules) {
+      Object.keys(createAlarmRules).forEach((severity) => {
+        const createAlarmRule = createAlarmRules[severity];
+        if (severity === 'empty') {
+          severity = null;
+        }
+        createAlarmRulesControls.push(this.fb.group({
+          severity: [severity, Validators.required],
+          alarmRule: [{value: createAlarmRule, disabled: this.disabled}, Validators.required]
+        }));
+      });
+    }
+    const formArray = this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray;
+    formArray.clear({emitEvent: false});
+    createAlarmRulesControls.forEach(c => formArray.push(c, {emitEvent: false}));
+    if (this.disabled) {
+      this.createAlarmRulesFormGroup.disable({emitEvent: false});
+    } else {
+      this.createAlarmRulesFormGroup.enable({emitEvent: false});
+    }
+    this.updateUsedSeverities();
+    if (!this.disabled && !this.createAlarmRulesFormGroup.valid) {
+      this.updateModel();
+    }
+  }
+
+  public removeCreateAlarmRule(index: number) {
+    (this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray).removeAt(index);
+  }
+
+  public addCreateAlarmRule() {
+    const createAlarmRulesArray = this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray;
+    createAlarmRulesArray.push(this.fb.group({
+      severity: [this.getFirstUnusedSeverity(), Validators.required],
+      alarmRule: [null, Validators.required]
+    }));
+    this.createAlarmRulesFormGroup.updateValueAndValidity();
+    if (!this.createAlarmRulesFormGroup.valid) {
+      this.updateModel();
+    }
+  }
+
+  private getFirstUnusedSeverity(): AlarmSeverity {
+    for (const severityKey of Object.keys(AlarmSeverity)) {
+      const severity = AlarmSeverity[severityKey];
+      if (this.usedSeverities.indexOf(severity) === -1) {
+        return severity;
+      }
+    }
+    return null;
+  }
+
+  public validate(): ValidationErrors | null {
+    return this.createAlarmRulesFormGroup.valid && this.createAlarmRulesFormArray().length > 0 ? null : {
+      createAlarmRules: {
+        valid: false,
+      },
+    };
+  }
+
+  public isDisabledSeverity(severity: AlarmSeverity, index: number): boolean {
+    const usedIndex = this.usedSeverities.indexOf(severity);
+    return usedIndex > -1 && usedIndex !== index;
+  }
+
+  private updateUsedSeverities() {
+    this.usedSeverities = [];
+    const value = this.createAlarmRulesFormGroup.get('createAlarmRules').value;
+    value.forEach((rule, index) => {
+      this.usedSeverities[index] = AlarmSeverity[rule.severity];
+    });
+  }
+
+  private updateModel() {
+    const value = this.createAlarmRulesFormGroup.get('createAlarmRules').value;
+    const createAlarmRules = {} as Record<AlarmSeverity, AlarmRule>;
+    value.forEach(v => createAlarmRules[v.severity] = v.alarmRule);
+    this.updateUsedSeverities();
+    this.propagateChange(createAlarmRules);
+  }
+}

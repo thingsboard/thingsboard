@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.transport.session;
 
 import lombok.Data;
@@ -23,15 +10,13 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * @author Andrew Shvayka
- */
 @Data
 public abstract class DeviceAwareSessionContext implements SessionContext {
 
@@ -39,6 +24,8 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     protected final UUID sessionId;
     @Getter
     private volatile DeviceId deviceId;
+    @Getter
+    private volatile TenantId tenantId;
     @Getter
     protected volatile TransportDeviceInfo deviceInfo;
     @Getter
@@ -58,6 +45,7 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     public void setDeviceInfo(TransportDeviceInfo deviceInfo) {
         this.deviceInfo = deviceInfo;
         this.deviceId = deviceInfo.getDeviceId();
+        this.tenantId = deviceInfo.getTenantId();
     }
 
     @Override
@@ -65,7 +53,6 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
         this.sessionInfo = sessionInfo;
         this.deviceProfile = deviceProfile;
         this.deviceInfo.setDeviceType(deviceProfile.getName());
-
     }
 
     @Override

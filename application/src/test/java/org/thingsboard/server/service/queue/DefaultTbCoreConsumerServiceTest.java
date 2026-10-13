@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -27,8 +14,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -51,6 +41,8 @@ public class DefaultTbCoreConsumerServiceTest {
     private TbCoreConsumerStats statsMock;
     @Mock
     private RuleEngineCallService ruleEngineCallServiceMock;
+    @Mock
+    private TbCoreDeviceRpcService tbCoreDeviceRpcServiceMock;
 
     @Mock
     private TbCallback tbCallbackMock;
@@ -533,6 +525,98 @@ public class DefaultTbCoreConsumerServiceTest {
     }
 
     @Test
+    public void givenProcessingSuccess_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenOnSuccessCallbackIsCalled() {
+        // GIVEN
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(stateServiceMock).should().onDeviceInactivityTimeoutUpdate(tenantId, deviceId, time);
+        then(tbCallbackMock).should().onSuccess();
+        then(tbCallbackMock).should(never()).onFailure(any());
+    }
+
+    @Test
+    public void givenProcessingFailure_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenOnFailureCallbackIsCalled() {
+        // GIVEN
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        var runtimeException = new RuntimeException("Something bad happened!");
+        doThrow(runtimeException).when(stateServiceMock).onDeviceInactivityTimeoutUpdate(tenantId, deviceId, time);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(tbCallbackMock).should(never()).onSuccess();
+        then(tbCallbackMock).should().onFailure(runtimeException);
+    }
+
+    @Test
+    public void givenStatsEnabled_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenStatsAreRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
+
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(inactivityTimeoutUpdateMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingInactivityTimeoutUpdateMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var inactivityTimeoutUpdateMsg = TransportProtos.DeviceInactivityTimeoutUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setInactivityTimeout(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityTimeoutUpdateMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(inactivityTimeoutUpdateMsg);
+    }
+
+    @Test
     public void givenRestApiCallResponseMsgProto_whenForwardToRuleEngineCallService_thenCallOnQueueMsg() {
         // GIVEN
         ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "ruleEngineCallService", ruleEngineCallServiceMock);
@@ -545,4 +629,32 @@ public class DefaultTbCoreConsumerServiceTest {
         // THEN
         then(ruleEngineCallServiceMock).should().onQueueMsg(restApiCallResponseMsgProto, tbCallbackMock);
     }
+
+    @Test
+    public void givenNotFoundErrorAndNoResponse_whenForwardToCoreRpcService_thenNotFoundAndNullResponseAreRecovered() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "tbCoreDeviceRpcService", tbCoreDeviceRpcServiceMock);
+        var requestId = UUID.randomUUID();
+        // error = NOT_FOUND.ordinal() (0) and response left unset: the previously broken combination
+        // ('error > 0' dropped NOT_FOUND, proto3 default collapsed a null response to "").
+        var proto = TransportProtos.FromDeviceRPCResponseProto.newBuilder()
+                .setRequestIdMSB(requestId.getMostSignificantBits())
+                .setRequestIdLSB(requestId.getLeastSignificantBits())
+                .setError(RpcError.NOT_FOUND.ordinal())
+                .build();
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToCoreRpcService(proto, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToCoreRpcService(proto, tbCallbackMock);
+
+        // THEN
+        var responseCaptor = ArgumentCaptor.forClass(FromDeviceRpcResponse.class);
+        then(tbCoreDeviceRpcServiceMock).should().processRpcResponseFromRuleEngine(responseCaptor.capture());
+        var response = responseCaptor.getValue();
+        assertThat(response.getId()).isEqualTo(requestId);
+        assertThat(response.getError()).contains(RpcError.NOT_FOUND);
+        assertThat(response.getResponse()).isEmpty();
+        then(tbCallbackMock).should().onSuccess();
+    }
+
 }

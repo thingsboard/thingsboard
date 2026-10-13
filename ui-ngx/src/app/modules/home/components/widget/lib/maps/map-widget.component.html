@@ -1,0 +1,19 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-map-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-map-overlay" [style]="overlayStyle"></div>
+    @if (widgetComponent.dashboardWidget.showWidgetTitlePanel) {
+      <div class="tb-widget-title-row flex justify-between">
+        <ng-container *ngTemplateOutlet="widgetTitlePanel || widgetComponent.widgetTitlePanel"></ng-container>
+        <ng-container *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel"></ng-container>
+      </div>
+    } @else {
+      <ng-container class="tb-widget-actions-absolute" *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel; context: {absolute: true}"></ng-container>
+    }
+  <div #mapElement>
+  </div>
+</div>

@@ -1,29 +1,19 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Directive, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Directive, inject, OnDestroy } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable, Subscription } from 'rxjs';
 import { selectIsLoading } from '@core/interceptors/load.selectors';
 import { delay, share } from 'rxjs/operators';
 import { AbstractControl } from '@angular/forms';
+import { Operation, Resource } from '@shared/models/security.models';
 
 @Directive()
 export abstract class PageComponent implements OnDestroy {
+
+  protected store: Store<AppState> = inject(Store<AppState>);
 
   isLoading$: Observable<boolean>;
   loadingSubscription: Subscription;
@@ -31,7 +21,10 @@ export abstract class PageComponent implements OnDestroy {
 
   showMainLoadingBar = true;
 
-  protected constructor(protected store: Store<AppState>) {
+  resource = Resource;
+  operation = Operation;
+
+  protected constructor(...args: unknown[]) {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());
   }
 

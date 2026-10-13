@@ -1,0 +1,166 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-map-layer-settings-panel" [formGroup]="layerFormGroup">
+  <div class="tb-map-layer-settings-title" translate>widgets.maps.layer.layer-settings</div>
+  <div class="tb-map-layer-settings-panel-content">
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.label</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="label" [placeholder]="labelPlaceholder()">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.provider.provider</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="provider" required>
+          @for (provider of mapProviders; track provider) {
+            <mat-option [value]="provider">
+              {{ mapProviderTranslationMap.get(provider) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+      <div class="tb-form-row space-between column-xs">
+        <mat-slide-toggle class="mat-slide" formControlName="vectorTiles">
+          <div tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.vector-tiles-hint' | translate }}">
+            {{ 'widgets.maps.layer.provider.custom.vector-tiles' | translate }}
+          </div>
+        </mat-slide-toggle>
+      </div>
+    }
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width"> {{ (MapProvider.custom === layerFormGroup.get('provider').value ? (layerFormGroup.get('vectorTiles').value ? 'widgets.maps.layer.provider.custom.style-url' : 'widgets.maps.layer.provider.custom.tile-url') : 'widgets.maps.layer.layer') | translate }}</div>
+      @if (MapProvider.openfreemap === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (styleType of openFreeMapStyleTypes; track styleType) {
+              <mat-option [value]="styleType">
+                {{ openFreeMapStyleTranslationMap.get(styleType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.openstreet === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of openStreetLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.carto === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of cartoLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ cartoLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.google === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of googleMapLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ googleMapLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.here === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of hereLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ hereLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.tencent === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex"  appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layerType" required>
+            @for (layerType of tencentLayerTypes; track layerType) {
+              <mat-option [value]="layerType">
+                {{ tencentLayerTranslationMap.get(layerType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+        <mat-form-field
+          class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      }
+    </div>
+    @if (hasApiKey()) {
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>widgets.maps.layer.credentials.credentials</div>
+        <div class="tb-form-row space-between column-xs">
+          <div class="fixed-title-width" translate>widgets.maps.layer.credentials.api-key</div>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="apiKey" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </div>
+    }
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.layer.reference.reference-layer</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="referenceLayer" placeholder="{{'widgets.maps.layer.reference.no-layer' | translate}}">
+          <mat-option [value]="null">{{ 'widgets.maps.layer.reference.no-layer' | translate }}</mat-option>
+          @for (layer of referenceLayerTypes; track layer) {
+            <mat-option [value]="layer">
+              {{ referenceLayerTypeTranslationMap.get(layer) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+      <div class="tb-form-row space-between column-xs">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'widgets.maps.layer.provider.custom.attribution-hint' | translate }}" translate>widgets.maps.layer.provider.custom.attribution</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="customAttribution" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
+  </div>
+  <div class="tb-map-layer-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyLayerSettings()"
+            [disabled]="layerFormGroup.invalid || !layerFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

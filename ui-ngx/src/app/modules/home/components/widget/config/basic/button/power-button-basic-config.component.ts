@@ -1,26 +1,12 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { TargetDevice, WidgetConfig, } from '@shared/models/widget.models';
+import { TargetDevice, WidgetConfig, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { isUndefined } from '@core/utils';
 import { ValueType } from '@shared/models/constants';
@@ -34,9 +20,10 @@ import {
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-power-button-basic-config',
-  templateUrl: './power-button-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-power-button-basic-config',
+    templateUrl: './power-button-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -52,6 +39,8 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
   valueType = ValueType;
 
   powerButtonWidgetConfigForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -86,6 +75,19 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
       iconSizeUnit: [iconSize[1], []],
       icon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
+
+      onButtonIcon: this.fb.group({
+        showIcon: [settings.onButtonIcon.showIcon, []],
+        iconSize: [settings.onButtonIcon.iconSize, [Validators.min(0)]],
+        iconSizeUnit: [settings.onButtonIcon.iconSizeUnit, []],
+        icon: [settings.onButtonIcon.icon, []],
+      }),
+      offButtonIcon: this.fb.group({
+        showIcon: [settings.offButtonIcon.showIcon, []],
+        iconSize: [settings.offButtonIcon.iconSize, [Validators.min(0)]],
+        iconSizeUnit: [settings.offButtonIcon.iconSizeUnit, []],
+        icon: [settings.offButtonIcon.icon, []],
+      }),
 
       mainColorOn: [settings.mainColorOn, []],
       backgroundColorOn: [settings.backgroundColorOn, []],
@@ -128,6 +130,9 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
 
     this.widgetConfig.config.settings.layout = config.layout;
 
+    this.widgetConfig.config.settings.onButtonIcon = config.onButtonIcon;
+    this.widgetConfig.config.settings.offButtonIcon = config.offButtonIcon;
+
     this.widgetConfig.config.settings.mainColorOn = config.mainColorOn;
     this.widgetConfig.config.settings.backgroundColorOn = config.backgroundColorOn;
 
@@ -148,12 +153,14 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon'];
+    return ['showTitle', 'showIcon', 'onButtonIcon.showIcon', 'offButtonIcon.showIcon'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showTitle: boolean = this.powerButtonWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.powerButtonWidgetConfigForm.get('showIcon').value;
+    const onButtonIcon: boolean = this.powerButtonWidgetConfigForm.get('onButtonIcon').get('showIcon').value;
+    const offButtonIcon: boolean = this.powerButtonWidgetConfigForm.get('offButtonIcon').get('showIcon').value;
     if (showTitle) {
       this.powerButtonWidgetConfigForm.get('title').enable();
       this.powerButtonWidgetConfigForm.get('titleFont').enable();
@@ -179,6 +186,24 @@ export class PowerButtonBasicConfigComponent extends BasicWidgetConfigComponent 
       this.powerButtonWidgetConfigForm.get('iconSizeUnit').disable();
       this.powerButtonWidgetConfigForm.get('icon').disable();
       this.powerButtonWidgetConfigForm.get('iconColor').disable();
+    }
+    if (onButtonIcon) {
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSize').enable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSizeUnit').enable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('icon').enable();
+    } else {
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSize').disable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('iconSizeUnit').disable();
+      this.powerButtonWidgetConfigForm.get('onButtonIcon').get('icon').disable();
+    }
+    if (offButtonIcon) {
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSize').enable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSizeUnit').enable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('icon').enable();
+    } else {
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSize').disable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('iconSizeUnit').disable();
+      this.powerButtonWidgetConfigForm.get('offButtonIcon').get('icon').disable();
     }
   }
 

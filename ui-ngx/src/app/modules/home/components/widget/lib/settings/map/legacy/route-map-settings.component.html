@@ -1,0 +1,21 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="tb-widget-settings" [formGroup]="routeMapSettingsFormGroup">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.maps.route-map-settings</legend>
+    <section class="!flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field class="flex-1">
+        <mat-label translate>widgets.maps.stroke-weight</mat-label>
+        <input matInput type="number" min="0" formControlName="strokeWeight">
+      </mat-form-field>
+      <mat-form-field class="flex-1">
+        <mat-label translate>widgets.maps.stroke-opacity</mat-label>
+        <input matInput type="number" min="0" max="1" formControlName="strokeOpacity">
+      </mat-form-field>
+    </section>
+  </fieldset>
+</section>

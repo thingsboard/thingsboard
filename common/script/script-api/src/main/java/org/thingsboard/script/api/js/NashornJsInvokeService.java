@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.js;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -20,6 +8,9 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
+import delight.nashornsandbox.exceptions.ScriptCPUAbuseException;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,8 +22,6 @@ import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -139,22 +128,34 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
 
     @Override
     protected ListenableFuture<UUID> doEval(UUID scriptId, JsScriptInfo scriptInfo, String jsScript) {
+        // A top-level function declaration creates a non-configurable property on the Nashorn Global
+        // that can never be deleted, so every eval/release cycle would grow the Global's PropertyMap
+        // shape history forever. Declaring the function inside an IIFE and assigning it to a global
+        // property keeps the property configurable, allowing doRelease() to actually delete it.
+        // The prefix stays on the first line to preserve line numbering on the raw engine path;
+        // the sandbox beautifier reformats the wrapper and shifts reported error lines anyway.
+        String wrappedScript = "this['" + scriptInfo.getFunctionName() + "'] = (function() { " + jsScript
+                + "\nreturn " + scriptInfo.getFunctionName() + ";\n})();";
         return jsExecutor.submit(() -> {
             try {
                 evalLock.lock();
                 try {
                     if (useJsSandbox) {
-                        sandbox.eval(jsScript);
+                        sandbox.eval(wrappedScript);
                     } else {
-                        engine.eval(jsScript);
+                        engine.eval(wrappedScript);
                     }
                 } finally {
                     evalLock.unlock();
                 }
                 scriptInfoMap.put(scriptId, scriptInfo);
                 return scriptId;
-            } catch (Exception e) {
+            } catch (ScriptException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, jsScript, e);
+            } catch (ScriptCPUAbuseException e) {
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.TIMEOUT, jsScript, e);
+            } catch (Exception e) {
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, jsScript, e);
             }
         });
     }
@@ -177,11 +178,21 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     protected void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws ScriptException {
-        if (useJsSandbox) {
-            sandbox.eval(scriptInfo.getFunctionName() + " = undefined;");
-        } else {
-            engine.eval(scriptInfo.getFunctionName() + " = undefined;");
+        String deleteScript = "delete this['" + scriptInfo.getFunctionName() + "'];";
+        evalLock.lock();
+        try {
+            if (useJsSandbox) {
+                sandbox.eval(deleteScript);
+            } else {
+                engine.eval(deleteScript);
+            }
+        } finally {
+            evalLock.unlock();
         }
     }
 
+    @Override
+    protected boolean isLocal() {
+        return true;
+    }
 }

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -43,8 +29,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
-@Slf4j
-@RuleNode(type = ComponentType.ENRICHMENT,
+@RuleNode(
+        type = ComponentType.ENRICHMENT,
         name = "calculate delta",
         version = 1,
         relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
@@ -53,8 +39,9 @@ import java.util.Map;
                 "and current value for this key from the incoming message",
         nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Other</code> or <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
+        configDirective = "tbEnrichmentNodeCalculateDeltaConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/calculate-delta/"
+)
 public class CalculateDeltaNode implements TbNode {
 
     private Map<EntityId, ValueWithTs> cache;
@@ -175,7 +162,9 @@ public class CalculateDeltaNode implements TbNode {
                 long period = previousData != null ? msg.getMetaDataTs() - previousData.ts : 0;
                 json.put(config.getPeriodValueKey(), period);
             }
-            return TbMsg.transformMsgData(msg, JacksonUtil.toString(json));
+            return msg.transform()
+                    .data(JacksonUtil.toString(json))
+                    .build();
         }, MoreExecutors.directExecutor());
     }
 
@@ -188,7 +177,6 @@ public class CalculateDeltaNode implements TbNode {
         return fetchLatestValueAsync(ctx, originator);
     }
 
-    private record ValueWithTs(long ts, double value) {
-    }
+    private record ValueWithTs(long ts, double value) {}
 
 }

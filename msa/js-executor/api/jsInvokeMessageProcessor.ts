@@ -1,24 +1,10 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import config from 'config';
 import { _logger } from '../config/logger';
 import { JsExecutor, TbScript } from './jsExecutor';
 import { performance } from 'perf_hooks';
-import { isString, parseJsErrorDetails, toUUIDString, UUIDFromBuffer, UUIDToBits, isNotUUID } from './utils';
+import { isString, parseJsErrorDetails, UUIDFromBuffer, UUIDToBits } from './utils';
 import { IQueue } from '../queue/queue.models';
 import {
     JsCompileRequest,
@@ -130,7 +116,7 @@ export class JsInvokeMessageProcessor {
 
     processCompileRequest(requestId: string, responseTopic: string, headers: any, compileRequest: JsCompileRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(compileRequest);
-        this.logger.debug('[%s] Processing compile request, scriptId: [%s]', requestId, scriptId);
+        this.logger.debug('[%s] Processing compile request, scriptId: [%s], compileRequest [%s]', requestId, scriptId, compileRequest);
         if (this.scriptMap.has(scriptId)) {
             const compileResponse = JsInvokeMessageProcessor.createCompileResponse(scriptId, true);
             this.logger.debug('[%s] Script was already compiled, scriptId: [%s]', requestId, scriptId);
@@ -154,7 +140,7 @@ export class JsInvokeMessageProcessor {
 
     processInvokeRequest(requestId: string, responseTopic: string, headers: any, invokeRequest: JsInvokeRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(invokeRequest);
-        this.logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
+        this.logger.debug('[%s] Processing invoke request, scriptId: [%s], invokeRequest [%s]', requestId, scriptId, invokeRequest);
         this.executedScriptsCounter++;
         if (this.executedScriptsCounter % statFrequency == 0) {
             const nowMs = performance.now();
@@ -217,7 +203,7 @@ export class JsInvokeMessageProcessor {
 
     processReleaseRequest(requestId: string, responseTopic: string, headers: any, releaseRequest: JsReleaseRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(releaseRequest);
-        this.logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
+        this.logger.debug('[%s] Processing release request, scriptId: [%s], releaseRequest [%s]', requestId, scriptId, releaseRequest);
         if (this.scriptMap.has(scriptId)) {
             const index = this.scriptIds.indexOf(scriptId);
             if (index > -1) {
@@ -306,26 +292,12 @@ export class JsInvokeMessageProcessor {
     }
 
     private static createCompileResponse(scriptId: string, success: boolean, errorCode?: number, err?: any): JsCompileResponse {
-        if (isNotUUID(scriptId)) {
-            return {
-                errorCode: errorCode,
-                success: success,
-                errorDetails: parseJsErrorDetails(err),
-                scriptIdMSB: "0",
-                scriptIdLSB: "0",
-                scriptHash: scriptId
-            };
-        } else { // this is for backward compatibility (to be able to work with tb-node of previous version) - todo: remove in the next release
-            let scriptIdBits = UUIDToBits(scriptId);
-            return {
-                errorCode: errorCode,
-                success: success,
-                errorDetails: parseJsErrorDetails(err),
-                scriptIdMSB: scriptIdBits[0],
-                scriptIdLSB: scriptIdBits[1],
-                scriptHash: ""
-            };
-        }
+        return {
+            errorCode: errorCode,
+            success: success,
+            errorDetails: parseJsErrorDetails(err),
+            scriptHash: scriptId
+        };
     }
 
     private static createInvokeResponse(result: string | undefined, success: boolean, errorCode?: number, err?: any): JsInvokeResponse {
@@ -338,26 +310,14 @@ export class JsInvokeMessageProcessor {
     }
 
     private static createReleaseResponse(scriptId: string, success: boolean): JsReleaseResponse {
-        if (isNotUUID(scriptId)) {
-            return {
-                success: success,
-                scriptIdMSB: "0",
-                scriptIdLSB: "0",
-                scriptHash: scriptId,
-            };
-        } else { // todo: remove in the next release
-            let scriptIdBits = UUIDToBits(scriptId);
-            return {
-                success: success,
-                scriptIdMSB: scriptIdBits[0],
-                scriptIdLSB: scriptIdBits[1],
-                scriptHash: ""
-            }
-        }
+        return {
+            success: success,
+            scriptHash: scriptId,
+        };
     }
 
     private static getScriptId(request: TbMessage): string {
-        return request.scriptHash ? request.scriptHash : toUUIDString(request.scriptIdMSB, request.scriptIdLSB);
+        return request.scriptHash;
     }
 
     private incrementUseScriptId(scriptId: string) {

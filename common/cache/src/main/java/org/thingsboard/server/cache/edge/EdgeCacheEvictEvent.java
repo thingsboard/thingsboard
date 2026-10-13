@@ -1,0 +1,17 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.cache.edge;
+
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
+
+@Data
+@RequiredArgsConstructor
+public class EdgeCacheEvictEvent {
+
+    private final TenantId tenantId;
+    private final String newName;
+    private final String oldName;
+
+}

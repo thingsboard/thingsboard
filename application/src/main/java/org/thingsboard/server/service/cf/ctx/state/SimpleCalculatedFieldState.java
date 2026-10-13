@@ -1,0 +1,80 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.service.cf.ctx.state;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import lombok.EqualsAndHashCode;
+import net.objecthunter.exp4j.Expression;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.NumberUtils;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
+
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
+public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
+
+    private ThreadLocal<Expression> expression;
+
+    public SimpleCalculatedFieldState(EntityId entityId) {
+        super(entityId);
+    }
+
+    @Override
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        super.setCtx(ctx, actorCtx);
+        this.expression = ctx.getSimpleExpressions().get(ctx.getExpression());
+    }
+
+    @Override
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
+        double expressionResult = ctx.evaluateSimpleExpression(expression.get(), this);
+
+        Output output = ctx.getOutput();
+        Object result = NumberUtils.roundResult(expressionResult, output.getDecimalsByDefault());
+        JsonNode outputResult = createResultJson(output.getName(), result);
+
+        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .outputStrategy(output.getStrategy())
+                .type(output.getType())
+                .scope(output.getScope())
+                .result(outputResult)
+                .build());
+    }
+
+    private JsonNode createResultJson(String outputName, Object result) {
+        ObjectNode valuesNode = JacksonUtil.newObjectNode();
+        if (result instanceof Double doubleValue) {
+            valuesNode.put(outputName, doubleValue);
+        } else if (result instanceof Long longValue) {
+            valuesNode.put(outputName, longValue);
+        } else if (result instanceof Integer integerValue) {
+            valuesNode.put(outputName, integerValue);
+        } else {
+            valuesNode.set(outputName, JacksonUtil.valueToTree(result));
+        }
+        return toResultNode(valuesNode);
+    }
+
+    @Override
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+        if (newEntry instanceof TsRollingArgumentEntry) {
+            throw new IllegalArgumentException("Unsupported argument type detected for argument: " + key + ". " +
+                                               "Rolling argument entry is not supported for simple calculated fields.");
+        }
+    }
+
+    @Override
+    public CalculatedFieldType getType() {
+        return CalculatedFieldType.SIMPLE;
+    }
+
+}

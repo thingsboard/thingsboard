@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 :host {
   .tb-table-widget {
     .mat-mdc-table, .mat-mdc-paginator, mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) {
@@ -44,7 +31,53 @@
         padding: 0 5px;
       }
     }
+
+    .mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {
+      border-color: var(--mat-tab-pagination-disabled-icon-color);
+    }
   }
+
+  .mat-mdc-input-element::placeholder {
+    color: var(--mat-table-header-headline-color);
+  }
+
+  .mat-mdc-table {
+    .mat-mdc-header-row {
+      background-color: var(--tb-orig-background-color);
+    }
+
+    .mat-mdc-cell, .mat-mdc-header-cell {
+      &.mat-mdc-table-sticky {
+        background-color:var(--tb-orig-background-color);
+      }
+    }
+
+    .mat-mdc-row {
+      background-color: rgba(0,0,0,0); 
+      &.tb-current-entity {
+        background-color: var(--tb-current-entity-color);
+        .mat-mdc-cell.mat-mdc-table-sticky {
+          background-color: var(--tb-current-entity-sticky-color);
+        }
+      }
+      &:hover:not(.tb-current-entity){
+        background-color: var(--tb-hover-color);
+        .mat-mdc-cell.mat-mdc-table-sticky {
+          background-color: var(--tb-hover-sticky-color);
+        }
+      }
+      &.mat-row-select.mat-selected:not(.tb-current-entity){
+        background-color: var(--tb-selected-color);
+        .mat-mdc-cell.mat-mdc-table-sticky {
+          background-color: var(--tb-selected-sticky-color);
+        }
+      }
+      &, .mat-mdc-cell.mat-mdc-table-sticky {
+        transition: background-color .2s;
+        background-color:var(--tb-orig-background-color);
+      }
+    }
+  } 
 }
 
 :host-context(.tb-has-timewindow) {

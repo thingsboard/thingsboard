@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
@@ -22,6 +9,7 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
@@ -31,14 +19,16 @@ import { forkJoin, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
+  AlarmAssignee,
   AlarmInfo,
   AlarmQueryV2,
   AlarmSearchStatus,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
-  AlarmStatus,
-  alarmStatusTranslations
+  alarmStatusTranslations,
+  getUserDisplayName,
+  getUserInitials
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -47,10 +37,13 @@ import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
 } from '@home/components/alarm/alarm-details-dialog.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { forAllTimeInterval } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, isNotEmptyStr, isUndefinedOrNull } from '@core/utils';
 import { Authority } from '@shared/models/authority.enum';
 import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -60,7 +53,6 @@ import {
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
@@ -74,6 +66,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   constructor(private alarmService: AlarmService,
               private entityService: EntityService,
               private dialogService: DialogService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
@@ -85,6 +78,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
               private overlay: Overlay,
               private cd: ChangeDetectorRef,
               private utilsService: UtilsService,
+              private writeEnabled,
+              private removeEnabled,
               pageMode = false) {
     super();
     this.loadDataOnInit = pageMode;
@@ -111,6 +106,27 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
+    if (this.pageMode && this.authUser.authority === Authority.TENANT_ADMIN &&
+      this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+      this.aiAssistantConfig = {
+        view: {
+          listView: AiAssistantViewType.ALARM_LIST
+        },
+        initialPromptPlaceholder: this.translate.instant('alarm-rule.ai-assistant-initial-prompt-placeholder'),
+        promptExamples: [
+          {
+            label: this.translate.instant('alarm-rule.ai-assistant-example-suggest-rules-label'),
+            message: this.translate.instant('alarm-rule.ai-assistant-example-suggest-rules-message')
+          },
+          {
+            label: this.translate.instant('alarm-rule.ai-assistant-example-inactivity-label'),
+            message: this.translate.instant('alarm-rule.ai-assistant-example-inactivity-message')
+          }
+        ],
+        showButton: false,
+      };
+    }
+
     this.columns.push(
       new DateEntityTableColumn<AlarmInfo>('createdTime', 'alarm.created-time', this.datePipe, '150px'));
     this.columns.push(
@@ -129,22 +145,15 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         })));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '240px',
-        (entity) => {
-          return this.getAssigneeTemplate(entity)
-        },
-        () => ({}),
-        false,
-        () => ({}),
-        (entity) => undefined,
-        false,
+        (entity) => this.getAssigneeTemplate(entity), () => ({}), false, () => ({}), () => undefined, false,
         {
           icon: 'keyboard_arrow_down',
           type: CellActionDescriptorType.DEFAULT,
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           name: this.translate.instant('alarm.assign'),
           onAction: ($event, entity) => this.openAlarmAssigneePanel($event, entity)
         })
-    )
+    );
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('status', 'alarm.status', '25%',
         (entity) => this.translate.instant(alarmStatusTranslations.get(entity.status))));
@@ -158,26 +167,34 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       }
     );
 
+    if (isUndefinedOrNull(this.writeEnabled)) {
+      this.writeEnabled = this.userPermissionsService.hasGenericPermission(Resource.ALARM, Operation.WRITE);
+    }
+
+    if (isUndefinedOrNull(this.removeEnabled)) {
+      this.removeEnabled = this.userPermissionsService.hasGenericPermission(Resource.ALARM, Operation.DELETE);
+    }
+
     this.groupActionDescriptors.push(
       {
         name: this.translate.instant('alarm.acknowledge'),
         icon: 'done',
-        isEnabled: true,
+        isEnabled: this.writeEnabled,
         onAction: ($event, entities) => this.ackAlarms($event, entities)
       },
       {
         name: this.translate.instant('alarm.clear'),
         icon: 'clear',
-        isEnabled: true,
+        isEnabled: this.writeEnabled,
         onAction: ($event, entities) => this.clearAlarms($event, entities)
       },
       {
         name: this.translate.instant('alarm.delete'),
         icon: 'delete',
-        isEnabled: true,
+        isEnabled: this.removeEnabled,
         onAction: ($event, entities) => this.deleteAlarms($event, entities)
       }
-    )
+    );
   }
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
@@ -192,7 +209,6 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   showAlarmDetails(entity: AlarmInfo) {
-    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId?.id === this.authUser.customerId;
     this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
     (AlarmDetailsDialogComponent,
       {
@@ -201,8 +217,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         data: {
           alarmId: entity.id.id,
           alarm: entity,
-          allowAcknowledgment: isPermissionWrite,
-          allowClear: isPermissionWrite,
+          allowAcknowledgment: this.writeEnabled,
+          allowClear: this.writeEnabled,
           displayDetails: true,
           allowAssign: true
         }
@@ -216,68 +232,39 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   getAssigneeTemplate(entity: AlarmInfo): string {
-    return `
-      <span class="assignee-cell">
-      ${isDefinedAndNotNull(entity.assigneeId) ?
-        `<span class="assigned-container">
-          <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity)}">
-            ${this.getUserInitials(entity)}
-          </span>
-          <span class="user-display-name">${this.getUserDisplayName(entity)}</span>
-        </span>`
-        :
-        `<span class="unassigned-container">
-          <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-          <span>${this.translate.instant('alarm.unassigned')}</span>
-        </span>`
-      }
-      </span>`
-  }
+    const hasAssigneeId = isDefinedAndNotNull(entity.assigneeId);
+    let templateContent: string;
 
-  getUserDisplayName(entity: AlarmInfo) {
-    let displayName = '';
-    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
-      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
-      if (entity.assignee.firstName) {
-        displayName += entity.assignee.firstName;
-      }
-      if (entity.assignee.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.assignee.lastName;
-      }
+    if (hasAssigneeId && ((isNotEmptyStr(entity.assignee?.firstName) || isNotEmptyStr(entity.assignee?.lastName)) ||
+      isNotEmptyStr(entity.assignee?.email))) {
+      templateContent = `
+        <span class="assigned-container">
+         <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity.assignee)}">
+           ${getUserInitials(entity.assignee)}
+         </span>
+         <span class="user-display-name">${getUserDisplayName(entity.assignee)}</span>
+        </span>`;
     } else {
-      displayName = entity.assignee.email;
+      templateContent = `
+        <span class="unassigned-container">
+         <mat-icon class="material-icons unassigned-icon">
+           ${hasAssigneeId ? 'no_accounts' : 'account_circle'}
+         </mat-icon>
+         <span>${this.translate.instant(hasAssigneeId ? 'alarm.user-deleted' : 'alarm.unassigned')}</span>
+        </span>`;
     }
-    return displayName;
+    return `<span class="assignee-cell">${templateContent}</span>`;
   }
 
-  getUserInitials(entity: AlarmInfo): string {
-    let initials = '';
-    if (entity.assignee.firstName && entity.assignee.firstName.length ||
-      entity.assignee.lastName && entity.assignee.lastName.length) {
-      if (entity.assignee.firstName) {
-        initials += entity.assignee.firstName.charAt(0);
-      }
-      if (entity.assignee.lastName) {
-        initials += entity.assignee.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.assignee.email.charAt(0);
-    }
-    return initials.toUpperCase();
-  }
-
-  getAvatarBgColor(entity: AlarmInfo) {
-    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  getAvatarBgColor(alarmAssignee: AlarmAssignee) {
+    return this.utilsService.stringToHslColor(getUserDisplayName(alarmAssignee), 40, 60);
   }
 
   openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;
@@ -312,7 +299,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
       if (componentRef.instance.reassigned) {
-        this.updateData()
+        this.updateData();
       }
     });
   }

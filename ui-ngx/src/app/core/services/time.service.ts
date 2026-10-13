@@ -1,31 +1,22 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Injectable } from '@angular/core';
 import {
   AggregationType,
   DAY,
   defaultTimeIntervals,
-  defaultTimewindow, Interval, IntervalMath,
+  defaultTimewindow,
+  getDefaultTimezoneInfo,
+  Interval,
+  IntervalMath,
   SECOND,
   TimeInterval,
-  Timewindow
+  Timewindow,
+  TimezoneInfo
 } from '@shared/models/time/time.models';
 import { HttpClient } from '@angular/common/http';
-import { isDefined } from '@core/utils';
+import { deepClone, isDefined } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 const MIN_INTERVAL = SECOND;
 const MAX_INTERVAL = 365 * 20 * DAY;
@@ -41,8 +32,11 @@ export class TimeService {
 
   private maxDatapointsLimit = MAX_DATAPOINTS_LIMIT;
 
+  private localBrowserTimezoneInfoPlaceholder: TimezoneInfo;
+
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private translate: TranslateService
   ) {}
 
   public setMaxDatapointsLimit(limit: number) {
@@ -138,8 +132,8 @@ export class TimeService {
     return this.boundMaxInterval(max);
   }
 
-  public defaultTimewindow(): Timewindow {
-    return defaultTimewindow(this);
+  public defaultTimewindow(isDashboard = false): Timewindow {
+    return defaultTimewindow(this, isDashboard);
   }
 
   private toBound(value: number, min: number, max: number, defValue: number): number {
@@ -160,5 +154,14 @@ export class TimeService {
     } else {
       return defValue;
     }
+  }
+
+  public getLocalBrowserTimezoneInfoPlaceholder(): TimezoneInfo {
+    if (!this.localBrowserTimezoneInfoPlaceholder) {
+      this.localBrowserTimezoneInfoPlaceholder = deepClone(getDefaultTimezoneInfo());
+      this.localBrowserTimezoneInfoPlaceholder.id = null;
+      this.localBrowserTimezoneInfoPlaceholder.name = this.translate.instant('timezone.browser-time');
+    }
+    return this.localBrowserTimezoneInfoPlaceholder;
   }
 }

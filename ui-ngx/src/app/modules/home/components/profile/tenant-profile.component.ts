@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { ChangeDetectorRef, Component, DestroyRef, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -24,11 +10,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { EntityComponent } from '../entity/entity.component';
 import { guid } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-tenant-profile',
-  templateUrl: './tenant-profile.component.html',
-  styleUrls: ['./tenant-profile.component.scss']
+    selector: 'tb-tenant-profile',
+    templateUrl: './tenant-profile.component.html',
+    styleUrls: ['./tenant-profile.component.scss'],
+    standalone: false
 })
 export class TenantProfileComponent extends EntityComponent<TenantProfile> {
 
@@ -40,7 +28,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
               @Optional() @Inject('entity') protected entityValue: TenantProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
               protected fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -142,7 +131,9 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         description: [entity ? entity.description : '', []],
       }
     );
-    formGroup.get('isolatedTbRuleEngine').valueChanges.subscribe((value) => {
+    formGroup.get('isolatedTbRuleEngine').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
       if (value) {
         formGroup.get('profileData').patchValue({
             queueConfiguration: mainQueue

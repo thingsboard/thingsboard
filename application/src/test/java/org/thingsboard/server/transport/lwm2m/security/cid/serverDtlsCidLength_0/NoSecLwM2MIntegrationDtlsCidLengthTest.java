@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.security.cid.serverDtlsCidLength_0;
 
 import org.junit.Before;
@@ -26,8 +13,8 @@ public class NoSecLwM2MIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2
 
     @Before
     public void setUpNoSecDtlsCidLength() {
-        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(NO_SEC, NONE));
-        awaitAlias = "await on client state (NoSec_Lwm2m) DtlsCidLength = 0";
+        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(NO_SEC, NONE));
+        awaitAlias = "await on client state (NoSec_Lwm2m) serverDtlsCidLength = 0";
     }
 
     @Test
@@ -41,7 +28,22 @@ public class NoSecLwM2MIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2
     }
 
     @Test
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_1() throws Exception {
+        testNoSecDtlsCidLength(1);
+    }
+
+    @Test
     public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_2() throws Exception {
-        testNoSecDtlsCidLength(2);
+        testNoSecDtlsCidLength(1);
+    }
+
+    @Test
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_4() throws Exception {
+        testNoSecDtlsCidLength(4);
+    }
+
+    @Test
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_16() throws Exception {
+        testNoSecDtlsCidLength(16);
     }
 }

@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -37,30 +23,32 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile-provision-configuration',
-  templateUrl: './device-profile-provision-configuration.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-device-profile-provision-configuration',
+    templateUrl: './device-profile-provision-configuration.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceProfileProvisionConfigurationComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DeviceProfileProvisionConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
   provisionConfigurationFormGroup: UntypedFormGroup;
 
   deviceProvisionType = DeviceProvisionType;
-  deviceProvisionTypes = Object.keys(DeviceProvisionType);
+  deviceProvisionTypes = Object.values(DeviceProvisionType);
   deviceProvisionTypeTranslateMap = deviceProvisionTypeTranslationMap;
 
   private requiredValue: boolean;
@@ -79,7 +67,8 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -91,7 +80,9 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
       certificateRegExPattern: [{value: null, disabled: true}, Validators.required],
       allowCreateNewDevicesByX509Certificate: [{value: null, disabled: true}, Validators.required]
     });
-    this.provisionConfigurationFormGroup.get('type').valueChanges.subscribe((type) => {
+    this.provisionConfigurationFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((type) => {
       if (type === DeviceProvisionType.DISABLED) {
         for (const field in this.provisionConfigurationFormGroup.controls) {
           if (field !== 'type') {
@@ -129,7 +120,9 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
         this.provisionConfigurationFormGroup.get('provisionDeviceKey').enable({emitEvent: false});
       }
     });
-    this.provisionConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.provisionConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

@@ -1,25 +1,12 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import {
   CONTAINS_TYPE,
   EntityRelation,
@@ -32,32 +19,45 @@ import { forkJoin, Observable } from 'rxjs';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { EntityType } from '@shared/models/entity-type.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 export interface RelationDialogData {
   isAdd: boolean;
   direction: EntitySearchDirection;
   relation: EntityRelation;
+  readonly: boolean;
 }
 
 @Component({
-  selector: 'tb-relation-dialog',
-  templateUrl: './relation-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: RelationDialogComponent}],
-  styleUrls: ['./relation-dialog.component.scss']
+    selector: 'tb-relation-dialog',
+    templateUrl: './relation-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: RelationDialogComponent }],
+    styleUrls: ['./relation-dialog.component.scss'],
+    standalone: false
 })
 export class RelationDialogComponent extends DialogComponent<RelationDialogComponent, boolean> implements OnInit, ErrorStateMatcher {
 
-  relationFormGroup: UntypedFormGroup;
+  relationFormGroup: FormGroup;
+
+  additionEntityTypes: {[key in string]: string} = {};
 
   isAdd: boolean;
   direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
+  readonly: boolean;
 
-  additionalInfo: UntypedFormControl;
+  additionalInfo: FormControl;
 
   @ViewChild('additionalInfoEdit', {static: true}) additionalInfoEdit: JsonObjectEditComponent;
 
   submitted = false;
+
+  private authUser = getCurrentAuthUser(this.store);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -65,32 +65,46 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               private entityRelationService: EntityRelationService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RelationDialogComponent, boolean>,
-              public fb: UntypedFormBuilder) {
+              public fb: FormBuilder,
+              private destroyRef: DestroyRef,
+              private userPermissionService: UserPermissionsService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     this.direction = data.direction;
+    this.readonly = data.readonly;
   }
 
   ngOnInit(): void {
+    const hasRuleChainPermission = this.userPermissionService
+      .hasGenericPermission(Resource.RULE_CHAIN, this.readonly ? Operation.READ : Operation.WRITE);
+    if (this.authUser.authority === Authority.TENANT_ADMIN && hasRuleChainPermission) {
+      this.additionEntityTypes = {[EntityType.RULE_CHAIN]: null};
+    }
+
     this.relationFormGroup = this.fb.group({
       type: [this.isAdd ? CONTAINS_TYPE : this.data.relation.type, [Validators.required]],
       targetEntityIds: [this.isAdd ? null :
         [this.direction === EntitySearchDirection.FROM ? this.data.relation.to : this.data.relation.from],
         [Validators.required]]
     });
-    this.additionalInfo = new UntypedFormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
+    this.additionalInfo = new FormControl(this.data.relation.additionalInfo ? {...this.data.relation.additionalInfo} : null);
     if (!this.isAdd) {
       this.relationFormGroup.get('type').disable();
       this.relationFormGroup.get('targetEntityIds').disable();
     }
-    this.additionalInfo.valueChanges.subscribe(
+    if (this.readonly) {
+      this.additionalInfo.disable();
+    }
+    this.additionalInfo.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.submitted = false;
       }
     );
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

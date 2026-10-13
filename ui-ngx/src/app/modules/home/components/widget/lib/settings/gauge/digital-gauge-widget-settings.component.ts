@@ -1,26 +1,13 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Datasource, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { Component } from '@angular/core';
 import {
   AbstractControl,
   UntypedFormArray,
   UntypedFormBuilder,
-  UntypedFormGroup, ValidationErrors,
+  UntypedFormGroup,
+  ValidationErrors,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -36,7 +23,7 @@ import {
   digitalGaugeLayoutTranslations,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { formatValue } from '@core/utils';
+import { formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   ColorSettings,
   ColorType,
@@ -45,11 +32,13 @@ import {
   ValueSourceConfig,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-digital-gauge-widget-settings',
-  templateUrl: './digital-gauge-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-digital-gauge-widget-settings',
+    templateUrl: './digital-gauge-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -215,11 +204,10 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
 
   private maxValueValidation(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      if (value) {
-        if (value < control.parent?.get('minValue').value) {
-          return {maxValue: true};
-        }
+      const value: number = control.value;
+      const minValue = control.parent?.get('minValue').value;
+      if (isNumeric(value) && isDefinedAndNotNull(minValue) && value < minValue) {
+        return {maxValue: true};
       }
       return null;
     };
@@ -244,6 +232,10 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     settings.valueFont.color = this.digitalGaugeWidgetSettingsForm.get('valueColor').value;
     settings.titleFont.color = this.digitalGaugeWidgetSettingsForm.get('titleColor').value;
     settings.labelFont.color = this.digitalGaugeWidgetSettingsForm.get('labelColor').value;
+
+    if (isDefined(settings.decimals)) {
+      delete settings.decimals;
+    }
 
     return settings;
   }
@@ -385,10 +377,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     return this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray;
   }
 
-  public trackByTickValue(index: number, tickValueControl: AbstractControl): any {
-    return tickValueControl;
-  }
-
   public removeTickValue(index: number) {
     (this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray).removeAt(index);
   }
@@ -412,6 +400,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   private _valuePreviewFn(units: boolean): string {
-    return formatValue(22, 0, units ? this.widget.config.units : null, true);
+    return formatValue(22, 0, units ? getSourceTbUnitSymbol(this.widget.config.units) : null, true);
   }
 }

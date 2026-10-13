@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="600" fill="none" version="1.1" viewBox="0 0 200 600">
 <tb:metadata xmlns=""><![CDATA[{
   "title": "Long top filter",
-  "description": "Title\nLong top filter\n",
+  "description": "Long top filter with configurable click actions for custom operations, dashboard manipulation, etc.",
   "searchTags": [
     "filter"
   ],

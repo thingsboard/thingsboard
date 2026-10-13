@@ -1,21 +1,7 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.geo;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -23,10 +9,6 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
         name = "gps geofencing filter",
@@ -60,8 +42,9 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "</br></br>" +
                 "Available radius units: METER, KILOMETER, FOOT, MILE, NAUTICAL_MILE;<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbFilterNodeGpsGeofencingConfig")
+        configDirective = "tbFilterNodeGpsGeofencingConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/gps-geofencing-filter/"
+)
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
 
     @Override
@@ -73,4 +56,5 @@ public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofe
     protected Class<TbGpsGeofencingFilterNodeConfiguration> getConfigClazz() {
         return TbGpsGeofencingFilterNodeConfiguration.class;
     }
+
 }

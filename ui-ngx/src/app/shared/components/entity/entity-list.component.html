@@ -1,30 +1,31 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [ngClass]="{'tb-chip-list': !labelText}" [subscriptSizing]="subscriptSizing">
-  <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
+<mat-form-field [formGroup]="entityListFormGroup" class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [class.tb-chip-list]="!labelText && !inlineField"
+                [class.tb-chips]="inlineField"
+                [class.flex]="inlineField"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  @if (!inlineField && labelText) {
+    <mat-label>{{ labelText }}</mat-label>
+  }
   <mat-chip-grid #chipList formControlName="entities">
-    <mat-chip-row
-      *ngFor="let entity of entities"
-      [removable]="!disabled"
-      (removed)="remove(entity)">
-      {{entity.name}}
-      <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
-    </mat-chip-row>
+    @for (entity of entities; track entity) {
+      <mat-chip-row
+        class="tb-chip-row-ellipsis"
+        [removable]="!disabled"
+        (removed)="remove(entity)">
+        {{ displayEntityFn(entity) }}
+        @if (!disabled) {
+          <mat-icon matChipRemove>close</mat-icon>
+        }
+      </mat-chip-row>
+    }
     <input matInput type="text" placeholder="{{ !disabled ? placeholderText : '' }}"
            #entityInput
            (focusin)="onFocus()"
@@ -34,32 +35,53 @@
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entityAutocomplete"
            [matChipInputFor]="chipList">
+    @if (allowCreateNew && !disabled) {
+      <button mat-button color="primary" matSuffix
+              type="button"
+              (click)="createNewEntity($event)">
+        <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
+      </button>
+    }
   </mat-chip-grid>
   <mat-autocomplete #entityAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     [displayWith]="displayEntityFn">
-    <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
-      <span [innerHTML]="entity.name | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
-      <div (click)="$event.stopPropagation()">
-        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span>{{ 'entity.no-entities-text' | translate }}</span>
+    @for (entity of filteredEntities | async; track entity) {
+      <mat-option [value]="entity">
+        <span [innerHTML]="displayEntityFn(entity) | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredEntities | async)?.length) {
+      <mat-option [value]="null">
+        <div (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span>{{ 'entity.no-entities-text' | translate }}</span>
+            </div>
+          } @else {
+            <span>
+              {{ noEntitiesText | translate: {entity: searchText} }}
+            </span>
+            @if (allowCreateNew) {
+              <span>
+                <a translate (click)="createNewEntity($event, searchText)">entity.create-new-key</a>
+              </span>
+            }
+          }
         </div>
-        <ng-template #searchNotEmpty>
-          <span>
-          {{ translate.get('entity.no-entities-matching', {entity: searchText}) | async }}
-          </span>
-        </ng-template>
-      </div>
-    </mat-option>
+      </mat-option>
+    }
   </mat-autocomplete>
-  <mat-hint *ngIf="hint">
-    {{ hint }}
-  </mat-hint>
-  <mat-error *ngIf="entityListFormGroup.get('entities').hasError('required')">
-    {{ requiredText }}
-  </mat-error>
+  @if (!inlineField && hint) {
+    <mat-hint>
+      {{ hint }}
+    </mat-hint>
+  }
+  @if (!inlineField && entityListFormGroup.get('entities').hasError('required')) {
+    <mat-error>
+      {{ requiredLabel }}
+    </mat-error>
+  }
   <div matSuffix>
     <ng-content select="[matSuffix]"></ng-content>
   </div>

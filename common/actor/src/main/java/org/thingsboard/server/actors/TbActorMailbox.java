@@ -1,26 +1,13 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.actors;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.common.util.RecoveryAware;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorError;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 
@@ -35,6 +22,7 @@ import java.util.function.Supplier;
 @Getter
 @RequiredArgsConstructor
 public final class TbActorMailbox implements TbActorCtx {
+
     private static final boolean HIGH_PRIORITY = true;
     private static final boolean NORMAL_PRIORITY = false;
 
@@ -100,7 +88,7 @@ public final class TbActorMailbox implements TbActorCtx {
         if (t instanceof TbActorException && t.getCause() != null) {
             t = t.getCause();
         }
-        return t instanceof TbActorError && ((TbActorError) t).isUnrecoverable();
+        return t instanceof RecoveryAware recoveryAware && recoveryAware.isUnrecoverable();
     }
 
     private void enqueue(TbActorMsg msg, boolean highPriority) {
@@ -153,7 +141,7 @@ public final class TbActorMailbox implements TbActorCtx {
             }
             if (msg != null) {
                 try {
-                    log.debug("[{}] Going to process message: {}", selfId, msg);
+                    log.trace("[{}] Going to process message: {}", selfId, msg);
                     actor.process(msg);
                 } catch (TbRuleNodeUpdateException updateException) {
                     stopReason = TbActorStopReason.INIT_FAILED;
@@ -237,10 +225,16 @@ public final class TbActorMailbox implements TbActorCtx {
             try {
                 ready.set(NOT_READY);
                 actor.destroy(stopReason, cause);
-                highPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
-                normalPriorityMsgs.forEach(msg -> msg.onTbActorStopped(stopReason));
+                highPriorityMsgs.removeIf(msg -> {
+                    msg.onTbActorStopped(stopReason);
+                    return true;
+                });
+                normalPriorityMsgs.removeIf(msg -> {
+                    msg.onTbActorStopped(stopReason);
+                    return true;
+                });
             } catch (Throwable t) {
-                log.warn("[{}] Failed to destroy actor: {}", selfId, t);
+                log.warn("[{}] Failed to destroy actor: ", selfId, t);
             }
         });
     }

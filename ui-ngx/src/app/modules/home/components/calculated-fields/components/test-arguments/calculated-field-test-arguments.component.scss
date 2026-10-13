@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@use '../../../../../../../scss/constants' as constants;
+
+:host {
+  .tb-form-table {
+    min-width: 700px;
+  }
+}
+
+:host::ng-deep {
+  .tb-form-table-row {
+    .argument-value {
+      .tb-value-type.row {
+        width: 120px;
+        min-width: 120px;
+      }
+    }
+  }
+}

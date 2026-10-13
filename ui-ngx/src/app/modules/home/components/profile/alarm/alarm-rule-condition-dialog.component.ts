@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -27,6 +13,7 @@ import { keyFilterInfosToKeyFilters, keyFiltersToKeyFilterInfos } from '@shared/
 import { AlarmCondition, AlarmConditionType, AlarmConditionTypeTranslationMap } from '@shared/models/device.models';
 import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface AlarmRuleConditionDialogData {
   readonly: boolean;
@@ -35,10 +22,11 @@ export interface AlarmRuleConditionDialogData {
 }
 
 @Component({
-  selector: 'tb-alarm-rule-condition-dialog',
-  templateUrl: './alarm-rule-condition-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleConditionDialogComponent}],
-  styleUrls: ['./alarm-rule-condition-dialog.component.scss']
+    selector: 'tb-alarm-rule-condition-dialog',
+    templateUrl: './alarm-rule-condition-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: AlarmRuleConditionDialogComponent }],
+    styleUrls: ['./alarm-rule-condition-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRuleConditionDialogComponent, AlarmCondition>
   implements OnInit, ErrorStateMatcher {
@@ -74,7 +62,9 @@ export class AlarmRuleConditionDialogComponent extends DialogComponent<AlarmRule
       })
     });
     this.conditionFormGroup.patchValue({spec: this.condition?.spec});
-    this.conditionFormGroup.get('spec.type').valueChanges.subscribe((type) => {
+    this.conditionFormGroup.get('spec.type').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((type) => {
       this.updateValidators(type, true, true);
     });
     if (this.readonly) {

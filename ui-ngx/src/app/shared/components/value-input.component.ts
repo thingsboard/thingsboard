@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -35,6 +22,7 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Subscription } from 'rxjs';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
 
 type Layout = 'column' | 'row';
@@ -45,16 +33,17 @@ export interface ValueInputLayout {
 }
 
 @Component({
-  selector: 'tb-value-input',
-  templateUrl: './value-input.component.html',
-  styleUrls: ['./value-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ValueInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-value-input',
+    templateUrl: './value-input.component.html',
+    styleUrls: ['./value-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ValueInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, ControlValueAccessor {
 
@@ -68,15 +57,34 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
   valueType: ValueType;
 
   @Input()
+  allowedValueTypes: ValueType[];
+
+  @Input()
   trueLabel: string;
 
   @Input()
   falseLabel: string;
 
   @Input()
+  @coerceBoolean()
+  shortBooleanField = false;
+
+  @Input()
+  @coerceBoolean()
+  required = true;
+
+  @Input()
+  @coerceBoolean()
+  hideJsonEdit = false;
+
+  @Input()
   layout: ValueInputLayout | Layout = 'row';
 
   @ViewChild('inputForm', {static: true}) inputForm: NgForm;
+
+  @Input()
+  @coerceBoolean()
+  stringNotRequired = false;
 
   modelValue: any;
 
@@ -109,6 +117,9 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
     }
     if (!this.falseLabel) {
       this.falseLabel = this.translate.instant('value.false');
+    }
+    if (this.allowedValueTypes?.length) {
+      this.valueTypeKeys = this.allowedValueTypes;
     }
     this._subscription = new Subscription();
     this.showValueType = !this.valueType;
@@ -191,8 +202,12 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
 
   updateView() {
     if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN ||
-        (this.valueType === ValueType.JSON && Array.isArray(this.modelValue))) {
-      this.propagateChange(this.modelValue);
+      (this.valueType === ValueType.JSON && Array.isArray(this.modelValue))) {
+      let value = this.modelValue;
+      if (this.stringNotRequired && this.valueType === ValueType.STRING && !value) {
+        value = '';
+      }
+      this.propagateChange(value);
     } else {
       this.propagateChange(null);
     }
@@ -204,6 +219,8 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
     } else if (this.valueType === ValueType.JSON) {
       this.modelValue = {};
       this.inputForm.form.get('value').patchValue({});
+    } else if (this.valueType === ValueType.STRING && this.stringNotRequired) {
+      this.modelValue = '';
     } else {
       this.modelValue = null;
     }

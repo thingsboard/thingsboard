@@ -1,22 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   forwardRef,
@@ -46,7 +33,7 @@ import {
   scadaSymbolBehaviorTypeTranslations, updateBehaviorDefaultSettings
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { deepClone, isUndefinedOrNull } from '@core/utils';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   ScadaSymbolBehaviorPanelComponent
@@ -57,6 +44,8 @@ import {
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behaviors.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
@@ -77,7 +66,7 @@ export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
         return false;
       }
       if (behavior.defaultSetValueSettings.valueToData?.type === ValueToDataType.FUNCTION
-        && isUndefinedOrNull(behavior.defaultSetValueSettings.valueToData?.valueToDataFunction)) {
+        && !isNotEmptyTbFunction(behavior.defaultSetValueSettings.valueToData?.valueToDataFunction)) {
         return false;
       }
       break;
@@ -88,22 +77,23 @@ export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
 };
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-behavior-row',
-  templateUrl: './scada-symbol-behavior-row.component.html',
-  styleUrls: ['./scada-symbol-behavior-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-behavior-row',
+    templateUrl: './scada-symbol-behavior-row.component.html',
+    styleUrls: ['./scada-symbol-behavior-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -111,7 +101,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   idInput: ElementRef<HTMLInputElement>;
 
   @ViewChild('editButton')
-  editButton: MatButton;
+  editButton: MatIconButton;
 
   scadaSymbolBehaviorTypes = scadaSymbolBehaviorTypes;
   scadaSymbolBehaviorTypeTranslations = scadaSymbolBehaviorTypeTranslations;
@@ -142,7 +132,8 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private behaviorsComponent: ScadaSymbolBehaviorsComponent) {
+              private behaviorsComponent: ScadaSymbolBehaviorsComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -151,10 +142,14 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
       name: [null, [Validators.required]],
       type: [null, [Validators.required]]
     });
-    this.behaviorRowFormGroup.valueChanges.subscribe(
+    this.behaviorRowFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.behaviorRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolBehaviorType) => {
+    this.behaviorRowFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((newType: ScadaSymbolBehaviorType) => {
       this.onTypeChanged(newType);
     });
   }
@@ -187,7 +182,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     this.cd.markForCheck();
   }
 
-  editBehavior($event: Event, matButton: MatButton, add = false, editCanceled = () => {}) {
+  editBehavior($event: Event, matButton: MatIconButton, add = false, editCanceled = () => {}) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -195,18 +190,21 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        isAdd: add,
-        disabled: this.disabled,
-        aliasController: this.aliasController,
-        callbacks: this.callbacks,
-        behavior: deepClone(this.modelValue)
-      };
-      const scadaSymbolBehaviorPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ScadaSymbolBehaviorPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const scadaSymbolBehaviorPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ScadaSymbolBehaviorPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          isAdd: add,
+          disabled: this.disabled,
+          aliasController: this.aliasController,
+          callbacks: this.callbacks,
+          behavior: deepClone(this.modelValue)
+        },
+        isModal: true
+      });
       scadaSymbolBehaviorPanelPopover.tbComponentRef.instance.popover = scadaSymbolBehaviorPanelPopover;
       scadaSymbolBehaviorPanelPopover.tbComponentRef.instance.behaviorSettingsApplied.subscribe((behavior) => {
         scadaSymbolBehaviorPanelPopover.hide();

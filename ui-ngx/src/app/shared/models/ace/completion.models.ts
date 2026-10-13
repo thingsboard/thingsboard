@@ -1,22 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Ace } from 'ace-builds';
+import { deepClone } from '@core/utils';
 
-export type tbMetaType = 'object' | 'function' | 'service' | 'property' | 'argument';
+export type tbMetaType = 'object' | 'function' | 'service' | 'property' | 'argument' | 'constant' | 'module';
 
 export type TbEditorCompletions = {[name: string]: TbEditorCompletion};
 
@@ -41,9 +28,9 @@ export interface TbEditorCompletion {
   children?: TbEditorCompletions;
 }
 
-interface TbEditorAceCompletion extends Ace.Completion {
+interface TbEditorAceCompletion extends Ace.SnippetCompletion {
   isTbEditorAceCompletion: true;
-  snippet: string;
+  title: string;
   description?: string;
   type?: string;
   args?: FunctionArg[];
@@ -124,10 +111,9 @@ export class TbEditorCompleter implements Ace.Completer {
     const aceCompletion: TbEditorAceCompletion = {
       isTbEditorAceCompletion: true,
       snippet: parentPrefix + name,
-      name,
+      title: name,
       caption: parentPrefix + name,
       score: 100000,
-      value: parentPrefix + name,
       meta: completion.meta,
       type: completion.type,
       description: completion.description,
@@ -139,14 +125,14 @@ export class TbEditorCompleter implements Ace.Completer {
 
   getDocTooltip(completion: TbEditorAceCompletion) {
     if (completion && completion.isTbEditorAceCompletion) {
-      return {
-        docHTML: this.createDocHTML(completion)
-      };
+      const aceCompletion = deepClone(completion);
+      aceCompletion.docHTML = this.createDocHTML(completion);
+      return aceCompletion;
     }
   }
 
   private createDocHTML(completion: TbEditorAceCompletion): string {
-    let title = `<b>${completion.name}</b>`;
+    let title = `<b>${completion.title}</b>`;
     if (completion.meta === 'function') {
       title += '(';
       if (completion.args) {

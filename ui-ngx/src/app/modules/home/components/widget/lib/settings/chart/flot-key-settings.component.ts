@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -35,6 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { WidgetService } from '@core/http/widget.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from 'src/app/core/api/widget-api.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export function flotDataKeyDefaultSettings(chartType: ChartType): TbFlotKeySettings {
   const settings: TbFlotKeySettings = {
@@ -90,21 +77,22 @@ export function flotDataKeyDefaultSettings(chartType: ChartType): TbFlotKeySetti
 }
 
 @Component({
-  selector: 'tb-flot-key-settings',
-  templateUrl: './flot-key-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FlotKeySettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => FlotKeySettingsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-flot-key-settings',
+    templateUrl: './flot-key-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FlotKeySettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => FlotKeySettingsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class FlotKeySettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -128,7 +116,8 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -189,23 +178,33 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
     });
 
-    this.flotKeySettingsFormGroup.get('showLines').valueChanges.subscribe(() => {
+    this.flotKeySettingsFormGroup.get('showLines').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(false);
     });
 
-    this.flotKeySettingsFormGroup.get('fillLines').valueChanges.subscribe(() => {
+    this.flotKeySettingsFormGroup.get('fillLines').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(false);
     });
 
-    this.flotKeySettingsFormGroup.get('showPoints').valueChanges.subscribe(() => {
+    this.flotKeySettingsFormGroup.get('showPoints').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(false);
     });
 
-    this.flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').valueChanges.subscribe(() => {
+    this.flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(false);
     });
 
-    this.flotKeySettingsFormGroup.valueChanges.subscribe(() => {
+    this.flotKeySettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
 
@@ -312,10 +311,6 @@ export class FlotKeySettingsComponent extends PageComponent implements OnInit, C
 
   thresholdsFormArray(): UntypedFormArray {
     return this.flotKeySettingsFormGroup.get('thresholds') as UntypedFormArray;
-  }
-
-  public trackByThreshold(index: number, thresholdControl: AbstractControl): any {
-    return thresholdControl;
   }
 
   public removeThreshold(index: number) {

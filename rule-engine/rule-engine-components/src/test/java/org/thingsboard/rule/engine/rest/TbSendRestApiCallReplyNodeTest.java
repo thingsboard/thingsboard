@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.rest;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +38,7 @@ public class TbSendRestApiCallReplyNodeTest {
 
     private TbSendRestApiCallReplyNode node;
     private TbSendRestApiCallReplyNodeConfiguration config;
-    
+
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -89,7 +76,12 @@ public class TbSendRestApiCallReplyNodeTest {
         Map<String, String> metadata = Map.of(
                 requestIdAttribute, requestUUIDStr,
                 serviceIdAttribute, serviceIdStr);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(new TbMsgMetaData(metadata))
+                .data(data)
+                .build();
 
         node.onMsg(ctxMock, msg);
 
@@ -109,7 +101,12 @@ public class TbSendRestApiCallReplyNodeTest {
     @ParameterizedTest
     @MethodSource
     public void givenInvalidRequest_whenOnMsg_thenTellFailure(TbMsgMetaData metaData, String data, String errorMsg) {
-        TbMsg msg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
 
         node.onMsg(ctxMock, msg);
 
@@ -130,4 +127,5 @@ public class TbSendRestApiCallReplyNodeTest {
                         TbMsg.EMPTY_STRING, "Request body is empty!")
         );
     }
+
 }

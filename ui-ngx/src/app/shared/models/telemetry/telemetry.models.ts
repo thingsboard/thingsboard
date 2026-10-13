@@ -1,23 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityType } from '@shared/models/entity-type.models';
 import { AggregationType } from '../time/time.models';
-import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, connectable, Observable, ReplaySubject, Subscription } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
@@ -33,9 +19,9 @@ import {
   TsValue
 } from '@shared/models/query/query.models';
 import { PageData } from '@shared/models/page/page-data';
-import { alarmFields } from '@shared/models/alarm.models';
+import { alarmFields, AlarmSeverity } from '@shared/models/alarm.models';
 import { entityFields } from '@shared/models/entity.models';
-import { isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { CmdWrapper, WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { Notification, NotificationType } from '@shared/models/notification.models';
@@ -141,17 +127,22 @@ export enum WsCmdType {
   ENTITY_COUNT = 'ENTITY_COUNT',
   ALARM_DATA = 'ALARM_DATA',
   ALARM_COUNT = 'ALARM_COUNT',
+  ALARM_STATUS = 'ALARM_STATUS',
 
   NOTIFICATIONS = 'NOTIFICATIONS',
   NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
   MARK_NOTIFICATIONS_AS_READ = 'MARK_NOTIFICATIONS_AS_READ',
   MARK_ALL_NOTIFICATIONS_AS_READ = 'MARK_ALL_NOTIFICATIONS_AS_READ',
 
+  LOGS = 'LOGS',
+
   ALARM_DATA_UNSUBSCRIBE = 'ALARM_DATA_UNSUBSCRIBE',
   ALARM_COUNT_UNSUBSCRIBE = 'ALARM_COUNT_UNSUBSCRIBE',
+  ALARM_STATUS_UNSUBSCRIBE = 'ALARM_STATUS_UNSUBSCRIBE',
   ENTITY_DATA_UNSUBSCRIBE = 'ENTITY_DATA_UNSUBSCRIBE',
   ENTITY_COUNT_UNSUBSCRIBE = 'ENTITY_COUNT_UNSUBSCRIBE',
-  NOTIFICATIONS_UNSUBSCRIBE = 'NOTIFICATIONS_UNSUBSCRIBE'
+  NOTIFICATIONS_UNSUBSCRIBE = 'NOTIFICATIONS_UNSUBSCRIBE',
+  LOGS_UNSUBSCRIBE = 'LOGS_UNSUBSCRIBE'
 }
 
 export interface WebsocketCmd {
@@ -186,7 +177,8 @@ export enum IntervalType {
   WEEK = 'WEEK',
   WEEK_ISO = 'WEEK_ISO',
   MONTH = 'MONTH',
-  QUARTER = 'QUARTER'
+  QUARTER = 'QUARTER',
+  CUSTOM = 'CUSTOM'
 }
 
 export class TimeseriesSubscriptionCmd extends SubscriptionCmd {
@@ -297,6 +289,14 @@ export class AlarmCountCmd implements WebsocketCmd {
   type = WsCmdType.ALARM_COUNT;
 }
 
+export class AlarmStatusCmd implements WebsocketCmd {
+  cmdId: number;
+  originatorId: EntityId;
+  severityList?: Array<AlarmSeverity>;
+  typeList?: Array<string>;
+  type = WsCmdType.ALARM_STATUS;
+}
+
 export class UnreadCountSubCmd implements WebsocketCmd {
   cmdId: number;
   type = WsCmdType.NOTIFICATIONS_COUNT;
@@ -351,9 +351,27 @@ export class AlarmCountUnsubscribeCmd implements WebsocketCmd {
   type = WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
 }
 
+export class AlarmStatusUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+  type = WsCmdType.ALARM_STATUS_UNSUBSCRIBE;
+}
+
 export class UnsubscribeCmd implements WebsocketCmd {
   cmdId: number;
   type = WsCmdType.NOTIFICATIONS_UNSUBSCRIBE;
+}
+
+export class LogsSubscriptionCmd implements WebsocketCmd {
+  cmdId: number;
+  entityType: EntityType;
+  entityId: string;
+  lastSeenSeq = 0;
+  type = WsCmdType.LOGS;
+}
+
+export class LogsUnsubscribeCmd implements WebsocketCmd {
+  cmdId: number;
+  type = WsCmdType.LOGS_UNSUBSCRIBE;
 }
 
 export class AuthCmd implements WebsocketCmd {
@@ -431,9 +449,11 @@ export enum CmdUpdateType {
   ENTITY_DATA = 'ENTITY_DATA',
   ALARM_DATA = 'ALARM_DATA',
   ALARM_COUNT_DATA = 'ALARM_COUNT_DATA',
+  ALARM_STATUS = 'ALARM_STATUS',
   COUNT_DATA = 'COUNT_DATA',
   NOTIFICATIONS_COUNT = 'NOTIFICATIONS_COUNT',
-  NOTIFICATIONS = 'NOTIFICATIONS'
+  NOTIFICATIONS = 'NOTIFICATIONS',
+  LOGS = 'LOGS'
 }
 
 export interface CmdUpdateMsg {
@@ -468,6 +488,11 @@ export interface AlarmCountUpdateMsg extends CmdUpdateMsg {
   count: number;
 }
 
+export interface AlarmStatusUpdateMsg extends CmdUpdateMsg {
+  cmdUpdateType: CmdUpdateType.ALARM_STATUS;
+  active: boolean;
+}
+
 export interface NotificationCountUpdateMsg extends CmdUpdateMsg {
   cmdUpdateType: CmdUpdateType.NOTIFICATIONS_COUNT;
   totalUnreadCount: number;
@@ -482,8 +507,16 @@ export interface NotificationsUpdateMsg extends CmdUpdateMsg {
   sequenceNumber: number;
 }
 
+export interface LogsUpdateMsg extends CmdUpdateMsg {
+  cmdUpdateType: CmdUpdateType.LOGS;
+  latestSeq: number;
+  lines: string[];
+  droppedLines: number;
+  evictedChunks: number;
+}
+
 export type WebsocketDataMsg = AlarmDataUpdateMsg | AlarmCountUpdateMsg |
-  EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg | NotificationCountUpdateMsg | NotificationsUpdateMsg;
+  EntityDataUpdateMsg | EntityCountUpdateMsg | SubscriptionUpdateMsg | NotificationCountUpdateMsg | NotificationsUpdateMsg | LogsUpdateMsg;
 
 export const isEntityDataUpdateMsg = (message: WebsocketDataMsg): message is EntityDataUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
@@ -505,6 +538,11 @@ export const isAlarmCountUpdateMsg = (message: WebsocketDataMsg): message is Ala
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.ALARM_COUNT_DATA;
 };
 
+export const isAlarmStatusUpdateMsg = (message: WebsocketDataMsg): message is AlarmCountUpdateMsg => {
+  const updateMsg = (message as CmdUpdateMsg);
+  return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.ALARM_STATUS;
+};
+
 export const isNotificationCountUpdateMsg = (message: WebsocketDataMsg): message is NotificationCountUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS_COUNT;
@@ -513,6 +551,11 @@ export const isNotificationCountUpdateMsg = (message: WebsocketDataMsg): message
 export const isNotificationsUpdateMsg = (message: WebsocketDataMsg): message is NotificationsUpdateMsg => {
   const updateMsg = (message as CmdUpdateMsg);
   return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.NOTIFICATIONS;
+};
+
+export const isLogsUpdateMsg = (message: WebsocketDataMsg): message is LogsUpdateMsg => {
+  const updateMsg = (message as CmdUpdateMsg);
+  return updateMsg.cmdId !== undefined && updateMsg.cmdUpdateType === CmdUpdateType.LOGS;
 };
 
 export class SubscriptionUpdate implements SubscriptionUpdateMsg {
@@ -704,6 +747,30 @@ export class AlarmCountUpdate extends CmdUpdate {
   }
 }
 
+export class AlarmStatusUpdate extends CmdUpdate {
+  active: boolean;
+
+  constructor(msg: AlarmStatusUpdateMsg) {
+    super(msg);
+    this.active = msg.active;
+  }
+}
+
+export class LogsUpdate extends CmdUpdate {
+  latestSeq: number;
+  lines: string[];
+  droppedLines: number;
+  evictedChunks: number;
+
+  constructor(msg: LogsUpdateMsg) {
+    super(msg);
+    this.latestSeq = msg.latestSeq || 0;
+    this.lines = msg.lines || [];
+    this.droppedLines = msg.droppedLines || 0;
+    this.evictedChunks = msg.evictedChunks || 0;
+  }
+}
+
 export class NotificationCountUpdate extends CmdUpdate {
   totalUnreadCount: number;
   sequenceNumber: number;
@@ -730,6 +797,129 @@ export class NotificationsUpdate extends CmdUpdate {
   }
 }
 
+interface SharedSubscriptionInfo {
+  key: string;
+  subscriber: TelemetrySubscriber;
+  subscribed: boolean;
+  sharedSubscribers: Set<SharedTelemetrySubscriber>;
+}
+
+export class SharedTelemetrySubscriber {
+
+  private static subscribersCache: {[key: string]: SharedSubscriptionInfo} = {};
+
+  private static createTelemetrySubscriberKey (entityId: EntityId, attributeScope: TelemetryType, keys: string[] = null): string  {
+      let key = entityId.entityType + '_' + entityId.id + '_' + attributeScope;
+      if (keys) {
+        key += '_' + keys.sort().join('_');
+      }
+      return key;
+  }
+
+  private static createAlarmStatusSubscriberKey (entityId: EntityId, severityList: AlarmSeverity[] = null, typeList: string[] = null): string  {
+    let key = entityId.entityType + '_' + entityId.id;
+    if (severityList) {
+      key += '_' + severityList.sort().join('_');
+    }
+    if (typeList) {
+      key += '_' + typeList.sort().join('_');
+    }
+    return key;
+  }
+
+  private subscribed = false;
+
+  private attributeDataSubject = connectable(this.sharedSubscriptionInfo.subscriber.attributeData$(),
+    { connector: () => new ReplaySubject<Array<AttributeData>>(1)});
+
+  private alarmStatusSubject = connectable(this.sharedSubscriptionInfo.subscriber.alarmStatus$,
+    { connector: () => new ReplaySubject<AlarmStatusUpdate>()});
+
+  private subscriptions = new Array<Subscription>();
+
+  public attributeData$: Observable<Array<AttributeData>> = this.attributeDataSubject; //this.attributeDataSubject.asObservable();
+  public alarmStatus$: Observable<AlarmStatusUpdate> = this.alarmStatusSubject;
+
+  public static createEntityAttributesSubscription(telemetryService: TelemetryWebsocketService,
+                                                   entityId: EntityId, attributeScope: TelemetryType,
+                                                   zone: NgZone, keys: string[] = null): SharedTelemetrySubscriber {
+    const key = SharedTelemetrySubscriber.createTelemetrySubscriberKey(entityId, attributeScope, keys);
+    let info = SharedTelemetrySubscriber.subscribersCache[key];
+    if (!info) {
+      const subscriber = TelemetrySubscriber.createEntityAttributesSubscription(
+        telemetryService, entityId, attributeScope, zone, keys
+      );
+      info = {
+        key,
+        subscriber,
+        subscribed: false,
+        sharedSubscribers: new Set<SharedTelemetrySubscriber>()
+      };
+      SharedTelemetrySubscriber.subscribersCache[key] = info;
+    }
+    const sharedSubscriber = new SharedTelemetrySubscriber(info);
+    info.sharedSubscribers.add(sharedSubscriber);
+    return sharedSubscriber;
+  }
+
+  public static createAlarmStatusSubscription(telemetryService: TelemetryWebsocketService,
+                                              entityId: EntityId, zone: NgZone, severityList: AlarmSeverity[] = null,
+                                              typeList: string[] = null): SharedTelemetrySubscriber {
+    const key = SharedTelemetrySubscriber.createAlarmStatusSubscriberKey(entityId, severityList, typeList);
+    let info = SharedTelemetrySubscriber.subscribersCache[key];
+    if (!info) {
+      const subscriber = TelemetrySubscriber.createAlarmStatusSubscription(
+        telemetryService, entityId, zone, severityList, typeList
+      );
+      info = {
+        key,
+        subscriber,
+        subscribed: false,
+        sharedSubscribers: new Set<SharedTelemetrySubscriber>()
+      };
+      SharedTelemetrySubscriber.subscribersCache[key] = info;
+    }
+    const sharedSubscriber = new SharedTelemetrySubscriber(info);
+    info.sharedSubscribers.add(sharedSubscriber);
+    return sharedSubscriber;
+  }
+
+  private constructor(private sharedSubscriptionInfo: SharedSubscriptionInfo) {
+  }
+
+  public subscribe() {
+    if (!this.subscribed) {
+      this.subscribed = true;
+      this.subscriptions.push(this.attributeDataSubject.connect());
+      this.subscriptions.push(this.alarmStatusSubject.connect());
+      if (!this.sharedSubscriptionInfo.subscribed) {
+        this.sharedSubscriptionInfo.subscriber.subscribe();
+        this.sharedSubscriptionInfo.subscribed = true;
+      }
+    }
+  }
+
+  public unsubscribe() {
+    if (this.subscribed) {
+      this.complete();
+    }
+    this.sharedSubscriptionInfo.sharedSubscribers.delete(this);
+    if (!this.sharedSubscriptionInfo.sharedSubscribers.size) {
+      if (this.sharedSubscriptionInfo.subscribed) {
+        this.sharedSubscriptionInfo.subscriber.unsubscribe();
+        this.sharedSubscriptionInfo.subscribed = false;
+      }
+      delete SharedTelemetrySubscriber.subscribersCache[this.sharedSubscriptionInfo.key];
+    }
+  }
+
+  private complete() {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.subscriptions.length = 0;
+  }
+
+}
+
 export class TelemetrySubscriber extends WsSubscriber {
 
   private dataSubject = new ReplaySubject<SubscriptionUpdate>(1);
@@ -737,6 +927,8 @@ export class TelemetrySubscriber extends WsSubscriber {
   private alarmDataSubject = new ReplaySubject<AlarmDataUpdate>(1);
   private entityCountSubject = new ReplaySubject<EntityCountUpdate>(1);
   private alarmCountSubject = new ReplaySubject<AlarmCountUpdate>(1);
+  private alarmStatusSubject = new ReplaySubject<AlarmStatusUpdate>(1);
+  private logsSubject = new ReplaySubject<LogsUpdate>(1);
   private tsOffset = undefined;
 
   public data$ = this.dataSubject.asObservable();
@@ -744,6 +936,8 @@ export class TelemetrySubscriber extends WsSubscriber {
   public alarmData$ = this.alarmDataSubject.asObservable();
   public entityCount$ = this.entityCountSubject.asObservable();
   public alarmCount$ = this.alarmCountSubject.asObservable();
+  public alarmStatus$ = this.alarmStatusSubject.asObservable();
+  public logs$ = this.logsSubject.asObservable();
 
   public static createEntityAttributesSubscription(telemetryService: TelemetryWebsocketService,
                                                    entityId: EntityId, attributeScope: TelemetryType,
@@ -760,6 +954,30 @@ export class TelemetrySubscriber extends WsSubscriber {
     if (keys) {
       subscriptionCommand.keys = keys.join(',');
     }
+    const subscriber = new TelemetrySubscriber(telemetryService, zone);
+    subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  public static createAlarmStatusSubscription(telemetryService: TelemetryWebsocketService, entityId: EntityId,
+                                              zone: NgZone, severityList: AlarmSeverity[] = null, typeList: string[] = null): TelemetrySubscriber {
+    const subscriptionCommand = new AlarmStatusCmd();
+    subscriptionCommand.originatorId = deepClone(entityId);
+    subscriptionCommand.severityList = severityList;
+    subscriptionCommand.typeList = typeList;
+    const subscriber = new TelemetrySubscriber(telemetryService, zone);
+    subscriber.subscriptionCommands.push(subscriptionCommand);
+    return subscriber;
+  }
+
+  public static createLogsSubscription(telemetryService: TelemetryWebsocketService,
+                                       entityId: EntityId,
+                                       zone: NgZone,
+                                       lastSeenSeq = 0): TelemetrySubscriber {
+    const subscriptionCommand = new LogsSubscriptionCmd();
+    subscriptionCommand.entityType = entityId.entityType as EntityType;
+    subscriptionCommand.entityId = entityId.id;
+    subscriptionCommand.lastSeenSeq = lastSeenSeq;
     const subscriber = new TelemetrySubscriber(telemetryService, zone);
     subscriber.subscriptionCommands.push(subscriptionCommand);
     return subscriber;
@@ -796,6 +1014,8 @@ export class TelemetrySubscriber extends WsSubscriber {
     this.alarmDataSubject.complete();
     this.entityCountSubject.complete();
     this.alarmCountSubject.complete();
+    this.alarmStatusSubject.complete();
+    this.logsSubject.complete();
     super.complete();
   }
 
@@ -882,6 +1102,30 @@ export class TelemetrySubscriber extends WsSubscriber {
       );
     } else {
       this.alarmCountSubject.next(message);
+    }
+  }
+
+  public onAlarmStatus(message: AlarmStatusUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.alarmStatusSubject.next(message);
+        }
+      );
+    } else {
+      this.alarmStatusSubject.next(message);
+    }
+  }
+
+  public onLogs(message: LogsUpdate) {
+    if (this.zone) {
+      this.zone.run(
+        () => {
+          this.logsSubject.next(message);
+        }
+      );
+    } else {
+      this.logsSubject.next(message);
     }
   }
 

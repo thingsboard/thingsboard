@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,12 +17,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.dao.model.sql.AlarmCommentEntity;
 import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +34,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_TABL
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEntity, AlarmComment> implements AlarmCommentDao {
+public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEntity, AlarmComment> implements AlarmCommentDao, TenantEntityDao<AlarmComment> {
     private final SqlPartitioningRepository partitioningRepository;
     @Value("${sql.alarm_comments.partition_size:168}")
     private int partitionSizeInHours;
@@ -72,8 +62,22 @@ public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEn
     }
 
     @Override
+    public int deleteByAlarmIds(List<UUID> alarmIds) {
+        log.trace("Try to delete alarm comments by alarm ids [{}]", alarmIds);
+        if (alarmIds.size() == 1) {
+            return alarmCommentRepository.deleteByAlarmId(alarmIds.get(0));
+        }
+        return alarmCommentRepository.deleteByAlarmIdIn(alarmIds);
+    }
+
+    @Override
     public void createPartition(AlarmCommentEntity entity) {
         partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+    }
+
+    @Override
+    public PageData<AlarmComment> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(alarmCommentRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
@@ -85,4 +89,5 @@ public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEn
     protected JpaRepository<AlarmCommentEntity, UUID> getRepository() {
         return alarmCommentRepository;
     }
+
 }

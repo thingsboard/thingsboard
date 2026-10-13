@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ChartType, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
@@ -28,9 +14,10 @@ import {
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
-  selector: 'tb-flot-widget',
-  templateUrl: './flot-widget.component.html',
-  styleUrls: []
+    selector: 'tb-flot-widget',
+    templateUrl: './flot-widget.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class FlotWidgetComponent implements OnInit {
 
@@ -46,7 +33,7 @@ export class FlotWidgetComponent implements OnInit {
   legendConfig: LegendConfig;
   legendData: LegendData;
   isLegendFirst: boolean;
-  legendContainerLayoutType: string;
+  legendContainerLayoutType: 'flex-row' | 'flex-col';
   legendStyle: {[klass: string]: any};
 
   public settings: TbFlotSettings;
@@ -70,7 +57,7 @@ export class FlotWidgetComponent implements OnInit {
     this.displayLegend = isDefinedAndNotNull(this.settings.showLegend) ? this.settings.showLegend
       : false;
 
-    this.legendContainerLayoutType = 'column';
+    this.legendContainerLayoutType = 'flex-col';
 
     if (this.displayLegend) {
       this.legendConfig = this.settings.legendConfig || defaultLegendConfig(widgetType.timeseries);
@@ -84,10 +71,10 @@ export class FlotWidgetComponent implements OnInit {
       }
       if (this.legendConfig.position === LegendPosition.top ||
         this.legendConfig.position === LegendPosition.bottom) {
-        this.legendContainerLayoutType = 'column';
+        this.legendContainerLayoutType = 'flex-col';
         this.isLegendFirst = this.legendConfig.position === LegendPosition.top;
       } else {
-        this.legendContainerLayoutType = 'row';
+        this.legendContainerLayoutType = 'flex-row';
         this.isLegendFirst = this.legendConfig.position === LegendPosition.left;
       }
       switch (this.legendConfig.position) {

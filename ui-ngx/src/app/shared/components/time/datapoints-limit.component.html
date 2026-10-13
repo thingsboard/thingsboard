@@ -1,0 +1,19 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div [formGroup]="datapointsLimitFormGroup" class="limit-slider-container flex flex-row items-center justify-start">
+  <mat-slider class="flex-1"
+              min="{{minDatapointsLimit()}}"
+              max="{{maxDatapointsLimit()}}">
+    <input matSliderThumb formControlName="limit" [value]="datapointsLimitFormGroup.get('limit').value"/>
+  </mat-slider>
+  <mat-form-field class="limit-slider-value" subscriptSizing="dynamic" appearance="outline">
+    <input matInput formControlName="limit" type="number" step="1"
+           [value]="datapointsLimitFormGroup.get('limit').value"
+           min="{{minDatapointsLimit()}}"
+           max="{{maxDatapointsLimit()}}"/>
+  </mat-form-field>
+</div>

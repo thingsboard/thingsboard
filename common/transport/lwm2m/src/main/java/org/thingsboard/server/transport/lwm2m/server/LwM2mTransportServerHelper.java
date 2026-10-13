@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.server;
 
 import com.google.gson.JsonParser;
@@ -36,7 +23,9 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,12 +47,12 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo) {
-        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, null);
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMaps){
+        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, keyTsLatestMaps, null);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap) {
-        TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap);
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap, @Nullable Instant ts) {
+        TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap, ts);
 
         PostTelemetryMsg postTelemetryMsg = PostTelemetryMsg.newBuilder()
                 .addTsKvList(tsKvList)
@@ -72,9 +61,9 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
-    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap) {
+    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap, @Nullable Instant ts) {
         return TransportProtos.TsKvListProto.newBuilder()
-                .setTs(getTs(kvList, keyTsLatestMap))
+                .setTs(ts == null ? getTs(kvList, keyTsLatestMap) : ts.toEpochMilli())
                 .addAllKv(kvList)
                 .build();
     }
@@ -179,8 +168,16 @@ public class LwM2mTransportServerHelper {
                 case BOOLEAN:
                     kvProto.setType(BOOLEAN_V).setBoolV((Boolean) value).build();
                     break;
-                case STRING:
                 case TIME:
+                    if (value instanceof Date) {
+                        kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV(((Date) value).getTime());
+                    } else if (value instanceof Integer || value instanceof Long) {
+                        kvProto.setType(TransportProtos.KeyValueType.LONG_V).setLongV((long) (value));
+                    } else {
+                        kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV(value.toString());
+                    }
+                    break;
+                case STRING:
                 case OPAQUE:
                 case OBJLNK:
                     kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV((String) value);

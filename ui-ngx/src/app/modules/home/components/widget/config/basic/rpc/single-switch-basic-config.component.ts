@@ -1,26 +1,12 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { TargetDevice, WidgetConfig, } from '@shared/models/widget.models';
+import { TargetDevice, WidgetConfig } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { isUndefined } from '@core/utils';
 import {
@@ -33,9 +19,10 @@ import {
 import { ValueType } from '@shared/models/constants';
 
 @Component({
-  selector: 'tb-single-switch-basic-config',
-  templateUrl: './single-switch-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-single-switch-basic-config',
+    templateUrl: './single-switch-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class SingleSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -108,6 +95,7 @@ export class SingleSwitchBasicConfigComponent extends BasicWidgetConfigComponent
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -159,6 +147,7 @@ export class SingleSwitchBasicConfigComponent extends BasicWidgetConfigComponent
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;

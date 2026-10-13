@@ -1,0 +1,117 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div [formGroup]="layerFormGroup" class="tb-form-table-row tb-map-layer-row">
+  <mat-form-field class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
+    <input matInput formControlName="label" [placeholder]="labelPlaceholder()">
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-provider-field" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="provider" required>
+      @for (provider of mapProviders; track provider) {
+        <mat-option [value]="provider">
+          {{ mapProviderTranslationMap.get(provider) | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  @if (MapProvider.openfreemap === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (styleType of openFreeMapStyleTypes; track styleType) {
+          <mat-option [value]="styleType">
+            {{ openFreeMapStyleTranslationMap.get(styleType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.openstreet === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of openStreetLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ openStreetMapLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.carto === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of cartoLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ cartoLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.google === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of googleMapLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ googleMapLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.here === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of hereLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ hereLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.tencent === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="layerType" required>
+        @for (layerType of tencentLayerTypes; track layerType) {
+          <mat-option [value]="layerType">
+            {{ tencentLayerTranslationMap.get(layerType) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (MapProvider.custom === layerFormGroup.get('provider').value) {
+    <mat-form-field
+      class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="tileUrl" required placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+  }
+  <div class="tb-form-table-row-cell-buttons">
+    <button type="button"
+            mat-icon-button
+            #matButton
+            (click)="editLayer($event, matButton)"
+            matTooltip="{{ 'widgets.maps.layer.layer-settings' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>settings</mat-icon>
+    </button>
+    <div class="tb-remove-button">
+      <button type="button"
+              mat-icon-button
+              (click)="layerRemoved.emit()"
+              matTooltip="{{ 'widgets.maps.layer.remove-layer' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>

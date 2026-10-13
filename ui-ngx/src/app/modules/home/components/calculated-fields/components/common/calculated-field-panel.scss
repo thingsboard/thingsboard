@@ -1,0 +1,48 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../../../scss/constants';
+
+:host {
+  .tb-config-panel {
+    width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    @media #{$mat-lt-md} {
+      max-width: fit-content;
+    }
+    @media #{$mat-xs} {
+      width: 90vw;
+    }
+
+    .tb-config-panel-title {
+      line-height: 24px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.87);
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .tb-config-panel-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: auto;
+
+      .fixed-title-width {
+        @media #{$mat-xs} {
+          min-width: 120px;
+        }
+      }
+    }
+
+    .tb-config-panel-buttons {
+      height: 40px;
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
+  }
+}

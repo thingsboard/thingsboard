@@ -1,23 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FluentFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +17,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -60,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -67,6 +57,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -96,9 +87,11 @@ class TbCreateAlarmNodeTest {
 
     @BeforeEach
     void before() {
-        dbExecutor = new TestDbCallbackExecutor();
+        dbExecutor = DirectListeningExecutor.INSTANCE;
         metadata = new TbMsgMetaData();
         config = new TbCreateAlarmNodeConfiguration();
+
+        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
     }
 
     @Test
@@ -119,8 +112,8 @@ class TbCreateAlarmNodeTest {
                     delete metadata.prevAlarmDetails;
                     //now metadata is the same as it comes IN this rule node
                 }
-
-
+                
+                
                 return details;""");
         assertThat(config.getAlarmDetailsBuildTbel()).isEqualTo("""
                 \
@@ -131,12 +124,13 @@ class TbCreateAlarmNodeTest {
                     metadata.remove('prevAlarmDetails');
                     //now metadata is the same as it comes IN this rule node
                 }
-
-
+                
+                
                 return details;""");
         assertThat(config.getSeverity()).isEqualTo(AlarmSeverity.CRITICAL.name());
         assertThat(config.isPropagate()).isFalse();
         assertThat(config.isPropagateToOwner()).isFalse();
+        assertThat(config.isPropagateToOwnerHierarchy()).isFalse();
         assertThat(config.isPropagateToTenant()).isFalse();
         assertThat(config.isUseMessageAlarmData()).isFalse();
         assertThat(config.isOverwriteAlarmDetails()).isFalse();
@@ -163,7 +157,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data("{\"temperature\": 50}")
+                .build();
 
         Alarm existingAlarm = null;
 
@@ -176,6 +175,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(false)
                 .propagateToOwner(false)
+                .propagateToOwnerHierarchy(false)
                 .propagateToTenant(false)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -198,6 +198,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(false)
                         .propagateToOwner(false)
+                        .propagateToOwnerHierarchy(false)
                         .propagateToTenant(false)
                         .propagateRelationTypes(Collections.emptyList()).build())
                 .userId(null)
@@ -207,10 +208,9 @@ class TbCreateAlarmNodeTest {
         // mocks
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
-        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingAlarm);
-        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(Futures.immediateFuture(alarmDetails));
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(FluentFuture.from(immediateFuture(existingAlarm)));
+        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(immediateFuture(alarmDetails));
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
                 .created(true)
@@ -224,12 +224,12 @@ class TbCreateAlarmNodeTest {
         given(alarmServiceMock.createAlarm(expectedCreateAlarmRequest)).willReturn(apiCallResult);
         given(ctxMock.alarmActionMsg(expectedCreatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_CREATED)).willReturn(alarmActionMsgMock);
         given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
-                .willAnswer(answer -> TbMsg.transformMsg(
-                        answer.getArgument(0, TbMsg.class),
-                        answer.getArgument(1, TbMsgType.class),
-                        answer.getArgument(2, EntityId.class),
-                        answer.getArgument(3, TbMsgMetaData.class),
-                        answer.getArgument(4, String.class))
+                .willAnswer(answer -> answer.getArgument(0, TbMsg.class).transform()
+                        .type(answer.getArgument(1, TbMsgType.class))
+                        .originator(answer.getArgument(2, EntityId.class))
+                        .metaData(answer.getArgument(3, TbMsgMetaData.class))
+                        .data(answer.getArgument(4, String.class))
+                        .build()
                 );
         given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, TbAbstractAlarmNodeConfiguration.ALARM_DETAILS_BUILD_TBEL_TEMPLATE)).willReturn(alarmDetailsScriptMock);
 
@@ -242,9 +242,7 @@ class TbCreateAlarmNodeTest {
         // THEN
 
         // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
         then(alarmDetailsScriptMock).should().executeJsonAsync(incomingMsg);
-        then(ctxMock).should().logJsEvalResponse();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
         then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
@@ -300,6 +298,7 @@ class TbCreateAlarmNodeTest {
         config.setSeverity("${alarmSeverity}");
         config.setPropagate(true);
         config.setPropagateToOwner(true);
+        config.setPropagateToOwnerHierarchy(true);
         config.setPropagateToTenant(true);
         config.setRelationTypes(List.of("RELATION_TYPE_1", "RELATION_TYPE_2", "RELATION_TYPE_3"));
         config.setUseMessageAlarmData(false);
@@ -317,7 +316,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50, \"alarmType\": \"" + alarmType + "\"}");
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data("{\"temperature\": 50, \"alarmType\": \"" + alarmType + "\"}")
+                .build();
 
         var existingClearedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -327,6 +331,7 @@ class TbCreateAlarmNodeTest {
                 .severity(AlarmSeverity.WARNING)
                 .propagate(false)
                 .propagateToOwner(false)
+                .propagateToOwnerHierarchy(false)
                 .propagateToTenant(false)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -345,6 +350,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(true)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(config.getRelationTypes())
                 .type(alarmType)
@@ -367,6 +373,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(true)
                         .propagateToOwner(true)
+                        .propagateToOwnerHierarchy(true)
                         .propagateToTenant(true)
                         .propagateRelationTypes(config.getRelationTypes()).build())
                 .userId(null)
@@ -376,10 +383,9 @@ class TbCreateAlarmNodeTest {
         // mocks
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
-        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingClearedAlarm);
-        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(Futures.immediateFuture(alarmDetails));
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(FluentFuture.from(immediateFuture(existingClearedAlarm)));
+        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(immediateFuture(alarmDetails));
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
                 .created(true)
@@ -393,12 +399,12 @@ class TbCreateAlarmNodeTest {
         given(alarmServiceMock.createAlarm(expectedCreateAlarmRequest)).willReturn(apiCallResult);
         given(ctxMock.alarmActionMsg(expectedCreatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_CREATED)).willReturn(alarmActionMsgMock);
         given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
-                .willAnswer(answer -> TbMsg.transformMsg(
-                        answer.getArgument(0, TbMsg.class),
-                        answer.getArgument(1, TbMsgType.class),
-                        answer.getArgument(2, EntityId.class),
-                        answer.getArgument(3, TbMsgMetaData.class),
-                        answer.getArgument(4, String.class))
+                .willAnswer(answer -> answer.getArgument(0, TbMsg.class).transform()
+                        .type(answer.getArgument(1, TbMsgType.class))
+                        .originator(answer.getArgument(2, EntityId.class))
+                        .metaData(answer.getArgument(3, TbMsgMetaData.class))
+                        .data(answer.getArgument(4, String.class))
+                        .build()
                 );
         given(ctxMock.createScriptEngine(ScriptLanguage.JS, config.getAlarmDetailsBuildJs())).willReturn(alarmDetailsScriptMock);
 
@@ -411,9 +417,7 @@ class TbCreateAlarmNodeTest {
         // THEN
 
         // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
         then(alarmDetailsScriptMock).should().executeJsonAsync(incomingMsg);
-        then(ctxMock).should().logJsEvalResponse();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
         then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
@@ -462,6 +466,9 @@ class TbCreateAlarmNodeTest {
         boolean oldPropagateToOwner = false;
         boolean newPropagateToOwner = true;
 
+        boolean oldPropagateToOwnerHierarchy = false;
+        boolean newPropagateToOwnerHierarchy = true;
+
         boolean oldPropagateToTenant = false;
         boolean newPropagateToTenant = true;
 
@@ -493,6 +500,7 @@ class TbCreateAlarmNodeTest {
         config.setSeverity("$[alarmSeverity]");
         config.setPropagate(newPropagate);
         config.setPropagateToOwner(newPropagateToOwner);
+        config.setPropagateToOwnerHierarchy(newPropagateToOwnerHierarchy);
         config.setPropagateToTenant(newPropagateToTenant);
         config.setRelationTypes(newPropagateRelationTypes);
         config.setUseMessageAlarmData(false);
@@ -508,7 +516,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50, \"alarmSeverity\": \"" + newAlarmSeverity.name() + "\"}");
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data("{\"temperature\": 50, \"alarmSeverity\": \"" + newAlarmSeverity.name() + "\"}")
+                .build();
 
         var existingAlarmId = new AlarmId(Uuids.timeBased());
         var existingActiveAlarm = Alarm.builder()
@@ -519,6 +532,7 @@ class TbCreateAlarmNodeTest {
                 .severity(oldAlarmSeverity)
                 .propagate(oldPropagate)
                 .propagateToOwner(oldPropagateToOwner)
+                .propagateToOwnerHierarchy(oldPropagateToOwnerHierarchy)
                 .propagateToTenant(oldPropagateToTenant)
                 .propagateRelationTypes(oldPropagateRelationTypes)
                 .type(alarmType)
@@ -537,6 +551,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(newPropagate)
                 .propagateToOwner(newPropagateToOwner)
+                .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                 .propagateToTenant(newPropagateToTenant)
                 .propagateRelationTypes(newPropagateRelationTypes)
                 .type(alarmType)
@@ -550,6 +565,7 @@ class TbCreateAlarmNodeTest {
         var expectedUpdateAlarmRequest = AlarmUpdateRequest.builder()
                 .tenantId(tenantId)
                 .alarmId(existingAlarmId)
+                .originator(msgOriginator)
                 .severity(newAlarmSeverity)
                 .startTs(100L)
                 .endTs(newEndTs)
@@ -557,6 +573,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(newPropagate)
                         .propagateToOwner(newPropagateToOwner)
+                        .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                         .propagateToTenant(newPropagateToTenant)
                         .propagateRelationTypes(newPropagateRelationTypes).build())
                 .userId(null)
@@ -565,10 +582,9 @@ class TbCreateAlarmNodeTest {
         // mocks
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
-        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingActiveAlarm);
-        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(Futures.immediateFuture(newAlarmDetails));
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(FluentFuture.from(immediateFuture(existingActiveAlarm)));
+        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(immediateFuture(newAlarmDetails));
         doReturn(newEndTs).when(nodeSpy).currentTimeMillis();
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
@@ -583,12 +599,12 @@ class TbCreateAlarmNodeTest {
         given(alarmServiceMock.updateAlarm(expectedUpdateAlarmRequest)).willReturn(apiCallResult);
         given(ctxMock.alarmActionMsg(expectedUpdatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_UPDATED)).willReturn(alarmActionMsgMock);
         given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
-                .willAnswer(answer -> TbMsg.transformMsg(
-                        answer.getArgument(0, TbMsg.class),
-                        answer.getArgument(1, TbMsgType.class),
-                        answer.getArgument(2, EntityId.class),
-                        answer.getArgument(3, TbMsgMetaData.class),
-                        answer.getArgument(4, String.class))
+                .willAnswer(answer -> answer.getArgument(0, TbMsg.class).transform()
+                        .type(answer.getArgument(1, TbMsgType.class))
+                        .originator(answer.getArgument(2, EntityId.class))
+                        .metaData(answer.getArgument(3, TbMsgMetaData.class))
+                        .data(answer.getArgument(4, String.class))
+                        .build()
                 );
         given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
@@ -601,14 +617,12 @@ class TbCreateAlarmNodeTest {
         // THEN
 
         // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
         var dummyMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(alarmDetailsScriptMock).should().executeJsonAsync(dummyMsgCaptor.capture());
         TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
         assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
         assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
         assertThat(actualDummyMsg.getMetaData().getData()).containsEntry("prevAlarmDetails", JacksonUtil.toString(oldAlarmDetails));
-        then(ctxMock).should().logJsEvalResponse();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
         then(alarmServiceMock).should().updateAlarm(expectedUpdateAlarmRequest);
@@ -666,6 +680,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(true)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -680,7 +695,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.ALARM, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.ALARM)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data(JacksonUtil.toString(alarmFromIncomingMessage))
+                .build();
 
         var existingClearedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -690,6 +710,7 @@ class TbCreateAlarmNodeTest {
                 .severity(AlarmSeverity.WARNING)
                 .propagate(false)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -708,6 +729,7 @@ class TbCreateAlarmNodeTest {
                 .severity(alarmSeverity)
                 .propagate(true)
                 .propagateToOwner(true)
+                .propagateToOwnerHierarchy(true)
                 .propagateToTenant(true)
                 .propagateRelationTypes(Collections.emptyList())
                 .type(alarmType)
@@ -730,6 +752,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(true)
                         .propagateToOwner(true)
+                        .propagateToOwnerHierarchy(true)
                         .propagateToTenant(true)
                         .propagateRelationTypes(Collections.emptyList()).build())
                 .userId(null)
@@ -739,9 +762,8 @@ class TbCreateAlarmNodeTest {
         // mocks
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
-        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingClearedAlarm);
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(FluentFuture.from(immediateFuture(existingClearedAlarm)));
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
                 .created(true)
@@ -755,12 +777,12 @@ class TbCreateAlarmNodeTest {
         given(alarmServiceMock.createAlarm(expectedCreateAlarmRequest)).willReturn(apiCallResult);
         given(ctxMock.alarmActionMsg(expectedCreatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_CREATED)).willReturn(alarmActionMsgMock);
         given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
-                .willAnswer(answer -> TbMsg.transformMsg(
-                        answer.getArgument(0, TbMsg.class),
-                        answer.getArgument(1, TbMsgType.class),
-                        answer.getArgument(2, EntityId.class),
-                        answer.getArgument(3, TbMsgMetaData.class),
-                        answer.getArgument(4, String.class))
+                .willAnswer(answer -> answer.getArgument(0, TbMsg.class).transform()
+                        .type(answer.getArgument(1, TbMsgType.class))
+                        .originator(answer.getArgument(2, EntityId.class))
+                        .metaData(answer.getArgument(3, TbMsgMetaData.class))
+                        .data(answer.getArgument(4, String.class))
+                        .build()
                 );
         given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
@@ -773,9 +795,7 @@ class TbCreateAlarmNodeTest {
         // THEN
 
         // verify alarm details script was not evaluated
-        then(ctxMock).should(never()).logJsEvalRequest();
         then(alarmDetailsScriptMock).should(never()).executeJsonAsync(any());
-        then(ctxMock).should(never()).logJsEvalResponse();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
         then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
@@ -824,6 +844,9 @@ class TbCreateAlarmNodeTest {
         boolean oldPropagateToOwner = false;
         boolean newPropagateToOwner = true;
 
+        boolean oldPropagateToOwnerHierarchy = false;
+        boolean newPropagateToOwnerHierarchy = true;
+
         boolean oldPropagateToTenant = false;
         boolean newPropagateToTenant = true;
 
@@ -859,6 +882,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(newPropagate)
                 .propagateToOwner(newPropagateToOwner)
+                .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                 .propagateToTenant(newPropagateToTenant)
                 .propagateRelationTypes(newPropagateRelationTypes)
                 .type(alarmType)
@@ -867,7 +891,12 @@ class TbCreateAlarmNodeTest {
                 .details(newAlarmDetails)
                 .build();
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data(JacksonUtil.toString(alarmFromIncomingMessage))
+                .build();
 
         var existingAlarmId = new AlarmId(Uuids.timeBased());
         var existingActiveAlarm = Alarm.builder()
@@ -878,6 +907,7 @@ class TbCreateAlarmNodeTest {
                 .severity(oldAlarmSeverity)
                 .propagate(oldPropagate)
                 .propagateToOwner(oldPropagateToOwner)
+                .propagateToOwnerHierarchy(oldPropagateToOwnerHierarchy)
                 .propagateToTenant(oldPropagateToTenant)
                 .propagateRelationTypes(oldPropagateRelationTypes)
                 .type(alarmType)
@@ -896,6 +926,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(newPropagate)
                 .propagateToOwner(newPropagateToOwner)
+                .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                 .propagateToTenant(newPropagateToTenant)
                 .propagateRelationTypes(newPropagateRelationTypes)
                 .type(alarmType)
@@ -909,6 +940,7 @@ class TbCreateAlarmNodeTest {
         var expectedUpdateAlarmRequest = AlarmUpdateRequest.builder()
                 .tenantId(tenantId)
                 .alarmId(existingAlarmId)
+                .originator(msgOriginator)
                 .severity(newAlarmSeverity)
                 .startTs(100L)
                 .endTs(newEndTs)
@@ -916,6 +948,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(newPropagate)
                         .propagateToOwner(newPropagateToOwner)
+                        .propagateToOwnerHierarchy(newPropagateToOwnerHierarchy)
                         .propagateToTenant(newPropagateToTenant)
                         .propagateRelationTypes(newPropagateRelationTypes).build())
                 .userId(null)
@@ -924,10 +957,9 @@ class TbCreateAlarmNodeTest {
         // mocks
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
-        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingActiveAlarm);
-        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(Futures.immediateFuture(newAlarmDetails));
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(FluentFuture.from(immediateFuture(existingActiveAlarm)));
+        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(immediateFuture(newAlarmDetails));
         doReturn(newEndTs).when(nodeSpy).currentTimeMillis();
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
@@ -942,12 +974,12 @@ class TbCreateAlarmNodeTest {
         given(alarmServiceMock.updateAlarm(expectedUpdateAlarmRequest)).willReturn(apiCallResult);
         given(ctxMock.alarmActionMsg(expectedUpdatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_UPDATED)).willReturn(alarmActionMsgMock);
         given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
-                .willAnswer(answer -> TbMsg.transformMsg(
-                        answer.getArgument(0, TbMsg.class),
-                        answer.getArgument(1, TbMsgType.class),
-                        answer.getArgument(2, EntityId.class),
-                        answer.getArgument(3, TbMsgMetaData.class),
-                        answer.getArgument(4, String.class))
+                .willAnswer(answer -> answer.getArgument(0, TbMsg.class).transform()
+                        .type(answer.getArgument(1, TbMsgType.class))
+                        .originator(answer.getArgument(2, EntityId.class))
+                        .metaData(answer.getArgument(3, TbMsgMetaData.class))
+                        .data(answer.getArgument(4, String.class))
+                        .build()
                 );
         given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
@@ -960,14 +992,12 @@ class TbCreateAlarmNodeTest {
         // THEN
 
         // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
         var dummyMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(alarmDetailsScriptMock).should().executeJsonAsync(dummyMsgCaptor.capture());
         TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
         assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
         assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
         assertThat(actualDummyMsg.getMetaData().getData()).containsEntry("prevAlarmDetails", JacksonUtil.toString(oldAlarmDetails));
-        then(ctxMock).should().logJsEvalResponse();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
         then(alarmServiceMock).should().updateAlarm(expectedUpdateAlarmRequest);
@@ -1012,6 +1042,7 @@ class TbCreateAlarmNodeTest {
 
         boolean propagate = true;
         boolean propagateToOwner = false;
+        boolean propagateToOwnerHierarchy = false;
         boolean propagateToTenant = false;
         List<String> propagateRelationTypes = List.of("RELATION_TYPE_1", "RELATION_TYPE_2", "RELATION_TYPE_3");
         JsonNode alarmDetails = JacksonUtil.newObjectNode().put("oldAlarmDetailsKey", "oldAlarmDetailsValue");
@@ -1040,6 +1071,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(propagate)
                 .propagateToOwner(propagateToOwner)
+                .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                 .propagateToTenant(propagateToTenant)
                 .propagateRelationTypes(propagateRelationTypes)
                 .type(alarmType)
@@ -1048,7 +1080,12 @@ class TbCreateAlarmNodeTest {
                 .details(alarmDetails)
                 .build();
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data(JacksonUtil.toString(alarmFromIncomingMessage))
+                .build();
 
         var existingAlarmId = new AlarmId(Uuids.timeBased());
         var existingActiveAlarm = Alarm.builder()
@@ -1059,6 +1096,7 @@ class TbCreateAlarmNodeTest {
                 .severity(oldAlarmSeverity)
                 .propagate(propagate)
                 .propagateToOwner(propagateToOwner)
+                .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                 .propagateToTenant(propagateToTenant)
                 .propagateRelationTypes(propagateRelationTypes)
                 .type(alarmType)
@@ -1077,6 +1115,7 @@ class TbCreateAlarmNodeTest {
                 .severity(newAlarmSeverity)
                 .propagate(propagate)
                 .propagateToOwner(propagateToOwner)
+                .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                 .propagateToTenant(propagateToTenant)
                 .propagateRelationTypes(propagateRelationTypes)
                 .type(alarmType)
@@ -1090,6 +1129,7 @@ class TbCreateAlarmNodeTest {
         var expectedUpdateAlarmRequest = AlarmUpdateRequest.builder()
                 .tenantId(tenantId)
                 .alarmId(existingAlarmId)
+                .originator(msgOriginator)
                 .severity(newAlarmSeverity)
                 .startTs(100L)
                 .endTs(endTs)
@@ -1097,6 +1137,7 @@ class TbCreateAlarmNodeTest {
                 .propagation(AlarmPropagationInfo.builder()
                         .propagate(propagate)
                         .propagateToOwner(propagateToOwner)
+                        .propagateToOwnerHierarchy(propagateToOwnerHierarchy)
                         .propagateToTenant(propagateToTenant)
                         .propagateRelationTypes(propagateRelationTypes).build())
                 .userId(null)
@@ -1105,10 +1146,9 @@ class TbCreateAlarmNodeTest {
         // mocks
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
-        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingActiveAlarm);
-        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(Futures.immediateFuture(alarmDetails));
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(FluentFuture.from(immediateFuture(existingActiveAlarm)));
+        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(immediateFuture(alarmDetails));
         doReturn(endTs).when(nodeSpy).currentTimeMillis();
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
@@ -1123,12 +1163,12 @@ class TbCreateAlarmNodeTest {
         given(alarmServiceMock.updateAlarm(expectedUpdateAlarmRequest)).willReturn(apiCallResult);
         given(ctxMock.alarmActionMsg(expectedUpdatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_UPDATED)).willReturn(alarmActionMsgMock);
         given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
-                .willAnswer(answer -> TbMsg.transformMsg(
-                        answer.getArgument(0, TbMsg.class),
-                        answer.getArgument(1, TbMsgType.class),
-                        answer.getArgument(2, EntityId.class),
-                        answer.getArgument(3, TbMsgMetaData.class),
-                        answer.getArgument(4, String.class))
+                .willAnswer(answer -> answer.getArgument(0, TbMsg.class).transform()
+                        .type(answer.getArgument(1, TbMsgType.class))
+                        .originator(answer.getArgument(2, EntityId.class))
+                        .metaData(answer.getArgument(3, TbMsgMetaData.class))
+                        .data(answer.getArgument(4, String.class))
+                        .build()
                 );
         given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
@@ -1141,14 +1181,12 @@ class TbCreateAlarmNodeTest {
         // THEN
 
         // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
         var dummyMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(alarmDetailsScriptMock).should().executeJsonAsync(dummyMsgCaptor.capture());
         TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
         assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
         assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
         assertThat(actualDummyMsg.getMetaData().getData()).containsEntry("prevAlarmDetails", JacksonUtil.toString(alarmDetails));
-        then(ctxMock).should().logJsEvalResponse();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
         then(alarmServiceMock).should().updateAlarm(expectedUpdateAlarmRequest);
@@ -1189,15 +1227,20 @@ class TbCreateAlarmNodeTest {
         // GIVEN
         config = config.defaultConfiguration();
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
+        var incomingMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data("{\"temperature\": 50}")
+                .build();
 
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
+        given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, config.getAlarmType())).willReturn(FluentFuture.from(immediateFuture(null)));
 
         var expectedException = new ExecutionException("Failed to execute script.", new RuntimeException("Something went wrong!"));
-        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(Futures.immediateFailedFuture(expectedException));
+        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(immediateFailedFuture(expectedException));
 
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Directive, TemplateRef } from '@angular/core';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import {
@@ -53,10 +40,13 @@ import {
   pieChartLabelPositionTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import {
-  DoughnutLayout, doughnutLayoutImages,
+  DoughnutLayout,
+  doughnutLayoutImages,
   doughnutLayouts,
-  doughnutLayoutTranslations, horizontalDoughnutLayoutImages
+  doughnutLayoutTranslations,
+  horizontalDoughnutLayoutImages
 } from '@home/components/widget/lib/chart/doughnut-widget.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -176,6 +166,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
       legendLabelColor: [settings.legendLabelColor, []],
       legendValueFont: [settings.legendValueFont, []],
       legendValueColor: [settings.legendValueColor, []],
+      legendShowTotal: [settings.legendShowTotal, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipValueType: [settings.tooltipValueType, []],
@@ -225,6 +216,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
     this.widgetConfig.config.settings.legendLabelColor = config.legendLabelColor;
     this.widgetConfig.config.settings.legendValueFont = config.legendValueFont;
     this.widgetConfig.config.settings.legendValueColor = config.legendValueColor;
+    this.widgetConfig.config.settings.legendShowTotal = config.legendShowTotal;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
     this.widgetConfig.config.settings.tooltipValueType = config.tooltipValueType;
@@ -284,12 +276,14 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
       this.latestChartWidgetConfigForm.get('legendLabelColor').enable();
       this.latestChartWidgetConfigForm.get('legendValueFont').enable();
       this.latestChartWidgetConfigForm.get('legendValueColor').enable();
+      this.latestChartWidgetConfigForm.get('legendShowTotal').enable();
     } else {
       this.latestChartWidgetConfigForm.get('legendPosition').disable();
       this.latestChartWidgetConfigForm.get('legendLabelFont').disable();
       this.latestChartWidgetConfigForm.get('legendLabelColor').disable();
       this.latestChartWidgetConfigForm.get('legendValueFont').disable();
       this.latestChartWidgetConfigForm.get('legendValueColor').disable();
+      this.latestChartWidgetConfigForm.get('legendShowTotal').disable();
     }
     if (showTooltip) {
       this.latestChartWidgetConfigForm.get('tooltipValueType').enable();
@@ -339,6 +333,9 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
 
   private getCardButtons(config: WidgetConfig): string[] {
     const buttons: string[] = [];
+    if (isUndefined(config.enableDataExport) || config.enableDataExport) {
+      buttons.push('dataExport');
+    }
     if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
       buttons.push('fullscreen');
     }
@@ -346,11 +343,12 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
   }
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.enableDataExport = buttons.includes('dataExport');
     config.enableFullscreen = buttons.includes('fullscreen');
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.latestChartWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.latestChartWidgetConfigForm.get('units').value);
     const decimals: number = this.latestChartWidgetConfigForm.get('decimals').value;
     return formatValue(110, decimals, units, false);
   }
@@ -361,7 +359,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
     if (tooltipValueType === LatestChartTooltipValueType.percentage) {
       return formatValue(35, decimals, '%', false);
     } else {
-      const units: string = this.latestChartWidgetConfigForm.get('units').value;
+      const units: string = getSourceTbUnitSymbol(this.latestChartWidgetConfigForm.get('units').value);
       return formatValue(110, decimals, units, false);
     }
   }

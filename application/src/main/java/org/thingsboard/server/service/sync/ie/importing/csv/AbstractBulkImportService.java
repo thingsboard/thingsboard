@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.importing.csv;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jakarta.annotation.Nullable;
@@ -31,16 +20,21 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.TbBiFunction;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasAdditionalInfo;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -49,6 +43,8 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
@@ -56,29 +52,26 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.util.TypeCastUtil;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.report.util.CsvUtils;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-import org.thingsboard.server.utils.CsvUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class AbstractBulkImportService<E extends HasId<? extends EntityId> & HasTenantId> {
+public abstract class AbstractBulkImportService<E extends HasId<? extends EntityId> & TenantEntity> {
     @Autowired
     private TelemetrySubscriptionService tsSubscriptionService;
     @Autowired
@@ -90,19 +83,14 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     @Autowired
     private EntityActionService entityActionService;
 
-    private ThreadPoolExecutor executor;
+    private ExecutorService executor;
 
     @PostConstruct
     private void initExecutor() {
-        if (executor == null) {
-            executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors(),
-                    60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(150_000),
-                    ThingsBoardThreadFactory.forName("bulk-import"), new ThreadPoolExecutor.CallerRunsPolicy());
-            executor.allowCoreThreadTimeOut(true);
-        }
+        executor = ThingsBoardExecutors.newLimitedTasksExecutor(Runtime.getRuntime().availableProcessors(), 150_000, "bulk-import");
     }
 
-    public final BulkImportResult<E> processBulkImport(BulkImportRequest request, SecurityUser user) throws Exception {
+    public final BulkImportResult<E> processBulkImport(BulkImportRequest request, SecurityUser user, BiConsumer<E, TbBiFunction<E, EntityGroup, E>> entityGroupAssigner) throws Exception {
         List<EntityData> entitiesData = parseData(request);
 
         BulkImportResult<E> result = new BulkImportResult<>();
@@ -113,11 +101,36 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         entitiesData.forEach(entityData -> DonAsynchron.submit(() -> {
                     SecurityContextHolder.setContext(securityContext);
 
-                    ImportedEntityInfo<E> importedEntityInfo = saveEntity(entityData.getFields(), user);
-                    E entity = importedEntityInfo.getEntity();
+                    ImportedEntityInfo<E> importedEntityInfo = new ImportedEntityInfo<>();
+                    E entity = findOrCreateEntity(user.getTenantId(), entityData.getFields().get(BulkImportColumnType.NAME));
+                    if (entity.getId() != null) {
+                        importedEntityInfo.setOldEntity((E) entity.getClass().getConstructor(entity.getClass()).newInstance(entity));
+                        importedEntityInfo.setUpdated(true);
+                        if (entity instanceof HasVersion versionedEntity) {
+                            versionedEntity.setVersion(null); // to overwrite the entity regardless of concurrent changes
+                        }
+                    } else {
+                        setOwners(entity, user.getTenantId(), request.getCustomerId() != null ? request.getCustomerId() : user.getCustomerId());
+                    }
 
+                    setEntityFields(entity, entityData.getFields());
+                    accessControlService.checkPermission(user, Resource.resourceFromEntityType(getEntityType()), Operation.WRITE, entity.getId(), entity);
+
+                    TbBiFunction<E, EntityGroup, E> savingFunction = (e, entityGroup) -> {
+                        E savedEntity = saveEntity(user, entity, entityGroup, entityData.getFields());
+                        importedEntityInfo.setEntity(savedEntity);
+                        return savedEntity;
+                    };
+
+                    if (entityGroupAssigner != null) {
+                        entityGroupAssigner.accept(entity, savingFunction);
+                    } else {
+                        savingFunction.apply(entity, null);
+                    }
+
+                    E savedEntity = importedEntityInfo.getEntity();
                     if (request.getMapping().getUpdate() || !importedEntityInfo.isUpdated()) {
-                        saveKvs(user, entity, entityData.getKvs());
+                        saveKvs(user, savedEntity, entityData.getKvs());
                     }
                     return importedEntityInfo;
                 },
@@ -140,38 +153,14 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         return result;
     }
 
-    @SneakyThrows
-    private ImportedEntityInfo<E> saveEntity(Map<BulkImportColumnType, String> fields, SecurityUser user) {
-        ImportedEntityInfo<E> importedEntityInfo = new ImportedEntityInfo<>();
-
-        E entity = findOrCreateEntity(user.getTenantId(), fields.get(BulkImportColumnType.NAME));
-        if (entity.getId() != null) {
-            importedEntityInfo.setOldEntity((E) entity.getClass().getConstructor(entity.getClass()).newInstance(entity));
-            importedEntityInfo.setUpdated(true);
-            if (entity instanceof HasVersion versionedEntity) {
-                versionedEntity.setVersion(null); // to overwrite the entity regardless of concurrent changes
-            }
-        } else {
-            setOwners(entity, user);
-        }
-
-        setEntityFields(entity, fields);
-        accessControlService.checkPermission(user, Resource.of(getEntityType()), Operation.WRITE, entity.getId(), entity);
-
-        E savedEntity = saveEntity(user, entity, fields);
-
-        importedEntityInfo.setEntity(savedEntity);
-        return importedEntityInfo;
-    }
-
 
     protected abstract E findOrCreateEntity(TenantId tenantId, String name);
 
-    protected abstract void setOwners(E entity, SecurityUser user);
+    protected abstract void setOwners(E entity, TenantId tenantId, CustomerId customerId);
 
     protected abstract void setEntityFields(E entity, Map<BulkImportColumnType, String> fields);
 
-    protected abstract E saveEntity(SecurityUser user, E entity, Map<BulkImportColumnType, String> fields);
+    protected abstract E saveEntity(SecurityUser user, E entity, EntityGroup entityGroup, Map<BulkImportColumnType, String> fields);
 
     protected abstract EntityType getEntityType();
 
@@ -188,10 +177,16 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                     data.entrySet().stream()
                             .filter(dataEntry -> dataEntry.getKey().getType() == kvType &&
                                     StringUtils.isNotEmpty(dataEntry.getKey().getKey()))
-                            .forEach(dataEntry -> kvs.add(dataEntry.getKey().getKey(), dataEntry.getValue().toJsonPrimitive()));
+                            .forEach(dataEntry -> {
+                                ParsedValue value = dataEntry.getValue();
+                                JsonElement kvValue = (value.getDataType() == DataType.JSON)
+                                        ? (JsonElement) value.getValue()
+                                        : value.toJsonPrimitive();
+                                kvs.add(dataEntry.getKey().getKey(), kvValue);
+                            });
                     return Map.entry(kvType, kvs);
                 })
-                .filter(kvsEntry -> kvsEntry.getValue().entrySet().size() > 0)
+                .filter(kvsEntry -> !kvsEntry.getValue().entrySet().isEmpty())
                 .forEach(kvsEntry -> {
                     BulkImportColumnType kvType = kvsEntry.getKey();
                     if (kvType == BulkImportColumnType.SHARED_ATTRIBUTE || kvType == BulkImportColumnType.SERVER_ATTRIBUTE) {
@@ -212,46 +207,57 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entity.getId(), (result, tenantId, entityId) -> {
             TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
             long tenantTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
-            tsSubscriptionService.saveAndNotify(tenantId, user.getCustomerId(), entityId, timeseries, tenantTtl, new FutureCallback<Void>() {
-                @Override
-                public void onSuccess(@Nullable Void tmp) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
-                            ActionType.TIMESERIES_UPDATED, null, timeseries);
-                }
+            tsSubscriptionService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .customerId(user.getCustomerId())
+                    .entityId(entityId)
+                    .entries(timeseries)
+                    .ttl(tenantTtl)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
+                                    ActionType.TIMESERIES_UPDATED, null, timeseries);
+                        }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
-                            ActionType.TIMESERIES_UPDATED, BaseController.toException(t), timeseries);
-                    throw new RuntimeException(t);
-                }
-            });
+                        @Override
+                        public void onFailure(Throwable t) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
+                                    ActionType.TIMESERIES_UPDATED, BaseController.toException(t), timeseries);
+                            throw new RuntimeException(t);
+                        }
+                    })
+                    .build());
         });
     }
 
     @SneakyThrows
     private void saveAttributes(SecurityUser user, E entity, Map.Entry<BulkImportColumnType, JsonObject> kvsEntry, BulkImportColumnType kvType) {
         String scope = kvType.getKey();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(kvsEntry.getValue());
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
-            tsSubscriptionService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<>() {
+            tsSubscriptionService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(entityId)
+                    .scope(AttributeScope.valueOf(scope))
+                    .entries(attributes)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
+                                    null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
+                        }
 
-                @Override
-                public void onSuccess(Void unused) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
-                }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
-                            AttributeScope.valueOf(scope), attributes);
-                    throw new RuntimeException(throwable);
-                }
-
-            });
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
+                                    null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
+                                    AttributeScope.valueOf(scope), attributes);
+                            throw new RuntimeException(throwable);
+                        }
+                    })
+                    .build());
         });
     }
 
@@ -287,8 +293,8 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
 
     @PreDestroy
     private void shutdownExecutor() {
-        if (!executor.isTerminating()) {
-            executor.shutdown();
+        if (executor != null) {
+            executor.shutdownNow();
         }
     }
 
@@ -297,6 +303,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         private final Map<BulkImportColumnType, String> fields = new LinkedHashMap<>();
         private final Map<BulkImportRequest.ColumnMapping, ParsedValue> kvs = new LinkedHashMap<>();
         private int lineNumber;
+
     }
 
     @Data

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -28,24 +14,22 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
-import { DatePipe } from '@angular/common';
+import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
-  getDataKey,
+  createValueFormatterFromSettings,
   getSingleTsValue,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
-import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
   batteryLevelDefaultSettings,
   BatteryLevelLayout,
   BatteryLevelWidgetSettings
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -76,10 +60,11 @@ const horizontalBatteryDimensions = {
 };
 
 @Component({
-  selector: 'tb-battery-level-widget',
-  templateUrl: './battery-level-widget.component.html',
-  styleUrls: ['./battery-level-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-battery-level-widget',
+    templateUrl: './battery-level-widget.component.html',
+    styleUrls: ['./battery-level-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -138,13 +123,10 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   hasCardClickAction = false;
 
-  private decimals = 0;
-  private units = '';
+  private valueFormat: ValueFormatProcessor;
 
-  constructor(private date: DatePipe,
-              private imagePipe: ImagePipe,
+  constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
-              private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
@@ -153,15 +135,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.ctx.$scope.batteryLevelWidget = this;
     this.settings = {...batteryLevelDefaultSettings, ...this.ctx.settings};
 
-    this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
-    const dataKey = getDataKey(this.ctx.datasources);
-    if (isDefinedAndNotNull(dataKey?.decimals)) {
-      this.decimals = dataKey.decimals;
-    }
-    if (dataKey?.units) {
-      this.units = dataKey.units;
-    }
+    this.valueFormat = createValueFormatterFromSettings(this.ctx);
 
     this.layout = this.settings.layout;
 
@@ -257,7 +231,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
       this.batteryFillValue = this.parseBatteryFillValue(this.value);
-      this.valueText = formatValue(this.value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.format(this.value);
     } else {
       this.valueText = 'N/A';
     }
@@ -281,10 +255,6 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     } else {
       return value;
     }
-  }
-
-  public trackBySection(index: number): number {
-    return index;
   }
 
   public cardClick($event: Event) {

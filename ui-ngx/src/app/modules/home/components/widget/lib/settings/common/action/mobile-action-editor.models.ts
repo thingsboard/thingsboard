@@ -1,22 +1,10 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { WidgetMobileActionType } from '@shared/models/widget.models';
+import { TbFunction } from '@shared/models/js-function.models';
 
-const processImageFunctionTemplate =
+const processImageFunctionTemplate: TbFunction =
   '// Function body to process image obtained as a result of mobile action (take photo, take image from gallery, etc.). \n' +
   '// - imageUrl - image URL in base64 data format\n\n' +
   'showImageDialog(\'--TITLE--\', imageUrl);\n' +
@@ -49,25 +37,25 @@ const processImageFunctionTemplate =
   '  imageDialogTemplate =\n' +
   '    \'<div aria-label="Image">\' +\n' +
   '    \'<form #theForm="ngForm">\' +\n' +
-  '    \'<mat-toolbar fxLayout="row" color="primary">\' +\n' +
+  '    \'<mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">\' +\n' +
   '    \'<h2>{{title}}</h2>\' +\n' +
-  '    \'<span fxFlex></span>\' +\n' +
+  '    \'<span class="flex-1"></span>\' +\n' +
   '    \'<button mat-icon-button (click)="close()">\' +\n' +
   '    \'<mat-icon>close</mat-icon>\' +\n' +
   '    \'</button>\' +\n' +
   '    \'</mat-toolbar>\' +\n' +
   '    \'<div mat-dialog-content>\' +\n' +
   '    \'<div class="mat-content mat-padding">\' +\n' +
-  '    \'<div fxLayout="column" fxFlex>\' +\n' +
+  '    \'<div class="flex flex-1 flex-col">\' +\n' +
   '    \'<div style="padding-top: 20px;">\' +\n' +
   '    \'<img [src]="imageUrl" style="height: 300px;"/>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
-  '    \'<div mat-dialog-actions fxLayout="row">\' +\n' +
-  '    \'<span fxFlex></span>\' +\n' +
-  '    \'<button mat-button (click)="close()" style="margin-right:20px;">Close</button>\' +\n' +
+  '    \'<div mat-dialog-actions class="flex flex-row">\' +\n' +
+  '    \'<span class="flex-1"></span>\' +\n' +
+  '    \'<button mat-button color="primary" (click)="close()">Close</button>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</form>\' +\n' +
   '    \'</div>\';\n' +
@@ -82,7 +70,7 @@ const processImageFunctionTemplate =
   '  }\n' +
   '}\n';
 
-const processLaunchResultFunctionTemplate =
+const processLaunchResultFunctionTemplate: TbFunction =
   // eslint-disable-next-line max-len
   '// Optional function body to process result of attempt to launch external mobile application (for ex. map application or phone call application). \n' +
   '// - launched - boolean value indicating if the external application was successfully launched.\n\n' +
@@ -94,7 +82,40 @@ const processLaunchResultFunctionTemplate =
   '    }, 100);\n' +
   '}\n';
 
-const processQrCodeFunction =
+const startLiveLocationResultFunction: TbFunction =
+  '// Optional function body to process result of the start live location tracking action. \n' +
+  '// - launched - boolean value indicating if live location tracking was started.\n' +
+  '// - trackingInfo - tracking session details ({targetName}) when available, otherwise undefined.\n\n' +
+  'showTrackingStartedDialog(\'Live location tracking\', launched, trackingInfo);\n' +
+  '\n' +
+  'function showTrackingStartedDialog(title, started, info) {\n' +
+  '    var message = started ? \'Live location tracking started\' : \'Live location tracking was not started\';\n' +
+  '    if (started && info && info.targetName) {\n' +
+  '        // The dialog renders HTML, so the entity name must be escaped.\n' +
+  '        message += \'<br>Location is being saved to \' + escapeHtml(info.targetName);\n' +
+  '    }\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n' +
+  '\n' +
+  'function escapeHtml(value) {\n' +
+  '    return String(value).replace(/[&<>"\']/g, function(c) { return \'&#\' + c.charCodeAt(0) + \';\'; });\n' +
+  '}\n';
+
+const stopLiveLocationResultFunction: TbFunction =
+  '// Optional function body to process result of the stop live location tracking action. \n' +
+  '// - launched - boolean value indicating if live location tracking was stopped.\n\n' +
+  'showTrackingStoppedDialog(\'Live location tracking\', launched);\n' +
+  '\n' +
+  'function showTrackingStoppedDialog(title, stopped) {\n' +
+  '    var message = stopped ? \'Live location tracking stopped\' : \'Live location tracking was not stopped\';\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
+const processQrCodeFunction: TbFunction =
   '// Function body to process result of QR code scanning. \n' +
   '// - code - scanned QR code\n' +
   '// - format - scanned QR code format\n\n' +
@@ -106,7 +127,7 @@ const processQrCodeFunction =
   '    }, 100);\n' +
   '}\n';
 
-const processLocationFunction =
+const processLocationFunction: TbFunction =
   '// Function body to process current location of the phone. \n' +
   '// - latitude - phone location latitude\n' +
   '// - longitude - phone location longitude\n\n' +
@@ -137,18 +158,54 @@ const processLocationFunction =
   '    }, 100);\n' +
   '}';
 
-const handleEmptyResultFunctionTemplate =
+const processLocationWithSaveFunction: TbFunction =
+  '// Function body to process current location of the phone. \n' +
+  '// - latitude - phone location latitude\n' +
+  '// - longitude - phone location longitude\n' +
+  '// - saveInfo - details of the performed save ({targetName}) when available, otherwise undefined.\n' +
+  '//   The function runs only after a successful save; a failed save is passed to the handle\n' +
+  '//   error function instead.\n\n' +
+  'showLocationDialog(\'Location\', latitude, longitude, saveInfo);\n' +
+  '\n' +
+  'function showLocationDialog(title, latitude, longitude, saveInfo) {\n' +
+  '    var message = \'Latitude: \'+latitude+\'<br>Longitude: \' + longitude;\n' +
+  '    if (saveInfo) {\n' +
+  '        // The dialog renders HTML, so the entity name must be escaped.\n' +
+  '        message += \'<br>Location has been saved to \' + escapeHtml(saveInfo.targetName || \'the target entity\');\n' +
+  '    }\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(title, message).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n' +
+  '\n' +
+  'function escapeHtml(value) {\n' +
+  '    return String(value).replace(/[&<>"\']/g, function(c) { return \'&#\' + c.charCodeAt(0) + \';\'; });\n' +
+  '}';
+
+const provisionSuccessFunction: TbFunction =
+  '// Function body to handle device provision success. \n' +
+  '// - deviceName - name of device that was successfully provisioned.\n' +
+  '\n' +
+  'showDeviceProvisionSuccess(deviceName);\n' +
+  '\n' +
+  'function showDeviceProvisionSuccess(deviceName) {\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.showSuccessToast(`Device ` + deviceName + ` was successfully provisioned`).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
+const handleEmptyResultFunctionTemplate: TbFunction =
   '// Optional function body to handle empty result. \n' +
   '// Usually this happens when user cancels the action (for ex. by pressing phone back button). \n\n' +
   'showEmptyResultDialog(\'--MESSAGE--\');\n' +
   '\n' +
   'function showEmptyResultDialog(message) {\n' +
   '    setTimeout(function() {\n' +
-  '        widgetContext.dialogs.alert(\'Empty result\', message).subscribe();\n' +
+  '        widgetContext.showInfoToast(message).subscribe();\n' +
   '    }, 100);\n' +
   '}\n';
 
-const handleErrorFunctionTemplate =
+const handleErrorFunctionTemplate: TbFunction =
   '// Optional function body to handle error occurred while mobile action execution \n' +
   '// - error - Error message\n\n' +
   'showErrorDialog(\'--TITLE--\', error);\n' +
@@ -159,7 +216,15 @@ const handleErrorFunctionTemplate =
   '    }, 100);\n' +
   '}\n';
 
-const getLocationFunctionTemplate =
+const handleNonMobileFallbackFunctionTemplate: TbFunction =
+  '// Optional function body to handle non-mobile fallback \n' +
+  'showFallbackToast();\n' +
+  '\n' +
+  'function showFallbackToast(title, error) {\n' +
+  '    widgetContext.showWarnToast(\'This action is only available in the mobile application.\');\n' +
+  '}\n';
+
+const getLocationFunctionTemplate: TbFunction =
   '// Function body that should return location as array of two numbers (latitude, longitude) for further processing by mobile action.\n' +
   '// Usually location can be obtained from entity attributes/telemetry. \n\n' +
   'return getLocationFromEntityAttributes();\n' +
@@ -182,7 +247,7 @@ const getLocationFunctionTemplate =
   '    }\n' +
   '}\n';
 
-const getPhoneNumberFunctionTemplate =
+const getPhoneNumberFunctionTemplate: TbFunction =
   '// Function body that should return phone number for further processing by mobile action.\n' +
   '// Usually phone number can be obtained from entity attributes/telemetry. \n\n' +
   'return getPhoneNumberFromEntityAttributes();\n' +
@@ -204,7 +269,7 @@ const getPhoneNumberFunctionTemplate =
   '    }\n' +
   '}\n';
 
-export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): TbFunction => {
   let title: string;
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -220,7 +285,7 @@ export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): st
   return processImageFunctionTemplate.replace('--TITLE--', title);
 };
 
-export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionType): TbFunction => {
   let title: string;
   switch (type) {
     case WidgetMobileActionType.mapLocation:
@@ -236,15 +301,23 @@ export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionTy
   return processLaunchResultFunctionTemplate.replace('--TITLE--', title);
 };
 
+export const getDefaultStartLiveLocationResultFunction = () => startLiveLocationResultFunction;
+
+export const getDefaultStopLiveLocationResultFunction = () => stopLiveLocationResultFunction;
+
 export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
 export const getDefaultProcessLocationFunction = () => processLocationFunction;
+
+export const getDefaultProcessLocationWithSaveFunction = () => processLocationWithSaveFunction;
+
+export const getDefaultProvisionSuccessFunction = () => provisionSuccessFunction;
 
 export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
 export const getDefaultGetPhoneNumberFunction = () => getPhoneNumberFunctionTemplate;
 
-export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType): TbFunction => {
   let message = 'Mobile action was cancelled!';
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -268,14 +341,23 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
     case WidgetMobileActionType.getLocation:
       message = 'Get location action was canceled!';
       break;
+    case WidgetMobileActionType.startLiveLocation:
+      message = 'Live location tracking was not started!';
+      break;
+    case WidgetMobileActionType.stopLiveLocation:
+      message = 'Live location tracking was not stopped!';
+      break;
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
+      break;
+    case WidgetMobileActionType.deviceProvision:
+      message = 'Device provision was not invoked!';
       break;
   }
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
 };
 
-export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbFunction => {
   let title = 'Mobile action failed';
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -299,9 +381,20 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): str
     case WidgetMobileActionType.getLocation:
       title = 'Failed to get phone location';
       break;
+    case WidgetMobileActionType.startLiveLocation:
+      title = 'Failed to start live location tracking';
+      break;
+    case WidgetMobileActionType.stopLiveLocation:
+      title = 'Failed to stop live location tracking';
+      break;
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';
+      break;
+    case WidgetMobileActionType.deviceProvision:
+      title = 'Failed to make device provision';
       break;
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);
 };
+
+export const getDefaultHandleNonMobileFallBackFunction = () => handleNonMobileFallbackFunctionTemplate;

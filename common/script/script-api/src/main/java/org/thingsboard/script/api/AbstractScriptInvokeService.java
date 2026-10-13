@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -20,36 +8,50 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.tbel.TbelCfObject;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.Counter;
+import org.thingsboard.server.common.stats.LocalCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.String.format;
 
 @Slf4j
 public abstract class AbstractScriptInvokeService implements ScriptInvokeService {
 
-    protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
-    private final AtomicInteger pushedMsgs = new AtomicInteger(0);
-    private final AtomicInteger invokeMsgs = new AtomicInteger(0);
-    private final AtomicInteger evalMsgs = new AtomicInteger(0);
-    protected final AtomicInteger failedMsgs = new AtomicInteger(0);
-    protected final AtomicInteger timeoutMsgs = new AtomicInteger(0);
+    private static final String REQUESTS = "requests";
+    private static final String INVOKE_RESPONSES = "invoke_responses";
+    private static final String EVAL_RESPONSES = "eval_responses";
+    private static final String FAILURES = "failures";
+    private static final String TIMEOUTS = "timeouts";
 
-    private final FutureCallback<UUID> evalCallback = new ScriptStatCallback<>(evalMsgs, timeoutMsgs, failedMsgs);
-    private final FutureCallback<Object> invokeCallback = new ScriptStatCallback<>(invokeMsgs, timeoutMsgs, failedMsgs);
+    protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
+
+    private Counter requestsCounter;
+    private Counter invokeResponsesCounter;
+    private Counter evalResponsesCounter;
+    private Counter failuresCounter;
+    private Counter timeoutsCounter;
+
+    private FutureCallback<UUID> evalCallback;
+    private FutureCallback<Object> invokeCallback;
+
+    @Autowired
+    private Optional<StatsFactory> statsFactory;
 
     protected ScheduledExecutorService timeoutExecutorService;
 
@@ -78,6 +80,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     protected abstract boolean isScriptPresent(UUID scriptId);
 
     protected abstract boolean isExecEnabled(TenantId tenantId);
+
     protected abstract void reportExecution(TenantId tenantId, CustomerId customerId);
 
     protected abstract ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames);
@@ -87,9 +90,24 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     protected abstract void doRelease(UUID scriptId) throws Exception;
 
     public void init() {
+        String key = getStatsType().getName();
+        this.requestsCounter = createCounter(key, REQUESTS);
+        this.invokeResponsesCounter = createCounter(key, INVOKE_RESPONSES);
+        this.evalResponsesCounter = createCounter(key, EVAL_RESPONSES);
+        this.failuresCounter = createCounter(key, FAILURES);
+        this.timeoutsCounter = createCounter(key, TIMEOUTS);
+        this.evalCallback = new ScriptStatCallback<>(evalResponsesCounter, timeoutsCounter, failuresCounter);
+        this.invokeCallback = new ScriptStatCallback<>(invokeResponsesCounter, timeoutsCounter, failuresCounter);
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
-            timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("script-timeout"));
+            timeoutExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("script-timeout");
         }
+    }
+
+    private Counter createCounter(String key, String statsName) {
+        if (statsFactory.isPresent()) {
+            return statsFactory.get().createStatsCounter(key, statsName);
+        }
+        return new LocalCounter();
     }
 
     public void stop() {
@@ -100,11 +118,11 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void printStats() {
         if (isStatsEnabled()) {
-            int pushed = pushedMsgs.getAndSet(0);
-            int invoked = invokeMsgs.getAndSet(0);
-            int evaluated = evalMsgs.getAndSet(0);
-            int failed = failedMsgs.getAndSet(0);
-            int timedOut = timeoutMsgs.getAndSet(0);
+            int pushed = requestsCounter.getAndClear();
+            int invoked = invokeResponsesCounter.getAndClear();
+            int evaluated = evalResponsesCounter.getAndClear();
+            int failed = failuresCounter.getAndClear();
+            int timedOut = timeoutsCounter.getAndClear();
             if (pushed > 0 || invoked > 0 || evaluated > 0 || failed > 0 || timedOut > 0) {
                 log.info("{}: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
                         getStatsName(), pushed, invoked + evaluated, invoked, evaluated, failed, timedOut);
@@ -112,19 +130,29 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    @Override
-    public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
+    public String validate(TenantId tenantId, String scriptBody) {
         if (isExecEnabled(tenantId)) {
             if (scriptBodySizeExceeded(scriptBody)) {
-                return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
+                return format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize());
             }
-            UUID scriptId = UUID.randomUUID();
-            pushedMsgs.incrementAndGet();
-            return withTimeoutAndStatsCallback(scriptId, null,
-                    doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
         } else {
-            return error("Script Execution is disabled due to API limits!");
+            return "Script Execution is disabled due to API limits!";
         }
+
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<UUID> eval(TenantId tenantId, ScriptType scriptType, String scriptBody, String... argNames) {
+        String validationError = validate(tenantId, scriptBody);
+        if (validationError != null) {
+            return error(validationError);
+        }
+
+        UUID scriptId = UUID.randomUUID();
+        requestsCounter.increment();
+        return withTimeoutAndStatsCallback(scriptId, null,
+                doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
     }
 
     @Override
@@ -141,7 +169,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                     return Futures.immediateFailedFuture(handleScriptException(scriptId, null, t));
                 }
                 reportExecution(tenantId, customerId);
-                pushedMsgs.incrementAndGet();
+                requestsCounter.increment();
                 log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
@@ -247,7 +275,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    private boolean scriptBodySizeExceeded(String scriptBody) {
+    public boolean scriptBodySizeExceeded(String scriptBody) {
         if (getMaxScriptBodySize() <= 0) return false;
         return scriptBody.length() > getMaxScriptBodySize();
     }
@@ -258,6 +286,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         for (Object arg : args) {
             if (arg instanceof CharSequence) {
                 totalArgsSize += ((CharSequence) arg).length();
+            } else if (arg instanceof TbelCfObject tbelCfObj) {
+                totalArgsSize += tbelCfObj.memorySize();
             } else {
                 var str = JacksonUtil.toString(arg);
                 if (str != null) {
@@ -273,7 +303,9 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         return result != null && result.length() > getMaxResultSize();
     }
 
-    private <T> ListenableFuture<T> error(String message) {
+    public <T> ListenableFuture<T> error(String message) {
         return Futures.immediateFailedFuture(new RuntimeException(message));
     }
+
+    protected abstract StatsType getStatsType();
 }

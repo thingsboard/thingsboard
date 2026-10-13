@@ -1,0 +1,68 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-form-field [formGroup]="countryFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+  <mat-label>{{ labelText }}</mat-label>
+  @if (countryFormGroup.get('country').value?.flag) {
+    <span matPrefix>
+      {{ countryFormGroup.get('country').value.flag }}
+    </span>
+  }
+  <input matInput type="text"
+         #countryInput
+         #autocompleteTrigger="matAutocompleteTrigger"
+         formControlName="country"
+         (focusin)="onFocus()"
+         (blur)="checkInputAndAutoSelect()"
+         [matAutocomplete]="countryAutocomplete">
+  @if (countryFormGroup.get('country').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete"
+                    #countryAutocomplete="matAutocomplete"
+                    [displayWith]="displayCountryFn">
+    @for (country of filteredCountries | async; track country) {
+      <mat-option [value]="country">
+        <span style="font-size: 20px;padding-right: 4px;">{{country.flag}}</span>
+        <span [innerHTML]="country.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredCountries | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span translate>contact.no-country-found</span>
+            </div>
+          } @else {
+            <span>
+              {{ 'contact.no-country-matching' | translate:
+              {country: (searchText | truncate: true: 6: &apos;...&apos;)} }}
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (autocompleteHint) {
+    <mat-hint>{{ autocompleteHint }}</mat-hint>
+  }
+  @if (countryFormGroup.get('country').hasError('required')) {
+    <mat-error>
+      {{ requiredText }}
+    </mat-error>
+  }
+  @if (countryFormGroup.get('country').hasError('objectRequired')) {
+    <mat-error>
+      {{ objectRequiredText }}
+    </mat-error>
+  }
+</mat-form-field>

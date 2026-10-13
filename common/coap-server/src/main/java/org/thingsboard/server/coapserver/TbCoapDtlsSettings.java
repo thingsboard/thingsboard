@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.coapserver;
 
 import lombok.Getter;
@@ -21,6 +8,7 @@ import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
+import org.eclipse.californium.scandium.dtls.MaxFragmentLengthExtension.Length;
 import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,6 +32,8 @@ import static org.eclipse.californium.elements.config.CertificateAuthenticationM
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_MAX_FRAGMENT_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_MAX_TRANSMISSION_UNIT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
@@ -63,8 +53,14 @@ public class TbCoapDtlsSettings {
     @Value("${coap.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
 
-    @Value("${coap.dtls.connection_id_length:}")
+    @Value("${coap.dtls.connection_id_length:8}")
     private Integer cIdLength;
+
+    @Value("${coap.dtls.max_transmission_unit:1024}")
+    private Integer maxTransmissionUnit;
+
+    @Value("${coap.dtls.max_fragment_length:1024}")
+    private Integer maxFragmentLength;
 
     @Bean
     @ConfigurationProperties(prefix = "coap.dtls.credentials")
@@ -91,6 +87,10 @@ public class TbCoapDtlsSettings {
     @Autowired(required = false)
     private TbServiceInfoProvider serviceInfoProvider;
 
+    public void registerReloadCallback(Runnable callback) {
+        coapDtlsCredentialsConfig.registerReloadCallback(callback);
+    }
+
     public DtlsConnectorConfig dtlsConnectorConfig(Configuration configuration) throws UnknownHostException {
         DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(configuration);
         configBuilder.setAddress(getInetSocketAddress());
@@ -106,6 +106,15 @@ public class TbCoapDtlsSettings {
                 configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, 0);
             } else {
                 configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, null);
+            }
+        }
+        if (maxTransmissionUnit > 0) {
+            configBuilder.set(DTLS_MAX_TRANSMISSION_UNIT, maxTransmissionUnit);
+        }
+        if (maxFragmentLength > 0) {
+            Length length = fromLength(maxFragmentLength);
+            if (length != null) {
+                configBuilder.set(DTLS_MAX_FRAGMENT_LENGTH, length);
             }
         }
         configBuilder.setAdvancedCertificateVerifier(
@@ -125,6 +134,16 @@ public class TbCoapDtlsSettings {
     private InetSocketAddress getInetSocketAddress() throws UnknownHostException {
         InetAddress addr = InetAddress.getByName(host);
         return new InetSocketAddress(addr, port);
+    }
+
+
+    private static Length fromLength(int length) {
+        for (Length l : Length.values()) {
+            if (l.length() == length) {
+                return l;
+            }
+        }
+        return null;
     }
 
 }

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, Inject, Input, OnInit, Type } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -28,18 +14,21 @@ import {
   hashCode,
   isDefinedAndNotNull,
   isNotEmptyStr,
-  parseFunction,
-  safeExecute
+  parseTbFunction,
+  safeExecuteTbFunction
 } from '@core/utils';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { HOME_COMPONENTS_MODULE_TOKEN, WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { CompiledTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 interface MarkdownWidgetSettings {
   markdownTextPattern: string;
   useMarkdownTextFunction: boolean;
-  markdownTextFunction: string;
+  markdownTextFunction: TbFunction;
   applyDefaultMarkdownStyle: boolean;
   markdownCss: string;
 }
@@ -47,18 +36,21 @@ interface MarkdownWidgetSettings {
 type MarkdownTextFunction = (data: FormattedData[], ctx: WidgetContext) => string;
 
 @Component({
-  selector: 'tb-markdown-widget',
-  templateUrl: './markdown-widget.component.html'
+    selector: 'tb-markdown-widget',
+    templateUrl: './markdown-widget.component.html',
+    standalone: false
 })
 export class MarkdownWidgetComponent extends PageComponent implements OnInit {
 
   settings: MarkdownWidgetSettings;
-  markdownTextFunction: MarkdownTextFunction;
+  markdownTextFunction: Observable<CompiledTbFunction<MarkdownTextFunction>>;
 
   markdownClass: string;
 
   @Input()
   ctx: WidgetContext;
+
+  data: FormattedData[];
 
   markdownText: string;
 
@@ -78,15 +70,15 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     this.ctx.$scope.markdownWidget = this;
     this.settings = this.ctx.settings;
     this.markdownTextFunction = this.settings.useMarkdownTextFunction ?
-      parseFunction(this.settings.markdownTextFunction, ['data', 'ctx']) : null;
+      parseTbFunction(this.ctx.http, this.settings.markdownTextFunction, ['data', 'ctx']) : of(null);
     let cssString = this.settings.markdownCss;
     if (isNotEmptyStr(cssString)) {
       const cssParser = new cssjs();
       this.markdownClass = 'markdown-widget-' + hashCode(cssString);
       cssParser.cssPreviewNamespace = this.markdownClass;
       cssParser.testMode = false;
-      cssString = cssParser.applyNamespacing(cssString);
-      cssString = cssParser.getCSSForEditor(cssString);
+      const cssObjects = cssParser.applyNamespacing(cssString);
+      cssString = cssParser.getCSSForEditor(cssObjects);
       this.additionalStyles = [cssString];
     }
     if (isDefinedAndNotNull(this.settings.applyDefaultMarkdownStyle)) {
@@ -125,15 +117,26 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     } else {
       initialData = [];
     }
-    const data = formattedDataFormDatasourceData(initialData);
-    let markdownText = this.settings.useMarkdownTextFunction ?
-      safeExecute(this.markdownTextFunction, [data, this.ctx]) : this.settings.markdownTextPattern;
+    this.data = formattedDataFormDatasourceData(initialData);
+
+    const markdownText = this.settings.useMarkdownTextFunction ?
+      this.markdownTextFunction.pipe(map(markdownTextFunction => safeExecuteTbFunction(markdownTextFunction, [this.data, this.ctx]))) : this.settings.markdownTextPattern;
+    if (typeof markdownText === 'string') {
+      this.updateMarkdownText(markdownText, this.data);
+    } else {
+      markdownText.subscribe((text) => {
+        this.updateMarkdownText(text, this.data);
+      });
+    }
+  }
+
+  private updateMarkdownText(markdownText: string, data: FormattedData[]) {
     const allData: FormattedData = flatDataWithoutOverride(data);
     markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
-      this.cd.detectChanges();
     }
+    this.cd.detectChanges();
   }
 
   markdownClick($event: MouseEvent) {

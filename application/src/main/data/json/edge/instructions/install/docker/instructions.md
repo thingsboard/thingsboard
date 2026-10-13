@@ -1,12 +1,17 @@
-Here is the list of commands, that can be used to quickly install ThingsBoard Edge using docker compose and connect to the server.
+Here is the list of commands that can be used to quickly install ThingsBoard Edge using docker compose and connect to the server.
 
 #### Prerequisites
 
 Install <a href="https://docs.docker.com/engine/install/" target="_blank"> Docker CE</a> and <a href="https://docs.docker.com/compose/install/" target="_blank"> Docker Compose</a>.
 
-#### Running ThingsBoard Edge as docker service
+#### Step 1. Create the ThingsBoard Edge Docker Compose file
 
-Create docker compose file for ThingsBoard Edge service:
+ThingsBoard Edge supports both **in-memory** and **Kafka** queues for message storage and communication between ThingsBoard services.
+It also supports **SQL** and **hybrid** database configurations.
+In this guide, we’ll use the **in-memory** queue and an **SQL** database.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/pe/edge/docker/#step-2-choose-queue-andor-database-services" target="_blank">ThingsBoard documentation site</a>.
+
+Now, create a Docker Compose file for the ThingsBoard Edge service:
 
 ```bash
 nano docker-compose.yml
@@ -16,29 +21,29 @@ nano docker-compose.yml
 Add the following lines to the yml file:
 
 ```bash
-version: '3.8'
 services:
   mytbedge:
     restart: always
-    image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
+    image: "thingsboard/tb-edge-pe:${TB_EDGE_VERSION}"
     ports:
       - "8080:8080"
       - "1883:1883"
       - "5683-5688:5683-5688/udp"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
+      EDGE_LICENSE_INSTANCE_DATA_FILE: /data/instance-edge-license.data
       CLOUD_ROUTING_KEY: ${CLOUD_ROUTING_KEY}
       CLOUD_ROUTING_SECRET: ${CLOUD_ROUTING_SECRET}
       CLOUD_RPC_HOST: ${BASE_URL}
       CLOUD_RPC_PORT: ${CLOUD_RPC_PORT}
       CLOUD_RPC_SSL_ENABLED: ${CLOUD_RPC_SSL_ENABLED}
+    ${EXTRA_HOSTS}
     volumes:
       - tb-edge-data:/data
       - tb-edge-logs:/var/log/tb-edge
-    ${EXTRA_HOSTS}
   postgres:
     restart: always
-    image: "postgres:15"
+    image: "postgres:16"
     ports:
       - "5432"
     environment:
@@ -57,44 +62,28 @@ volumes:
 {:copy-code}
 ```
 
-##### [Optional] Update bind ports 
-If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update docker compose port mapping to avoid port collision between ThingsBoard server and ThingsBoard Edge.
+##### [Optional] Update Bind Ports
+If ThingsBoard Edge runs on the same machine as the ThingsBoard Server, you need to update the port configuration to avoid conflicts between the two services.
 
-Please update next lines of `docker-compose.yml` file:
+Make sure that ports **18080**, **11883**, and **15683–15688** are not being used by any other applications.
 
-```text
-ports:
-  - "18080:8080"
-  - "11883:1883"
-  - "15683-15688:5683-5688/udp"
-```
-Make sure that ports above (18080, 11883, 15683-15688) are not used by any other application.
-
-#### Start ThingsBoard Edge
-Set the terminal in the directory which contains the `docker-compose.yml` file and execute the following commands to up this docker compose directly:
+Then, update the port configuration in the `docker-compose.yml` file accordingly:
 
 ```bash
-docker compose up -d
-docker compose logs -f mytbedge
+sed -i 's/8080:8080/18080:8080/; s/1883:1883/11883:1883/; s/5683-5688:5683-5688\/udp/15683-15688:5683-5688\/udp/' docker-compose.yml
 {:copy-code}
 ```
 
-###### NOTE: Docker Compose V2 vs docker-compose (with a hyphen)
-
-ThingsBoard supports Docker Compose V2 (Docker Desktop or Compose plugin) starting from **3.4.2** release, because **docker-compose** as standalone setup is no longer supported by Docker.
-We **strongly** recommend to update to Docker Compose V2 and use it.
-If you still rely on using Docker Compose as docker-compose (with a hyphen), then please execute the following commands to start ThingsBoard Edge:
+#### Step 2. Start ThingsBoard Edge
+Navigate to the directory containing the `docker-compose.yml` file and run the following command to start the ThingsBoard Edge service:
 
 ```bash
-docker-compose up -d
-docker-compose logs -f mytbedge
+docker compose up -d && docker compose logs -f mytbedge
+{:copy-code}
 ```
 
-#### Open ThingsBoard Edge UI
+#### Step 3. Open ThingsBoard Edge UI
 
-Once started, you will be able to open **ThingsBoard Edge UI** using the following link http://localhost:8080.
+Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-###### NOTE: Edge HTTP bind port update 
-
-Use next **ThingsBoard Edge UI** link **http://localhost:18080** if you updated HTTP 8080 bind port to **18080**.
-
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Cloud**.

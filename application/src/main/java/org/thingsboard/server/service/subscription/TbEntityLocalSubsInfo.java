@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -24,11 +12,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Information about the local websocket subscriptions.
@@ -41,8 +28,6 @@ public class TbEntityLocalSubsInfo {
     private final TenantId tenantId;
     @Getter
     private final EntityId entityId;
-    @Getter
-    private final Lock lock = new ReentrantLock();
     @Getter
     private final Set<TbSubscription<?>> subs = ConcurrentHashMap.newKeySet();
     private volatile TbSubscriptionsInfo state = new TbSubscriptionsInfo();
@@ -80,6 +65,12 @@ public class TbEntityLocalSubsInfo {
             case ALARMS:
                 if (!newState.alarms) {
                     newState.alarms = true;
+                    stateChanged = true;
+                }
+                break;
+            case LOGS:
+                if (!newState.logs) {
+                    newState.logs = true;
                     stateChanged = true;
                 }
                 break;
@@ -133,13 +124,67 @@ public class TbEntityLocalSubsInfo {
         if (!subs.remove(sub)) {
             return null;
         }
-        if (subs.isEmpty()) {
+        if (isEmpty()) {
             return toEvent(ComponentLifecycleEvent.DELETED);
         }
-        TbSubscriptionsInfo oldState = state.copy();
-        TbSubscriptionsInfo newState = new TbSubscriptionsInfo();
+        TbSubscriptionType type = sub.getType();
+        TbSubscriptionsInfo newState = state.copy();
+        clearState(newState, type);
+        return updateState(Set.of(type), newState);
+    }
+
+    public TbEntitySubEvent removeAll(List<? extends TbSubscription<?>> subsToRemove) {
+        Set<TbSubscriptionType> changedTypes = new HashSet<>();
+        TbSubscriptionsInfo newState = state.copy();
+        for (TbSubscription<?> sub : subsToRemove) {
+            log.trace("[{}][{}][{}] Removing: {}", tenantId, entityId, sub.getSubscriptionId(), sub);
+            if (!subs.remove(sub)) {
+                continue;
+            }
+            if (isEmpty()) {
+                return toEvent(ComponentLifecycleEvent.DELETED);
+            }
+            TbSubscriptionType type = sub.getType();
+            if (changedTypes.contains(type)) {
+                continue;
+            }
+
+            clearState(newState, type);
+            changedTypes.add(type);
+        }
+
+        return updateState(changedTypes, newState);
+    }
+
+    private void clearState(TbSubscriptionsInfo state, TbSubscriptionType type) {
+        switch (type) {
+            case NOTIFICATIONS:
+            case NOTIFICATIONS_COUNT:
+                state.notifications = false;
+                break;
+            case ALARMS:
+                state.alarms = false;
+                break;
+            case LOGS:
+                state.logs = false;
+                break;
+            case ATTRIBUTES:
+                state.attrAllKeys = false;
+                state.attrKeys = null;
+                break;
+            case TIMESERIES:
+                state.tsAllKeys = false;
+                state.tsKeys = null;
+        }
+    }
+
+    private TbEntitySubEvent updateState(Set<TbSubscriptionType> updatedTypes, TbSubscriptionsInfo newState) {
         for (TbSubscription<?> subscription : subs) {
-            switch (subscription.getType()) {
+            TbSubscriptionType type = subscription.getType();
+            if (!updatedTypes.contains(type)) {
+                continue;
+            }
+            switch (type) {
                 case NOTIFICATIONS:
                 case NOTIFICATIONS_COUNT:
                     if (!newState.notifications) {
@@ -149,6 +194,11 @@ public class TbEntityLocalSubsInfo {
                 case ALARMS:
                     if (!newState.alarms) {
                         newState.alarms = true;
+                    }
+                    break;
+                case LOGS:
+                    if (!newState.logs) {
+                        newState.logs = true;
                     }
                     break;
                 case ATTRIBUTES:
@@ -177,7 +227,7 @@ public class TbEntityLocalSubsInfo {
                     break;
             }
         }
-        if (newState.equals(oldState)) {
+        if (newState.equals(state)) {
             return null;
         } else {
             this.state = newState;
@@ -200,7 +250,7 @@ public class TbEntityLocalSubsInfo {
 
 
     public boolean isEmpty() {
-        return state.isEmpty();
+        return subs.isEmpty();
     }
 
     public TbSubscription<?> registerPendingSubscription(TbSubscription<?> subscription, TbEntitySubEvent event) {

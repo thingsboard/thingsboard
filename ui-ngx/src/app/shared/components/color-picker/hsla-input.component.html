@@ -1,0 +1,46 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<div class="color-input-container">
+  <div class="tb-form-row tb-flex no-gap no-border no-padding column align-center">
+    <mat-form-field class="color-input number" appearance="outline" subscriptSizing="dynamic">
+      <input matInput type="number" [min]="0" [max]="360" [value]="value.getHue()" (inputChange)="onInputChange($event, 'H')"/>
+    </mat-form-field>
+    @if (labelVisible) {
+      <span>H</span>
+    }
+  </div>
+  <div class="tb-form-row tb-flex no-gap no-border no-padding column align-center">
+    <mat-form-field class="color-input number" appearance="outline" subscriptSizing="dynamic">
+      <input matInput type="number" [min]="0" [max]="100" [value]="value.getSaturation()" (inputChange)="onInputChange($event, 'S')" />
+      <span matSuffix>{{suffixValue}}</span>
+    </mat-form-field>
+    @if (labelVisible) {
+      <span>S</span>
+    }
+  </div>
+  <div class="tb-form-row tb-flex no-gap no-border no-padding column align-center">
+    <mat-form-field class="color-input number" appearance="outline" subscriptSizing="dynamic">
+      <input matInput type="number" [min]="0" [max]="100" [value]="value.getLightness()" (inputChange)="onInputChange($event,'L')" />
+      <span matSuffix>{{suffixValue}}</span>
+    </mat-form-field>
+    @if (labelVisible) {
+      <span>L</span>
+    }
+  </div>
+  @if (alpha) {
+    <div class="tb-form-row tb-flex no-gap no-border no-padding column align-center">
+      <mat-form-field class="color-input number" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" [min]="0" [max]="100" [value]="alphaValue" (inputChange)="onAlphaInputChange($event)" />
+        <span matSuffix>{{suffixValue}}</span>
+      </mat-form-field>
+      @if (labelVisible) {
+        <span>A</span>
+      }
+    </div>
+  }
+</div>

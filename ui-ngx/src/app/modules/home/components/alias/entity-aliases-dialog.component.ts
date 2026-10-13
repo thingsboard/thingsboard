@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, Inject, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -40,6 +27,15 @@ import { DialogService } from '@core/services/dialog.service';
 import { deepClone, isUndefined } from '@core/utils';
 import { EntityAliasDialogComponent, EntityAliasDialogData } from './entity-alias-dialog.component';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AlarmTableReportComponentConfig, DataReportComponentConfig,
+  ReportComponentConfig,
+  ReportComponentType
+} from '@shared/models/report-component.models';
+import {
+  reportComponentTypesData
+} from '@home/pages/reporting/template/components/report-component.models';
 
 export interface EntityAliasesDialogData {
   entityAliases: EntityAliases;
@@ -50,22 +46,31 @@ export interface EntityAliasesDialogData {
   disableAdd?: boolean;
   singleEntityAlias?: EntityAlias;
   customTitle?: string;
+  disableResolveMultiple?: boolean;
+  reportMode?: boolean;
+  subReport?: boolean;
+  reportComponents?:  ReportComponentConfig[];
 }
 
 @Component({
-  selector: 'tb-entity-aliases-dialog',
-  templateUrl: './entity-aliases-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: EntityAliasesDialogComponent}],
-  styleUrls: ['./entity-aliases-dialog.component.scss']
+    selector: 'tb-entity-aliases-dialog',
+    templateUrl: './entity-aliases-dialog.component.html',
+    providers: [{ provide: ErrorStateMatcher, useExisting: EntityAliasesDialogComponent }],
+    styleUrls: ['./entity-aliases-dialog.component.scss'],
+    standalone: false
 })
 export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesDialogComponent, EntityAliases>
-  implements OnInit, ErrorStateMatcher {
+  implements ErrorStateMatcher {
 
   title: string;
   disableAdd: boolean;
+  disableResolveMultiple: boolean;
   allowedEntityTypes: Array<EntityType | AliasEntityType>;
 
   aliasToWidgetsMap: {[aliasId: string]: Array<string>} = {};
+
+  reportMode: boolean;
+  subReport: boolean;
 
   entityAliasesFormGroup: UntypedFormGroup;
 
@@ -80,12 +85,15 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
               private dialogs: DialogService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.title = data.customTitle ? data.customTitle : 'entity.aliases';
     this.disableAdd = this.data.disableAdd;
+    this.disableResolveMultiple = this.data.disableResolveMultiple;
     this.allowedEntityTypes = this.data.allowedEntityTypes;
-
+    this.reportMode = data.reportMode;
+    this.subReport = data.subReport;
     if (data.widgets) {
       let widgetsTitleList: Array<string>;
       if (this.data.isSingleWidget && this.data.widgets.length === 1) {
@@ -105,8 +113,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
               this.addWidgetTitleToWidgetsMap(widget.config.alarmSource.entityAliasId, widget.config.title);
             }
           } else {
-            const datasources = this.dashboardUtils.validateAndUpdateDatasources(widget.config.datasources);
-            datasources.forEach((datasource) => {
+            this.dashboardUtils.getWidgetDatasources(widget).forEach((datasource) => {
               if ([DatasourceType.entity, DatasourceType.entityCount, DatasourceType.alarmCount].includes(datasource.type)
                 && datasource.entityAliasId) {
                 this.addWidgetTitleToWidgetsMap(datasource.entityAliasId, widget.config.title);
@@ -116,15 +123,36 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
         });
       }
     }
+
+    if(data.reportMode && data.reportComponents.length) {
+      this.data.reportComponents.forEach((component) => {
+        if (component.type === ReportComponentType.ALARM_TABLE) {
+          const alarmSource = (component as AlarmTableReportComponentConfig).alarmSource
+          if (alarmSource) {
+            this.addWidgetTitleToWidgetsMap(alarmSource.entityAliasId,
+              reportComponentTypesData.getReportComponentTypeData(component.type, component.subType).title);
+          }
+        } else {
+          const dataSources = (component as DataReportComponentConfig).dataSources;
+          if (Array.isArray(dataSources) && dataSources.length) {
+            dataSources.forEach((datasource) => {
+              if ([DatasourceType.entity, DatasourceType.entityCount, DatasourceType.alarmCount].includes(datasource.type)
+                && datasource.entityAliasId) {
+                this.addWidgetTitleToWidgetsMap(datasource.entityAliasId,
+                  reportComponentTypesData.getReportComponentTypeData(component.type, component.subType).title);
+              }
+            });
+          }
+        }
+      });
+    }
     const entityAliasControls: Array<AbstractControl> = [];
     for (const aliasId of Object.keys(this.data.entityAliases)) {
       const entityAlias = this.data.entityAliases[aliasId];
       if (!entityAlias.filter) {
-        entityAlias.filter = {
-          resolveMultiple: false
-        };
+        entityAlias.filter = {};
       }
-      if (isUndefined(entityAlias.filter.resolveMultiple)) {
+      if (!this.disableResolveMultiple && isUndefined(entityAlias.filter.resolveMultiple)) {
         entityAlias.filter.resolveMultiple = false;
       }
       entityAliasControls.push(this.createEntityAliasFormControl(aliasId, entityAlias));
@@ -141,28 +169,31 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
       widgetsTitleList = [];
       this.aliasToWidgetsMap[aliasId] = widgetsTitleList;
     }
-    widgetsTitleList.push(widgetTitle);
+    if (!widgetsTitleList.includes(widgetTitle)) {
+      widgetsTitleList.push(widgetTitle);
+    }
   }
 
   private createEntityAliasFormControl(aliasId: string, entityAlias: EntityAlias): AbstractControl {
     const aliasFormControl = this.fb.group({
       id: [aliasId],
       alias: [entityAlias ? entityAlias.alias : null, [Validators.required]],
-      filter: [entityAlias ? entityAlias.filter : null],
-      resolveMultiple: [entityAlias ? entityAlias.filter.resolveMultiple : false]
+      filter: [entityAlias ? entityAlias.filter : null]
     });
-    aliasFormControl.get('resolveMultiple').valueChanges.subscribe((resolveMultiple: boolean) => {
-      (aliasFormControl.get('filter').value as EntityAliasFilter).resolveMultiple = resolveMultiple;
-    });
+    if (!this.disableResolveMultiple) {
+      aliasFormControl.addControl('resolveMultiple', this.fb.control(entityAlias ? entityAlias.filter.resolveMultiple : false));
+      aliasFormControl.get('resolveMultiple').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe((resolveMultiple: boolean) => {
+        (aliasFormControl.get('filter').value as EntityAliasFilter).resolveMultiple = resolveMultiple;
+      });
+    }
     return aliasFormControl;
   }
 
 
   entityAliasesFormArray(): UntypedFormArray {
     return this.entityAliasesFormGroup.get('entityAliases') as UntypedFormArray;
-  }
-
-  ngOnInit(): void {
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -177,9 +208,10 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
     if (widgetsTitleList) {
       let widgetsListHtml = '';
       for (const widgetTitle of widgetsTitleList) {
-        widgetsListHtml += '<br/>\'' + widgetTitle + '\'';
+        widgetsListHtml += '<br/>\'' + this.translate.instant(widgetTitle) + '\'';
       }
-      const message = this.translate.instant('entity.unable-delete-entity-alias-text',
+      const messageKey = this.data.reportMode ? 'entity.unable-delete-entity-alias-text-components' : 'entity.unable-delete-entity-alias-text';
+      const message = this.translate.instant(messageKey,
         {entityAlias: entityAlias.alias, widgetsList: widgetsListHtml});
       this.dialogs.alert(this.translate.instant('entity.unable-delete-entity-alias-title'),
         message, this.translate.instant('action.close'), true);
@@ -212,7 +244,10 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
         isAdd,
         allowedEntityTypes: this.allowedEntityTypes,
         entityAliases: aliasesArray,
-        alias: isAdd ? null : deepClone(alias)
+        alias: isAdd ? null : deepClone(alias),
+        disableResolveMultiple: this.disableResolveMultiple,
+        reportMode: this.reportMode,
+        subReport: this.subReport
       }
     }).afterClosed().subscribe((entityAlias) => {
       if (entityAlias) {
@@ -223,7 +258,9 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
           const aliasFormControl = (this.entityAliasesFormGroup.get('entityAliases') as UntypedFormArray).at(index);
           aliasFormControl.get('alias').patchValue(entityAlias.alias);
           aliasFormControl.get('filter').patchValue(entityAlias.filter);
-          aliasFormControl.get('resolveMultiple').patchValue(entityAlias.filter.resolveMultiple);
+          if (!this.disableResolveMultiple) {
+            aliasFormControl.get('resolveMultiple').patchValue(entityAlias.filter.resolveMultiple);
+          }
         }
         this.entityAliasesFormGroup.markAsDirty();
       }

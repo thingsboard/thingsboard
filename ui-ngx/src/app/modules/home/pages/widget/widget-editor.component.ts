@@ -1,28 +1,16 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { PageComponent } from '@shared/components/page.component';
 import {
   Component,
   ElementRef,
-  EventEmitter,
   Inject,
   OnDestroy,
   OnInit,
+  Renderer2,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -30,6 +18,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
 import {
+  migrateWidgetTypeToDynamicForms,
   TargetDeviceType,
   Widget,
   WidgetConfig,
@@ -60,20 +49,29 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
-import { HttpStatusCode } from '@angular/common/http';
+import { HttpClient, HttpStatusCode } from '@angular/common/http';
+import { loadModulesCompleter } from '@shared/models/js-function.models';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
+import { MatIconButton } from '@angular/material/button';
+import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { BreadcrumbService } from '@core/services/breadcrumb.service';
+import { HomeService } from '@core/services/home.service';
 import Timeout = NodeJS.Timeout;
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 // @dynamic
 @Component({
-  selector: 'tb-widget-editor',
-  templateUrl: './widget-editor.component.html',
-  styleUrls: ['./widget-editor.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-widget-editor',
+    templateUrl: './widget-editor.component.html',
+    styleUrls: ['./widget-editor.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class WidgetEditorComponent extends PageComponent implements OnInit, OnDestroy, HasDirtyFlag {
 
@@ -100,15 +98,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   @ViewChild('cssInput', {static: true})
   cssInputElmRef: ElementRef;
-
-  @ViewChild('settingsJsonInput', {static: true})
-  settingsJsonInputElmRef: ElementRef;
-
-  @ViewChild('dataKeySettingsJsonInput', {static: true})
-  dataKeySettingsJsonInputElmRef: ElementRef;
-
-  @ViewChild('latestDataKeySettingsJsonInput', {static: true})
-  latestDataKeySettingsJsonInputElmRef: ElementRef;
 
   @ViewChild('javascriptInput', {static: true})
   javascriptInputElmRef: ElementRef;
@@ -147,9 +136,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   fullscreen = false;
   htmlFullscreen = false;
   cssFullscreen = false;
-  jsonSettingsFullscreen = false;
-  jsonDataKeySettingsFullscreen = false;
-  jsonLatestDataKeySettingsFullscreen = false;
   javascriptFullscreen = false;
   iFrameFullscreen = false;
 
@@ -157,10 +143,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
   htmlEditor: Ace.Editor;
   cssEditor: Ace.Editor;
-  jsonSettingsEditor: Ace.Editor;
-  dataKeyJsonSettingsEditor: Ace.Editor;
-  latestDataKeyJsonSettingsEditor: Ace.Editor;
   jsEditor: Ace.Editor;
+  private initialCompleters: Ace.Completer[];
   aceResize$: ResizeObserver;
 
   onWindowMessageListener = this.onWindowMessage.bind(this);
@@ -177,7 +161,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   hotKeys: Hotkey[] = [];
 
-  updateBreadcrumbs = new EventEmitter();
+  breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   private rxSubscriptions = new Array<Subscription>();
 
@@ -188,7 +172,15 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private widgetService: WidgetService,
               private translate: TranslateService,
               private raf: RafService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              private customTranslate: CustomTranslatePipe,
+              private http: HttpClient,
+              private breadcrumbService: BreadcrumbService,
+              public wl: WhiteLabelingService,
+              public homeService: HomeService) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
@@ -221,6 +213,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   ngOnInit(): void {
+    this.homeService.setHideMainToolbar(true);
     this.initSplitLayout();
     this.initAceEditors();
     this.iframe = $(this.widgetIFrameElmRef.nativeElement);
@@ -237,6 +230,10 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       subscription.unsubscribe();
     });
     this.rxSubscriptions.length = 0;
+  }
+
+  toggleSidenav() {
+    this.homeService.toggleSideBar.emit();
   }
 
   private initHotKeys(): void {
@@ -344,59 +341,26 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       })
     ));
 
-    editorsObservables.push(this.createAceEditor(this.settingsJsonInputElmRef, 'json').pipe(
-      tap((editor) => {
-        this.jsonSettingsEditor = editor;
-        this.jsonSettingsEditor.on('input', () => {
-          const editorValue = this.jsonSettingsEditor.getValue();
-          if (this.widget.settingsSchema !== editorValue) {
-            this.widget.settingsSchema = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
-    editorsObservables.push(this.createAceEditor(this.dataKeySettingsJsonInputElmRef, 'json').pipe(
-      tap((editor) => {
-        this.dataKeyJsonSettingsEditor = editor;
-        this.dataKeyJsonSettingsEditor.on('input', () => {
-          const editorValue = this.dataKeyJsonSettingsEditor.getValue();
-          if (this.widget.dataKeySettingsSchema !== editorValue) {
-            this.widget.dataKeySettingsSchema = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
-    editorsObservables.push(this.createAceEditor(this.latestDataKeySettingsJsonInputElmRef, 'json').pipe(
-      tap((editor) => {
-        this.latestDataKeyJsonSettingsEditor = editor;
-        this.latestDataKeyJsonSettingsEditor.on('input', () => {
-          const editorValue = this.latestDataKeyJsonSettingsEditor.getValue();
-          if (this.widget.latestDataKeySettingsSchema !== editorValue) {
-            this.widget.latestDataKeySettingsSchema = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
     editorsObservables.push(this.createAceEditor(this.javascriptInputElmRef, 'javascript').pipe(
       tap((editor) => {
         this.jsEditor = editor;
         this.jsEditor.on('input', () => {
           const editorValue = this.jsEditor.getValue();
-          if (this.widget.controllerScript !== editorValue) {
-            this.widget.controllerScript = editorValue;
+          if (this.controllerScriptBody !== editorValue) {
+            this.controllerScriptBody = editorValue;
             this.isDirty = true;
           }
         });
         this.jsEditor.on('change', () => {
           this.cleanupJsErrors();
         });
-        this.jsEditor.completers = [widgetEditorCompleter, ...(this.jsEditor.completers || [])];
+        if (!this.jsEditor.completer) {
+          this.jsEditor.execCommand("startAutocomplete");
+          this.jsEditor.completer.detach();
+        }
+        (this.jsEditor.completer as Ace.Autocomplete).editor = this.jsEditor;
+        (this.jsEditor.completer as Ace.Autocomplete).getPopup().container.style.width = '500px';
+        this.initialCompleters = this.jsEditor.completers || [];
       })
     ));
 
@@ -411,11 +375,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   private setAceEditorValues() {
     this.htmlEditor.setValue(this.widget.templateHtml ? this.widget.templateHtml : '', -1);
     this.cssEditor.setValue(this.widget.templateCss ? this.widget.templateCss : '', -1);
-    this.jsonSettingsEditor.setValue(this.widget.settingsSchema ? this.widget.settingsSchema : '', -1);
-    this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
-    this.latestDataKeyJsonSettingsEditor.setValue(this.widget.latestDataKeySettingsSchema ?
-      this.widget.latestDataKeySettingsSchema : '', -1);
-    this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
+    this.jsEditor.setValue(this.controllerScriptBody ? this.controllerScriptBody : '', -1);
+    this.updateControllerScriptCompleters();
   }
 
   private createAceEditor(editorElementRef: ElementRef, mode: string): Observable<Ace.Editor> {
@@ -586,7 +547,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       }),
       catchError((err) => {
         if (id && err.status === HttpStatusCode.Conflict) {
-          return this.widgetService.getWidgetTypeById(id.id);
+          return this.widgetService.getWidgetTypeById(id.id).pipe(
+            map((details) => {
+              return migrateWidgetTypeToDynamicForms(details);
+            })
+          );
         }
         return throwError(() => err);
       }),
@@ -660,7 +625,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.widget.defaultConfig = JSON.stringify(config);
     this.origWidget = deepClone(this.widget);
     this.isDirty = false;
-    this.updateBreadcrumbs.emit();
   }
 
   applyWidgetScript(): void {
@@ -744,50 +708,13 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     );
   }
 
-  beautifyJson(): void {
-    beautifyJs(this.widget.settingsSchema, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.settingsSchema !== res) {
-          this.isDirty = true;
-          this.widget.settingsSchema = res;
-          this.jsonSettingsEditor.setValue(this.widget.settingsSchema ? this.widget.settingsSchema : '', -1);
-        }
-      }
-    );
-  }
-
-  beautifyDataKeyJson(): void {
-    beautifyJs(this.widget.dataKeySettingsSchema, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.dataKeySettingsSchema !== res) {
-          this.isDirty = true;
-          this.widget.dataKeySettingsSchema = res;
-          this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
-        }
-      }
-    );
-  }
-
-  beautifyLatestDataKeyJson(): void {
-    beautifyJs(this.widget.latestDataKeySettingsSchema, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.latestDataKeySettingsSchema !== res) {
-          this.isDirty = true;
-          this.widget.latestDataKeySettingsSchema = res;
-          this.latestDataKeyJsonSettingsEditor.setValue(this.widget.latestDataKeySettingsSchema ?
-            this.widget.latestDataKeySettingsSchema : '', -1);
-        }
-      }
-    );
-  }
-
   beautifyJs(): void {
-    beautifyJs(this.widget.controllerScript, {indent_size: 4, wrap_line_length: 60}).subscribe(
+    beautifyJs(this.controllerScriptBody, {indent_size: 4, wrap_line_length: 60}).subscribe(
       (res) => {
-        if (this.widget.controllerScript !== res) {
+        if (this.controllerScriptBody !== res) {
           this.isDirty = true;
-          this.widget.controllerScript = res;
-          this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
+          this.controllerScriptBody = res;
+          this.jsEditor.setValue(this.controllerScriptBody ? this.controllerScriptBody : '', -1);
         }
       }
     );
@@ -863,10 +790,108 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
+  settingsFormUpdated() {
+    this.isDirty = true;
+    this.updateControllerScriptCompleters();
+  }
+
+  dataKeySettingsFormUpdated() {
+    this.isDirty = true;
+  }
+
+  latestDataKeySettingsFormUpdated() {
+    this.isDirty = true;
+  }
+
+  editControllerScriptModules($event: Event, button: MatIconButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = button._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const ctx: any = {
+        modules: deepClone(this.controllerScriptModules)
+      };
+      const modulesPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: JsFuncModulesComponent,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: ctx,
+        isModal: true
+      });
+      modulesPanelPopover.tbComponentRef.instance.popover = modulesPanelPopover;
+      modulesPanelPopover.tbComponentRef.instance.modulesApplied.subscribe((modules) => {
+        modulesPanelPopover.hide();
+        this.controllerScriptModules = modules;
+        this.updateControllerScriptCompleters();
+        this.isDirty = true;
+      });
+    }
+  }
+
+  get controllerScriptBody(): string {
+    if (typeof this.widget.controllerScript === 'string') {
+      return this.widget.controllerScript;
+    } else {
+      return this.widget.controllerScript.body;
+    }
+  }
+
+  set controllerScriptBody(controllerScriptBody) {
+    if (typeof this.widget.controllerScript === 'string') {
+      this.widget.controllerScript = controllerScriptBody;
+    } else {
+      this.widget.controllerScript.body = controllerScriptBody;
+    }
+  }
+
+  get controllerScriptModules(): {[alias: string]: string} {
+    if (typeof this.widget.controllerScript === 'string') {
+      return null;
+    } else {
+      return this.widget.controllerScript.modules;
+    }
+  }
+
+  set controllerScriptModules(modules: {[alias: string]: string}) {
+    if (modules && Object.keys(modules).length) {
+      if (typeof this.widget.controllerScript === 'string') {
+        this.widget.controllerScript = {
+          body: this.widget.controllerScript,
+          modules
+        };
+      } else {
+        this.widget.controllerScript.modules = modules;
+      }
+    } else {
+      if (typeof this.widget.controllerScript !== 'string') {
+        this.widget.controllerScript = this.widget.controllerScript.body;
+      }
+    }
+  }
+
   get confirmOnExitMessage(): string {
     if (this.isEditModeWidget && !this._isDirty) {
       return this.translate.instant('widget.confirm-to-exit-editor-html');
     }
     return '';
+  }
+
+  private updateControllerScriptCompleters() {
+    const modulesCompleterObservable = loadModulesCompleter(this.http, this.controllerScriptModules);
+    modulesCompleterObservable.subscribe((modulesCompleter) => {
+      const completers: Ace.Completer[] = [];
+      const formPropertiesCompletions = formPropertyCompletions(this.widget.settingsForm || [], this.customTranslate);
+      completers.push(widgetEditorCompleter(formPropertiesCompletions));
+      if (modulesCompleter) {
+        completers.push(modulesCompleter);
+      }
+      completers.push(...this.initialCompleters);
+      this.jsEditor.completers = completers;
+    });
   }
 }

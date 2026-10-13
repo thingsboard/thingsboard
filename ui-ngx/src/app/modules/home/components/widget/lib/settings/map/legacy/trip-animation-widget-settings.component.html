@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section class="tb-widget-settings" [formGroup]="tripAnimationWidgetSettingsForm">
+  <tb-map-provider-settings
+    [ignoreImageMap]="true"
+    [aliasController]="aliasController"
+    formControlName="mapProviderSettings">
+  </tb-map-provider-settings>
+  <tb-trip-animation-common-settings
+    [widget]="widget"
+    formControlName="commonMapSettings">
+  </tb-trip-animation-common-settings>
+  <tb-trip-animation-marker-settings
+    formControlName="markersSettings">
+  </tb-trip-animation-marker-settings>
+  <tb-trip-animation-path-settings
+    formControlName="pathSettings">
+  </tb-trip-animation-path-settings>
+  <tb-trip-animation-point-settings
+    formControlName="pointSettings">
+  </tb-trip-animation-point-settings>
+  <tb-polygon-settings
+    [widget]="widget"
+    formControlName="polygonSettings">
+  </tb-polygon-settings>
+  <tb-circle-settings
+    [widget]="widget"
+    formControlName="circleSettings">
+  </tb-circle-settings>
+</section>

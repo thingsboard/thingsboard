@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.common;
 
 import lombok.RequiredArgsConstructor;
@@ -47,7 +34,7 @@ public class TbRuleEngineProducerService {
                 Integer partition = tpi.getPartition().orElse(null);
                 UUID id = i > 0 ? UUID.randomUUID() : tbMsg.getId();
 
-                tbMsg = tbMsg.toBuilder()
+                tbMsg = tbMsg.transform()
                         .id(id)
                         .correlationId(correlationId)
                         .partition(partition)
@@ -65,7 +52,7 @@ public class TbRuleEngineProducerService {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
         }
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
-                .setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
         producer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);

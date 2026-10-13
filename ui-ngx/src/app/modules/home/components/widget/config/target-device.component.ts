@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -24,31 +10,34 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { TargetDevice, TargetDeviceType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-select.component.models';
+import { EntityAliasSelectCallbacks } from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-target-device',
-  templateUrl: './target-device.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TargetDeviceComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TargetDeviceComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-target-device',
+    templateUrl: './target-device.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TargetDeviceComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TargetDeviceComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -71,6 +60,9 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
   @Input()
   disabled: boolean;
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
   widgetEditMode = this.utils.widgetEditMode;
 
   targetDeviceFormGroup: UntypedFormGroup;
@@ -80,7 +72,8 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
   constructor(private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -111,10 +104,14 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
       deviceId: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []],
       entityAliasId: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []]
     });
-    this.targetDeviceFormGroup.get('type').valueChanges.subscribe(() => {
+    this.targetDeviceFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
-    this.targetDeviceFormGroup.valueChanges.subscribe(
+    this.targetDeviceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.targetDeviceUpdated(this.targetDeviceFormGroup.value);
       }

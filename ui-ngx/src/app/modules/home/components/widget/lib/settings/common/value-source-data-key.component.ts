@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -29,25 +15,27 @@ import { AppState } from '@core/core.state';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import {
   ValueSourceConfig,
   ValueSourceType,
   ValueSourceTypes,
   ValueSourceTypeTranslation
 } from '@shared/models/widget-settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-value-source-data-key',
-  templateUrl: './value-source-data-key.component.html',
-  styleUrls: ['value-source-data-key.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ValueSourceDataKeyComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-value-source-data-key',
+    templateUrl: './value-source-data-key.component.html',
+    styleUrls: ['value-source-data-key.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ValueSourceDataKeyComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ValueSourceDataKeyComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
@@ -81,7 +69,8 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -93,16 +82,24 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
     });
     this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
     this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
-    this.valueSourceFormGroup.valueChanges.subscribe(
+    this.valueSourceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.latestKeyFormControl.valueChanges.subscribe(
+    this.latestKeyFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.entityKeyFormControl.valueChanges.subscribe(
+    this.entityKeyFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.valueSourceFormGroup.get('type').valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

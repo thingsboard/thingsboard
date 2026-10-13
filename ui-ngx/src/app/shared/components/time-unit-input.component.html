@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="timeInputForm" [class]="containerClass">
+  <mat-form-field [class]="{'number': inlineField, 'max-w-66%': !inlineField && !sameWidthInputs, 'flex-full': !inlineField}"
+                  [appearance]="inlineField ? 'outline' : appearance"
+                  subscriptSizing="dynamic">
+    @if (labelText && !inlineField) {
+      <mat-label>{{ labelText }}</mat-label>
+    }
+    <input type="number" [min]="minValueValidator" step="1" matInput formControlName="time" placeholder="{{ 'widget-config.set' | translate }}">
+    <div matSuffix>
+      <ng-content select="[matSuffix]"></ng-content>
+    </div>
+    @if (inlineField) {
+      @if (hasError) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="hasError"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
+    }
+    @if ((subscriptSizing === 'fixed') && !inlineField) {
+      <mat-hint>{{ hintText }}</mat-hint>
+    }
+    @if (hasError && !inlineField) {
+      <mat-error>
+        {{ hasError }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <mat-form-field [class.h-fit]="!inlineField"
+                  [class.max-w-33%]="!inlineField && !sameWidthInputs"
+                  [class.flex-full]="!inlineField"
+                  [appearance]="inlineField ? 'outline' : appearance"
+                  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+    @if (!inlineField) {
+      <mat-label translate>rule-node-config.units</mat-label>
+    }
+    <mat-select formControlName="timeUnit">
+      @for (timeUnit of timeUnits; track timeUnit) {
+        <mat-option [value]="timeUnit">{{ timeUnitTranslations.get(timeUnit) | translate }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</section>

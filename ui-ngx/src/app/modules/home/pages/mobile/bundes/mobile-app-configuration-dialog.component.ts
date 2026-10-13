@@ -1,0 +1,89 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject } from '@angular/core';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
+import { MobileApp, MobileAppBundleInfo } from '@shared/models/mobile-app.models';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { isNotEmptyStr } from '@core/utils';
+
+export interface MobileAppConfigurationDialogData {
+  afterAdd: boolean;
+  androidApp: MobileApp;
+  iosApp: MobileApp;
+  bundle: MobileAppBundleInfo;
+}
+
+@Component({
+    selector: 'tb-mobile-app-configuration-dialog',
+    templateUrl: './mobile-app-configuration-dialog.component.html',
+    styleUrls: ['./mobile-app-configuration-dialog.component.scss'],
+    standalone: false
+})
+export class MobileAppConfigurationDialogComponent extends DialogComponent<MobileAppConfigurationDialogComponent> {
+
+  private fileName = 'configs';
+
+  notShowAgain = false;
+  showDontShowAgain: boolean;
+
+  gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_pe_app.git';
+  flutterRunCommand = `flutter run --dart-define-from-file ${this.fileName}.json`;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) private data: MobileAppConfigurationDialogData,
+              protected dialogRef: MatDialogRef<MobileAppConfigurationDialogComponent>,
+              private importExportService: ImportExportService,
+              ) {
+    super(store, router, dialogRef);
+    this.showDontShowAgain = this.data.afterAdd;
+  }
+
+  close(): void {
+    if (this.notShowAgain && this.showDontShowAgain) {
+      this.store.dispatch(new ActionPreferencesPutUserSettings({ notDisplayConfigurationAfterAddMobileBundle: true }));
+      this.dialogRef.close(null);
+    } else {
+      this.dialogRef.close(null);
+    }
+  }
+
+  createMarkDownCommand(commands: string): string {
+    return this.createMarkDownSingleCommand(commands);
+  }
+
+  downloadSettings(): void {
+    const settings: any = {
+      thingsboardApiEndpoint: window.location.origin,
+      appLinksUrlHost: window.location.host,
+      appLinksUrlScheme: window.location.protocol.slice(0, -1),
+      registrationRedirectUrlScheme: this.data.bundle.selfRegistrationParams?.redirect?.scheme ?? '',
+      registrationRedirectUrlHost: this.data.bundle.selfRegistrationParams?.redirect?.host ?? '',
+    };
+    if (!!this.data.androidApp) {
+      settings.androidApplicationId = this.data.androidApp.pkgName;
+      settings.androidApplicationName = isNotEmptyStr(this.data.androidApp.title) ? this.data.androidApp.title : this.data.bundle.title;
+      settings.thingsboardOAuth2CallbackUrlScheme = this.data.androidApp.pkgName + '.auth';
+      settings.thingsboardAndroidAppSecret = this.data.androidApp.appSecret;
+    }
+    if (!!this.data.iosApp) {
+      settings.iosApplicationId = this.data.iosApp.pkgName;
+      settings.iosApplicationName = isNotEmptyStr(this.data.iosApp.title) ? this.data.iosApp.title : this.data.bundle.title;
+      settings.thingsboardIosAppSecret = this.data.iosApp.appSecret;
+    }
+    this.importExportService.exportJson(settings, this.fileName);
+  }
+
+  private createMarkDownSingleCommand(command: string): string {
+    return '```bash\n' +
+      command +
+      '{:copy-code}\n' +
+      '```';
+  }
+}

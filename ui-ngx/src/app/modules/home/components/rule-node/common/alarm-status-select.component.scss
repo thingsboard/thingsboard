@@ -1,0 +1,47 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  .chip-listbox {
+    max-width: 460px;
+    width: 100%;
+
+    .toggle-column {
+      display: flex;
+      flex: 1 1 100%;
+      gap: 8px;
+    }
+
+    .option {
+      margin: 0;
+    }
+  }
+
+  @media screen and (max-width: 959px) {
+    .chip-listbox {
+      max-width: 360px;
+
+      .toggle-column {
+        flex-direction: column;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .chip-listbox {
+    .mdc-evolution-chip-set__chips {
+      gap: 8px;
+    }
+
+    .option {
+      button {
+        flex-basis: 100%;
+        justify-content: start;
+      }
+
+      .mdc-evolution-chip__graphic {
+        flex-grow: 0;
+      }
+    }
+  }
+}

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.filter;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +11,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -63,10 +50,15 @@ import static org.mockito.Mockito.when;
 
 class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
-    private final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+    private final DirectListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
+    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
+            .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+            .originator(ORIGINATOR_ID)
+            .copyMetaData(TbMsgMetaData.EMPTY)
+            .data(TbMsg.EMPTY_JSON_OBJECT)
+            .build();
 
     private TbCheckRelationNode node;
 

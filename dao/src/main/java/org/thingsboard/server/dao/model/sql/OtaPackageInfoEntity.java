@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -100,6 +87,9 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
     @Column(name = ModelConstants.OTA_PACKAGE_ADDITIONAL_INFO_COLUMN)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     @Transient
     private boolean hasData;
 
@@ -125,11 +115,12 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
         this.checksum = otaPackageInfo.getChecksum();
         this.dataSize = otaPackageInfo.getDataSize();
         this.additionalInfo = otaPackageInfo.getAdditionalInfo();
+        this.externalId = getUuid(otaPackageInfo.getExternalId());
     }
 
     public OtaPackageInfoEntity(UUID id, long createdTime, UUID tenantId, UUID deviceProfileId, OtaPackageType type, String title, String version, String tag,
                                 String url, String fileName, String contentType, ChecksumAlgorithm checksumAlgorithm, String checksum, Long dataSize,
-                                Object additionalInfo, boolean hasData) {
+                                Object additionalInfo, UUID externalId, boolean hasData) {
         this.id = id;
         this.createdTime = createdTime;
         this.tenantId = tenantId;
@@ -146,6 +137,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
         this.dataSize = dataSize;
         this.hasData = hasData;
         this.additionalInfo = JacksonUtil.convertValue(additionalInfo, JsonNode.class);
+        this.externalId = externalId;
     }
 
     @Override
@@ -168,6 +160,8 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> {
         otaPackageInfo.setDataSize(dataSize);
         otaPackageInfo.setAdditionalInfo(additionalInfo);
         otaPackageInfo.setHasData(hasData);
+        otaPackageInfo.setExternalId(getEntityId(externalId, OtaPackageId::new));
         return otaPackageInfo;
     }
+
 }

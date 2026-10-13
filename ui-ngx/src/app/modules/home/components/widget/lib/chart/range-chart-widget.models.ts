@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BackgroundSettings,
   BackgroundType,
@@ -22,6 +9,7 @@ import {
   Font,
   simpleDateFormat,
   sortedColorRange,
+  ValueFormatProcessor,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
@@ -42,7 +30,7 @@ import {
   TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { isNumber, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, isNumber, mergeDeep, plainColorFromVariable } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import {
   chartAnimationDefaultSettings,
@@ -56,6 +44,7 @@ import {
 import {
   TimeSeriesChartTooltipWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
+import { TbUnit } from '@shared/models/unit.models';
 
 export interface RangeItem {
   index: number;
@@ -220,7 +209,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
 };
 
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
-                                             decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
+                                             decimals: number, units: TbUnit): DeepPartial<TimeSeriesChartSettings> => {
   let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
     ...{type: ValueSourceType.constant,
     yAxisId: 'default',
@@ -239,10 +228,8 @@ export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings,
     yAxes: {
       default: {
         ...settings.yAxis,
-        ...{
-          decimals,
-          units
-        }
+        decimals,
+        units
       }
     },
     xAxis: settings.xAxis,
@@ -291,7 +278,7 @@ export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettin
     }
   });
 
-export const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
+export const toRangeItems = (colorRanges: Array<ColorRange>, valueFormat: ValueFormatProcessor): RangeItem[] => {
   const rangeItems: RangeItem[] = [];
   let counter = 0;
   const ranges = sortedColorRange(filterIncludingColorRanges(colorRanges)).filter(r => isNumber(r.from) || isNumber(r.to));
@@ -305,20 +292,22 @@ export const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
         from = prevRange.to;
       }
     }
+    const formatToValue = isDefinedAndNotNull(to) ? Number(valueFormat.format(to)) : to;
+    const formatFromValue = isDefinedAndNotNull(from) ? Number(valueFormat.format(from)) : from;
     rangeItems.push(
       {
         index: counter++,
-        color: range.color,
+        color: plainColorFromVariable(range.color),
         enabled: true,
         visible: true,
         from,
         to,
-        label: rangeItemLabel(from, to),
-        piece: createTimeSeriesChartVisualMapPiece(range.color, from, to)
+        label: rangeItemLabel(formatFromValue, formatToValue),
+        piece: createTimeSeriesChartVisualMapPiece(range.color, formatFromValue, formatToValue)
       }
     );
     if (!isNumber(from) || !isNumber(to)) {
-      const value = !isNumber(from) ? to : from;
+      const value = !isNumber(from) ? formatToValue : formatFromValue;
       rangeItems.push(
         {
           index: counter++,

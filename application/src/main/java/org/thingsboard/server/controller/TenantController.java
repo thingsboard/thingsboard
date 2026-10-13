@@ -1,33 +1,23 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
@@ -36,12 +26,19 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -71,17 +68,14 @@ public class TenantController extends BaseController {
     @ApiOperation(value = "Get Tenant (getTenantById)",
             notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/{tenantId}")
     public Tenant getTenantById(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
         Tenant tenant = checkTenantId(tenantId, Operation.READ);
-        if (!tenant.getAdditionalInfo().isNull()) {
-            processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
-        }
+        checkDashboardInfo(tenant.getAdditionalInfo(), HOME_DASHBOARD);
         return tenant;
     }
 
@@ -89,8 +83,7 @@ public class TenantController extends BaseController {
             notes = "Fetch the Tenant Info object based on the provided Tenant Id. " +
                     TENANT_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/info/{tenantId}")
     public TenantInfo getTenantInfoById(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
@@ -108,8 +101,7 @@ public class TenantController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Tenant entity." +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/tenant")
     public Tenant saveTenant(@Parameter(description = "A JSON value representing the tenant.")
                              @RequestBody Tenant tenant) throws Exception {
         checkEntity(tenant.getId(), tenant, Resource.TENANT);
@@ -117,9 +109,9 @@ public class TenantController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Tenant (deleteTenant)",
-            notes = "Deletes the tenant, it's customers, rule chains, devices and all other related entities. Referencing non-existing tenant Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
+            notes = "Deletes the tenant, it's customers, rule chains, devices and all other related entities. Referencing non-existing tenant Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @DeleteMapping(value = "/tenant/{tenantId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenant(@Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
                              @PathVariable(TENANT_ID) String strTenantId) throws Exception {
@@ -131,8 +123,7 @@ public class TenantController extends BaseController {
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenants")
     public PageData<Tenant> getTenants(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -144,15 +135,41 @@ public class TenantController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenants(pageLink));
+    }
+
+    @Hidden
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants", params = {"tenantIds"})
+    public List<Tenant> getTenantsByIdsV1(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<TenantId> tenantIds = new ArrayList<>();
+        for (UUID tenantUUID : tenantUUIDs) {
+            tenantIds.add(TenantId.fromUUID(tenantUUID));
+        }
+        List<Tenant> tenants = tenantService.findTenantsByIds(tenantId, tenantIds);
+        return filterTenantsByReadPermission(tenants);
+    }
+
+    @ApiOperation(value = "Get Tenants By Ids (getTenantsByIds)",
+            notes = "Fetch Tenant objects based on the provided ids. " + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants/list")
+    public List<Tenant> getTenantsByIds(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        return getTenantsByIdsV1(tenantUUIDs);
     }
 
     @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
             + TENANT_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantInfos")
     public PageData<TenantInfo> getTenantInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -165,8 +182,19 @@ public class TenantController extends BaseController {
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenantInfos(pageLink));
+    }
+
+    private List<Tenant> filterTenantsByReadPermission(List<Tenant> tenants) {
+        return tenants.stream().filter(tenant -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.TENANT, Operation.READ, tenant.getId(), tenant);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).toList();
     }
 
 }

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -21,15 +8,15 @@ import {
   ElementRef,
   forwardRef,
   Input,
+  NgZone,
   OnDestroy,
   OnInit,
+  SecurityContext,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from '@shared/components/page.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { PageLink } from '@shared/models/page/page-link';
@@ -39,6 +26,8 @@ import { MatSort } from '@angular/material/sort';
 import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, first, tap } from 'rxjs/operators';
 import {
+  mergeWidgetActionsMap,
+  stripRuntimeWidgetActionFields,
   toWidgetActionDescriptor,
   WidgetActionCallbacks,
   WidgetActionDescriptorInfo,
@@ -46,27 +35,39 @@ import {
   WidgetActionsDatasource
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionDescriptor, WidgetActionSource, widgetType } from '@shared/models/widget.models';
+import {
+  WidgetActionDescriptor,
+  WidgetActionSource,
+  WidgetActionsMap,
+  WidgetActionType,
+  widgetActionTypes,
+  widgetType
+} from '@shared/models/widget.models';
 import {
   WidgetActionDialogComponent,
   WidgetActionDialogData
 } from '@home/components/widget/action/widget-action-dialog.component';
-import { deepClone } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
+import { deepClone, isNotEmptyStr } from '@core/utils';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { DomSanitizer } from '@angular/platform-browser';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { ItemBufferService } from '@core/services/item-buffer.service';
 
 @Component({
-  selector: 'tb-manage-widget-actions',
-  templateUrl: './manage-widget-actions.component.html',
-  styleUrls: ['./manage-widget-actions.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ManageWidgetActionsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-manage-widget-actions',
+    templateUrl: './manage-widget-actions.component.html',
+    styleUrls: ['./manage-widget-actions.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ManageWidgetActionsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ManageWidgetActionsComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor {
 
@@ -74,22 +75,40 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   @Input() widgetType: widgetType;
 
+  @Input() widgetName: string;
+
+  @Input() widgetTitle: string;
+
+  @Input() defaultIconColor: string;
+
   @Input() callbacks: WidgetActionCallbacks;
 
   @Input() actionSources: {[actionSourceId: string]: WidgetActionSource};
 
-  innerValue: WidgetActionsData;
+  @Input() actionTypes: WidgetActionType[];
+
+  @Input() customFunctionArgs: string[];
+
+  @Input()
+  @coerceBoolean()
+  isEntityGroup = false;
+
+  @Input()
+  @coerceBoolean()
+  outlinedBorder = false;
+
+  @Input() additionalWidgetActionTypes: WidgetActionType[];
 
   displayedColumns: string[];
   pageLink: PageLink;
   textSearchMode = false;
   hidePageSize = false;
   dataSource: WidgetActionsDatasource;
-
-  viewsInited = false;
-  dirtyValue = false;
   dragDisabled = true;
 
+  private actionsMap: WidgetActionsMap;
+  private viewsInited = false;
+  private dirtyValue = false;
   private widgetResize$: ResizeObserver;
   private destroyed = false;
 
@@ -100,14 +119,17 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   private propagateChange = (_: any) => {};
 
-  constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
+  constructor(private translate: TranslateService,
               private utils: UtilsService,
               private dialog: MatDialog,
               private dialogs: DialogService,
               private cd: ChangeDetectorRef,
-              private elementRef: ElementRef) {
-    super(store);
+              private elementRef: ElementRef,
+              private zone: NgZone,
+              private sanitizer: DomSanitizer,
+              private importExportService: ImportExportService,
+              private itembuffer: ItemBufferService) {
+    super();
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
     this.dataSource = new WidgetActionsDatasource(this.translate, this.utils);
@@ -116,11 +138,13 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   ngOnInit(): void {
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
   }
@@ -133,7 +157,6 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   }
 
   ngAfterViewInit() {
-
     fromEvent(this.searchInputField.nativeElement, 'keyup')
       .pipe(
         debounceTime(150),
@@ -158,10 +181,9 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
       this.dirtyValue = false;
       this.updateData(true);
     }
-
   }
 
-  updateData(reload: boolean = false) {
+  private updateData(reload: boolean = false) {
     this.pageLink.page = this.paginator.pageIndex;
     this.pageLink.pageSize = this.paginator.pageSize;
     this.pageLink.sortOrder.property = this.sort.active;
@@ -190,11 +212,147 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.openWidgetActionDialog($event);
   }
 
+  get hasActions(): boolean {
+    return this.actionsMap && Object.keys(this.actionsMap).some(id => this.actionsMap[id]?.length > 0);
+  }
+
+  importActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExportService.importWidgetActions().subscribe((importedActionsMap) => {
+      if (importedActionsMap) {
+        this.applyImportedActions(importedActionsMap, 'widget-config.import-actions-imported');
+      }
+    });
+  }
+
+  copyAction($event: Event, action: WidgetActionDescriptorInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.itembuffer.copyWidgetActions({[action.actionSourceId]: [this.prepareActionForTransfer(action)]});
+    this.store.dispatch(new ActionNotificationShow(
+      {message: this.translate.instant('widget-config.action-copied'),
+        type: 'success', duration: 1500}));
+  }
+
+  pasteActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const actionsMap = this.itembuffer.pasteWidgetActions();
+    if (actionsMap) {
+      this.applyImportedActions(actionsMap, 'widget-config.paste-actions-pasted');
+    }
+  }
+
+  get hasActionsInBuffer(): boolean {
+    return this.itembuffer.hasWidgetActions();
+  }
+
+  private get allowedActionTypes(): WidgetActionType[] {
+    const predefinedActionTypes = this.actionTypes?.length ? this.actionTypes : widgetActionTypes;
+    return this.additionalWidgetActionTypes?.length ?
+      predefinedActionTypes.concat(this.additionalWidgetActionTypes) : predefinedActionTypes;
+  }
+
+  private prepareActionForTransfer(action: WidgetActionDescriptorInfo): WidgetActionDescriptor {
+    return stripRuntimeWidgetActionFields(toWidgetActionDescriptor(action));
+  }
+
+  private applyImportedActions(importedActionsMap: WidgetActionsMap, appliedMessage: string) {
+    const result = mergeWidgetActionsMap(this.actionsMap, importedActionsMap, this.actionSources,
+      this.allowedActionTypes, () => this.callbacks.fetchCellClickColumns()?.length ?? 0);
+    if (result.imported) {
+      this.onActionsUpdated();
+    }
+    const messageParts = [this.translate.instant(appliedMessage, {count: result.imported})];
+    if (result.skipped) {
+      messageParts.push(this.translate.instant('widget-config.import-actions-skipped', {count: result.skipped}));
+    }
+    if (result.columnIndexesReset) {
+      messageParts.push(this.translate.instant('widget-config.import-actions-columns-reset', {count: result.columnIndexesReset}));
+    }
+    const hasWarnings = !!(result.skipped || result.columnIndexesReset);
+    this.store.dispatch(new ActionNotificationShow(
+      {message: messageParts.join('<br/>'),
+        type: hasWarnings ? 'warn' : 'success',
+        duration: hasWarnings ? 6000 : 2000}));
+  }
+
+  duplicateAction($event: Event, action: WidgetActionDescriptorInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.applyImportedActions({[action.actionSourceId]: [this.prepareActionForTransfer(action)]},
+      'widget-config.duplicate-actions-duplicated');
+  }
+
+  clearActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const title = this.translate.instant('widget-config.clear-actions-title');
+    const content = this.translate.instant('widget-config.clear-actions-text');
+    this.dialogs.confirm(title, content,
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'), true).subscribe(
+      (res) => {
+        if (res) {
+          for (const actionSourceId of Object.keys(this.actionsMap)) {
+            delete this.actionsMap[actionSourceId];
+          }
+          this.onActionsUpdated();
+        }
+      });
+  }
+
+  exportActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const baseName = this.widgetName || 'widget';
+    const fileName = `${baseName}${isNotEmptyStr(this.widgetTitle) ? `_${this.widgetTitle}` : ''}_actions`;
+    this.importExportService.exportWidgetActions(this.prepareActionsMap(), fileName);
+  }
+
+  copyAllActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.itembuffer.copyWidgetActions(this.prepareActionsMap());
+    this.store.dispatch(new ActionNotificationShow(
+      {message: this.translate.instant('widget-config.actions-copied'),
+        type: 'success', duration: 1500}));
+  }
+
+  private prepareActionsMap(): WidgetActionsMap {
+    const preparedActionsMap: WidgetActionsMap = {};
+    for (const actionSourceId of Object.keys(this.actionsMap)) {
+      const actions = this.actionsMap[actionSourceId];
+      if (actions?.length) {
+        preparedActionsMap[actionSourceId] = actions.map(action => stripRuntimeWidgetActionFields(deepClone(action)));
+      }
+    }
+    return preparedActionsMap;
+  }
+
+  exportAction($event: Event, action: WidgetActionDescriptorInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const exportedActionsMap: WidgetActionsMap = {
+      [action.actionSourceId]: [this.prepareActionForTransfer(action)]
+    };
+    this.importExportService.exportWidgetActions(exportedActionsMap, `${action.name}_action`);
+  }
+
   editAction($event: Event, action: WidgetActionDescriptorInfo) {
     this.openWidgetActionDialog($event, action);
   }
 
-  openWidgetActionDialog($event: Event, action: WidgetActionDescriptorInfo = null) {
+  private openWidgetActionDialog($event: Event, action: WidgetActionDescriptorInfo = null) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -204,15 +362,15 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
       prevActionSourceId = action.actionSourceId;
     }
     const availableActionSources: {[actionSourceId: string]: WidgetActionSource} = {};
-    for (const id of Object.keys(this.innerValue.actionSources)) {
-      const actionSource = this.innerValue.actionSources[id];
+    for (const id of Object.keys(this.actionSources)) {
+      const actionSource = this.actionSources[id];
       if (actionSource.multiple) {
         availableActionSources[id] = actionSource;
       } else {
         if (!isAdd && action.actionSourceId === id) {
           availableActionSources[id] = actionSource;
         } else {
-          const existing = this.innerValue.actionsMap[id];
+          const existing = this.actionsMap[id];
           if (!existing || !existing.length) {
             availableActionSources[id] = actionSource;
           }
@@ -221,7 +379,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     }
 
     const actionsData: WidgetActionsData = {
-      actionsMap: this.innerValue.actionsMap,
+      actionsMap: this.actionsMap,
       actionSources: availableActionSources
     };
 
@@ -234,7 +392,12 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
         callbacks: this.callbacks,
         actionsData,
         action: deepClone(action),
-        widgetType: this.widgetType
+        actionTypes: this.actionTypes,
+        customFunctionArgs: this.customFunctionArgs,
+        widgetType: this.widgetType,
+        defaultIconColor: this.defaultIconColor,
+        additionalWidgetActionTypes: this.additionalWidgetActionTypes,
+        isEntityGroup: this.isEntityGroup,
       }
     }).afterClosed().subscribe(
       (res) => {
@@ -272,7 +435,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   }
 
   private getOrCreateTargetActions(actionSourceId: string): Array<WidgetActionDescriptor> {
-    const actionsMap = this.innerValue.actionsMap;
+    const actionsMap = this.actionsMap;
     let targetActions = actionsMap[actionSourceId];
     if (!targetActions) {
       targetActions = [];
@@ -287,7 +450,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     }
     const title = this.translate.instant('widget-config.delete-action-title');
     const content = this.translate.instant('widget-config.delete-action-text', {actionName: action.name});
-    this.dialogs.confirm(title, content,
+    const safeContent = this.sanitizer.sanitize(SecurityContext.HTML, content);
+    this.dialogs.confirm(title, safeContent,
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'), true).subscribe(
       (res) => {
@@ -318,7 +482,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.updateData();
   }
 
-  resetSortAndFilter(update: boolean = true) {
+  private resetSortAndFilter(update: boolean = true) {
     this.pageLink.textSearch = null;
     this.paginator.pageIndex = 0;
     const sortable = this.sort.sortables.get('actionSourceName');
@@ -333,21 +497,22 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
   }
 
-  writeValue(actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>}): void {
-    this.innerValue = {
-      actionsMap: actions || {},
-      actionSources: this.actionSources || {}
-    };
+  writeValue(actions?: WidgetActionsMap): void {
+    this.actionsMap = actions ?? {};
     setTimeout(() => {
       if (!this.destroyed) {
-        this.dataSource.setActions(this.innerValue);
+        const actionData: WidgetActionsData = {
+          actionsMap: this.actionsMap,
+          actionSources: this.actionSources
+        };
+        this.dataSource.setActions(actionData);
         if (this.viewsInited) {
           this.resetSortAndFilter(true);
         } else {
@@ -359,6 +524,6 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   private onActionsUpdated() {
     this.updateData(true);
-    this.propagateChange(this.innerValue.actionsMap);
+    this.propagateChange(this.actionsMap);
   }
 }

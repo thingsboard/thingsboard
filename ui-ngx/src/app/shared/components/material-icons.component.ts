@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { PageComponent } from '@shared/components/page.component';
 import {
   ChangeDetectorRef,
@@ -37,13 +23,15 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { isTbImage } from '@shared/models/resource.models';
 
 @Component({
-  selector: 'tb-material-icons',
-  templateUrl: './material-icons.component.html',
-  providers: [],
-  styleUrls: ['./material-icons.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-material-icons',
+    templateUrl: './material-icons.component.html',
+    providers: [],
+    styleUrls: ['./material-icons.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MaterialIconsComponent extends PageComponent implements OnInit {
 
@@ -58,7 +46,15 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
   iconClearButton = false;
 
   @Input()
-  popover: TbPopoverComponent<MaterialIconsComponent>;
+  @coerceBoolean()
+  showTitle = true;
+
+  @Input()
+  @coerceBoolean()
+  allowedCustomIcon = false;
+
+  @Input()
+  popover: TbPopoverComponent;
 
   @Output()
   iconSelected = new EventEmitter<string>();
@@ -66,6 +62,8 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
   iconRows$: Observable<MaterialIcon[][]>;
   showAllSubject = new BehaviorSubject<boolean>(false);
   searchIconControl: UntypedFormControl;
+
+  isCustomIcon = false;
 
   iconsRowHeight = 48;
 
@@ -118,14 +116,15 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
       map((data) => data.iconRows),
       share()
     );
+    this.isCustomIcon = isTbImage(this.selectedIcon)
   }
 
   clearSearch() {
     this.searchIconControl.patchValue('', {emitEvent: true});
   }
 
-  selectIcon(icon: MaterialIcon) {
-    this.iconSelected.emit(icon.name);
+  selectIcon(icon: string) {
+    this.iconSelected.emit(icon);
   }
 
   clearIcon() {

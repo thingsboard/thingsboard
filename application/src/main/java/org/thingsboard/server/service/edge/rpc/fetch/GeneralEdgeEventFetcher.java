@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.fetch;
 
 import lombok.AllArgsConstructor;
@@ -33,11 +20,13 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
     private final Long queueStartTs;
     private Long seqIdStart;
     @Getter
-    private Long seqIdEnd;
-    @Getter
     private boolean seqIdNewCycleStarted;
     private Long maxReadRecordsCount;
     private final EdgeEventService edgeEventService;
+    // Subtract from queueStartTs to compensate for possible misalignment between `created_time` and `seqId`.
+    // This ensures early events with lower seqId are not skipped due to partitioning by `created_time`.
+    // See: edge_event is partitioned by created_time but sorted by seqId during retrieval.
+    private final long misorderingCompensationMillis;
 
     @Override
     public PageLink getPageLink(int pageSize) {
@@ -46,32 +35,35 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 0,
                 null,
                 null,
-                queueStartTs,
+                queueStartTs > 0 ? queueStartTs - misorderingCompensationMillis : 0,
                 System.currentTimeMillis());
     }
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
         try {
-            PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, seqIdEnd, (TimePageLink) pageLink);
-            if (edgeEvents.getData().isEmpty()) {
-                this.seqIdEnd = Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount);
-                edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, seqIdEnd, (TimePageLink) pageLink);
+            log.trace("[{}] Finding general edge events [{}], seqIdStart = {}, pageLink = {}",
+                    tenantId, edge.getId(), seqIdStart, pageLink);
+            PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, null, (TimePageLink) pageLink);
+            if (!edgeEvents.getData().isEmpty()) {
+                return edgeEvents;
+            }
+            if (seqIdStart > this.maxReadRecordsCount) {
+                edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount), (TimePageLink) pageLink);
                 if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart)) {
                     log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
                     this.seqIdNewCycleStarted = true;
                     this.seqIdStart = 0L;
-                } else {
-                    edgeEvents = new PageData<>();
-                    log.warn("[{}] unexpected edge notification message received. " +
-                            "no new events found and seqId column of edge_event table doesn't started new cycle [{}]", tenantId, edge.getId());
+                    return edgeEvents;
                 }
             }
-            return edgeEvents;
+            log.info("[{}] Unexpected edge notification message received. " +
+                    "No new events found, and the seqId column of the edge_event table has not started a new cycle [{}].", tenantId, edge.getId());
+            return new PageData<>();
         } catch (Exception e) {
-            log.error("[{}] failed to find edge events [{}]", tenantId, edge.getId());
+            log.error("[{}] Failed to find edge events [{}]", tenantId, edge.getId(), e);
+            return new PageData<>();
         }
-        return new PageData<>();
     }
 
 }

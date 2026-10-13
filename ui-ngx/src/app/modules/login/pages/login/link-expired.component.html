@@ -1,0 +1,26 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<div class="tb-expired-link-content mat-app-background tb-dark flex flex-row items-center justify-center" [class.dark-foreground]="wl.loginDarkForeground$ | async"
+     [style.background-color]="wl.loginPageBackgroundColor$ | async"
+     style="width: 100%;">
+  <mat-card appearance="raised" class="tb-expired-link-card">
+    <mat-card-header style="justify-content: center">
+      <mat-card-title>
+        <span class="mat-headline-5">{{ title | translate }}</span>
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content style="padding: 24px 16px">
+      <div>{{ message | translate }}</div>
+    </mat-card-content>
+    <mat-card-actions class="flex flex-row justify-center">
+      <button mat-flat-button color="accent" routerLink="/login">
+        {{ 'login.login' | translate }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

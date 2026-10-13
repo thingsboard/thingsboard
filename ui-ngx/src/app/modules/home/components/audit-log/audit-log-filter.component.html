@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<button color="primary"
+        matTooltip="{{buttonDisplayValue}}"
+        matTooltipPosition="above"
+        mat-stroked-button
+        (click)="toggleAuditLogFilterPanel($event)">
+  <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
+</button>
+<ng-template #auditLogFilterPanel>
+  <form class="tb-audit-log-config-component mat-content mat-padding flex flex-col" [formGroup]="auditLogFilterForm" (ngSubmit)="update()">
+    <div class="tb-form-panel no-padding no-border flex-1">
+      <div class="tb-form-row space-between column-xs flex-1">
+        <div class="fixed-title-width" translate>audit-log.filter-types</div>
+        <tb-string-items-list appearance="outline"
+                              class="flex flex-1 gt-xs:w-64"
+                              subscriptSizing="dynamic"
+                              placeholder="{{ !auditLogFilterForm.get('actionTypes').value?.length ? ('audit-log.any-type' | translate) : '' }}"
+                              [predefinedValues]="predefinedTypeValues"
+                              formControlName="actionTypes">
+        </tb-string-items-list>
+      </div>
+    </div>
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+              mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+              mat-button
+              (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="auditLogFilterForm.invalid || !auditLogFilterForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>

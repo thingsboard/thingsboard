@@ -1,38 +1,27 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { merge } from 'rxjs';
 import {
   StatusWidgetLayout,
   StatusWidgetStateSettings
 } from '@home/components/widget/lib/indicator/status-widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { widgetTitleAutocompleteValues } from '@app/shared/public-api';
 
 @Component({
-  selector: 'tb-status-widget-state-settings',
-  templateUrl: './status-widget-state-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => StatusWidgetStateSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-status-widget-state-settings',
+    templateUrl: './status-widget-state-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => StatusWidgetStateSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class StatusWidgetStateSettingsComponent implements OnInit, OnChanges, ControlValueAccessor {
 
@@ -50,7 +39,10 @@ export class StatusWidgetStateSettingsComponent implements OnInit, OnChanges, Co
 
   public stateSettingsFormGroup: UntypedFormGroup;
 
-  constructor(private fb: UntypedFormBuilder) {
+  predefinedValues = widgetTitleAutocompleteValues;
+
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -71,12 +63,16 @@ export class StatusWidgetStateSettingsComponent implements OnInit, OnChanges, Co
       secondaryColorDisabled: [null, []],
       backgroundDisabled: [null, []]
     });
-    this.stateSettingsFormGroup.valueChanges.subscribe(() => {
+    this.stateSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.stateSettingsFormGroup.get('showLabel').valueChanges,
-      this.stateSettingsFormGroup.get('showStatus').valueChanges)
-    .subscribe(() => {
+      this.stateSettingsFormGroup.get('showStatus').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

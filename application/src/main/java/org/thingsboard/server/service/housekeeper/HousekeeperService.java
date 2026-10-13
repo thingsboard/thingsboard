@@ -1,20 +1,8 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.housekeeper;
 
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -35,7 +23,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.housekeeper.processor.HousekeeperTaskProcessor;
 import org.thingsboard.server.service.housekeeper.stats.HousekeeperStatsService;
 
-import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,9 +104,10 @@ public class HousekeeperService {
             throw new IllegalArgumentException("Unsupported task type " + taskType);
         }
 
+        Future<Object> future = null;
         try {
             long startTs = System.currentTimeMillis();
-            Future<Object> future = taskExecutor.submit(() -> {
+            future = taskExecutor.submit(() -> {
                 taskProcessor.process((T) task);
                 return null;
             });
@@ -137,7 +125,7 @@ public class HousekeeperService {
             if (e instanceof ExecutionException) {
                 error = e.getCause();
             } else if (e instanceof TimeoutException) {
-                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " seconds");
+                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " ms");
             }
 
             if (msg.getTask().getAttempt() < config.getMaxReprocessingAttempts()) {
@@ -153,6 +141,10 @@ public class HousekeeperService {
                         .build());
             }
             statsService.ifPresent(statsService -> statsService.reportFailure(taskType, msg));
+        } finally {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
         }
     }
 
@@ -160,6 +152,7 @@ public class HousekeeperService {
     private void stop() {
         consumer.stop();
         consumerExecutor.shutdownNow();
+        taskExecutor.shutdownNow();
         log.info("Stopped Housekeeper service");
     }
 

@@ -1,0 +1,67 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="svListFormGroup" class="tb-form-panel stroked">
+  <div class="tb-form-row no-padding no-border space-between">
+    <div class="tb-form-panel-title">{{ labelText }}</div>
+    @if (svListFormGroup.hasError('required')) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        rule-node-config.map-fields-required
+      </div>
+    }
+    @if (svListFormGroup.hasError('svMapRequired')) {
+      <div class="tb-form-panel-hint tb-error" translate>
+        {{ requiredText }}
+      </div>
+    }
+  </div>
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-table">
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell field-space">{{ selectText }}</div>
+        <div class="tb-form-table-header-cell field-space">{{ valText }}</div>
+        <div class="tb-form-table-header-cell actions-header"></div>
+      </div>
+      <div class="tb-form-table-body">
+        @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
+          <div class="tb-form-table-row"
+               >
+            <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+              <mat-select [placeholder]="selectText" [formControl]="keyValControl.get('key')" required>
+                @for (option of filterSelectOptions(keyValControl); track option) {
+                  <mat-option [value]="option.value">
+                    {{option.name}}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="tb-inline-field field-space" appearance="outline" subscriptSizing="dynamic">
+              <input [placeholder]="valText" [formControl]="keyValControl.get('value')" matInput/>
+            </mat-form-field>
+            <div class="tb-form-table-row-cell-buttons">
+              <button [class.tb-hidden]="keyValsFormArray().controls.length === 1"
+                      type="button"
+                      mat-icon-button
+                      (click)="removeKeyVal($index)"
+                      [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'rule-node-config.key-val.remove-mapping-entry' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+  <div>
+    <button [disabled]="(isLoading$ | async) || keyValsFormArray().length >= selectOptions.length"
+            type="button" mat-stroked-button color="primary" (click)="addKeyVal()">
+      {{ 'rule-node-config.key-val.add-mapping-entry' | translate }}
+    </button>
+  </div>
+  <tb-example-hint [hintText]="hintText" [popupHelpLink]="popupHelpLink"></tb-example-hint>
+</section>

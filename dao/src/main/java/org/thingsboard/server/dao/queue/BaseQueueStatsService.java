@@ -1,20 +1,8 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.queue;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,12 +15,15 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 import java.util.Optional;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 
@@ -51,7 +42,10 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     public QueueStats save(TenantId tenantId, QueueStats queueStats) {
         log.trace("Executing save [{}]", queueStats);
         queueStatsValidator.validate(queueStats, QueueStats::getTenantId);
-        return queueStatsDao.save(tenantId, queueStats);
+        QueueStats savedQueueStats = queueStatsDao.save(tenantId, queueStats);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedQueueStats.getTenantId()).entityId(savedQueueStats.getId())
+                .entity(savedQueueStats).created(queueStats.getId() == null).build());
+        return savedQueueStats;
     }
 
     @Override
@@ -80,7 +74,7 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     public PageData<QueueStats> findByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findByTenantId, tenantId: [{}]", tenantId);
         Validator.validatePageLink(pageLink);
-        return queueStatsDao.findByTenantId(tenantId, pageLink);
+        return queueStatsDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override
@@ -93,11 +87,18 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         queueStatsDao.removeById(tenantId, id.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
     }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findQueueStatsById(tenantId, new QueueStatsId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(queueStatsDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

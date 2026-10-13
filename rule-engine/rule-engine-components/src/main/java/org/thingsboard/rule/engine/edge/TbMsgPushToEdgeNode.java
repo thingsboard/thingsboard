@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +7,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -40,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
@@ -59,14 +49,12 @@ import java.util.UUID;
                 "<br><code>ALARM</code><br><br>" +
                 "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported message type arrived. " +
                 "In case successful storage edge event to database message will be routed via <b>Success</b> route.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodePushToEdgeConfig",
         icon = "cloud_download",
-        ruleChainTypes = RuleChainType.CORE
+        ruleChainTypes = RuleChainType.CORE,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/push-to-edge/"
 )
 public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNodeConfiguration, EdgeEvent, EdgeEventType> {
-
-    static final int DEFAULT_PAGE_SIZE = 100;
 
     @Override
     EdgeEvent buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId,
@@ -114,7 +102,7 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
                     }
 
                     @Override
-                    public void onFailure(Throwable t) {
+                    public void onFailure(@NonNull Throwable t) {
                         ctx.tellFailure(msg, t);
                     }
                 };
@@ -122,7 +110,7 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
             } else {
                 List<ListenableFuture<Void>> futures = new ArrayList<>();
                 PageDataIterableByTenantIdEntityId<EdgeId> edgeIds = new PageDataIterableByTenantIdEntityId<>(
-                        ctx.getEdgeService()::findRelatedEdgeIdsByEntityId, ctx.getTenantId(), msg.getOriginator(), DEFAULT_PAGE_SIZE);
+                        ctx.getEdgeService()::findRelatedEdgeIdsByEntityId, ctx.getTenantId(), msg.getOriginator(), RELATED_EDGES_CACHE_ITEMS);
                 for (EdgeId edgeId : edgeIds) {
                     EdgeEvent edgeEvent = buildEvent(msg, ctx);
                     futures.add(notifyEdge(ctx, edgeEvent, edgeId));

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.common;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,17 +30,17 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.RETURNS_DEEP_STUBS;
+import static org.mockito.BDDMockito.atLeastOnce;
+import static org.mockito.BDDMockito.lenient;
+import static org.mockito.BDDMockito.mock;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.spy;
+import static org.mockito.BDDMockito.times;
+import static org.mockito.BDDMockito.verify;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.hamcrest.MockitoHamcrest.longThat;
 
 @Slf4j
@@ -108,7 +95,6 @@ public class DefaultTbQueueRequestTemplateTest {
         inst.init();
         assertThat(inst.nextCleanupNs, equalTo(0L));
         verify(queueAdmin, times(1)).createTopicIfNotExists(topic);
-        verify(requestTemplate, times(1)).init();
         verify(responseTemplate, times(1)).subscribe();
         verify(executorMock, times(1)).submit(any(Runnable.class));
 
@@ -145,19 +131,19 @@ public class DefaultTbQueueRequestTemplateTest {
 
     @Test
     public void givenMessages_whenSend_thenOK() {
-        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any());
+        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any(), any());
         inst.init();
         final int msgCount = 10;
         for (int i = 0; i < msgCount; i++) {
             inst.send(getRequestMsgMock());
         }
         assertThat(inst.pendingRequests.mappingCount(), equalTo((long) msgCount));
-        verify(inst, times(msgCount)).sendToRequestTemplate(any(), any(), any(), any());
+        verify(inst, times(msgCount)).sendToRequestTemplate(any(), any(), any(), any(), any());
     }
 
     @Test
     public void givenMessagesOverMaxPendingRequests_whenSend_thenImmediateFailedFutureForTheOfRequests() {
-        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any());
+        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any(), any());
         inst.init();
         int msgOverflowCount = 10;
         for (int i = 0; i < inst.maxPendingRequests; i++) {
@@ -167,7 +153,7 @@ public class DefaultTbQueueRequestTemplateTest {
             assertThat("max pending requests overflow", inst.send(getRequestMsgMock()).isDone(), is(true)); //overflow, immediate failed future
         }
         assertThat(inst.pendingRequests.mappingCount(), equalTo(inst.maxPendingRequests));
-        verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any());
+        verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any(), any());
     }
 
     @SuppressWarnings("unchecked")

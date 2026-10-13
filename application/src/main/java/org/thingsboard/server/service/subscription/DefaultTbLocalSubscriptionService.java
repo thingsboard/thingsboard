@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import jakarta.annotation.PostConstruct;
@@ -22,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DeduplicationUtil;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -56,10 +45,12 @@ import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
+import org.thingsboard.server.service.log.sub.LogsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +74,7 @@ import java.util.stream.Collectors;
 @Service
 public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionService {
 
-    private final ConcurrentMap<String, Map<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ConcurrentMap<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityLocalSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
 
@@ -99,9 +90,9 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private ExecutorService tsCallBackExecutor;
     private ScheduledExecutorService staleSessionCleanupExecutor;
 
-    @Value("${server.ws.rate_limits.subscriptions_per_tenant:2000:60}")
+    @Value("${server.ws.rate_limits.subscriptions_per_tenant:}")
     private String subscriptionsPerTenantRateLimit;
-    @Value("${server.ws.rate_limits.subscriptions_per_user:500:60}")
+    @Value("${server.ws.rate_limits.subscriptions_per_user:}")
     private String subscriptionsPerUserRateLimit;
 
     public DefaultTbLocalSubscriptionService(AttributesService attrService, TimeseriesService tsService, TbServiceInfoProvider serviceInfoProvider,
@@ -121,14 +112,14 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private String serviceId;
     private ExecutorService subscriptionUpdateExecutor;
 
-    private final Lock subsLock = new ReentrantLock();
+    private final ConcurrentReferenceHashMap<TenantId, Lock> locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.SOFT);
 
     @PostConstruct
     public void initExecutor() {
         subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
-        tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-sub-callback"));
+        tsCallBackExecutor = Executors.newFixedThreadPool(8, ThingsBoardThreadFactory.forName("ts-sub-callback")); //since we are using locks by TenantId
         serviceId = serviceInfoProvider.getServiceId();
-        staleSessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("stale-session-cleanup"));
+        staleSessionCleanupExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("stale-session-cleanup");
         staleSessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupStaleSessions, 60, 60, TimeUnit.SECONDS);
     }
 
@@ -157,28 +148,29 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
              * Even if we cache locally the list of active subscriptions by entity id, it is still time-consuming operation to get them from cache
              * Since number of subscriptions is usually much less than number of devices that are pushing data.
              */
-            Set<UUID> staleSubs = new HashSet<>();
+            Map<TenantId, Set<UUID>> staleSubs = new HashMap<>();
             subscriptionsByEntityId.forEach((id, sub) -> {
                 try {
                     pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED));
                 } catch (TenantNotFoundException e) {
-                    staleSubs.add(id);
+                    staleSubs.computeIfAbsent(sub.getTenantId(), key -> new HashSet<>()).add(id);
                     log.warn("Cleaning up stale subscription {} for tenant {} due to TenantNotFoundException", id, sub.getTenantId());
                 } catch (Exception e) {
                     log.error("Failed to push subscription {} to manager service", sub, e);
                 }
             });
-            if (!staleSubs.isEmpty()) {
+            staleSubs.forEach((tenantId, subs) -> {
+                var subsLock = getSubsLock(tenantId);
                 subsLock.lock();
                 try {
-                    staleSubs.forEach(entityId -> {
+                    subs.forEach(entityId -> {
                         subscriptionsByEntityId.remove(entityId);
                         entityUpdates.remove(entityId);
                     });
                 } finally {
                     subsLock.unlock();
                 }
-            }
+            });
         }
     }
 
@@ -198,6 +190,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         });
     }
 
+    Lock getSubsLock(TenantId tenantId) {
+        return locks.computeIfAbsent(tenantId, x -> new ReentrantLock());
+    }
+
     @Override
     public void addSubscription(TbSubscription<?> subscription, WebSocketSessionRef sessionRef) {
         TenantId tenantId = subscription.getTenantId();
@@ -213,6 +209,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
         log.debug("[{}][{}] Register subscription: {}", tenantId, entityId, subscription);
         SubscriptionModificationResult result;
+        final Lock subsLock = getSubsLock(tenantId);
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.computeIfAbsent(subscription.getSessionId(), k -> new ConcurrentHashMap<>());
@@ -228,19 +225,26 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     @Override
     public void onSubEventCallback(TransportProtos.TbEntitySubEventCallbackProto subEventCallback, TbCallback callback) {
+        TenantId tenantId;
+        if (subEventCallback.getTenantIdMSB() == 0 && subEventCallback.getTenantIdLSB() == 0) {
+            tenantId = TenantId.SYS_TENANT_ID; //TODO: remove after release
+        } else {
+            tenantId = TenantId.fromUUID(new UUID(subEventCallback.getTenantIdMSB(), subEventCallback.getTenantIdLSB()));
+        }
         UUID entityId = new UUID(subEventCallback.getEntityIdMSB(), subEventCallback.getEntityIdLSB());
-        onSubEventCallback(entityId, subEventCallback.getSeqNumber(), new TbEntityUpdatesInfo(subEventCallback.getAttributesUpdateTs(), subEventCallback.getTimeSeriesUpdateTs()), callback);
+        onSubEventCallback(tenantId, entityId, subEventCallback.getSeqNumber(), new TbEntityUpdatesInfo(subEventCallback.getAttributesUpdateTs(), subEventCallback.getTimeSeriesUpdateTs()), callback);
     }
 
     @Override
-    public void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
-        onSubEventCallback(entityId.getId(), seqNumber, entityUpdatesInfo, callback);
+    public void onSubEventCallback(TenantId tenantId, EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
+        onSubEventCallback(tenantId, entityId.getId(), seqNumber, entityUpdatesInfo, callback);
     }
 
-    public void onSubEventCallback(UUID entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
-        log.debug("[{}][{}] Processing sub event callback: {}.", entityId, seqNumber, entityUpdatesInfo);
+    private void onSubEventCallback(TenantId tenantId, UUID entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
+        log.debug("[{}][{}][{}] Processing sub event callback: {}.", tenantId, entityId, seqNumber, entityUpdatesInfo);
         entityUpdates.put(entityId, entityUpdatesInfo);
         Set<TbSubscription<?>> pendingSubs = null;
+        Lock subsLock = getSubsLock(tenantId);
         subsLock.lock();
         try {
             TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.get(entityId);
@@ -257,9 +261,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
-    public void cancelSubscription(String sessionId, int subscriptionId) {
-        log.debug("[{}][{}] Going to remove subscription.", sessionId, subscriptionId);
+    public void cancelSubscription(TenantId tenantId, String sessionId, int subscriptionId) {
+        log.debug("[{}][{}][{}] Going to remove subscription.", tenantId, sessionId, subscriptionId);
         SubscriptionModificationResult result = null;
+        Lock subsLock = getSubsLock(tenantId);
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.get(sessionId);
@@ -271,10 +276,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     }
                     result = modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
                 } else {
-                    log.debug("[{}][{}] Subscription not found!", sessionId, subscriptionId);
+                    log.debug("[{}][{}][{}] Subscription not found!", tenantId, sessionId, subscriptionId);
                 }
             } else {
-                log.debug("[{}] No session subscriptions found!", sessionId);
+                log.debug("[{}][{}] No session subscriptions found!", tenantId, sessionId);
             }
         } finally {
             subsLock.unlock();
@@ -285,23 +290,28 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     @Override
-    public void cancelAllSessionSubscriptions(String sessionId) {
-        log.debug("[{}] Going to remove session subscriptions.", sessionId);
-        List<SubscriptionModificationResult> results = new ArrayList<>();
+    public void cancelAllSessionSubscriptions(TenantId tenantId, String sessionId) {
+        log.debug("[{}][{}] Going to remove session subscriptions.", tenantId, sessionId);
+        Lock subsLock = getSubsLock(tenantId);
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
             if (sessionSubscriptions != null) {
-                for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
-                    results.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
-                }
+                Map<EntityId, List<TbSubscription<?>>> entitySubscriptions =
+                        sessionSubscriptions.values().stream().collect(Collectors.groupingBy(TbSubscription::getEntityId));
+
+                entitySubscriptions.forEach((entityId, subscriptions) -> {
+                    TbEntitySubEvent event = removeAllSubscriptions(tenantId, entityId, subscriptions);
+                    if (event != null) {
+                        pushSubscriptionsEvent(tenantId, entityId, event);
+                    }
+                });
             } else {
-                log.debug("[{}] No session subscriptions found!", sessionId);
+                log.debug("[{}][{}] No session subscriptions found!", tenantId, sessionId);
             }
         } finally {
             subsLock.unlock();
         }
-        results.stream().filter(SubscriptionModificationResult::hasEvent).forEach(this::pushSubscriptionEvent);
     }
 
     @Override
@@ -316,21 +326,37 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void onTimeSeriesUpdate(UUID entityId, List<TsKvEntry> data, TbCallback callback) {
-        entityUpdates.get(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
+        getEntityUpdatesInfo(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.TIMESERIES.equals(sub.getType()),
                 s -> {
                     TbTimeSeriesSubscription sub = (TbTimeSeriesSubscription) s;
                     List<TsKvEntry> updateData = null;
+                    Map<String, Long> keyStates = sub.getKeyStates();
                     if (sub.isAllKeys()) {
-                        updateData = data;
+                        if (sub.isLatestValues()) {
+                            for (TsKvEntry kv : data) {
+                                Long stateTs = keyStates.get(kv.getKey());
+                                if (stateTs == null || kv.getTs() >= stateTs || kv.isDeletedEntry()) {
+                                    if (updateData == null) {
+                                        updateData = new ArrayList<>();
+                                    }
+                                    updateData.add(kv);
+                                }
+                            }
+                        } else {
+                            updateData = data;
+                        }
                     } else {
                         for (TsKvEntry kv : data) {
-                            if (sub.getKeyStates().containsKey((kv.getKey()))) {
-                                if (updateData == null) {
-                                    updateData = new ArrayList<>();
+                            Long stateTs = keyStates.get(kv.getKey());
+                            if (stateTs != null) {
+                                if (!sub.isLatestValues() || kv.getTs() >= stateTs || kv.isDeletedEntry()) {
+                                    if (updateData == null) {
+                                        updateData = new ArrayList<>();
+                                    }
+                                    updateData.add(kv);
                                 }
-                                updateData.add(kv);
                             }
                         }
                     }
@@ -353,7 +379,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void onAttributesUpdate(UUID entityId, String scope, List<TsKvEntry> data, TbCallback callback) {
-        entityUpdates.get(entityId).attributesUpdateTs = System.currentTimeMillis();
+        getEntityUpdatesInfo(entityId).attributesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.ATTRIBUTES.equals(sub.getType()),
                 s -> {
@@ -411,6 +437,21 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.NOTIFICATIONS.equals(sub.getType()) || TbSubscriptionType.NOTIFICATIONS_COUNT.equals(sub.getType()),
                 update, callback);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void onLogsUpdate(EntityId entityId, LogsSubscriptionUpdate update, TbCallback callback) {
+        var subs = subscriptionsByEntityId.get(entityId.getId());
+        if (subs != null) {
+            subs.getSubs().forEach(s -> {
+                if (TbSubscriptionType.LOGS.equals(s.getType())) {
+                    TbSubscription<LogsSubscriptionUpdate> sub = (TbSubscription<LogsSubscriptionUpdate>) s;
+                    sub.getUpdateProcessor().accept(sub, update);
+                }
+            });
+        }
+        callback.onSuccess();
     }
 
     @Override
@@ -480,6 +521,30 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             log.warn("[{}][{}] Failed to {} subscription {} due to ", tenantId, entityId, add ? "add" : "remove", subscription, e);
         }
         return new SubscriptionModificationResult(tenantId, entityId, subscription, missedUpdatesCandidate, event);
+    }
+
+    private TbEntitySubEvent removeAllSubscriptions(TenantId tenantId, EntityId entityId, List<TbSubscription<?>> subscriptions) {
+        TbEntitySubEvent event = null;
+        try {
+            TbEntityLocalSubsInfo entitySubs = subscriptionsByEntityId.get(entityId.getId());
+            event = entitySubs.removeAll(subscriptions);
+            if (entitySubs.isEmpty()) {
+                subscriptionsByEntityId.remove(entityId.getId());
+                entityUpdates.remove(entityId.getId());
+            }
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to remove all subscriptions {} due to ", tenantId, entityId, subscriptions, e);
+        }
+        return event;
+    }
+
+    private void pushSubscriptionsEvent(TenantId tenantId, EntityId entityId, TbEntitySubEvent event) {
+        try {
+            log.trace("[{}][{}] Event: {}", tenantId, entityId, event);
+            pushSubEventToManagerService(tenantId, entityId, event);
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push subscription event {} due to ", tenantId, entityId, event, e);
+        }
     }
 
     private void pushSubscriptionEvent(SubscriptionModificationResult modificationResult) {
@@ -604,7 +669,12 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void cleanupStaleSessions() {
-        subscriptionsBySessionId.keySet().forEach(webSocketService::cleanupIfStale);
+        subscriptionsBySessionId.forEach((sessionId, subscriptions) ->
+                subscriptions.values()
+                        .stream()
+                        .findAny()
+                        .ifPresent(subscription -> webSocketService.cleanupIfStale(subscription.getTenantId(), sessionId))
+        );
     }
 
     private void handleRateLimitError(TbSubscription<?> subscription, WebSocketSessionRef sessionRef, String message) {
@@ -614,6 +684,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             webSocketService.sendError(sessionRef, subscription.getSubscriptionId(), SubscriptionErrorCode.BAD_REQUEST, message);
         }
         throw new TbRateLimitsException(message);
+    }
+
+    private TbEntityUpdatesInfo getEntityUpdatesInfo(UUID entityId) {
+        return entityUpdates.computeIfAbsent(entityId, id -> new TbEntityUpdatesInfo(0));
     }
 
 }

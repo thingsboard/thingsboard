@@ -1,4 +1,4 @@
-Create docker compose file for ThingsBoard Edge upgrade process:
+Create a docker compose file for ThingsBoard Edge upgrade process:
 
 ```bash
 > docker-compose-upgrade.yml && nano docker-compose-upgrade.yml
@@ -8,11 +8,10 @@ Create docker compose file for ThingsBoard Edge upgrade process:
 Add the following lines to the yml file:
 
 ```bash
-version: '3.8'
 services:
   mytbedge:
     restart: on-failure
-    image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
+    image: "thingsboard/tb-edge-pe:${TB_EDGE_VERSION}"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
     volumes:
@@ -40,22 +39,9 @@ volumes:
 {:copy-code}
 ```
 
-Execute the following command to start upgrade process:
+Execute the following command to start an upgrade process:
 
 ```bash
-docker compose -f docker-compose-upgrade.yml up
-{:copy-code}
-```
-
-Once upgrade process successfully completed, exit from the docker-compose shell by this combination:
-
-```text
-Ctrl + C
-```
-
-Execute the following command to stop TB Edge upgrade container:
-
-```bash
-docker compose -f docker-compose-upgrade.yml stop
+docker compose -f docker-compose-upgrade.yml up --abort-on-container-exit
 {:copy-code}
 ```

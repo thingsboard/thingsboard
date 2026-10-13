@@ -1,0 +1,53 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<section [formGroup]="relatedAttributesConfigForm" class="tb-form-panel no-padding no-border">
+  <tb-relations-query-config
+    required
+    formControlName="relationsQuery">
+  </tb-relations-query-config>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>rule-node-config.data-to-fetch</div>
+    <tb-toggle-select formControlName="dataToFetch" appearance="fill">
+      @for (data of fetchToData; track data) {
+        <tb-toggle-option [value]="data.value">
+          {{ data.name }}
+        </tb-toggle-option>
+      }
+    </tb-toggle-select>
+    <tb-kv-map-config
+      [hidden]="relatedAttributesConfigForm.get('dataToFetch').value === DataToFetch.FIELDS"
+      required
+      formControlName="kvMap"
+      [requiredText]="'rule-node-config.attr-mapping-required' | translate"
+      [labelText]="selectTranslation('rule-node-config.latest-telemetry-mapping','rule-node-config.attributes-mapping') | translate"
+      [keyText]="selectTranslation('rule-node-config.source-telemetry','rule-node-config.source-attribute') | translate"
+      [keyRequiredText]="selectTranslation('rule-node-config.source-telemetry-required','rule-node-config.source-attribute-required') | translate"
+      [valText]="'rule-node-config.target-key' | translate"
+      [valRequiredText]="'rule-node-config.target-key-required' | translate"
+      [hintText]="'rule-node-config.kv-map-pattern-hint'"
+      popupHelpLink="rulenode/related_entity_data_node_fields_templatization">
+    </tb-kv-map-config>
+    <tb-sv-map-config
+      [hidden]="relatedAttributesConfigForm.get('dataToFetch').value !== DataToFetch.FIELDS"
+      required
+      [labelText]="'rule-node-config.fields-mapping' | translate"
+      targetKeyPrefix="relatedEntity"
+      [selectOptions]="originatorFields"
+      formControlName="svMap"
+      [requiredText]="'rule-node-config.attr-mapping-required' | translate"
+      [selectText]="'rule-node-config.source-field' | translate"
+      [selectRequiredText]="'rule-node-config.source-field-required' | translate"
+      [valText]="'rule-node-config.target-key' | translate"
+      [valRequiredText]="'rule-node-config.target-key-required' | translate"
+      [hintText]="'rule-node-config.sv-map-hint' | translate"
+      popupHelpLink="rulenode/related_entity_data_node_fields_templatization">
+    </tb-sv-map-config>
+    <tb-msg-metadata-chip formControlName="fetchTo"
+                          [labelText]="msgMetadataLabelTranslations.get(relatedAttributesConfigForm.get('dataToFetch').value) | translate">
+    </tb-msg-metadata-chip>
+  </div>
+</section>

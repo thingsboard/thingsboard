@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -35,25 +21,27 @@ import {
 } from '@shared/models/queue.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-queue-form',
-  templateUrl: './queue-form.component.html',
-  styleUrls: ['./queue-form.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => QueueFormComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => QueueFormComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-queue-form',
+    templateUrl: './queue-form.component.html',
+    styleUrls: ['./queue-form.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => QueueFormComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => QueueFormComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
-export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
+export class QueueFormComponent implements ControlValueAccessor, OnInit, Validator {
 
   @Input()
   disabled: boolean;
@@ -77,10 +65,10 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
   private modelValue: QueueInfo;
   private propagateChange = null;
   private propagateChangePending = false;
-  private valueChange$: Subscription = null;
 
   constructor(private utils: UtilsService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -122,22 +110,21 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
           duplicateMsgToAllPartitions: [false]
         })
       });
-    this.valueChange$ = this.queueFormGroup.valueChanges.subscribe(() => {
+    this.queueFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.queueFormGroup.get('name').valueChanges.subscribe((value) => {
+    this.queueFormGroup.get('name').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
       this.queueFormGroup.patchValue({topic: `tb_rule_engine.${value}`});
     });
-    this.queueFormGroup.get('submitStrategy').get('type').valueChanges.subscribe(() => {
+    this.queueFormGroup.get('submitStrategy').get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.submitStrategyTypeChanged();
     });
-  }
-
-  ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-      this.valueChange$ = null;
-    }
   }
 
   setDisabledState(isDisabled: boolean): void {

@@ -1,0 +1,82 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { DialogComponent } from '@app/shared/components/dialog.component';
+import { ComplexOperation, EntityKeyValueType } from '@shared/models/query/query.models';
+import {
+  AlarmRuleFilterPredicate,
+  AlarmRuleFilterPredicateType,
+  ComplexAlarmRuleFilterPredicate,
+  filterOperationTranslationMap
+} from "@shared/models/alarm-rule.models";
+import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+
+export interface AlarmRuleComplexFilterPredicateDialogData {
+  complexPredicate: ComplexAlarmRuleFilterPredicate;
+  isAdd: boolean;
+  valueType: EntityKeyValueType;
+  arguments: Record<string, CalculatedFieldArgument>;
+  readonly: boolean;
+  argumentInUse: string;
+}
+
+@Component({
+    selector: 'tb-alarm-rule-complex-filter-predicate-dialog',
+    templateUrl: './alarm-rule-complex-filter-predicate-dialog.component.html',
+    providers: [],
+    styleUrls: [],
+    standalone: false
+})
+
+export class AlarmRuleComplexFilterPredicateDialogComponent extends
+  DialogComponent<AlarmRuleComplexFilterPredicateDialogComponent, ComplexAlarmRuleFilterPredicate> {
+
+  complexFilterFormGroup = this.fb.group(
+    {
+      operation: [ComplexOperation.AND, [Validators.required]],
+      predicates: this.fb.control<AlarmRuleFilterPredicate[] | null>(null, Validators.required)
+    }
+  );
+
+  EntityKeyValueType = EntityKeyValueType;
+  complexOperationEnum = ComplexOperation;
+  complexOperationTranslations = filterOperationTranslationMap;
+
+  isAdd: boolean;
+
+  arguments = this.data.arguments;
+
+  readonly = this.data.readonly;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: AlarmRuleComplexFilterPredicateDialogData,
+              public dialogRef: MatDialogRef<AlarmRuleComplexFilterPredicateDialogComponent, ComplexAlarmRuleFilterPredicate>,
+              private fb: FormBuilder) {
+    super(store, router, dialogRef);
+
+    this.isAdd = this.data.isAdd;
+
+    this.complexFilterFormGroup.patchValue(this.data.complexPredicate, {emitEvent: false});
+
+    if (this.readonly) {
+      this.complexFilterFormGroup.disable({emitEvent: false});
+    }
+  }
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  save(): void {
+    const predicate = this.complexFilterFormGroup.value as ComplexAlarmRuleFilterPredicate;
+    predicate.type = AlarmRuleFilterPredicateType.COMPLEX;
+    this.dialogRef.close(predicate);
+  }
+}

@@ -1,35 +1,24 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import { cssUnit, cssUnits } from '@shared/models/widget-settings.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-css-unit-select',
-  templateUrl: './css-unit-select.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CssUnitSelectComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-css-unit-select',
+    templateUrl: './css-unit-select.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CssUnitSelectComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
 
@@ -43,6 +32,9 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
   @Input()
   width = '100%';
 
+  @Input()
+  allowedCssUnits: cssUnit[];
+
   cssUnitsList = cssUnits;
 
   cssUnitFormControl: UntypedFormControl;
@@ -51,11 +43,16 @@ export class CssUnitSelectComponent implements OnInit, ControlValueAccessor {
 
   private propagateChange = null;
 
-  constructor() {}
+  constructor(private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
+    if (this.allowedCssUnits?.length) {
+      this.cssUnitsList = this.allowedCssUnits;
+    }
     this.cssUnitFormControl = new UntypedFormControl();
-    this.cssUnitFormControl.valueChanges.subscribe((value: cssUnit) => {
+    this.cssUnitFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value: cssUnit) => {
       this.updateModel(value);
     });
   }

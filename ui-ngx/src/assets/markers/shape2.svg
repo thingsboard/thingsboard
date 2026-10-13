@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <g filter="url(#shadow-filter)">
+    <path class="marker-opacity" d="M19 24.5C17.4075 27.4125 17 33 17 33C17 33 27.0858 32.1955 30.9992 27.4998C34 23.8992 31.9992 19 27.9992 19C23.9993 19 21.1929 20.4894 19 24.5Z" fill="black" fill-opacity="0.24"/>
+  </g>
+  <path d="M 17,34 C 15,29 13,24 10,20 7,16 6.01823,14.0001 6.01758,9.95494 6.01758,7.00007 7,4.90955 9,3 c 2,-1.90955 5,-3 8,-3 3,0 6,1 8,3 2,2 3.0015,4 3.0009,6.95514 C 28,14 26.9254,16.0995 24,20 c -3,4 -5,9 -7,14 z" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="m 7.86637,14.5895 c 0.56577,1.3728 1.49038,2.782 2.98363,4.773 2.592,3.4559 4.4489,7.6155 6.15,11.7912 1.7011,-4.1757 3.558,-8.3353 6.15,-11.7912 1.4554,-1.9406 2.3865,-3.352 2.9668,-4.7405 0.5684,-1.36 0.8212,-2.7509 0.8216,-4.6671 C 26.939,7.32272 26.0804,5.58305 24.2487,3.7513 22.493,1.99565 19.7891,1.0625 17,1.0625 14.2338,1.0625 11.5092,2.07329 9.73372,3.76848 7.93379,5.487 7.08011,7.30378 7.08008,9.95477 M 17.5726,32.5716 C 19.3902,28.0562 21.2859,23.6189 24,20 26.9254,16.0995 28,14 28.0009,9.95514 28.0015,7 27,5 25,3 23,1 20,0 17,0 14,0 11,1.09045 9,3 7,4.90955 6.01758,7.00007 6.01758,9.95494 6.01823,14.0001 7,16 10,20 c 2.7141,3.6189 4.6098,8.0562 6.4274,12.5716 0.1914,0.4755 0.382,0.952 0.5726,1.4284 0.1906,-0.4764 0.3812,-0.9529 0.5726,-1.4284 z M 7.86637,14.5895 C 7.3128,13.2463 7.0804,11.8807 7.08008,9.95477 Z" style="filter:url(#stroke-filter)" />
+  <path d="m 20,11 c 0,1.6568 -1.3431,3 -3,3 -1.6568,0 -3,-1.3432 -3,-3 0,-1.6569 1.3431,-3 3,-3 1.6569,0 3,1.3431 3,3 z" style="filter:url(#stroke-filter)" />
+  <defs>
+    <filter id="shadow-filter" x="12.75" y="14.75" width="23.9434" height="22.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="2.125"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_8817_262071"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_8817_262071" result="shape"/>
+      <feGaussianBlur stdDeviation="0.5" result="effect2_foregroundBlur_8817_262071"/>
+    </filter>
+    <filter
+      id="stroke-filter"
+      style="color-interpolation-filters:sRGB"
+      x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>

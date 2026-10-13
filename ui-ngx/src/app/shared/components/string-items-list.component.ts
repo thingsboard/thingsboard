@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -29,7 +15,8 @@ import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angula
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 import { Observable, of } from 'rxjs';
 import { filter, mergeMap, share, tap } from 'rxjs/operators';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { isDefined, isUndefined } from '@core/utils';
 
 export interface StringItemsOption {
   name: string;
@@ -45,7 +32,9 @@ export interface StringItemsOption {
       useExisting: forwardRef(() => StringItemsListComponent),
       multi: true
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None,
+  standalone: false
 })
 export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 
@@ -109,8 +98,18 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
+  fieldClass: string;
+
+  @Input()
   @coerceArray()
   predefinedValues: StringItemsOption[];
+
+  @Input()
+  fetchOptionsFn: (searchText?: string) => Observable<Array<StringItemsOption>>;
+
+  @Input()
+  @coerceBoolean()
+  allowUserValue = false;
 
   get itemsControl(): AbstractControl {
     return this.stringItemsForm.get('items');
@@ -120,7 +119,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     return this.stringItemsForm.get('item');
   }
 
-  onTouched = () => {};
+  private onTouched = () => {};
   private propagateChange: (value: any) => void = () => {};
   private dirty = false;
 
@@ -132,18 +131,17 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-    if (this.predefinedValues) {
+    if (this.predefinedValues || isDefined(this.fetchOptionsFn)) {
       this.filteredValues = this.itemControl.valueChanges
         .pipe(
           tap((value) => {
-            if (value && typeof value !== 'string') {
-              this.add(value);
-            } else if (value === null) {
+            if (value === null) {
               this.clear();
             }
           }),
           filter((value) => typeof value === 'string'),
-          mergeMap(name => this.fetchValues(name)),
+          tap(name => this.searchText = name),
+          mergeMap(name => this.fetchOptionsFn ? this.fetchOptionsFn(name) : this.fetchValues(name)),
           share()
         );
     }
@@ -176,7 +174,7 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
       this.itemList = [];
-      if (this.predefinedValues) {
+      if (this.predefinedValues && !this.allowUserValue) {
         value.forEach(item => {
           const findItem = this.predefinedValues.find(option => option.value === item);
           if (findItem) {
@@ -195,19 +193,17 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     this.dirty = true;
   }
 
-  addItem(event: MatChipInputEvent): void {
-    const item = event.value?.trim() ?? '';
-    if (item) {
-      if (this.predefinedValues) {
-        const findItems = this.predefinedValues
-          .filter(value => value.name.toLowerCase().includes(item.toLowerCase()));
-        if (findItems.length === 1) {
-          this.add(findItems[0]);
-        }
-      } else {
-        this.add({value: item, name: item});
-      }
+  onOptionSelected(event: MatAutocompleteSelectedEvent): void {
+    if (event.option.value != null) {
+      this.add(event.option.value);
+    } else {
+      this.clear();
     }
+  }
+
+  addOnEnd(event: MatChipInputEvent): void {
+    this.addItem(event.value ?? '');
+    this.onTouched();
   }
 
   removeItems(item: StringItemsOption) {
@@ -235,6 +231,27 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     return values ? values.name : undefined;
   }
 
+  private addItem(searchText: string) {
+    searchText = searchText.trim();
+    if (searchText) {
+      if (this.allowUserValue || !this.predefinedValues && isUndefined(this.fetchOptionsFn)) {
+        this.add({value: searchText, name: searchText});
+      } else if (this.predefinedValues) {
+        const findItems = this.predefinedValues
+          .filter(value => value.name.toLowerCase().includes(searchText.toLowerCase()));
+        if (findItems.length === 1) {
+          this.add(findItems[0]);
+        }
+      } else if (isDefined(this.fetchOptionsFn)) {
+        this.fetchOptionsFn(searchText).subscribe((findItems) => {
+          if (findItems.length === 1) {
+            this.add(findItems[0]);
+          }
+        })
+      }
+    }
+  }
+
   private add(item: StringItemsOption) {
     if (!this.modelValue || this.modelValue.indexOf(item.value) === -1) {
       if (!this.modelValue) {
@@ -252,7 +269,6 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     if (!this.predefinedValues?.length) {
       return of([]);
     }
-    this.searchText = searchText;
     let result = this.predefinedValues;
     if (searchText && searchText.length) {
       result = this.predefinedValues.filter(option => option.name.toLowerCase().includes(searchText.toLowerCase()));
@@ -264,6 +280,8 @@ export class StringItemsListComponent implements ControlValueAccessor, OnInit {
     this.stringItemInput.nativeElement.value = value;
     this.itemControl.patchValue(value, {emitEvent: true});
     setTimeout(() => {
+      this.stringItemInput.nativeElement.value = value;
+      this.itemControl.patchValue(null, {emitEvent: false});
       this.stringItemInput.nativeElement.blur();
       this.stringItemInput.nativeElement.focus();
     }, 0);

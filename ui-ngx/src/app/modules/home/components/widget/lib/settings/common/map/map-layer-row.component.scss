@@ -1,0 +1,26 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../../../../../../../../scss/constants';
+
+.tb-form-table-row.tb-map-layer-row {
+
+  .tb-label-field {
+    flex: 1 1 33.33%;
+  }
+
+  .tb-provider-field {
+    flex: 1 1 33.33%;
+  }
+
+  .tb-layer-field {
+    flex: 1 1 33.33%;
+    @media #{$mat-xs} {
+      display: none;
+    }
+  }
+
+  .tb-remove-button {
+    width: 40px;
+    min-width: 40px;
+  }
+}

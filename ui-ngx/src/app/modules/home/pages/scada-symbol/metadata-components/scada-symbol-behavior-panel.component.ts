@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
@@ -32,12 +18,14 @@ import { mergeDeep } from '@core/utils';
 import { WidgetAction, widgetType } from '@shared/models/widget.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-scada-symbol-behavior-panel',
-  templateUrl: './scada-symbol-behavior-panel.component.html',
-  styleUrls: ['./scada-symbol-behavior-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-behavior-panel',
+    templateUrl: './scada-symbol-behavior-panel.component.html',
+    styleUrls: ['./scada-symbol-behavior-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolBehaviorPanelComponent implements OnInit {
 
@@ -84,7 +72,8 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
   behaviorFormGroup: UntypedFormGroup;
 
   constructor(private fb: UntypedFormBuilder,
-              private widgetService: WidgetService) {
+              private widgetService: WidgetService,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -109,7 +98,10 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
       this.behaviorFormGroup.disable({emitEvent: false});
     } else {
       merge(this.behaviorFormGroup.get('type').valueChanges,
-        this.behaviorFormGroup.get('valueType').valueChanges).subscribe(() => {
+        this.behaviorFormGroup.get('valueType').valueChanges
+      ).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators();
       });
       this.updateValidators();

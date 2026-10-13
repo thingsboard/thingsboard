@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 @import "../../../scss/constants";
 
 $previewSize: 100px !default;
@@ -28,6 +15,37 @@ $previewSize: 100px !default;
     label.tb-title {
       display: flex;
       padding-bottom: 0;
+    }
+    &.tb-button {
+      padding: 0;
+      gap: 0;
+      .tb-title {
+        display: none;
+      }
+      .tb-file-select-container {
+        width: auto;
+        height: auto;
+        .tb-file-clear-container {
+          display: none;
+        }
+        .tb-flow-drop {
+          height: auto;
+          border: none;
+          border-radius: 0;
+          .upload-label {
+            padding: 0;
+            .drop-label-icon {
+              display: none;
+            }
+            .drop-label-text {
+              display: none;
+            }
+          }
+        }
+      }
+      .tb-file-info-container {
+        display: none;
+      }
     }
   }
 
@@ -100,24 +118,22 @@ $previewSize: 100px !default;
   .tb-file-name {
     color: rgba(0, 0, 0, 0.54);
     font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .tb-file-hint {
     color: rgba(0, 0, 0, 0.38);
     font-weight: 400;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 
 :host ::ng-deep {
   button.mat-mdc-button.mat-mdc-button-base.browse-file {
-    padding: 0;
-    min-width: 0;
-    height: 24px;
-    font-size: 16px;
+    &:not(.tb-ignore-browse-file-button-style) {
+      padding: 0;
+      min-width: 0;
+      height: 24px;
+      font-size: 16px;
+    }
     label {
       display: block;
       cursor: pointer;

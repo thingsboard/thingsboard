@@ -1,31 +1,21 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
+  EventEmitter,
   forwardRef,
   HostBinding,
   Injector,
   Input,
   OnChanges,
   OnInit,
+  Output,
   SimpleChanges,
   StaticProvider,
+  ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -63,21 +53,25 @@ import {
 } from '@shared/models/widget-settings.models';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { fromEvent } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // @dynamic
 @Component({
-  selector: 'tb-timewindow',
-  templateUrl: './timewindow.component.html',
-  styleUrls: ['./timewindow.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimewindowComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-timewindow',
+    templateUrl: './timewindow.component.html',
+    styleUrls: ['./timewindow.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimewindowComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChanges {
+
+  @ViewChild('panelContainer', { read: ViewContainerRef, static: true }) panelContainer: ViewContainerRef;
 
   historyOnlyValue = false;
 
@@ -180,6 +174,17 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
   @coerceBoolean()
   disabled: boolean;
 
+  @Input()
+  @coerceBoolean()
+  panelMode = true;
+
+  @Input()
+  @coerceBoolean()
+  showSaveAsDefault = false;
+
+  @Output()
+  saveAsDefault = new EventEmitter<Timewindow>();
+
   innerValue: Timewindow;
 
   timewindowDisabled: boolean;
@@ -197,7 +202,8 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
               private datePipe: DatePipe,
               private cd: ChangeDetectorRef,
               private nativeElement: ElementRef,
-              public viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -220,14 +226,14 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.disablePanel) {
+    if (this.disablePanel || this.timewindowDisabled) {
       return;
     }
     const config = new OverlayConfig({
       panelClass: 'tb-timewindow-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
-      maxHeight: '80vh',
+      maxHeight: '70vh',
       height: 'min-content'
     });
 
@@ -249,7 +255,9 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
           quickIntervalOnly: this.quickIntervalOnly,
           aggregation: this.aggregation,
           timezone: this.timezone,
-          isEdit: this.isEdit
+          isEdit: this.isEdit,
+          panelMode: this.panelMode,
+          showSaveAsDefault: this.showSaveAsDefault,
         } as TimewindowPanelData
       },
       {
@@ -269,7 +277,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
         this.innerValue = componentRef.instance.result;
         this.timewindowDisabled = this.isTimewindowDisabled();
         this.updateDisplayValue();
-        this.notifyChanged();
+        this.notifyChanged(this.showSaveAsDefault && componentRef.instance.saveTimewindow);
       }
     });
     this.cd.detectChanges();
@@ -288,7 +296,8 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   private onHistoryOnlyChanged(): boolean {
     if (this.historyOnlyValue && this.innerValue && this.innerValue.selectedTab !== TimewindowType.HISTORY) {
-      this.innerValue.selectedTab = TimewindowType.HISTORY;
+      this.innerValue = initModelFromDefaultTimewindow(this.innerValue, this.quickIntervalOnly, this.historyOnly,
+        this.timeService, this.aggregation);
       this.updateDisplayValue();
       return true;
     }
@@ -308,7 +317,8 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   writeValue(obj: Timewindow): void {
-    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.historyOnly, this.timeService);
+    this.innerValue = initModelFromDefaultTimewindow(obj, this.quickIntervalOnly, this.historyOnly, this.timeService,
+      this.aggregation);
     this.timewindowDisabled = this.isTimewindowDisabled();
     if (this.onHistoryOnlyChanged()) {
       setTimeout(() => {
@@ -317,10 +327,16 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
     } else {
       this.updateDisplayValue();
     }
+    if (!this.panelMode) {
+      this.createPanel();
+    }
   }
 
-  notifyChanged() {
+  notifyChanged(notifySaveAsDefault = false) {
     this.propagateChange(cloneSelectedTimewindow(this.innerValue));
+    if (notifySaveAsDefault) {
+      this.saveAsDefault.emit(this.innerValue);
+    }
   }
 
   displayValue(): string {
@@ -328,6 +344,9 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   updateDisplayValue() {
+    if (!this.panelMode) {
+      return
+    }
     if (this.innerValue.selectedTab === TimewindowType.REALTIME && !this.historyOnly) {
       this.innerValue.displayValue = this.displayTypePrefix ? (this.translate.instant('timewindow.realtime') + ' - ') : '';
       if (this.innerValue.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
@@ -363,8 +382,40 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   private isTimewindowDisabled(): boolean {
     return this.disabled ||
-      (!this.isEdit && (!this.innerValue || this.innerValue.hideInterval &&
-        (!this.aggregation || this.innerValue.hideAggregation && this.innerValue.hideAggInterval)));
+      (!this.isEdit && (!this.innerValue || (
+        ((this.innerValue.realtime?.hideInterval && this.innerValue.history?.hideInterval) ||
+          (this.innerValue.realtime?.hideLastInterval && this.innerValue.realtime?.hideQuickInterval &&
+            this.innerValue.history?.hideLastInterval && this.innerValue.history?.hideFixedInterval &&
+            this.innerValue.history?.hideQuickInterval)) &&
+        (!this.aggregation || this.innerValue.hideAggregation && this.innerValue.hideAggInterval) &&
+        (!this.timezone || this.innerValue.hideTimezone)
+      )));
   }
 
+  private createPanel() {
+    this.panelContainer.clear();
+    const panelData = {
+      timewindow: deepClone(this.innerValue),
+      historyOnly: this.historyOnly,
+      forAllTimeEnabled: this.forAllTimeEnabled,
+      quickIntervalOnly: this.quickIntervalOnly,
+      aggregation: this.aggregation,
+      timezone: this.timezone,
+      isEdit: this.isEdit,
+      panelMode: this.panelMode,
+      showSaveAsDefault: this.showSaveAsDefault,
+    }
+    const injector = Injector.create({
+      providers: [{ provide: TIMEWINDOW_PANEL_DATA, useValue: panelData }],
+      parent: this.viewContainerRef.injector
+    });
+    const componentRef = this.panelContainer.createComponent(TimewindowPanelComponent, {index: 0, injector});
+    componentRef.instance.changeTimewindow.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => {
+      this.innerValue = value;
+      this.timewindowDisabled = this.isTimewindowDisabled();
+      this.notifyChanged(this.showSaveAsDefault && componentRef.instance.saveTimewindow);
+    })
+  }
 }

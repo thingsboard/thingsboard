@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.notification;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,18 +33,23 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeC
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig.EdgeConnectivityEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.IntegrationLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.ResourcesShortageNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.TaskProcessingFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -101,7 +94,142 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit")
                     .build())
             .build();
-
+    public static final DefaultNotification entitiesLimitIncreaseRequest = DefaultNotification.builder()
+            .name("Entities limit increase request")
+            .type(NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST)
+            .subject("${entityType} limit increase request")
+            .text("${userEmail} has reached the maximum number of ${entityType:lowerCase}s allowed and is requesting an increase to the ${entityType:lowerCase} limit.")
+            .button("${increaseLimitActionLabel}").link("${increaseLimitLink}")
+            .emailTemplate(DefaultEmailTemplate.builder()
+                    .subject("${entityType} limit increase request")
+                    .body("""
+                            <table style="box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;" cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; margin: 0px; padding: 40px;" align="center" valign="middle">
+                            <table style="box-sizing: border-box; border: 1px solid #E0E0E0; border-radius: 3px; margin: 0px; background-color: #ffffff; max-width: 600px !important;" cellspacing="0" cellpadding="0">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; border-bottom: 1px solid #E0E0E0; margin: 0px; padding: 20px; color: #212121; font-family: Arial; font-size: 20px; line-height: 20px; font-style: normal; font-weight: bold;" valign="middle">${entityType} limit increase request</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">${userEmail} has reached the maximum number of ${entityType:lowerCase}s allowed and is requesting an increase to the ${entityType:lowerCase} limit.</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 0 24px 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">
+                            <a style="display: inline-block; padding: 10px 16px; border-radius: 4px; background: #106CC8; color: #fff; font-family: Arial; font-size: 14px; line-height: 20px; font-weight: bold; text-decoration: none;" href="${baseUrl}${increaseLimitLink}">${increaseLimitActionLabel}</a>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>""")
+                    .build())
+            .build();
+    public static final DefaultNotification addonAccessRequest = DefaultNotification.builder()
+            .name("Add-on access request")
+            .type(NotificationType.ADDON_ACCESS_REQUEST)
+            .subject("${addon} access request")
+            .text("${userEmail} is requesting access to the ${addon}.")
+            .button("${enableAddonActionLabel}").link("${enableAddonLink}")
+            .emailTemplate(DefaultEmailTemplate.builder()
+                    .subject("${addon} access request")
+                    .body("""
+                            <table style="box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;" cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; margin: 0px; padding: 40px;" align="center" valign="middle">
+                            <table style="box-sizing: border-box; border: 1px solid #E0E0E0; border-radius: 3px; margin: 0px; background-color: #ffffff; max-width: 600px !important;" cellspacing="0" cellpadding="0">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; border-bottom: 1px solid #E0E0E0; margin: 0px; padding: 20px; color: #212121; font-family: Arial; font-size: 20px; line-height: 20px; font-style: normal; font-weight: bold;" valign="middle">${addon} access request</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">${userEmail} is requesting access to the ${addon}.</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 0 24px 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">
+                            <a style="display: inline-block; padding: 10px 16px; border-radius: 4px; background: #106CC8; color: #fff; font-family: Arial; font-size: 14px; line-height: 20px; font-weight: bold; text-decoration: none;" href="${baseUrl}${enableAddonLink}">${enableAddonActionLabel}</a>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>""")
+                    .build())
+            .build();
+    public static final DefaultNotification addonAccessError = DefaultNotification.builder()
+            .name("Add-on access error")
+            .type(NotificationType.ADDON_ACCESS_ERROR)
+            .subject("${addon} access error")
+            .text("${userEmail} was unable to access ${addon}.")
+            .button("${checkConfigurationActionLabel}").link("${checkConfigurationLink}")
+            .emailTemplate(DefaultEmailTemplate.builder()
+                    .subject("${addon} access error")
+                    .body("""
+                            <table style="box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;" cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; margin: 0px; padding: 40px;" align="center" valign="middle">
+                            <table style="box-sizing: border-box; border: 1px solid #E0E0E0; border-radius: 3px; margin: 0px; background-color: #ffffff; max-width: 600px !important;" cellspacing="0" cellpadding="0">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; border-bottom: 1px solid #E0E0E0; margin: 0px; padding: 20px; color: #212121; font-family: Arial; font-size: 20px; line-height: 20px; font-style: normal; font-weight: bold;" valign="middle">${addon} access error</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">${userEmail} was unable to access ${addon}.</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 0 24px 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">
+                            <a style="display: inline-block; padding: 10px 16px; border-radius: 4px; background: #106CC8; color: #fff; font-family: Arial; font-size: 14px; line-height: 20px; font-weight: bold; text-decoration: none;" href="${baseUrl}${checkConfigurationLink}">${checkConfigurationActionLabel}</a>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>""")
+                    .build())
+            .build();
+    public static final DefaultNotification planUpgradeRequest = DefaultNotification.builder()
+            .name("Plan upgrade request")
+            .type(NotificationType.PLAN_UPGRADE_REQUEST)
+            .subject("Plan upgrade request")
+            .text("${userEmail} is unable to install a new Solution due to subscription plan restrictions and is requesting upgrade to ${planName} plan.")
+            .button("Upgrade plan").link("${upgradePlanLink}")
+            .emailTemplate(DefaultEmailTemplate.builder()
+                    .subject("Plan upgrade request")
+                    .body("""
+                            <table style="box-sizing: border-box; border-radius: 3px; width: 100%; background-color: #f6f6f6; margin: 0px auto;" cellspacing="0" cellpadding="0" bgcolor="#f6f6f6">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; margin: 0px; padding: 40px;" align="center" valign="middle">
+                            <table style="box-sizing: border-box; border: 1px solid #E0E0E0; border-radius: 3px; margin: 0px; background-color: #ffffff; max-width: 600px !important;" cellspacing="0" cellpadding="0">
+                            <tbody>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: middle; border-bottom: 1px solid #E0E0E0; margin: 0px; padding: 20px; color: #212121; font-family: Arial; font-size: 20px; line-height: 20px; font-style: normal; font-weight: bold;" valign="middle">Plan upgrade request</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">${userEmail} is unable to install a new Solution due to subscription plan restrictions and is requesting upgrade to ${planName} plan.</td>
+                            </tr>
+                            <tr style="box-sizing: border-box; margin: 0px;">
+                            <td style="box-sizing: border-box; vertical-align: top; margin: 0px; padding: 0 24px 16px 24px; color: #212121; font-family: Arial; font-size: 16px; line-height: 24px; font-weight: 400;" valign="top">
+                            <a style="display: inline-block; padding: 10px 16px; border-radius: 4px; background: #106CC8; color: #fff; font-family: Arial; font-size: 14px; line-height: 20px; font-weight: bold; text-decoration: none;" href="${baseUrl}${upgradePlanLink}">Upgrade plan</a>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>
+                            </td>
+                            </tr>
+                            </tbody>
+                            </table>""")
+                    .build())
+            .build();
     public static final DefaultNotification apiFeatureWarningForSysadmin = DefaultNotification.builder()
             .name("API feature warning notification for sysadmin")
             .type(NotificationType.API_USAGE_LIMIT)
@@ -329,13 +457,28 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when any Rule chain or Rule node failed to start, update or stop")
                     .build())
             .build();
+    public static final DefaultNotification integrationStartFailure = DefaultNotification.builder()
+            .name("Integration start failure notification")
+            .type(NotificationType.INTEGRATION_LIFECYCLE_EVENT)
+            .subject("${integrationType} integration start failure")
+            .text("Integration '${integrationName}' failed to start:<br/>${error}")
+            .button("Go to integration").link("/integrations/${integrationId}")
+            .rule(DefaultRule.builder()
+                    .name("Integration start failure")
+                    .triggerConfig(IntegrationLifecycleEventNotificationRuleTriggerConfig.builder()
+                            .notifyOn(Set.of(ComponentLifecycleEvent.STARTED))
+                            .onlyOnError(true)
+                            .build())
+                    .description("Send notification to tenant admins when any integration fails to start")
+                    .build())
+            .build();
     public static final DefaultNotification edgeConnection = DefaultNotification.builder()
             .name("Edge connection notification")
             .type(NotificationType.EDGE_CONNECTION)
             .subject("Edge connection status change")
             .text("Edge '${edgeName}' is now ${eventType}")
             .icon("info").color(null)
-            .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")
+            .button("Go to Edge").link("/edgeManagement/edges/all/${edgeId}")
             .rule(DefaultRule.builder()
                     .name("Edge connection status change")
                     .triggerConfig(EdgeConnectionNotificationRuleTriggerConfig.builder()
@@ -351,7 +494,7 @@ public class DefaultNotifications {
             .subject("Edge '${edgeName}' communication failure occurred")
             .text("Failure message: '${failureMsg}'")
             .icon("error").color(RED_COLOR)
-            .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")
+            .button("Go to Edge").link("/edgeManagement/edges/all/${edgeId}")
             .rule(DefaultRule.builder()
                     .name("Edge communication failure")
                     .triggerConfig(EdgeCommunicationFailureNotificationRuleTriggerConfig.builder().edges(null).build())
@@ -370,6 +513,29 @@ public class DefaultNotifications {
                     .triggerConfig(TaskProcessingFailureNotificationRuleTriggerConfig.builder().build())
                     .description("Send notification to system admins when task processing fails")
                     .build())
+            .build();
+
+    public static final DefaultNotification resourcesShortage = DefaultNotification.builder()
+            .name("Resources shortage notification")
+            .type(NotificationType.RESOURCES_SHORTAGE)
+            .subject("Warning: ${resource} shortage for ${serviceId}")
+            .text("${resource} usage is at ${usage}%.")
+            .icon("warning")
+            .rule(DefaultRule.builder()
+                    .name("Resources shortage")
+                    .triggerConfig(ResourcesShortageNotificationRuleTriggerConfig.builder().cpuThreshold(0.8f).storageThreshold(0.8f).ramThreshold(0.8f).build())
+                    .description("Send notification to system admins on resource shortage")
+                    .build())
+            .color(RED_COLOR)
+            .build();
+
+    public static final DefaultNotification reportGenerated = DefaultNotification.builder()
+            .name("Report generated notification")
+            .type(NotificationType.REPORT_GENERATED)
+            .subject("Report generated")
+            .text("${reportFormat} report '${reportName}' is ready")
+            .icon("description").color(null)
+            .button("Go to reports").link("/reporting/reports")
             .build();
 
     private final NotificationTemplateService templateService;
@@ -399,6 +565,8 @@ public class DefaultNotifications {
         private final String color;
         private final String button;
         private final String link;
+
+        private final DefaultEmailTemplate emailTemplate;
 
         private final DefaultRule rule;
 
@@ -433,9 +601,17 @@ public class DefaultNotifications {
             }
             webTemplate.setAdditionalConfig(additionalConfig);
             webTemplate.setEnabled(true);
-            templateConfig.setDeliveryMethodsTemplates(Map.of(
-                    NotificationDeliveryMethod.WEB, webTemplate
-            ));
+
+            Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> deliveryMethodsTemplates = new HashMap<>();
+            deliveryMethodsTemplates.put(NotificationDeliveryMethod.WEB, webTemplate);
+            if (this.emailTemplate != null) {
+                EmailDeliveryMethodNotificationTemplate emailTemplate = new EmailDeliveryMethodNotificationTemplate();
+                emailTemplate.setSubject(this.emailTemplate.getSubject());
+                emailTemplate.setBody(this.emailTemplate.getBody());
+                emailTemplate.setEnabled(true);
+                deliveryMethodsTemplates.put(NotificationDeliveryMethod.EMAIL, emailTemplate);
+            }
+            templateConfig.setDeliveryMethodsTemplates(deliveryMethodsTemplates);
             template.setConfiguration(templateConfig);
             return template;
         }
@@ -450,12 +626,10 @@ public class DefaultNotifications {
             rule.setTriggerConfig(defaultRule.getTriggerConfig());
             if (rule.getTriggerType() == NotificationRuleTriggerType.ALARM) {
                 EscalatedNotificationRuleRecipientsConfig recipientsConfig = new EscalatedNotificationRuleRecipientsConfig();
-                recipientsConfig.setTriggerType(rule.getTriggerType());
                 recipientsConfig.setEscalationTable(Map.of(0, toUUIDs(List.of(targets))));
                 rule.setRecipientsConfig(recipientsConfig);
             } else {
-                DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
-                recipientsConfig.setTriggerType(rule.getTriggerType());
+                DefaultNotificationRuleRecipientsConfig recipientsConfig = DefaultNotificationRuleRecipientsConfig.forTriggerType(rule.getTriggerType());
                 recipientsConfig.setTargets(toUUIDs(List.of(targets)));
                 rule.setRecipientsConfig(recipientsConfig);
             }
@@ -469,11 +643,20 @@ public class DefaultNotifications {
 
     @Data
     @Builder(toBuilder = true)
+    public static class DefaultEmailTemplate {
+        private final String subject;
+        private final String body;
+
+    }
+
+    @Data
+    @Builder(toBuilder = true)
     public static class DefaultRule {
         private final String name;
         private final Boolean enabled;
         private final NotificationRuleTriggerConfig triggerConfig;
         private final String description;
+
     }
 
 }

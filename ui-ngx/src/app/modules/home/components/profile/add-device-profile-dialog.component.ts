@@ -1,29 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import {
-  AfterViewInit,
-  Component,
-  ComponentFactoryResolver,
-  Inject,
-  Injector,
-  SkipSelf,
-  ViewChild
-} from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -55,6 +32,7 @@ import { Observable } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { map } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface AddDeviceProfileDialogData {
   deviceProfileName: string;
@@ -62,13 +40,14 @@ export interface AddDeviceProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-add-device-profile-dialog',
-  templateUrl: './add-device-profile-dialog.component.html',
-  providers: [],
-  styleUrls: ['./add-device-profile-dialog.component.scss']
+    selector: 'tb-add-device-profile-dialog',
+    templateUrl: './add-device-profile-dialog.component.html',
+    providers: [],
+    styleUrls: ['./add-device-profile-dialog.component.scss'],
+    standalone: false
 })
 export class AddDeviceProfileDialogComponent extends
-  DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> implements AfterViewInit {
+  DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> {
 
   @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
@@ -93,8 +72,6 @@ export class AddDeviceProfileDialogComponent extends
 
   transportConfigFormGroup: UntypedFormGroup;
 
-  alarmRulesFormGroup: UntypedFormGroup;
-
   provisionConfigFormGroup: UntypedFormGroup;
 
   serviceType = ServiceType.TB_RULE_ENGINE;
@@ -105,10 +82,7 @@ export class AddDeviceProfileDialogComponent extends
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddDeviceProfileDialogData,
               public dialogRef: MatDialogRef<AddDeviceProfileDialogComponent, DeviceProfile>,
-              private componentFactoryResolver: ComponentFactoryResolver,
-              private injector: Injector,
               private breakpointObserver: BreakpointObserver,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private deviceProfileService: DeviceProfileService,
               private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
@@ -137,15 +111,11 @@ export class AddDeviceProfileDialogComponent extends
           [Validators.required]]
       }
     );
-    this.transportConfigFormGroup.get('transportType').valueChanges.subscribe(() => {
+    this.transportConfigFormGroup.get('transportType').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => {
       this.deviceProfileTransportTypeChanged();
     });
-
-    this.alarmRulesFormGroup = this.fb.group(
-      {
-        alarms: [null]
-      }
-    );
 
     this.provisionConfigFormGroup = this.fb.group(
       {
@@ -160,9 +130,6 @@ export class AddDeviceProfileDialogComponent extends
     const deviceTransportType: DeviceTransportType = this.transportConfigFormGroup.get('transportType').value;
     this.transportConfigFormGroup.patchValue(
       {transportConfiguration: createDeviceProfileTransportConfiguration(deviceTransportType)});
-  }
-
-  ngAfterViewInit(): void {
   }
 
   cancel(): void {
@@ -188,8 +155,6 @@ export class AddDeviceProfileDialogComponent extends
       case 1:
         return this.transportConfigFormGroup;
       case 2:
-        return this.alarmRulesFormGroup;
-      case 3:
         return this.provisionConfigFormGroup;
     }
   }
@@ -211,7 +176,6 @@ export class AddDeviceProfileDialogComponent extends
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
           transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-          alarms: this.alarmRulesFormGroup.get('alarms').value,
           provisionConfiguration: deviceProvisionConfiguration
         }
       };
@@ -239,8 +203,6 @@ export class AddDeviceProfileDialogComponent extends
       case 1:
         return 'device-profile.transport-configuration';
       case 2:
-        return 'device-profile.alarm-rules';
-      case 3:
         return 'device-profile.device-provisioning';
     }
   }

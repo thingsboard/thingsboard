@@ -1,25 +1,16 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetTypeDetailsEntity;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
@@ -69,12 +60,6 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     WidgetTypeDetailsEntity findByTenantIdAndFqn(UUID tenantId, String fqn);
 
-    @Query(value = "SELECT * FROM widget_type wt " +
-            "WHERE wt.tenant_id = :tenantId AND cast(wt.descriptor as json) ->> 'resources' LIKE LOWER(CONCAT('%', :resourceId, '%'))",
-            nativeQuery = true)
-    List<WidgetTypeDetailsEntity> findWidgetTypesInfosByTenantIdAndResourceId(@Param("tenantId") UUID tenantId,
-                                                                              @Param("resourceId") UUID resourceId);
-
     @Query("SELECT externalId FROM WidgetTypeDetailsEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
@@ -84,4 +69,10 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     @Query("SELECT w.id FROM WidgetTypeDetailsEntity w WHERE w.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields(w.id, w.createdTime, w.tenantId," +
+            "w.name, w.version) FROM WidgetTypeEntity w WHERE w.id > :id ORDER BY w.id")
+    List<WidgetTypeFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    @Query(value = "SELECT new org.thingsboard.server.common.data.util.TbPair(i.type, count(i)) FROM RuleNodeEntity i GROUP BY i.type")
+    List<TbPair<String, Long>> countRuleNodesPerType();
 }

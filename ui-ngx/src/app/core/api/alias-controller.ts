@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import {
@@ -61,6 +47,9 @@ export class AliasController implements IAliasController {
   resolvedAliases: { [aliasId: string]: AliasInfo } = {};
   resolvedAliasesObservable: { [aliasId: string]: Observable<AliasInfo> } = {};
 
+  resolvedDevices: { [deviceId: string]: EntityInfo } = {};
+  resolvedDevicesObservable: { [deviceId: string]: Observable<EntityInfo> } = {};
+
   resolvedAliasesToStateEntities: { [aliasId: string]: StateEntityInfo } = {};
 
   constructor(private utils: UtilsService,
@@ -68,10 +57,11 @@ export class AliasController implements IAliasController {
               private translate: TranslateService,
               private stateControllerHolder: StateControllerHolder,
               private origEntityAliases: EntityAliases,
-              private origFilters: Filters) {
+              private origFilters: Filters,
+              private origUserFilters?: Filters) {
     this.entityAliases = deepClone(this.origEntityAliases) || {};
     this.filters = deepClone(this.origFilters) || {};
-    this.userFilters = {};
+    this.userFilters = deepClone(this.origUserFilters) || {};
   }
 
   updateEntityAliases(newEntityAliases: EntityAliases) {
@@ -166,6 +156,10 @@ export class AliasController implements IAliasController {
     return this.filters;
   }
 
+  getUserFilters(): Filters {
+    return this.userFilters;
+  }
+
   getFilterInfo(filterId: string): FilterInfo {
     if (this.userFilters[filterId]) {
       return this.userFilters[filterId];
@@ -256,9 +250,35 @@ export class AliasController implements IAliasController {
   }
 
   resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo> {
-    const entityFilter = singleEntityFilterFromDeviceId(deviceId);
-    return this.entityService.findSingleEntityInfoByEntityFilter(entityFilter,
-      {ignoreLoading: true, ignoreErrors: true});
+    let entityInfo = this.resolvedDevices[deviceId];
+    if (entityInfo) {
+      return of(entityInfo);
+    } else if (this.resolvedDevicesObservable[deviceId]) {
+      return this.resolvedDevicesObservable[deviceId];
+    } else {
+      const resolvedDeviceSubject = new ReplaySubject<EntityInfo>();
+      this.resolvedDevicesObservable[deviceId] = resolvedDeviceSubject.asObservable();
+      const entityFilter = singleEntityFilterFromDeviceId(deviceId);
+      this.entityService.findSingleEntityInfoByEntityFilter(entityFilter,
+        {ignoreLoading: true, ignoreErrors: true}).subscribe(
+        (resolvedEntityInfo) => {
+          this.resolvedDevices[deviceId] = resolvedEntityInfo;
+          delete this.resolvedDevicesObservable[deviceId];
+          resolvedDeviceSubject.next(resolvedEntityInfo);
+          resolvedDeviceSubject.complete();
+        },
+        () => {
+          resolvedDeviceSubject.error(null);
+          delete this.resolvedDevicesObservable[deviceId];
+        }
+      );
+      entityInfo = this.resolvedDevices[deviceId];
+      if (entityInfo) {
+        return of(entityInfo);
+      } else {
+        return this.resolvedDevicesObservable[deviceId];
+      }
+    }
   }
 
   resolveSingleEntityInfoForTargetDevice(targetDevice: TargetDevice): Observable<EntityInfo> {
@@ -280,7 +300,15 @@ export class AliasController implements IAliasController {
       || newDatasource.type === DatasourceType.entityCount
       || newDatasource.type === DatasourceType.alarmCount) {
       if (newDatasource.filterId) {
-        newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
+        const filterInfo = this.getFilterInfo(newDatasource.filterId);
+        if (filterInfo) {
+          newDatasource.keyFilters = filterInfoToKeyFilters(filterInfo);
+          if (filterInfo.keyFiltersOperation) {
+            newDatasource.keyFiltersOperation = filterInfo.keyFiltersOperation;
+          }
+        } else {
+          newDatasource.keyFilters = [];
+        }
       }
       if (newDatasource.type === DatasourceType.alarmCount) {
         newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig, false);

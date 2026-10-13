@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
@@ -25,10 +12,26 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from '@shared/models/entity-type.models';
+import {
+  CompiledTbFunction,
+  compileTbFunction,
+  isNotEmptyTbFunction,
+  TbFunction
+} from '@shared/models/js-function.models';
+import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
+import { catchError, map, share } from 'rxjs/operators';
+import type { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
 type ColumnSelectionOptions = 'enabled' | 'disabled';
+
+export enum columnExportOptions {
+  always = 'always',
+  onlyVisible = 'onlyVisible',
+  never = 'never'
+}
 
 export interface TableWidgetSettings {
   enableSearch: boolean;
@@ -38,8 +41,10 @@ export interface TableWidgetSettings {
   enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
+  pageStepIncrement: number;
+  pageStepCount: number;
   useRowStyleFunction: boolean;
-  rowStyleFunction?: string;
+  rowStyleFunction?: TbFunction;
   reserveSpaceForHiddenAction?: boolean;
 }
 
@@ -47,25 +52,28 @@ export interface TableWidgetDataKeySettings {
   customTitle?: string;
   columnWidth?: string;
   useCellStyleFunction: boolean;
-  cellStyleFunction?: string;
+  cellStyleFunction?: TbFunction;
   useCellContentFunction: boolean;
-  cellContentFunction?: string;
+  useCellContentFunctionOnExport: boolean;
+  cellContentFunction?: TbFunction;
   defaultColumnVisibility?: ColumnVisibilityOptions;
   columnSelectionToDisplay?: ColumnSelectionOptions;
+  columnExportOption?: columnExportOptions;
+  disableSorting?: boolean;
 }
 
 export type ShowCellButtonActionFunction = (ctx: WidgetContext, data: EntityData | AlarmDataInfo | FormattedData) => boolean;
 
 export interface TableCellButtonActionDescriptor extends  WidgetActionDescriptor {
   useShowActionCellButtonFunction: boolean;
-  showActionCellButtonFunction: ShowCellButtonActionFunction;
+  showActionCellButtonFunction: CompiledTbFunction<ShowCellButtonActionFunction>;
 }
 
 export interface EntityData {
   id: EntityId;
   entityName: string;
   entityLabel?: string;
-  entityType?: string;
+  entityType?: EntityType;
   actionCellButtons?: TableCellButtonActionDescriptor[];
   hasActions?: boolean;
   [key: string]: any;
@@ -83,29 +91,34 @@ export interface DisplayColumn {
   def: string;
   display: boolean;
   selectable: boolean;
+  includeToExport?: columnExportOptions;
 }
 
 export type CellContentFunction = (...args: any[]) => string;
 
-export interface CellContentInfo {
+export interface CellContentFunctionInfo {
   useCellContentFunction: boolean;
-  cellContentFunction?: CellContentFunction;
-  units?: string;
-  decimals?: number;
+  useCellContentFunctionOnExport?: boolean;
+  cellContentFunction?: CompiledTbFunction<CellContentFunction>;
+}
+
+export interface CellContentInfo {
+  contentFunction: Observable<CellContentFunctionInfo>;
+  valueFormat: ValueFormatProcessor
 }
 
 export type CellStyleFunction = (...args: any[]) => any;
 
 export interface CellStyleInfo {
   useCellStyleFunction: boolean;
-  cellStyleFunction?: CellStyleFunction;
+  cellStyleFunction?: CompiledTbFunction<CellStyleFunction>;
 }
 
 export type RowStyleFunction = (...args: any[]) => any;
 
 export interface RowStyleInfo {
   useRowStyleFunction: boolean;
-  rowStyleFunction?: RowStyleFunction;
+  rowStyleFunction?: CompiledTbFunction<RowStyleFunction>;
 }
 
 
@@ -132,7 +145,7 @@ export function entityDataSortOrderFromString(strSortOrder: string, columns: Ent
   if (!column) {
     column = findColumnByName(property, columns);
   }
-  if (column && column.entityKey) {
+  if (column && column.entityKey && column.sortable) {
     return {key: column.entityKey, direction};
   }
   return null;
@@ -228,67 +241,118 @@ export function getAlarmValue(alarm: AlarmDataInfo, key: EntityColumn) {
   }
 }
 
-export function getRowStyleInfo(settings: TableWidgetSettings, ...args: string[]): RowStyleInfo {
-  let rowStyleFunction: RowStyleFunction = null;
-  let useRowStyleFunction = false;
-
-  if (settings.useRowStyleFunction === true) {
-    if (isDefined(settings.rowStyleFunction) && settings.rowStyleFunction.length > 0) {
-      try {
-        rowStyleFunction = new Function(...args, settings.rowStyleFunction) as RowStyleFunction;
-        useRowStyleFunction = true;
-      } catch (e) {
-        rowStyleFunction = null;
-        useRowStyleFunction = false;
-      }
-    }
+export function getRowStyleInfo(widgetContext: WidgetContext, settings: TableWidgetSettings, ...args: string[]): Observable<RowStyleInfo> {
+  let rowStyleInfo$: Observable<RowStyleInfo>;
+  if (settings.useRowStyleFunction === true && isNotEmptyTbFunction(settings.rowStyleFunction)) {
+    rowStyleInfo$ = compileTbFunction<RowStyleFunction>(widgetContext.http, settings.rowStyleFunction, ...args).pipe(
+      catchError(() => { return of(null) }),
+      map((rowStyleFunction) => {
+        if (!rowStyleFunction) {
+          return {
+            useRowStyleFunction: false,
+            rowStyleFunction: null
+          }
+        } else {
+          return {
+            useRowStyleFunction: true,
+            rowStyleFunction
+          }
+        }
+      })
+    );
+  } else {
+    rowStyleInfo$ = of({
+      useRowStyleFunction: false,
+      rowStyleFunction: null
+    });
   }
-  return {
-    useRowStyleFunction,
-    rowStyleFunction
-  };
+  return rowStyleInfo$.pipe(
+    share({
+      connector: () => new ReplaySubject(1),
+      resetOnError: false,
+      resetOnComplete: false,
+      resetOnRefCountZero: false
+    })
+  );
 }
 
-export function getCellStyleInfo(keySettings: TableWidgetDataKeySettings, ...args: string[]): CellStyleInfo {
-  let cellStyleFunction: CellStyleFunction = null;
-  let useCellStyleFunction = false;
-
-  if (keySettings.useCellStyleFunction === true) {
-    if (isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
-      try {
-        cellStyleFunction = new Function(...args, keySettings.cellStyleFunction) as CellStyleFunction;
-        useCellStyleFunction = true;
-      } catch (e) {
-        cellStyleFunction = null;
-        useCellStyleFunction = false;
+export function getCellStyleInfo(widgetContext: WidgetContext, keySettings: TableWidgetDataKeySettings, ...args: string[]): Observable<CellStyleInfo> {
+  let cellStyleInfo$: Observable<CellStyleInfo>;
+  if (keySettings.useCellStyleFunction === true && isNotEmptyTbFunction(keySettings.cellStyleFunction)) {
+    cellStyleInfo$ = compileTbFunction<CellStyleFunction>(widgetContext.http, keySettings.cellStyleFunction, ...args).pipe(
+      catchError(() => { return of(null) }),
+      map((cellStyleFunction) => {
+        if (!cellStyleFunction) {
+          return {
+            useCellStyleFunction: false,
+            cellStyleFunction: null
+          }
+        } else {
+          return {
+            useCellStyleFunction: true,
+            cellStyleFunction
+          }
+        }
+      })
+    );
+  } else {
+    cellStyleInfo$ = of(
+      {
+        useCellStyleFunction: false,
+        cellStyleFunction: null
       }
-    }
+    )
   }
-  return {
-    useCellStyleFunction,
-    cellStyleFunction
-  };
+  return cellStyleInfo$.pipe(
+    share({
+      connector: () => new ReplaySubject(1),
+      resetOnError: false,
+      resetOnComplete: false,
+      resetOnRefCountZero: false
+    })
+  );
 }
 
-export function getCellContentInfo(keySettings: TableWidgetDataKeySettings, ...args: string[]): CellContentInfo {
-  let cellContentFunction: CellContentFunction = null;
-  let useCellContentFunction = false;
-
-  if (keySettings.useCellContentFunction === true) {
-    if (isDefined(keySettings.cellContentFunction) && keySettings.cellContentFunction.length > 0) {
-      try {
-        cellContentFunction = new Function(...args, keySettings.cellContentFunction) as CellContentFunction;
-        useCellContentFunction = true;
-      } catch (e) {
-        cellContentFunction = null;
-        useCellContentFunction = false;
+export function getCellContentFunctionInfo(widgetContext: WidgetContext, keySettings: TableWidgetDataKeySettings, ...args: string[]): Observable<CellContentFunctionInfo> {
+  let cellContentFunctionInfo$: Observable<CellContentFunctionInfo>;
+  if (keySettings.useCellContentFunction === true && isNotEmptyTbFunction(keySettings.cellContentFunction)) {
+    cellContentFunctionInfo$ = compileTbFunction<CellContentFunction>(widgetContext.http, keySettings.cellContentFunction, ...args).pipe(
+      catchError(() => { return of(null) }),
+      map((cellContentFunction) => {
+        if (!cellContentFunction) {
+          return {
+            useCellContentFunction: false,
+            cellContentFunction: null,
+            useCellContentFunctionOnExport: false
+          }
+        } else {
+          const useCellContentFunctionOnExport = isDefined(keySettings.useCellContentFunctionOnExport) ?
+            keySettings.useCellContentFunctionOnExport : true;
+          return {
+            useCellContentFunction: true,
+            cellContentFunction,
+            useCellContentFunctionOnExport
+          }
+        }
+      })
+    );
+  } else {
+    cellContentFunctionInfo$ = of(
+      {
+        useCellContentFunction: false,
+        cellContentFunction: null,
+        useCellContentFunctionOnExport: false
       }
-    }
+    )
   }
-  return {
-    cellContentFunction,
-    useCellContentFunction
-  };
+  return cellContentFunctionInfo$.pipe(
+    share({
+      connector: () => new ReplaySubject(1),
+      resetOnError: false,
+      resetOnComplete: false,
+      resetOnRefCountZero: false
+    })
+  );
 }
 
 export function getColumnWidth(keySettings: TableWidgetDataKeySettings): string {
@@ -313,20 +377,26 @@ export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySe
   return !(isDefined(keySettings.columnSelectionToDisplay) && keySettings.columnSelectionToDisplay === 'disabled');
 }
 
-export function getTableCellButtonActions(widgetContext: WidgetContext): TableCellButtonActionDescriptor[] {
-  return widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
+export function getTableCellButtonActions(widgetContext: WidgetContext): Observable<TableCellButtonActionDescriptor[]> {
+  const actions$ = widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
     let useShowActionCellButtonFunction = descriptor.useShowWidgetActionFunction || false;
-    let showActionCellButtonFunction: ShowCellButtonActionFunction = null;
-    if (useShowActionCellButtonFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
-      try {
-        showActionCellButtonFunction =
-          new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowCellButtonActionFunction;
-      } catch (e) {
-        useShowActionCellButtonFunction = false;
-      }
+    let showActionCellButtonFunction$: Observable<CompiledTbFunction<ShowCellButtonActionFunction>>;
+    if (useShowActionCellButtonFunction && isNotEmptyTbFunction(descriptor.showWidgetActionFunction)) {
+      showActionCellButtonFunction$ = compileTbFunction(widgetContext.http, descriptor.showWidgetActionFunction, 'widgetContext', 'data');
+    } else {
+      showActionCellButtonFunction$ = of(null);
     }
-    return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+    return showActionCellButtonFunction$.pipe(
+      catchError(() => { return of(null) }),
+      map(showActionCellButtonFunction => {
+        if (!showActionCellButtonFunction) {
+          useShowActionCellButtonFunction = false;
+        }
+        return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+      })
+    );
   });
+  return actions$.length ? forkJoin(actions$) : of([]);
 }
 
 export function checkHasActions(cellButtonActions: TableCellButtonActionDescriptor[]): boolean {
@@ -347,7 +417,7 @@ function filterTableCellButtonAction(widgetContext: WidgetContext,
                                      action: TableCellButtonActionDescriptor, data: EntityData | AlarmDataInfo | FormattedData): boolean {
   if (action.useShowActionCellButtonFunction) {
     try {
-      return action.showActionCellButtonFunction(widgetContext, data);
+      return action.showActionCellButtonFunction.execute(widgetContext, data);
     } catch (e) {
       console.warn('Failed to execute showActionCellButtonFunction', e);
       return false;
@@ -365,7 +435,7 @@ export function noDataMessage(noDataDisplayMessage: string, defaultMessage: stri
   return translate.instant(defaultMessage);
 }
 
-export function constructTableCssString(widgetConfig: WidgetConfig): string {
+export function constructTableCssString(widgetConfig: WidgetConfig, isTabsEnabled = false): string {
   const origColor = widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
   const origBackgroundColor = widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
   const currentEntityColor = 'rgba(221, 221, 221, 0.65)';
@@ -384,106 +454,67 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDarkDisabled2 = defaultColor.setAlpha(0.38).toRgbString();
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
 
-  const cssString =
-    '.mat-mdc-input-element::placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-input-element::-moz-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-input-element::-webkit-input-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-input-element:-ms-input-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    'mat-toolbar.mat-mdc-table-toolbar {\n' +
-    'color: ' + mdDark + ';\n' +
-    '}\n' +
-    'mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) button.mat-mdc-icon-button mat-icon {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-tab .mdc-tab__text-label {\n' +
-    'color: ' + mdDark + ';\n' +
-    '}\n' +
-    '.mat-mdc-tab-header-pagination-chevron {\n' +
-    'border-color: ' + mdDark + ';\n' +
-    '}\n' +
-    '.mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {\n' +
-    'border-color: ' + mdDarkDisabled2 + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-header-row {\n' +
-    'background-color: ' + origBackgroundColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-header-cell {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell, .mat-mdc-table .mat-mdc-header-cell {\n' +
-    'border-bottom-color: ' + mdDarkDivider + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell .mat-mdc-checkbox ' +
-    '.mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])'+
-    '~.mdc-checkbox__background, ' +
-    '.mat-table .mat-header-cell .mat-mdc-checkbox ' +
-    '.mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])'+
-    '~.mdc-checkbox__background {\n' +
-    'border-color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'transition: background-color .2s;\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.tb-current-entity {\n' +
-    'background-color: ' + currentEntityColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.tb-current-entity .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + currentEntityStickyColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row:hover:not(.tb-current-entity) {\n' +
-    'background-color: ' + hoverColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row:hover:not(.tb-current-entity) .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + hoverStickyColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.mat-row-select.mat-selected:not(.tb-current-entity) {\n' +
-    'background-color: ' + selectedColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.mat-row-select.mat-selected:not(.tb-current-entity) .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + selectedStickyColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky, .mat-mdc-table .mat-mdc-header-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + origBackgroundColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row {\n' +
-    'color: ' + mdDark + ';\n' +
-    'background-color: rgba(0, 0, 0, 0);\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button mat-icon {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button[disabled][disabled] mat-icon {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
-    '.mat-divider {\n' +
-    'border-top-color: ' + mdDarkDivider + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator button.mat-mdc-icon-button {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator button.mat-mdc-icon-button[disabled][disabled] {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator .mat-mdc-select-value {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}';
-  return cssString;
+  let cssString = ` {
+    --mat-toolbar-container-text-color: ${mdDark};
+    --mat-table-header-headline-color: ${mdDarkSecondary};
+    --mat-table-row-item-label-text-color: ${mdDark};
+    --mat-icon-color: ${mdDarkSecondary};
+    --mat-icon-button-disabled-icon-color: ${mdDarkDisabled};
+    --mat-divider-color: ${mdDarkDivider};
+    --mat-paginator-container-text-color: ${mdDarkSecondary};
+    --mat-icon-button-icon-color: ${mdDarkSecondary};
+    --mat-paginator-enabled-icon-color: ${mdDarkSecondary};
+    --mat-paginator-disabled-icon-color: ${mdDarkDisabled};
+    --mat-select-enabled-trigger-text-color: ${mdDarkSecondary};
+    --mat-select-disabled-trigger-text-color: ${mdDarkDisabled};
+    --mat-table-row-item-outline-color: ${mdDarkDivider};
+    --mat-checkbox-unselected-focus-icon-color: ${mdDarkSecondary};
+
+    --tb-orig-background-color: ${origBackgroundColor};
+    --tb-current-entity-color: ${currentEntityColor};
+    --tb-current-entity-sticky-color: ${currentEntityStickyColor};
+    --tb-hover-color: ${hoverColor};
+    --tb-hover-sticky-color: ${hoverStickyColor};
+    --tb-selected-color: ${selectedColor};
+    --tb-selected-sticky-color: ${selectedStickyColor};
+  }
+  `;
+  if (isTabsEnabled) {
+    cssString += `
+    .mat-mdc-tab-group {
+      --mat-tab-inactive-label-text-color: ${mdDarkSecondary};
+      --mat-tab-pagination-icon-color: ${mdDark};
+      --mat-tab-pagination-disabled-icon-color: ${mdDarkDisabled2};
+      --mat-tab-inactive-ripple-color: ${mdDarkSecondary};
+      --mat-tab-inactive-focus-label-text-color: ${mdDarkSecondary};
+      --mat-tab-inactive-hover-label-text-color: ${mdDarkSecondary};
+    }
+    `
+  }
+  return cssString ;
 }
 
-export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings, utils: UtilsService) {
-  if (isDefined(keySettings.customTitle) && isNotEmptyStr(keySettings.customTitle)) {
+export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings | undefined, utils: UtilsService) {
+  if (isNotEmptyStr(keySettings?.customTitle)) {
     return utils.customTranslation(keySettings.customTitle, keySettings.customTitle);
   }
   return dataKey.label;
+}
+
+export function buildPageStepSizeValues(pageStepCount: number, pageStepIncrement: number): Array<number> {
+  const pageSteps: Array<number> = [];
+  if (isValidPageStepCount(pageStepCount) && isValidPageStepIncrement(pageStepIncrement)) {
+    for (let i = 1; i <= pageStepCount; i++) {
+      pageSteps.push(pageStepIncrement * i);
+    }
+  }
+  return pageSteps;
+}
+
+export function isValidPageStepIncrement(value: number): boolean {
+  return Number.isInteger(value) && value > 0;
+}
+
+export function isValidPageStepCount(value: number): boolean {
+  return Number.isInteger(value) && value > 0 && value <= 100;
 }

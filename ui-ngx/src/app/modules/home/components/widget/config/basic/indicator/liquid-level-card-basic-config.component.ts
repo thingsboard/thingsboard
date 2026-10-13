@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, Injector, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -27,6 +13,7 @@ import {
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -56,18 +43,20 @@ import {
   ShapesTranslations,
   updatedFormSettingsValidators
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
-import { UnitsType } from '@shared/models/unit.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { map, share, tap } from 'rxjs/operators';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 import { UtilsService } from '@core/services/utils.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-basic-config',
-  templateUrl: './liquid-level-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-liquid-level-card-basic-config',
+    templateUrl: './liquid-level-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigComponent {
 
@@ -115,8 +104,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   shapesImageMap: Map<Shapes, string> = new Map();
   ShapesTranslationMap = ShapesTranslations;
 
-  unitsType = UnitsType;
-
   levelCardWidgetConfigForm: FormGroup;
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
@@ -126,6 +113,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   totalVolumeValuePreviewFn = this._totalVolumeValuePreviewFn.bind(this);
 
   datePreviewFn = this._datePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   private keySearchText: string;
   private latestKeySearchTextResult: Array<string>;
@@ -228,7 +217,9 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       actions: [configData.config.actions || {}, []]
     });
 
-    this.levelCardWidgetConfigForm.get('selectedShape').valueChanges.subscribe(() => {
+    this.levelCardWidgetConfigForm.get('selectedShape').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });
@@ -354,13 +345,13 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.levelCardWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetConfigForm.get('units').value);
     const decimals: number = this.levelCardWidgetConfigForm.get('decimals').value;
     return formatValue(22, decimals, units, true);
   }
 
   private _tooltipValuePreviewFn() {
-    const units: string = this.levelCardWidgetConfigForm.get('tooltipUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetConfigForm.get('tooltipUnits').value);
     const decimals: number = this.levelCardWidgetConfigForm.get('tooltipLevelDecimals').value;
     return formatValue(32, decimals, units, true);
   }
@@ -369,7 +360,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     const value = this.levelCardWidgetConfigForm.get('volumeConstant').value;
     const datasourceUnits = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
     const decimals: number = this.widgetConfig.config.decimals;
-    let units: string = this.widgetConfig.config.units;
+    let units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
 
     if (datasourceUnits !== CapacityUnits.percent) {
       units = datasourceUnits;

@@ -1,64 +1,69 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.device;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.common.data.DeviceIdInfo;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @Repository
 @Slf4j
-public class DefaultNativeDeviceRepository implements NativeDeviceRepository {
+public class DefaultNativeDeviceRepository extends AbstractNativeRepository implements NativeDeviceRepository {
 
     private final String COUNT_QUERY = "SELECT count(id) FROM device;";
-    private final String QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
-    private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final TransactionTemplate transactionTemplate;
+
+    public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+        super(jdbcTemplate, transactionTemplate);
+    }
 
     @Override
     public PageData<DeviceIdInfo> findDeviceIdInfos(Pageable pageable) {
-        return transactionTemplate.execute(status -> {
-            long startTs = System.currentTimeMillis();
-            int totalElements = jdbcTemplate.queryForObject(COUNT_QUERY, Collections.emptyMap(), Integer.class);
-            log.debug("Count query took {} ms", System.currentTimeMillis() - startTs);
-            startTs = System.currentTimeMillis();
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(String.format(QUERY, pageable.getPageSize(), pageable.getOffset()), Collections.emptyMap());
-            log.debug("Main query took {} ms", System.currentTimeMillis() - startTs);
-            int totalPages = pageable.getPageSize() > 0 ? (int) Math.ceil((float) totalElements / pageable.getPageSize()) : 1;
-            boolean hasNext = pageable.getPageSize() > 0 && totalElements > pageable.getOffset() + rows.size();
-            var data = rows.stream().map(row -> {
-                UUID id = (UUID) row.get("id");
-                var tenantIdObj = row.get("tenantId");
-                var customerIdObj = row.get("customerId");
-                return new DeviceIdInfo(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), customerIdObj != null ? (UUID) customerIdObj : null, id);
-            }).collect(Collectors.toList());
-            return new PageData<>(data, totalPages, totalElements, hasNext);
-        });
+        String DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
+        return find(COUNT_QUERY, DEVICE_ID_INFO_QUERY, pageable, this::mapDeviceIdInfo);
     }
+
+    private DeviceIdInfo mapDeviceIdInfo(Map<String, Object> row) {
+        UUID id = (UUID) row.get("id");
+        var tenantIdObj = row.get("tenantId");
+        var customerIdObj = row.get("customerId");
+        return new DeviceIdInfo(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), customerIdObj != null ? (UUID) customerIdObj : null, id);
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(Pageable pageable) {
+        String PROFILE_DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
+        return find(COUNT_QUERY, PROFILE_DEVICE_ID_INFO_QUERY, pageable, DefaultNativeDeviceRepository::toInfo);
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
+        String PROFILE_DEVICE_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
+        String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM device WHERE tenant_id = '%s';", tenantId);
+        return find(COUNT_QUERY_BY_TENANT, PROFILE_DEVICE_ID_INFO_QUERY, pageable, DefaultNativeDeviceRepository::toInfo);
+    }
+
+    private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {
+        var tenantIdObj = row.get("tenantId");
+        UUID tenantId = tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId();
+        DeviceId id = new DeviceId((UUID) row.get("id"));
+        CustomerId customerId = new CustomerId((UUID) row.get("customerId"));
+        EntityId ownerId = !customerId.isNullUid() ? customerId : TenantId.fromUUID(tenantId);
+        DeviceProfileId profileId = new DeviceProfileId((UUID) row.get("profileId"));
+        return ProfileEntityIdInfo.create(tenantId, ownerId, profileId, id);
+    }
+
 }

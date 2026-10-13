@@ -1,21 +1,9 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
+  booleanAttribute,
   Component,
   ElementRef,
   EventEmitter,
@@ -32,24 +20,26 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { FlowDirective } from '@flowjs/ngx-flow';
+import { FlowConfig } from '@flowjs/ngx-flow';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { DialogService } from '@core/services/dialog.service';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { bytesToString } from '@core/utils';
 
 @Component({
-  selector: 'tb-file-input',
-  templateUrl: './file-input.component.html',
-  styleUrls: ['./file-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FileInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-file-input',
+    templateUrl: './file-input.component.html',
+    styleUrls: ['./file-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FileInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class FileInputComponent extends PageComponent implements AfterViewInit, OnDestroy, ControlValueAccessor, OnChanges {
 
@@ -102,6 +92,16 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   @Input()
   workFromFileObj = false;
 
+  @Input()
+  @coerceBoolean()
+  asButton: boolean;
+
+  @Input()
+  uploadButtonClass = 'browse-file';
+
+  @Input()
+  uploadButtonText: string;
+
   private multipleFileValue = false;
 
   @Input()
@@ -116,15 +116,23 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
     return this.multipleFileValue;
   }
 
+  @Input({transform: booleanAttribute})
+  hideClearButtonOnEmpty = false;
+
   @Output()
   fileNameChanged = new EventEmitter<string|string[]>();
+
+  @Output()
+  mediaTypeChanged = new EventEmitter<string>();
 
   fileName: string | string[];
   fileContent: any;
   files: File[];
 
+  mediaType: string;
+
   @ViewChild('flow', {static: true})
-  flow: FlowDirective;
+  flow: FlowConfig;
 
   @ViewChild('flowInput', {static: true})
   flowInput: ElementRef;
@@ -165,16 +173,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
         if (readers.length) {
           Promise.all(readers).then((files) => {
-            files = files.filter(file => file.fileContent != null || file.files != null);
-            if (files.length === 1) {
-              this.fileContent = files[0].fileContent;
-              this.fileName = files[0].fileName;
-              this.files = files[0].files;
+            const validResults = files.filter(file => file.fileContent != null || file.files != null);
+
+            if (validResults.length === 1) {
+              this.fileContent = validResults[0].fileContent;
+              this.fileName = validResults[0].fileName;
+              this.files = validResults[0].files;
+              this.mediaType = validResults[0].mediaType;
               this.updateModel();
-            } else if (files.length > 1) {
-              this.fileContent = files.map(content => content.fileContent);
-              this.fileName = files.map(content => content.fileName);
-              this.files = files.map(content => content.files);
+            } else if (validResults.length > 1) {
+              this.fileContent = validResults.map(content => content.fileContent);
+              this.fileName = validResults.map(content => content.fileName);
+              this.files = validResults.map(content => content.files);
               this.updateModel();
             }
           });
@@ -188,36 +198,47 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
 
   private readerAsFile(file: flowjs.FlowFile): Promise<any> {
     return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        let fileName = null;
-        let fileContent = null;
-        let files = null;
-        if (reader.readyState === reader.DONE) {
-          if (!this.workFromFileObj) {
-            fileContent = reader.result;
-            if (fileContent && fileContent.length > 0) {
-              if (this.contentConvertFunction) {
-                fileContent = this.contentConvertFunction(fileContent);
-              }
-              fileName = fileContent ? file.name : null;
-            }
-          } else if (file.name || file.file){
-            files = file.file;
-            fileName = file.name;
-          }
-        }
-        resolve({fileContent, fileName, files});
-      };
-      reader.onerror = () => {
-        resolve({fileContent: null, fileName: null, files: null});
-      };
+      if (this.workFromFileObj) {
+        resolve({
+          fileContent: null,
+          fileName: file.name,
+          files: file.file,
+          mediaType: file.file.type || null
+        });
+        return;
+      }
+
+      const onReadError = () => resolve({fileContent: null, fileName: null, files: null, mediaType: null});
+
       if (this.readAsBinary) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const content = reader.readyState === reader.DONE ? reader.result : null;
+          resolve(this.buildResult(file, content));
+        };
+        reader.onerror = onReadError;
         reader.readAsBinaryString(file.file);
       } else {
-        reader.readAsText(file.file);
+        file.file.arrayBuffer().then(
+          buf => resolve(this.buildResult(file, bytesToString(new Uint8Array(buf)))),
+          onReadError
+        );
       }
     });
+  }
+
+  private buildResult(file: flowjs.FlowFile, content: string | ArrayBuffer): any {
+    let fileContent: any = content;
+    let fileName = null;
+    let mediaType = null;
+    if (fileContent && fileContent.length > 0) {
+      if (this.contentConvertFunction) {
+        fileContent = this.contentConvertFunction(fileContent);
+      }
+      fileName = fileContent ? file.name : null;
+      mediaType = file?.file?.type || null;
+    }
+    return {fileContent, fileName, files: null, mediaType};
   }
 
   private checkMaxSize(file: flowjs.FlowFile): boolean {
@@ -273,6 +294,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
       this.propagateChange(this.files);
     } else {
       this.propagateChange(this.fileContent);
+      this.mediaTypeChanged.emit(this.mediaType);
       this.fileNameChanged.emit(this.fileName);
     }
   }

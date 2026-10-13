@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -70,6 +57,9 @@ import {
 import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 import { WidgetActionComponent } from '@home/components/widget/lib/settings/common/action/widget-action.component';
 import {
+  MapItemTooltipsComponent
+} from '@home/components/widget/lib/settings/common/action/map-item-tooltips.component';
+import {
   CustomActionPrettyResourcesTabsComponent
 } from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
 import {
@@ -78,6 +68,15 @@ import {
 import {
   MobileActionEditorComponent
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
+import {
+  SaveBrowserLocationActionEditorComponent
+} from '@home/components/widget/lib/settings/common/action/save-browser-location-action-editor.component';
+import {
+  LocationTargetEntityComponent
+} from '@home/components/widget/lib/settings/common/action/location-target-entity.component';
+import {
+  LocationKeysTableComponent
+} from '@home/components/widget/lib/settings/common/action/location-keys-table.component';
 import {
   WidgetActionSettingsComponent
 } from '@home/components/widget/lib/settings/common/action/widget-action-settings.component';
@@ -102,7 +101,7 @@ import {
 import {
   TimeSeriesChartThresholdRowComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-row.component';
-import { DataKeyInputComponent } from '@home/components/widget/lib/settings/common/data-key-input.component';
+import { DataKeyInputComponent } from '@home/components/widget/lib/settings/common/key/data-key-input.component';
 import { EntityAliasInputComponent } from '@home/components/widget/lib/settings/common/entity-alias-input.component';
 import {
   TimeSeriesChartThresholdSettingsPanelComponent
@@ -158,6 +157,129 @@ import {
 import {
   ScadaSymbolObjectSettingsComponent
 } from '@home/components/widget/lib/settings/common/scada/scada-symbol-object-settings.component';
+import {
+  WidgetButtonToggleCustomStyleComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-toggle-custom-style.component';
+import {
+  WidgetButtonToggleCustomStylePanelComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-toggle-custom-style-panel.component';
+import {
+  DynamicFormPropertiesComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-properties.component';
+import {
+  DynamicFormPropertyRowComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
+import {
+  DynamicFormPropertyPanelComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-panel.component';
+import { DynamicFormComponent } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form.component';
+import {
+  DynamicFormSelectItemsComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-select-items.component';
+import {
+  DynamicFormSelectItemRowComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-select-item-row.component';
+import {
+  DynamicFormArrayComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-array.component';
+import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
+import { MapLayersComponent } from '@home/components/widget/lib/settings/common/map/map-layers.component';
+import { MapLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-layer-row.component';
+import {
+  MapLayerSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
+import { MapDataLayersComponent } from '@home/components/widget/lib/settings/common/map/map-data-layers.component';
+import { MapDataLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-data-layer-row.component';
+import {
+  EntityAliasSelectComponent
+} from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
+import {
+  MapDataLayerDialogComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-layer-dialog.component';
+import { FilterSelectComponent } from '@home/components/widget/lib/settings/common/filter/filter-select.component';
+import { DataKeysComponent } from '@home/components/widget/lib/settings/common/key/data-keys.component';
+import {
+  DataKeyConfigDialogComponent
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
+import { WidgetSettingsComponent } from '@home/components/widget/lib/settings/common/widget/widget-settings.component';
+import {
+  DataLayerColorSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-color-settings.component';
+import {
+  DataLayerColorSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-color-settings-panel.component';
+import {
+  MarkerImageSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-image-settings.component';
+import {
+  MarkerImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/marker-image-settings-panel.component';
+import {
+  DataLayerPatternSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-pattern-settings.component';
+import {
+  MarkerShapeSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-shape-settings.component';
+import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';
+import {
+  MarkerClusteringSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-clustering-settings.component';
+import { AdditionalMapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/additional-map-data-sources.component';
+import {
+  AdditionalMapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/additional-map-data-source-row.component';
+import {
+  ImageMapSourceSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/image-map-source-settings.component';
+import {
+  MapTooltipTagActionsComponent
+} from '@home/components/widget/lib/settings/common/map/map-tooltip-tag-actions.component';
+import {
+  MapActionButtonsSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/map-action-buttons-settings.component';
+import {
+  MapActionButtonRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-action-button-row.component';
+import {
+  TripTimelineSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/trip-timeline-settings.component';
+import {
+  MarkerIconShapesComponent
+} from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
+import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/map-data-sources.component';
+import {
+  MapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
+import {
+  ShapeFillImageSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings.component';
+import {
+  ShapeFillImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings-panel.component';
+import {
+  ShapeFillStripeSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings.component';
+import {
+  ShapeFillStripeSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings-panel.component';
+import {
+  HtmlContainerSettingsComponent
+} from '@home/components/widget/lib/settings/common/html/html-container-settings.component';
+import {
+  AlignmentPanelComponent
+} from '@home/components/widget/lib/settings/common/alignment-panel.component';
+import { AlignmentComponent } from '@home/components/widget/lib/settings/common/alignment.component';
+import {
+  DynamicFormDialogComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-dialog.component';
+import {
+  ComparisonKeysTableComponent
+} from '@home/components/widget/lib/settings/common/chart/comparison-keys-table.component';
+import {
+  ComparisonKeyRowComponent
+} from '@home/components/widget/lib/settings/common/chart/comparison-key-row.component';
+import { AxisScaleRowComponent } from './axis-scale-row.component';
 
 @NgModule({
   declarations: [
@@ -169,6 +291,8 @@ import {
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
     CssSizeInputComponent,
+    AlignmentComponent,
+    AlignmentPanelComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     AutoDateFormatSettingsComponent,
@@ -189,14 +313,22 @@ import {
     SetValueActionSettingsComponent,
     SetValueActionSettingsPanelComponent,
     WidgetActionComponent,
+    MapItemTooltipsComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
+    SaveBrowserLocationActionEditorComponent,
+    LocationTargetEntityComponent,
+    LocationKeysTableComponent,
     WidgetActionSettingsComponent,
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
     WidgetButtonCustomStyleComponent,
+    WidgetButtonToggleCustomStyleComponent,
     WidgetButtonCustomStylePanelComponent,
+    WidgetButtonToggleCustomStylePanelComponent,
+    ComparisonKeyRowComponent,
+    ComparisonKeysTableComponent,
     TimeSeriesChartAxisSettingsComponent,
     TimeSeriesChartThresholdsPanelComponent,
     TimeSeriesChartThresholdRowComponent,
@@ -218,7 +350,52 @@ import {
     DataKeyInputComponent,
     EntityAliasInputComponent,
     AdvancedRangeComponent,
-    GradientComponent
+    GradientComponent,
+    DynamicFormPropertiesComponent,
+    DynamicFormPropertyRowComponent,
+    DynamicFormPropertyPanelComponent,
+    DynamicFormSelectItemsComponent,
+    DynamicFormSelectItemRowComponent,
+    DynamicFormComponent,
+    DynamicFormArrayComponent,
+    DynamicFormDialogComponent,
+    MapLayerSettingsPanelComponent,
+    MapLayerRowComponent,
+    MapLayersComponent,
+    ImageMapSourceSettingsComponent,
+    DataLayerColorSettingsComponent,
+    DataLayerColorSettingsPanelComponent,
+    MapTooltipTagActionsComponent,
+    MapActionButtonsSettingsComponent,
+    MapActionButtonRowComponent,
+    DataLayerPatternSettingsComponent,
+    MarkerShapeSettingsComponent,
+    MarkerShapesComponent,
+    MarkerIconShapesComponent,
+    MarkerImageSettingsComponent,
+    MarkerImageSettingsPanelComponent,
+    MarkerClusteringSettingsComponent,
+    ShapeFillStripeSettingsComponent,
+    ShapeFillStripeSettingsPanelComponent,
+    ShapeFillImageSettingsComponent,
+    ShapeFillImageSettingsPanelComponent,
+    MapDataLayerDialogComponent,
+    MapDataLayerRowComponent,
+    MapDataLayersComponent,
+    MapDataSourceRowComponent,
+    MapDataSourcesComponent,
+    AdditionalMapDataSourceRowComponent,
+    AdditionalMapDataSourcesComponent,
+    TripTimelineSettingsComponent,
+    MapSettingsComponent,
+    EntityAliasSelectComponent,
+    FilterSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigDialogComponent,
+    DataKeyConfigComponent,
+    WidgetSettingsComponent,
+    HtmlContainerSettingsComponent,
+    AxisScaleRowComponent
   ],
   imports: [
     CommonModule,
@@ -234,6 +411,8 @@ import {
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
     CssSizeInputComponent,
+    AlignmentComponent,
+    AlignmentPanelComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     AutoDateFormatSettingsComponent,
@@ -257,11 +436,18 @@ import {
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
+    SaveBrowserLocationActionEditorComponent,
+    LocationTargetEntityComponent,
+    LocationKeysTableComponent,
     WidgetActionSettingsComponent,
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
     WidgetButtonCustomStyleComponent,
+    WidgetButtonToggleCustomStyleComponent,
     WidgetButtonCustomStylePanelComponent,
+    WidgetButtonToggleCustomStylePanelComponent,
+    ComparisonKeyRowComponent,
+    ComparisonKeysTableComponent,
     TimeSeriesChartAxisSettingsComponent,
     TimeSeriesChartThresholdsPanelComponent,
     TimeSeriesChartThresholdRowComponent,
@@ -283,7 +469,24 @@ import {
     DataKeyInputComponent,
     EntityAliasInputComponent,
     AdvancedRangeComponent,
-    GradientComponent
+    GradientComponent,
+    DynamicFormPropertiesComponent,
+    DynamicFormPropertyRowComponent,
+    DynamicFormPropertyPanelComponent,
+    DynamicFormSelectItemsComponent,
+    DynamicFormSelectItemRowComponent,
+    DynamicFormComponent,
+    DynamicFormArrayComponent,
+    DynamicFormDialogComponent,
+    MapSettingsComponent,
+    EntityAliasSelectComponent,
+    FilterSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigDialogComponent,
+    DataKeyConfigComponent,
+    WidgetSettingsComponent,
+    HtmlContainerSettingsComponent,
+    AxisScaleRowComponent
   ],
   providers: [
     ColorSettingsComponentService,

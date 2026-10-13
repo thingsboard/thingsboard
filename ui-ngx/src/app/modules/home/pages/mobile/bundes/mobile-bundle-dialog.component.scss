@@ -1,0 +1,76 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import "../../../../../../scss/constants";
+
+:host {
+  width: 850px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: grid;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;
+  --mat-form-field-outlined-outline-color: rgba(0,0,0,0.12);
+
+  .mat-mdc-slide-toggle {
+    margin-bottom: 16px;
+  }
+
+  form.layout-form {
+    display: block;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  ::ng-deep {
+
+    .mat-mdc-dialog-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 !important;
+      color: rgba(0, 0, 0, 0.87);
+
+      .mat-stepper-horizontal {
+        display: flex;
+        height: 100%;
+        overflow: hidden;
+
+        .mat-horizontal-stepper-wrapper {
+          flex: 1 1 100%;
+          max-width: 100%;
+        }
+
+        .mat-horizontal-content-container {
+          height: 700px;
+          max-height: 100%;
+          width: 100%;;
+          overflow-y: auto;
+          scrollbar-gutter: stable;
+          @media #{$mat-gt-sm} {
+            min-width: 500px;
+          }
+          .mat-horizontal-stepper-content.mat-horizontal-stepper-content-current:nth-child(3) {
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+          }
+        }
+      }
+      .mat-stepper-vertical {
+        .mat-step:nth-child(4) {
+          .mat-vertical-content-container.mat-vertical-content-container-active {
+            .mat-vertical-stepper-content {
+              .mat-vertical-content {
+                padding-left: 0;
+              }
+            }
+          }
+        }
+      }
+      tb-user-group-panel {
+        --mat-icon-button-icon-color: rgba(0, 0, 0, .38);
+      }
+    }
+  }
+}

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.coap.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
@@ -63,8 +51,6 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.SHARED_ATTR
 @DaoSqlTest
 public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
 
-    private static final String PAYLOAD_VALUES_STR = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
-            " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
     private static final List<String> EXPECTED_KEYS = Arrays.asList("key1", "key2", "key3", "key4", "key5");
     private static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
 
@@ -163,7 +149,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
     protected void processTestRequestAttributesValuesFromTheServer(boolean confirmable) throws Exception {
         client = createClientForFeatureWithConfirmableParameter(FeatureType.ATTRIBUTES, confirmable);
         SingleEntityFilter dtf = new SingleEntityFilter();
-        dtf.setSingleEntity(savedDevice.getId());
+        dtf.setSingleEntity(AliasEntityId.fromEntityId(savedDevice.getId()));
         List<EntityKey> csKeys = getEntityKeys(CLIENT_ATTRIBUTE);
         List<EntityKey> shKeys = getEntityKeys(SHARED_ATTRIBUTE);
         List<EntityKey> keys = new ArrayList<>();

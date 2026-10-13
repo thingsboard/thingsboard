@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -24,16 +10,17 @@ import { IAliasController, IStateController } from '@core/api/widget-api.models'
 import { Widget, WidgetConfigMode } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
-import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-edit-widget',
-  templateUrl: './edit-widget.component.html',
-  styleUrls: ['./edit-widget.component.scss']
+    selector: 'tb-edit-widget',
+    templateUrl: './edit-widget.component.html',
+    styleUrls: ['./edit-widget.component.scss'],
+    standalone: false
 })
 export class EditWidgetComponent extends PageComponent implements OnInit, OnChanges {
 
@@ -139,32 +126,18 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       return;
     }
     const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
-    const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
-    const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
-    const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
+
+    const settingsForm = widgetInfo.typeSettingsForm?.length ?
+      widgetInfo.typeSettingsForm : (widgetInfo.settingsForm || []);
+    const dataKeySettingsForm = widgetInfo.typeDataKeySettingsForm?.length ?
+      widgetInfo.typeDataKeySettingsForm : (widgetInfo.dataKeySettingsForm || []);
+    const latestDataKeySettingsForm = widgetInfo.typeLatestDataKeySettingsForm?.length ?
+      widgetInfo.typeLatestDataKeySettingsForm : (widgetInfo.latestDataKeySettingsForm || []);
     const typeParameters = widgetInfo.typeParameters;
     const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
-    let settingsSchema;
-    if (!rawSettingsSchema || rawSettingsSchema === '') {
-      settingsSchema = {};
-    } else {
-      settingsSchema = isString(rawSettingsSchema) ? JSON.parse(rawSettingsSchema) : rawSettingsSchema;
-    }
-    let dataKeySettingsSchema;
-    if (!rawDataKeySettingsSchema || rawDataKeySettingsSchema === '') {
-      dataKeySettingsSchema = {};
-    } else {
-      dataKeySettingsSchema = isString(rawDataKeySettingsSchema) ? JSON.parse(rawDataKeySettingsSchema) : rawDataKeySettingsSchema;
-    }
-    let latestDataKeySettingsSchema;
-    if (!rawLatestDataKeySettingsSchema || rawLatestDataKeySettingsSchema === '') {
-      latestDataKeySettingsSchema = {};
-    } else {
-      latestDataKeySettingsSchema = isString(rawLatestDataKeySettingsSchema) ?
-        JSON.parse(rawLatestDataKeySettingsSchema) : rawLatestDataKeySettingsSchema;
-    }
+
     this.widgetConfig = {
       widgetName: widgetInfo.widgetName,
       config: this.widget.config,
@@ -173,9 +146,9 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       typeParameters,
       actionSources,
       isDataEnabled,
-      settingsSchema,
-      dataKeySettingsSchema,
-      latestDataKeySettingsSchema,
+      settingsForm,
+      dataKeySettingsForm,
+      latestDataKeySettingsForm,
       dataKeySettingsFunction,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,

@@ -1,21 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +15,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
@@ -32,6 +25,7 @@ import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
@@ -43,23 +37,24 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TO_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TO_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_GROUP_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
-/**
- * Created by Valerii Sosliuk on 5/29/2017.
- */
 @Slf4j
 @Component
 @SqlDao
 public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService implements RelationDao {
 
     private static final List<String> ALL_TYPE_GROUP_NAMES = new ArrayList<>();
-    private static final String RETURNING = "RETURNING from_id, from_type, to_id, to_type, relation_type, relation_type_group, nextval('relation_version_seq') as version";
-    private static final String DELETE_QUERY = "DELETE FROM relation WHERE from_id = ? AND from_type = ? AND to_id = ? AND to_type = ? AND relation_type = ? AND relation_type_group = ? " + RETURNING;
+    private static final String RETURNING_SEQ = "RETURNING from_id, from_type, to_id, to_type, relation_type, relation_type_group, nextval('relation_version_seq') as version";
+    // Citus: relation is a reference table whose writes are cross-node 2PC; the version is maintained per row
+    // (see SqlRelationInsertRepository), so delete returns the row's own stored version instead of nextval().
+    private static final String RETURNING_CITUS = "RETURNING from_id, from_type, to_id, to_type, relation_type, relation_type_group, version";
+    private static final String DELETE_QUERY_TEMPLATE = "DELETE FROM relation WHERE from_id = ? AND from_type = ? AND to_id = ? AND to_type = ? AND relation_type = ? AND relation_type_group = ? %s";
 
     static {
         Arrays.stream(RelationTypeGroup.values()).map(RelationTypeGroup::name).forEach(ALL_TYPE_GROUP_NAMES::add);
@@ -70,6 +65,19 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Autowired
     private RelationInsertRepository relationInsertRepository;
+
+    @Autowired
+    private CitusSettings citusSettings;
+
+    private String returning;
+    @Getter
+    private String deleteQuery;
+
+    @PostConstruct
+    private void initDeleteQuery() {
+        this.returning = citusSettings.isEnabled() ? RETURNING_CITUS : RETURNING_SEQ;
+        this.deleteQuery = String.format(DELETE_QUERY_TEMPLATE, returning);
+    }
 
     @Override
     public List<EntityRelation> findAllByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
@@ -126,6 +134,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                         relationType,
                         typeGroup.name()));
     }
+
 
     @Override
     public ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
@@ -196,7 +205,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     private EntityRelation deleteRelationIfExists(RelationCompositeKey key) {
-        return jdbcTemplate.query(DELETE_QUERY, rs -> {
+        return jdbcTemplate.query(deleteQuery, rs -> {
             if (!rs.next()) {
                 return null;
             }
@@ -255,14 +264,12 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
         if (!CollectionUtils.isEmpty(relationTypeGroups)) {
             sqlBuilder.append("AND relation_type_group IN (?");
-            for (int i = 1; i < relationTypeGroups.size(); i++) {
-                sqlBuilder.append(", ?");
-            }
+            sqlBuilder.append(", ?".repeat(Math.max(0, relationTypeGroups.size() - 1)));
             sqlBuilder.append(")");
             params.addAll(relationTypeGroups);
         }
 
-        sqlBuilder.append(RETURNING);
+        sqlBuilder.append(returning);
 
         return jdbcTemplate.queryForList(sqlBuilder.toString(), params.toArray()).stream()
                 .map(row -> {
@@ -284,12 +291,114 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                     relation.setTypeGroup(RelationTypeGroup.valueOf((String) relationTypeGroup));
                     relation.setVersion((Long) version);
                     return relation;
-                })
-                .collect(Collectors.toList());
+                }).toList();
     }
 
     @Override
     public List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit) {
         return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(ruleChainType, PageRequest.of(0, limit)));
     }
+
+    @Override
+    public List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery query, int limit) {
+        List<RelationPathLevel> levels = query.levels();
+        if (levels == null || levels.isEmpty()) {
+            return List.of();
+        }
+        if (limit <= 0) {
+            return List.of();
+        }
+        String sql = buildRelationPathSql(query);
+        Object[] params = buildRelationPathParams(query, limit);
+
+        log.trace("[{}] relation path query: {}", tenantId, sql);
+
+        return jdbcTemplate.queryForList(sql, params).stream()
+                .map(row -> {
+                    var entityRelation = new EntityRelation();
+                    var fromId = (UUID) row.get(RELATION_FROM_ID_PROPERTY);
+                    var fromType = (String) row.get(RELATION_FROM_TYPE_PROPERTY);
+                    var toId = (UUID) row.get(RELATION_TO_ID_PROPERTY);
+                    var toType = (String) row.get(RELATION_TO_TYPE_PROPERTY);
+                    var grp = (String) row.get(RELATION_TYPE_GROUP_PROPERTY);
+                    var type = (String) row.get(RELATION_TYPE_PROPERTY);
+                    var version = (Long) row.get(VERSION_COLUMN);
+
+                    entityRelation.setFrom(EntityIdFactory.getByTypeAndUuid(fromType, fromId));
+                    entityRelation.setTo(EntityIdFactory.getByTypeAndUuid(toType, toId));
+                    entityRelation.setType(type);
+                    entityRelation.setTypeGroup(RelationTypeGroup.valueOf(grp));
+                    entityRelation.setVersion(version);
+                    return entityRelation;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Object[] buildRelationPathParams(EntityRelationPathQuery query, int limit) {
+        final List<Object> params = new ArrayList<>();
+        // seed
+        params.add(query.rootEntityId().getId());
+        params.add(query.rootEntityId().getEntityType().name());
+
+        // levels
+        for (var lvl : query.levels()) {
+            params.add(lvl.relationType());
+        }
+
+        // limit
+        params.add(limit);
+
+        return params.toArray();
+    }
+
+    private static String buildRelationPathSql(EntityRelationPathQuery query) {
+        List<RelationPathLevel> levels = query.levels();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("WITH seed AS (\n")
+                .append("  SELECT ?::uuid AS id, ?::varchar AS type\n")
+                .append(")");
+
+        String prev = "seed";
+        for (int i = 0; i < levels.size() - 1; i++) {
+            RelationPathLevel lvl = levels.get(i);
+            boolean down = lvl.direction() == EntitySearchDirection.FROM;
+
+            String cur = "lvl" + (i + 1);
+            String joinCond = down
+                    ? "r.from_id = p.id AND r.from_type = p.type"
+                    : "r.to_id   = p.id AND r.to_type   = p.type";
+            String selectNext = down
+                    ? "r.to_id   AS id, r.to_type   AS type"
+                    : "r.from_id AS id, r.from_type AS type";
+
+            sb.append(",\n").append(cur).append(" AS (\n")
+                    .append("  SELECT ").append(selectNext).append("\n")
+                    .append("  FROM ").append(RELATION_TABLE_NAME).append(" r\n")
+                    .append("  JOIN ").append(prev).append(" p ON ").append(joinCond).append("\n")
+                    .append("  WHERE r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n")
+                    .append("    AND r.relation_type = ?\n")
+                    .append(")");
+            prev = cur;
+        }
+
+        RelationPathLevel last = levels.get(levels.size() - 1);
+        boolean lastDown = last.direction() == EntitySearchDirection.FROM;
+        String prevForLast = (levels.size() == 1) ? "seed" : prev;
+        String lastJoin = lastDown
+                ? "r.from_id = p.id AND r.from_type = p.type"
+                : "r.to_id   = p.id AND r.to_type   = p.type";
+
+        sb.append("\n")
+                .append("SELECT r.from_id, r.from_type, r.to_id, r.to_type,\n")
+                .append("       r.relation_type_group, r.relation_type, r.version\n")
+                .append("FROM ").append(RELATION_TABLE_NAME).append(" r\n")
+                .append("JOIN ").append(prevForLast).append(" p ON ").append(lastJoin).append("\n")
+                .append("WHERE r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n")
+                .append("  AND r.relation_type = ?\n")
+                .append("LIMIT ?");
+
+        return sb.toString();
+    }
+
 }

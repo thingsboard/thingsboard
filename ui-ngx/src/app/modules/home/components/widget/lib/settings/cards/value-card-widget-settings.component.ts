@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -21,21 +7,21 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   valueCardDefaultSettings,
-  ValueCardLayout, valueCardLayoutImages,
-  valueCardLayouts, valueCardLayoutTranslations
+  ValueCardLayout,
+  valueCardLayoutImages,
+  valueCardLayouts,
+  valueCardLayoutTranslations
 } from '@home/components/widget/lib/cards/value-card-widget.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import {
-  DateFormatProcessor,
-  DateFormatSettings,
-  getLabel
-} from '@shared/models/widget-settings.models';
+import { DateFormatProcessor, DateFormatSettings, getLabel } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-value-card-widget-settings',
-  templateUrl: './value-card-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-value-card-widget-settings',
+    templateUrl: './value-card-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class ValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -110,7 +96,8 @@ export class ValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
       dateFont: [settings.dateFont, []],
       dateColor: [settings.dateColor, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 
@@ -187,7 +174,7 @@ export class ValueCardWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(22, decimals, units, true);
   }

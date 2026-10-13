@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.script.api.tbel;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -22,6 +9,8 @@ import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,20 +32,19 @@ import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -66,9 +54,9 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 public class DefaultTbelInvokeService extends AbstractScriptInvokeService implements TbelInvokeService {
 
-    protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
-    protected final Map<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
-    protected Cache<String, Serializable> compiledScriptsCache;
+    private final ConcurrentMap<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
+    private Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
     private final Optional<TbApiUsageStateClient> apiUsageStateClient;
@@ -131,9 +119,17 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         OptimizerFactory.setDefaultOptimizer(OptimizerFactory.SAFE_REFLECTIVE);
         parserConfig = ParserContext.enableSandboxedMode();
         parserConfig.addImport("JSON", TbJson.class);
-        parserConfig.registerDataType("Date", TbDate.class, date -> 8L);
-        parserConfig.registerDataType("Random", Random.class, date -> 8L);
-        parserConfig.registerDataType("Calendar", Calendar.class, date -> 8L);
+        parserConfig.registerDataType("Date", TbDate.class, val -> 8L);
+        parserConfig.registerDataType("Random", Random.class, val -> 8L);
+        parserConfig.registerDataType("Calendar", Calendar.class, val -> 8L);
+        parserConfig.registerDataType("TbelCfSingleValueArg", TbelCfSingleValueArg.class, TbelCfSingleValueArg::memorySize);
+        parserConfig.registerDataType("TbelCfTsRollingArg", TbelCfTsRollingArg.class, TbelCfTsRollingArg::memorySize);
+        parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsDoubleVal.class, TbelCfTsDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfTsRollingData", TbelCfTsRollingData.class, TbelCfTsRollingData::memorySize);
+        parserConfig.registerDataType("TbTimeWindow", TbTimeWindow.class, TbTimeWindow::memorySize);
+        parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsMultiDoubleVal.class, TbelCfTsMultiDoubleVal::memorySize);
+        parserConfig.registerDataType("TbelCfCtx", TbelCfCtx.class, TbelCfCtx::memorySize);
+
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {
@@ -196,8 +192,10 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                     lock.unlock();
                 }
                 return scriptId;
-            } catch (Exception e) {
+            } catch (CompileException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
+            } catch (Exception e) {
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, scriptBody, e);
             }
         });
     }
@@ -238,7 +236,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         }
     }
 
-    private Serializable compileScript(String scriptBody) {
+    private static Serializable compileScript(String scriptBody) throws CompileException {
         return MVEL.compileExpression(scriptBody, new ParserContext());
     }
 
@@ -250,6 +248,16 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
             hasher.putString(argName, StandardCharsets.UTF_8);
         }
         return hasher.hash().toString();
+    }
+
+    @Override
+    protected long getMaxEvalRequestsTimeout() {
+        return maxInvokeRequestsTimeout * 2;
+    }
+
+    @Override
+    protected StatsType getStatsType() {
+        return StatsType.TBEL_INVOKE;
     }
 
 }

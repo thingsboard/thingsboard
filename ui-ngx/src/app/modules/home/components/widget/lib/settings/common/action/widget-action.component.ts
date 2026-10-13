@@ -1,37 +1,29 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ControlValueAccessor,
+  FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
   Validator,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, computed, ElementRef, forwardRef, input, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  MapItemType,
+  mapItemTypeTranslationMap,
   WidgetAction,
   WidgetActionType,
   widgetActionTypes,
   widgetActionTypeTranslationMap,
   widgetType
 } from '@shared/models/widget.models';
+import { defaultSaveBrowserLocationDescriptor } from '@shared/models/location.models';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { map, mergeMap, share, startWith, takeUntil, tap } from 'rxjs/operators';
@@ -44,8 +36,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { PopoverPlacement, PopoverPlacements } from '@shared/components/popover.models';
 import {
   CustomActionEditorCompleter,
-  toCustomAction
+  toCustomAction,
+  toPlaceMapItemAction
 } from '@home/components/widget/lib/settings/common/action/custom-action.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 const stateDisplayTypes = ['normal', 'separateDialog', 'popover'] as const;
 type stateDisplayTypeTuple = typeof  stateDisplayTypes;
@@ -60,21 +54,22 @@ const stateDisplayTypesTranslations = new Map<stateDisplayType, string>(
 );
 
 @Component({
-  selector: 'tb-widget-action',
-  templateUrl: './widget-action.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetActionComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => WidgetActionComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-widget-action',
+    templateUrl: './widget-action.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetActionComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => WidgetActionComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class WidgetActionComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -89,9 +84,35 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   @Input()
   callbacks: WidgetActionCallbacks;
 
-  widgetActionTypes = widgetActionTypes;
+  @Input()
+  customFunctionArgs: string[] = ['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'];
+
+  @Input()
+  customFunctionHelpId = 'widget/action/custom_action_fn';
+
+  @Input()
+  @coerceBoolean()
+  withName = false;
+
+  @Input()
+  actionNames: string[];
+
+  additionalWidgetActionTypes = input<WidgetActionType[]>(null);
+  widgetActionTypes = input(widgetActionTypes);
+
+  actionTypes = computed(() => {
+    const predefinedActionTypes = this.widgetActionTypes();
+    if (this.additionalWidgetActionTypes()?.length) {
+      return predefinedActionTypes.concat(this.additionalWidgetActionTypes());
+    }
+    return predefinedActionTypes;
+  });
+
   widgetActionTypeTranslations = widgetActionTypeTranslationMap;
   widgetActionType = WidgetActionType;
+
+  mapItemTypes = Object.values(MapItemType) as MapItemType[];
+  mapItemTypeTranslationMap = mapItemTypeTranslationMap;
 
   allStateDisplayTypes = stateDisplayTypes;
   allPopoverPlacements = PopoverPlacements;
@@ -147,6 +168,10 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
 
   ngOnInit() {
     this.widgetActionFormGroup = this.fb.group({});
+    if (this.withName) {
+      this.widgetActionFormGroup.addControl('name',
+        this.fb.control(null, [this.validateActionName(), Validators.required]));
+    }
     this.widgetActionFormGroup.addControl('type',
       this.fb.control(null, [Validators.required]));
     this.widgetActionFormGroup.get('type').valueChanges.pipe(
@@ -162,6 +187,11 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   writeValue(widgetAction?: WidgetAction): void {
+    if (this.withName) {
+      this.widgetActionFormGroup.patchValue({
+        name: widgetAction?.name
+      }, {emitEvent: false});
+    }
     this.widgetActionFormGroup.patchValue({
       type: widgetAction?.type
     }, {emitEvent: false});
@@ -280,6 +310,13 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
             this.fb.control(action ? action.mobileAction : null, [Validators.required])
           );
           break;
+        case WidgetActionType.saveBrowserLocation:
+          this.actionTypeFormGroup.addControl(
+            'saveBrowserLocation',
+            this.fb.control(action?.saveBrowserLocation ?? defaultSaveBrowserLocationDescriptor(),
+              [Validators.required])
+          );
+          break;
         case WidgetActionType.openURL:
           this.actionTypeFormGroup.addControl(
             'openNewBrowserTab',
@@ -288,6 +325,17 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
           this.actionTypeFormGroup.addControl(
             'url',
             this.fb.control(action ? action.url : null, [Validators.required])
+          );
+          break;
+        case WidgetActionType.placeMapItem:
+          this.actionTypeFormGroup.addControl(
+            'mapItemType',
+            this.fb.control(action?.mapItemType ?? MapItemType.marker, [Validators.required])
+          );
+          this.actionTypeFormGroup.addControl('mapItemTooltips', this.fb.control(action?.mapItemTooltips ?? {}));
+          this.actionTypeFormGroup.addControl(
+            'customAction',
+            this.fb.control(toPlaceMapItemAction(action), [Validators.required])
           );
           break;
       }
@@ -457,11 +505,36 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     return res;
   }
 
+  private validateActionName(): ValidatorFn {
+    return (c: FormControl) => {
+      const newName = c.value;
+      const valid = this.checkActionName(newName);
+      return !valid ? {
+        actionNameNotUnique: true
+      } : null;
+    };
+  }
+
+  private checkActionName(name: string): boolean {
+    let actionNameIsUnique = true;
+    if (this.actionNames?.length) {
+      actionNameIsUnique = !this.actionNames.includes(name);
+    }
+    return actionNameIsUnique;
+  }
+
   private widgetActionUpdated() {
     const type: WidgetActionType = this.widgetActionFormGroup.get('type').value;
     let result: WidgetAction;
     if (type === WidgetActionType.customPretty) {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.get('customAction').value};
+    } else if (type === WidgetActionType.placeMapItem) {
+      result = {
+        ...this.widgetActionFormGroup.value,
+        ...this.actionTypeFormGroup.get('customAction').value,
+        mapItemType: this.actionTypeFormGroup.get('mapItemType').value,
+        mapItemTooltips: this.actionTypeFormGroup.get('mapItemTooltips').value,
+      };
     } else {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
     }

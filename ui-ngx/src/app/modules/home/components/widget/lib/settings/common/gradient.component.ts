@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
   AbstractControl,
@@ -33,20 +19,21 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-gradient',
-  templateUrl: './gradient.component.html',
-  styleUrls: ['color-settings-panel.component.scss', 'gradient.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GradientComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-gradient',
+    templateUrl: './gradient.component.html',
+    styleUrls: ['color-settings-panel.component.scss', 'gradient.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => GradientComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class GradientComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
@@ -117,9 +104,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
     this.gradientFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => this.updateModel());
-    this.gradientFormGroup.get('advancedMode').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {
@@ -225,10 +209,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
     return this.advancedGradientListFormArray.controls as FormGroup[];
   }
 
-  trackByGradient(index: number, gradientControl: AbstractControl): any {
-    return gradientControl;
-  }
-
   removeGradient(index: number, advanced = false) {
     if (advanced) {
       this.advancedGradientListFormArray.removeAt(index);
@@ -236,7 +216,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       this.gradientListFormArray.removeAt(index);
     }
     this.gradientFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   gradientDrop(event: CdkDragDrop<string[]>, advanced = false) {
@@ -255,7 +234,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       this.gradientListFormArray.push(this.colorGradientControl('rgba(0,0,0,0.87)'));
     }
     this.gradientFormGroup.markAsDirty();
-    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   updateModel() {

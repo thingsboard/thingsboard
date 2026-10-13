@@ -1,0 +1,32 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<div class="entity-limit-exceeded-dialog">
+  <button mat-icon-button class="close-btn" (click)="cancel()">
+    <tb-icon>close</tb-icon>
+  </button>
+  <div class="entity-limit-exceeded-bg"></div>
+  <div class="entity-limit-exceeded-title">{{ 'entity.limit-reached' | translate }}</div>
+  <div class="entity-limit-exceeded-container">
+    <div class="entity-limit-exceeded-text" [innerHTML]="limitReachedText | safe: 'html'"></div>
+  </div>
+  <div class="flex flex-row justify-center gap-2">
+    <button mat-flat-button color="primary" (click)="requestLimitIncrease($event)">
+      {{ 'entity.request-limit-increase' | translate }}
+    </button>
+    <button mat-button (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+  @if (!isCustomerUser) {
+    <div class="request-entity-limit-increase-sysadmin-prompt">
+      {{ 'entity.request-sysadmin-text' | translate }}
+      <a href="" (click)="loginAsSysAdmin($event)"> {{ 'entity.login-here' | translate }} </a>
+      {{ 'entity.to-increase-limit' | translate }}
+    </div>
+  }
+</div>

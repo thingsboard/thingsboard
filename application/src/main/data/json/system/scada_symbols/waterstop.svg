@@ -1,0 +1,276 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Water stop",
+  "description": "Remotely controlled water shutoff valve with configurable connectors and various states.",
+  "searchTags": [
+    "water stop"
+  ],
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "stateRenderFunction": "",
+  "tags": [
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "var opened = ctx.values.opened;\nvar action = opened ? 'close' : 'open';\n\nctx.api.callAction(event, action, undefined, {\n  next: () => {\n     ctx.api.setValue('opened', !opened);\n  }\n});"
+        }
+      }
+    },
+    {
+      "tag": "pipe-color",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "walve",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nif (opened) {\n    element.attr({fill: ctx.properties.openedColor});\n    ctx.api.resetCssAnimation(element);\n} else {\n    element.attr({fill: ctx.properties.closedColor});\n    if (ctx.values.closeAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "opened",
+      "name": "{i18n:scada.symbol.opened}",
+      "hint": "{i18n:scada.symbol.opened-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.opened}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "open",
+      "name": "{i18n:scada.symbol.open}",
+      "hint": "{i18n:scada.symbol.open-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": true,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "close",
+      "name": "{i18n:scada.symbol.close}",
+      "hint": "{i18n:scada.symbol.close-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "closeAnimation",
+      "name": "{i18n:scada.symbol.close-state-animation}",
+      "hint": "{i18n:scada.symbol.close-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    }
+  ],
+  "properties": [
+    {
+      "id": "openedColor",
+      "name": "{i18n:scada.symbol.opened-color}",
+      "type": "color",
+      "default": "#1C943E",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "closedColor",
+      "name": "{i18n:scada.symbol.closed-color}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<path d="M14 64H186V136H14V64Z" fill="#fff" tb:tag="pipe-color"/><path d="M14 64H186V136H14V64Z" fill="url(#paint0_linear_2089_217683)"/><path d="m15.5 65.5h169v69h-169v-69z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="187.5" y="51.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><rect x="1.5" y="51.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><path d="m70.5 46c0 1.933 1.567 3.5 3.5 3.5l52 1e-4c1.933 0 3.5-1.567 3.5-3.5v-37c0-4.6944-3.806-8.5-8.5-8.5h-42c-4.6944 0-8.5 3.8056-8.5 8.5v37z" fill="#1C943E" tb:tag="walve"/><path d="m70.5 46c0 1.933 1.567 3.5 3.5 3.5l52 1e-4c1.933 0 3.5-1.567 3.5-3.5v-37c0-4.6944-3.806-8.5-8.5-8.5h-42c-4.6944 0-8.5 3.8056-8.5 8.5v37z" fill="url(#paint1_linear_2089_217683)"/><path d="m70.5 46c0 1.933 1.567 3.5 3.5 3.5l52 1e-4c1.933 0 3.5-1.567 3.5-3.5v-37c0-4.6944-3.806-8.5-8.5-8.5h-42c-4.6944 0-8.5 3.8056-8.5 8.5v37z" stroke="#fff"/><path d="m110 136v-72h-21v72h21z" fill="#1C943E" tb:tag="walve"/><path d="m110 136v-72h-21v72h21z" fill="url(#paint2_linear_2089_217683)"/><path d="m110 136v-72h-21v72h21z" fill="url(#paint3_linear_2089_217683)"/><path d="m109.5 135.5v-71h-20v71h20z" stroke="#000" stroke-opacity=".12"/><path d="m126 64c2.209 0 4-1.7908 4-3.9999v-6c0-2.2092-1.791-4.0001-4-4.0001h-52c-2.2091 0-4 1.7909-4 4v6c0 2.2091 1.7909 4 4 4h52z" fill="#647484"/><path d="m126 64c2.209 0 4-1.7908 4-3.9999v-6c0-2.2092-1.791-4.0001-4-4.0001h-52c-2.2091 0-4 1.7909-4 4v6c0 2.2091 1.7909 4 4 4h52z" fill="url(#paint4_linear_2089_217683)"/><path d="m126 62.5c1.381 0 2.5-1.1193 2.5-2.5v-6c0-1.3807-1.119-2.5-2.5-2.5h-52c-1.3807 0-2.5 1.1193-2.5 2.5v6c0 1.3807 1.1193 2.5 2.5 2.5h52z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m67.262 0s-67.262 0-67.262 33.5v164.18c0 1.3256 1.7909 2.3202 4 2.3202h192c2.209 0 4-0.9946 4-2.3202v-164.18c0-33.5-66.07-33.5-66.07-33.5h-33.93zm67.07 40.6c-1.2887 0-2.3332 0.6268-2.3332 1.4v150.2c0 0.7732 1.0447 1.4 2.3332 1.4h14.667c1.2887 0 2.3332-0.6268 2.3332-1.4v-150.2c0-0.7732-1.0447-1.4-2.3332-1.4z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><defs>
+  <linearGradient id="paint0_linear_2089_217683" x1="58.72" x2="58.53" y1="64" y2="136" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_2089_217683" x1="134.3" x2="65.705" y1="8.0405" y2="9.0306" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".14093"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".39937"/>
+   <stop stop-color="#fff" stop-opacity=".3" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".59721"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".85946"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint2_linear_2089_217683" x1="99.475" x2="100.06" y1="64" y2="134.92" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset=".15823"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".28193"/>
+   <stop stop-color="#fff" stop-opacity=".2" offset=".50291"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".72128"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset=".8423"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset=".99341"/>
+  </linearGradient>
+  <linearGradient id="paint3_linear_2089_217683" x1="110" x2="89" y1="100" y2="100" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".2" offset=".01"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".05"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".15343"/>
+   <stop stop-color="#fff" stop-opacity=".2" offset=".5"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".85"/>
+   <stop stop-opacity=".12" offset=".95"/>
+   <stop stop-opacity=".2" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint4_linear_2089_217683" x1="72.287" x2="127.11" y1="55.78" y2="57.142" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".2" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".18" offset=".090959"/>
+   <stop stop-color="#020202" stop-opacity=".1" offset=".1"/>
+   <stop stop-color="#020202" stop-opacity=".08" offset=".20513"/>
+   <stop stop-color="#020202" stop-opacity=".05" offset=".21555"/>
+   <stop stop-color="#020202" stop-opacity=".02" offset=".36962"/>
+   <stop stop-color="#fff" stop-opacity=".01" offset=".37768"/>
+   <stop stop-color="#fff" stop-opacity=".01" offset=".62413"/>
+   <stop stop-color="#020202" stop-opacity=".02" offset=".6313"/>
+   <stop stop-color="#020202" stop-opacity=".05" offset=".77601"/>
+   <stop stop-color="#020202" stop-opacity=".08" offset=".7898"/>
+   <stop stop-color="#020202" stop-opacity=".1" offset=".9"/>
+   <stop stop-color="#020202" stop-opacity=".18" offset=".90846"/>
+   <stop stop-color="#020202" stop-opacity=".2" offset="1"/>
+  </linearGradient>
+ </defs>
+</svg>

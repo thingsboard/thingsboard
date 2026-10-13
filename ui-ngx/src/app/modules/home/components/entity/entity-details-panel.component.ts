@@ -1,25 +1,10 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   EventEmitter,
   Injector,
@@ -48,10 +33,11 @@ import { catchError } from 'rxjs/operators';
 import { HttpStatusCode } from '@angular/common/http';
 
 @Component({
-  selector: 'tb-entity-details-panel',
-  templateUrl: './entity-details-panel.component.html',
-  styleUrls: ['./entity-details-panel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-entity-details-panel',
+    templateUrl: './entity-details-panel.component.html',
+    styleUrls: ['./entity-details-panel.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class EntityDetailsPanelComponent extends PageComponent implements AfterViewInit, OnDestroy {
 
@@ -97,8 +83,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
 
   constructor(protected store: Store<AppState>,
               protected injector: Injector,
-              protected cd: ChangeDetectorRef,
-              protected componentFactoryResolver: ComponentFactoryResolver) {
+              protected cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -167,7 +152,6 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
       this.entityComponentRef.destroy();
       this.entityComponentRef = null;
     }
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
     const injector: Injector = Injector.create(
@@ -185,7 +169,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
         parent: this.injector
       }
     );
-    this.entityComponentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
+    this.entityComponentRef = viewContainerRef.createComponent(this.entitiesTableConfig.entityComponent, {index: 0, injector});
     this.entityComponent = this.entityComponentRef.instance;
     this.entityComponent.isEdit = this.isEdit;
     this.detailsForm = this.entityComponent.entityForm;
@@ -207,8 +191,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
     viewContainerRef.clear();
     this.entityTabsComponent = null;
     if (this.entitiesTableConfig.entityTabsComponent) {
-      const componentTabsFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityTabsComponent);
-      this.entityTabsComponentRef = viewContainerRef.createComponent(componentTabsFactory);
+      this.entityTabsComponentRef = viewContainerRef.createComponent(this.entitiesTableConfig.entityTabsComponent);
       this.entityTabsComponent = this.entityTabsComponentRef.instance;
       this.entityTabsComponent.isEdit = this.isEdit;
       this.entityTabsComponent.entitiesTableConfig = this.entitiesTableConfig;
@@ -218,6 +201,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
           if (entityTabs) {
             if (this.viewInited) {
               this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...entityTabs]);
+              this.matTabGroup.selectedIndex = this.selectedTab;
               this.matTabGroup._tabs.notifyOnChanges();
             } else {
               this.pendingTabs = entityTabs;
@@ -324,6 +308,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
     this.viewInited = true;
     if (this.pendingTabs) {
       this.matTabGroup._tabs.reset([...this.inclusiveTabs.toArray(), ...this.pendingTabs]);
+      this.matTabGroup.selectedIndex = this.selectedTab;
       this.matTabGroup._tabs.notifyOnChanges();
       this.pendingTabs = null;
     }

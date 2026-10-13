@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ILayoutController } from '@home/components/dashboard-page/layout/layout.models';
 import { DashboardContext, DashboardPageLayoutContext } from '@home/components/dashboard-page/dashboard-page.models';
@@ -36,14 +23,15 @@ import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
-import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { BreakpointId, LayoutType, ViewFormatType } from '@shared/models/dashboard.models';
 import { isNotEmptyStr } from '@core/utils';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
-  selector: 'tb-dashboard-layout',
-  templateUrl: './dashboard-layout.component.html',
-  styleUrls: ['./dashboard-layout.component.scss']
+    selector: 'tb-dashboard-layout',
+    templateUrl: './dashboard-layout.component.html',
+    styleUrls: ['./dashboard-layout.component.scss'],
+    standalone: false
 })
 export class DashboardLayoutComponent extends PageComponent implements ILayoutController, DashboardCallbacks, OnInit, OnDestroy {
 
@@ -73,16 +61,34 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.gridSettings.layoutType === LayoutType.scada;
   }
 
+  get isHtml(): boolean {
+    return this.layoutCtx.gridSettings.layoutType === LayoutType.html;
+  }
+
+  // The HTML page layout has no widget grid: its only widget is virtual and is not stored in the layout,
+  // so widgets cannot be copied from it, pasted into it, cut from it or referenced.
+  get widgetLayoutEditable(): boolean {
+    return this.isEdit && !this.isEditingWidget && !this.widgetEditMode && !this.isHtml;
+  }
+
+  get disableMargins(): boolean {
+    return this.isScada || this.isHtml;
+  }
+
   get outerMargin(): boolean {
-    return this.isScada ? false : this.layoutCtx.gridSettings.outerMargin;
+    return this.disableMargins ? false : this.layoutCtx.gridSettings.outerMargin;
   }
 
   get margin(): number {
-    return this.isScada ? 0 : this.layoutCtx.gridSettings.margin;
+    return this.disableMargins ? 0 : this.layoutCtx.gridSettings.margin;
   }
 
   get autoFillHeight(): boolean {
-    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+    if (this.isHtml) {
+      return true;
+    } else {
+      return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+    }
   }
 
   get mobileAutoFillHeight(): boolean {
@@ -99,7 +105,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   get isMobileDisabled(): boolean {
-    return this.widgetEditMode || this.isScada || (this.layoutCtx.breakpoint !== 'default' && !this.isMobileValue);
+    return this.widgetEditMode || this.isScada || this.isHtml || (this.layoutCtx.breakpoint !== 'default' && !this.isMobileValue);
   }
 
   get mobielRowHeigth(): number {
@@ -109,15 +115,11 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.gridSettings.mobileRowHeight;
   }
 
-  get colWidthInteger(): boolean {
-    return this.isScada;
-  }
-
   get columns(): number {
     return this.layoutCtx.gridSettings.minColumns || this.layoutCtx.gridSettings.columns || 24;
   }
 
-  get displayGrid(): displayGrids {
+  get displayGrid(): 'always' | 'onDrag&Resize' | 'none' {
     return this.layoutCtx.displayGrid || 'onDrag&Resize';
   }
 
@@ -177,66 +179,71 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   private initHotKeys(): void {
     this.hotKeys.push(
-      new Hotkey('ctrl+c', (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+      new Hotkey(['ctrl+c', 'meta+c'], (event: KeyboardEvent) => {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
               this.copyWidget(event, widget);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.copy'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+r', (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+      new Hotkey(['ctrl+r', 'meta+r'], (event: KeyboardEvent) => {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
               this.copyWidgetReference(event, widget);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.copy-reference'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+v', (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+      new Hotkey(['ctrl+v', 'meta+v'], (event: KeyboardEvent) => {
+          if (this.widgetLayoutEditable) {
             if (this.itembuffer.hasWidget()) {
               event.preventDefault();
               this.pasteWidget(event);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.paste'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+i', (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+      new Hotkey(['ctrl+i', 'meta+i'], (event: KeyboardEvent) => {
+          if (this.widgetLayoutEditable) {
             if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.getDashboard(),
               this.dashboardCtx.state, this.layoutCtx.id, this.layoutCtx.breakpoint)) {
               event.preventDefault();
               this.pasteWidgetReference(event);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.paste-reference'))
     );
     this.hotKeys.push(
-      new Hotkey('ctrl+x', (event: KeyboardEvent) => {
-          if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
+      new Hotkey(['ctrl+x', 'meta+x'], (event: KeyboardEvent) => {
+          if (this.widgetLayoutEditable) {
             const widget = this.dashboard.getSelectedWidget();
             if (widget) {
               event.preventDefault();
               this.layoutCtx.dashboardCtrl.removeWidget(event, this.layoutCtx, widget);
             }
+            return false;
           }
-          return false;
+          return true;
         }, null,
         this.translate.instant('action.delete'))
     );
@@ -275,8 +282,16 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.dashboard.selectWidget(widgetId, delay);
   }
 
+  get aiConfigurableForDashboard(): boolean {
+    return this.layoutCtx.dashboardCtrl.aiConfigurableForDashboard;
+  }
+
   addWidget($event: Event) {
     this.layoutCtx.dashboardCtrl.addWidget($event, this.layoutCtx);
+  }
+
+  configureWithAi($event: Event) {
+    this.layoutCtx.dashboardCtrl.configureWithAi($event);
   }
 
   onEditWidget($event: Event, widget: Widget): void {
@@ -323,34 +338,13 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.layoutCtx.dashboardCtrl.copyWidgetReference($event, this.layoutCtx, widget);
   }
 
-  pasteWidget($event: Event) {
+  pasteWidget($event: TbContextMenuEvent | KeyboardEvent) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidget($event, this.layoutCtx, pos);
   }
 
-  pasteWidgetReference($event: Event) {
+  pasteWidgetReference($event: TbContextMenuEvent | KeyboardEvent) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
-  }
-
-  updatedCurrentBreakpoint(breakpointId?: BreakpointId, showLayout = true) {
-    if (!isNotEmptyStr(breakpointId)) {
-      breakpointId = this.dashboardCtx.breakpoint;
-    }
-    if (this.layoutCtx.layoutData[breakpointId]) {
-      this.layoutCtx.breakpoint = breakpointId;
-    } else {
-      this.layoutCtx.breakpoint = 'default';
-    }
-    const layoutInfo = this.layoutCtx.layoutData[this.layoutCtx.breakpoint];
-    if (layoutInfo.gridSettings) {
-      this.layoutCtx.gridSettings = layoutInfo.gridSettings;
-    }
-    this.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
-    this.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
-    if (showLayout && this.layoutCtx.ctrl) {
-      this.layoutCtx.ctrl.reload();
-    }
-    this.layoutCtx.ignoreLoading = true;
   }
 }

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { WidgetActionsData } from '@home/components/widget/action/manage-widget-actions.component.models';
@@ -25,23 +12,30 @@ import {
 } from '@home/components/widget/action/manage-widget-actions-dialog.component';
 import { deepClone } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-widget-actions-panel',
-  templateUrl: './widget-actions-panel.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetActionsPanelComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-widget-actions-panel',
+    templateUrl: './widget-actions-panel.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetActionsPanelComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  strokedPanel = false;
 
   actionsFormGroup: UntypedFormGroup;
 
@@ -50,14 +44,17 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
   constructor(private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private cd: ChangeDetectorRef,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.actionsFormGroup = this.fb.group({
       actions: [null, []]
     });
-    this.actionsFormGroup.get('actions').valueChanges.subscribe(
+    this.actionsFormGroup.get('actions').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (val) => this.propagateChange(val)
     );
   }
@@ -115,10 +112,13 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        widgetTitle: this.widgetConfigComponent.modelValue.widgetName,
+        widgetName: this.widgetConfigComponent.modelValue.widgetName,
+        widgetTitle: this.widgetConfigComponent.modelValue.config?.title,
         callbacks: this.widgetConfigComponent.widgetConfigCallbacks,
         actionsData,
-        widgetType: this.widgetConfigComponent.widgetType
+        widgetType: this.widgetConfigComponent.widgetType,
+        defaultIconColor: this.widgetConfigComponent.widgetSettings.get('color').value,
+        additionalWidgetActionTypes: this.widgetConfigComponent.modelValue.typeParameters.additionalWidgetActionTypes
       }
     }).afterClosed().subscribe(
       (res) => {

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -36,10 +22,10 @@ import {
   ComponentStyle,
   iconStyle,
   overlayStyle,
+  resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
@@ -50,10 +36,11 @@ const horizontalLayoutPadding = 48;
 const verticalLayoutPadding = 36;
 
 @Component({
-  selector: 'tb-single-switch-widget',
-  templateUrl: './single-switch-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-single-switch-widget',
+    templateUrl: './single-switch-widget.component.html',
+    styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class SingleSwitchWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -74,6 +61,7 @@ export class SingleSwitchWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
   overlayInset = '12px';
 
   value = false;
@@ -123,6 +111,7 @@ export class SingleSwitchWidgetComponent extends
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.layout = this.settings.layout;
 
@@ -231,11 +220,15 @@ export class SingleSwitchWidgetComponent extends
   }
 
   private onResize() {
-    const height = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height;
+    const widgetBoundingClientRect = this.singleSwitchPanel.nativeElement.getBoundingClientRect();
+    const height = widgetBoundingClientRect.height;
     const switchScale = height / initialSwitchHeight;
     const paddingScale = Math.min(switchScale, 1);
-    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - (horizontalLayoutPadding * paddingScale);
-    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - (verticalLayoutPadding * paddingScale);
+    const computedStyle = getComputedStyle(this.singleSwitchPanel.nativeElement);
+    const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
+      .map(side => resolveCssSize(computedStyle[side])[0]);
+    const panelWidth = widgetBoundingClientRect.width - ((pLeft + pRight) || horizontalLayoutPadding * paddingScale);
+    const panelHeight = widgetBoundingClientRect.height - ((pTop + pBottom) || verticalLayoutPadding * paddingScale);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(1)`);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', 'auto');
     let contentWidth = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().width;

@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -30,18 +16,20 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { merge } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-no-aggregation-bar-width-settings',
-  templateUrl: './time-series-no-aggregation-bar-width-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesNoAggregationBarWidthSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-no-aggregation-bar-width-settings',
+    templateUrl: './time-series-no-aggregation-bar-width-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesNoAggregationBarWidthSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesNoAggregationBarWidthSettingsComponent implements OnInit, ControlValueAccessor {
 
@@ -64,7 +52,8 @@ export class TimeSeriesNoAggregationBarWidthSettingsComponent implements OnInit,
 
   public barWidthSettingsFormGroup: UntypedFormGroup;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -81,13 +70,17 @@ export class TimeSeriesNoAggregationBarWidthSettingsComponent implements OnInit,
         absoluteWidth: [null, [Validators.required, Validators.min(100)]]
       })
     });
-    this.barWidthSettingsFormGroup.valueChanges.subscribe(() => {
+    this.barWidthSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.barWidthSettingsFormGroup.get('strategy').valueChanges,
       this.barWidthSettingsFormGroup.get('groupWidth.relative').valueChanges,
-      this.barWidthSettingsFormGroup.get('barWidth.relative').valueChanges)
-    .subscribe(() => {
+      this.barWidthSettingsFormGroup.get('barWidth.relative').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

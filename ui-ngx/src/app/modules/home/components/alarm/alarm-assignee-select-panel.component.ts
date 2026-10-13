@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   Component,
@@ -36,7 +23,7 @@ import { emptyPageData } from '@shared/models/page/page-data';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
-import { AlarmAssigneeOption } from '@shared/models/alarm.models';
+import { AlarmAssigneeOption, getUserDisplayName, getUserInitials } from '@shared/models/alarm.models';
 
 export const ALARM_ASSIGNEE_SELECT_PANEL_DATA = new InjectionToken<any>('AlarmAssigneeSelectPanelData');
 
@@ -44,12 +31,14 @@ export interface AlarmAssigneeSelectPanelData {
   assigneeId?: string;
   assigneeOption?: AlarmAssigneeOption;
   userMode?: boolean;
+  disableAssignedToCurrentUserOption?: boolean;
 }
 
 @Component({
-  selector: 'tb-alarm-assignee-select-panel',
-  templateUrl: './alarm-assignee-panel.component.html',
-  styleUrls: ['./alarm-assignee-panel.component.scss']
+    selector: 'tb-alarm-assignee-select-panel',
+    templateUrl: './alarm-assignee-panel.component.html',
+    styleUrls: ['./alarm-assignee-panel.component.scss'],
+    standalone: false
 })
 export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit, OnDestroy {
 
@@ -59,6 +48,7 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
 
   assigneeId?: string;
   assigneeOption?: AlarmAssigneeOption;
+  disableAssignedToCurrentUserOption = false;
 
   assigneeNotSetText = 'alarm.assignee-not-set';
   assignedToCurrentUserText = this.data.userMode ? 'alarm.assigned-to-me' : 'alarm.assigned-to-current-user';
@@ -81,7 +71,7 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
   }
 
   get displayAssignedToCurrentUser(): boolean {
-    return this.assigneeOption !== AlarmAssigneeOption.currentUser;
+    return !this.disableAssignedToCurrentUserOption && this.assigneeOption !== AlarmAssigneeOption.currentUser;
   }
 
   private destroy$ = new Subject<void>();
@@ -94,6 +84,7 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
               private utilsService: UtilsService) {
     this.assigneeId = data.assigneeId;
     this.assigneeOption = data.assigneeOption;
+    this.disableAssignedToCurrentUserOption = data.disableAssignedToCurrentUserOption;
     this.selectUserFormGroup = this.fb.group({
       user: [null]
     });
@@ -165,39 +156,8 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
     }, 0);
   }
 
-  getUserDisplayName(entity: UserEmailInfo) {
-    let displayName = '';
-    if ((entity.firstName && entity.firstName.length > 0) ||
-      (entity.lastName && entity.lastName.length > 0)) {
-      if (entity.firstName) {
-        displayName += entity.firstName;
-      }
-      if (entity.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.lastName;
-      }
-    } else {
-      displayName = entity.email;
-    }
-    return displayName;
-  }
-
   getUserInitials(entity: UserEmailInfo): string {
-    let initials = '';
-    if (entity.firstName && entity.firstName.length ||
-      entity.lastName && entity.lastName.length) {
-      if (entity.firstName) {
-        initials += entity.firstName.charAt(0);
-      }
-      if (entity.lastName) {
-        initials += entity.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.email.charAt(0);
-    }
-    return initials.toUpperCase();
+    return getUserInitials(entity);
   }
 
   getFullName(entity: UserEmailInfo): string {
@@ -218,7 +178,7 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
   }
 
   getAvatarBgColor(entity: UserEmailInfo) {
-    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+    return this.utilsService.stringToHslColor(getUserDisplayName(entity), 40, 60);
   }
 
 }

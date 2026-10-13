@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.rules.lifecycle;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +19,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -97,7 +85,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         ruleNode.setName("Simple Rule Node");
         ruleNode.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode.setDebugMode(true);
+        ruleNode.setDebugSettings(DebugSettings.all());
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
         configuration.setFetchTo(TbMsgSource.METADATA);
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
@@ -117,7 +105,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 .pollInterval(10, MILLISECONDS)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
-                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), EventType.LC_EVENT.getOldName(), 1000)
+                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), EventType.LC_EVENT, 1000)
                                     .getData().stream().filter(e -> {
                                         var body = e.getBody();
                                         return body.has("event") && body.get("event").asText().equals("STARTED")
@@ -141,7 +129,13 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         log.warn("attr updated");
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, device.getId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, tbMsgCallback);
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(device.getId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .callback(tbMsgCallback)
+                .build();
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(tenantId, tbMsg, null, null);
         // Pushing Message to the system
         log.warn("before tell tbMsgCallback");

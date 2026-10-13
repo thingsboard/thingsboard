@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -41,6 +27,7 @@ import {
 } from '@home/components/widget/lib/settings/chart/label-data-key.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { defaultLegendConfig, widgetType } from '@shared/models/widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSettings> => {
   const settings: Partial<TbFlotSettings> = {
@@ -105,21 +92,22 @@ export const flotDefaultSettings = (chartType: ChartType): Partial<TbFlotSetting
 };
 
 @Component({
-  selector: 'tb-flot-widget-settings',
-  templateUrl: './flot-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => FlotWidgetSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => FlotWidgetSettingsComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-flot-widget-settings',
+    templateUrl: './flot-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => FlotWidgetSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => FlotWidgetSettingsComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class FlotWidgetSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -140,7 +128,8 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -238,34 +227,50 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
       this.flotSettingsFormGroup.addControl('dataKeysListForLabels', this.fb.control(this.fb.array([]), []));
     }
 
-    this.flotSettingsFormGroup.get('showTooltip').valueChanges.subscribe(() => {
+    this.flotSettingsFormGroup.get('showTooltip').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
 
-    this.flotSettingsFormGroup.get('xaxis.showLabels').valueChanges.subscribe(() => {
+    this.flotSettingsFormGroup.get('xaxis.showLabels').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
 
-    this.flotSettingsFormGroup.get('yaxis.showLabels').valueChanges.subscribe(() => {
+    this.flotSettingsFormGroup.get('yaxis.showLabels').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
 
     if (this.chartType === 'graph' || this.chartType === 'bar') {
-      this.flotSettingsFormGroup.get('showLegend').valueChanges.subscribe(() => {
+      this.flotSettingsFormGroup.get('showLegend').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true);
       });
-      this.flotSettingsFormGroup.get('comparisonEnabled').valueChanges.subscribe(() => {
+      this.flotSettingsFormGroup.get('comparisonEnabled').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true);
       });
-      this.flotSettingsFormGroup.get('timeForComparison').valueChanges.subscribe(() => {
+      this.flotSettingsFormGroup.get('timeForComparison').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true);
       });
-      this.flotSettingsFormGroup.get('customLegendEnabled').valueChanges.subscribe(() => {
+      this.flotSettingsFormGroup.get('customLegendEnabled').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true);
       });
     }
 
-    this.flotSettingsFormGroup.valueChanges.subscribe(() => {
+    this.flotSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
 
@@ -405,8 +410,8 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
     return this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray;
   }
 
-  public trackByLabelDataKey(index: number, labelDataKeyControl: AbstractControl): any {
-    return labelDataKeyControl;
+  get typedSelectOptions() {
+    return this.dataKeysListForLabelsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public removeLabelDataKey(index: number) {

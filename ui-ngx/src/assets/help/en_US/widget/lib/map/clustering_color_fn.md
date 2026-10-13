@@ -10,9 +10,9 @@ A JavaScript function used to compute clustering marker color.
 **Parameters:**
 
 <ul>
-  <li><b>data:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/5bb6403407aa4898084832d6698aa9ea6d484889/ui-ngx/src/app/modules/home/components/widget/lib/maps/map-models.ts#L108" target="_blank">FormattedData[]</a></code>
+  <li><b>data:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/b881f1c2985399f9665e033e2479549e97da1f36/ui-ngx/src/app/shared/models/widget.models.ts#L513" target="_blank">FormattedData[]</a></code>
     - the array of total markers contained within each cluster.<br/>
-     Represents basic entity properties (ex. <code>entityId</code>, <code>entityName</code>)<br/>and provides access to other entity attributes/timeseries declared in widget datasource configuration.
+     Represents basic entity properties (ex. <code>entityId</code>, <code>entityName</code>)<br/>and provides access to other entity attributes/timeseries declared in datasource of the data layer configuration.
   </li>
   <li><b>childCount:</b> <code>number</code> - the total number of markers contained within that cluster
   </li>
@@ -22,7 +22,7 @@ A JavaScript function used to compute clustering marker color.
 
 Should return string value presenting color of the marker.
 
-In case no data is returned, color value from **Color** settings field will be used.
+In case no data is returned, default colors will be used depending on number of markers within that cluster.
 
 <div class="divider"></div>
 
@@ -30,7 +30,8 @@ In case no data is returned, color value from **Color** settings field will be u
 
 <ul>
 <li>
-Calculate color depending on temperature telemetry value:
+Calculate color depending on temperature telemetry value.<br/>
+Ensure that the <code>temperature</code> key is included in the <b>additional data keys</b> configuration.
 </li>
 
 

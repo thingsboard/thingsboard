@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,7 +16,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -46,24 +32,23 @@ import java.util.stream.Collectors;
         nodeDetails = "Copies key-value pairs from the message to message metadata, or vice-versa, according to the configured direction and keys. " +
                 "Regular expressions can be used to define which keys-value pairs to copy. Any configured key not found in the source will be ignored.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeCopyKeysConfig",
-        icon = "content_copy"
+        icon = "content_copy",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/copy-key-value-pairs/"
 )
 public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
-    private TbCopyKeysNodeConfiguration config;
     private TbMsgSource copyFrom;
     private List<Pattern> compiledKeyPatterns;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
-        this.copyFrom = config.getCopyFrom();
+        var config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
+        copyFrom = config.getCopyFrom();
         if (copyFrom == null) {
             throw new TbNodeException("CopyFrom can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         }
-        this.compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
+        compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
     }
 
     @Override
@@ -88,9 +73,7 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     msgData = JacksonUtil.toString(msgDataNode);
                     break;
                 case DATA:
-                    Iterator<Map.Entry<String, JsonNode>> iteratorNode = dataNode.fields();
-                    while (iteratorNode.hasNext()) {
-                        Map.Entry<String, JsonNode> entry = iteratorNode.next();
+                    for (Map.Entry<String, JsonNode> entry : dataNode.properties()) {
                         String msgKey = entry.getKey();
                         JsonNode msgValue = entry.getValue();
                         if (matches(msgKey)) {
@@ -105,7 +88,10 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     log.debug("Unexpected CopyFrom value: {}. Allowed values: {}", copyFrom, TbMsgSource.values());
             }
         }
-        ctx.tellSuccess(msgChanged ? TbMsg.transformMsg(msg, metaDataCopy, msgData) : msg);
+        ctx.tellSuccess(msgChanged ? msg.transform()
+                .metaData(metaDataCopy)
+                .data(msgData)
+                .build() : msg);
     }
 
     @Override

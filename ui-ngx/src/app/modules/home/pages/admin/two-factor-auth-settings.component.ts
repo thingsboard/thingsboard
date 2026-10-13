@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
@@ -28,24 +15,41 @@ import {
   TwoFactorAuthSettings,
   TwoFactorAuthSettingsForm
 } from '@shared/models/two-factor-auth.models';
-import { isNotEmptyStr } from '@core/utils';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { isDefined, isNotEmptyStr, isUndefined } from '@core/utils';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { Authority } from '@shared/models/authority.enum';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { NotificationTargetConfigType, NotificationTargetConfigTypeInfoMap } from '@shared/models/notification.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-2fa-settings',
-  templateUrl: './two-factor-auth-settings.component.html',
-  styleUrls: [ './settings-card.scss', './two-factor-auth-settings.component.scss']
+    selector: 'tb-2fa-settings',
+    templateUrl: './two-factor-auth-settings.component.html',
+    styleUrls: ['./settings-card.scss', './two-factor-auth-settings.component.scss'],
+    standalone: false
 })
-export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
+export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm {
 
-  private readonly destroy$ = new Subject<void>();
   private readonly posIntValidation = [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)];
+
+  authState = getCurrentAuthState(this.store);
+  authUser = this.authState.authUser;
+
+  readonly = this.isTenantAdmin() && !this.userPermissionsService.hasGenericPermission(Resource.WHITE_LABELING, Operation.WRITE);
 
   twoFaFormGroup: UntypedFormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
   twoFactorAuthProvidersData = twoFactorAuthProvidersData;
+
+  notificationTargetConfigType = NotificationTargetConfigType;
+  notificationTargetConfigTypes: NotificationTargetConfigType[] = this.allowNotificationTargetConfigTypes();
+  notificationTargetConfigTypeInfoMap = NotificationTargetConfigTypeInfoMap;
+
+  filterByTenants: boolean;
+  entityType = EntityType;
 
   showMainLoadingBar = false;
 
@@ -53,7 +57,9 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               private twoFaService: TwoFactorAuthenticationService,
-              private fb: UntypedFormBuilder) {
+              private userPermissionsService: UserPermissionsService,
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -61,17 +67,17 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     this.build2faSettingsForm();
     this.twoFaService.getTwoFaSettings().subscribe((setting) => {
       this.setAuthConfigFormValue(setting);
+      this.twoFaFormGroup.markAsUntouched();
+      this.twoFaFormGroup.markAsPristine();
     });
-  }
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   confirmForm(): UntypedFormGroup {
     return this.twoFaFormGroup;
+  }
+
+  isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
   }
 
   save() {
@@ -80,7 +86,15 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       this.joinRateLimit(setting, 'verificationCodeCheckRateLimit');
       const providers = setting.providers.filter(provider => provider.enable);
       providers.forEach(provider => delete provider.enable);
-      const config = Object.assign(setting, {providers});
+      const enforcedUsersFilter = this.twoFaFormGroup.get('enforcedUsersFilter').value;
+      if (enforcedUsersFilter.filterByTenants) {
+        enforcedUsersFilter.tenantProfilesIds = null;
+      } else {
+        enforcedUsersFilter.tenantsIds = null;
+      }
+      delete enforcedUsersFilter.filterByTenants;
+      const config = Object.assign(setting, {providers}, {enforcedUsersFilter});
+      this.filterByTenants = this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').value;
       this.twoFaService.saveTwoFaSettings(config).subscribe(
         (settings) => {
           this.setAuthConfigFormValue(settings);
@@ -107,16 +121,20 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     }
   }
 
-  trackByElement(i: number, item: any) {
-    return item;
-  }
-
   get providersForm(): UntypedFormArray {
     return this.twoFaFormGroup.get('providers') as UntypedFormArray;
   }
 
   private build2faSettingsForm(): void {
     this.twoFaFormGroup = this.fb.group({
+      useSystemTwoFactorAuthSettings: [this.isTenantAdmin()],
+      enforceTwoFa: [false],
+      enforcedUsersFilter: this.fb.group({
+        type: [NotificationTargetConfigType.ALL_USERS],
+        filterByTenants: [true],
+        tenantsIds: [],
+        tenantProfilesIds: []
+      }),
       maxVerificationFailuresBeforeUserLockout: [30, [
         Validators.pattern(/^\d*$/),
         Validators.min(0),
@@ -130,14 +148,14 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeCheckRateLimitEnable: [false],
       verificationCodeCheckRateLimitNumber: [{value: 3, disabled: true}, this.posIntValidation],
       verificationCodeCheckRateLimitTime: [{value: 900, disabled: true}, this.posIntValidation],
-      minVerificationCodeSendPeriod: ['30', [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
+      minVerificationCodeSendPeriod: [30, [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
       providers: this.fb.array([])
     });
     Object.values(TwoFactorAuthProviderType).forEach(provider => {
       this.buildProvidersSettingsForm(provider);
     });
     this.twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       if (value) {
         this.twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').enable({emitEvent: false});
@@ -148,7 +166,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       }
     });
     this.providersForm.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value: TwoFactorAuthProviderConfigForm[]) => {
       const activeProvider = value.filter(provider => provider.enable);
       const indexBackupCode = Object.values(TwoFactorAuthProviderType).indexOf(TwoFactorAuthProviderType.BACKUP_CODE);
@@ -161,8 +179,27 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         this.providersForm.at(indexBackupCode).get('enable').enable( {emitEvent: false});
       }
     });
+    this.twoFaFormGroup.get('enforceTwoFa').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => {
+      if (value) {
+        this.twoFaFormGroup.get('enforcedUsersFilter').enable({emitEvent: false});
+      } else {
+        this.twoFaFormGroup.get('enforcedUsersFilter').disable({emitEvent: false});
+      }
+    });
+    if (this.readonly) {
+      this.twoFaFormGroup.disable({emitEvent: false});
+    }
   }
 
+  get atListOneProvider():boolean {
+    if ((this.isTenantAdmin() && !this.twoFaFormGroup.get('useSystemTwoFactorAuthSettings').value) ||
+      (!this.isTenantAdmin() && this.twoFaFormGroup.get('enforceTwoFa').value)) {
+      return this.providersForm.value.some(value => value.enable);
+    }
+    return true;
+  }
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
     const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings?.verificationCodeCheckRateLimit);
     const allowProvidersConfig = settings?.providers.map(provider => provider.providerType) || [];
@@ -172,19 +209,30 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeCheckRateLimitTime: checkRateLimitTime || 900,
       providers: []
     });
+    if (settings?.enforceTwoFa) {
+      this.getByIndexPanel(0).open();
+    }
     if (checkRateLimitNumber > 0) {
-      this.getByIndexPanel(this.providersForm.length).open();
+      this.getByIndexPanel(this.providersForm.length+1).open();
     }
     Object.values(TwoFactorAuthProviderType).forEach((provider, index) => {
       const findIndex = allowProvidersConfig.indexOf(provider);
       if (findIndex > -1) {
         processFormValue.providers.push(Object.assign(settings.providers[findIndex], {enable: true}));
-        this.getByIndexPanel(index).open();
+        this.getByIndexPanel(index+1).open();
       } else {
         processFormValue.providers.push({enable: false});
       }
     });
+    if (this.isTenantAdmin() && isUndefined(settings?.useSystemTwoFactorAuthSettings)) {
+      processFormValue.useSystemTwoFactorAuthSettings = true;
+    }
     this.twoFaFormGroup.patchValue(processFormValue);
+    this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter?.tenantProfilesIds);
+    this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').patchValue(this.filterByTenants, {onlySelf: true});
+    if (this.readonly) {
+      this.twoFaFormGroup.disable({emitEvent: false});
+    }
   }
 
   private buildProvidersSettingsForm(provider: TwoFactorAuthProviderType) {
@@ -212,7 +260,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     }
     const newProviders = this.fb.group(formControlConfig);
     newProviders.get('enable').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       if (value) {
         newProviders.enable({emitEvent: false});
@@ -244,5 +292,13 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     delete processFormValue[`${property}Enable`];
     delete processFormValue[`${property}Number`];
     delete processFormValue[`${property}Time`];
+  }
+
+  private allowNotificationTargetConfigTypes(): NotificationTargetConfigType[] {
+    return [
+      NotificationTargetConfigType.ALL_USERS,
+      NotificationTargetConfigType.TENANT_ADMINISTRATORS,
+      NotificationTargetConfigType.SYSTEM_ADMINISTRATORS
+    ];
   }
 }

@@ -18,12 +18,20 @@
       },
       "architect": {
         "build": {
-          "builder": "@angular-builders/custom-webpack:browser",
+          "builder": "@angular-builders/custom-esbuild:application",
           "options": {
-            "outputPath": "target/generated-resources/public",
+            "plugins": ["./esbuild/tb-esbuild-plugins.ts"],
+            "loader": {
+                ".raw": "text"
+            },
+            "outputPath": {
+                "base": "target/generated-resources/public",
+                "media": ".",
+                "browser": ""
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "browser": "src/main.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "src/tsconfig.app.json",
             "aot": true,
             "assets": [
@@ -36,6 +44,11 @@
               },
               {
                 "glob": "worker-html.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-xml.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
               },
@@ -61,8 +74,18 @@
               },
               {
                 "glob": "**/*",
-                "input": "node_modules/tinymce",
-                "output": "/assets/tinymce/"
+                "input": "node_modules/hugerte",
+                "output": "/assets/hugerte/"
+              },
+              {
+                "glob": "maplibre-gl-worker.mjs",
+                "input": "node_modules/maplibre-gl/dist/",
+                "output": "/assets/maplibre-gl/"
+              },
+              {
+                "glob": "maplibre-gl-shared.mjs",
+                "input": "node_modules/maplibre-gl/dist/",
+                "output": "/assets/maplibre-gl/"
               },
               {
                 "glob": "marker-icon-2x.png",
@@ -78,31 +101,52 @@
                 "glob": "marker-shadow.png",
                 "input": "node_modules/leaflet/dist/images/",
                 "output": "/"
+              },
+              {
+                "glob": "*.svg",
+                "input": "./node_modules/flag-icons/flags/4x3/",
+                "output": "/assets/flags/"
               }
             ],
             "styles": [
+              {
+                "input": "src/theme/app-theme.scss",
+                "bundleName": "app-theme"
+              },
+              {
+                "input": "src/theme/login-theme.scss",
+                "bundleName": "login-theme"
+              },
+              {
+                "input": "src/app/modules/home/pages/reporting/template/components/report-component-style.scss",
+                "bundleName": "report-component"
+              },
               "src/styles.scss",
               "src/form.scss",
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
               "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
               "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
-              "src/app/shared/components/json-form/react/json-form.scss",
-              "node_modules/rc-select/assets/index.less",
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
               "node_modules/leaflet/dist/leaflet.css",
-              "src/app/modules/home/components/widget/lib/maps/markers.scss",
+              "src/app/modules/home/components/widget/lib/maps/map.scss",
+              "src/app/modules/home/components/widget/lib/maps-legacy/markers.scss",
               "src/app/modules/home/components/widget/lib/home-page/home-page.scss",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
               "node_modules/prismjs/themes/prism.css",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
-              "node_modules/ace-diff/dist/ace-diff.min.css"
+              "node_modules/ace-diff/dist/ace-diff.min.css",
+              "node_modules/photoswipe/dist/photoswipe.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "src/scss"
-              ]
+                "src/scss",
+                "node_modules"
+              ],
+              "sass": {
+                "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
+              }
             },
             "scripts": [
               "node_modules/tinycolor2/dist/tinycolor-min.js",
@@ -115,51 +159,13 @@
               "node_modules/prismjs/components/prism-json.min.js",
               "node_modules/prismjs/components/prism-javascript.min.js",
               "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/prismjs/components/prism-python.min.js",
+              "node_modules/prismjs/components/prism-c.min.js",
+              "node_modules/prismjs/components/prism-cpp.min.js",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.min.js"
             ],
-            "customWebpackConfig": {
-              "path": "./extra-webpack.config.js"
-            },
             "allowedCommonJsDependencies": [
-              "hammerjs",
-              "react",
-              "react-dom",
-              "reactcss",
-              "react-ace",
-              "schema-inspector",
-              "@flowjs/flow.js",
-              "@material-ui/icons/Add",
-              "@material-ui/icons/Clear",
-              "js-beautify",
-              "mousetrap",
-              "prop-types",
-              "react-is",
-              "hoist-non-react-statics",
-              "classnames",
-              "raf",
-              "moment-timezone",
-              "tinycolor2",
-              "json-schema-defaults",
-              "leaflet-providers",
-              "lodash",
-              "jquery",
-              "jquery.terminal",
-              "tooltipster",
-              "jstree",
-              "qrcode",
-              "wcwidth",
-              "leaflet-polylinedecorator",
-              "ace-diff",
-              "messageformat-parser",
-              "html2canvas",
-              "jszip",
-              "moment",
-              "ace",
-              "ace-builds",
-              "diff-match-patch",
-              "tv4",
-              "@messageformat/parser",
-              "sorted-btree"
+              "*"
             ]
           },
           "configurations": {
@@ -182,8 +188,6 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": false,
               "budgets": [
                 {
                   "type": "initial",
@@ -193,7 +197,6 @@
               ]
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": {
                 "scripts": false,
                 "styles": {
@@ -202,7 +205,6 @@
                 },
                 "fonts": false
               },
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -210,42 +212,26 @@
           }
         },
         "serve": {
-          "builder": "@angular-builders/custom-webpack:dev-server",
+          "builder": "@angular-builders/custom-esbuild:dev-server",
           "options": {
-            "browserTarget": "thingsboard:build",
-            "proxyConfig": "proxy.conf.js"
+            "buildTarget": "thingsboard:build",
+            "proxyConfig": "proxy.conf.js",
+            "middlewares": ["./esbuild/tb-html-fallback-middleware.ts"]
           },
           "configurations": {
             "production": {
-              "browserTarget": "thingsboard:build:production"
+              "buildTarget": "thingsboard:build:production"
             },
             "development": {
-              "browserTarget": "thingsboard:build:development"
+              "buildTarget": "thingsboard:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "thingsboard:build"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
-            "karmaConfig": "src/karma.conf.js",
-            "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": [],
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ]
+            "buildTarget": "thingsboard:build"
           }
         },
         "lint": {
@@ -258,25 +244,6 @@
           }
         }
       }
-    },
-    "thingsboard-e2e": {
-      "root": "e2e/",
-      "projectType": "application",
-      "prefix": "",
-      "architect": {
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "thingsboard:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "thingsboard:serve:production"
-            }
-          }
-        }
-      }
     }
   },
   "cli": {
@@ -285,5 +252,31 @@
     "schematicCollections": [
       "@angular-eslint/schematics"
     ]
+  },
+  "schematics": {
+    "@schematics/angular:component": {
+      "type": "component"
+    },
+    "@schematics/angular:directive": {
+      "type": "directive"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
+    }
   }
 }

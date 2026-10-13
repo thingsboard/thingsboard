@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<form>
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ (readonly ? 'alarm-rule.schedule-title' : 'alarm-rule.edit-schedule') | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-padding no-border">
+      <div class="tb-form-panel stroked no-padding-bottom">
+        <div class="flex flex-row items-center justify-between">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.mode' | translate }}</div>
+          <tb-toggle-select [formControl]="dynamicModeControl" selectMediaBreakpoint="xs">
+            <tb-toggle-option [value]="false">{{ 'alarm-rule.static-schedule' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="true">{{ 'alarm-rule.dynamic-schedule' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <tb-cf-alarm-schedule [arguments]="arguments"
+                              [dynamicMode]="dynamicModeControl.value"
+                              [formControl]="alarmScheduleControl">
+        </tb-cf-alarm-schedule>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()" cdkFocusInitial>
+      {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    @if (!readonly) {
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="save()"
+              [disabled]="alarmScheduleControl.invalid || !alarmScheduleControl.dirty">
+        {{ 'action.save' | translate }}
+      </button>
+    }
+  </div>
+</form>

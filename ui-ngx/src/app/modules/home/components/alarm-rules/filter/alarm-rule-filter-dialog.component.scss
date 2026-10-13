@@ -1,0 +1,15 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host ::ng-deep {
+  .mat-mdc-form-field.tb-value-type {
+    mat-select-trigger {
+      .mat-icon {
+        vertical-align: middle;
+        margin-right: 8px;
+        svg {
+          vertical-align: initial;
+        }
+      }
+    }
+  }
+}

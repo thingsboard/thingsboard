@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -23,6 +11,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
+import org.thingsboard.server.service.log.sub.LogsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
@@ -34,11 +23,11 @@ public interface TbLocalSubscriptionService {
 
     void onSubEventCallback(TransportProtos.TbEntitySubEventCallbackProto subEventCallback, TbCallback callback);
 
-    void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty);
+    void onSubEventCallback(TenantId tenantId, EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty);
 
-    void cancelSubscription(String sessionId, int subscriptionId);
+    void cancelSubscription(TenantId tenantId, String sessionId, int subscriptionId);
 
-    void cancelAllSessionSubscriptions(String sessionId);
+    void cancelAllSessionSubscriptions(TenantId tenantId, String sessionId);
 
     void onTimeSeriesUpdate(TransportProtos.TbSubUpdateProto tsUpdate, TbCallback callback);
 
@@ -53,6 +42,8 @@ public interface TbLocalSubscriptionService {
     void onAlarmUpdate(TransportProtos.TbAlarmSubUpdateProto update, TbCallback callback);
 
     void onNotificationUpdate(EntityId entityId, NotificationsSubscriptionUpdate subscriptionUpdate, TbCallback callback);
+
+    void onLogsUpdate(EntityId entityId, LogsSubscriptionUpdate update, TbCallback callback);
 
     void onApplicationEvent(ClusterTopologyChangeEvent event);
 

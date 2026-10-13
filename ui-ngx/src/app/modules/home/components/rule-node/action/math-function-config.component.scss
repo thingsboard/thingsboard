@@ -1,0 +1,28 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host ::ng-deep {
+  .fields-group {
+    padding: 0 16px 8px;
+    margin: 10px 0;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+
+    .mat-mdc-form-field {
+      .mat-mdc-form-field-infix {
+        width: 100%;
+      }
+    }
+
+    legend {
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
+    }
+
+    legend + * {
+      display: block;
+      &.no-margin-top {
+        margin-top: 0;
+      }
+    }
+  }
+}

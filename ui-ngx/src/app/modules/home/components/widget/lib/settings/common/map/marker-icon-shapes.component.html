@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-marker-icon-shapes-panel">
+  <div class="tb-marker-icon-shapes-title" translate>widgets.maps.data-layer.marker.marker-icon</div>
+  <tb-material-icons [selectedIcon]="icon" [iconClearButton]="false" [showTitle]="false"
+  [popover]="popover" (iconSelected)="selectIcon($event)"></tb-material-icons>
+  <div class="tb-marker-icon-shapes-title" translate>widgets.maps.data-layer.marker.marker-appearance</div>
+  <div class="flex flex-row flex-wrap gap-3">
+    @for (containerInfo of iconContainers; track containerInfo) {
+      @if (containerInfo.iconContainer === iconContainer) {
+        <button class="tb-select-shape-button"
+                mat-raised-button
+                (click)="selectIconContainer(containerInfo.iconContainer)"
+                type="button">
+          <div class="tb-marker-shape" matButtonIcon [innerHTML]="containerInfo.html$ | async">
+          </div>
+        </button>
+      } @else {
+        <button class="tb-select-shape-button"
+                mat-button
+                (click)="selectIconContainer(containerInfo.iconContainer)"
+                type="button">
+          <div class="tb-marker-shape" matButtonIcon [innerHTML]="containerInfo.html$ | async">
+          </div>
+        </button>
+      }
+    }
+  </div>
+  <div class="tb-marker-icon-shapes-panel-buttons">
+    <span class="flex-1"></span>
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="apply()"
+            [disabled]="!dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

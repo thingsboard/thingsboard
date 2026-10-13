@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 
 import { AdminModule } from './admin/admin.module';
@@ -27,15 +14,24 @@ import { UserModule } from '@modules/home/pages/user/user.module';
 import { DeviceModule } from '@modules/home/pages/device/device.module';
 import { AssetModule } from '@modules/home/pages/asset/asset.module';
 import { EntityViewModule } from '@modules/home/pages/entity-view/entity-view.module';
+import { CalculatedFieldPageModule } from '@home/pages/calculated-fields/calculated-field-page.module';
 import { RuleChainModule } from '@modules/home/pages/rulechain/rulechain.module';
 import { WidgetLibraryModule } from '@modules/home/pages/widget/widget-library.module';
 import { DashboardModule } from '@modules/home/pages/dashboard/dashboard.module';
+import { IFrameViewModule } from '@home/pages/iframe/iframe-view.module';
+import { ConverterModule } from '@home/pages/converter/converter.module';
+import { IntegrationModule } from '@home/pages/integration/integration.module';
+import { RoleModule } from '@home/pages/role/role.module';
+import { SchedulerModule } from '@home/pages/scheduler/scheduler.module';
+import { EntityGroupModule } from '@home/pages/group/entity-group.module';
 import { TenantProfileModule } from './tenant-profile/tenant-profile.module';
 import { DeviceProfileModule } from './device-profile/device-profile.module';
 import { ApiUsageModule } from '@home/pages/api-usage/api-usage.module';
 import { EdgeModule } from '@home/pages/edge/edge.module';
 import { OtaUpdateModule } from '@home/pages/ota-update/ota-update.module';
+import { SolutionCreatorModule } from '@home/pages/ai-solution-creator/solution-creator.module';
 import { VcModule } from '@home/pages/vc/vc.module';
+import { TaskManagerModule } from '@home/pages/task-manager/task-manager.module';
 import { AssetProfileModule } from '@home/pages/asset-profile/asset-profile.module';
 import { ProfilesModule } from '@home/pages/profiles/profiles.module';
 import { AlarmModule } from '@home/pages/alarm/alarm.module';
@@ -43,7 +39,19 @@ import { EntitiesModule } from '@home/pages/entities/entities.module';
 import { FeaturesModule } from '@home/pages/features/features.module';
 import { NotificationModule } from '@home/pages/notification/notification.module';
 import { AccountModule } from '@home/pages/account/account.module';
+import { IntegrationsCenterModule } from '@home/pages/integration/integrations-center.module';
+import { CustomTranslationModule } from '@home/pages/custom-translation/custom-translation.module';
 import { ScadaSymbolModule } from '@home/pages/scada-symbol/scada-symbol.module';
+import { GatewaysModule } from '@home/pages/gateways/gateways.module';
+import { MobileModule } from '@home/pages/mobile/mobile.module';
+import { CustomMenuModule } from '@home/pages/custom-menu/custom-menu.module';
+import { SecretStorageModule } from '@home/pages/secret-storage/secret-storage.module';
+import { AiModelModule } from '@home/pages/ai-model/ai-model.module';
+import { ReportingModule } from '@home/pages/reporting/reporting.module';
+import { TrendzAnalyticsModule } from '@home/pages/trendz-analytics/trendz-analytics.module';
+import { TrendzSettingsModule } from '@home/pages/trendz-settings/trendz-settings.module';
+import { AgentModule } from '@home/pages/agent/agent.module';
+import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
 
 @NgModule({
   exports: [
@@ -58,23 +66,46 @@ import { ScadaSymbolModule } from '@home/pages/scada-symbol/scada-symbol.module'
     ProfilesModule,
     EntitiesModule,
     FeaturesModule,
+    MobileModule,
     NotificationModule,
     DeviceModule,
     AssetModule,
     AlarmModule,
     EdgeModule,
+    AgentModule,
     EntityViewModule,
     CustomerModule,
+    CalculatedFieldPageModule,
     RuleChainModule,
     WidgetLibraryModule,
     DashboardModule,
     AuditLogModule,
     ApiUsageModule,
+    GatewaysModule,
     OtaUpdateModule,
     UserModule,
-    VcModule,
     AccountModule,
-    ScadaSymbolModule
+    RoleModule,
+    SecretStorageModule,
+    IntegrationsCenterModule,
+    ConverterModule,
+    IntegrationModule,
+    EntityGroupModule,
+    IFrameViewModule,
+    SchedulerModule,
+    OtaUpdateModule,
+    SolutionCreatorModule,
+    VcModule,
+    TaskManagerModule,
+    AccountModule,
+    ScadaSymbolModule,
+    CustomTranslationModule,
+    CustomMenuModule,
+    AiModelModule,
+    ReportingModule,
+    TrendzAnalyticsModule,
+    TrendzSettingsModule,
+    IotHubModule
   ]
 })
 export class HomePagesModule { }

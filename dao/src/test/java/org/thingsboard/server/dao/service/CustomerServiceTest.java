@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -30,14 +18,25 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -45,20 +44,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 public class CustomerServiceTest extends AbstractServiceTest {
 
     @Autowired
     CustomerService customerService;
+    @Autowired
+    CalculatedFieldService calculatedFieldService;
+    @Autowired
+    AssetService assetService;
 
     static final int TIMEOUT = 30;
 
     ListeningExecutorService executor;
 
     @Before
-    public void before() {
+    public void beforeRun() {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
     }
 
@@ -310,6 +313,17 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindOrCreatePublicCustomer_Concurrency() throws Exception {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("My customer");
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Assert.assertNotNull(savedCustomer);
+        Assert.assertNotNull(savedCustomer.getId());
+        Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
+        Assert.assertEquals(customer.getTenantId(), savedCustomer.getTenantId());
+        Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
+
         CountDownLatch allThreadsReadyLatch = new CountDownLatch(2);
         final Customer[] customers = new Customer[2];
 
@@ -322,7 +336,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
                     allThreadsReadyLatch.countDown();
                     try {
                         allThreadsReadyLatch.await();
-                        customers[threadIndex] = customerService.findOrCreatePublicCustomer(tenantId);
+                        customers[threadIndex] = customerService.findOrCreatePublicCustomer(tenantId, savedCustomer.getId());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -341,6 +355,52 @@ public class CustomerServiceTest extends AbstractServiceTest {
                 executor.shutdownNow();
             }
         }
+    }
+
+    @Test
+    public void testDeleteCustomerIfReferencedInCalculatedField() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("My customer");
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = assetService.saveAsset(asset);
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setTenantId(tenantId);
+        calculatedField.setName("Test CF");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setEntityId(savedAsset.getId());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        argument.setRefEntityId(savedCustomer.getId());
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+
+        config.setArguments(Map.of("T", argument));
+
+        config.setExpression("T - (100 - H) / 5");
+
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("output");
+
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> customerService.deleteCustomer(tenantId, savedCustomer.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Can't delete customer that is referenced in calculated fields!");
+
+        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
 
 }

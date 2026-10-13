@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +24,8 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
 
-    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
+    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId,
+                          RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
         super(systemContext, tenantId, ruleNodeId);
         this.ruleChainName = ruleChainName;
         this.ruleChainId = ruleChainId;
@@ -46,7 +34,7 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
 
     @Override
     protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
-        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx.getParentRef(), ctx);
+        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx);
     }
 
     @Override
@@ -118,7 +106,6 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
             this.ruleChainId = ruleChainId;
             this.ruleChainName = ruleChainName;
             this.ruleNodeId = ruleNodeId;
-
         }
 
         @Override

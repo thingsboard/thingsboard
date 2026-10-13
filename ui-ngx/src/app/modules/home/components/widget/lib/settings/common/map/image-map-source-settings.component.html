@@ -1,0 +1,53 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-image-map-source-settings tb-form-panel stroked" [formGroup]="imageMapSourceFormGroup">
+  <div class="flex flex-row items-center justify-between">
+    <div class="tb-form-panel-title">
+      {{ 'widgets.maps.image.image-source' | translate }}
+    </div>
+    <tb-toggle-select formControlName="sourceType">
+      <tb-toggle-option [value]="ImageSourceType.image">{{ 'widgets.maps.image.image-source-image' | translate }}</tb-toggle-option>
+      <tb-toggle-option [value]="ImageSourceType.entityKey">{{ 'widgets.maps.image.image-source-entity-key' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  @if (ImageSourceType.image === imageMapSourceFormGroup.get('sourceType').value) {
+    <tb-gallery-image-input
+      required
+      formControlName="url">
+    </tb-gallery-image-input>
+  }
+  @if (ImageSourceType.entityKey === imageMapSourceFormGroup.get('sourceType').value) {
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.image.source-entity-alias</div>
+      <tb-entity-alias-select
+        class="flex-1"
+        tbRequired
+        inlineField
+        [aliasController]="context.aliasController"
+        formControlName="entityAliasId"
+        [callbacks]="context.callbacks">
+      </tb-entity-alias-select>
+    </div>
+    <div class="tb-form-row tb-standard-fields column-xs">
+      <div class="fixed-title-width" translate>widgets.maps.image.image-url-key</div>
+      <tb-data-key-input
+        class="flex-1"
+        required
+        requiredText="widgets.maps.image.image-url-key-required"
+        [datasourceType]="DatasourceType.entity"
+        [entityAliasId]="imageMapSourceFormGroup.get('entityAliasId').value"
+        [aliasController]="context.aliasController"
+        [widgetType]="widgetType.latest"
+        [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+        [callbacks]="context.callbacks"
+        [generateKey]="context.generateDataKey"
+        (keyEdit)="editKey()"
+        formControlName="entityKey">
+      </tb-data-key-input>
+    </div>
+  }
+</div>

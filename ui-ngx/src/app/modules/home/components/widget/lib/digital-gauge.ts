@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as CanvasGauges from 'canvas-gauges';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
@@ -21,13 +8,20 @@ import {
   DigitalGaugeSettings
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { Subscription } from 'rxjs';
-import { ColorProcessor, createValueSubscription, ValueSourceType } from '@shared/models/widget-settings.models';
+import {
+  ColorProcessor,
+  createValueSubscription,
+  ValueFormatProcessor,
+  ValueSourceType
+} from '@shared/models/widget-settings.models';
+import { UnitService } from '@core/services/unit.service';
+import { isNotEmptyTbUnits } from '@shared/models/unit.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -49,7 +43,7 @@ export class TbCanvasDigitalGauge {
     const keyColor = settings.defaultColor || dataKey.color;
 
     this.localSettings.unitTitle = ((settings.showUnitTitle === true) ?
-      (settings.unitTitle && settings.unitTitle.length > 0 ?
+      ctx.$injector.get(CustomTranslatePipe).transform(settings.unitTitle && settings.unitTitle.length > 0 ?
         settings.unitTitle : dataKey.label) : '');
 
     this.localSettings.showUnitTitle = settings.showUnitTitle === true;
@@ -69,11 +63,11 @@ export class TbCanvasDigitalGauge {
     this.localSettings.tickWidth = settings.tickWidth || 4;
     this.localSettings.colorTicks = settings.colorTicks || '#666';
 
-    this.localSettings.decimals = isDefined(dataKey.decimals) ? dataKey.decimals :
+    this.localSettings.decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
       (isDefinedAndNotNull(settings.decimals) ? settings.decimals : ctx.decimals);
 
-    this.localSettings.units = dataKey.units && dataKey.units.length ? dataKey.units :
-      (isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units);
+    this.localSettings.units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units :
+      (isNotEmptyTbUnits(settings.units) ? settings.units : ctx.units);
 
     this.localSettings.hideValue = settings.showValue !== true;
     this.localSettings.hideMinMax = settings.showMinMax !== true;
@@ -81,7 +75,7 @@ export class TbCanvasDigitalGauge {
       -TbCanvasDigitalGauge.toRadians(settings.donutStartAngle) : null;
 
     this.localSettings.title = ((settings.showTitle === true) ?
-      (settings.title && settings.title.length > 0 ?
+      ctx.$injector.get(CustomTranslatePipe).transform(settings.title && settings.title.length > 0 ?
         settings.title : dataKey.label) : '');
 
     if (!this.localSettings.unitTitle && this.localSettings.showTimestamp) {
@@ -117,6 +111,11 @@ export class TbCanvasDigitalGauge {
     });
 
     this.barColorProcessor = ColorProcessor.fromSettings(settings.barColor, this.ctx);
+    this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
+      units: this.localSettings.units,
+      decimals: this.localSettings.decimals,
+      ignoreUnitSymbol: true
+    });
 
     const gaugeData: CanvasDigitalGaugeOptions = {
       renderTo: gaugeElement,
@@ -125,6 +124,7 @@ export class TbCanvasDigitalGauge {
       gaugeColor: this.localSettings.gaugeColor,
 
       barColorProcessor: this.barColorProcessor,
+      valueFormat: this.valueFormat,
 
       colorTicks: this.localSettings.colorTicks,
       tickWidth: this.localSettings.tickWidth,
@@ -162,7 +162,7 @@ export class TbCanvasDigitalGauge {
       dashThickness: this.localSettings.dashThickness,
       roundedLineCap: this.localSettings.roundedLineCap,
 
-      symbol: this.localSettings.units,
+      symbol: this.ctx.$injector.get(UnitService).getTargetUnitSymbol(this.localSettings.units),
       unitTitle: this.localSettings.unitTitle,
       showUnitTitle: this.localSettings.showUnitTitle,
       showTimestamp: this.localSettings.showTimestamp,
@@ -191,6 +191,7 @@ export class TbCanvasDigitalGauge {
   private ticksSourcesSubscription: IWidgetSubscription;
 
   private readonly barColorProcessor: ColorProcessor;
+  private readonly valueFormat: ValueFormatProcessor;
 
   private gauge: CanvasDigitalGauge;
 
@@ -260,6 +261,8 @@ export class TbCanvasDigitalGauge {
         if (value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
+          } else {
+            delete this.gauge._value;
           }
           this.gauge.value = value;
         } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {

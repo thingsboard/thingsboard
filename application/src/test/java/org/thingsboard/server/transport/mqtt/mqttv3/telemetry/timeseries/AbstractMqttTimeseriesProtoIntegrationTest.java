@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt.mqttv3.telemetry.timeseries;
 
 import com.github.os72.protobuf.dynamic.DynamicSchema;
@@ -457,6 +444,31 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         client.publish(POST_DATA_TELEMETRY_TOPIC, MALFORMED_PROTO_PAYLOAD.getBytes());
         callback.getDeliveryLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertFalse(callback.isPubAckReceived());
+    }
+
+    @Override
+    public void testAckIsReceivedOnFailedPublishMessage() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .gatewayName("Test Post Telemetry gateway proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
+
+        TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
+        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
+        String deviceName1 = "Device A";
+        String deviceName2 = "Device B";
+        TransportApiProtos.TelemetryMsg deviceATelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName1, expectedKeys, 10000, 20000);
+        gatewayTelemetryMsgProtoBuilder.addAllMsg(List.of(deviceATelemetryMsgProto));
+        TransportApiProtos.GatewayTelemetryMsg payload1 = gatewayTelemetryMsgProtoBuilder.build();
+
+        TransportApiProtos.TelemetryMsg deviceBTelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName2, expectedKeys, 10000, 20000);
+        TransportApiProtos.GatewayTelemetryMsg payload2 = TransportApiProtos.GatewayTelemetryMsg.newBuilder()
+                .addAllMsg(List.of(deviceBTelemetryMsgProto))
+                .build();
+        super.testAckIsReceivedOnFailedPublishMessage(deviceName1, payload1.toByteArray(), deviceName2, payload2.toByteArray());
     }
 
     private DynamicSchema getDynamicSchema() {

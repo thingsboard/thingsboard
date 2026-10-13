@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.util;
 
 import com.google.common.util.concurrent.Futures;
@@ -22,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -76,7 +63,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class EntitiesFieldsAsyncLoaderTest {
 
-    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final ListeningExecutor DB_EXECUTOR = DirectListeningExecutor.INSTANCE;
     private static EnumSet<EntityType> SUPPORTED_ENTITY_TYPES;
     private static UUID RANDOM_UUID;
     private static TenantId TENANT_ID;
@@ -104,7 +91,7 @@ public class EntitiesFieldsAsyncLoaderTest {
     @BeforeAll
     public static void setup() {
         RANDOM_UUID = UUID.randomUUID();
-        TENANT_ID = new TenantId(UUID.randomUUID());
+        TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
         SUPPORTED_ENTITY_TYPES = EnumSet.of(
                 EntityType.TENANT,
                 EntityType.CUSTOMER,
@@ -172,7 +159,7 @@ public class EntitiesFieldsAsyncLoaderTest {
     private void initMocks(EntityType entityType, boolean entityDoesNotExist) {
         switch (entityType) {
             case TENANT:
-                var tenant = Futures.immediateFuture(entityDoesNotExist ? null : new Tenant(new TenantId(RANDOM_UUID)));
+                var tenant = Futures.immediateFuture(entityDoesNotExist ? null : new Tenant(TenantId.fromUUID(RANDOM_UUID)));
 
                 when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
                 when(ctxMock.getTenantService()).thenReturn(tenantServiceMock);

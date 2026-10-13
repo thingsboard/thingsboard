@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { inject, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, RouterModule, Routes } from '@angular/router';
 
@@ -26,7 +12,12 @@ import { WidgetService } from '@core/http/widget.service';
 import { WidgetEditorComponent } from '@home/pages/widget/widget-editor.component';
 import { map } from 'rxjs/operators';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
-import { widgetType, WidgetTypeDetails, WidgetTypeInfo } from '@app/shared/models/widget.models';
+import {
+  migrateWidgetTypeToDynamicForms,
+  widgetType,
+  WidgetTypeDetails,
+  WidgetTypeInfo
+} from '@app/shared/models/widget.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { WidgetTypesTableConfigResolver } from '@home/pages/widget/widget-types-table-config.resolver';
@@ -68,10 +59,13 @@ const widgetEditorDataResolver: ResolveFn<WidgetEditorData> = (route: ActivatedR
     );
   } else {
     return inject(WidgetService).getWidgetTypeById(widgetTypeId).pipe(
-      map((result) => ({
-        widgetTypeDetails: result,
-        widget: detailsToWidgetInfo(result)
-      }))
+      map((result) => {
+        result = migrateWidgetTypeToDynamicForms(result);
+        return {
+          widgetTypeDetails: result,
+          widget: detailsToWidgetInfo(result)
+        };
+      })
     );
   }
 };
@@ -80,9 +74,11 @@ export const widgetsBundleWidgetsBreadcumbLabelFunction: BreadCrumbLabelFunction
   route.data.widgetsBundle.title);
 
 export const widgetEditorBreadcumbLabelFunction: BreadCrumbLabelFunction<WidgetEditorComponent> =
-  ((route, translate, component) =>
-    component?.widget?.widgetName ?
-      (component.widget.widgetName + (component.widget.deprecated ? ` (${translate.instant('widget.deprecated')})` : '')) : '');
+  ((route, translate, component) => {
+    const widget = component?.widget ?? route.data?.widgetEditorData?.widget;
+    return widget?.widgetName ?
+      (widget.widgetName + (widget.deprecated ? ` (${translate.instant('widget.deprecated')})` : '')) : '';
+  });
 
 const widgetEditorRouter: Routes = [
   {
@@ -234,7 +230,8 @@ export const widgetsLibraryRoutes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        menuId: MenuId.widget_library
+        menuId: MenuId.widget_library,
+        skip: true
       }
     },
     children: [

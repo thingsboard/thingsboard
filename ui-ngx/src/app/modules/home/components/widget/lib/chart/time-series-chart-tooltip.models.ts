@@ -1,29 +1,14 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { isFunction } from '@core/utils';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { isDefined, isFunction, isNotEmptyStr } from '@core/utils';
 import { FormattedData } from '@shared/models/widget.models';
 import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/widget-settings.models';
-import {
-  TimeSeriesChartDataItem,
-} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { TimeSeriesChartDataItem } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { Renderer2, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { Interval } from '@shared/models/time/time.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export type TimeSeriesChartTooltipValueFormatFunction =
   (value: any, latestData: FormattedData, units?: string, decimals?: number) => string;
@@ -39,11 +24,13 @@ export interface TimeSeriesChartTooltipWidgetSettings {
   tooltipValueFormatter?: string | TimeSeriesChartTooltipValueFormatFunction;
   tooltipShowDate: boolean;
   tooltipDateInterval?: boolean;
+  tooltipHideZeroValues?: boolean;
   tooltipDateFormat: DateFormatSettings;
   tooltipDateFont: Font;
   tooltipDateColor: string;
   tooltipBackgroundColor: string;
   tooltipBackgroundBlur: number;
+  tooltipStackedShowTotal?: boolean
 }
 
 export enum TimeSeriesChartTooltipTrigger {
@@ -89,7 +76,8 @@ export class TimeSeriesChartTooltip {
               private sanitizer: DomSanitizer,
               private settings: TimeSeriesChartTooltipWidgetSettings,
               private tooltipDateFormat: DateFormatProcessor,
-              private valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction) {
+              private valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction,
+              private translate: TranslateService) {
 
   }
 
@@ -102,6 +90,9 @@ export class TimeSeriesChartTooltip {
     const tooltipParams = TimeSeriesChartTooltip.mapTooltipParams(params, series, focusedSeriesIndex);
     if (!tooltipParams.items.length && !tooltipParams.comparisonItems.length) {
       return null;
+    }
+    if (this.settings.tooltipHideZeroValues && !tooltipParams.items.some(value => value.param.value[1] && value.param.value[1] !== 'false')) {
+      return undefined;
     }
 
     const tooltipElement: HTMLElement = this.renderer.createElement('div');
@@ -128,14 +119,65 @@ export class TimeSeriesChartTooltip {
       if (this.settings.tooltipShowDate) {
         this.renderer.appendChild(tooltipItemsElement, this.constructTooltipDateElement(items[0].param, interval));
       }
+      let total = 0;
+      let isStacked = false;
+      const totalUnits = new Set<string>();
+      let totalDecimal = 0;
       for (const item of items) {
-        this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
+        if (this.shouldShowItem(item)) {
+          this.renderer.appendChild(tooltipItemsElement, this.constructTooltipSeriesElement(item));
+          if (item.dataItem?.option?.stack !== undefined && !isNaN(Number(item.param.value[1]))) {
+            isStacked = true;
+            total += Number(item.param.value[1]);
+            if (isNotEmptyStr(item.dataItem.units)) {
+              totalUnits.add(item.dataItem.units);
+            }
+            if (isDefined(item.dataItem.decimals)) {
+              totalDecimal = Math.max(item.dataItem.decimals, totalDecimal);
+            }
+          }
+        }
+      }
+      if (isStacked && this.settings.tooltipStackedShowTotal) {
+        const unit = totalUnits.size === 1 ? Array.from(totalUnits.values())[0] : "";
+        const totalValue = this.valueFormatFunction(total, {} as FormattedData, unit, totalDecimal);
+        this.renderer.appendChild(tooltipItemsElement, this.constructTooltipTotalStackedElement(totalValue));
+      }
+    }
+  }
+
+  private shouldShowItem(item: TooltipItem): boolean {
+    if (!this.settings.tooltipHideZeroValues) return true;
+    const value = item.param?.value?.[1];
+    return value && value !== 'false';
+  }
+
+  private createElement(tag = 'div', styles?: Record<string, string>): HTMLElement {
+    const node = this.renderer.createElement(tag);
+    if (styles) {
+      for (const [k, v] of Object.entries(styles)) {
+        this.renderer.setStyle(node, k, v);
+      }
+    }
+    return node;
+  }
+
+  private applyFont(el: HTMLElement, font: {family: string; size: number; sizeUnit: string; style: string; weight: string; lineHeight: string}, color: string, overrides?: Partial<CSSStyleDeclaration>) {
+    this.renderer.setStyle(el, 'font-family', font.family);
+    this.renderer.setStyle(el, 'font-size', `${font.size}${font.sizeUnit}`);
+    this.renderer.setStyle(el, 'font-style', font.style);
+    this.renderer.setStyle(el, 'font-weight', font.weight);
+    this.renderer.setStyle(el, 'line-height', font.lineHeight);
+    this.renderer.setStyle(el, 'color', color);
+    if (overrides) {
+      for (const [k, v] of Object.entries(overrides)) {
+        if (v != null) this.renderer.setStyle(el, k, v as string);
       }
     }
   }
 
   private constructTooltipDateElement(param: CallbackDataParams, interval?: Interval): HTMLElement {
-    const dateElement: HTMLElement = this.renderer.createElement('div');
+    const dateElement = this.createElement();
     let dateText: string;
     const startTs = param.value[2];
     const endTs = param.value[3];
@@ -152,43 +194,25 @@ export class TimeSeriesChartTooltip {
       dateText = this.tooltipDateFormat.update(ts, interval);
     }
     this.renderer.appendChild(dateElement, this.renderer.createText(dateText));
-    this.renderer.setStyle(dateElement, 'font-family', this.settings.tooltipDateFont.family);
-    this.renderer.setStyle(dateElement, 'font-size', this.settings.tooltipDateFont.size + this.settings.tooltipDateFont.sizeUnit);
-    this.renderer.setStyle(dateElement, 'font-style', this.settings.tooltipDateFont.style);
-    this.renderer.setStyle(dateElement, 'font-weight', this.settings.tooltipDateFont.weight);
-    this.renderer.setStyle(dateElement, 'line-height', this.settings.tooltipDateFont.lineHeight);
-    this.renderer.setStyle(dateElement, 'color', this.settings.tooltipDateColor);
+    this.applyFont(dateElement, this.settings.tooltipDateFont, this.settings.tooltipDateColor);
     return dateElement;
   }
 
   private constructTooltipSeriesElement(item: TooltipItem): HTMLElement {
-    const labelValueElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(labelValueElement, 'display', 'flex');
-    this.renderer.setStyle(labelValueElement, 'flex-direction', 'row');
-    this.renderer.setStyle(labelValueElement, 'align-items', 'center');
-    this.renderer.setStyle(labelValueElement, 'align-self', 'stretch');
-    this.renderer.setStyle(labelValueElement, 'gap', '12px');
-    const labelElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(labelElement, 'display', 'flex');
-    this.renderer.setStyle(labelElement, 'align-items', 'center');
-    this.renderer.setStyle(labelElement, 'gap', '8px');
-    this.renderer.appendChild(labelValueElement, labelElement);
-    const circleElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(circleElement, 'width', '8px');
-    this.renderer.setStyle(circleElement, 'height', '8px');
-    this.renderer.setStyle(circleElement, 'border-radius', '50%');
-    this.renderer.setStyle(circleElement, 'background', item.param.color);
-    this.renderer.appendChild(labelElement, circleElement);
-    const labelTextElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setProperty(labelTextElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, item.param.seriesName));
-    this.renderer.setStyle(labelTextElement, 'font-family', this.settings.tooltipLabelFont.family);
-    this.renderer.setStyle(labelTextElement, 'font-size', this.settings.tooltipLabelFont.size + this.settings.tooltipLabelFont.sizeUnit);
-    this.renderer.setStyle(labelTextElement, 'font-style', this.settings.tooltipLabelFont.style);
-    this.renderer.setStyle(labelTextElement, 'font-weight', this.settings.tooltipLabelFont.weight);
-    this.renderer.setStyle(labelTextElement, 'line-height', this.settings.tooltipLabelFont.lineHeight);
-    this.renderer.setStyle(labelTextElement, 'color', this.settings.tooltipLabelColor);
-    this.renderer.appendChild(labelElement, labelTextElement);
-    const valueElement: HTMLElement = this.renderer.createElement('div');
+    const row = this.createElement('div', {display: 'flex', 'flex-direction': 'row', 'align-items': 'center', 'align-self': 'stretch', gap: '12px'});
+
+    const label = this.createElement('div', { display: 'flex', 'align-items': 'center', gap: '8px' });
+    this.renderer.appendChild(row, label);
+
+    const dot = this.createElement('div', { width: '8px', height: '8px', 'border-radius': '50%', background: item.param.color as string });
+    this.renderer.appendChild(label, dot);
+
+    const labelText = this.createElement('div');
+    this.renderer.setProperty(labelText, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, item.param.seriesName));
+    this.applyFont(labelText, this.settings.tooltipLabelFont, this.settings.tooltipLabelColor);
+    this.renderer.appendChild(label, labelText);
+
+    const valueElement: HTMLElement = this.createElement('div', { flex: '1', 'text-align': 'end' });
     let formatFunction = this.valueFormatFunction;
     let latestData: FormattedData;
     let units = '';
@@ -206,19 +230,32 @@ export class TimeSeriesChartTooltip {
     }
     const value = formatFunction(item.param.value[1], latestData, units, decimals);
     this.renderer.setProperty(valueElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, value));
-    this.renderer.setStyle(valueElement, 'flex', '1');
-    this.renderer.setStyle(valueElement, 'text-align', 'end');
-    this.renderer.setStyle(valueElement, 'font-family', this.settings.tooltipValueFont.family);
-    this.renderer.setStyle(valueElement, 'font-size', this.settings.tooltipValueFont.size + this.settings.tooltipValueFont.sizeUnit);
-    this.renderer.setStyle(valueElement, 'font-style', this.settings.tooltipValueFont.style);
-    this.renderer.setStyle(valueElement, 'font-weight', this.settings.tooltipValueFont.weight);
-    this.renderer.setStyle(valueElement, 'line-height', this.settings.tooltipValueFont.lineHeight);
-    this.renderer.setStyle(valueElement, 'color', this.settings.tooltipValueColor);
-    this.renderer.appendChild(labelValueElement, valueElement);
-    return labelValueElement;
+    this.applyFont(valueElement, this.settings.tooltipValueFont, this.settings.tooltipValueColor);
+    this.renderer.appendChild(row, valueElement);
+
+    return row;
   }
 
-  private static mapTooltipParams(params: CallbackDataParams[] | CallbackDataParams,
+  private constructTooltipTotalStackedElement(total: string): HTMLElement {
+    const row = this.createElement('div', {display: 'flex', 'flex-direction': 'row', 'align-items': 'center', 'align-self': 'stretch', gap: '12px'});
+
+    const label = this.createElement('div', { display: 'flex', 'align-items': 'center', gap: '8px' });
+    this.renderer.appendChild(row, label);
+
+    const labelText = this.createElement('div');
+    this.renderer.setProperty(labelText, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, this.translate.instant('legend.Total')));
+    this.applyFont(labelText, this.settings.tooltipLabelFont, this.settings.tooltipLabelColor, { fontWeight: 'bold' });
+    this.renderer.appendChild(label, labelText);
+
+    const valueEl = this.createElement('div', { flex: '1', 'text-align': 'end' });
+    this.renderer.setProperty(valueEl, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, total));
+    this.applyFont(valueEl, this.settings.tooltipValueFont, this.settings.tooltipValueColor, { fontWeight: 'bold' });
+    this.renderer.appendChild(row, valueEl);
+
+    return row;
+  }
+
+private static mapTooltipParams(params: CallbackDataParams[] | CallbackDataParams,
                                   series?: TimeSeriesChartDataItem[],
                                   focusedSeriesIndex?: number): TooltipParams {
     const result: TooltipParams = {
@@ -242,7 +279,9 @@ export class TimeSeriesChartTooltip {
       TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
     } else if (Array.isArray(params)) {
       for (seriesParams of params) {
-        TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
+        if (seriesParams.value) {
+          TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
+        }
       }
     }
     return result;

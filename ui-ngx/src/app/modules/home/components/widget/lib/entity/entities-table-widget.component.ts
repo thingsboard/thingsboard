@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -36,28 +23,63 @@ import {
   DataKey,
   Datasource,
   DatasourceData,
+  DatasourceType,
   WidgetActionDescriptor,
   WidgetConfig
 } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from '@core/utils';
+import {
+  checkNumericStringAndConvert,
+  deepClone,
+  hashCode,
+  isDefined,
+  isDefinedAndNotNull,
+  isObject,
+  isUndefined
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
+import {
+  BehaviorSubject,
+  EMPTY,
+  firstValueFrom,
+  forkJoin,
+  from,
+  fromEvent,
+  merge,
+  Observable,
+  of,
+  ReplaySubject,
+  Subject,
+  switchMap
+} from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import {
+  catchError,
+  concatMap,
+  debounceTime,
+  distinctUntilChanged,
+  expand,
+  map,
+  share,
+  takeUntil,
+  tap,
+  toArray
+} from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
+  CellContentFunctionInfo,
   CellContentInfo,
   CellStyleInfo,
   checkHasActions,
+  columnExportOptions,
   constructTableCssString,
   DisplayColumn,
   EntityColumn,
@@ -66,7 +88,7 @@ import {
   findColumnByEntityKey,
   findEntityKeyByColumnDef,
   fromEntityColumnDef,
-  getCellContentInfo,
+  getCellContentFunctionInfo,
   getCellStyleInfo,
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
@@ -75,6 +97,8 @@ import {
   getHeaderTitle,
   getRowStyleInfo,
   getTableCellButtonActions,
+  isValidPageStepCount,
+  isValidPageStepIncrement,
   noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
@@ -93,20 +117,25 @@ import {
 import { Direction } from '@shared/models/page/sort-order';
 import {
   dataKeyToEntityKey,
+  EntityData as QueryEntityData,
   EntityDataPageLink,
   entityDataPageLinkSortDirection,
+  EntityDataQuery,
   EntityKeyType,
+  getLatestDataValue,
   KeyFilter
 } from '@shared/models/query/query.models';
-import { sortItems } from '@shared/models/page/page-link';
+import { SortColumnType, sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
+import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
+import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -120,9 +149,10 @@ interface EntitiesTableWidgetSettings extends TableWidgetSettings {
 }
 
 @Component({
-  selector: 'tb-entities-table-widget',
-  templateUrl: './entities-table-widget.component.html',
-  styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss']
+    selector: 'tb-entities-table-widget',
+    templateUrl: './entities-table-widget.component.html',
+    styleUrls: ['./entities-table-widget.component.scss', './../table-widget.scss'],
+    standalone: false
 })
 export class EntitiesTableWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -139,7 +169,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public showCellActionsMenu = true;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
@@ -161,17 +191,18 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private widgetResize$: ResizeObserver;
   private destroy$ = new Subject<void>();
 
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = 'entityName';
 
-  private contentsInfo: {[key: string]: CellContentInfo} = {};
-  private stylesInfo: {[key: string]: CellStyleInfo} = {};
+  private contentsInfo: {[key: string]: WithOptional<CellContentInfo, 'valueFormat'>} = {};
+  private stylesInfo: {[key: string]: Observable<CellStyleInfo>} = {};
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnExportParameters: {[key: string]: columnExportOptions} = {};
   private columnsWithCellClick: Array<number> = [];
 
-  private rowStylesInfo: RowStyleInfo;
+  private rowStylesInfo: Observable<RowStyleInfo>;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -191,11 +222,14 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   };
 
+  private postProcessingFunctionMap = new Map<string, Observable<CompiledTbFunction<any>>>();
+
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
               private ngZone: NgZone,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
+              private entityService: EntityService,
               private utils: UtilsService,
               private datePipe: DatePipe,
               private translate: TranslateService,
@@ -221,11 +255,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.ngZone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }
@@ -260,6 +296,15 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     if (this.displayPagination) {
       this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
+
+      this.ctx.aliasController?.filtersChanged.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((filters) => {
+        let currentFilterId = this.ctx.defaultSubscription.options.datasources?.[0]?.filterId;
+        if (currentFilterId && filters.includes(currentFilterId)) {
+          this.paginator.firstPage();
+        }
+      });
     }
     ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
       takeUntil(this.destroy$)
@@ -287,6 +332,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
+    this.ctx.customDataExport = this.customDataExport.bind(this);
+
     this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
     this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
@@ -306,13 +353,28 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
 
-    this.rowStylesInfo = getRowStyleInfo(this.settings, 'entity, ctx');
+    this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'entity, ctx');
 
     const pageSize = this.settings.defaultPageSize;
-    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+    let pageStepIncrement = isValidPageStepIncrement(this.settings.pageStepIncrement) ? this.settings.pageStepIncrement : null;
+    let pageStepCount = isValidPageStepCount(this.settings.pageStepCount) ? this.settings.pageStepCount : null;
+
+    if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+
+    if (!this.defaultPageSize) {
+      this.defaultPageSize = pageStepIncrement ?? 10;
+    }
+
+    if (!isDefinedAndNotNull(pageStepIncrement) || !isDefinedAndNotNull(pageStepCount)) {
+      pageStepIncrement = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepIncrement * i);
+    }
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
 
     this.noDataDisplayMessageText =
@@ -360,14 +422,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         } as EntityColumn
       );
       this.contentsInfo.entityName = {
-        useCellContentFunction: false
+        contentFunction: of({
+          useCellContentFunction: false
+        })
       };
-      this.stylesInfo.entityName = {
+      this.stylesInfo.entityName = of({
         useCellStyleFunction: false
-      };
+      });
       this.columnWidth.entityName = '0px';
       this.columnDefaultVisibility.entityName = true;
       this.columnSelectionAvailability.entityName = true;
+      this.columnExportParameters.entityName = columnExportOptions.onlyVisible;
     }
     if (displayEntityLabel) {
       this.columns.push(
@@ -384,14 +449,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         } as EntityColumn
       );
       this.contentsInfo.entityLabel = {
-        useCellContentFunction: false
+        contentFunction: of({
+          useCellContentFunction: false
+        })
       };
-      this.stylesInfo.entityLabel = {
+      this.stylesInfo.entityLabel = of({
         useCellStyleFunction: false
-      };
+      });
       this.columnWidth.entityLabel = '0px';
       this.columnDefaultVisibility.entityLabel = true;
       this.columnSelectionAvailability.entityLabel = true;
+      this.columnExportParameters.entityLabel = columnExportOptions.onlyVisible;
     }
     if (displayEntityType) {
       this.columns.push(
@@ -408,14 +476,22 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         } as EntityColumn
       );
       this.contentsInfo.entityType = {
-        useCellContentFunction: false
+        contentFunction: of({
+          useCellContentFunction: true,
+          cellContentFunction: new CompiledTbFunction(
+            (entityType: EntityType) =>
+              entityType ? this.translate.instant(entityTypeTranslations.get(entityType).type) : '',
+            []
+          )
+        })
       };
-      this.stylesInfo.entityType = {
+      this.stylesInfo.entityType = of({
         useCellStyleFunction: false
-      };
+      });
       this.columnWidth.entityType = '0px';
       this.columnDefaultVisibility.entityType = true;
       this.columnSelectionAvailability.entityType = true;
+      this.columnExportParameters.entityType = columnExportOptions.onlyVisible;
     }
 
     const dataKeys: Array<DataKey> = [];
@@ -431,11 +507,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         }
         dataKeys.push(dataKey);
 
-        const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+        const keySettings: TableWidgetDataKeySettings = dataKey.settings ?? {};
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = getHeaderTitle(dataKey, keySettings, this.utils);
         dataKey.def = 'def' + this.columns.length;
-        dataKey.sortable = !dataKey.usePostProcessing && (!dataKey.aggregationType || dataKey.aggregationType === AggregationType.NONE);
+        dataKey.sortable = !keySettings.disableSorting && !dataKey.usePostProcessing
+          && (!dataKey.aggregationType ||dataKey.aggregationType === AggregationType.NONE);
         if (dataKey.type === DataKeyType.entityField &&
           !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
           const entityField = entityFields[dataKey.name];
@@ -444,13 +521,19 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           }
         }
 
-        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, entity, ctx');
-        this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, entity, ctx');
-        this.contentsInfo[dataKey.def].units = dataKey.units;
-        this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
+        this.stylesInfo[dataKey.def] = getCellStyleInfo(this.ctx, keySettings, 'value, entity, ctx');
+        const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, entity, ctx');
+        const decimals = (dataKey.decimals || dataKey.decimals === 0) ? dataKey.decimals : this.ctx.widgetConfig.decimals;
+        const units = dataKey.units || this.ctx.widgetConfig.units;
+        const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units, decimals, showZeroDecimals: true});
+        this.contentsInfo[dataKey.def] = {
+          contentFunction: contentFunctionInfo,
+          valueFormat
+        };
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
+        this.columnExportParameters[dataKey.def] = keySettings.columnExportOption;
         this.columns.push(dataKey);
       });
       this.displayedColumns.push(...this.columns.filter(column => this.columnDefaultVisibility[column.def])
@@ -478,7 +561,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig({
       panelClass: 'tb-panel-container',
       backdropClass: 'cdk-overlay-transparent-backdrop',
@@ -570,21 +653,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.pageLink.sortOrder = null;
     }
     const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
     const keyFilters: KeyFilter[] = null; // TODO:
-    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, keyFilters);
+    this.entityDatasource.loadEntities(this.pageLink, sortOrderLabel, sortColumnType, keyFilters);
     this.ctx.detectChanges();
-  }
-
-  public trackByColumnDef(index, column: EntityColumn) {
-    return column.def;
   }
 
   public trackByEntityId(index: number, entity: EntityData) {
     return entity.id.id;
-  }
-
-  public trackByActionCellDescriptionId(index: number, action: WidgetActionDescriptor) {
-    return action.id;
   }
 
   public headerStyle(key: EntityColumn): any {
@@ -592,101 +671,147 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     return widthStyle(columnWidth);
   }
 
-  public rowStyle(entity: EntityData, row: number): any {
-    let res = this.rowStyleCache[row];
+  public rowStyle(entity: EntityData, row: number): Observable<any> {
+    let style$: Observable<any>;
+    const res = this.rowStyleCache[row];
     if (!res) {
-      res = {};
-      if (entity && this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
-        try {
-          res = this.rowStylesInfo.rowStyleFunction(entity, this.ctx);
-          if (!isObject(res)) {
-            throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
-          }
-          if (Array.isArray(res)) {
-            throw new TypeError(`Array instead of style object`);
-          }
-        } catch (e) {
-          res = {};
-          console.warn(`Row style function in widget '${this.ctx.widgetTitle}' ` +
-            `returns '${e}'. Please check your row style function.`);
-        }
-      }
-      this.rowStyleCache[row] = res;
-    }
-    return res;
-  }
-
-  public cellStyle(entity: EntityData, key: EntityColumn, row: number): any {
-    const col = this.columns.indexOf(key);
-    const index = row * this.columns.length + col;
-    let res = this.cellStyleCache[index];
-    if (!res) {
-      res = {};
-      if (entity && key) {
-        const styleInfo = this.stylesInfo[key.def];
-        const value = getEntityValue(entity, key);
-        if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
-          try {
-            res = styleInfo.cellStyleFunction(value, entity, this.ctx);
-            if (!isObject(res)) {
-              throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
+      style$ = this.rowStylesInfo.pipe(
+        map(styleInfo => {
+          if (styleInfo.useRowStyleFunction && styleInfo.rowStyleFunction) {
+            const style = styleInfo.rowStyleFunction.execute(entity, this.ctx);
+            if (!isObject(style)) {
+              throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
             }
-            if (Array.isArray(res)) {
+            if (Array.isArray(style)) {
               throw new TypeError(`Array instead of style object`);
             }
-          } catch (e) {
-            res = {};
-            console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
-              `returns '${e}'. Please check your cell style function.`);
+            return style;
+          } else {
+            return {};
           }
-        }
-        this.cellStyleCache[index] = res;
-      }
+        }),
+        catchError(e => {
+          console.warn(`Row style function in widget '${this.ctx.widgetTitle}' ` +
+            `returns '${e}'. Please check your row style function.`);
+          return of({});
+        })
+      );
+      style$ = style$.pipe(
+        tap((style) => {
+          this.rowStyleCache[row] = style;
+        })
+      );
+    } else {
+      style$ = of(res);
     }
-    if (!res.width) {
-      const columnWidth = this.columnWidth[key.def];
-      res = Object.assign(res, widthStyle(columnWidth));
-    }
-    return res;
+    return style$;
   }
 
-  public cellContent(entity: EntityData, key: EntityColumn, row: number): SafeHtml {
+  public cellStyle(entity: EntityData, key: EntityColumn, row: number): Observable<any> {
+    let style$: Observable<any>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
-    let res = this.cellContentCache[index];
-    if (isUndefined(res)) {
-      res = '';
+    const res = this.cellStyleCache[index];
+    if (!res) {
       if (entity && key) {
-        const contentInfo = this.contentsInfo[key.def];
-        const value = getEntityValue(entity, key);
-        let content: string;
-        if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
-          try {
-            content = contentInfo.cellContentFunction(value, entity, this.ctx);
-          } catch (e) {
-            content = '' + value;
-          }
-        } else {
-          content = this.defaultContent(key, contentInfo, value);
-        }
-
-        if (isDefined(content)) {
-          content = this.utils.customTranslation(content, content);
-          switch (typeof content) {
-            case 'string':
-              res = this.domSanitizer.bypassSecurityTrustHtml(content);
-              break;
-            default:
-              res = content;
-          }
-        }
+        style$ = this.stylesInfo[key.def].pipe(
+          map((styleInfo) => {
+            const value = getEntityValue(entity, key);
+            if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
+              const style = styleInfo.cellStyleFunction.execute(value, entity, this.ctx);
+              if (!isObject(style)) {
+                throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+              }
+              if (Array.isArray(style)) {
+                throw new TypeError(`Array instead of style object`);
+              }
+              return style;
+            } else {
+              return {};
+            }
+          }),
+          catchError(e => {
+            console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
+              `returns '${e}'. Please check your cell style function.`);
+            return of({});
+          })
+        );
+      } else {
+        style$ = of({});
       }
-      this.cellContentCache[index] = res;
+      style$ = style$.pipe(
+        map((style) => {
+          if (!style.width) {
+            const columnWidth = this.columnWidth[key.def];
+            style = Object.assign(style, widthStyle(columnWidth));
+          }
+          return style;
+        }),
+        tap((style) => {
+          this.cellStyleCache[index] = style;
+        })
+      );
+    } else {
+      style$ = of(res);
     }
-    return res;
+    return style$;
   }
 
-  private defaultContent(key: EntityColumn, contentInfo: CellContentInfo, value: any): any {
+  public cellContent(entity: EntityData, key: EntityColumn, row: number, useSafeHtml = true, isExport = false): Observable<SafeHtml> {
+    let content$: Observable<SafeHtml>;
+    const col = this.columns.indexOf(key);
+    const index = row * this.columns.length + col;
+    const res = useSafeHtml ? this.cellContentCache[index] : undefined;
+    if (isUndefined(res)) {
+      const contentInfo = this.contentsInfo[key.def];
+      content$ = contentInfo.contentFunction.pipe(
+        map((contentFunction) => {
+          let content: any = '';
+          if (entity && key) {
+            const contentInfo = this.contentsInfo[key.def];
+            const value = getEntityValue(entity, key);
+            if (contentFunction.useCellContentFunction && contentFunction.cellContentFunction && !isExport) {
+              content = this.applyCellContentFunction(entity, contentFunction, value);
+            } else {
+              content = contentFunction.useCellContentFunctionOnExport ? this.applyCellContentFunction(entity, contentFunction, value)
+                : this.defaultContent(key, contentInfo, value);
+            }
+            if (isDefined(content)) {
+              content = this.utils.customTranslation(content, content);
+              switch (typeof content) {
+                case 'string':
+                  content = useSafeHtml ? this.domSanitizer.bypassSecurityTrustHtml(content) : content;
+                  break;
+              }
+            }
+          }
+          return content;
+        })
+      );
+      content$ = content$.pipe(
+        tap((content) => {
+          if (useSafeHtml) {
+            this.cellContentCache[index] = content;
+          }
+        })
+      );
+    } else {
+      content$ = of(res);
+    }
+    return content$;
+  }
+
+  private applyCellContentFunction(entity: EntityData, contentFunction: CellContentFunctionInfo, value: any) {
+    let content: string;
+    try {
+      content = contentFunction.cellContentFunction.execute(value, entity, this.ctx);
+    } catch (e) {
+      content = '' + value;
+    }
+    return content;
+  }
+
+  private defaultContent(key: EntityColumn, contentInfo: WithOptional<CellContentInfo, 'valueFormat'>, value: any): any {
     if (isDefined(value)) {
       const entityField = entityFields[key.name];
       if (entityField) {
@@ -694,9 +819,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           return this.datePipe.transform(value, 'yyyy-MM-dd HH:mm:ss');
         }
       }
-      const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
-      const units = contentInfo.units || this.ctx.widgetConfig.units;
-      return this.ctx.utils.formatValue(value, decimals, units, true);
+      return contentInfo.valueFormat?.format(value) ?? value;
     } else {
       return '';
     }
@@ -764,11 +887,196 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {entity}, entityLabel);
   }
 
+  customDataExport(): Observable<Map<string, any>[]> {
+    const datasource = this.subscription.datasources[0];
+    if (datasource && datasource.type === DatasourceType.entity && datasource.entityFilter) {
+      const pageLink = deepClone(this.pageLink);
+      pageLink.dynamic = false;
+      pageLink.page = 0;
+      pageLink.pageSize = 1000;
+      const query: EntityDataQuery = {
+        entityFilter: datasource.entityFilter,
+        keyFilters: datasource.keyFilters,
+        pageLink
+      };
+      const allColumns = this.columns.filter(c => c.entityKey);
+      const exportedColumns = this.columns.filter(
+        c => this.includeColumnInExport(c) && c.entityKey);
+
+      query.entityFields = allColumns.filter(c => c.entityKey.type === EntityKeyType.ENTITY_FIELD &&
+                                                       entityFields[c.entityKey.key]).map(c => c.entityKey);
+      query.latestValues = allColumns.filter(c => c.entityKey.type === EntityKeyType.ATTRIBUTE ||
+                                                       c.entityKey.type === EntityKeyType.TIME_SERIES).map(c => c.entityKey);
+
+      if (query.entityFields.every(entityField => entityField.key !== entityFields.name.keyName)) {
+        query.entityFields.push({ key: entityFields.name.keyName, type: EntityKeyType.ENTITY_FIELD });
+      }
+      if (query.entityFields.every(entityField => entityField.key !== entityFields.label.keyName)) {
+        query.entityFields.push({ key: entityFields.label.keyName, type: EntityKeyType.ENTITY_FIELD });
+      }
+
+      return this.entityService.findEntityDataByQuery(query).pipe(
+        expand(data => {
+            if (data.hasNext) {
+              pageLink.page += 1;
+              return this.entityService.findEntityDataByQuery(query);
+            } else {
+              return EMPTY;
+            }
+        }),
+        concatMap(data => from(data.data)),
+        toArray(),
+        switchMap(rawData => rawData.length ?
+          forkJoin(rawData.map(e => from(this.queryEntityDataToEntity(e, allColumns)))) : of([] as EntityData[])),
+        map(entities => this.sortEntitiesForExport(entities)),
+        switchMap(entities => entities.length ?
+          forkJoin(entities.map((entity, index) =>
+            from(this.entityToExportedData(entity, index, exportedColumns)))) : of([] as {[key: string]: any}[])),
+        map(rows => rows.map(rowObject => new Map(Object.entries(rowObject))))
+      );
+    } else {
+      const exportedData: Observable<Map<string, any>>[] = [];;
+      const entitiesToExport = this.entityDatasource.entities;
+      entitiesToExport.forEach((entity, index) => {
+        const dataMap = new Map<string, Observable<any>>();
+        this.columns.forEach((column) => {
+          if (this.includeColumnInExport(column)) {
+            dataMap.set(column.title, this.cellContent(entity, column, index, false, true));
+          }
+        });
+        if (dataMap.size > 0) {
+          const orderedKeys = Array.from(dataMap.keys());
+          const orderedObservables = Array.from(dataMap.values());
+
+          exportedData.push(
+            forkJoin(orderedObservables).pipe(
+              map(resolvedValues => {
+                const orderedRow = new Map<string, any>();
+                orderedKeys.forEach((key, i) => {
+                  orderedRow.set(key, resolvedValues[i]);
+                });
+                return orderedRow;
+              })
+            )
+          );
+        } else {
+          exportedData.push(of(new Map<string, any>()))
+        }
+      });
+      if (exportedData.length) {
+        return forkJoin(exportedData);
+      } else {
+        return of([]);
+      }
+    }
+  }
+
+  private includeColumnInExport(column: EntityColumn): boolean {
+    switch (this.columnExportParameters[column.def]) {
+      case columnExportOptions.always:
+        return true;
+      case columnExportOptions.never:
+        return false;
+      default:
+        return this.displayedColumns.indexOf(column.def) > -1;
+    }
+  }
+
+  private async queryEntityDataToEntity(queryEntityData: QueryEntityData,
+                                        allColumns: EntityColumn[]): Promise<EntityData> {
+    const entity: EntityData = {
+      entityName: '',
+      id: queryEntityData.entityId,
+      entityType: this.translate.instant(entityTypeTranslations.get(queryEntityData.entityId.entityType).type)
+    };
+    const latest = queryEntityData.latest;
+    if (latest) {
+      entity.entityName = getLatestDataValue(latest, EntityKeyType.ENTITY_FIELD, 'name', '');
+      entity.entityLabel = getLatestDataValue(latest, EntityKeyType.ENTITY_FIELD, 'label', entity.entityName);
+    }
+    for (const column of allColumns) {
+      if (!['entityName', 'entityLabel', 'entityType'].includes(column.label)) {
+        if (latest) {
+          let dataValue: any = '';
+          let tsValue;
+          const fields = latest[column.entityKey.type];
+          if (fields) {
+            tsValue = fields[column.entityKey.key];
+            if (tsValue && isDefinedAndNotNull(tsValue.value)) {
+              dataValue = tsValue.value;
+            }
+          }
+          dataValue = checkNumericStringAndConvert(dataValue);
+          if (column.usePostProcessing && isNotEmptyTbFunction(column.postFuncBody)) {
+            if (!this.postProcessingFunctionMap.has(column.label)) {
+              const postFunction = compileTbFunction(this.ctx.http, column.postFuncBody,
+                'time', 'value', 'prevValue', 'timePrev', 'prevOrigValue').pipe(
+                catchError(() => { return of(null) }),
+                share({
+                  connector: () => new ReplaySubject(1),
+                  resetOnError: false,
+                  resetOnComplete: false,
+                  resetOnRefCountZero: false
+                })
+              );
+              this.postProcessingFunctionMap.set(column.label, postFunction);
+            }
+            let dataTs = 0;
+            if (tsValue && isDefinedAndNotNull(tsValue.ts)) {
+              dataTs = tsValue.ts;
+            }
+            dataValue = await firstValueFrom(this.postProcessingFunctionMap.get(column.label).pipe(
+              map(compiled => {
+                if (compiled) {
+                  return compiled.execute(dataTs, dataValue, 0, 0, 0);
+                } else {
+                  return dataValue;
+                }
+              })
+            ));
+          }
+          entity[column.label] = dataValue;
+        } else {
+          entity[column.label] = '';
+        }
+      }
+    }
+    return entity;
+  }
+
+  private async entityToExportedData(entity: EntityData,
+                                     index: number,
+                                     exportedColumns: EntityColumn[]): Promise<{[key: string]: any}> {
+    const dataObj: { [key: string]: any } = {};
+    for (const column of exportedColumns) {
+      dataObj[column.title] = await firstValueFrom(this.cellContent(entity, column, index, false, true));
+    }
+    return dataObj;
+  }
+
+  private sortEntitiesForExport(entities: EntityData[]): EntityData[] {
+    if (!entities.length || !this.pageLink.sortOrder || !this.sort?.active) {
+      return entities;
+    }
+    const sortOrderLabel = fromEntityColumnDef(this.sort.active, this.columns);
+    if (!sortOrderLabel) {
+      return entities;
+    }
+    const key = findEntityKeyByColumnDef(this.sort.active, this.columns);
+    const sortColumnType: SortColumnType = key
+      ? (key.type === EntityKeyType.ENTITY_FIELD ? 'entityField'
+         : key.type === EntityKeyType.TIME_SERIES ? 'timeseries' : 'attribute')
+      : 'entityField';
+    const asc = this.pageLink.sortOrder.direction === Direction.ASC;
+    return entities.sort((a, b) => sortItems(a, b, sortOrderLabel, asc, sortColumnType));
+  }
+
   private clearCache() {
     this.cellContentCache.length = 0;
     this.cellStyleCache.length = 0;
     this.rowStyleCache.length = 0;
   }
+
 }
 
 class EntityDatasource implements DataSource<EntityData> {
@@ -778,15 +1086,18 @@ class EntityDatasource implements DataSource<EntityData> {
 
   private currentEntity: EntityData = null;
 
+  public entities: EntityData[] = [];
   public dataLoading = true;
   public countCellButtonAction = 0;
 
   private appliedPageLink: EntityDataPageLink;
   private appliedSortOrderLabel: string;
+  private appliedSortColumnType: SortColumnType = 'entityField';
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
-  private readonly usedShowCellActionFunction: boolean;
+  private usedShowCellActionFunction: boolean;
+  private inited = false;
 
   constructor(
        private translate: TranslateService,
@@ -795,11 +1106,22 @@ class EntityDatasource implements DataSource<EntityData> {
        private ngZone: NgZone,
        private widgetContext: WidgetContext
     ) {
-    this.cellButtonActions = getTableCellButtonActions(widgetContext);
-    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
     if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
       this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
     }
+  }
+
+  private init(): Observable<any> {
+    if (this.inited) {
+      return of(null);
+    }
+    return getTableCellButtonActions(this.widgetContext).pipe(
+      tap(actions => {
+        this.cellButtonActions = actions
+        this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+        this.inited = true;
+      })
+    );
   }
 
   connect(collectionViewer: CollectionViewer): Observable<EntityData[] | ReadonlyArray<EntityData>> {
@@ -811,50 +1133,56 @@ class EntityDatasource implements DataSource<EntityData> {
     this.pageDataSubject.complete();
   }
 
-  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string, keyFilters: KeyFilter[]) {
+  loadEntities(pageLink: EntityDataPageLink, sortOrderLabel: string,
+               sortColumnType: SortColumnType, keyFilters: KeyFilter[]) {
     this.dataLoading = true;
     // this.clear();
     this.appliedPageLink = pageLink;
     this.appliedSortOrderLabel = sortOrderLabel;
+    this.appliedSortColumnType = sortColumnType;
     this.subscription.subscribeForPaginatedData(0, pageLink, keyFilters);
   }
 
   private clear() {
+    this.entities = [];
     this.entitiesSubject.next([]);
     this.pageDataSubject.next(emptyPageData<EntityData>());
   }
 
   dataUpdated() {
-    const datasourcesPageData = this.subscription.datasourcePages[0];
-    const dataPageData = this.subscription.dataPages[0];
-    let entities = new Array<EntityData>();
-    let maxCellButtonAction = 0;
-    const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
-    datasourcesPageData.data.forEach((datasource, index) => {
-      const entity = this.datasourceToEntityData(datasource, dataPageData.data[index]);
-      entities.push(entity);
-      if (dynamicWidthCellButtonActions && entity.actionCellButtons.length > maxCellButtonAction) {
-        maxCellButtonAction = entity.actionCellButtons.length;
+    this.init().subscribe(() => {
+      const datasourcesPageData = this.subscription.datasourcePages[0];
+      const dataPageData = this.subscription.dataPages[0];
+      let entities = new Array<EntityData>();
+      let maxCellButtonAction = 0;
+      const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
+      datasourcesPageData.data.forEach((datasource, index) => {
+        const entity = this.datasourceToEntityData(datasource, dataPageData.data[index]);
+        entities.push(entity);
+        if (dynamicWidthCellButtonActions && entity.actionCellButtons.length > maxCellButtonAction) {
+          maxCellButtonAction = entity.actionCellButtons.length;
+        }
+      });
+      if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
+        const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
+        entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc, this.appliedSortColumnType));
       }
-    });
-    if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
-      const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-      entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
-    }
-    if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
-      maxCellButtonAction = entities[0].actionCellButtons.length;
-    }
-    const entitiesPageData: PageData<EntityData> = {
-      data: entities,
-      totalPages: datasourcesPageData.totalPages,
-      totalElements: datasourcesPageData.totalElements,
-      hasNext: datasourcesPageData.hasNext
-    };
-    this.ngZone.run(() => {
-      this.entitiesSubject.next(entities);
-      this.pageDataSubject.next(entitiesPageData);
-      this.countCellButtonAction = maxCellButtonAction;
-      this.dataLoading = false;
+      this.entities = entities;
+      if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
+        maxCellButtonAction = entities[0].actionCellButtons.length;
+      }
+      const entitiesPageData: PageData<EntityData> = {
+        data: entities,
+        totalPages: datasourcesPageData.totalPages,
+        totalElements: datasourcesPageData.totalElements,
+        hasNext: datasourcesPageData.hasNext
+      };
+      this.ngZone.run(() => {
+        this.entitiesSubject.next(entities);
+        this.pageDataSubject.next(entitiesPageData);
+        this.countCellButtonAction = maxCellButtonAction;
+        this.dataLoading = false;
+      });
     });
   }
 
@@ -869,9 +1197,9 @@ class EntityDatasource implements DataSource<EntityData> {
     }
     if (datasource.entityType) {
       entity.id.entityType = datasource.entityType;
-      entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
+      entity.entityType = datasource.entityType;
     } else {
-      entity.entityType = '';
+      entity.entityType = null;
     }
     this.dataKeys.forEach((dataKey, index) => {
       const keyData = data[index].data;

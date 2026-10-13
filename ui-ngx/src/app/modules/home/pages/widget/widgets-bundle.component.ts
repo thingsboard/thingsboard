@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -23,16 +10,20 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 
 @Component({
-  selector: 'tb-widgets-bundle',
-  templateUrl: './widgets-bundle.component.html',
-  styleUrls: ['./widgets-bundle.component.scss']
+    selector: 'tb-widgets-bundle',
+    templateUrl: './widgets-bundle.component.html',
+    styleUrls: ['./widgets-bundle.component.scss'],
+    standalone: false
 })
 export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
 
+  @Input()
+  standalone = false;
+
   constructor(protected store: Store<AppState>,
-              @Inject('entity') protected entityValue: WidgetsBundle,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<WidgetsBundle>,
-              public fb: UntypedFormBuilder,
+              @Optional() @Inject('entity') protected entityValue: WidgetsBundle,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<WidgetsBundle>,
+              protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }

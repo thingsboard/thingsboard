@@ -1,40 +1,33 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.GroupEntity;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -49,12 +42,6 @@ public abstract class AbstractTbEntityService {
     @Autowired
     private Environment env;
 
-    @Value("${server.log_controller_error_stack_trace}")
-    @Getter
-    private boolean logControllerErrorStackTrace;
-
-    @Autowired
-    protected DbCallbackExecutorService dbExecutor;
     @Autowired(required = false)
     protected TbLogEntityActionService logEntityActionService;
     @Autowired(required = false)
@@ -68,9 +55,13 @@ public abstract class AbstractTbEntityService {
     protected CustomerService customerService;
     @Autowired
     protected TbClusterService tbClusterService;
+    @Autowired
+    protected EntityGroupService entityGroupService;
     @Autowired(required = false)
     @Lazy
     private EntitiesVersionControlService vcService;
+    @Autowired
+    protected EntityService entityService;
 
     protected boolean isTestProfile() {
         return Set.of(this.env.getActiveProfiles()).contains("test");
@@ -103,7 +94,26 @@ public abstract class AbstractTbEntityService {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
-    protected ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
+    protected <I extends EntityId> I getOrEmptyId(I entityId, EntityType entityType) {
+        return entityId == null ? emptyId(entityType) : entityId;
+    }
+
+    protected <I extends EntityId, T extends GroupEntity<I>> void createOrUpdateGroupEntity(TenantId tenantId, T entity, List<EntityGroup> entityGroups,
+                                                                                            ActionType actionType, User user) {
+        EntityId entityId = entity.getId();
+        CustomerId customerId = entity.getCustomerId();
+        if (entityGroups != null && actionType == ActionType.ADDED) {
+            for (EntityGroup entityGroup : entityGroups) {
+                EntityGroupId entityGroupId = entityGroup.getId();
+                entityGroupService.addEntityToEntityGroup(tenantId, entityGroupId, entityId);
+                logEntityActionService.logEntityAction(tenantId, entityId, entity, customerId, ActionType.ADDED_TO_ENTITY_GROUP,
+                        user, entityId.toString(), entityGroupId.toString(), entityGroup.getName());
+            }
+        }
+        logEntityActionService.logEntityAction(tenantId, entityId, entity, customerId, actionType, user);
+    }
+
+    protected ListenableFuture<UUID> autoCommit(User user, EntityId entityId) {
         if (vcService != null) {
             return vcService.autoCommit(user, entityId);
         } else {
@@ -112,7 +122,7 @@ public abstract class AbstractTbEntityService {
         }
     }
 
-    protected ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception {
+    protected ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) {
         if (vcService != null) {
             return vcService.autoCommit(user, entityType, entityIds);
         } else {
@@ -120,4 +130,14 @@ public abstract class AbstractTbEntityService {
             return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
         }
     }
+
+    protected ListenableFuture<UUID> autoCommit(User user, EntityType entityType, EntityGroupId groupId) throws Exception {
+        if (vcService != null) {
+            return vcService.autoCommit(user, entityType, groupId);
+        } else {
+            // We do not support auto-commit for rule engine
+            return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
+        }
+    }
+
 }

@@ -1,0 +1,173 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="alarmsCountMappingFormGroup" (ngSubmit)="save()" style="width: 650px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2>{{ (isAdd ? 'rule-node-config.add-mapping' : 'rule-node-config.edit-mapping') | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <div class="flex flex-1 flex-col">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
+          <mat-label translate>rule-node-config.target-telemetry</mat-label>
+          <input required matInput formControlName="target">
+          @if (alarmsCountMappingFormGroup.get('target').hasError('required')) {
+            <mat-error>
+              {{ 'rule-node-config.target-telemetry-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>rule-node-config.status-filter</mat-label>
+          <mat-chip-grid #alarmStatusChipList>
+            @for (alarmStatus of alarmsCountMappingFormGroup.get('statusList').value; track alarmStatus) {
+              <mat-chip-row
+                (removed)="removeKey(alarmStatus, 'statusList')">
+                <span>
+                  <strong>{{alarmStatusTranslationsMap.get(alarmStatus) | translate}}</strong>
+                </span>
+                <mat-icon matChipRemove>close</mat-icon>
+              </mat-chip-row>
+            }
+            <input matInput type="text"
+                   placeholder="{{(alarmsCountMappingFormGroup.get('statusList').value.length ?
+                                   'rule-node-config.add-alarm-status' : 'rule-node-config.all-statuses') | translate}}"
+              #alarmStatusInput
+              (focusin)="onAlarmStatusInputFocus()"
+              [formControl]="statusFormControl"
+              matAutocompleteOrigin
+              #originAlarmStatus="matAutocompleteOrigin"
+              [matAutocompleteConnectedTo]="originAlarmStatus"
+              [matAutocomplete]="alarmStatusAutocomplete"
+              [matChipInputFor]="alarmStatusChipList">
+          </mat-chip-grid>
+          <mat-autocomplete #alarmStatusAutocomplete="matAutocomplete"
+            class="tb-autocomplete"
+            (optionSelected)="alarmStatusSelected($event)"
+            [displayWith]="displayStatusFn">
+            @for (status of filteredAlarmStatus | async; track status) {
+              <mat-option [value]="status">
+                <span [innerHTML]="alarmStatusTranslationsMap.get(status) | translate | highlight:alarmStatusSearchText"></span>
+              </mat-option>
+            }
+            @if ((filteredAlarmStatus | async)?.length === 0) {
+              <mat-option [value]="null" class="tb-not-found">
+                <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+                  <div>
+                    <span translate>rule-node-config.no-alarm-status-matching</span>
+                  </div>
+                </div>
+              </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>rule-node-config.severity-filter</mat-label>
+          <mat-chip-grid #alarmSeverityChipList>
+            @for (alarmSeverity of alarmsCountMappingFormGroup.get('severityList').value; track alarmSeverity) {
+              <mat-chip-row
+                (removed)="removeKey(alarmSeverity, 'severityList')">
+                <span>
+                  <strong>{{alarmSeverityTranslationsMap.get(alarmSeverity) | translate}}</strong>
+                </span>
+                <mat-icon matChipRemove>close</mat-icon>
+              </mat-chip-row>
+            }
+            <input matInput type="text"
+                   placeholder="{{(alarmsCountMappingFormGroup.get('severityList').value.length ?
+                                   'rule-node-config.add-alarm-severity' : 'rule-node-config.all-severities') | translate}}"
+              #alarmSeverityInput
+              (focusin)="onAlarmSeverityInputFocus()"
+              [formControl]="severityFormControl"
+              matAutocompleteOrigin
+              #originAlarmSeverity="matAutocompleteOrigin"
+              [matAutocompleteConnectedTo]="originAlarmSeverity"
+              [matAutocomplete]="alarmSeverityAutocomplete"
+              [matChipInputFor]="alarmSeverityChipList">
+          </mat-chip-grid>
+          <mat-autocomplete #alarmSeverityAutocomplete="matAutocomplete"
+            class="tb-autocomplete"
+            (optionSelected)="alarmSeveritySelected($event)"
+            [displayWith]="displaySeverityFn">
+            @for (severity of filteredAlarmSeverity | async; track severity) {
+              <mat-option [value]="severity">
+                <span [innerHTML]="alarmSeverityTranslationsMap.get(severity) | translate | highlight:alarmSeveritySearchText"></span>
+              </mat-option>
+            }
+            @if ((filteredAlarmSeverity | async)?.length === 0) {
+              <mat-option [value]="null" class="tb-not-found">
+                <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+                  <div>
+                    <span translate>rule-node-config.no-alarm-severity-matching</span>
+                  </div>
+                </div>
+              </mat-option>
+            }
+          </mat-autocomplete>
+        </mat-form-field>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>rule-node-config.type-filter</mat-label>
+          <mat-chip-grid #typesChipList>
+            @for (key of alarmsCountMappingFormGroup.get('typesList').value; track key) {
+              <mat-chip-row
+                (removed)="removeKey(key, 'typesList')">
+                {{key}}
+                <mat-icon matChipRemove>close</mat-icon>
+              </mat-chip-row>
+            }
+            <input matInput type="text"
+                   placeholder="{{(alarmsCountMappingFormGroup.get('typesList').value.length ?
+                                   'rule-node-config.add-alarm-type' : 'rule-node-config.all-types') | translate}}"
+              [matChipInputFor]="typesChipList"
+              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+              (matChipInputTokenEnd)="addKey($event, 'typesList')"
+              [matChipInputAddOnBlur]="true">
+          </mat-chip-grid>
+        </mat-form-field>
+        <mat-checkbox
+          [(ngModel)]="specifyInterval"
+          [ngModelOptions]="{ standalone: true}"
+          (ngModelChange)="specifyIntervalChange()" style="display: block; margin-bottom: 16px;">
+          {{ 'rule-node-config.specify-interval' | translate }}
+        </mat-checkbox>
+        @if (specifyInterval) {
+          <tb-timeinterval
+            predefinedName="timewindow.last"
+            formControlName="latestInterval"
+            style="padding-top: 8px">
+          </tb-timeinterval>
+        }
+      </div>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
+    <span class="flex-1"></span>
+    <button mat-button mat-raised-button color="primary"
+      type="submit"
+      [disabled]="(isLoading$ | async) || alarmsCountMappingFormGroup.invalid || !alarmsCountMappingFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.save') | translate }}
+    </button>
+    <button mat-button color="primary"
+      style="margin-right: 20px;"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+  </div>
+</form>

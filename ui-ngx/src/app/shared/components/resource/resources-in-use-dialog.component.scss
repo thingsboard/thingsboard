@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  .tb-resources-in-use-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    &.multiple {
+      gap: 16px;
+    }
+    .table-container {
+      overflow: auto;
+      .mat-mdc-cell.mat-column-preview {
+        width: 50px;
+        height: 50px;
+        padding: 2px 12px;
+        display: block;
+      }
+    }
+    .tb-image-preview {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+  }
+}

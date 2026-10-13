@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.filter;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -59,7 +46,15 @@ public class TbJsFilterNodeTest {
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException {
         initWithScript();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, TbMsgMetaData.EMPTY, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(false));
 
         node.onMsg(ctx, msg);
@@ -71,7 +66,15 @@ public class TbJsFilterNodeTest {
     public void exceptionInJsThrowsException() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFailedFuture(new ScriptException("error")));
 
 
@@ -83,7 +86,15 @@ public class TbJsFilterNodeTest {
     public void metadataConditionCanBeTrue() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(true));
 
         node.onMsg(ctx, msg);

@@ -1,0 +1,148 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+package org.thingsboard.server.common.data.cf;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasAdditionalInfo;
+import org.thingsboard.server.common.data.HasDebugSettings;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.debug.DebugSettings;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
+@Schema
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, TenantEntity, HasVersion, HasDebugSettings, HasAdditionalInfo {
+
+    public static final Map<EntityType, Set<CalculatedFieldType>> SUPPORTED_ENTITIES = Map.of(
+            EntityType.DEVICE, CalculatedFieldType.all,
+            EntityType.ASSET, CalculatedFieldType.all,
+            EntityType.DEVICE_PROFILE, CalculatedFieldType.all,
+            EntityType.ASSET_PROFILE, CalculatedFieldType.all,
+            EntityType.CUSTOMER, Set.of(CalculatedFieldType.ALARM)
+    );
+
+    public static final Set<EntityType> SUPPORTED_REFERENCED_ENTITIES = Collections.unmodifiableSet(EnumSet.of(
+            EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT
+    ));
+
+    public static boolean isSupportedRefEntity(EntityId entity) {
+        return SUPPORTED_REFERENCED_ENTITIES.contains(entity.getEntityType());
+    }
+
+    private TenantId tenantId;
+    private EntityId entityId;
+
+    @NoXss
+    @Length(fieldName = "type")
+    private CalculatedFieldType type;
+    @NoXss
+    @Length(fieldName = "name")
+    @Schema(description = "User defined name of the calculated field.")
+    private String name;
+    @Deprecated
+    @Schema(description = "Enable/disable debug. ", example = "false", deprecated = true)
+    private boolean debugMode;
+    @Schema(description = "Debug settings object.")
+    private DebugSettings debugSettings;
+    @Schema(description = "Version of calculated field configuration.", example = "0")
+    private int configurationVersion;
+    @Schema(implementation = CalculatedFieldConfiguration.class)
+    @Valid
+    @NotNull
+    private CalculatedFieldConfiguration configuration;
+    private Long version;
+    @NoXss
+    @Schema(description = "Additional parameters of the calculated field")
+    private JsonNode additionalInfo;
+
+    public CalculatedField() {}
+
+    public CalculatedField(CalculatedFieldId id) {
+        super(id);
+    }
+
+    public CalculatedField(CalculatedField calculatedField) {
+        super(calculatedField);
+        this.tenantId = calculatedField.tenantId;
+        this.entityId = calculatedField.entityId;
+        this.type = calculatedField.type;
+        this.name = calculatedField.name;
+        this.debugMode = calculatedField.debugMode;
+        this.debugSettings = calculatedField.debugSettings;
+        this.configurationVersion = calculatedField.configurationVersion;
+        this.configuration = calculatedField.configuration;
+        this.version = calculatedField.version;
+        this.additionalInfo = calculatedField.additionalInfo;
+    }
+
+    @Schema(description = "JSON object with the Calculated Field Id. Referencing non-existing Calculated Field Id will cause error.")
+    @Override
+    public CalculatedFieldId getId() {
+        return super.getId();
+    }
+
+    @Schema(description = "Timestamp of the calculated field creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
+    }
+
+    // Getter is ignored for serialization
+    @JsonIgnore
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    // Setter is annotated for deserialization
+    @JsonSetter
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.CALCULATED_FIELD;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("CalculatedField[")
+                .append("tenantId=").append(tenantId)
+                .append(", entityId=").append(entityId)
+                .append(", type='").append(type)
+                .append(", name='").append(name)
+                .append(", configurationVersion=").append(configurationVersion)
+                .append(", configuration=").append(configuration)
+                .append(", additionalInfo=").append(additionalInfo)
+                .append(", version=").append(version)
+                .append(", createdTime=").append(createdTime)
+                .append(", id=").append(id).append(']')
+                .toString();
+    }
+
+}

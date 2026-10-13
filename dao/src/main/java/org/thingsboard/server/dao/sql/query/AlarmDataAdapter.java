@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
@@ -92,6 +80,7 @@ public class AlarmDataAdapter {
         }
         alarm.setPropagate((boolean) row.get(ModelConstants.ALARM_PROPAGATE_PROPERTY));
         alarm.setPropagateToOwner((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_PROPERTY));
+        alarm.setPropagateToOwnerHierarchy((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_HIERARCHY_PROPERTY));
         alarm.setPropagateToTenant((boolean) row.get(ModelConstants.ALARM_PROPAGATE_TO_TENANT_PROPERTY));
         alarm.setType(row.get(ModelConstants.ALARM_TYPE_PROPERTY).toString());
         alarm.setSeverity(AlarmSeverity.valueOf(row.get(ModelConstants.ALARM_SEVERITY_PROPERTY).toString()));
@@ -117,10 +106,13 @@ public class AlarmDataAdapter {
         String originatorName = originatorNameObj != null ? originatorNameObj.toString() : null;
         Object originatorLabelObj = row.get(ModelConstants.ALARM_ORIGINATOR_LABEL_PROPERTY);
         String originatorLabel = originatorLabelObj != null ? originatorLabelObj.toString() : null;
+        Object originatorDisplayNameObj = row.get(ModelConstants.ALARM_ORIGINATOR_DISPLAY_NAME_PROPERTY);
+        String originatorDisplayName = originatorDisplayNameObj != null ? originatorDisplayNameObj.toString() : null;
 
         AlarmData alarmData = new AlarmData(alarm, entityId);
         alarmData.setOriginatorName(originatorName);
         alarmData.setOriginatorLabel(originatorLabel);
+        alarmData.setOriginatorDisplayName(originatorDisplayName);
         if (alarm.getAssigneeId() != null) {
             alarmData.setAssignee(new AlarmAssignee(alarm.getAssigneeId(), assigneeFirstName, assigneeLastName, assigneeEmail));
         }

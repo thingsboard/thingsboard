@@ -1,21 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { PageLink } from '@shared/models/page/page-link';
-import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, Observable, of, ReplaySubject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
@@ -28,6 +14,7 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
 
   private entitiesSubject = new BehaviorSubject<T[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<T>>(emptyPageData<T>());
+  private currentLoadSubscription: Subscription = null;
 
   public pageData$ = this.pageDataSubject.asObservable();
 
@@ -58,9 +45,12 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
   }
 
   loadEntities(pageLink: P): Observable<PageData<T>> {
+    if (this.currentLoadSubscription) {
+      this.currentLoadSubscription.unsubscribe();
+    }
     this.dataLoading = true;
     const result = new ReplaySubject<PageData<T>>();
-    this.fetchFunction(pageLink).pipe(
+    this.currentLoadSubscription = this.fetchFunction(pageLink).pipe(
       tap(() => {
         this.selection.clear();
       }),

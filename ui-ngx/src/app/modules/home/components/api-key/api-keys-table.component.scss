@@ -1,0 +1,32 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import '../../src/scss/constants.scss';
+@import '../../src/scss/mixins';
+
+:host ::ng-deep {
+  tb-entities-table {
+    .mat-drawer-container {
+      background-color: white;
+
+      mat-cell.mat-column-description {
+        white-space: nowrap;
+        .mat-mdc-icon-button {
+          vertical-align: middle;
+          margin-left: 8px;
+          @include tb-mat-icon-button-size(32);
+          .mat-icon {
+            @include tb-mat-icon-size(20);
+          }
+        }
+        span {
+          display: inline-block;
+          max-width: 40ch;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          vertical-align: middle;
+          pointer-events: none;
+        }
+      }
+    }
+  }
+}

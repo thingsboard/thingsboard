@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -35,29 +22,31 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { mergeDeep } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ValueSourceType } from '@shared/models/widget-settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-series-chart-thresholds-panel',
-  templateUrl: './time-series-chart-thresholds-panel.component.html',
-  styleUrls: ['./time-series-chart-thresholds-panel.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-thresholds-panel',
+    templateUrl: './time-series-chart-thresholds-panel.component.html',
+    styleUrls: ['./time-series-chart-thresholds-panel.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeSeriesChartThresholdsPanelComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -83,18 +72,33 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
   @coerceBoolean()
   hideYAxis = false;
 
+  @Input()
+  @coerceBoolean()
+  supportsUnitConversion = true;
+
+  @Input()
+  @coerceBoolean()
+  stroked = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
   thresholdsFormGroup: UntypedFormGroup;
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.thresholdsFormGroup = this.fb.group({
       thresholds: [this.fb.array([]), []]
     });
-    this.thresholdsFormGroup.valueChanges.subscribe(
+    this.thresholdsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let thresholds: TimeSeriesChartThreshold[] = this.thresholdsFormGroup.get('thresholds').value;
         if (thresholds) {
@@ -138,10 +142,6 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
 
   thresholdsFormArray(): UntypedFormArray {
     return this.thresholdsFormGroup.get('thresholds') as UntypedFormArray;
-  }
-
-  trackByThreshold(index: number, thresholdControl: AbstractControl): any {
-    return thresholdControl;
   }
 
   removeThreshold(index: number) {

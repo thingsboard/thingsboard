@@ -1,0 +1,13 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  .debug-dialog-container {
+    width: 1080px;
+    max-width: 100%;
+
+    .debug-dialog-content {
+      height: 65vh;
+      border-radius: 0;
+    }
+  }
+}

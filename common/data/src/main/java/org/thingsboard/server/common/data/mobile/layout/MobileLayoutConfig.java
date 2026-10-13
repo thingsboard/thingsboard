@@ -1,0 +1,33 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.server.common.data.mobile.layout;
+
+import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.Views;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Schema
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class MobileLayoutConfig {
+
+    @ArraySchema(schema = @Schema(implementation = MobilePage.class))
+    @JsonView(Views.Public.class)
+    @Valid
+    @Builder.Default
+    private List<MobilePage> pages = new ArrayList<>();
+
+}

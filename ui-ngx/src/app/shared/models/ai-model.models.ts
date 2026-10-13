@@ -1,0 +1,262 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
+import { HasTenantId } from '@shared/models/entity.models';
+import { AiModelId } from '@shared/models/id/ai-model-id';
+
+export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId, ExportableEntity<AiModelId> {
+  modelType: ModelType;
+  configuration: {
+    provider: AiProvider
+    providerConfig: {
+      apiKey?: string;
+      personalAccessToken?: string;
+      endpoint?: string;
+      serviceVersion?: string;
+      projectId?: string;
+      location?: string;
+      serviceAccountKey?: string;
+      fileName?: string;
+      region?: string;
+      accessKeyId?: string;
+      secretAccessKey?: string;
+      baseUrl?: string;
+      auth?: {
+        type: AuthenticationType;
+        username?: string;
+        password?: string;
+        token?: string
+      }
+    };
+    modelId: string;
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    frequencyPenalty?: number;
+    presencePenalty?: number;
+    maxOutputTokens?: number;
+    contextLength?: number;
+  }
+}
+
+export enum ModelType {
+  CHAT = 'CHAT'
+}
+
+export enum AiProvider {
+  OPENAI = 'OPENAI',
+  AZURE_OPENAI = 'AZURE_OPENAI',
+  GOOGLE_AI_GEMINI = 'GOOGLE_AI_GEMINI',
+  GOOGLE_VERTEX_AI_GEMINI = 'GOOGLE_VERTEX_AI_GEMINI',
+  MISTRAL_AI = 'MISTRAL_AI',
+  ANTHROPIC = 'ANTHROPIC',
+  AMAZON_BEDROCK = 'AMAZON_BEDROCK',
+  GITHUB_MODELS = 'GITHUB_MODELS',
+  OLLAMA = 'OLLAMA'
+}
+
+export const AiProviderTranslations = new Map<AiProvider, string>(
+  [
+    [AiProvider.OPENAI , 'ai-models.ai-providers.openai'],
+    [AiProvider.AZURE_OPENAI , 'ai-models.ai-providers.azure-openai'],
+    [AiProvider.GOOGLE_AI_GEMINI , 'ai-models.ai-providers.google-ai-gemini'],
+    [AiProvider.GOOGLE_VERTEX_AI_GEMINI , 'ai-models.ai-providers.google-vertex-ai-gemini'],
+    [AiProvider.MISTRAL_AI , 'ai-models.ai-providers.mistral-ai'],
+    [AiProvider.ANTHROPIC , 'ai-models.ai-providers.anthropic'],
+    [AiProvider.AMAZON_BEDROCK , 'ai-models.ai-providers.amazon-bedrock'],
+    [AiProvider.GITHUB_MODELS , 'ai-models.ai-providers.github-models'],
+    [AiProvider.OLLAMA , 'ai-models.ai-providers.ollama']
+  ]
+);
+
+export const ProviderFieldsAllList = [
+  'apiKey',
+  'personalAccessToken',
+  'projectId',
+  'location',
+  'serviceAccountKey',
+  'fileName',
+  'endpoint',
+  'serviceVersion',
+  'region',
+  'accessKeyId',
+  'secretAccessKey',
+  'baseUrl'
+];
+
+export const ModelFieldsAllList = ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens', 'contextLength'];
+
+export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFieldsList: string[], modelFieldsList: string[] }>([
+  [
+    AiProvider.OPENAI,
+    {
+      modelList: [
+        'o3-pro',
+        'o3',
+        'gpt-5.5-pro',
+        'gpt-5.5',
+        'gpt-5.4-pro',
+        'gpt-5.4',
+        'gpt-5.4-mini',
+        'gpt-5.4-nano',
+        'gpt-5.2',
+        'gpt-5.1',
+        'gpt-5',
+        'gpt-5-mini',
+        'gpt-5-nano',
+        'gpt-4.1',
+        'gpt-4.1-mini',
+        'gpt-4o',
+        'gpt-4o-mini',
+      ],
+      providerFieldsList: ['baseUrl', 'apiKey'],
+      modelFieldsList: ['temperature', 'topP', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.AZURE_OPENAI,
+    {
+      modelList: [],
+      providerFieldsList: ['apiKey', 'endpoint', 'serviceVersion'],
+      modelFieldsList: ['temperature', 'topP', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.GOOGLE_AI_GEMINI,
+    {
+      modelList: [
+        'gemini-3.5-flash',
+        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-pro',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
+      ],
+      providerFieldsList: ['apiKey'],
+      modelFieldsList: ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.GOOGLE_VERTEX_AI_GEMINI,
+    {
+      modelList: [
+        'gemini-3.5-flash',
+        'gemini-3.1-pro-preview',
+        'gemini-3-flash-preview',
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-pro',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
+      ],
+      providerFieldsList: ['projectId', 'location', 'serviceAccountKey', 'fileName'],
+      modelFieldsList: ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.MISTRAL_AI,
+    {
+      modelList: [
+        'mistral-large-latest',
+        'mistral-medium-latest',
+        'mistral-small-latest',
+        'ministral-14b-latest',
+        'ministral-8b-latest',
+        'ministral-3b-latest'
+      ],
+      providerFieldsList: ['apiKey'],
+      modelFieldsList: ['temperature', 'topP', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.ANTHROPIC,
+    {
+      modelList: [
+        'claude-opus-4-8',
+        'claude-opus-4-7',
+        'claude-opus-4-6',
+        'claude-opus-4-5',
+        'claude-opus-4-1',
+        'claude-sonnet-4-6',
+        'claude-sonnet-4-5',
+        'claude-haiku-4-5'
+      ],
+      providerFieldsList: ['apiKey'],
+      modelFieldsList: ['temperature', 'topP', 'topK', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.AMAZON_BEDROCK,
+    {
+      modelList: [],
+      providerFieldsList: ['region', 'accessKeyId', 'secretAccessKey'],
+      modelFieldsList: ['temperature', 'topP', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.GITHUB_MODELS,
+    {
+      modelList: [],
+      providerFieldsList: ['personalAccessToken'],
+      modelFieldsList: ['temperature', 'topP', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'],
+    },
+  ],
+  [
+    AiProvider.OLLAMA,
+    {
+      modelList: [],
+      providerFieldsList: ['baseUrl'],
+      modelFieldsList: ['temperature', 'topP', 'topK', 'maxOutputTokens', 'contextLength'],
+    },
+  ],
+]);
+
+export enum ResponseFormat {
+  TEXT = 'TEXT',
+  JSON = 'JSON',
+  JSON_SCHEMA = 'JSON_SCHEMA'
+}
+
+export const aiRuleNodeResponseFormats = (provider: AiProvider): ResponseFormat[] => {
+  switch (provider) {
+    case AiProvider.ANTHROPIC:
+    case AiProvider.AMAZON_BEDROCK:
+      return [ResponseFormat.TEXT, ResponseFormat.JSON_SCHEMA];
+    default:
+      return [ResponseFormat.TEXT, ResponseFormat.JSON, ResponseFormat.JSON_SCHEMA];
+  }
+};
+
+export interface AiModelWithUserMsg {
+  userMessage: {
+    contents: Array<{contentType: string; text: string}>;
+  }
+  chatModelConfig: {
+    modelType: string;
+    provider: AiProvider
+    providerConfig: {
+      apiKey?: string;
+      personalAccessToken?: string;
+      endpoint?: string;
+      serviceVersion?: string;
+      projectId?: string;
+      location?: string;
+      serviceAccountKey?: string;
+      fileName?: string;
+      baseUrl?: string;
+    };
+    modelId: string;
+    maxRetries: number;
+    timeoutSeconds: number;
+  }
+}
+
+export interface CheckConnectivityResult {
+  status: string;
+  errorDetails: string;
+}
+export enum AuthenticationType {
+  NONE = 'NONE',
+  BASIC = 'BASIC',
+  TOKEN = 'TOKEN'
+}

@@ -1,0 +1,55 @@
+{
+  "reprocessingOrder": 1,
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "ff395d16-0c28-4985-802d-bad40f4bf4d0"
+  },
+  "type": "ENTITY_AGGREGATION",
+  "name": "Excavator hourly fuel consumption",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ENTITY_AGGREGATION",
+    "arguments": {
+      "fuelConsumptionRate": {
+        "refEntityKey": {
+          "key": "fuelConsumptionRate",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": null
+      }
+    },
+    "metrics": {
+      "hourlyFuelConsumption": {
+        "function": "SUM",
+        "input": {
+          "type": "key",
+          "key": "fuelConsumptionRate"
+        },
+        "defaultValue": 0
+      }
+    },
+    "interval": {
+      "type": "HOUR",
+      "tz": "UTC"
+    },
+    "watermark": null,
+    "produceIntermediateResult": true,
+    "output": {
+      "type": "TIME_SERIES",
+      "decimalsByDefault": 2,
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": true,
+        "saveLatest": true,
+        "sendWsUpdate": true,
+        "processCfs": true
+      }
+    }
+  }
+}

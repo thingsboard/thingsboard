@@ -1,35 +1,21 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   BackgroundSettings,
   BackgroundType,
   ColorProcessor,
   ColorSettings,
-  ColorType,
   ComponentStyle,
   constantColor,
   DateFormatSettings,
   Font,
   lastUpdateAgoDateFormat,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
-import { ComparisonResultType, DataEntry, DataKey, DatasourceData } from '@shared/models/widget.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { AggregationType } from '@shared/models/time/time.models';
+import { DataEntry, DataKey, DatasourceData } from '@shared/models/widget.models';
+import { Injector } from '@angular/core';
+import { UnitService } from '@core/services/unit.service';
 
 export interface AggregatedValueCardWidgetSettings {
   autoScale: boolean;
@@ -81,10 +67,12 @@ export interface AggregatedValueCardValue {
   showArrow: boolean;
   upArrow: boolean;
   downArrow: boolean;
+  valueFormat: ValueFormatProcessor;
 }
 
 export const computeAggregatedCardValue =
-  (dataKeys: DataKey[], keyName: string, position: AggregatedValueCardKeyPosition): AggregatedValueCardValue => {
+  (dataKeys: DataKey[], keyName: string, position: AggregatedValueCardKeyPosition,
+   $injector: Injector, widgetDecimal: number): AggregatedValueCardValue => {
   const key = dataKeys.find(dataKey => ( dataKey.name === keyName && (dataKey.settings?.position === position ||
                                          (!dataKey.settings?.position && position === AggregatedValueCardKeyPosition.center)) ));
   if (key) {
@@ -92,13 +80,18 @@ export const computeAggregatedCardValue =
     return {
       key,
       value: '',
-      units: key.units,
+      units: $injector.get(UnitService).getTargetUnitSymbol(key.units),
       style: textStyle(settings.font),
       color: ColorProcessor.fromSettings(settings.color),
       center: position === AggregatedValueCardKeyPosition.center,
       showArrow: settings.showArrow,
       upArrow: false,
-      downArrow: false
+      downArrow: false,
+      valueFormat: ValueFormatProcessor.fromSettings($injector, {
+        units: key.units,
+        decimals: key.decimals || widgetDecimal,
+        ignoreUnitSymbol: true,
+      })
     };
   }
 };

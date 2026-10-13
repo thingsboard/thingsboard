@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import jakarta.persistence.Column;
@@ -28,19 +16,16 @@ import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 4/21/2017.
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.API_USAGE_STATE_TABLE_NAME)
-public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
+public class ApiUsageStateEntity extends BaseVersionedEntity<ApiUsageState> implements BaseEntity<ApiUsageState> {
 
     @Column(name = ModelConstants.API_USAGE_STATE_TENANT_ID_COLUMN)
     private UUID tenantId;
@@ -73,14 +58,19 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
     @Column(name = ModelConstants.API_USAGE_STATE_ALARM_EXEC_COLUMN)
     private ApiUsageStateValue alarmExecState = ApiUsageStateValue.ENABLED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_REPORT_EXEC_COLUMN)
+    private ApiUsageStateValue reportExecState = ApiUsageStateValue.ENABLED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.API_USAGE_STATE_AI_COLUMN)
+    private ApiUsageStateValue aiState = ApiUsageStateValue.ENABLED;
+
     public ApiUsageStateEntity() {
     }
 
     public ApiUsageStateEntity(ApiUsageState ur) {
-        if (ur.getId() != null) {
-            this.setUuid(ur.getId().getId());
-        }
-        this.setCreatedTime(ur.getCreatedTime());
+        super(ur);
         if (ur.getTenantId() != null) {
             this.tenantId = ur.getTenantId().getId();
         }
@@ -96,6 +86,8 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.reportExecState = ur.getReportExecState();
+        this.aiState = ur.getAiState();
     }
 
     @Override
@@ -116,6 +108,9 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         ur.setEmailExecState(emailExecState);
         ur.setSmsExecState(smsExecState);
         ur.setAlarmExecState(alarmExecState);
+        ur.setReportExecState(reportExecState);
+        ur.setAiState(aiState);
+        ur.setVersion(version);
         return ur;
     }
 

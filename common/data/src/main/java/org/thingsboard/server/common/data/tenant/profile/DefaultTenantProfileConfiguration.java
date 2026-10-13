@@ -1,21 +1,11 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.tenant.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +13,9 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfileType;
+import org.thingsboard.server.common.data.validation.RateLimit;
+
+import java.io.Serial;
 
 @Schema
 @AllArgsConstructor
@@ -31,6 +24,7 @@ import org.thingsboard.server.common.data.TenantProfileType;
 @Data
 public class DefaultTenantProfileConfiguration implements TenantProfileConfiguration {
 
+    @Serial
     private static final long serialVersionUID = -7134932690332578595L;
 
     private long maxDevices;
@@ -39,42 +33,74 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxUsers;
     private long maxDashboards;
     private long maxRuleChains;
+    private long maxEdges;
     private long maxResourcesInBytes;
     private long maxOtaPackagesInBytes;
     private long maxResourceSize;
+    private long maxReportSizeInBytes;
+    private long maxIntegrations;
+    private long maxConverters;
+    private long maxSchedulerEvents;
+    private long maxAgents;
+    private long maxAgentApplications;
 
     @Schema(example = "1000:1,20000:60")
+    @RateLimit(fieldName = "Transport tenant messages")
     private String transportTenantMsgRateLimit;
     @Schema(example = "1000:1,20000:60")
+    @RateLimit(fieldName = "Transport tenant telemetry messages")
     private String transportTenantTelemetryMsgRateLimit;
     @Schema(example = "1000:1,20000:60")
+    @RateLimit(fieldName = "Transport tenant telemetry data points")
     private String transportTenantTelemetryDataPointsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport device messages")
     private String transportDeviceMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport device telemetry messages")
     private String transportDeviceTelemetryMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport device telemetry data points")
     private String transportDeviceTelemetryDataPointsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway messages")
     private String transportGatewayMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway telemetry messages")
     private String transportGatewayTelemetryMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway telemetry data points")
     private String transportGatewayTelemetryDataPointsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway device messages")
     private String transportGatewayDeviceMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway device telemetry messages")
     private String transportGatewayDeviceTelemetryMsgRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Transport gateway device telemetry data points")
     private String transportGatewayDeviceTelemetryDataPointsRateLimit;
 
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Tenant integration messages")
+    private String integrationMsgsPerTenantRateLimit;
+    @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Device integration messages")
+    private String integrationMsgsPerDeviceRateLimit;
+    @RateLimit(fieldName = "Asset integration messages")
+    private String integrationMsgsPerAssetRateLimit;
+
+    @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Entity version creation")
     private String tenantEntityExportRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Entity version load")
     private String tenantEntityImportRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Notification requests")
     private String tenantNotificationRequestsRateLimit;
     @Schema(example = "20:1,600:60")
+    @RateLimit(fieldName = "Notification requests per notification rule")
     private String tenantNotificationRequestsPerRuleRateLimit;
 
     @Schema(example = "10000000")
@@ -91,6 +117,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxDPStorageDays;
     @Schema(example = "50")
     private int maxRuleNodeExecutionsPerMessage;
+    @Schema(example = "15")
+    private int maxDebugModeDurationMinutes;
     @Schema(example = "0")
     private long maxEmails;
     @Schema(example = "true")
@@ -99,8 +127,14 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxSms;
     @Schema(example = "1000")
     private long maxCreatedAlarms;
+    @Schema(example = "10000")
+    private long maxGeneratedReports;
+    @Schema(example = "10000")
+    private long maxAiCredits;
 
+    @RateLimit(fieldName = "REST requests for tenant")
     private String tenantServerRestLimitsConfiguration;
+    @RateLimit(fieldName = "REST requests for customer")
     private String customerServerRestLimitsConfiguration;
 
     private int maxWsSessionsPerTenant;
@@ -112,56 +146,115 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxWsSubscriptionsPerCustomer;
     private long maxWsSubscriptionsPerRegularUser;
     private long maxWsSubscriptionsPerPublicUser;
+    @RateLimit(fieldName = "WS updates per session")
     private String wsUpdatesPerSessionRateLimit;
 
-    private String cassandraQueryTenantRateLimitsConfiguration;
+    @RateLimit(fieldName = "Rest API and WS telemetry Cassandra read queries")
+    private String cassandraReadQueryTenantCoreRateLimits;
+    @RateLimit(fieldName = "Rest API Cassandra write queries")
+    private String cassandraWriteQueryTenantCoreRateLimits;
 
+    @RateLimit(fieldName = "Rule Engine telemetry Cassandra read queries")
+    private String cassandraReadQueryTenantRuleEngineRateLimits;
+    @RateLimit(fieldName = "Rule Engine telemetry Cassandra write queries")
+    private String cassandraWriteQueryTenantRuleEngineRateLimits;
+
+    @RateLimit(fieldName = "Edge events")
     private String edgeEventRateLimits;
+    @RateLimit(fieldName = "Edge events per edge")
     private String edgeEventRateLimitsPerEdge;
+    @RateLimit(fieldName = "Edge uplink messages")
     private String edgeUplinkMessagesRateLimits;
+    @RateLimit(fieldName = "Edge uplink messages per edge")
     private String edgeUplinkMessagesRateLimitsPerEdge;
+
+    @RateLimit(fieldName = "Agent events")
+    private String agentEventRateLimits;
+    @RateLimit(fieldName = "Agent events per agent")
+    private String agentEventRateLimitsPerAgent;
+    @RateLimit(fieldName = "Agent log chunks")
+    private String agentLogChunkRateLimits;
+    @RateLimit(fieldName = "Agent log chunks per agent")
+    private String agentLogChunkRateLimitsPerAgent;
 
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;
     private int queueStatsTtlDays;
     private int ruleEngineExceptionsTtlDays;
+    private int blobEntityTtlDays;
+    private int reportTtlDays;
 
     private double warnThreshold;
 
+    @Builder.Default
+    @Schema(example = "100")
+    private long maxCalculatedFieldsPerEntity = 100;
+    @Builder.Default
+    @Schema(example = "10")
+    private long maxArgumentsPerCF = 10;
+    @Schema(example = "10")
+    @PositiveOrZero
+    private int minAllowedScheduledUpdateIntervalInSecForCF = 10;
+    @Builder.Default
+    @Schema(example = "2")
+    @Positive
+    private int maxRelationLevelPerCfArgument = 2;
+    @Builder.Default
+    @Schema(example = "1000")
+    @Positive
+    private int maxRelatedEntitiesToReturnPerCfArgument = 1000;
+    @Builder.Default
+    @Positive
+    @Schema(example = "1000")
+    private long maxDataPointsPerRollingArg = 1000;
+    @Builder.Default
+    @Schema(example = "512")
+    private long maxStateSizeInKBytes = 512;
+    @Builder.Default
+    @Schema(example = "32")
+    private long maxSingleValueArgumentSizeInKBytes = 32;
+    @Schema(example = "10")
+    private long minAllowedDeduplicationIntervalInSecForCF = 10;
+    @Schema(example = "60")
+    private long minAllowedAggregationIntervalInSecForCF = 60;
+    @Builder.Default
+    @Schema(example = "300")
+    private long intermediateAggregationIntervalInSecForCF = 300;
+    @Builder.Default
+    @Schema(example = "60")
+    private long cfReevaluationCheckInterval = 60;
+    @Builder.Default
+    @Schema(example = "60")
+    private long alarmsReevaluationInterval = 60;
+
+    @RateLimit(fieldName = "AI chat requests per tenant")
+    private String aiChatRequestsPerTenantRateLimit;
+
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {
-        switch (key) {
-            case TRANSPORT_MSG_COUNT:
-                return maxTransportMessages;
-            case TRANSPORT_DP_COUNT:
-                return maxTransportDataPoints;
-            case JS_EXEC_COUNT:
-                return maxJSExecutions;
-            case TBEL_EXEC_COUNT:
-                return maxTbelExecutions;
-            case RE_EXEC_COUNT:
-                return maxREExecutions;
-            case STORAGE_DP_COUNT:
-                return maxDPStorageDays;
-            case EMAIL_EXEC_COUNT:
-                return maxEmails;
-            case SMS_EXEC_COUNT:
-                return maxSms;
-            case CREATED_ALARMS_COUNT:
-                return maxCreatedAlarms;
-        }
-        return 0L;
+        return switch (key) {
+            case TRANSPORT_MSG_COUNT -> maxTransportMessages;
+            case TRANSPORT_DP_COUNT -> maxTransportDataPoints;
+            case JS_EXEC_COUNT -> maxJSExecutions;
+            case TBEL_EXEC_COUNT -> maxTbelExecutions;
+            case RE_EXEC_COUNT -> maxREExecutions;
+            case STORAGE_DP_COUNT -> maxDPStorageDays;
+            case EMAIL_EXEC_COUNT -> maxEmails;
+            case SMS_EXEC_COUNT -> maxSms;
+            case CREATED_ALARMS_COUNT -> maxCreatedAlarms;
+            case GENERATED_REPORTS_COUNT -> maxGeneratedReports;
+            case AI_CREDITS_COUNT -> maxAiCredits;
+            default -> 0L;
+        };
     }
 
     @Override
     public boolean getProfileFeatureEnabled(ApiUsageRecordKey key) {
-        switch (key) {
-            case SMS_EXEC_COUNT:
-                return smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
-            default:
-                return true;
-        }
+        return switch (key) {
+            case SMS_EXEC_COUNT -> smsEnabled == null || Boolean.TRUE.equals(smsEnabled);
+            default -> true;
+        };
     }
 
     @Override
@@ -170,22 +263,21 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     }
 
     public long getEntitiesLimit(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return maxDevices;
-            case ASSET:
-                return maxAssets;
-            case CUSTOMER:
-                return maxCustomers;
-            case USER:
-                return maxUsers;
-            case DASHBOARD:
-                return maxDashboards;
-            case RULE_CHAIN:
-                return maxRuleChains;
-            default:
-                return 0;
-        }
+        return switch (entityType) {
+            case DEVICE -> maxDevices;
+            case ASSET -> maxAssets;
+            case CUSTOMER -> maxCustomers;
+            case USER -> maxUsers;
+            case DASHBOARD -> maxDashboards;
+            case RULE_CHAIN -> maxRuleChains;
+            case EDGE -> maxEdges;
+            case INTEGRATION -> maxIntegrations;
+            case CONVERTER -> maxConverters;
+            case SCHEDULER_EVENT -> maxSchedulerEvents;
+            case AGENT -> maxAgents;
+            case AGENT_APPLICATION -> maxAgentApplications;
+            default -> 0;
+        };
     }
 
     @Override
@@ -197,4 +289,17 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     public int getMaxRuleNodeExecsPerMessage() {
         return maxRuleNodeExecutionsPerMessage;
     }
+
+    public long getCfReevaluationCheckInterval() {
+        return cfReevaluationCheckInterval <= 0 ? 60 : cfReevaluationCheckInterval;
+    }
+
+    public long getAlarmsReevaluationInterval() {
+        return alarmsReevaluationInterval <= 0 ? 60 : alarmsReevaluationInterval;
+    }
+
+    public long getIntermediateAggregationIntervalInSecForCF() {
+        return intermediateAggregationIntervalInSecForCF <= 0 ? 300 : intermediateAggregationIntervalInSecForCF;
+    }
+
 }

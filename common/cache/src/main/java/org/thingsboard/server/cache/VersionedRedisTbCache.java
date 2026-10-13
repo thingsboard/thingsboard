@@ -1,24 +1,9 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.cache;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.ReturnType;
@@ -27,10 +12,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.HasVersion;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 @Slf4j
-public abstract class VersionedRedisTbCache<K extends Serializable, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
+public abstract class VersionedRedisTbCache<K extends VersionedCacheKey, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
 
     private static final int VERSION_SIZE = 8;
     private static final int VALUE_END_OFFSET = -1;
@@ -65,29 +49,21 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
         super(cacheName, cacheSpecsMap, connectionFactory, configuration, valueSerializer);
     }
 
-    @PostConstruct
-    public void init() {
-        try (var connection = getConnection(SET_VERSIONED_VALUE_SHA)) {
-            log.debug("Loading LUA with expected SHA[{}], connection [{}]", new String(SET_VERSIONED_VALUE_SHA), connection.getNativeConnection());
-            String sha = connection.scriptingCommands().scriptLoad(SET_VERSIONED_VALUE_LUA_SCRIPT);
-            if (!Arrays.equals(SET_VERSIONED_VALUE_SHA, StringRedisSerializer.UTF_8.serialize(sha))) {
-                log.error("SHA for SET_VERSIONED_VALUE_LUA_SCRIPT wrong! Expected [{}], but actual [{}], connection [{}]", new String(SET_VERSIONED_VALUE_SHA), sha, connection.getNativeConnection());
-            }
-        } catch (Throwable t) {
-            log.error("Error on Redis versioned cache init", t);
-        }
-    }
-
     @Override
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
-        if (transactionMode) {
-            return super.doGet(connection, rawKey, true);
+    protected byte[] doGet(K key, RedisConnection connection) {
+        if (!key.isVersioned()) {
+            return super.doGet(key, connection);
         }
+        byte[] rawKey = getRawKey(key);
         return connection.stringCommands().getRange(rawKey, VERSION_SIZE, VALUE_END_OFFSET);
     }
 
     @Override
     public void put(K key, V value) {
+        if (!key.isVersioned()) {
+            super.put(key, value);
+            return;
+        }
         Long version = getVersion(value);
         if (version == null) {
             return;
@@ -96,9 +72,9 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     @Override
-    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
-        if (transactionMode) {
-            super.put(key, value, connection, true); // because scripting commands are not supported in transaction mode
+    public void put(K key, V value, RedisConnection connection) {
+        if (!key.isVersioned()) {
+            super.put(key, value, connection); // because scripting commands are not supported in transaction mode
             return;
         }
         Long version = getVersion(value);
@@ -124,21 +100,7 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
         byte[] rawValue = getRawValue(value);
         byte[] rawVersion = StringRedisSerializer.UTF_8.serialize(String.valueOf(version));
         byte[] rawExpiration = StringRedisSerializer.UTF_8.serialize(String.valueOf(expiration.getExpirationTimeInSeconds()));
-        try {
-            connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
-        } catch (InvalidDataAccessApiUsageException e) {
-            log.debug("loading LUA [{}]", connection.getNativeConnection());
-            String sha = connection.scriptingCommands().scriptLoad(SET_VERSIONED_VALUE_LUA_SCRIPT);
-            if (!Arrays.equals(SET_VERSIONED_VALUE_SHA, StringRedisSerializer.UTF_8.serialize(sha))) {
-                log.error("SHA for SET_VERSIONED_VALUE_LUA_SCRIPT wrong! Expected [{}], but actual [{}]", new String(SET_VERSIONED_VALUE_SHA), sha);
-            }
-            try {
-                connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
-            } catch (InvalidDataAccessApiUsageException ignored) {
-                log.debug("Slowly executing eval instead of fast evalsha");
-                connection.scriptingCommands().eval(SET_VERSIONED_VALUE_LUA_SCRIPT, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
-            }
-        }
+        executeScript(connection, SET_VERSIONED_VALUE_SHA, SET_VERSIONED_VALUE_LUA_SCRIPT, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
     }
 
     @Override

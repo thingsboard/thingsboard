@@ -1,0 +1,442 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+package org.thingsboard.server.edqs.util;
+
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.edqs.DataPoint;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.permission.MergedGroupTypePermissionInfo;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.QueryContext;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.query.ComplexOperation;
+import org.thingsboard.server.common.data.query.EntitiesByGroupNameFilter;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityFilter;
+import org.thingsboard.server.common.data.query.EntityGroupFilter;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
+import org.thingsboard.server.common.data.query.EntityListFilter;
+import org.thingsboard.server.common.data.query.EntityNameFilter;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
+import org.thingsboard.server.common.data.query.FilterPredicateType;
+import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.query.KeyFilterPredicate;
+import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.edqs.data.EntityData;
+import org.thingsboard.server.edqs.query.DataKey;
+import org.thingsboard.server.edqs.query.EdqsCountQuery;
+import org.thingsboard.server.edqs.query.EdqsDataQuery;
+import org.thingsboard.server.edqs.query.EdqsFilter;
+import org.thingsboard.server.edqs.query.EdqsQuery;
+import org.thingsboard.server.edqs.query.SortableEntityData;
+import org.thingsboard.server.edqs.repo.KeyDictionary;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
+import static org.thingsboard.server.common.data.StringUtils.equalsAny;
+import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
+import static org.thingsboard.server.common.data.query.ComplexOperation.AND;
+import static org.thingsboard.server.common.data.query.ComplexOperation.OR;
+
+@Slf4j
+public class RepositoryUtils {
+
+    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(sp -> sp.getId().toString());
+
+    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing(SortableEntityData::getSortValue, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(sp -> sp.getId().toString()).reversed();
+
+    public static final MergedUserPermissions SYS_ADMIN_PERMISSIONS = new MergedUserPermissions(Collections.singletonMap(Resource.ALL, Set.of(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)), Collections.emptyMap());
+    public static final MergedUserPermissions ALL_READ_PERMISSIONS = new MergedUserPermissions(
+            Collections.singletonMap(Resource.ALL, Set.of(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)), Collections.emptyMap());
+
+    public static EntityType resolveEntityType(EntityFilter entityFilter) {
+        return switch (entityFilter.getType()) {
+            case SINGLE_ENTITY -> ((SingleEntityFilter) entityFilter).getSingleEntity().getEntityType();
+            case ENTITY_GROUP -> ((EntityGroupFilter) entityFilter).getGroupType();
+            case ENTITY_LIST -> ((EntityListFilter) entityFilter).getEntityType();
+            case ENTITY_NAME -> ((EntityNameFilter) entityFilter).getEntityType();
+            case ENTITY_TYPE -> ((EntityTypeFilter) entityFilter).getEntityType();
+            case ENTITY_GROUP_LIST, ENTITY_GROUP_NAME -> EntityType.ENTITY_GROUP;
+            case ENTITIES_BY_GROUP_NAME -> ((EntitiesByGroupNameFilter) entityFilter).getGroupType();
+            case STATE_ENTITY -> throw new RuntimeException("Not implemented!");
+            case STATE_ENTITY_OWNER -> throw new RuntimeException("Not implemented!"); // TODO: implement
+            case ASSET_TYPE, ASSET_SEARCH_QUERY -> EntityType.ASSET;
+            case DEVICE_TYPE, DEVICE_SEARCH_QUERY -> EntityType.DEVICE;
+            case ENTITY_VIEW_TYPE, ENTITY_VIEW_SEARCH_QUERY -> EntityType.ENTITY_VIEW;
+            case EDGE_TYPE, EDGE_SEARCH_QUERY -> EntityType.EDGE;
+            case RELATIONS_QUERY -> {
+                RelationsQueryFilter rgf = (RelationsQueryFilter) entityFilter;
+                yield rgf.isMultiRoot() ? rgf.getMultiRootEntitiesType() : rgf.getRootEntity().getEntityType();
+            }
+            case API_USAGE_STATE -> EntityType.API_USAGE_STATE;
+            case SCHEDULER_EVENT -> EntityType.SCHEDULER_EVENT;
+        };
+    }
+
+    public static boolean hasNoPermissionsForAllRelationQueryResources(Map<Resource, MergedGroupTypePermissionInfo> permissionsMap) {
+        if (permissionsMap.get(Resource.resourceFromEntityType(EntityType.TENANT)).isHasGenericRead()) {
+            return false;
+        }
+        for (EntityType entityType : EntityGroup.groupTypes) {
+            if (permissionsMap.get(Resource.resourceFromEntityType(entityType)).isHasGenericRead() ||
+                !permissionsMap.get(Resource.resourceFromEntityType(entityType)).getEntityGroupIds().isEmpty()) {
+                return false;
+            }
+            if (permissionsMap.get(Resource.groupResourceFromGroupType(entityType)).isHasGenericRead() ||
+                !permissionsMap.get(Resource.groupResourceFromGroupType(entityType)).getEntityGroupIds().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean customerUserIsTryingToAccessTenantEntity(QueryContext ctx, EntityFilter entityFilter) {
+        if (ctx.isTenantUser()) {
+            return false;
+        } else {
+            return switch (entityFilter.getType()) {
+                case SINGLE_ENTITY -> {
+                    SingleEntityFilter seFilter = (SingleEntityFilter) entityFilter;
+                    yield isSystemOrTenantEntity(seFilter.getSingleEntity().getEntityType());
+                }
+                case ENTITY_LIST -> {
+                    EntityListFilter elFilter = (EntityListFilter) entityFilter;
+                    yield isSystemOrTenantEntity(elFilter.getEntityType());
+                }
+                case ENTITY_NAME -> {
+                    EntityNameFilter enFilter = (EntityNameFilter) entityFilter;
+                    yield isSystemOrTenantEntity(enFilter.getEntityType());
+                }
+                case ENTITY_TYPE -> {
+                    EntityTypeFilter etFilter = (EntityTypeFilter) entityFilter;
+                    yield isSystemOrTenantEntity(etFilter.getEntityType());
+                }
+                default -> false;
+            };
+        }
+    }
+
+    private static boolean isSystemOrTenantEntity(EntityType entityType) {
+        return switch (entityType) {
+            case INTEGRATION, CONVERTER, DEVICE_PROFILE, ASSET_PROFILE, RULE_CHAIN, SCHEDULER_EVENT, TENANT,
+                 TENANT_PROFILE, WIDGET_TYPE, WIDGETS_BUNDLE -> true;
+            default -> false;
+        };
+    }
+
+    public static EdqsDataQuery toNewQuery(EntityDataQuery oldQuery) {
+        var query = EdqsDataQuery.builder();
+        query.page(oldQuery.getPageLink().getPage());
+        query.pageSize(oldQuery.getPageLink().getPageSize());
+        query.textSearch(oldQuery.getPageLink().getTextSearch());
+        var sortOrder = oldQuery.getPageLink().getSortOrder();
+        if (sortOrder != null && toNewKey(sortOrder.getKey()) != null) {
+            query.sortKey(toNewKey(sortOrder.getKey()));
+            query.sortDirection(sortOrder.getDirection());
+        } else {
+            query.sortKey(new DataKey(EntityKeyType.ENTITY_FIELD, "createdTime", null));
+            query.sortDirection(EntityDataSortOrder.Direction.DESC);
+        }
+        query.entityFilter(oldQuery.getEntityFilter());
+        query.keyFilters(toKeyFilters(oldQuery.getKeyFilters()));
+        query.keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault());
+        query.entityFields(toNewKeys(oldQuery.getEntityFields()));
+        query.latestValues(toNewKeys(oldQuery.getLatestValues()));
+        return query.build();
+    }
+
+    public static EdqsCountQuery toNewQuery(EntityCountQuery oldQuery) {
+        return EdqsCountQuery.builder()
+                .entityFilter(oldQuery.getEntityFilter())
+                .hasKeyFilters(CollectionsUtil.isNotEmpty(oldQuery.getKeyFilters()))
+                .keyFilters(toKeyFilters(oldQuery.getKeyFilters()))
+                .keyFiltersOperation(oldQuery.getKeyFiltersOperationOrDefault())
+                .build();
+    }
+
+    private static List<EdqsFilter> toKeyFilters(List<KeyFilter> keyFilters) {
+        if (keyFilters == null || keyFilters.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            List<EdqsFilter> result = new ArrayList<>();
+            for (KeyFilter entityFilter : keyFilters) {
+                var newKey = toNewKey(entityFilter.getKey());
+                if (newKey != null) {
+                    result.add(new EdqsFilter(newKey, entityFilter.getValueType(), entityFilter.getPredicate()));
+                }
+            }
+            return result;
+        }
+    }
+
+    private static DataKey toNewKey(EntityKey entityKey) {
+        if (EntityKeyType.ENTITY_FIELD.equals(entityKey.getType())) {
+            return new DataKey(entityKey.getType(), entityKey.getKey(), null);
+        }
+        Integer keyId = KeyDictionary.get(entityKey.getKey());
+        if (keyId != null) {
+            return new DataKey(entityKey.getType(), entityKey.getKey(), keyId);
+        } else {
+            log.warn("Missing dictionary key for {}", entityKey.getKey());
+            return null;
+        }
+    }
+
+    private static List<DataKey> toNewKeys(List<EntityKey> entityKeys) {
+        if (entityKeys == null || entityKeys.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            var result = new ArrayList<DataKey>(entityKeys.size());
+            for (EntityKey entityKey : entityKeys) {
+                var newKey = toNewKey(entityKey);
+                if (newKey != null) {
+                    result.add(newKey);
+                }
+            }
+            return result;
+        }
+    }
+
+    public static boolean checkKeyFilters(EntityData entity, List<EdqsFilter> keyFilters) {
+        return checkKeyFilters(entity, keyFilters, ComplexOperation.AND);
+    }
+
+    public static boolean checkKeyFilters(EntityData entity, List<EdqsFilter> keyFilters, ComplexOperation operation) {
+        ComplexOperation op = operation != null ? operation : ComplexOperation.AND;
+        if (op == ComplexOperation.OR) {
+            for (EdqsFilter keyFilter : keyFilters) {
+                if (evaluateSingleFilter(entity, keyFilter)) {
+                    return true;
+                }
+            }
+            // Vacuously true when OR is called with an empty filter list. Unreachable via checkFilters
+            // (which guards on isHasKeyFilters()), but kept defensive for any future direct caller.
+            return keyFilters.isEmpty();
+        } else {
+            for (EdqsFilter keyFilter : keyFilters) {
+                if (!evaluateSingleFilter(entity, keyFilter)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private static boolean evaluateSingleFilter(EntityData entity, EdqsFilter keyFilter) {
+        EntityKeyValueType valueType = keyFilter.valueType();
+        if (valueType == null) {
+            valueType = switch (keyFilter.predicate().getType()) {
+                case STRING -> EntityKeyValueType.STRING;
+                case NUMERIC -> EntityKeyValueType.NUMERIC;
+                case BOOLEAN -> EntityKeyValueType.BOOLEAN;
+                default -> throw new IllegalStateException();
+            };
+        }
+        DataKey dataKey = keyFilter.key();
+        DataPoint dp = entity.getDataPoint(dataKey, null);
+        return switch (valueType) {
+            case STRING -> {
+                String str = dp != null ? dp.valueToString() : null;
+                yield (dataKey.type() == EntityKeyType.ENTITY_FIELD) ? (str == null || checkKeyFilter(str, keyFilter.predicate())) :
+                        (str != null && checkKeyFilter(str, keyFilter.predicate()));
+            }
+            case BOOLEAN -> {
+                Boolean booleanValue = dp != null ? dp.getBool() : null;
+                yield booleanValue != null && checkKeyFilter(booleanValue, keyFilter.predicate());
+            }
+            case DATE_TIME, NUMERIC -> {
+                Double doubleValue = dp != null ? dp.getDouble() : null;
+                yield doubleValue != null && checkKeyFilter(doubleValue, keyFilter.predicate());
+            }
+        };
+    }
+
+    public static boolean checkKeyFilter(String value, KeyFilterPredicate keyFilterPredicate) {
+        if (keyFilterPredicate.getType() == FilterPredicateType.COMPLEX) {
+            return checkComplexKeyFilter(value, (ComplexFilterPredicate) keyFilterPredicate, RepositoryUtils::checkKeyFilter);
+        }
+        if (keyFilterPredicate.getType() != FilterPredicateType.STRING) {
+            throw new IllegalStateException("Not implemented");
+        }
+        StringFilterPredicate predicate = (StringFilterPredicate) keyFilterPredicate;
+        String predicateValue = predicate.getValue().getValue();
+        if (StringUtils.isEmpty(predicateValue)) {
+            return true;
+        }
+        if (predicate.isIgnoreCase()) {
+            predicateValue = predicateValue.toLowerCase();
+            value = value.toLowerCase();
+        }
+        return switch (predicate.getOperation()) {
+            case EQUAL -> value.equals(predicateValue);
+            case STARTS_WITH -> toSqlLikePattern(predicateValue, "^", ".*").matcher(value).matches();
+            case ENDS_WITH -> toSqlLikePattern(predicateValue, ".*", "$").matcher(value).matches();
+            case NOT_EQUAL -> !value.equals(predicateValue);
+            case CONTAINS -> toSqlLikePattern(predicateValue, ".*", ".*").matcher(value).matches();
+            case NOT_CONTAINS -> !toSqlLikePattern(predicateValue, ".*", ".*").matcher(value).matches();
+            case IN -> equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
+            case NOT_IN -> !equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
+        };
+    }
+
+    public static boolean checkKeyFilter(Double value, KeyFilterPredicate keyFilterPredicate) {
+        if (keyFilterPredicate.getType() == FilterPredicateType.COMPLEX) {
+            return checkComplexKeyFilter(value, (ComplexFilterPredicate) keyFilterPredicate, RepositoryUtils::checkKeyFilter);
+        }
+        if (keyFilterPredicate.getType() != FilterPredicateType.NUMERIC) {
+            throw new IllegalStateException("Not implemented");
+        }
+        NumericFilterPredicate predicate = (NumericFilterPredicate) keyFilterPredicate;
+        Double predicateValue = predicate.getValue().getValue();
+        return switch (predicate.getOperation()) {
+            case EQUAL -> value.equals(predicateValue);
+            case NOT_EQUAL -> !value.equals(predicateValue);
+            case GREATER -> value.compareTo(predicateValue) > 0;
+            case LESS -> value.compareTo(predicateValue) < 0;
+            case GREATER_OR_EQUAL -> value.compareTo(predicateValue) >= 0;
+            case LESS_OR_EQUAL -> value.compareTo(predicateValue) <= 0;
+        };
+    }
+
+    public static boolean checkKeyFilter(Boolean value, KeyFilterPredicate keyFilterPredicate) {
+        if (keyFilterPredicate.getType() == FilterPredicateType.COMPLEX) {
+            return checkComplexKeyFilter(value, (ComplexFilterPredicate) keyFilterPredicate, RepositoryUtils::checkKeyFilter);
+        }
+        if (keyFilterPredicate.getType() != FilterPredicateType.BOOLEAN) {
+            throw new IllegalStateException("Not implemented");
+        }
+        BooleanFilterPredicate predicate = (BooleanFilterPredicate) keyFilterPredicate;
+        Boolean predicateValue = predicate.getValue().getValue();
+        return switch (predicate.getOperation()) {
+            case EQUAL -> value.equals(predicateValue);
+            case NOT_EQUAL -> !value.equals(predicateValue);
+        };
+    }
+
+    public static <T> boolean checkComplexKeyFilter(T value, ComplexFilterPredicate filterPredicates,
+                                                    SimpleKeyFilter<T> simpleKeyFilter) {
+        if (filterPredicates.getOperation() == AND) {
+            for (KeyFilterPredicate filterPredicate : filterPredicates.getPredicates()) {
+                if (!simpleKeyFilter.check(value, filterPredicate)) {
+                    return false;
+                }
+            }
+            return true;
+        } else if (filterPredicates.getOperation() == OR) {
+            for (KeyFilterPredicate filterPredicate : filterPredicates.getPredicates()) {
+
+                // Emulate the SQL-like behavior of ThingsBoard's Entity Data Query service:
+                // for COMPLEX filters, return no results if filter value is empty
+                if (filterPredicate instanceof StringFilterPredicate stringFilterPredicate) {
+                    if (StringUtils.isEmpty(stringFilterPredicate.getValue().getValue())) {
+                        continue;
+                    }
+                }
+
+                if (simpleKeyFilter.check(value, filterPredicate)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+
+    public static Pattern toEntityNameSqlLikePattern(String filter) {
+        if (StringUtils.isNotBlank(filter)) {
+            return toSqlLikePattern(filter, "", ".*", true);
+        }
+        return null;
+    }
+
+    private static Pattern toSqlLikePattern(String value, String prefix, String suffix) {
+        return toSqlLikePattern(value, prefix, suffix, false);
+    }
+
+    private static Pattern toSqlLikePattern(String value, String prefix, String suffix, boolean ignoreCase) {
+        String regexValue;
+        if (value.contains("%") || value.contains("_")) {
+            regexValue = value
+                    .replace("_", ".")
+                    .replace("%", ".*");
+            if ("^".equals(prefix)) {
+                regexValue = "^" + regexValue + (regexValue.endsWith(".*") ? "" : ".*");
+            } else if ("$".equals(suffix)) {
+                regexValue = (regexValue.startsWith(".*") ? "" : ".*") + regexValue + "$";
+            }
+        } else {
+            regexValue = prefix + Pattern.quote(value) + suffix;
+        }
+        return ignoreCase ? Pattern.compile(regexValue, Pattern.CASE_INSENSITIVE) : Pattern.compile(regexValue);
+    }
+
+    @FunctionalInterface
+    public interface SimpleKeyFilter<T> {
+
+        boolean check(T value, KeyFilterPredicate predicate);
+
+    }
+
+    public static TsValue toTsValue(long ts, DataPoint dp) {
+        if (dp != null) {
+            return new TsValue(dp.getTs() > 0 ? dp.getTs() : ts, dp.valueToString());
+        } else {
+            return TsValue.EMPTY;
+        }
+    }
+
+    public static DataPoint getSortValue(EntityData entity, DataKey sortKey, QueryContext queryContext) {
+        if (sortKey == null) {
+            return null;
+        }
+        return entity.getDataPoint(sortKey, queryContext);
+    }
+
+    public static boolean checkFilters(EdqsQuery query, EntityData entity) {
+        if (entity == null || entity.getFields() == null) {
+            return false; // Entity was already removed or not arrived yet;
+        }
+        if (query.isHasKeyFilters() && !checkKeyFilters(entity, query.getKeyFilters(), query.getKeyFiltersOperation())) {
+            return false;
+        }
+        if (query instanceof EdqsDataQuery dataQuery) {
+            return !dataQuery.isHasTextSearch() || checkTextSearch(entity, dataQuery);
+        }
+        return true;
+    }
+
+    private static boolean checkTextSearch(EntityData entityData, EdqsDataQuery query) {
+        return Stream.concat(query.getEntityFields().stream(), query.getLatestValues().stream())
+                .anyMatch(key -> {
+                    DataPoint value = entityData.getDataPoint(key, null);
+                    return value != null && containsIgnoreCase(value.valueToString(), query.getTextSearch());
+                });
+    }
+
+}

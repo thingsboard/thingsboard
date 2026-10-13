@@ -1,0 +1,99 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<section [formGroup]="customMobilePageForm" class="mobile-page-form">
+  <div class="tb-form-row space-between">
+    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="visible">
+      {{ 'mobile.visible' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="flex items-center justify-center gap-2">
+    <tb-material-icon-select asBoxInput
+                             required
+                             color="var(--tb-primary-500)"
+                             formControlName="icon">
+    </tb-material-icon-select>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>mobile.page-name</mat-label>
+      <input required matInput formControlName="label">
+      @if (customMobilePageForm.get('label').hasError('required') && customMobilePageForm.get('label').touched) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  matTooltip="{{ 'mobile.page-name-required' | translate }}"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
+      @if (customMobilePageForm.get('label').hasError('pattern') && customMobilePageForm.get('label').touched) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
+      @if (customMobilePageForm.get('label').hasError('maxlength') && customMobilePageForm.get('label').touched) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>mobile.page-type</mat-label>
+    <mat-select formControlName="type">
+      @for (pageType of mobilePagesTypes; track pageType) {
+        <mat-option [value]="pageType">
+          {{ mobilePageTypeTranslations.get(pageType) | translate }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  @if (customMobilePageForm.get('type').value === MobilePageType.DASHBOARD) {
+    <tb-dashboard-autocomplete class="flex-1"
+                               formControlName="dashboardId"
+                               required
+                               label="{{ 'dashboard.dashboard' | translate }}"
+                               floatLabel="always"
+                               appearance="outline"
+                               subscriptSizing="dynamic"
+                               requiredText="dashboard.dashboard-required"
+                               placeholder="{{ 'dashboard.select-dashboard' | translate }}"
+                               [selectFirstDashboard]="false"
+    ></tb-dashboard-autocomplete>
+  }
+  @if (customMobilePageForm.get('type').value === MobilePageType.WEB_VIEW) {
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>mobile.url</mat-label>
+      <input required matInput formControlName="url">
+      <mat-hint></mat-hint>
+      @if (customMobilePageForm.get('url').hasError('pattern')) {
+        <mat-error>
+          {{ 'mobile.invalid-url-format' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+  }
+  @if (customMobilePageForm.get('type').value === MobilePageType.CUSTOM) {
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>mobile.path</mat-label>
+      <input required matInput formControlName="path">
+      <mat-hint></mat-hint>
+      @if (customMobilePageForm.get('path').hasError('pattern')) {
+        <mat-error>
+          {{ 'mobile.invalid-path-format' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+  }
+</section>

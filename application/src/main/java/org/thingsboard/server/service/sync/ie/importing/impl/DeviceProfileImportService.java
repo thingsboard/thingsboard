@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
@@ -45,14 +32,23 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultEdgeRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
-        deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
-        deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
+        deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId(), false));
+        deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId(), false));
         return deviceProfile;
     }
 
     @Override
-    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
-        return deviceProfileService.saveDeviceProfile(deviceProfile);
+    protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider, CompareResult compareResult) {
+        boolean toUpdate = ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds();
+        if (toUpdate) {
+            deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
+            deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
+        }
+        DeviceProfile saved = deviceProfileService.saveDeviceProfile(deviceProfile);
+        if (toUpdate) {
+            importCalculatedFields(ctx, saved, exportData, idProvider);
+        }
+        return saved;
     }
 
     @Override
@@ -69,8 +65,6 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     @Override
     protected void cleanupForComparison(DeviceProfile deviceProfile) {
         super.cleanupForComparison(deviceProfile);
-        deviceProfile.setFirmwareId(null);
-        deviceProfile.setSoftwareId(null);
     }
 
     @Override

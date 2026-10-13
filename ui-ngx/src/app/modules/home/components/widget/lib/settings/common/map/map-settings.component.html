@@ -1,0 +1,165 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<ng-container [formGroup]="mapSettingsFormGroup">
+  <div class="tb-form-panel">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title">
+        {{ 'widgets.maps.map-type.type' | translate }}
+      </div>
+      <tb-toggle-select formControlName="mapType">
+        <tb-toggle-option [value]="MapType.geoMap">{{ 'widgets.maps.map-type.map' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="MapType.image">{{ 'widgets.maps.map-type.image' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if (MapType.geoMap === mapSettingsFormGroup.get('mapType').value) {
+      <tb-map-layers
+        formControlName="layers">
+      </tb-map-layers>
+    }
+    @if (MapType.image === mapSettingsFormGroup.get('mapType').value) {
+      <tb-image-map-source-settings
+        [context]="context"
+        formControlName="imageSource">
+      </tb-image-map-source-settings>
+    }
+  </div>
+  <div class="tb-form-panel">
+    <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.overlays.overlays-hint' | translate }}">
+        {{ 'widgets.maps.overlays.overlays' | translate }}
+      </div>
+      <tb-toggle-select [(ngModel)]="dataLayerMode"
+                        [ngModelOptions]="{ standalone: true }">
+        @if (trip) {
+          <tb-toggle-option value="trips" [error]="mapSettingsFormGroup.get('trips').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.trips' | translate }}</tb-toggle-option>
+        }
+        <tb-toggle-option value="markers" [error]="mapSettingsFormGroup.get('markers').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="polygons" [error]="mapSettingsFormGroup.get('polygons').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="circles" [error]="mapSettingsFormGroup.get('circles').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="polylines" [error]="mapSettingsFormGroup.get('polylines').invalid ? ('common.required-fields' | translate) : null">{{ 'widgets.maps.overlays.polylines' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if (trip) {
+      <tb-map-data-layers
+        [class.!hidden]="dataLayerMode !== 'trips'"
+        formControlName="trips"
+        dataLayerType="trips"
+        [context]="context"
+      [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    }
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'markers'"
+                        formControlName="markers"
+                        dataLayerType="markers"
+                        [context]="context"
+    [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'polygons'"
+                        formControlName="polygons"
+                        dataLayerType="polygons"
+                        [context]="context"
+    [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'circles'"
+                        formControlName="circles"
+                        dataLayerType="circles"
+                        [context]="context"
+    [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'polylines'"
+                        formControlName="polylines"
+                        dataLayerType="polylines"
+                        [context]="context"
+    [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'widgets.maps.data-layer.additional-datasources-hint' | translate }}">
+      {{ 'widgets.maps.data-layer.additional-datasources' | translate }}
+    </div>
+    <tb-additional-map-data-sources formControlName="additionalDataSources"
+                                    [context]="context">
+    </tb-additional-map-data-sources>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title">
+      {{ 'widgets.maps.control.map-controls' | translate }}
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.maps.control.position</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="controlsPosition">
+          @for (position of mapControlPositions; track position) {
+            <mat-option [value]="position">
+              {{ mapControlsPositionTranslationMap.get(position) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widgets.maps.control.zoom-actions</div>
+      <mat-chip-listbox multiple formControlName="zoomActions">
+        @for (action of mapZoomActions; track action) {
+          <mat-chip-option [value]="action">
+            {{ mapZoomActionTranslationMap.get(action) | translate }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widgets.maps.control.scale</div>
+      <mat-chip-listbox multiple formControlName="scales">
+        @for (scale of mapScales; track scale) {
+          <mat-chip-option [value]="scale">
+            {{ mapScaleTranslationMap.get(scale) | translate }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+    @if (showDragButtonModeButtonSettings) {
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="dragModeButton">
+          {{ 'widgets.maps.control.switch-to-drag-mode-using-button' | translate }}
+        </mat-slide-toggle>
+      </div>
+    }
+    @if (trip) {
+      <tb-trip-timeline-settings
+      formControlName="tripTimeline"></tb-trip-timeline-settings>
+    }
+  </div>
+  <tb-map-action-button-settings formControlName="mapActionButtons">
+  </tb-map-action-button-settings>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title">
+      {{ 'widgets.maps.common.common-map-settings' | translate }}
+    </div>
+    @if (MapType.geoMap === mapSettingsFormGroup.get('mapType').value) {
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="fitMapBounds">
+          {{ 'widgets.maps.common.fit-map-bounds' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <mat-slide-toggle class="mat-slide" formControlName="useDefaultCenterPosition">
+          {{ 'widgets.maps.common.default-map-center-position' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field appearance="outline" class="medium-width" subscriptSizing="dynamic">
+          <input matInput formControlName="defaultCenterPosition" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.maps.common.default-map-zoom-level</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" max="20" step="1" formControlName="defaultZoomLevel" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    }
+    <div class="tb-form-row space-between">
+      <div translate>widgets.maps.common.entities-limit</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput type="number" min="1" step="1" formControlName="mapPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>

@@ -1,28 +1,22 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
-  CellActionDescriptor,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
-import { NotificationTarget, NotificationTargetTypeTranslationMap } from '@shared/models/notification.models';
+import {
+  notificationAiAssistantConfig,
+  NotificationTarget,
+  NotificationTargetTypeTranslationMap
+} from '@shared/models/notification.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -30,29 +24,35 @@ import {
   RecipientNotificationDialogData
 } from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { Observable } from 'rxjs';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
-export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<NotificationTarget>> {
+export class RecipientTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationTarget> = new EntityTableConfig<NotificationTarget>();
 
-  constructor(private notificationService: NotificationService,
+  constructor(private store: Store<AppState>,
+              private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private customTranslate: CustomTranslatePipe,
+              private userPermissionsService: UserPermissionsService) {
 
     this.config.entityType = EntityType.NOTIFICATION_TARGET;
     this.config.detailsPanelEnabled = false;
-    this.config.addEnabled = false;
     this.config.rowPointer = true;
 
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TARGET);
     this.config.entityResources = {} as EntityTypeResource<NotificationTarget>;
+
+    this.config.addEntity = () => this.notificationTargetDialog(null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTargets(pageLink);
 
@@ -62,11 +62,7 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
     this.config.deleteEntitiesContent = () => this.translate.instant('notification.delete-recipients-text');
 
     this.config.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
-
-    this.config.cellActionDescriptors = this.configureCellActions();
-
-    this.config.headerComponent = RecipientTableHeaderComponent;
-    this.config.onEntityAction = action => this.onTargetAction(action);
+    this.config.entitySelectionEnabled = () => this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
 
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
@@ -82,45 +78,34 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
         (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.configuration.type)),
         () => ({}), false),
       new EntityTableColumn<NotificationTarget>('configuration.description', 'notification.description', '60%',
-      (target) => target.configuration.description || '',
+      (target) => this.customTranslate.transform(target.configuration.description || ''),
       () => ({}), false)
     );
+
+    this.config.aiAssistantConfig = notificationAiAssistantConfig(
+      this.store, this.userPermissionsService, this.translate, AiAssistantViewType.NOTIFICATION_RECIPIENT_LIST);
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTarget> {
+  resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<NotificationTarget> {
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 
-  private configureCellActions(): Array<CellActionDescriptor<NotificationTarget>> {
-    return [];
+  private editTarget($event: Event, target: NotificationTarget): void {
+    $event?.stopPropagation();
+    this.notificationTargetDialog(target).subscribe(res => res ? this.config.updateData() : null);
   }
 
-  private editTarget($event: Event, target: NotificationTarget, isAdd = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
+  private notificationTargetDialog(target: NotificationTarget, isAdd = false): Observable<NotificationTarget> {
+    return this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
       NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
-        target
+        target,
+        readonly: !this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE)
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  private onTargetAction(action: EntityAction<NotificationTarget>): boolean {
-    switch (action.action) {
-      case 'add':
-        this.editTarget(action.event, action.entity, true);
-        return true;
-    }
-    return false;
+    }).afterClosed();
   }
 }

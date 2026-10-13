@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.resource;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +10,13 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 import org.thingsboard.server.dao.resource.TbResourceDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -38,7 +28,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @SqlDao
-public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResource> implements TbResourceDao {
+public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResource> implements TbResourceDao, TenantEntityDao<TbResource> {
 
     private final TbResourceRepository resourceRepository;
 
@@ -115,6 +105,11 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     }
 
     @Override
+    public TbResourceDataInfo getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+        return resourceRepository.getDataInfoById(resourceId.getId());
+    }
+
+    @Override
     public Long sumDataSizeByTenantId(TenantId tenantId) {
         return resourceRepository.sumDataSizeByTenantId(tenantId.getId());
     }
@@ -145,4 +140,8 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
         return EntityType.TB_RESOURCE;
     }
 
+    @Override
+    public void deleteAllTenantResourcesByResourceKey(String resourceKey) {
+        this.resourceRepository.deleteAllTenantResourceByResourceKey(resourceKey);
+    }
 }

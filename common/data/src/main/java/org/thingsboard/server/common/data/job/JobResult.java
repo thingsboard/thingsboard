@@ -1,0 +1,89 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+package org.thingsboard.server.common.data.job;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.job.task.TaskResult;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+@Schema(
+        description = "Job execution result",
+        discriminatorProperty = "jobType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "DUMMY", schema = DummyJobResult.class),
+                @DiscriminatorMapping(value = "CF_REPROCESSING", schema = CfReprocessingJobResult.class),
+                @DiscriminatorMapping(value = "REPORT", schema = ReportJobResult.class)
+        }
+)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
+@JsonSubTypes({
+        @Type(name = "CF_REPROCESSING", value = CfReprocessingJobResult.class),
+        @Type(name = "REPORT", value = ReportJobResult.class),
+        @Type(name = "DUMMY", value = DummyJobResult.class)
+})
+@Data
+@NoArgsConstructor
+public abstract class JobResult implements Serializable {
+
+    @Schema(description = "Count of successfully completed tasks")
+    private int successfulCount;
+    @Schema(description = "Count of failed tasks")
+    private int failedCount;
+    @Schema(description = "Count of discarded tasks")
+    private int discardedCount;
+    @Schema(description = "Total number of tasks, set when all tasks are submitted", nullable = true)
+    private Integer totalCount = null;
+    @ArraySchema(schema = @Schema(ref = "#/components/schemas/TaskResult"))
+    private List<TaskResult> results = new ArrayList<>();
+    @Schema(description = "General error message if the job failed")
+    private String generalError;
+
+    @Schema(description = "Timestamp of the job start, in milliseconds")
+    private long startTs;
+    @Schema(description = "Timestamp of the job finish, in milliseconds")
+    private long finishTs;
+    @Schema(description = "Timestamp of the job cancellation, in milliseconds")
+    private long cancellationTs;
+
+    @JsonIgnore
+    public int getCompletedCount() {
+        return successfulCount + failedCount + discardedCount;
+    }
+
+    public void processTaskResult(TaskResult taskResult) {
+        if (taskResult.isSuccess()) {
+            if (totalCount == null || successfulCount < totalCount) {
+                successfulCount++;
+            }
+        } else if (taskResult.isDiscarded()) {
+            if (totalCount == null || discardedCount < totalCount) {
+                discardedCount++;
+            }
+        } else {
+            if (totalCount == null || failedCount < totalCount) {
+                failedCount++;
+            }
+            if (results.size() < 100) { // preserving only first 100 errors, not reprocessing if there are more failures
+                results.add(taskResult);
+            }
+        }
+    }
+
+    @JsonIgnore
+    public abstract JobType getJobType();
+
+}

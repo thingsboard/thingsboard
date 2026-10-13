@@ -1,20 +1,16 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -36,18 +32,21 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { EntityFilter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-device-key-autocomplete',
-  templateUrl: './device-key-autocomplete.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceKeyAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-device-key-autocomplete',
+    templateUrl: './device-key-autocomplete.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceKeyAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class DeviceKeyAutocompleteComponent extends PageComponent implements OnInit, ControlValueAccessor, OnChanges {
 
@@ -85,6 +84,9 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   @coerceBoolean()
   inlineField: boolean;
 
+  @Input()
+  appearance: MatFormFieldAppearance;
+
   dataKeyType = DataKeyType;
 
   private modelValue: string;
@@ -101,7 +103,8 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -109,7 +112,9 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
     this.deviceKeyFormGroup = this.fb.group({
       key: [null, this.required ? [Validators.required] : []]
     });
-    this.deviceKeyFormGroup.valueChanges.subscribe(() => {
+    this.deviceKeyFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
 

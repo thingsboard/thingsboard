@@ -1,33 +1,20 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
 import {
   getDefaultClientSecurityConfig,
-  getDefaultServerSecurityConfig, Lwm2mClientKeyTooltipTranslationsMap,
+  getDefaultServerSecurityConfig,
+  Lwm2mClientKeyTooltipTranslationsMap,
   Lwm2mSecurityConfigModels,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap
@@ -35,23 +22,29 @@ import {
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { isDefinedAndNotNull } from '@core/utils';
+import { DeviceId } from "@shared/models/id/device-id";
+import { DeviceService } from "@core/http/device.service";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { Store } from "@ngrx/store";
+import { AppState } from "@core/core.state";
 
 @Component({
-  selector: 'tb-device-credentials-lwm2m',
-  templateUrl: './device-credentials-lwm2m.component.html',
-  styleUrls: ['./device-credentials-lwm2m.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-device-credentials-lwm2m',
+    templateUrl: './device-credentials-lwm2m.component.html',
+    styleUrls: ['./device-credentials-lwm2m.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceCredentialsLwm2mComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 
 export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Validator, OnDestroy {
@@ -65,7 +58,12 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  @Input()
+  deviceId: DeviceId;
+
+  constructor(protected store: Store<AppState>,
+              private fb: UntypedFormBuilder,
+              private deviceService: DeviceService) {
     this.lwm2mConfigFormGroup = this.initLwm2mConfigForm();
   }
 
@@ -99,6 +97,41 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * AbstractRpcController -> rpcController
+   * - API
+   * "/api/plugins/rpc/twoway/${this.deviceId.id}"
+   * - DiscoveryAll
+   * requestBody =  "{\"method\":\"DiscoverAll\"}";
+   * - "Registration Update Trigger",
+   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1/0/8\"}}
+   * - "Bootstrap-Request Trigger"
+   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1/0/9\"}}
+   */
+
+  public rebootDevice(isBootstrapServer: boolean): void {
+    this.deviceService.rebootDevice(this.deviceId.id, isBootstrapServer).subscribe(responseReboot => {
+      if (responseReboot.result === 'SUCCESS') {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: responseReboot.msg,
+            type: 'success',
+            duration: 1500,
+            verticalPosition: 'top',
+            horizontalPosition: 'left'
+          }));
+      } else {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: responseReboot.msg,
+            type: 'error',
+            verticalPosition: 'top',
+            horizontalPosition: 'left'
+          }));
+      }
+    });
   }
 
   private initClientSecurityConfig(config: Lwm2mSecurityConfigModels): void {

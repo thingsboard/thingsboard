@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2024 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.device;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,6 +20,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -62,8 +50,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -187,9 +173,14 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         try {
             Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
                     AttributeScope.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
-            if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
-                notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
-                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            if (provisionState != null && provisionState.isPresent()) {
+                if (provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
+                    notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
+                    throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+                } else {
+                    log.error("[{}][{}] Unknown provision state: {}!", device.getName(), DEVICE_PROVISION_STATE, provisionState.get().getValueAsString());
+                    throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+                }
             } else {
                 saveProvisionStateAttribute(device).get();
                 notify(device, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
@@ -240,10 +231,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
     }
 
-    private ListenableFuture<List<Long>> saveProvisionStateAttribute(Device device) {
-        return attributesService.save(device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE),
-                        System.currentTimeMillis())));
+    private ListenableFuture<AttributesSaveResult> saveProvisionStateAttribute(Device device) {
+        return attributesService.save(
+                device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
+                new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE), System.currentTimeMillis())
+        );
     }
 
     private DeviceCredentials getDeviceCredentials(Device device) {
@@ -253,7 +245,13 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushProvisionEventToRuleEngine(ProvisionRequest request, Device device, TbMsgType type) {
         try {
             JsonNode entityNode = JacksonUtil.valueToTree(request);
-            TbMsg msg = TbMsg.newMsg(type, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.toString(entityNode));
+            TbMsg msg = TbMsg.newMsg()
+                    .type(type)
+                    .originator(device.getId())
+                    .customerId(device.getCustomerId())
+                    .copyMetaData(createTbMsgMetaData(device))
+                    .data(JacksonUtil.toString(entityNode))
+                    .build();
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), type, e);
@@ -263,7 +261,13 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode));
+            TbMsg msg = TbMsg.newMsg()
+                    .type(TbMsgType.ENTITY_CREATED)
+                    .originator(device.getId())
+                    .customerId(device.getCustomerId())
+                    .copyMetaData(createTbMsgMetaData(device))
+                    .data(JacksonUtil.OBJECT_MAPPER.writeValueAsString(entityNode))
+                    .build();
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), TbMsgType.ENTITY_CREATED.name(), e);
@@ -272,7 +276,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     protected void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tbMsg.getOriginator());
-        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
         ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);

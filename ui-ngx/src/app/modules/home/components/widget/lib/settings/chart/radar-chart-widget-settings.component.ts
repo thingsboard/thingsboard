@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2024 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { WidgetSettings } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -28,9 +14,10 @@ import {
 } from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
 
 @Component({
-  selector: 'tb-radar-chart-widget-settings',
-  templateUrl: './latest-chart-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+    selector: 'tb-radar-chart-widget-settings',
+    templateUrl: './latest-chart-widget-settings.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    standalone: false
 })
 export class RadarChartWidgetSettingsComponent extends LatestChartWidgetSettingsComponent<RadarChartWidgetSettings> {
 
@@ -65,6 +52,7 @@ export class RadarChartWidgetSettingsComponent extends LatestChartWidgetSettings
     latestChartWidgetSettingsForm.addControl('labelColor', this.fb.control(settings.labelColor, []));
     latestChartWidgetSettingsForm.addControl('fillAreaSettings', this.fb.control(settings.fillAreaSettings, []));
 
+    latestChartWidgetSettingsForm.addControl('normalizeAxes', this.fb.control(settings.normalizeAxes, []));
     latestChartWidgetSettingsForm.addControl('axisShowLabel', this.fb.control(settings.axisShowLabel, []));
     latestChartWidgetSettingsForm.addControl('axisLabelFont', this.fb.control(settings.axisLabelFont, []));
     latestChartWidgetSettingsForm.addControl('axisShowTickLabels', this.fb.control(settings.axisShowTickLabels, []));

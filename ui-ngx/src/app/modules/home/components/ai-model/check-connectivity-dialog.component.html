@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-toolbar class="transparent">
+  <h2 translate>ai-models.check-connectivity</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <div class="flex h-full flex-1 flex-col items-center justify-center">
+    @if (!showCheckSuccess && !checkErrMsg) {
+      <mat-progress-spinner color="warn" mode="indeterminate"
+                            strokeWidth="5">
+      </mat-progress-spinner>
+    }
+    @if (showCheckSuccess) {
+      <div>
+        <div class="flex flex-1 items-center justify-center">
+          <mat-icon class="success connection-icon">check_circle</mat-icon>
+        </div>
+        <span class="connection-status success">{{ "ai-models.check-connectivity-success" | translate }}</span>
+      </div>
+    }
+    @if (checkErrMsg) {
+      <div class="w-full">
+        <div class="flex flex-1 items-center justify-center">
+          <mat-icon class="error connection-icon">cancel</mat-icon>
+        </div>
+        <div class="connection-status error">{{ "ai-models.check-connectivity-failed" | translate }}</div>
+        <tb-json-object-edit class="json-editor"
+                             readonly
+                             [ngModel]="checkErrMsg">
+        </tb-json-object-edit>
+      </div>
+    }
+  </div>
+</div>
+<div mat-dialog-actions class="justify-end">
+  <button mat-button color="primary"
+          type="button"
+          [disabled]="(isLoading$ | async)"
+          (click)="cancel()" cdkFocusInitial>
+    {{ 'action.cancel' | translate }}
+  </button>
+</div>

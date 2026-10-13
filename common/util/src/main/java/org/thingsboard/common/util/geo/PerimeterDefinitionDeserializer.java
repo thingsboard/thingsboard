@@ -1,0 +1,39 @@
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+package org.thingsboard.common.util.geo;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+
+public class PerimeterDefinitionDeserializer extends JsonDeserializer<PerimeterDefinition> {
+
+    @Override
+    public PerimeterDefinition deserialize(JsonParser p, DeserializationContext ctx) throws IOException {
+        ObjectCodec codec = p.getCodec();
+        JsonNode node = codec.readTree(p);
+
+        if (node.isObject()) {
+            if (!node.has("latitude") || !node.has("longitude") || !node.has("radius")) {
+                throw JsonMappingException.from(p, "CirclePerimeterDefinition missing required fields. Received: " + node);
+            }
+            double latitude = node.get("latitude").asDouble();
+            double longitude = node.get("longitude").asDouble();
+            double radius = node.get("radius").asDouble();
+            return new CirclePerimeterDefinition(latitude, longitude, radius);
+        }
+        if (node.isArray()) {
+            ObjectMapper mapper = (ObjectMapper) p.getCodec();
+            String polygonStrDefinition = mapper.writeValueAsString(node);
+            return new PolygonPerimeterDefinition(polygonStrDefinition);
+        }
+        throw JsonMappingException.from(p, "Unknown JSON format for PerimeterDefinition. Expected OBJECT (Circle) or ARRAY (Polygon), but found: " + node.getNodeType());
+    }
+
+}

@@ -1,0 +1,42 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
+-->
+<form (ngSubmit)="save()" style="width: 850px;max-height: 100vh;display: grid;grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ 'mobile.add-application' | translate }}</h2>
+    <span class="flex-1"></span>
+    <div tb-help="mobileApplication"></div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div></div>
+  }
+  <div mat-dialog-content class="!p-0">
+    <tb-mobile-app #mobileAppComponent></tb-mobile-app>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || mobileAppComponent.entityForm?.invalid || !mobileAppComponent.entityForm?.dirty">
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</form>
