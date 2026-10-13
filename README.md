@@ -4,7 +4,7 @@
 <div align="center">
 
 # All-in-one IoT platform for data collection, processing, visualization, and device management.
-
+ 
 </div>
 <br>
 <div align="center">
