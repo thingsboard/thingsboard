@@ -75,12 +75,12 @@
         <commons-lang3.version>3.18.0</commons-lang3.version> <!-- to fix CVE-2025-48924. TODO: remove when fixed in spring-boot-dependencies -->
         <netty.version>4.1.138.Final</netty.version> <!-- to fix CVE-2026-44891, CVE-2026-55831, CVE-2026-55833, CVE-2026-55851, CVE-2026-56745, CVE-2026-56817, CVE-2026-56819, CVE-2026-56820, CVE-2026-56821, CVE-2026-56822, CVE-2026-59901, CVE-2026-59902, CVE-2026-59903, CVE-2026-59920, CVE-2026-62243, CVE-2026-73507, CVE-2026-75595, CVE-2026-93488, CVE-2026-93491, CVE-2026-93560, CVE-2026-100655, CVE-2026-100656, CVE-2026-100657 (supersedes earlier netty CVE pins; also retains the 4.1.134 MQTT decoder regression fix). TODO: remove when fixed in spring-boot-dependencies -->
         <opentelemetry.version>1.62.0</opentelemetry.version> <!-- to fix CVE-2026-45292 (transitive opentelemetry-api). Pinned via the opentelemetry-bom import below. TODO: remove when a TB dependency pulls opentelemetry >= 1.62.0 transitively -->
-        <tomcat.version>10.1.59</tomcat.version> <!-- to fix CVE-2026-53434, CVE-2026-55955, CVE-2026-65182, CVE-2026-65905 and CVE-2026-68525 (10.1.58 was never released; 10.1.59 is the release carrying the fixes). Pinned via the tomcat-embed overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <tomcat.version>10.1.60</tomcat.version> <!-- to fix CVE-2026-53434, CVE-2026-55955, CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 and CVE-2026-76183. Pinned via the tomcat-embed overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <httpcore5.version>5.4.3</httpcore5.version> <!-- to fix CVE-2026-54399 and CVE-2026-54428 (no fix exists on the 5.3.x line; the httpclient5 5.6.4 pin below requires httpcore5 5.4.3). Pinned via the httpcore5 overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <logback.version>1.5.38</logback.version> <!-- to fix CVE-2026-13006 (1.5.36 as reported by the scanner is still vulnerable; 1.5.37 removed Janino conditional processing entirely, 1.5.38 adds a HardenedObjectInputStream fix). Pinned via the logback overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <jackson-bom.version>2.21.7</jackson-bom.version> <!-- to fix CVE-2026-59889, CVE-2026-68497, CVE-2026-89425 and CVE-2026-91777. Pinned via the jackson-bom import below: spring-boot-dependencies re-imports jackson-bom with its own placeholder, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <postgresql.version>42.7.12</postgresql.version> <!-- to fix CVE-2026-54291. Pinned via the postgresql override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <lz4-java.version>1.11.1</lz4-java.version> <!-- to fix CVE-2026-59949. Transitive dependency of amazon-kinesis-producer 0.15.12; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once amazon-kinesis-producer pulls lz4-java >= 1.11.1 -->
+        <postgresql.version>42.7.14</postgresql.version> <!-- to fix CVE-2026-54291 and CVE-2026-107314. Pinned via the postgresql override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
+        <lz4-java.version>1.11.4</lz4-java.version> <!-- to fix CVE-2026-59949, CVE-2026-106450 and CVE-2026-106451. Transitive dependency of amazon-kinesis-producer 0.15.12 and kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once amazon-kinesis-producer and kafka-clients pull lz4-java >= 1.11.4 -->
         <amqp-client.version>5.34.0</amqp-client.version> <!-- to fix CVE-2026-63337, CVE-2026-69219, CVE-2026-69220 and CVE-2026-75516. Pinned via the amqp-client override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <httpclient5.version>5.6.4</httpclient5.version> <!-- to fix CVE-2026-71290. Pinned via the httpclient5 overrides below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <zstd-jni.version>1.5.7-14</zstd-jni.version> <!-- to fix CVE-2026-87795, CVE-2026-87823, CVE-2026-87824, CVE-2026-87825, CVE-2026-87877, CVE-2026-90560 and CVE-2026-90852. Transitive dependency of kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once kafka-clients pulls zstd-jni >= 1.5.7-14 -->
@@ -92,7 +92,7 @@
         <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
         <cassandra-all.version>5.0.7</cassandra-all.version> <!-- tools; 5.0.7 fixes CVE-2026-27314 -->
-        <guava.version>33.1.0-jre</guava.version>
+        <guava.version>33.7.2-jre</guava.version> <!-- to fix CVE-2026-102554 -->
         <commons-io.version>2.16.1</commons-io.version>
         <commons-logging.version>1.3.1</commons-logging.version>
         <commons-csv.version>1.10.0</commons-csv.version>
@@ -125,7 +125,7 @@
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
         <jts.version>1.19.0</jts.version>
-        <bouncycastle.version>1.85</bouncycastle.version> <!-- to fix CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
+        <bouncycastle.version>1.86</bouncycastle.version> <!-- to fix CVE-2026-18036, CVE-2026-71888, CVE-2026-71889, CVE-2026-71891, CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
         <winsw.version>2.0.1</winsw.version>
         <azure-iot-service-client.version>1.13.0</azure-iot-service-client.version>
         <proton-j.version>0.35.0</proton-j.version> <!-- to fix CVE-2026-66257, CVE-2026-66273, CVE-2026-66274, CVE-2026-66275, CVE-2026-66276 and CVE-2026-66277. Not managed by the Spring Boot BOM — this pin is the sole source of the proton-j version. TODO: remove only once a TB dependency pulls proton-j >= 0.35.0 transitively -->
@@ -204,7 +204,7 @@
         <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
-        <snappy.version>1.1.10.5</snappy.version>
+        <snappy.version>1.1.10.10</snappy.version> <!-- to fix CVE-2026-108106, CVE-2026-90559 and CVE-2026-93452 -->
         <rocksdbjni.version>9.10.0</rocksdbjni.version>
         <thymeleaf.version>3.1.5.RELEASE</thymeleaf.version> <!-- to fix CVE-2026-40477, CVE-2026-40478, CVE-2026-41901. TODO: remove when fixed in spring-boot-dependencies -->
         <flying-saucer.version>9.13.0</flying-saucer.version>
