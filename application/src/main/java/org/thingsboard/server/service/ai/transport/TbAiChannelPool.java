@@ -95,8 +95,9 @@ class TbAiChannelPool {
 
     /**
      * A channel with one slot reserved for the caller, who must give it back through
-     * {@link TbAiPooledConnection#finish}. {@code fresh} skips the open channels, for a retry after a channel refused
-     * the call. Fails with {@link TbAiChannelUnavailableException} or {@link TbAiChannelRejectedException}.
+     * {@link TbAiPooledConnection#finish} or {@link TbAiPooledConnection#unreserve}. {@code fresh} skips the open
+     * channels, for a retry after a channel refused the call. Fails with {@link TbAiChannelUnavailableException} or
+     * {@link TbAiChannelRejectedException}.
      */
     CompletableFuture<TbAiPooledConnection> acquire(TbAiTurnContext context, boolean fresh) {
         return acquire(context, fresh, 1);
@@ -147,18 +148,12 @@ class TbAiChannelPool {
             CompletableFuture<TbAiPooledConnection> ready = connect(context, key, true);
             group.connecting.put(origin, ready);
             ready.whenComplete((connection, error) -> {
-                boolean added = false;
                 synchronized (group) {
                     group.connecting.remove(origin, ready);
                     // A channel closed right after hello has already left the pool (removed() then found nothing).
-                    if (connection != null && connection.isMultiplexed() && !connection.isRemoved()) {
+                    if (connection != null && !connection.isRemoved()) {
                         group.connections.add(connection);
-                        added = true;
                     }
-                }
-                if (connection != null && !added) {
-                    // An older TB AI closes the channel after one call: nothing to pool.
-                    release(connection);
                 }
             });
             return ready;

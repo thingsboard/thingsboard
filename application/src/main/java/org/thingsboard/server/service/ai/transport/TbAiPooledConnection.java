@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * One WebSocket to TB AI, shared by the turns and operations of one user. Capacity is reserved before an exchange
  * starts ({@link #tryReserve}) and released when it ends ({@link #finish}); a retiring connection takes no new work
- * and closes once its last exchange ends. Without {@code mux.v1} (older TB AI) a connection carries one exchange.
+ * and closes once its last exchange ends. Exchanges are told apart by their op, the id of their start frame.
  * <p>
  * Lock order: the pool's group lock may be held while calling into a connection, never the reverse, and a connection
  * never closes its session while holding its own lock.
@@ -33,7 +33,6 @@ final class TbAiPooledConnection implements ChannelFrameListener {
 
     static final List<String> CLIENT_CAPABILITIES = List.of(ChannelProtocol.CAPABILITY_REST,
             ChannelProtocol.CAPABILITY_OPERATIONS, ChannelProtocol.CAPABILITY_API, ChannelProtocol.CAPABILITY_MUX);
-    private static final String SINGLE = "";
 
     private final TbAiChannelPool.PoolKey key;
     private final String origin;
@@ -53,7 +52,6 @@ final class TbAiPooledConnection implements ChannelFrameListener {
     private long lastUsedNanos;
 
     private volatile ChannelSession session;
-    private volatile boolean multiplexed;
     private volatile Set<String> capabilities = Set.of();
     private volatile int maxFrameBytes = TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES;
 
@@ -99,10 +97,6 @@ final class TbAiPooledConnection implements ChannelFrameListener {
         return pooled;
     }
 
-    boolean isMultiplexed() {
-        return multiplexed;
-    }
-
     boolean supports(String capability) {
         return capabilities.contains(capability);
     }
@@ -140,7 +134,7 @@ final class TbAiPooledConnection implements ChannelFrameListener {
 
     boolean tryReserve(long nowNanos) {
         synchronized (lock) {
-            if (retiring || session == null || !session.isOpen() || reserved >= capacity()) {
+            if (retiring || session == null || !session.isOpen() || reserved >= maxOperations) {
                 return false;
             }
             reserved++;
@@ -150,18 +144,16 @@ final class TbAiPooledConnection implements ChannelFrameListener {
     }
 
     /**
-     * Starts an exchange on a reserved slot and returns its op, or null on a single-use connection.
+     * Starts an exchange on a reserved slot; its op is the id of {@code startFrame}.
      */
-    String start(TbAiChannelExchange exchange, ChannelFrame startFrame) {
-        String op = multiplexed ? startFrame.id() : null;
-        exchanges.put(op != null ? op : SINGLE, exchange);
+    void start(TbAiChannelExchange exchange, ChannelFrame startFrame) {
+        exchanges.put(startFrame.id(), exchange);
         try {
             session.send(startFrame);
         } catch (ChannelException e) {
-            exchanges.remove(op != null ? op : SINGLE);
+            exchanges.remove(startFrame.id());
             throw e;
         }
-        return op;
     }
 
     void send(ChannelFrame frame) {
@@ -169,19 +161,23 @@ final class TbAiPooledConnection implements ChannelFrameListener {
     }
 
     /**
-     * Ends an exchange, or gives back a reservation that never started one; frames for it that still arrive are
+     * Ends the exchange started with {@code op} and gives back its reservation; frames for it that still arrive are
      * dropped.
      */
     void finish(String op, long nowNanos) {
-        exchanges.remove(op != null ? op : SINGLE);
+        exchanges.remove(op);
+        unreserve(nowNanos);
+    }
+
+    /**
+     * Gives back a reservation that never started an exchange.
+     */
+    void unreserve(long nowNanos) {
         boolean close;
         synchronized (lock) {
             reserved = Math.max(0, reserved - 1);
             lastUsedNanos = nowNanos;
-            close = (retiring || !multiplexed) && reserved == 0;
-            if (close) {
-                retiring = true;
-            }
+            close = retiring && reserved == 0;
         }
         if (close) {
             close(ChannelProtocol.CLOSE_NORMAL, "Done");
@@ -259,16 +255,11 @@ final class TbAiPooledConnection implements ChannelFrameListener {
             onHandshakeFrame(frame);
             return;
         }
-        TbAiChannelExchange exchange;
-        if (multiplexed) {
-            if (frame.op() == null) {
-                onConnectionFrame(frame);
-                return;
-            }
-            exchange = exchanges.get(frame.op());
-        } else {
-            exchange = exchanges.get(SINGLE);
+        if (frame.op() == null) {
+            onConnectionFrame(frame);
+            return;
         }
+        TbAiChannelExchange exchange = exchanges.get(frame.op());
         if (exchange == null) {
             log.debug("[{}] Dropping AI channel frame '{}' for finished operation '{}'", key, frame.type(), frame.op());
             return;
@@ -295,14 +286,14 @@ final class TbAiPooledConnection implements ChannelFrameListener {
                 case ChannelProtocol.HELLO -> {
                     ChannelHello hello = codec.fromPayload(frame.payload(), ChannelHello.class);
                     capabilities = hello.capabilities() != null ? Set.copyOf(hello.capabilities()) : Set.of();
-                    multiplexed = capabilities.contains(ChannelProtocol.CAPABILITY_MUX);
+                    if (!capabilities.contains(ChannelProtocol.CAPABILITY_MUX)) {
+                        ready.completeExceptionally(new TbAiChannelUnavailableException(
+                                "AI channel does not support " + ChannelProtocol.CAPABILITY_MUX, null));
+                        close(ChannelProtocol.CLOSE_PROTOCOL_ERROR, "Missing " + ChannelProtocol.CAPABILITY_MUX);
+                        return;
+                    }
                     if (hello.maxFrameBytes() != null && hello.maxFrameBytes() > 0 && hello.maxFrameBytes() < Integer.MAX_VALUE) {
                         maxFrameBytes = hello.maxFrameBytes().intValue();
-                    }
-                    if (!multiplexed) {
-                        synchronized (lock) {
-                            retiring = true;
-                        }
                     }
                     ready.complete(this);
                 }
@@ -327,10 +318,6 @@ final class TbAiPooledConnection implements ChannelFrameListener {
         } else {
             log.debug("[{}] Ignoring AI channel frame '{}' without op", key, frame.type());
         }
-    }
-
-    private int capacity() {
-        return multiplexed ? maxOperations : 1;
     }
 
     private void markRemoved() {

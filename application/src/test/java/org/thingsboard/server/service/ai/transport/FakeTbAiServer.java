@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A scripted TB AI channel endpoint. It answers {@code hello} with the given capabilities and hands every other frame
- * to the script, which replies through {@link Connection}: tagged with the frame's op on a multiplexed connection, as
- * TB AI does.
+ * to the script, which replies through {@link Connection}: tagged with the op of the operation it belongs to, as TB AI
+ * does.
  */
 class FakeTbAiServer implements AutoCloseable {
 
@@ -43,14 +43,11 @@ class FakeTbAiServer implements AutoCloseable {
                 .route(routes -> routes.ws(ChannelProtocol.WS_PATH, (inbound, outbound) -> {
                     connections.incrementAndGet();
                     openConnections.incrementAndGet();
-                    var connection = new Connection(capabilities);
+                    var connection = new Connection();
                     inbound.receive().asString().subscribe(text -> {
                         ChannelFrame frame = codec.decode(text);
                         received.add(frame);
                         if (ChannelProtocol.HELLO.equals(frame.type())) {
-                            ChannelHello hello = codec.fromPayload(frame.payload(), ChannelHello.class);
-                            connection.multiplexed = capabilities.contains(ChannelProtocol.CAPABILITY_MUX)
-                                    && hello.capabilities().contains(ChannelProtocol.CAPABILITY_MUX);
                             connection.send(ChannelFrame.of(ChannelProtocol.HELLO, codec.toPayload(
                                     new ChannelHello(1, capabilities, null, (long) TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES))));
                         } else {
@@ -99,18 +96,8 @@ class FakeTbAiServer implements AutoCloseable {
     final class Connection {
 
         private final Sinks.Many<String> out = Sinks.many().unicast().onBackpressureBuffer();
-        private final List<String> capabilities;
-        private volatile boolean multiplexed;
         private volatile int closeCode = ChannelProtocol.CLOSE_NORMAL;
         private volatile String closeReason = "Done";
-
-        private Connection(List<String> capabilities) {
-            this.capabilities = capabilities;
-        }
-
-        boolean isMultiplexed() {
-            return multiplexed;
-        }
 
         // A unicast sink drops concurrent emissions, so frames sent from several threads are serialized here.
         synchronized void send(ChannelFrame frame) {
@@ -121,23 +108,20 @@ class FakeTbAiServer implements AutoCloseable {
          * A frame that belongs to the operation started by {@code start}.
          */
         void sendFor(ChannelFrame start, String type, Object payload) {
-            send(new ChannelFrame(type, null, null, codec.toPayload(payload), multiplexed ? start.id() : null));
+            send(new ChannelFrame(type, null, null, codec.toPayload(payload), start.id()));
         }
 
         void request(ChannelFrame start, String type, String id, Object payload) {
-            send(new ChannelFrame(type, id, null, codec.toPayload(payload), multiplexed ? start.id() : null));
+            send(new ChannelFrame(type, id, null, codec.toPayload(payload), start.id()));
         }
 
         void result(ChannelFrame start, OperationResult result) {
-            send(new ChannelFrame(ChannelProtocol.OPERATION_RESULT, null, start.id(), codec.toPayload(result), multiplexed ? start.id() : null));
-            if (!multiplexed) {
-                close(ChannelProtocol.CLOSE_NORMAL, "Operation completed");
-            }
+            send(new ChannelFrame(ChannelProtocol.OPERATION_RESULT, null, start.id(), codec.toPayload(result), start.id()));
         }
 
         void refuse(ChannelFrame start, String code) {
             send(new ChannelFrame(ChannelProtocol.ERROR, null, start.id(), codec.toPayload(new ChannelError(code, code)),
-                    multiplexed ? start.id() : null));
+                    start.id()));
         }
 
         synchronized void close(int code, String reason) {

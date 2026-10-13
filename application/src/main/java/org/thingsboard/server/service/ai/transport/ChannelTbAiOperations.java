@@ -51,7 +51,7 @@ class ChannelTbAiOperations {
         for (int attempt = 1; ; attempt++) {
             TbAiPooledConnection connection = acquire(context, fresh);
             if (!connection.supports(capability)) {
-                connection.finish(null, System.nanoTime());
+                connection.unreserve(System.nanoTime());
                 throw new TbAiOperationsUnsupportedException("TB AI does not support '" + operation.type() + "' over the channel");
             }
             var call = new OperationCall(operation, context, connection);
@@ -132,8 +132,9 @@ class ChannelTbAiOperations {
 
         TbAiResponse run() {
             ChannelFrame start = ChannelFrame.request(operation.type(), connection.codec().toPayload(operation.payload()));
+            op = start.id();
             try {
-                op = connection.start(this, start);
+                connection.start(this, start);
             } catch (ChannelException e) {
                 finish();
                 throw new NotStartedException("channel closed before the operation was sent");

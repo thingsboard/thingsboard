@@ -18,10 +18,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -35,12 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class ChannelTbAiTransport implements TbAiTransport {
 
     private static final String HEARTBEAT = "heartbeat";
-    private static final String TOOL_EXECUTION_REQUESTED = "toolExecutionRequested";
-    private static final String TOOL_EXECUTION_RESULT = "toolExecutionResult";
 
     private final TbAiChannelPool pool;
     private final TbAiRequestExecutor requestExecutor;
-    private final TbAiChannelRegistry registry;
 
     @Override
     public Flux<ServerSentEvent<String>> sendChatMessage(UUID chatId, JsonNode request, TbAiTurnContext context) {
@@ -65,7 +60,6 @@ class ChannelTbAiTransport implements TbAiTransport {
         private final TbAiTurnContext context;
         private final FluxSink<ServerSentEvent<String>> sink;
         private final AtomicBoolean finished = new AtomicBoolean();
-        private final Set<UUID> approvals = ConcurrentHashMap.newKeySet();
         private volatile TbAiPooledConnection connection;
         private volatile String op;
         private volatile boolean frameSeen;
@@ -94,14 +88,10 @@ class ChannelTbAiTransport implements TbAiTransport {
             }
             TbAiPooledConnection current = connection;
             if (current != null) {
-                if (op != null) {
-                    try {
-                        current.send(new ChannelFrame(ChannelProtocol.CANCEL, null, null, null, op));
-                    } catch (ChannelException e) {
-                        log.debug("[{}] Failed to cancel the AI turn: {}", chatId, e.getMessage());
-                    }
-                } else {
-                    current.close(ChannelProtocol.CLOSE_NORMAL, "Turn abandoned");
+                try {
+                    current.send(new ChannelFrame(ChannelProtocol.CANCEL, null, null, null, op));
+                } catch (ChannelException e) {
+                    log.debug("[{}] Failed to cancel the AI turn: {}", chatId, e.getMessage());
                 }
             }
             end(null);
@@ -159,17 +149,18 @@ class ChannelTbAiTransport implements TbAiTransport {
 
         private void attach(TbAiPooledConnection acquired) {
             if (sink.isCancelled() || finished.get()) {
-                acquired.finish(null, System.nanoTime());
+                acquired.unreserve(System.nanoTime());
                 return;
             }
-            connection = acquired;
             ChannelFrame start = ChannelFrame.request(ChannelProtocol.CHAT_SEND,
                     acquired.codec().toPayload(new ChatTurnRequest(chatId, request, context.acceptLanguage())));
+            op = start.id();
+            connection = acquired;
             try {
-                op = acquired.start(this, start);
+                acquired.start(this, start);
             } catch (ChannelException e) {
                 connection = null;
-                acquired.finish(null, System.nanoTime());
+                acquired.finish(op, System.nanoTime());
                 if (!retry()) {
                     fail(new TbAiChannelUnavailableException("AI channel closed before the turn started", e));
                 }
@@ -182,26 +173,10 @@ class ChannelTbAiTransport implements TbAiTransport {
                 sink.next(ServerSentEvent.<String>builder().comment(HEARTBEAT).build());
                 return;
             }
-            trackApproval(frameConnection, event);
             sink.next(ServerSentEvent.<String>builder()
                     .event(event.name())
                     .data(event.data() != null ? event.data().toString() : null)
                     .build());
-        }
-
-        private void trackApproval(TbAiPooledConnection frameConnection, ChatEventPayload event) {
-            JsonNode executionId = event.data() != null ? event.data().get("executionId") : null;
-            if (executionId == null || !executionId.isTextual()) {
-                return;
-            }
-            UUID id = UUID.fromString(executionId.asText());
-            if (TOOL_EXECUTION_REQUESTED.equals(event.name()) && event.data().path("needsApproval").asBoolean()) {
-                approvals.add(id);
-                registry.registerApproval(id, frameConnection.session(), op);
-            } else if (TOOL_EXECUTION_RESULT.equals(event.name())) {
-                approvals.remove(id);
-                registry.unregisterApproval(id);
-            }
         }
 
         private void onError(TbAiPooledConnection frameConnection, ChannelFrame frame) {
@@ -228,7 +203,6 @@ class ChannelTbAiTransport implements TbAiTransport {
             }
             retried = true;
             log.debug("[{}] AI turn was not started, retrying on a new channel", chatId);
-            op = null;
             connection = null;
             start(true);
             return true;
@@ -252,8 +226,6 @@ class ChannelTbAiTransport implements TbAiTransport {
         }
 
         private void release() {
-            approvals.forEach(registry::unregisterApproval);
-            approvals.clear();
             TbAiPooledConnection current = connection;
             if (current != null) {
                 connection = null;

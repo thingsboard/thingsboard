@@ -54,7 +54,7 @@ class ChannelTbAiOperationsTest {
     }
 
     @Test
-    void shouldRunOperationAndServeThingsBoardRequests_whenServerIsMultiplexed() {
+    void shouldRunOperationAndServeThingsBoardRequests() {
         // GIVEN
         server = FakeTbAiServer.start(MUX, (connection, frame) -> {
             switch (frame.type()) {
@@ -87,7 +87,7 @@ class ChannelTbAiOperationsTest {
     }
 
     @Test
-    void shouldRunConcurrentOperationsOnOneChannel_whenServerIsMultiplexed() throws Exception {
+    void shouldRunConcurrentOperationsOnOneChannel() throws Exception {
         // GIVEN
         CountDownLatch bothStarted = new CountDownLatch(2);
         server = FakeTbAiServer.start(MUX, (connection, frame) -> {
@@ -228,20 +228,14 @@ class ChannelTbAiOperationsTest {
     }
 
     @Test
-    void shouldRunOnSingleUseChannel_whenServerIsNotMultiplexed() {
+    void shouldSignalChannelUnavailable_whenServerHelloLacksMux() {
         // GIVEN
         server = FakeTbAiServer.start(List.of(ChannelProtocol.CAPABILITY_REST, ChannelProtocol.CAPABILITY_OPERATIONS),
                 (connection, frame) -> connection.result(frame, new OperationResult(200, null, 0)));
 
-        // WHEN
-        TbAiResponse first = operations().execute(install, context);
-        TbAiResponse second = operations().execute(install, context);
-
-        // THEN
-        assertThat(first.isSuccess()).isTrue();
-        assertThat(second.isSuccess()).isTrue();
-        assertThat(server.connections.get()).isEqualTo(2);
-        assertThat(server.received(ChannelProtocol.SOLUTION_INSTALL)).extracting(ChannelFrame::op).containsOnlyNulls();
+        // WHEN-THEN
+        assertThatThrownBy(() -> operations().execute(install, context)).isInstanceOf(TbAiChannelUnavailableException.class);
+        assertThat(server.received(ChannelProtocol.SOLUTION_INSTALL)).isEmpty();
     }
 
     @Test

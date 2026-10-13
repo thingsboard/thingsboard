@@ -62,7 +62,7 @@ class TbAiChannelPoolTest {
         pool = pool(10);
         TbAiTurnContext context = context(user(), "https://tb.example.com", true);
         TbAiPooledConnection connection = join(pool.acquire(context, false));
-        connection.finish(null, now.get());
+        connection.unreserve(now.get());
 
         // WHEN
         TbAiPooledConnection again = join(pool.acquire(context, false));
@@ -96,7 +96,7 @@ class TbAiChannelPoolTest {
         // GIVEN
         pool = pool(10);
         TbAiPooledConnection connection = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
-        connection.finish(null, now.get());
+        connection.unreserve(now.get());
 
         // WHEN
         now.addAndGet(Duration.ofSeconds(30).toNanos());
@@ -122,7 +122,7 @@ class TbAiChannelPoolTest {
         now.addAndGet(Duration.ofMinutes(11).toNanos());
         pool.sweep();
         TbAiPooledConnection next = join(pool.acquire(context, false));
-        busy.finish(null, now.get());
+        busy.unreserve(now.get());
 
         // THEN
         assertThat(next).isNotSameAs(busy);
@@ -134,7 +134,7 @@ class TbAiChannelPoolTest {
         // GIVEN
         pool = pool(1);
         TbAiPooledConnection idle = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
-        idle.finish(null, now.get());
+        idle.unreserve(now.get());
 
         // WHEN
         TbAiPooledConnection next = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
@@ -152,7 +152,7 @@ class TbAiChannelPoolTest {
 
         // WHEN
         TbAiPooledConnection overflow = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
-        overflow.finish(null, now.get());
+        overflow.unreserve(now.get());
 
         // THEN
         assertThat(overflow.isPooled()).isFalse();
@@ -169,7 +169,7 @@ class TbAiChannelPoolTest {
 
         // WHEN
         TbAiPooledConnection connection = join(pool.acquire(context, false));
-        connection.finish(null, now.get());
+        connection.unreserve(now.get());
 
         // THEN
         assertThat(connection.isPooled()).isFalse();
@@ -178,21 +178,18 @@ class TbAiChannelPoolTest {
     }
 
     @Test
-    void shouldNotPoolChannel_whenServerIsNotMultiplexed() {
+    void shouldFailAsUnavailable_whenServerHelloLacksMux() {
         // GIVEN
         server.close();
         server = FakeTbAiServer.start(List.of(ChannelProtocol.CAPABILITY_REST, ChannelProtocol.CAPABILITY_OPERATIONS), (connection, frame) -> {});
         pool = pool(10);
-        TbAiTurnContext context = context(user(), "https://tb.example.com", true);
 
-        // WHEN
-        TbAiPooledConnection first = join(pool.acquire(context, false));
-        TbAiPooledConnection second = join(pool.acquire(context, false));
-
-        // THEN
-        assertThat(first.isMultiplexed()).isFalse();
-        assertThat(second).isNotSameAs(first);
+        // WHEN-THEN
+        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com", true), false)))
+                .hasCauseInstanceOf(TbAiChannelUnavailableException.class)
+                .hasMessageEndingWith("AI channel does not support mux.v1");
         await().atMost(5, TimeUnit.SECONDS).until(() -> pool.pooledConnections() == 0);
+        await().atMost(5, TimeUnit.SECONDS).until(() -> server.openConnections.get() == 0);
     }
 
     @Test

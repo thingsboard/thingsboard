@@ -42,7 +42,6 @@ class ChannelTbAiTransportTest {
     static final List<String> MUX = TbAiChannelPoolTest.MUX;
 
     TbAiRequestExecutor requestExecutor = mock(TbAiRequestExecutor.class);
-    TbAiChannelRegistry registry = new TbAiChannelRegistry();
     TbAiTurnContext context = TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", true);
     JsonNode request = JacksonUtil.newObjectNode().put("message", "Create a device");
     FakeTbAiServer server;
@@ -59,7 +58,7 @@ class ChannelTbAiTransportTest {
     }
 
     @Test
-    void shouldRelayEventsServeRequestsAndKeepChannel_whenServerIsMultiplexed() {
+    void shouldRelayEventsServeRequestsAndKeepChannel() {
         // GIVEN
         server = FakeTbAiServer.start(MUX, this::assistantWithToolCall);
         stubExecutor();
@@ -81,24 +80,6 @@ class ChannelTbAiTransportTest {
         assertThat(turnRequest.acceptLanguage()).isEqualTo("de-DE");
         assertThat(server.received(ChannelProtocol.TB_RESPONSE)).extracting(ChannelFrame::op)
                 .containsExactlyElementsOf(server.received(ChannelProtocol.CHAT_SEND).stream().map(ChannelFrame::id).toList());
-        await().atMost(Duration.ofSeconds(5)).until(() -> registry.findApprovalRoute(EXECUTION_ID).isEmpty());
-    }
-
-    @Test
-    void shouldRunTurnOnSingleUseChannel_whenServerIsNotMultiplexed() {
-        // GIVEN
-        server = FakeTbAiServer.start(List.of(ChannelProtocol.CAPABILITY_REST), this::assistantWithToolCall);
-        stubExecutor();
-
-        // WHEN
-        List<ServerSentEvent<String>> first = turn();
-        List<ServerSentEvent<String>> second = turn();
-
-        // THEN
-        assertThat(first).hasSize(3);
-        assertThat(second).hasSize(3);
-        assertThat(server.connections.get()).isEqualTo(2);
-        assertThat(server.received(ChannelProtocol.TB_RESPONSE)).extracting(ChannelFrame::op).containsOnlyNulls();
     }
 
     @Test
@@ -134,7 +115,7 @@ class ChannelTbAiTransportTest {
             }
         });
         pool = pool();
-        var transport = new ChannelTbAiTransport(pool, requestExecutor, registry);
+        var transport = new ChannelTbAiTransport(pool, requestExecutor);
         AtomicBoolean heartbeat = new AtomicBoolean();
 
         // WHEN
@@ -178,7 +159,7 @@ class ChannelTbAiTransportTest {
         }
         TbAiTurnContext turnContext = new TbAiTurnContext(context.tenantId(), context.userId(), context.user(), "Bearer user-jwt",
                 "de-DE", context.tokenProvider(), new TbAiClientRequest("https://tb.example.com", Map.of()));
-        return new ChannelTbAiTransport(pool, requestExecutor, registry)
+        return new ChannelTbAiTransport(pool, requestExecutor)
                 .sendChatMessage(UUID.randomUUID(), request, turnContext)
                 .collectList()
                 .block(Duration.ofSeconds(10));
@@ -212,9 +193,6 @@ class ChannelTbAiTransportTest {
                 connection.sendFor(start, ChannelProtocol.CHAT_EVENT, new ChatEventPayload("toolExecutionRequested",
                         JacksonUtil.newObjectNode().put("executionId", EXECUTION_ID.toString()).put("needsApproval", true)));
                 connection.sendFor(start, ChannelProtocol.TURN_END, new TurnEnd(TurnEnd.Status.COMPLETED));
-                if (!connection.isMultiplexed()) {
-                    connection.close(ChannelProtocol.CLOSE_NORMAL, "Turn completed");
-                }
             }
             default -> {}
         }
