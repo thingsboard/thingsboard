@@ -295,6 +295,11 @@ public class CustomerUserPermissions extends AbstractPermissions {
     private static final PermissionChecker customerResourcePermissionChecker = new PermissionChecker<TbResourceId, TbResourceInfo>() {
 
         @Override
+        public boolean hasPermission(SecurityUser user, Resource resource, Operation operation) {
+            return operation == Operation.READ && user.getUserPrincipal().getType() != UserPrincipal.Type.PUBLIC_ID;
+        }
+
+        @Override
         public boolean hasPermission(SecurityUser user, Operation operation, TbResourceId resourceId, TbResourceInfo resource) {
             if (resource.getResourceType() == null || !resource.getResourceType().isCustomerAccess()) {
                 return false;
