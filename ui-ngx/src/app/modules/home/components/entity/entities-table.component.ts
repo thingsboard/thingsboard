@@ -529,9 +529,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   toggleEntityDetails($event: Event, entity) {
     if ($event) {
       $event.stopPropagation();
-      if (($event as MouseEvent).detail > 1) {
-        return;
-      }
     }
     const open = this.dataSource.toggleCurrentEntity(entity) ? true : !this.isDetailsOpen;
     this.setEntityDetailsOpen(open);
