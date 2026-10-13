@@ -1,0 +1,32 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="generateReportFormGroup">
+  <div formGroupName="msgBody" class="tb-form-panel no-border no-padding flex flex-col">
+    <tb-dashboard-report-config
+      formControlName="reportConfig">
+    </tb-dashboard-report-config>
+    <div class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings tb-slide-toggle"
+                           style="margin: -15px; padding: 15px;"
+                           [expanded]="generateReportFormGroup.get('msgBody.sendEmail').value"
+                           [disabled]="!generateReportFormGroup.get('msgBody.sendEmail').value">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <mat-slide-toggle formControlName="sendEmail" class="mat-slide flex-1" (click)="$event.stopPropagation()">
+              {{ 'report.email-config' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <div [class.!hidden]="!generateReportFormGroup.get('msgBody.sendEmail').value">
+          <tb-email-config
+            formControlName="emailConfig">
+          </tb-email-config>
+        </div>
+      </mat-expansion-panel>
+    </div>
+  </div>
+</section>

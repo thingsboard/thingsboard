@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -22,6 +9,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -30,7 +20,9 @@ import org.thingsboard.server.dao.timeseries.TimeseriesLatestDao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -102,8 +94,71 @@ public class SqlTimeseriesLatestDaoTest extends AbstractServiceTest {
         }
     }
 
+    @Test
+    public void findLatestByEntityIds_returnsOneEntryPerKey() throws Exception {
+        DeviceId device1 = new DeviceId(UUID.randomUUID());
+        DeviceId device2 = new DeviceId(UUID.randomUUID());
+
+        // Both devices have "temperature" key, device2 has a newer ts
+        timeseriesLatestDao.saveLatest(tenantId, device1, new BasicTsKvEntry(1000, new DoubleDataEntry("temperature", 20.0))).get();
+        timeseriesLatestDao.saveLatest(tenantId, device2, new BasicTsKvEntry(2000, new DoubleDataEntry("temperature", 25.0))).get();
+        // Only device1 has "humidity"
+        timeseriesLatestDao.saveLatest(tenantId, device1, new BasicTsKvEntry(1500, new LongDataEntry("humidity", 60L))).get();
+        // Only device2 has "active"
+        timeseriesLatestDao.saveLatest(tenantId, device2, new BasicTsKvEntry(3000, new BooleanDataEntry("active", true))).get();
+
+        List<TsKvEntry> results = timeseriesLatestDao.findLatestByEntityIds(tenantId, List.of(device1, device2));
+        Map<String, TsKvEntry> byKey = results.stream().collect(Collectors.toMap(TsKvEntry::getKey, e -> e));
+
+        assertEquals(3, byKey.size());
+
+        // "temperature" should pick device2's value (ts=2000 > ts=1000)
+        TsKvEntry temp = byKey.get("temperature");
+        assertNotNull(temp);
+        assertEquals(25.0, temp.getDoubleValue().orElseThrow());
+        assertEquals(2000, temp.getTs());
+
+        // "humidity" — only device1 has it
+        TsKvEntry humidity = byKey.get("humidity");
+        assertNotNull(humidity);
+        assertEquals(60L, humidity.getLongValue().orElseThrow());
+        assertEquals(1500, humidity.getTs());
+
+        // "active" — only device2 has it
+        TsKvEntry active = byKey.get("active");
+        assertNotNull(active);
+        assertEquals(true, active.getBooleanValue().orElseThrow());
+        assertEquals(3000, active.getTs());
+    }
+
+    @Test
+    public void findLatestByEntityIds_emptyList() {
+        List<TsKvEntry> results = timeseriesLatestDao.findLatestByEntityIds(tenantId, List.of());
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    public void findLatestByEntityIds_singleEntity() throws Exception {
+        DeviceId device = new DeviceId(UUID.randomUUID());
+        timeseriesLatestDao.saveLatest(tenantId, device, new BasicTsKvEntry(1000, new StringDataEntry("key1", "value1"))).get();
+        timeseriesLatestDao.saveLatest(tenantId, device, new BasicTsKvEntry(2000, new StringDataEntry("key2", "value2"))).get();
+
+        // sync
+        List<TsKvEntry> results = timeseriesLatestDao.findLatestByEntityIds(tenantId, List.of(device));
+        assertEquals(2, results.size());
+        Map<String, TsKvEntry> byKey = results.stream().collect(Collectors.toMap(TsKvEntry::getKey, e -> e));
+        assertEquals("value1", byKey.get("key1").getStrValue().orElseThrow());
+        assertEquals(1000, byKey.get("key1").getTs());
+        assertEquals("value2", byKey.get("key2").getStrValue().orElseThrow());
+        assertEquals(2000, byKey.get("key2").getTs());
+
+        // async — same result
+        List<TsKvEntry> asyncResults = timeseriesLatestDao.findLatestByEntityIdsAsync(tenantId, List.of(device)).get();
+        assertEquals(results, asyncResults);
+    }
+
     private TsKvEntry createEntry(String key, long ts) {
-        return new BasicTsKvEntry(ts, new StringDataEntry(key, RandomStringUtils.random(10)));
+        return new BasicTsKvEntry(ts, new StringDataEntry(key, RandomStringUtils.secure().next(10)));
     }
 
     private void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {

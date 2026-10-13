@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="tb-agent-install-dialog-header">
+  <h2 class="flex-1">{{ dialogTitle | translate }}</h2>
+  <div tb-help="agentInstall"></div>
+  <button mat-icon-button (click)="close()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content class="tb-agent-install-dialog-body">
+  <tb-agent-install-instructions [agent]="agent" [instructions]="instructions"></tb-agent-install-instructions>
+</div>
+
+<div mat-dialog-actions align="end" class="tb-agent-install-dialog-footer">
+  <button mat-button (click)="close()">
+    {{ 'action.close' | translate }}
+  </button>
+  @if (afterAdd && agent?.id?.id) {
+    <button mat-raised-button color="primary"
+      (click)="goToAgent()">
+      <mat-icon>open_in_new</mat-icon>
+      <span translate>agent.go-to-agent</span>
+    </button>
+  }
+</div>

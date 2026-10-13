@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   Component,
   DestroyRef,
@@ -53,22 +39,23 @@ import { DialogService } from '@core/services/dialog.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-dynamic-form-properties',
-  templateUrl: './dynamic-form-properties.component.html',
-  styleUrls: ['./dynamic-form-properties.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DynamicFormPropertiesComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DynamicFormPropertiesComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-dynamic-form-properties',
+    templateUrl: './dynamic-form-properties.component.html',
+    styleUrls: ['./dynamic-form-properties.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DynamicFormPropertiesComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DynamicFormPropertiesComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnInit, Validator {
 
@@ -208,10 +195,6 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
 
   propertiesFormArray(): UntypedFormArray {
     return this.propertiesFormGroup.get('properties') as UntypedFormArray;
-  }
-
-  trackByProperty(_index: number, propertyControl: AbstractControl): any {
-    return propertyControl;
   }
 
   removeProperty(index: number, emitEvent = true) {

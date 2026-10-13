@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.kafka;
 
 import org.apache.kafka.clients.producer.Callback;
@@ -40,7 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -79,7 +66,7 @@ public class TbKafkaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5f2eac08-bd1f-4635-a6c2-437369f996cf"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("d46bb666-ecab-4d89-a28f-5abdca23ac29"));
-    private final ListeningExecutor executor = new TestDbCallbackExecutor();
+    private final ListeningExecutor executor = DirectListeningExecutor.INSTANCE;
 
     private final long OFFSET = 1;
     private final int PARTITION = 0;
@@ -420,7 +407,7 @@ public class TbKafkaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private void verifyProducerRecord(String expectedTopic, String expectedKey, String expectedValue, Headers expectedHeaders) {
-        ArgumentCaptor<ProducerRecord<String, String>> actualRecordCaptor = ArgumentCaptor.forClass(ProducerRecord.class);
+        ArgumentCaptor<ProducerRecord<String, String>> actualRecordCaptor = ArgumentCaptor.captor();
         then(producerMock).should().send(actualRecordCaptor.capture(), any());
         ProducerRecord<String, String> actualRecord = actualRecordCaptor.getValue();
         assertThat(actualRecord.topic()).isEqualTo(expectedTopic);

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
@@ -49,6 +36,8 @@ import { authenticationDialogMap } from '@home/pages/security/authentication-dia
 import { takeUntil, tap } from 'rxjs/operators';
 import { Observable, of, Subject } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { AuthService } from '@core/auth/auth.service';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
@@ -59,9 +48,10 @@ import {
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
 
 @Component({
-  selector: 'tb-security',
-  templateUrl: './security.component.html',
-  styleUrls: ['./security.component.scss']
+    selector: 'tb-security',
+    templateUrl: './security.component.html',
+    styleUrls: ['./security.component.scss'],
+    standalone: false
 })
 export class SecurityComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -88,11 +78,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     return localStorage.getItem('jwt_token_expiration');
   }
 
-  get expirationJwtData(): string {
-    const expirationData = this.datePipe.transform(this.jwtTokenExpiration, 'yyyy-MM-dd HH:mm:ss');
-    return this.translate.instant('profile.valid-till', { expirationData });
-  }
-
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private translate: TranslateService,
@@ -101,6 +86,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               public dialogService: DialogService,
               public fb: UntypedFormBuilder,
               private datePipe: DatePipe,
+              private userPermissionsService: UserPermissionsService,
               private authService: AuthService,
               private clipboardService: ClipboardService) {
     super(store);
@@ -141,7 +127,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   private twoFactorLoad(providers: TwoFactorAuthProviderType[]) {
-    if (providers.length) {
+    if (providers.length && this.userPermissionsService.hasGenericPermission(Resource.PROFILE, Operation.WRITE)) {
       this.twoFaService.getAccountTwoFaSettings().subscribe(data => this.processTwoFactorAuthConfig(data));
       Object.values(TwoFactorAuthProviderType).forEach(type => {
         if (providers.includes(type)) {
@@ -213,10 +199,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
         return null;
       }
     };
-  }
-
-  trackByProvider(i: number, provider: TwoFactorAuthProviderType) {
-    return provider;
   }
 
   copyToken() {
@@ -333,22 +315,24 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   onChangePassword(form: FormGroupDirective): void {
     if (this.changePassword.valid) {
       this.authService.changePassword(this.changePassword.get('currentPassword').value,
-        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe(() => {
-          this.discardChanges(form);
-        },
-        (error) => {
-          if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
-            this.changePassword.get('currentPassword').setErrors({differencePassword: true});
-          } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
-            this.loadPasswordPolicy();
-          } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
-            this.changePassword.get('newPassword').setErrors({alreadyUsed: error.error.message});
-          } else {
-            this.store.dispatch(new ActionNotificationShow({
-              message: error.error.message,
-              type: 'error',
-              target: 'changePassword'
-            }));
+        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe({
+          next: () => {
+            this.discardChanges(form);
+          },
+          error: (error) => {
+            if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
+              this.changePassword.get('currentPassword').setErrors({ differencePassword: true });
+            } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
+              this.loadPasswordPolicy();
+            } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
+              this.changePassword.get('newPassword').setErrors({ alreadyUsed: error.error.message });
+            } else {
+              this.store.dispatch(new ActionNotificationShow({
+                message: error.error.message,
+                type: 'error',
+                target: 'changePassword'
+              }));
+            }
           }
         });
     } else {

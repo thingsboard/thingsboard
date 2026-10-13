@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="removeFromGroupConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
+    <mat-label translate>rule-node-config.group-name-pattern</mat-label>
+    <input required matInput formControlName="groupNamePattern">
+    @if (removeFromGroupConfigForm.get('groupNamePattern').hasError('required') ||
+      removeFromGroupConfigForm.get('groupNamePattern').hasError('pattern')) {
+      <mat-error>
+        {{ 'rule-node-config.group-name-pattern-required' | translate }}
+      </mat-error>
+    }
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline">
+    <mat-label translate>rule-node-config.group-cache-expiration</mat-label>
+    <input required type="number" min="0" step="1" matInput formControlName="groupCacheExpiration">
+    @if (removeFromGroupConfigForm.get('groupCacheExpiration').hasError('required')) {
+      <mat-error>
+        {{ 'rule-node-config.group-cache-expiration-required' | translate }}
+      </mat-error>
+    }
+    @if (removeFromGroupConfigForm.get('groupCacheExpiration').hasError('min')) {
+      <mat-error>
+        {{ 'rule-node-config.group-cache-expiration-range' | translate }}
+      </mat-error>
+    }
+    <mat-hint translate>rule-node-config.group-cache-expiration-hint</mat-hint>
+  </mat-form-field>
+</section>

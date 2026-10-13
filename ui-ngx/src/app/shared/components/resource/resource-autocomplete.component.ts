@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -32,17 +19,19 @@ import {
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
 import { ResourceService } from '@core/http/resource.service';
 import { PageLink } from '@shared/models/page/page-link';
+import { emptyPageData } from '@shared/models/page/page-data';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-resource-autocomplete',
-  templateUrl: './resource-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => ResourceAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-resource-autocomplete',
+    templateUrl: './resource-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ResourceAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class ResourceAutocompleteComponent implements ControlValueAccessor, OnInit {
 
@@ -219,7 +208,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   private fetchResources(searchText?: string): Observable<Array<ResourceInfo>> {
     this.searchText = searchText;
     return this.resourceService.getResources(new PageLink(50, 0, searchText), ResourceType.JS_MODULE, this.subType, {ignoreLoading: true}).pipe(
-      catchError(() => of(null)),
+      catchError(() => of(emptyPageData<ResourceInfo>())),
       map(data => data.data)
     );
   }

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { booleanAttribute, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -46,20 +33,21 @@ import { map } from 'rxjs/operators';
 type SimpeConfiguration = CalculatedFieldSimpleConfiguration | CalculatedFieldScriptConfiguration;
 
 @Component({
-  selector: 'tb-simple-configuration',
-  templateUrl: './simple-configuration.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => SimpleConfigurationComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-simple-configuration',
+    templateUrl: './simple-configuration.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => SimpleConfigurationComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class SimpleConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 
@@ -80,6 +68,11 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
 
   @Input({required: true})
   testScript: () => Observable<string>;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
+
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
 
   simpleConfiguration = this.fb.group({
     arguments: this.fb.control({}),
@@ -151,9 +144,9 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
       formValue.expressionSIMPLE = formValue.expression;
     }
     this.simpleConfiguration.patchValue(formValue, {emitEvent: false});
-    this.updatedFormWithScript();
     setTimeout(() => {
       this.simpleConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
+      this.simpleConfiguration.get('output').updateValueAndValidity({onlySelf: true});
     });
   }
 
@@ -198,7 +191,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   private toggleScopeByOutputType(): void {
-    if (this.isScript || this.simpleConfiguration.get('output').value.type === OutputType.Attribute) {
+    if (this.isScript || this.simpleConfiguration.get('output').value.type === OutputType.Attribute || this.disabled) {
       this.simpleConfiguration.get('useLatestTs').disable({emitEvent: false});
     } else {
       this.simpleConfiguration.get('useLatestTs').enable({emitEvent: false});

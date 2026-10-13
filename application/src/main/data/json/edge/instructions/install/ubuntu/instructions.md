@@ -1,14 +1,16 @@
 Here is the list of commands that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
-#### Step 1. Install Java 17 (OpenJDK)
-ThingsBoard service is running on Java 17. To install OpenJDK 17, follow these instructions:
+**Note:** OpenJDK 25 requires Ubuntu 22.04 LTS or newer. Earlier versions (20.04 and below) are not supported.
+
+#### Step 1. Install Java 25 (OpenJDK)
+ThingsBoard service is running on Java 25. To install OpenJDK 25, follow these instructions:
 
 ```bash
-sudo apt update && sudo apt install openjdk-17-jdk
+sudo apt update && sudo apt install openjdk-25-jdk
 {:copy-code}
 ```
 
-Configure your operating system to use OpenJDK 17 by default. You can configure the default version by running the following command:
+Configure your operating system to use OpenJDK 25 by default. You can configure the default version by running the following command:
 
 ```bash
 sudo update-alternatives --config java
@@ -25,7 +27,7 @@ java -version
 The expected result is:
 
 ```text
-openjdk version "17.x.xx"
+openjdk version "25.x.xx"
 OpenJDK Runtime Environment (...)
 OpenJDK 64-Bit Server VM (build ...)
 ```
@@ -34,7 +36,7 @@ OpenJDK 64-Bit Server VM (build ...)
 
 ThingsBoard Edge supports **SQL** and **hybrid** database configurations.
 In this guide, we’ll use an **SQL** database.
-For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/edge/deb-installation/#step-2-configure-the-thingsboard-edge-database" target="_blank">ThingsBoard documentation site</a>.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/pe/edge/deb-installation/#step-2-configure-the-thingsboard-edge-database" target="_blank">ThingsBoard documentation site</a>.
 
 To install the PostgreSQL database, run these commands:
 
@@ -72,14 +74,14 @@ echo "CREATE DATABASE tb_edge;" | psql -U postgres -d postgres -h 127.0.0.1 -W
 Download the installation package:
 
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.deb
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.deb
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo dpkg -i tb-edge-${TB_EDGE_TAG}.deb
+sudo dpkg -i tb-edge-${TB_EDGE_TAG}pe.deb
 {:copy-code}
 ```
 
@@ -123,6 +125,7 @@ export MQTT_BIND_PORT=11883
 export COAP_BIND_PORT=15683
 export LWM2M_ENABLED=false
 export SNMP_ENABLED=false
+export INTEGRATIONS_RPC_PORT=19090
 EOL'
 {:copy-code}
 ```
@@ -149,4 +152,4 @@ sudo service tb-edge start
 
 Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Live Demo**.
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Cloud**.

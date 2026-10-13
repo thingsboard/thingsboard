@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { CmdWrapper, WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -29,9 +16,12 @@ import {
   WebsocketDataMsg
 } from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { NotificationType } from '@core/notification/notification.models';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 import Timeout = NodeJS.Timeout;
 
 const RECONNECT_INTERVAL = 2000;
+const MAX_RECONNECT_INTERVAL = 60000;
 const WS_IDLE_TIMEOUT = 90000;
 const MAX_PUBLISH_COMMANDS = 10;
 
@@ -57,12 +47,23 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   errorName = 'WebSocket Error';
 
+  // Exponential backoff: tracks the number of consecutive failed reconnect attempts.
+  // Reset only after a productive connection (i.e. at least one message received).
+  // This prevents the open→immediately-closed cycle from resetting the counter.
+  private reconnectAttempts = 0;
+
+  // Stores the last close-event error code shown to the user during a reconnect cycle.
+  // Only suppresses duplicate notifications for the same error code; a new error code is still shown.
+  // Cleared after receiving a successful message.
+  private lastShownCloseCode: number | null = null;
+
   protected constructor(protected store: Store<AppState>,
                         protected authService: AuthService,
                         protected ngZone: NgZone,
                         protected apiEndpoint: string,
                         protected cmdWrapper: CmdWrapper,
-                        protected window: Window) {
+                        protected window: Window,
+                        protected reportService?: DashboardReportService) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       () => {
         this.reset(true);
@@ -84,13 +85,26 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.wsUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
   }
 
-  abstract subscribe(subscriber: WsSubscriber);
+  abstract subscribe(subscriber: WsSubscriber, skipPublish?: boolean);
 
   abstract update(subscriber: T);
 
-  abstract unsubscribe(subscriber: T);
+  abstract unsubscribe(subscriber: T, skipPublish?: boolean);
 
   abstract processOnMessage(message: WebsocketDataMsg);
+
+  public batchSubscribe(subscribers: T[]) {
+    subscribers.forEach((subscriber) => {
+      this.subscribe(subscriber, true);
+    });
+  }
+
+  public batchUnsubscribe(subscribers: T[]) {
+    subscribers.forEach((subscriber) => {
+      this.unsubscribe(subscriber, true);
+      subscriber.complete();
+    });
+  }
 
   protected nextCmdId(): number {
     this.lastCmdId++;
@@ -99,7 +113,11 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   protected publishCommands() {
     while (this.isOpened && this.cmdWrapper.hasCommands()) {
-      this.dataStream.next(this.cmdWrapper.preparePublishCommands(MAX_PUBLISH_COMMANDS));
+      const cmds = this.cmdWrapper.preparePublishCommands(MAX_PUBLISH_COMMANDS);
+      if (this.reportService?.reportView) {
+        this.reportService.onSendWsCommands(cmds);
+      }
+      this.dataStream.next(cmds);
       this.checkToClose();
     }
     if (this.subscribersCount > 0) {
@@ -126,6 +144,8 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     this.subscribersCount = 0;
     this.cmdWrapper.clear();
     if (close) {
+      this.reconnectAttempts = 0;
+      this.lastShownCloseCode = null;
       this.closeSocket();
     }
   }
@@ -215,12 +235,19 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private onMessage(message: CmdUpdateMsg) {
+    if (this.reportService?.reportView) {
+      this.reportService.onWsCmdUpdateMessage(message);
+    }
     if (message.errorCode) {
       this.showWsError(message.errorCode, message.errorMsg);
     } else {
       this.processOnMessage(message as WebsocketDataMsg);
     }
     this.checkToClose();
+    if (this.reconnectAttempts) {
+      this.reconnectAttempts = 0;
+      this.lastShownCloseCode = null;
+    }
   }
 
   private onError(errorEvent) {
@@ -231,8 +258,13 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private onClose(closeEvent: CloseEvent) {
+    // Show error notification only when the error code changes to prevent notification spam,
+    // while still surfacing new, potentially actionable errors during a reconnect cycle.
+    // lastShownCloseCode is cleared only after a productive connection (onMessage).
     if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
-      && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
+      && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500
+      && this.lastShownCloseCode !== closeEvent.code) {
+      this.lastShownCloseCode = closeEvent.code;
       this.showWsError(closeEvent.code, closeEvent.reason);
     }
     this.isOpening = false;
@@ -251,18 +283,28 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       if (this.reconnectTimer) {
         clearTimeout(this.reconnectTimer);
       }
-      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), RECONNECT_INTERVAL);
+      const delay = Math.min(RECONNECT_INTERVAL * Math.pow(2, this.reconnectAttempts), MAX_RECONNECT_INTERVAL);
+      this.reconnectAttempts = Math.min(this.reconnectAttempts + 1, 10);
+      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), delay);
     }
   }
 
   private showWsError(errorCode: number, errorMsg: string) {
     let message = errorMsg;
-    if (!message) {
-      message += `${this.errorName}: error code - ${errorCode}.`;
+    let notificationType: NotificationType = 'error';
+
+    if (errorCode === 1008 || (errorMsg && errorMsg.includes('limit reached'))) {
+      message = 'Too many active sessions. Please close unused browser tabs or sign out from other devices';
+      notificationType = 'warn';
+    } else if (errorCode === 1009) {
+      message = 'Too much data to display. Please refresh the page or narrow your request.';
+      notificationType = 'warn';
+    } else if (!message) {
+      message = `${this.errorName}: error code - ${errorCode}.`;
     }
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message, type: 'error'
-      }));
+
+    this.store.dispatch(new ActionNotificationShow({
+      message, type: notificationType
+    }));
   }
 }

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   effect,
@@ -43,22 +30,24 @@ import { EntitiesKeysByQuery } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from "@shared/decorators/coercion";
 
 @Component({
-  selector: 'tb-entity-key-autocomplete',
-  templateUrl: './entity-key-autocomplete.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-entity-key-autocomplete',
+    templateUrl: './entity-key-autocomplete.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => EntityKeyAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Validator, OnChanges {
 
@@ -67,6 +56,10 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   @Input() placeholder = this.translate.instant('action.set');
   @Input() requiredText = this.translate.instant('common.hint.key-required');
   @Input() enableAutocomplete = true;
+
+  @Input()
+  @coerceBoolean()
+  hideNoKeyOption = false;
 
   entityFilter = input.required<EntityFilter>();
   dataKeyType = input.required<DataKeyType>();
@@ -139,8 +132,10 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
       changes.dataKeyType.currentValue !== changes.dataKeyType.previousValue;
 
     if (filterChanged || keyScopeChanged || keyTypeChanged) {
-      this.keyControl.setValue('', {emitEvent: false});
       this.cachedResult = null;
+      if (!this.keyControl.disabled) {
+        this.keyControl.setValue('', {emitEvent: false});
+      }
     }
   }
 

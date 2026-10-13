@@ -1,25 +1,15 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -58,6 +48,16 @@ import static org.junit.Assert.assertNotNull;
 @Slf4j
 public abstract class AbstractMqttIntegrationTest extends AbstractTransportIntegrationTest {
 
+    public static final String MQTT_HOST = "localhost";
+    public static final int MQTT_PORT = TestSocketUtils.findAvailableTcpPort();
+    public static final String MQTT_URL = "tcp://" + MQTT_HOST + ":" + MQTT_PORT;
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("transport.mqtt.bind_port = {}", MQTT_PORT);
+        registry.add("transport.mqtt.bind_port", () -> MQTT_PORT);
+    }
+
     protected Device savedGateway;
     protected String gatewayAccessToken;
 
@@ -75,7 +75,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             assertNotNull(accessToken);
         }
         if (config.getGatewayName() != null) {
-            savedGateway = createDevice(config.getGatewayName(), deviceProfile.getName(), true);
+            savedGateway = createDevice(config.getGatewayName(), deviceProfile.getName(), !config.isSparkplug);
             DeviceCredentials gatewayCredentials =
                     doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
             assertNotNull(gatewayCredentials);

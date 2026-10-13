@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -40,6 +27,7 @@ import { Ace } from 'ace-builds';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityVersionRestoreComponent } from '@home/components/vc/entity-version-restore.component';
+import { EntityType } from '@shared/models/entity-type.models';
 
 interface DiffInfo {
   leftStartLine: number;
@@ -49,10 +37,11 @@ interface DiffInfo {
 }
 
 @Component({
-  selector: 'tb-entity-version-diff',
-  templateUrl: './entity-version-diff.component.html',
-  styleUrls: ['./entity-version-diff.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-entity-version-diff',
+    templateUrl: './entity-version-diff.component.html',
+    styleUrls: ['./entity-version-diff.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class EntityVersionDiffComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -66,10 +55,16 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
   versionId: string;
 
   @Input()
+  groupType: EntityType;
+
+  @Input()
   entityId: EntityId;
 
   @Input()
   externalEntityId: EntityId;
+
+  @Input()
+  readonly: boolean;
 
   @Output()
   versionRestored = new EventEmitter<void>();
@@ -125,6 +120,7 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
             {
               element: this.diffViewerElmRef.nativeElement,
               mode: 'ace/mode/json',
+              lockScrolling: false,
               left: {
                 copyLinkEnabled: false,
                 editable: false,
@@ -313,6 +309,8 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
         context: {
           versionName: this.versionName,
           versionId: this.versionId,
+          groupType: this.groupType,
+          internalEntityId: this.entityId,
           externalEntityId: this.externalEntityId,
           onClose: (result: VersionLoadResult | null) => {
             restoreVersionPopover.hide();

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { booleanAttribute, Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -30,7 +17,8 @@ import { Observable } from 'rxjs';
 import {
   ComplexOperation,
   complexOperationTranslationMap,
-  EntityKeyValueType
+  EntityKeyValueType,
+  entityKeyValueTypesMap
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
@@ -38,32 +26,32 @@ import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
-import {
-  AlarmRuleFilter,
-  areFilterAndPredicateArgumentsValid,
-  FilterPredicateTypeTranslationMap
-} from "@shared/models/alarm-rule.models";
+import { AlarmRuleFilter, areFilterAndPredicateArgumentsValid } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-list',
-  templateUrl: './alarm-rule-filter-list.component.html',
-  styleUrls: ['./alarm-rule-filter-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-list',
+    templateUrl: './alarm-rule-filter-list.component.html',
+    styleUrls: ['./alarm-rule-filter-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
+
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
@@ -80,7 +68,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   areFilterAndPredicateArgumentsValid = areFilterAndPredicateArgumentsValid;
 
   complexOperationTranslationMap = complexOperationTranslationMap;
-  FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
+  entityKeyValueTypes = entityKeyValueTypesMap;
+  entityKeyValueTypeEnum = EntityKeyValueType;
 
   private propagateChange = (v: any) => { };
 
@@ -143,17 +132,17 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     });
   }
 
-  public editFilter(index: number) {
+  public editFilter(index: number, readonly = false) {
     const filter: AlarmRuleFilter =
       (this.filterListFormGroup.get('filters') as FormArray).at(index).value;
-    this.openFilterDialog(filter).subscribe(result => {
+    this.openFilterDialog(filter, readonly).subscribe(result => {
       if (result) {
         (this.filterListFormGroup.get('filters') as FormArray).at(index).patchValue(result);
       }
     });
   }
 
-  private openFilterDialog(filter?: AlarmRuleFilter): Observable<AlarmRuleFilter> {
+  private openFilterDialog(filter?: AlarmRuleFilter, readonly = false): Observable<AlarmRuleFilter> {
     const isAdd = !filter;
     if (isAdd) {
       filter = {
@@ -171,7 +160,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
         filter: filter ? deepClone(filter) : null,
         isAdd,
         arguments: this.arguments,
-        usedArguments: this.getUsedArguments
+        usedArguments: this.getUsedArguments,
+        readonly: this.readonly || readonly,
       }
     }).afterClosed();
   }

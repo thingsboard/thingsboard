@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, forwardRef, Input, Renderer2, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -24,16 +10,17 @@ import {
 } from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings-panel.component';
 
 @Component({
-  selector: 'tb-shape-fill-image-settings',
-  templateUrl: './shape-fill-image-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ShapeFillImageSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-shape-fill-image-settings',
+    templateUrl: './shape-fill-image-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ShapeFillImageSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ShapeFillImageSettingsComponent implements ControlValueAccessor {
 
@@ -81,11 +68,12 @@ export class ShapeFillImageSettingsComponent implements ControlValueAccessor {
         renderer: this.renderer,
         componentType: ShapeFillImageSettingsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: 'left',
+        preferredPlacement: 'leftOnly',
         context: {
           shapeFillImageSettings: this.modelValue,
         },
-        isModal: true
+        isModal: true,
+        overlayStyle: {padding: '10px'}
       }).tbComponentRef.instance.shapeFillImageSettingsApplied.subscribe((shapeFillImageSettings) => {
         this.modelValue = shapeFillImageSettings;
         this.propagateChange(this.modelValue);

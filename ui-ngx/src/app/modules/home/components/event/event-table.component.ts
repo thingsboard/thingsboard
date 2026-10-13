@@ -1,26 +1,15 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
-  Component, EventEmitter,
+  Component,
+  EventEmitter,
   Input,
   OnDestroy,
-  OnInit, Output,
+  OnInit,
+  Output,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -40,9 +29,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-event-table',
-  templateUrl: './event-table.component.html',
-  styleUrls: ['./event-table.component.scss']
+    selector: 'tb-event-table',
+    templateUrl: './event-table.component.html',
+    styleUrls: ['./event-table.component.scss'],
+    standalone: false
 })
 export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
@@ -59,7 +49,25 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
   debugEventTypes: Array<DebugEventType>;
 
   @Input()
+  isReadOnly: boolean = false;
+
+  @Input()
   hideClearEventAction: boolean = false;
+
+  private disableDebugEventActionValue = false;
+
+  get disableDebugEventAction() {
+    return this.disableDebugEventActionValue;
+  }
+
+  @Input()
+  set disableDebugEventAction(value) {
+    this.disableDebugEventActionValue = value;
+    if (this.eventTableConfig) {
+      this.eventTableConfig.disableDebugEventAction = this.disableDebugEventAction;
+      this.eventTableConfig.updateCellAction();
+    }
+  };
 
   activeValue = false;
   dirtyValue = false;
@@ -149,9 +157,11 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.viewContainerRef,
       this.cd,
       this.store,
+      this.isReadOnly,
       this.functionTestButtonLabel,
       this.debugEventSelected,
-      this.hideClearEventAction
+      this.hideClearEventAction,
+      this.disableDebugEventAction
     );
   }
 

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, output, ViewChild } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
@@ -32,6 +19,7 @@ import {
   ArgumentEntityTypeTranslations,
   CalculatedFieldGeofencing,
   CalculatedFieldGeofencingValue,
+  CalculatedFieldType,
   FORBIDDEN_NAMES,
   forbiddenNamesValidator,
   GeofencingDirectionLevelTranslations,
@@ -58,9 +46,10 @@ import { EntitySearchDirection } from '@shared/models/relation.models';
 import { CdkDragDrop } from "@angular/cdk/drag-drop";
 
 @Component({
-  selector: 'tb-calculated-field-geofencing-zone-groups-panel',
-  templateUrl: './calculated-field-geofencing-zone-groups-panel.component.html',
-  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-geofencing-zone-groups-panel.component.scss']
+    selector: 'tb-calculated-field-geofencing-zone-groups-panel',
+    templateUrl: './calculated-field-geofencing-zone-groups-panel.component.html',
+    styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-geofencing-zone-groups-panel.component.scss'],
+    standalone: false
 })
 export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit, AfterViewInit {
 
@@ -70,7 +59,9 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() ownerId: EntityId;
+  @Input() calculatedFieldType: CalculatedFieldType;
   @Input() usedNames: string[];
+  @Input() readonly = false;
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
@@ -160,6 +151,10 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
 
     this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
     this.updateEntityFilter(this.zone.refEntityId?.entityType);
+
+    if (this.readonly) {
+      this.geofencingFormGroup.disable({emitEvent: false});
+    }
   }
 
   fetchOptions(searchText: string): Observable<Array<string>> {
@@ -297,12 +292,9 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     return this.refDynamicSourceFormGroup.get('levels') as UntypedFormArray;
   }
 
-  trackByKey(_index: number, keyControl: AbstractControl): any {
-    return keyControl;
-  }
-
   removeKey(index: number) {
     this.levelsFormArray().removeAt(index);
+    this.levelsFormArray().markAsDirty();
   }
 
   addKey() {
@@ -320,6 +312,6 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   }
 
   get dragEnabled(): boolean {
-    return this.levelsFormArray().controls.length > 1;
+    return this.levelsFormArray().controls.length > 1 && !this.readonly;
   }
 }

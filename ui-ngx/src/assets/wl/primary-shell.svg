@@ -1,0 +1,50 @@
+<svg viewBox="0 0 252 165" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g filter="url(#shadow_primary)">
+    <g clip-path="url(#clip_primary)">
+      <rect x="4" y="2" width="244" height="157" rx="6" fill="#EEEEEE"></rect>
+      <rect class="tb-fill-primary" x="24" y="2" width="224" height="16"></rect>
+      <path d="M248 41H102V159H248V41Z" fill="white"></path>
+      <path opacity="0.5" d="M160.938 29H111.062C109.371 29 108 30.7909 108 33C108 35.2091 109.371 37 111.062 37H160.938C162.629 37 164 35.2091 164 33C164 30.7909 162.629 29 160.938 29Z" fill="white"></path>
+      <path class="tb-fill-primary" d="M142 136H116C114.343 136 113 137.343 113 139V145C113 146.657 114.343 148 116 148H142C143.657 148 145 146.657 145 145V139C145 137.343 143.657 136 142 136Z"></path>
+      <path d="M179 136H153C151.343 136 150 137.343 150 139V145C150 146.657 151.343 148 153 148H179C180.657 148 182 146.657 182 145V139C182 137.343 180.657 136 179 136Z" fill="#212121" fill-opacity="0.08"></path>
+      <mask id="mask_primary" fill="white"><path d="M4 2H24V159H4V2Z"></path></mask>
+      <path class="tb-fill-primary" d="M4 2H24V159H4V2Z"></path>
+      <path d="M24 2H23V159H24H25V2H24Z" fill="black" fill-opacity="0.2" mask="url(#mask_primary)"></path>
+      <circle cx="13.5" cy="11" r="5" fill="white"></circle>
+      <circle opacity="0.5" cx="13.5" cy="28" r="5" fill="white"></circle>
+      <circle opacity="0.5" cx="13.5" cy="45" r="5" fill="white"></circle>
+      <circle opacity="0.5" cx="13.5" cy="62" r="5" fill="white"></circle>
+      <circle opacity="0.5" cx="13.5" cy="79" r="5" fill="white"></circle>
+      <circle opacity="0.5" cx="13.5" cy="96" r="5" fill="white"></circle>
+      <circle cx="13.5" cy="147" r="5" fill="white"></circle>
+      <circle opacity="0.5" cx="238" cy="10" r="4" fill="white"></circle>
+      <rect class="tb-fill-accent tb-stroke-accent" x="113.5" y="52.5" width="11" height="11" rx="2.5"></rect>
+      <path d="M116 58.2222L118.182 60L122 56" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      <rect x="130" y="55" width="72" height="6" rx="3" fill="#D9D9D9"></rect>
+      <rect x="114" y="70" width="10" height="10" rx="2" stroke="black" stroke-opacity="0.2" stroke-width="2"></rect>
+      <rect x="130" y="72" width="59" height="6" rx="3" fill="#D9D9D9"></rect>
+      <rect class="tb-stroke-accent" x="114" y="94" width="10" height="10" rx="5" stroke-width="2"></rect>
+      <path class="tb-fill-accent tb-stroke-accent" d="M119 97.1001C120.049 97.1003 120.899 97.9513 120.899 99.0005C120.899 100.05 120.049 100.9 119 100.9C117.951 100.9 117.1 100.05 117.1 99.0005C117.1 97.9511 117.951 97.1001 119 97.1001Z"></path>
+      <rect x="130" y="96" width="60" height="6" rx="3" fill="#D9D9D9"></rect>
+      <rect x="114" y="111" width="10" height="10" rx="5" stroke="black" stroke-opacity="0.2" stroke-width="2"></rect>
+      <rect x="130" y="113" width="53" height="6" rx="3" fill="#D9D9D9"></rect>
+      <path class="tb-fill-primary" d="M102 27C102 25.3431 103.343 24 105 24H248V40H102V27Z"></path>
+      <path class="tb-fill-accent" d="M230 48C234.418 48 238 44.4183 238 40C238 35.5817 234.418 32 230 32C225.582 32 222 35.5817 222 40C222 44.4183 225.582 48 230 48Z"></path>
+      <rect opacity="0.5" x="30" y="7" width="74" height="6" rx="3" fill="white"></rect>
+      <rect opacity="0.5" x="110" y="29" width="48" height="6" rx="3" fill="white"></rect>
+    </g>
+  </g>
+  <defs>
+    <filter id="shadow_primary" x="0" y="0" width="252" height="165" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+      <feOffset dy="2"></feOffset>
+      <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+      <feComposite in2="hardAlpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"></feColorMatrix>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"></feBlend>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"></feBlend>
+    </filter>
+    <clipPath id="clip_primary"><rect x="4" y="2" width="244" height="157" rx="6" fill="white"></rect></clipPath>
+  </defs>
+</svg>

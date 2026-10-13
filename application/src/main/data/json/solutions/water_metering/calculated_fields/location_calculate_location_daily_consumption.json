@@ -1,0 +1,56 @@
+{
+  "reprocessingOrder": 2,
+  "type": "RELATED_ENTITIES_AGGREGATION",
+  "name": "Calculate location daily consumption",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "83595270-c452-42d8-ab35-494d7de7cfcd"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "RELATED_ENTITIES_AGGREGATION",
+    "relation": {
+      "direction": "FROM",
+      "relationType": "Contains"
+    },
+    "arguments": {
+      "dailyConsumption": {
+        "refEntityKey": {
+          "key": "dailyConsumption",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      }
+    },
+    "deduplicationIntervalInSec": 10,
+    "metrics": {
+      "dailyConsumption": {
+        "function": "SUM",
+        "input": {
+          "type": "key",
+          "key": "dailyConsumption"
+        }
+      }
+    },
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "IMMEDIATE",
+        "ttl": 0,
+        "saveTimeSeries": false,
+        "saveLatest": false,
+        "sendWsUpdate": false,
+        "processCfs": true
+      },
+      "decimalsByDefault": 2
+    },
+    "useLatestTs": true,
+    "scheduledUpdateInterval": 10,
+    "scheduledUpdateEnabled": true
+  }
+}

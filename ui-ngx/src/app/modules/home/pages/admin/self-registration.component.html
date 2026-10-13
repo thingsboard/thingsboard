@@ -1,0 +1,180 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div>
+  <mat-card appearance="outlined" class="settings-card self-registration">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="mat-headline-5" translate>self-registration.self-registration</span>
+      </mat-card-title>
+      <span class="flex-1"></span>
+      <div tb-help="selfRegistration"></div>
+    </mat-card-header>
+    @if (isLoading$ | async) {
+      <mat-progress-bar color="warn" mode="indeterminate">
+      </mat-progress-bar>
+    }
+    @if ((isLoading$ | async) === false) {
+      <div style="height: 4px;"></div>
+    }
+    <mat-card-content style="padding-top: 16px;">
+      <form [formGroup]="selfRegistrationFormGroup" #selfRegistrationForm="ngForm">
+        <fieldset [disabled]="isLoading$ | async">
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>
+              self-registration.domain-settings
+            </legend>
+            <tb-entity-autocomplete
+              [entityType]="EntityType.DOMAIN"
+              labelText="white-labeling.domain-name"
+              useFullEntityId
+              required
+              appearance="outline"
+              formControlName="domainId"
+              [allowCreateNew]="resource.DOMAIN | hasGenericPermission: operation.CREATE"
+              (entityChanged)="domainChange($event)"
+              (createNew)="createDomain($event)"
+              class="mt-2">
+            </tb-entity-autocomplete>
+            <div class="mat-content flex flex-col" id="registration-link-content"
+              tb-toast toastTarget="registrationLinkContent">
+              <span translate>self-registration.self-registration-url</span>
+              <div class="flex flex-row items-center justify-start">
+                <pre class="tb-highlight flex-1"><code>{{ registerLink }}</code></pre>
+                <button mat-icon-button
+                  type="button"
+                  ngxClipboard
+                  (cbOnSuccess)="onActivationLinkCopied()"
+                  cbContent="{{registerLink}}"
+                  matTooltipPosition="above"
+                  matTooltip="{{ 'user.copy-activation-link' | translate }}">
+                  <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+                </button>
+              </div>
+            </div>
+            <div class="flex flex-row gap-2" formGroupName="captcha">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
+                <mat-label translate>self-registration.captcha-version</mat-label>
+                <mat-select formControlName="version" required>
+                  <mat-option [value]="'v2'">v2 Checkbox</mat-option>
+                  <mat-option [value]="'v3'">v3</mat-option>
+                </mat-select>
+              </mat-form-field>
+              @if (selfRegistrationFormGroup.get('captcha.version').value !== 'v3') {
+                <span class="flex-1"></span>
+              }
+              @if (selfRegistrationFormGroup.get('captcha.version').value === 'v3') {
+                <mat-form-field class="mat-block flex-1" appearance="outline">
+                  <mat-label translate>self-registration.captcha-action</mat-label>
+                  <input matInput formControlName="logActionName"/>
+                </mat-form-field>
+              }
+            </div>
+            <div class="flex flex-col gap-0 gt-sm:flex-row gt-sm:gap-2" formGroupName="captcha">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
+                <mat-label translate>self-registration.captcha-site-key</mat-label>
+                <input matInput required formControlName="siteKey"/>
+                @if (selfRegistrationFormGroup.get('captcha.siteKey').hasError('required')) {
+                  <mat-error>
+                    {{ 'self-registration.captcha-site-key-required' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+              <mat-form-field class="mat-block flex-1" appearance="outline">
+                <mat-label translate>self-registration.captcha-secret-key</mat-label>
+                <input matInput required formControlName="secretKey"/>
+                @if (selfRegistrationFormGroup.get('captcha.secretKey').hasError('required')) {
+                  <mat-error>
+                    {{ 'self-registration.captcha-secret-key-required' | translate }}
+                  </mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </fieldset>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>
+              self-registration.general-settings
+            </legend>
+            <tb-entity-autocomplete
+              required
+              allowCreateNew
+              useFullEntityId
+              appearance="outline"
+              formControlName="notificationRecipient"
+              labelText="self-registration.notification-recipient"
+              requiredText="self-registration.notification-recipient-required"
+              [entityType]="entityTypes.NOTIFICATION_TARGET"
+              (createNew)="createTarget($event)"
+              class="mt-2">
+            </tb-entity-autocomplete>
+            <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
+              <mat-label translate>self-registration.text-message-page</mat-label>
+              <textarea matInput #input formControlName="title"
+                cdkTextareaAutosize
+                placeholder="Text message for signup page"
+              [maxLength]="200"></textarea>
+              <mat-hint align="end">{{input.value?.length || 0}}/200</mat-hint>
+            </mat-form-field>
+            <section class="flex flex-col gt-sm:flex-row gt-sm:gap-2" formGroupName="defaultDashboard">
+              <tb-entity-autocomplete
+                class="flex-1 gt-sm:max-w-30% gt-sm:flex-full"
+                appearance="outline"
+                [entityType]="entityTypes.DASHBOARD"
+                labelText="user.default-dashboard"
+                formControlName="id">
+              </tb-entity-autocomplete>
+              <div class="flex flex-1 flex-col items-start justify-center">
+                <mat-checkbox formControlName="fullscreen">
+                  {{ 'user.always-fullscreen' | translate }}
+                </mat-checkbox>
+              </div>
+            </section>
+          </fieldset>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>self-registration.privacy-policy-text</legend>
+            <div class="mat-content flex flex-col">
+              <mat-slide-toggle formControlName="showPrivacyPolicy">
+                {{ 'self-registration.show-privacy-policy' | translate }}
+              </mat-slide-toggle>
+              <div class="tb-privacy-policy mat-elevation-z1">
+                <editor [init]="hugeRteOptions" id="privacy-policy"
+                  formControlName="privacyPolicy">
+                </editor>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset class="fields-group" style="margin-top: 20px">
+            <legend class="group-title" translate>self-registration.terms-of-use-text</legend>
+            <div class="mat-content flex flex-col">
+              <mat-slide-toggle formControlName="showTermsOfUse">
+                {{ 'self-registration.show-terms-of-use' | translate }}
+              </mat-slide-toggle>
+              <div class="tb-terms-of-use mat-elevation-z1">
+                <editor [init]="hugeRteOptions" id="terms-of-use"
+                  formControlName="termsOfUse">
+                </editor>
+              </div>
+            </div>
+          </fieldset>
+          <tb-registration-permissions
+            formControlName="permissions">
+          </tb-registration-permissions>
+          <div class="flex items-center justify-between gap-4">
+            <button mat-stroked-button color="warn" [disabled]="(isLoading$ | async) || deleteDisabled"
+              (click)="delete(selfRegistrationForm)">
+              <tb-icon matButtonIcon>mdi:broom</tb-icon>
+              {{ 'action.reset-default' | translate }}
+            </button>
+            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || selfRegistrationFormGroup.invalid || !selfRegistrationFormGroup.dirty"
+              (click)="save()">
+              {{ 'action.save' | translate }}
+            </button>
+          </div>
+        </fieldset>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

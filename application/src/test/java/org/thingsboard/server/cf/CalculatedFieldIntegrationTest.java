@@ -1,31 +1,25 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.TestPropertySource;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -46,13 +40,28 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoor
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.job.task.CfReprocessingTaskResult;
+import org.thingsboard.server.common.data.job.task.TaskResult;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.service.entitiy.cf.CalculatedFieldReprocessingValidator;
+import org.thingsboard.server.service.entitiy.cf.CalculatedFieldReprocessingValidator.CfReprocessingValidationResult;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,22 +70,56 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_ONLY;
+import static org.thingsboard.server.common.data.job.JobStatus.PENDING;
+import static org.thingsboard.server.common.data.job.JobStatus.QUEUED;
+import static org.thingsboard.server.common.data.job.JobStatus.RUNNING;
 
+@Slf4j
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "queue.tasks.partitioning_strategy=entity",
+        "queue.tasks.partitions_per_type=CF_REPROCESSING:24",
+        "queue.calculated_fields.pack_processing_timeout=10000"
+})
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
 
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
 
+    private final String exampleScript = """
+            var avgTemperature = temperature.mean(); // Get average temperature
+            var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin
+            
+            // Estimate air pressure based on altitude
+            var pressure = 101325 * Math.pow((1 - 2.25577e-5 * altitude), 5.25588);
+            
+            // Air density formula
+            var airDensity = pressure / (287.05 * temperatureK);
+            
+            return {
+              ts: ctx.latestTs,
+              values: {
+                  "airDensity": toFixed(airDensity, 2)
+              }
+            };
+            """;
+
+    @MockitoSpyBean
+    private TimeseriesService timeseriesService;
+
     @Test
     public void testSimpleCalculatedFieldWhenAllTelemetryPresent() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         postTelemetry(testDevice.getId(), "{\"temperature\":25}");
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"deviceTemperature\":40}"));
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"deviceTemperature\":40}");
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
@@ -259,15 +302,15 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     @Test
     public void testSimpleCalculatedFieldWhenEntityIdIsProfile() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":40}"));
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"x\":40}");
 
         AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
 
         Asset asset1 = createAsset("Test asset 1", assetProfile.getId());
-        doPost("/api/plugins/telemetry/ASSET/" + asset1.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":11}"));
+        postAttributes(asset1.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":11}");
 
         Asset asset2 = createAsset("Test asset 2", assetProfile.getId());
-        doPost("/api/plugins/telemetry/ASSET/" + asset2.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":12}"));
+        postAttributes(asset2.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":12}");
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(assetProfile.getId());
@@ -316,7 +359,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("52.0");
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":25}"));
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"x\":25}");
 
         await().alias("update device telemetry -> recalculate state for all assets").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -332,7 +375,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("37.0");
                 });
 
-        doPost("/api/plugins/telemetry/ASSET/" + asset1.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":15}"));
+        postAttributes(asset1.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":15}");
 
         await().alias("update asset 1 telemetry -> recalculate state only for asset 1").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -348,7 +391,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z2.get(0).get("value").asText()).isEqualTo("37.0");
                 });
 
-        doPost("/api/plugins/telemetry/ASSET/" + asset2.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":5}"));
+        postAttributes(asset2.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":5}");
 
         await().alias("update asset 2 telemetry -> recalculate state only for asset 2").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -365,7 +408,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         Asset asset3 = createAsset("Test asset 3", assetProfile.getId());
-        doPost("/api/plugins/telemetry/ASSET/" + asset3.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":13}"));
+        postAttributes(asset3.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":13}");
 
         Asset finalAsset3 = asset3;
         await().alias("add new entity to profile -> calculate state for new entity").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -377,7 +420,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(z3.get(0).get("value").asText()).isEqualTo("38.0");
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":20}"));
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"x\":20}");
 
         await().alias("update device telemetry -> recalculate state for all assets").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -403,7 +446,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         asset3.setAssetProfileId(newAssetProfile.getId());
         asset3 = doPost("/api/asset", asset3, Asset.class);
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":15}"));
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"x\":15}");
 
         Asset updatedAsset3 = asset3;
         await().alias("update device telemetry -> recalculate state for asset 1 and asset 2").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -616,90 +659,607 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrueAndDefaultArguments() throws Exception {
+    public void testReprocessCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        long a1Ts = currentTime - TimeUnit.SECONDS.toMillis(140); // outside the TW
+        long a2b1Ts = currentTime - TimeUnit.SECONDS.toMillis(130); // outside the TW (but telemetry will be used for initial processing)
+        long b2Ts = currentTime - TimeUnit.SECONDS.toMillis(80); // inside the TW
+        long b3Ts = currentTime - TimeUnit.SECONDS.toMillis(70); // inside the TW
+        long a3Ts = currentTime - TimeUnit.SECONDS.toMillis(60); // inside the TW
+        long a4Ts = currentTime - TimeUnit.SECONDS.toMillis(50); // inside the TW
+        long b4Ts = currentTime - TimeUnit.SECONDS.toMillis(40); // outside the TW
+
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":1}}", a1Ts));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":2}}", a2b1Ts));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":3}}", a3Ts));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":4}}", a4Ts));
+
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":10}}", a2b1Ts));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":20}}", b2Ts));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":30}}", b3Ts));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":40}}", b4Ts));
+
+        /*      telemetry flow:
+                             startTs                endTs
+                               |______________________|
+               |  ts  | 1    2 |   3     4     5    6 |   7
+               |device| 1 -> 2 |->    ->    -> 3 -> 4 |
+               |asset |      10|-> 20 -> 30 ->   ->   |-> 40
+                               |______________________|
+                                          |--- reprocessing time window
+               the result should be: 12 -> 22 -> 32 -> 33 -> 34
+        */
+
+        CalculatedField savedCalculatedField = createCalculatedField(testDevice.getId(), testAsset.getId());
+
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":10}}", currentTime));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":100}}", currentTime));
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for time window").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
+                    assertThat(result).isNotNull();
+
+                    assertThat(result.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(a4Ts));
+                    assertThat(result.get("result").get(0).get("value").asText()).isEqualTo("34.0");
+
+                    assertThat(result.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(a3Ts));
+                    assertThat(result.get("result").get(1).get("value").asText()).isEqualTo("33.0");
+
+                    assertThat(result.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(b3Ts));
+                    assertThat(result.get("result").get(2).get("value").asText()).isEqualTo("32.0");
+
+                    assertThat(result.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(b2Ts));
+                    assertThat(result.get("result").get(3).get("value").asText()).isEqualTo("22.0");
+
+                    assertThat(result.get("result").get(4).get("ts").asText()).isEqualTo(Long.toString(startTs)); // we use reprocessing startTs instead of telemetry ts for initial calculation
+                    assertThat(result.get("result").get(4).get("value").asText()).isEqualTo("12.0");
+
+                    ObjectNode resultLatest = getLatestTelemetry(testDevice.getId(), "result");
+                    assertThat(resultLatest).isNotNull();
+                    assertThat(resultLatest.get("result").get(0).get("value").asText()).isEqualTo("110.0"); // reprocessing result did not overwrite the actual latest value
+                });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(testDevice.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(testDevice.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(testDevice.getName());
+        });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldAndWait() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        long currentTime = System.currentTimeMillis();
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        long aTs = currentTime - TimeUnit.SECONDS.toMillis(80);
+        long bTs = currentTime - TimeUnit.SECONDS.toMillis(60);
+
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":3}}", aTs));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":7}}", bTs));
+
+        CalculatedField savedCalculatedField = createCalculatedField(testDevice.getId(), testAsset.getId());
+
+        reprocessCalculatedFieldAndWait(savedCalculatedField, startTs, endTs);
+
+        ObjectNode result = getTimeSeries(testDevice.getId(), startTs, endTs, "result");
+        assertThat(result).isNotNull();
+        assertThat(result.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(bTs));
+        assertThat(result.get("result").get(0).get("value").asText()).isEqualTo("10.0");
+
+        Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(testDevice.getUuidId())).stream().findFirst().orElseThrow();
+        assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+        assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(1);
+        assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenUseLatestTsTrue() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        long x1Ts = currentTime - TimeUnit.SECONDS.toMillis(80); // inside the TW
+        long x2Ts = currentTime - TimeUnit.SECONDS.toMillis(60); // inside the TW
+        long x3y1Ts = currentTime - TimeUnit.SECONDS.toMillis(50); // inside the TW
+        long x4Ts = currentTime - TimeUnit.SECONDS.toMillis(47); // inside the TW
+
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"x\":1}}", x1Ts));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"x\":2}}", x2Ts));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"x\":3}}", x3y1Ts));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\":%s, \"values\":{\"x\":4}}", x4Ts));
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":10}");
+
+    /*      telemetry flow:
+             startTs          endTs
+                |____________________|
+           | ts |   1    2    3    4 |
+           | x  |-> 1 -> 2 -> 3 -> 4 |
+           | y  |->   ->   -> 10 ->  |
+                |____________________|
+                        |--- reprocessing time window
+           the result should be: 11 -> 12 -> 13 -> 14
+    */
+
+        CalculatedField savedCalculatedField = createCalculatedFieldWhenUseLatestTs(testDevice.getId());
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for time window").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode z = getTimeSeries(testDevice.getId(), startTs, endTs, "z");
+                    assertThat(z).isNotNull();
+                    assertThat(z.get("z").get(0).get("ts").asText()).isEqualTo(Long.toString(x4Ts));
+                    assertThat(z.get("z").get(0).get("value").asText()).isEqualTo("14");
+
+                    assertThat(z.get("z").get(1).get("ts").asText()).isEqualTo(Long.toString(x3y1Ts));
+                    assertThat(z.get("z").get(1).get("value").asText()).isEqualTo("13");
+
+                    assertThat(z.get("z").get(2).get("ts").asText()).isEqualTo(Long.toString(x2Ts));
+                    assertThat(z.get("z").get(2).get("value").asText()).isEqualTo("12");
+
+                    assertThat(z.get("z").get(3).get("ts").asText()).isEqualTo(Long.toString(x1Ts));
+                    assertThat(z.get("z").get(3).get("value").asText()).isEqualTo("11");
+                });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(testDevice.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(testDevice.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(testDevice.getName());
+        });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfile() throws Exception {
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+        long aTs_1 = currentTime - TimeUnit.SECONDS.toMillis(100);
+        long aTs_2 = currentTime - TimeUnit.SECONDS.toMillis(85);
+        long aTs_3 = currentTime - TimeUnit.SECONDS.toMillis(60);
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":100}}", aTs_1));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":200}}", aTs_2));
+        postTelemetry(testAsset.getId(), String.format("{\"ts\":%s, \"values\":{\"b\":300}}", aTs_3));
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test Device Profile"), DeviceProfile.class);
+
+        Device testDevice1 = createDevice("Test device 1", "1234567890111", deviceProfile.getId());
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(100);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(90);
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":10}}", d1Ts_1));
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":20}}", d1Ts_2));
+
+
+        Device testDevice2 = createDevice("Test device 2", "1234567890222", deviceProfile.getId());
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(90);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(55);
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":1}}", d2Ts_1));
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"a\":2}}", d2Ts_2));
+
+        /*      telemetry flow:
+                     startTs                         endTs
+                       |_______________________________|
+               |  ts   |   1      2     3      4     5 |
+               |device1|  10  -> 20 ->     ->     ->   |
+               |device2|      ->  1 ->     ->     -> 2 |
+               |asset  |  100 ->    -> 200 -> 300 ->   |
+                       |_______________________________|
+                                         |--- reprocessing time window
+               the result for device 1 should be: 110 -> 120 -> 220 -> 320
+               the result for device 2 should be: 101 -> 201 -> 301 -> 302
+        */
+
+        CalculatedField savedCalculatedField = createCalculatedField(deviceProfile.getId(), testAsset.getId());
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode ab_1 = getTimeSeries(testDevice1.getId(), startTs, endTs, "result");
+                    assertThat(ab_1).isNotNull();
+
+                    assertThat(ab_1.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(aTs_3));
+                    assertThat(ab_1.get("result").get(0).get("value").asText()).isEqualTo("320.0");
+
+                    assertThat(ab_1.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(aTs_2));
+                    assertThat(ab_1.get("result").get(1).get("value").asText()).isEqualTo("220.0");
+
+                    assertThat(ab_1.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(ab_1.get("result").get(2).get("value").asText()).isEqualTo("120.0");
+
+                    assertThat(ab_1.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(aTs_1));
+                    assertThat(ab_1.get("result").get(3).get("value").asText()).isEqualTo("110.0");
+
+                    ObjectNode resultLatest = getLatestTelemetry(testDevice1.getId(), "result");
+                    assertThat(resultLatest).isNotNull();
+                    assertThat(resultLatest.get("result").get(0).get("value").asText()).isEqualTo("320.0");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode ab_2 = getTimeSeries(testDevice2.getId(), startTs, endTs, "result");
+                    assertThat(ab_2).isNotNull();
+
+                    assertThat(ab_2.get("result").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(ab_2.get("result").get(0).get("value").asText()).isEqualTo("302.0");
+
+                    assertThat(ab_2.get("result").get(1).get("ts").asText()).isEqualTo(Long.toString(aTs_3));
+                    assertThat(ab_2.get("result").get(1).get("value").asText()).isEqualTo("301.0");
+
+                    assertThat(ab_2.get("result").get(2).get("ts").asText()).isEqualTo(Long.toString(aTs_2));
+                    assertThat(ab_2.get("result").get(2).get("value").asText()).isEqualTo("201.0");
+
+                    assertThat(ab_2.get("result").get(3).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(ab_2.get("result").get(3).get("value").asText()).isEqualTo("101.0");
+
+                    ObjectNode resultLatest = getLatestTelemetry(testDevice2.getId(), "result");
+                    assertThat(resultLatest).isNotNull();
+                    assertThat(resultLatest.get("result").get(0).get("value").asText()).isEqualTo("302.0");
+                });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(deviceProfile.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(deviceProfile.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(deviceProfile.getName());
+        });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfileAndTsRollingArgUsed() throws Exception {
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(300);
+
+
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        postAttributes(testAsset.getId(), AttributeScope.SERVER_SCOPE, "{\"altitude\":1531}");
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test Device Profile"), DeviceProfile.class);
+
+        Device testDevice1 = createDevice("Test device 1", "1234567890111", deviceProfile.getId());
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(1000);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d1Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(500);
+
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":66.12}}", d1Ts_1));
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":45.31}}", d1Ts_2));
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":70.36}}", d1Ts_3));
+
+
+        Device testDevice2 = createDevice("Test device 2", "1234567890222", deviceProfile.getId());
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(900);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d2Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(400);
+
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":55.16}}", d2Ts_1));
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":56.57}}", d2Ts_2));
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":59.40}}", d2Ts_3));
+
+
+        /*      telemetry flow:
+                     startTs                                      endTs
+                       |____________________________________________|
+               |  ts   |  -1000    -900     -550     -500     -400  |
+               |device1|  66.12 ->       -> 45.31 -> 70.36 ->       |
+               |device2|        -> 55.16 -> 56.57 ->       -> 59.40 |
+               |asset  |        ->       ->       ->       ->       | -> 1531
+                       |____________________________________________|
+                                         |--- reprocessing time window
+               the airDensity for device 1 should be: 1.0 -> 1.05 -> 1.02
+               the airDensity for device 2 should be: 1.03 -> 1.02 -> 1.02
+        */
+
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfile.getId(), testAsset.getId());
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice1.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d1Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.05");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.0");
+
+                    ObjectNode airDensityLatest = getLatestTelemetry(testDevice1.getId(), "airDensity");
+                    assertThat(airDensityLatest).isNotNull();
+                    assertThat(airDensityLatest.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice2.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.03");
+
+                    ObjectNode airDensityLatest = getLatestTelemetry(testDevice2.getId(), "airDensity");
+                    assertThat(airDensityLatest).isNotNull();
+                    assertThat(airDensityLatest.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+                });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(deviceProfile.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(deviceProfile.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(deviceProfile.getName());
+        });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenEntityIsProfileAndTsRollingArgUsed_failed() throws Exception {
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(300);
+
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        postAttributes(testAsset.getId(), AttributeScope.SERVER_SCOPE, "{\"altitude\":1531}");
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Test Device Profile"), DeviceProfile.class);
+
+        Device testDevice1 = createDevice("Test device 1", "1234567890111", deviceProfile.getId());
+        long d1Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(1000);
+        long d1Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d1Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(500);
+
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":66.12}}", d1Ts_1));
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":45.31}}", d1Ts_2));
+        postTelemetry(testDevice1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":70.36}}", d1Ts_3));
+
+
+        Device testDevice2 = createDevice("Test device 2", "1234567890222", deviceProfile.getId());
+        long d2Ts_1 = currentTime - TimeUnit.SECONDS.toMillis(900);
+        long d2Ts_2 = currentTime - TimeUnit.SECONDS.toMillis(550);
+        long d2Ts_3 = currentTime - TimeUnit.SECONDS.toMillis(400);
+
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":55.16}}", d2Ts_1));
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":56.57}}", d2Ts_2));
+        postTelemetry(testDevice2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperatureInF\":59.40}}", d2Ts_3));
+
+        CalculatedField savedCalculatedField = createScriptCalculatedField(deviceProfile.getId(), testAsset.getId());
+
+        doReturn(Futures.immediateFailedFuture(new RuntimeException("Failed to fetch timeseries data")))
+                .when(timeseriesService).findAll(any(), any(), any());
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = getLastReprocessingJob(savedCalculatedField.getId());
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.FAILED);
+            assertThat(cfReprocessingJob.getResult().getFailedCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(2);
+            List<CfReprocessingTaskResult.CfReprocessingTaskFailure> failures = cfReprocessingJob.getResult().getResults().stream()
+                    .map(result -> (CfReprocessingTaskResult) result)
+                    .map(CfReprocessingTaskResult::getFailure)
+                    .toList();
+            assertThat(failures).hasSize(2);
+            assertThat(failures).anySatisfy(failure -> {
+                assertThat(failure.getEntityInfo().getId()).isEqualTo(testDevice1.getId());
+                assertThat(failure.getEntityInfo().getName()).isEqualTo(testDevice1.getName());
+                assertThat(failure.getError()).contains("Failed to fetch timeseries data");
+            });
+            assertThat(failures).anySatisfy(failure -> {
+                assertThat(failure.getEntityInfo().getId()).isEqualTo(testDevice2.getId());
+                assertThat(failure.getEntityInfo().getName()).isEqualTo(testDevice2.getName());
+                assertThat(failure.getError()).contains("Failed to fetch timeseries data");
+            });
+        });
+
+        // fixing the method and reprocessing the job
+        doCallRealMethod().when(timeseriesService).findAll(any(), any(), any());
+        Job job = getLastReprocessingJob(savedCalculatedField.getId());
+        reprocessJob(job.getId());
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(deviceProfile.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(2);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(deviceProfile.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(deviceProfile.getName());
+        });
+        await().alias("reprocess -> perform calculation for device 1").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice1.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d1Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d1Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.05");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d1Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.0");
+                });
+
+        await().alias("reprocess -> perform calculation for device 2").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(testDevice2.getId(), startTs, endTs, "airDensity");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("airDensity").get(0).get("ts").asText()).isEqualTo(Long.toString(d2Ts_3));
+                    assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(1).get("ts").asText()).isEqualTo(Long.toString(d2Ts_2));
+                    assertThat(airDensity.get("airDensity").get(1).get("value").asText()).isEqualTo("1.02");
+
+                    assertThat(airDensity.get("airDensity").get(2).get("ts").asText()).isEqualTo(Long.toString(d2Ts_1));
+                    assertThat(airDensity.get("airDensity").get(2).get("value").asText()).isEqualTo("1.03");
+                });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenConfigIsNotValid() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
         calculatedField.setType(CalculatedFieldType.SIMPLE);
-        calculatedField.setName("a + b + c");
+        calculatedField.setName("A + 10");
         calculatedField.setDebugSettings(DebugSettings.all());
         calculatedField.setConfigurationVersion(1);
 
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        Argument argument1 = new Argument();
-        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
-        argument1.setRefEntityKey(refEntityKey1);
-        argument1.setDefaultValue("100");
-        Argument argument2 = new Argument();
-        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
-        argument2.setRefEntityKey(refEntityKey2);
-        argument2.setDefaultValue("200");
-        Argument argument3 = new Argument();
-        ReferencedEntityKey refEntityKey3 = new ReferencedEntityKey("c", ArgumentType.TS_LATEST, null);
-        argument3.setRefEntityKey(refEntityKey3);
-        argument3.setDefaultValue("300");
-        config.setArguments(Map.of("a", argument1, "b", argument2, "c", argument3));
-        config.setExpression("a + b + c");
+        Argument a = new Argument();
+        a.setRefEntityKey(new ReferencedEntityKey("a", ArgumentType.ATTRIBUTE, null));
+        config.setArguments(Map.of("a", a));
+        config.setExpression("a + 10");
 
         TimeSeriesOutput output = new TimeSeriesOutput();
-        output.setName("d");
-        output.setDecimalsByDefault(0);
+        output.setName("result");
         config.setOutput(output);
-
-        config.setUseLatestTs(true);
 
         calculatedField.setConfiguration(config);
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().alias("create CF -> perform initial calculation with default arguments").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode d = getLatestTelemetry(testDevice.getId(), "d");
-                    assertThat(d).isNotNull();
-                    assertThat(d.get("d").get(0).get("value").asText()).isEqualTo("600");
-                });
+        var response = doGet("/api/calculatedField/" + savedCalculatedField.getUuidId() + "/reprocess/validate", CfReprocessingValidationResult.class);
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":10}"));
-
-        await().alias("update telemetry -> save result with ts of 'a' argument").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d", "a");
-                    assertThat(keys).isNotNull();
-                    String aTs = keys.get("a").get(0).get("ts").asText();
-                    assertThat(keys.get("d").get(0).get("ts").asText()).isEqualTo(aTs);
-                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("510");
-                });
-
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"b\":20}"));
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"c\":30}"));
-
-        await().alias("update telemetry -> save result with latest ts of updated arguments").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d");
-                    assertThat(keys).isNotNull();
-                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("60");
-                });
-
-        String latestTs = getLatestTelemetry(testDevice.getId(), "d").get("d").get(0).get("ts").asText();
-
-        doDelete("/api/plugins/telemetry/DEVICE/" + testDevice.getId() + "/timeseries/delete?keys=b&deleteAllDataForKeys=true").andExpect(status().isOk());
-
-        await().alias("delete telemetry -> save result with previous latest ts and default argument").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d");
-                    assertThat(keys).isNotNull();
-                    assertThat(keys.get("d").get(0).get("ts").asText()).isEqualTo(latestTs);
-                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("240");
-                });
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.message()).contains(CalculatedFieldReprocessingValidator.NO_TELEMETRY_ARGS);
     }
 
     @Test
+    public void testReprocessCalculatedFieldWhenJobIsRunning() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        AssetProfile assetProfile = doPost("/api/assetProfile", createAssetProfile("Test Asset Profile"), AssetProfile.class);
+        Asset testAsset = createAsset("Test asset", assetProfile.getId());
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        CalculatedField savedCalculatedField = createCalculatedField(testDevice.getId(), testAsset.getId());
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        var response = doGet("/api/calculatedField/" + savedCalculatedField.getUuidId() + "/reprocess/validate", CfReprocessingValidationResult.class);
+
+        assertThat(response.isValid()).isFalse();
+        assertThat(response.lastJobStatus().isOneOf(QUEUED, PENDING, RUNNING)).isTrue();
+    }
+
+    private CalculatedField createScriptCalculatedField(EntityId entityId, EntityId refEntityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("Air density" + RandomStringUtils.randomAlphabetic(5));
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
+
+        Argument argument1 = new Argument();
+        argument1.setRefEntityId(refEntityId);
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
+        argument1.setRefEntityKey(refEntityKey1);
+        Argument argument2 = new Argument();
+        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("temperatureInF", ArgumentType.TS_ROLLING, null);
+        argument2.setTimeWindow(300000L);
+        argument2.setLimit(5);
+        argument2.setRefEntityKey(refEntityKey2);
+
+        config.setArguments(Map.of("altitude", argument1, "temperature", argument2));
+
+        config.setExpression(exampleScript);
+
+        config.setOutput(new TimeSeriesOutput());
+
+        calculatedField.setConfiguration(config);
+
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    private CalculatedField createCalculatedField(EntityId entityId, EntityId refEntityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("A + B");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument a = new Argument();
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        a.setRefEntityKey(refEntityKeyA);
+        Argument b = new Argument();
+        b.setRefEntityId(refEntityId);
+        ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
+        b.setRefEntityKey(refEntityKeyB);
+        config.setArguments(Map.of("a", a, "b", b));
+        config.setExpression("a + b");
+
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("result");
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
     public void testSimpleCalculatedFieldWhenCtxBecameUninitialized() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
 
@@ -721,12 +1281,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         output.setName("m1");
         output.setDecimalsByDefault(0);
         config.setOutput(output);
-
         calculatedField.setConfiguration(config);
 
         calculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"m\":1}"));
+        postTelemetry(testDevice.getId(), "{\"m\":1}");
 
         await().alias("create CF -> ctx is initialized -> perform calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -740,7 +1299,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         calculatedField.setConfiguration(config);
         calculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"m\":2}"));
+        postTelemetry(testDevice.getId(), "{\"m\":2}");
 
         await().alias("update CF -> ctx is not initialized -> no calculation performed").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -749,6 +1308,110 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(m1).isNotNull();
                     assertThat(m1.get("m1").get(0).get("value").asText()).isEqualTo("2");
                 });
+    }
+
+    @Test
+    public void testGeofencingCalculatedField_reprocess_overTimeWindow() throws Exception {
+        // --- Arrange entities and zones ---
+        Device device = createDevice("GF Device (reprocess)", "sn-geo-reproc-1");
+
+        // Allowed polygon
+        String allowedPolygon = "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]";
+        // Restricted polygon
+        String restrictedPolygon = "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]";
+
+        Asset allowedZoneAsset = createAsset("Allowed Zone (reproc)", null);
+        postAttributes(allowedZoneAsset.getId(), AttributeScope.SERVER_SCOPE, "{\"zone\":" + allowedPolygon + "}");
+
+        Asset restrictedZoneAsset = createAsset("Restricted Zone (reproc)", null);
+        postAttributes(restrictedZoneAsset.getId(), AttributeScope.SERVER_SCOPE, "{\"zone\":" + restrictedPolygon + "}");
+
+        // Relations FROM device -> zones
+        createEntityRelation(device.getId(), allowedZoneAsset.getId(), "AllowedZone");
+        createEntityRelation(device.getId(), restrictedZoneAsset.getId(), "RestrictedZone");
+
+        // --- Prepare historical telemetry (two points with explicit timestamps) ---
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(1200);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(300);
+
+        // Point 1: inside Allowed
+        long ts1 = currentTime - TimeUnit.SECONDS.toMillis(900);
+        String p1 = """
+                {"ts": %d, "values": {"latitude": 50.4730, "longitude": 30.5050}}
+                """.formatted(ts1);
+        // Point 2: inside Restricted
+        long ts2 = currentTime - TimeUnit.SECONDS.toMillis(600);
+        String p2 = """
+                {"ts": %d, "values": {"latitude": 50.4760, "longitude": 30.5110}}
+                """.formatted(ts2);
+
+        postTelemetry(device.getId(), p1);
+        postTelemetry(device.getId(), p2);
+
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.GEOFENCING);
+        cf.setName("Geofencing CF (reprocess)");
+        cf.setDebugSettings(DebugSettings.off());
+
+        GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
+
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        cfg.setEntityCoordinates(entityCoordinates);
+
+        ZoneGroupConfiguration allowedGroup = new ZoneGroupConfiguration("zone",
+                REPORT_TRANSITION_EVENTS_ONLY, false);
+        RelationPathQueryDynamicSourceConfiguration allowedDyn = new RelationPathQueryDynamicSourceConfiguration();
+        allowedDyn.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "AllowedZone")));
+        allowedGroup.setRefDynamicSourceConfiguration(allowedDyn);
+
+        ZoneGroupConfiguration restrictedGroup = new ZoneGroupConfiguration("zone",
+                REPORT_TRANSITION_EVENTS_ONLY, false);
+        RelationPathQueryDynamicSourceConfiguration restrictedDyn = new RelationPathQueryDynamicSourceConfiguration();
+        restrictedDyn.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "RestrictedZone")));
+        restrictedGroup.setRefDynamicSourceConfiguration(restrictedDyn);
+
+        cfg.setZoneGroups(Map.of("allowedZones", allowedGroup, "restrictedZones", restrictedGroup));
+
+        cfg.setOutput(new TimeSeriesOutput());
+
+        cf.setConfiguration(cfg);
+
+        CalculatedField saved = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(saved).isNotNull();
+        assertThat(saved.getId()).isNotNull();
+
+        // --- Trigger CF reprocessing for the TW ---
+        // Expectation: final state in the window is at ts2 -> LEFT Allowed, ENTERED Restricted.
+        reprocessCalculatedField(saved, startTs, endTs);
+
+        // --- Assert results after reprocessing ---
+        await().alias("Geofencing CF reprocess").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getTimeSeries(device.getId(), startTs, endTs, "allowedZonesEvent,restrictedZonesEvent");
+                    assertThat(result).isNotNull().hasSize(2);
+
+                    assertThat(result.get("allowedZonesEvent")).hasSize(1);
+                    assertThat(result.get("restrictedZonesEvent")).hasSize(1);
+
+                    assertThat(result.get("allowedZonesEvent").get(0).get("value").asText()).isEqualTo("LEFT");
+                    assertThat(result.get("allowedZonesEvent").get(0).get("ts").asText()).isEqualTo(Long.toString(ts2));
+
+                    assertThat(result.get("restrictedZonesEvent").get(0).get("value").asText()).isEqualTo("ENTERED");
+                    assertThat(result.get("restrictedZonesEvent").get(0).get("ts").asText()).isEqualTo(Long.toString(ts2));
+                });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(device.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(device.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(device.getName());
+        });
     }
 
     @Test
@@ -761,15 +1424,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         // Restricted zone polygon (square)
         String restrictedPolygon = "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]";
 
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"allowedZone\":" + allowedPolygon + "}")).andExpect(status().isOk());
-
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"restrictedZone\":" + restrictedPolygon + "}")).andExpect(status().isOk());
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, "{\"allowedZone\":" + allowedPolygon + "}");
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, "{\"restrictedZone\":" + restrictedPolygon + "}");
 
         // Initial device coordinates (inside Allowed, outside Restricted)
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"latitude\":50.4730,\"longitude\":30.5050}"));
+        postTelemetry(device.getId(), "{\"latitude\":50.4730,\"longitude\":30.5050}");
 
         // --- Build CF: GEOFENCING ---
         CalculatedField cf = new CalculatedField();
@@ -817,8 +1476,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doDelete("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/SERVER_SCOPE?keys=allowedZonesStatus,restrictedZonesStatus", String.class);
 
         // --- Update restrictedZone by 'restrictedZone' attribute update
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"restrictedZone\":" + restrictedPolygon + "}")).andExpect(status().isOk());
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, "{\"restrictedZone\":" + restrictedPolygon + "}");
 
         // --- Assert no transition ---
         // --- Assert attributes updated with the same values for restrictedZones ---
@@ -848,30 +1506,17 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         String restrictedPolygon = "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]";
 
         Asset allowedZoneAsset = createAsset("Allowed Zone", null);
-        doPost("/api/plugins/telemetry/ASSET/" + allowedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygon + "}")).andExpect(status().isOk());
+        postAttributes(allowedZoneAsset.getId(), AttributeScope.SERVER_SCOPE, "{\"zone\":" + allowedPolygon + "}");
 
         Asset restrictedZoneAsset = createAsset("Restricted Zone", null);
-        doPost("/api/plugins/telemetry/ASSET/" + restrictedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"zone\":" + restrictedPolygon + "}")).andExpect(status().isOk());
+        postAttributes(restrictedZoneAsset.getId(), AttributeScope.SERVER_SCOPE, "{\"zone\":" + restrictedPolygon + "}");
 
         // Relations from device to zones
-        EntityRelation deviceToAllowedZoneRelation = new EntityRelation();
-        deviceToAllowedZoneRelation.setFrom(device.getId());
-        deviceToAllowedZoneRelation.setTo(allowedZoneAsset.getId());
-        deviceToAllowedZoneRelation.setType("AllowedZone");
-
-        EntityRelation deviceToRestrictedZoneRelation = new EntityRelation();
-        deviceToRestrictedZoneRelation.setFrom(device.getId());
-        deviceToRestrictedZoneRelation.setTo(restrictedZoneAsset.getId());
-        deviceToRestrictedZoneRelation.setType("RestrictedZone");
-
-        doPost("/api/relation", deviceToAllowedZoneRelation).andExpect(status().isOk());
-        doPost("/api/relation", deviceToRestrictedZoneRelation).andExpect(status().isOk());
+        createEntityRelation(device.getId(), allowedZoneAsset.getId(), "AllowedZone");
+        createEntityRelation(device.getId(), restrictedZoneAsset.getId(), "RestrictedZone");
 
         // Initial device coordinates (inside Allowed, outside Restricted)
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"latitude\":50.4730,\"longitude\":30.5050}"));
+        postTelemetry(device.getId(), "{\"latitude\":50.4730,\"longitude\":30.5050}");
 
         // --- Build CF: GEOFENCING ---
         CalculatedField cf = new CalculatedField();
@@ -922,8 +1567,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         // --- Move the device into Restricted zone (and outside Allowed) ---
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}"));
+        postTelemetry(device.getId(), "{\"latitude\":50.4760,\"longitude\":30.5110}");
 
         // --- Assert transition (LEFT / ENTERED) ---
         await().alias("transition evaluation after movement")
@@ -965,19 +1609,13 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         String allowedPolygonA = "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]";
 
         Asset allowedZoneA = createAsset("Allowed Zone A", null);
-        doPost("/api/plugins/telemetry/ASSET/" + allowedZoneA.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygonA + "}")).andExpect(status().isOk());
+        postAttributes(allowedZoneA.getId(), AttributeScope.SERVER_SCOPE, "{\"zone\":" + allowedPolygonA + "}");
 
         // Relation from device to Allowed Zone A
-        EntityRelation relAllowedA = new EntityRelation();
-        relAllowedA.setFrom(device.getId());
-        relAllowedA.setTo(allowedZoneA.getId());
-        relAllowedA.setType("AllowedZone");
-        doPost("/api/relation", relAllowedA).andExpect(status().isOk());
+        createEntityRelation(device.getId(), allowedZoneA.getId(), "AllowedZone");
 
         // Initial device coordinates: INSIDE Zone A
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"latitude\":50.4730,\"longitude\":30.5050}")).andExpect(status().isOk());
+        postTelemetry(device.getId(), "{\"latitude\":50.4730,\"longitude\":30.5050}");
 
         // --- Build CF: GEOFENCING with dynamic 'allowedZones' and short scheduled refresh ---
         CalculatedField cf = new CalculatedField();
@@ -1024,8 +1662,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         // --- Move device OUTSIDE Zone A (expect LEFT) ---
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}")).andExpect(status().isOk());
+        postTelemetry(device.getId(), "{\"latitude\":50.4760,\"longitude\":30.5110}");
 
         await().alias("outside zone A (LEFT)")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -1042,21 +1679,15 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         String allowedPolygonB = "[[50.475500, 30.510500], [50.475500, 30.511500], [50.476500, 30.511500], [50.476500, 30.510500]]";
 
         Asset allowedZoneB = createAsset("Allowed Zone B", null);
-        doPost("/api/plugins/telemetry/ASSET/" + allowedZoneB.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygonB + "}")).andExpect(status().isOk());
+        postAttributes(allowedZoneB.getId(), AttributeScope.SERVER_SCOPE, "{\"zone\":" + allowedPolygonB + "}");
 
         // Add a new relation
-        EntityRelation relAllowedB = new EntityRelation();
-        relAllowedB.setFrom(device.getId());
-        relAllowedB.setTo(allowedZoneB.getId());
-        relAllowedB.setType("AllowedZone");
-        doPost("/api/relation", relAllowedB).andExpect(status().isOk());
+        createEntityRelation(device.getId(), allowedZoneB.getId(), "AllowedZone");
 
         awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsReadyToRefreshDynamicArguments(device.getId(), savedCalculatedField.getId(), minAllowedScheduledUpdateIntervalInSecForCF);
 
         // --- Same coordinates as before, but now we expect INSIDE group status since a new zone is registered ---
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}")).andExpect(status().isOk());
+        postTelemetry(device.getId(), "{\"latitude\":50.4760,\"longitude\":30.5110}");
 
         // --- Assert dynamic refresh picks up a new relation and flips status back to INSIDE on the next telemetry update ---
         await().alias("dynamic refresh rebinds allowedZones")
@@ -1079,14 +1710,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         Asset asset2 = createAsset("Propagated Asset 2", null);
 
         // Create relations FROM assets TO device
-        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
-        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
-        doPost("/api/relation", rel1).andExpect(status().isOk());
-        doPost("/api/relation", rel2).andExpect(status().isOk());
+        createEntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        createEntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
 
         // Telemetry on device
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"temperature\":12.5, \"humidity\":85}")).andExpect(status().isOk());
+        postTelemetry(device.getId(), "{\"temperature\":12.5, \"humidity\":85}");
 
         // --- Build CF: PROPAGATION with expression ---
         CalculatedField cf = new CalculatedField();
@@ -1136,8 +1764,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         doDelete(deleteUrl).andExpect(status().isOk());
         doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/SERVER_SCOPE?keys=testResult").andExpect(status().isOk());
 
-        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"temperature\":25}")).andExpect(status().isOk());
+        postTelemetry(device.getId(), "{\"temperature\":25}");
 
         // --- Assert propagated calculation (expression applied with new temperature argument and one relation removed) ---
         await().alias("propagation expr mode evaluation after temperature update")
@@ -1160,10 +1787,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         Asset asset2 = createAsset("Propagated Asset 2", null);
 
         // Create relations FROM assets TO device
-        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
-        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
-        doPost("/api/relation", rel1).andExpect(status().isOk());
-        doPost("/api/relation", rel2).andExpect(status().isOk());
+        createEntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        createEntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
 
         // Telemetry on device
         long ts = System.currentTimeMillis() - 300000L;
@@ -1245,8 +1870,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         Asset asset3 = createAsset("Propagated Asset 3", null);
-        EntityRelation rel3 = new EntityRelation(asset3.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
-        doPost("/api/relation", rel3).andExpect(status().isOk());
+        createEntityRelation(asset3.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
 
         // --- Assert propagated calculation (arguments-only mode after update) ---
         await().alias("propagation args-only to new entity after relation creation")
@@ -1266,7 +1890,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     @Test
     public void testCalculatedFieldWhenTheSameTelemetryKeysUsed() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":5}"));
+        postTelemetry(testDevice.getId(), "{\"a\":5}");
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
@@ -1301,7 +1925,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("10");
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":10}"));
+        postTelemetry(testDevice.getId(), "{\"a\":10}");
 
         await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -1309,83 +1933,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ObjectNode c = getLatestTelemetry(testDevice.getId(), "c");
                     assertThat(c).isNotNull();
                     assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("20");
-                });
-    }
-
-    @Test
-    public void testCalculatedFieldWhenBatchOfTelemetrySent() throws Exception {
-        Device testDevice = createDevice("Test device", "1234567890");
-        long now = System.currentTimeMillis();
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":5, \"b\":10}}", now - TimeUnit.MINUTES.toMillis(3))));
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"b\":20}}", now - TimeUnit.MINUTES.toMillis(1))));
-
-        CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setEntityId(testDevice.getId());
-        calculatedField.setType(CalculatedFieldType.SCRIPT);
-        calculatedField.setName("Script CF");
-        calculatedField.setDebugSettings(DebugSettings.all());
-
-        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
-
-        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
-        Argument argumentA = new Argument();
-        argumentA.setRefEntityKey(refEntityKeyA);
-        Argument argumentB = new Argument();
-        ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_ROLLING, null);
-        argumentB.setTimeWindow(TimeUnit.MINUTES.toMillis(10));
-        argumentB.setLimit(1000);
-        argumentB.setRefEntityKey(refEntityKeyB);
-        config.setArguments(Map.of("a", argumentA, "b", argumentB));
-        config.setExpression("""
-                return {
-                    "latestA": a,
-                    "avgB": b.avg
-                };
-                """);
-
-        config.setOutput(new TimeSeriesOutput());
-
-        calculatedField.setConfiguration(config);
-
-        doPost("/api/calculatedField", calculatedField, CalculatedField.class);
-
-        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
-                    assertThat(result).isNotNull();
-                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("5");
-                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("15.0");
-                });
-
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("""
-                [{
-                    "ts": %s,
-                    "values": {
-                        "a": 6,
-                        "b": 100
-                    }
-                }, {
-                    "ts": %s,
-                    "values": {
-                        "a": 7,
-                        "b": 200
-                    }
-                }, {
-                    "ts": %s,
-                    "values": {
-                        "a": 8,
-                        "b": 300
-                    }
-                }]""", now - TimeUnit.MINUTES.toMillis(2), now, now - TimeUnit.MINUTES.toMillis(5))));
-
-        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
-                    assertThat(result).isNotNull();
-                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("7");
-                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("126.0");
                 });
     }
 
@@ -1431,6 +1978,322 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
     }
 
+    @Test
+    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrueAndDefaultArguments() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("a + b + c");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument1 = new Argument();
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        argument1.setRefEntityKey(refEntityKey1);
+        argument1.setDefaultValue("100");
+        Argument argument2 = new Argument();
+        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
+        argument2.setRefEntityKey(refEntityKey2);
+        argument2.setDefaultValue("200");
+        Argument argument3 = new Argument();
+        ReferencedEntityKey refEntityKey3 = new ReferencedEntityKey("c", ArgumentType.TS_LATEST, null);
+        argument3.setRefEntityKey(refEntityKey3);
+        argument3.setDefaultValue("300");
+        config.setArguments(Map.of("a", argument1, "b", argument2, "c", argument3));
+        config.setExpression("a + b + c");
+
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("d");
+        output.setDecimalsByDefault(0);
+        config.setOutput(output);
+
+        config.setUseLatestTs(true);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation with default arguments").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode d = getLatestTelemetry(testDevice.getId(), "d");
+                    assertThat(d).isNotNull();
+                    assertThat(d.get("d").get(0).get("value").asText()).isEqualTo("600");
+                });
+
+        postTelemetry(testDevice.getId(), "{\"a\":10}");
+
+        await().alias("update telemetry -> save result with ts of 'a' argument").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d", "a");
+                    assertThat(keys).isNotNull();
+                    String aTs = keys.get("a").get(0).get("ts").asText();
+                    assertThat(keys.get("d").get(0).get("ts").asText()).isEqualTo(aTs);
+                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("510");
+                });
+
+        postTelemetry(testDevice.getId(), "{\"b\":20}");
+        postTelemetry(testDevice.getId(), "{\"c\":30}");
+
+        await().alias("update telemetry -> save result with latest ts of updated arguments").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d");
+                    assertThat(keys).isNotNull();
+                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("60");
+                });
+
+        String latestTs = getLatestTelemetry(testDevice.getId(), "d").get("d").get(0).get("ts").asText();
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + testDevice.getId() + "/timeseries/delete?keys=b&deleteAllDataForKeys=true").andExpect(status().isOk());
+
+        await().alias("delete telemetry -> save result with previous latest ts and default argument").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d");
+                    assertThat(keys).isNotNull();
+                    assertThat(keys.get("d").get(0).get("ts").asText()).isEqualTo(latestTs);
+                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("240");
+                });
+    }
+
+    @Test
+    public void testCalculatedFieldWhenBatchOfTelemetrySent() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        long now = System.currentTimeMillis();
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"a\":5, \"b\":10}}", now - TimeUnit.MINUTES.toMillis(3)));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"b\":20}}", now - TimeUnit.MINUTES.toMillis(1)));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("Script CF");
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();
+
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        Argument argumentA = new Argument();
+        argumentA.setRefEntityKey(refEntityKeyA);
+        Argument argumentB = new Argument();
+        ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_ROLLING, null);
+        argumentB.setTimeWindow(TimeUnit.MINUTES.toMillis(10));
+        argumentB.setLimit(1000);
+        argumentB.setRefEntityKey(refEntityKeyB);
+        config.setArguments(Map.of("a", argumentA, "b", argumentB));
+        config.setExpression("""
+                return {
+                    "latestA": a,
+                    "avgB": b.avg
+                };
+                """);
+
+        config.setOutput(new TimeSeriesOutput());
+
+        calculatedField.setConfiguration(config);
+
+        doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("5");
+                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("15.0");
+                });
+
+        postTelemetry(testDevice.getId(), String.format("""
+                [{
+                    "ts": %s,
+                    "values": {
+                        "a": 6,
+                        "b": 100
+                    }
+                }, {
+                    "ts": %s,
+                    "values": {
+                        "a": 7,
+                        "b": 200
+                    }
+                }, {
+                    "ts": %s,
+                    "values": {
+                        "a": 8,
+                        "b": 300
+                    }
+                }]""", now - TimeUnit.MINUTES.toMillis(2), now, now - TimeUnit.MINUTES.toMillis(5)));
+
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("7");
+                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("126.0");
+                });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenNoTimeseriesDataAvailableForTimewindow() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        postAttributes(testDevice.getId(), AttributeScope.SERVER_SCOPE, "{\"y\":10}");
+
+        CalculatedField savedCalculatedField = createCalculatedFieldWhenUseLatestTs(testDevice.getId());
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(testDevice.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.FAILED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(0);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getFailedCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getResults()).isNotNull().hasSize(1);
+            TaskResult taskResult = cfReprocessingJob.getResult().getResults().get(0);
+            assertThat(taskResult).isInstanceOf(CfReprocessingTaskResult.class);
+            CfReprocessingTaskResult cfReprocessingTaskResult = (CfReprocessingTaskResult) taskResult;
+            assertThat(cfReprocessingTaskResult.getFailure()).isNotNull()
+                    .extracting(CfReprocessingTaskResult.CfReprocessingTaskFailure::getError)
+                    .isEqualTo("Required arguments are missing: x");
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(testDevice.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(testDevice.getName());
+        });
+    }
+
+    @Test
+    public void testCalculatedFieldsWhenOneIsInvalid() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        long now = System.currentTimeMillis();
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + AttributeScope.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":5}}", now - TimeUnit.MINUTES.toMillis(3))));
+
+        // Script CF - invalid
+        CalculatedField invalidCF = new CalculatedField();
+        invalidCF.setEntityId(testDevice.getId());
+        invalidCF.setType(CalculatedFieldType.SCRIPT);
+        invalidCF.setName("Script CF");
+        invalidCF.setDebugSettings(DebugSettings.all());
+
+        ScriptCalculatedFieldConfiguration scriptConfig = new ScriptCalculatedFieldConfiguration();
+
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        Argument argumentA = new Argument();
+        argumentA.setRefEntityKey(refEntityKeyA);
+        scriptConfig.setArguments(Map.of("a", argumentA));
+        scriptConfig.setExpression("""
+                return {
+                    "temperature": temp
+                };
+                """);
+
+        scriptConfig.setOutput(new TimeSeriesOutput());
+
+        invalidCF.setConfiguration(scriptConfig);
+
+        invalidCF = doPost("/api/calculatedField", invalidCF, CalculatedField.class);
+        CalculatedFieldId invalidCfId = invalidCF.getId();
+
+        await().alias("create invalid CF -> check error").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    PageData<EventInfo> debugEvents = getDebugEvents(tenantId, invalidCfId, 1);
+                    if (!debugEvents.getData().isEmpty()) {
+                        EventInfo eventInfo = debugEvents.getData().get(0);
+                        assertThat(eventInfo.getBody().has("error")).isTrue();
+                    }
+                });
+
+        // Simple CF - valid
+        CalculatedField validCF = new CalculatedField();
+        validCF.setEntityId(testDevice.getId());
+        validCF.setType(CalculatedFieldType.SIMPLE);
+        validCF.setName("Simple CF");
+        validCF.setDebugSettings(DebugSettings.all());
+
+        SimpleCalculatedFieldConfiguration simpleConfig = new SimpleCalculatedFieldConfiguration();
+        simpleConfig.setArguments(Map.of("a", argumentA));
+        simpleConfig.setExpression("a+1");
+
+        TimeSeriesOutput simpleOutput = new TimeSeriesOutput();
+        simpleOutput.setName("a+1");
+        simpleOutput.setDecimalsByDefault(0);
+        simpleConfig.setOutput(simpleOutput);
+
+        validCF.setConfiguration(simpleConfig);
+
+        validCF = doPost("/api/calculatedField", validCF, CalculatedField.class);
+        CalculatedFieldId validCfId = validCF.getId();
+
+        await().alias("create CF -> check initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    PageData<EventInfo> debugEvents = getDebugEvents(tenantId, validCfId, 1);
+                    if (!debugEvents.getData().isEmpty()) {
+                        EventInfo eventInfo = debugEvents.getData().get(0);
+                        assertThat(eventInfo.getBody().has("error")).isFalse();
+                    }
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "a+1");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("a+1").get(0).get("value").asText()).isEqualTo("6");
+                });
+
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + AttributeScope.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":6}"));
+
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "a+1");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("a+1").get(0).get("value").asText()).isEqualTo("7");
+                });
+    }
+
+    private CalculatedField createCalculatedFieldWhenUseLatestTs(EntityId entityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("x + y");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument x = new Argument();
+        ReferencedEntityKey refEntityKeyX = new ReferencedEntityKey("x", ArgumentType.TS_LATEST, null);
+        x.setRefEntityKey(refEntityKeyX);
+        Argument y = new Argument();
+        ReferencedEntityKey refEntityKeyY = new ReferencedEntityKey("y", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
+        y.setRefEntityKey(refEntityKeyY);
+        config.setArguments(Map.of("x", x, "y", y));
+        config.setExpression("x + y");
+
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setName("z");
+        output.setDecimalsByDefault(0);
+        config.setOutput(output);
+
+        config.setUseLatestTs(true);
+
+        calculatedField.setConfiguration(config);
+
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    private ObjectNode getTimeSeries(EntityId entityId, long startTs, long endTs, String... keys) throws Exception {
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}", ObjectNode.class, String.join(",", keys), startTs, endTs);
+    }
+
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
         return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys=" + String.join(",", keys), ObjectNode.class);
     }
@@ -1444,6 +2307,31 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         asset.setName(name);
         asset.setAssetProfileId(assetProfileId);
         return doPost("/api/asset", asset, Asset.class);
+    }
+
+    private Device createDevice(String name, String accessToken, DeviceProfileId deviceProfileId) {
+        Device device = new Device();
+        device.setName(name);
+        device.setType("default");
+        device.setDeviceProfileId(deviceProfileId);
+        DeviceData deviceData = new DeviceData();
+        deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
+        deviceData.setConfiguration(new DefaultDeviceConfiguration());
+        device.setDeviceData(deviceData);
+        return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
+    }
+
+    private Job reprocessCalculatedField(CalculatedField savedCalculatedField, long startTs, long endTs) throws Exception {
+        return doGet("/api/calculatedField/" + savedCalculatedField.getUuidId() + "/reprocess?startTs={startTs}&endTs={endTs}", Job.class, startTs, endTs);
+    }
+
+    private void reprocessCalculatedFieldAndWait(CalculatedField savedCalculatedField, long startTs, long endTs) throws Exception {
+        doGetAsync("/api/calculatedField/" + savedCalculatedField.getUuidId() + "/reprocessAndWait?startTs={startTs}&endTs={endTs}", startTs, endTs)
+                .andExpect(status().isOk());
+    }
+
+    private Job getLastReprocessingJob(CalculatedFieldId calculatedFieldId) throws Exception {
+        return doGet("/api/calculatedField/" + calculatedFieldId.getId() + "/reprocess/job", Job.class);
     }
 
     private static Map<String, String> kv(ArrayNode attrs) {

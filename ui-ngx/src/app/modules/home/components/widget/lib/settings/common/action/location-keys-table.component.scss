@@ -1,0 +1,22 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-location-keys {
+    .tb-key-header, .tb-key-field {
+      flex: 1 1 30%;
+    }
+
+    .tb-label-header, .tb-label-field {
+      flex: 1 1 40%;
+    }
+
+    .tb-value-type-header, .tb-value-type-field {
+      flex: 1 1 30%;
+    }
+
+    .tb-actions-header {
+      width: 40px;
+      min-width: 40px;
+    }
+  }
+}
