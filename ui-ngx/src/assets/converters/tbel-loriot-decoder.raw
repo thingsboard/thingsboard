@@ -52,10 +52,10 @@ function decodePayload(input) {
     // };
 }
 
-// Process only LORIOT uplink messages (cmd == 'rx').
+// Process only LORIOT uplink messages: cmd is 'rx', or 'gw' when gateway info is included.
 // Skip downlink confirmations (e.g. cmd == 'txd') and other events so they
 // are not stored as telemetry. Returning an empty array yields no uplink data.
-if (metadata.cmd != 'rx') {
+if (metadata.cmd != 'rx' && metadata.cmd != 'gw') {
     return [];
 }
 
