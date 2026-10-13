@@ -1,0 +1,235 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/agent-shared' as *;
+
+:host {
+  display: block;
+  width: min(720px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+}
+
+.tb-preset-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid $agent-divider;
+
+  h2 {
+    flex: 1;
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+  }
+}
+
+.tb-preset-dialog-body {
+  max-height: 75vh;
+  padding: 12px 24px 16px;
+
+  &.tb-preset-body-advanced {
+    padding: 0 !important;
+  }
+}
+
+tb-agent-profile-wizard {
+  display: block;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.tb-preset-section-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 12px 0 8px;
+}
+
+.tb-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+
+  @media (max-width: 599.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tb-preset-tile {
+  @include agent-button-reset;
+  position: relative;
+  display: grid;
+  text-align: left;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid $agent-divider;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+
+  &:hover {
+    border-color: var(--tb-primary-400);
+    background: color-mix(in srgb, var(--tb-primary-500) 4%, transparent);
+  }
+
+  &.selected {
+    border-color: var(--tb-primary-500);
+    background: color-mix(in srgb, var(--tb-primary-500) 8%, transparent);
+    box-shadow: inset 0 0 0 1px var(--tb-primary-500);
+  }
+
+  &.disabled,
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+
+    &:hover {
+      border-color: $agent-divider;
+      background: #fff;
+    }
+  }
+
+  .tile-icon {
+    grid-column: 1;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--tb-primary-500);
+  }
+
+  .tile-title-row,
+  > .tile-title {
+    grid-column: 2;
+  }
+
+  .tile-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tile-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: $agent-text-primary;
+  }
+
+  .tile-description {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .tile-chips {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .tile-chip {
+    background: color-mix(in srgb, var(--tb-primary-500) 10%, transparent);
+    color: var(--tb-primary-500);
+    border-radius: 2px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .tile-check {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--tb-primary-500);
+  }
+
+  &.advanced {
+    border-style: dashed;
+    border-color: rgba(0, 0, 0, 0.24);
+
+    .advanced-icon {
+      color: $agent-text-secondary;
+    }
+
+    .tile-configure {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--tb-primary-500);
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
+.tb-wizard-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 0 12px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 13px;
+  line-height: 1.5;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .hint-icon {
+    flex-shrink: 0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: $agent-text-hint;
+  }
+
+  > div {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-wrap: anywhere;
+  }
+
+  .hint-title {
+    font-weight: 500;
+    color: $agent-text-primary;
+    margin-bottom: 2px;
+  }
+
+  &.warn {
+    background: $agent-warning-surface;
+
+    .hint-icon {
+      color: $agent-color-warning;
+    }
+  }
+}
+
+.tb-preset-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid $agent-divider-light;
+}

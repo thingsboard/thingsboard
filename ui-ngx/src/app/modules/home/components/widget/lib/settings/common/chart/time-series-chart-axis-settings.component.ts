@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -25,7 +12,7 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  AxisPosition, defaultXAxisTicksFormat,
+  AxisPosition, defaultXAxisTicksFormat, normalizeAxisLimit,
   timeSeriesAxisPositionTranslations,
   TimeSeriesChartAxisSettings, TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
@@ -39,21 +26,22 @@ import { Datasource } from '@app/shared/public-api';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 @Component({
-  selector: 'tb-time-series-chart-axis-settings',
-  templateUrl: './time-series-chart-axis-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-axis-settings',
+    templateUrl: './time-series-chart-axis-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 
@@ -98,6 +86,10 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   @coerceBoolean()
   hideDecimals = false;
 
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
   private modelValue: TimeSeriesChartXAxisSettings | TimeSeriesChartYAxisSettings;
 
   private propagateChange = null;
@@ -137,8 +129,8 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
       this.axisSettingsFormGroup.addControl('ticksGenerator', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('interval', this.fb.control(null, [Validators.min(0)]));
       this.axisSettingsFormGroup.addControl('splitNumber', this.fb.control(null, [Validators.min(1)]));
-      this.axisSettingsFormGroup.addControl('min', this.fb.control(null, []));
-      this.axisSettingsFormGroup.addControl('max', this.fb.control(null, []));
+      this.axisSettingsFormGroup.addControl('min', this.fb.control(normalizeAxisLimit(null), []));
+      this.axisSettingsFormGroup.addControl('max', this.fb.control(normalizeAxisLimit(null), []));
     } else if (this.axisType === 'xAxis') {
       this.axisSettingsFormGroup.addControl('ticksFormat', this.fb.control(null, []));
     }

@@ -1,0 +1,109 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../../components/agent/wizard/agent-wizard' as *;
+
+@include wizard-chrome;
+
+:host {
+  display: block;
+  width: min(750px, 95vw);
+  min-width: 0;
+  max-width: 95vw;
+
+  .tb-install-wizard-body {
+    min-height: 50vh;
+  }
+
+  .tb-install-wizard-body.tb-install-wizard-embedded {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 24px 0 !important;
+
+    mat-stepper {
+      flex: 1 1 auto;
+    }
+
+    .step-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 15;
+      background: #fff;
+      margin: 16px -24px 0;
+      padding: 8px;
+      min-height: 52px;
+    }
+  }
+
+  // Sibling layout: button lives outside the entity-list's form-field so
+  // clicking it counts as a genuine outside-click and MatAutocomplete closes
+  // its panel naturally — no synthetic-event hacks needed.
+  .app-profile-picker-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+
+    .app-profile-picker-field {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .create-profile-btn {
+      flex-shrink: 0;
+      white-space: nowrap;
+      margin-top: 6px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        margin-right: 4px;
+      }
+    }
+  }
+
+  .tb-wizard-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 4px 0 16px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+    line-height: 1.5;
+
+    .hint-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: $agent-text-hint;
+    }
+
+    > div {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow-wrap: anywhere;
+    }
+
+    div, p, span {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    .hint-title {
+      font-weight: 500;
+      color: $agent-text-primary;
+      margin-bottom: 2px;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    .hint-body {
+      font-size: inherit;
+      line-height: inherit;
+    }
+  }
+}

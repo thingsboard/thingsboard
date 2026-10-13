@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -38,10 +25,12 @@ import {
   TargetDevice,
   targetDeviceValid,
   Widget,
-  widgetTypeCanHaveTimewindow,
+  widgetActionTypes,
   WidgetConfigMode,
   widgetTitleAutocompleteValues,
-  widgetType
+  widgetType,
+  widgetTypeCanHaveTimewindow,
+  widgetTypeHasTimewindow
 } from '@shared/models/widget.models';
 import {
   AsyncValidator,
@@ -88,24 +77,26 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetService } from '@core/http/widget.service';
 import { TimeService } from '@core/services/time.service';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
+import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
 import Timeout = NodeJS.Timeout;
 
 @Component({
-  selector: 'tb-widget-config',
-  templateUrl: './widget-config.component.html',
-  styleUrls: ['./widget-config.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => WidgetConfigComponent),
-      multi: true
-    },
-    {
-      provide: NG_ASYNC_VALIDATORS,
-      useExisting: forwardRef(() => WidgetConfigComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-widget-config',
+    templateUrl: './widget-config.component.html',
+    styleUrls: ['./widget-config.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => WidgetConfigComponent),
+            multi: true
+        },
+        {
+            provide: NG_ASYNC_VALIDATORS,
+            useExisting: forwardRef(() => WidgetConfigComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, AsyncValidator {
 
@@ -158,6 +149,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   widgetType: widgetType;
 
+  widgetActionTypesList = widgetActionTypes;
+
   widgetConfigCallbacks: WidgetConfigCallbacks = {
     createEntityAlias: this.createEntityAlias.bind(this),
     editEntityAlias: this.editEntityAlias.bind(this),
@@ -166,7 +159,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     fetchEntityKeysForDevice: this.fetchEntityKeysForDevice.bind(this),
     fetchEntityKeys: this.fetchEntityKeys.bind(this),
     fetchDashboardStates: this.fetchDashboardStates.bind(this),
-    fetchCellClickColumns: this.fetchCellClickColumns.bind(this)
+    fetchCellClickColumns: this.fetchCellClickColumns.bind(this),
+    fetchEntityAliases: this.fetchEntityAliases.bind(this)
   };
 
   widgetEditMode = this.utils.widgetEditMode;
@@ -180,6 +174,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   headerOptions: ToggleHeaderOption[] = [];
   selectedOption: string;
   predefinedValues = widgetTitleAutocompleteValues;
+
+  displayDataExport = true;
 
   public dataSettings: UntypedFormGroup;
   public targetDeviceSettings: UntypedFormGroup;
@@ -232,6 +228,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       showTitle: [null, []],
       dropShadow: [null, []],
       enableFullscreen: [null, []],
+      enableDataExport: [null, []],
       backgroundColor: [null, []],
       color: [null, []],
       padding: [null, []],
@@ -391,8 +388,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       } else if (this.widgetType === widgetType.rpc) {
         this.targetDeviceSettings.addControl('targetDevice',
           this.fb.control(null, []));
+        this.displayDataExport = false;
       } else if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmSource', this.fb.control(null));
+      } else if (this.widgetType === widgetType.static) {
+        this.displayDataExport = false;
       }
     }
     this.advancedSettings.addControl('settings',
@@ -510,6 +510,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           showTitle: displayWidgetTitle,
           dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
           enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
+          enableDataExport: isDefined(config.enableDataExport) ? config.enableDataExport : true,
           backgroundColor: config.backgroundColor,
           color: config.color,
           padding: config.padding,
@@ -734,11 +735,16 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   public get displayTimewindowConfig(): boolean {
-    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm) {
+    if (widgetTypeHasTimewindow(this.widgetType)) {
       return true;
     } else if (this.widgetType === widgetType.latest) {
-      const datasources = this.dataSettings.get('datasources').value;
-      return datasourcesHasAggregation(datasources);
+      const widgetDefinition = findWidgetModelDefinition(this.widget);
+      if (widgetDefinition) {
+        return widgetDefinition.datasourcesHasAggregation(this.widget);
+      } else {
+        const datasources = this.dataSettings.get('datasources').value;
+        return datasourcesHasAggregation(datasources);
+      }
     }
   }
 
@@ -761,8 +767,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   public onlyHistoryTimewindow(): boolean {
     if (this.widgetType === widgetType.latest) {
-      const datasources = this.dataSettings.get('datasources').value;
-      return datasourcesHasOnlyComparisonAggregation(datasources);
+      const widgetDefinition = findWidgetModelDefinition(this.widget);
+      if (widgetDefinition) {
+        return widgetDefinition.datasourcesHasOnlyComparisonAggregation(this.widget);
+      } else {
+        const datasources = this.dataSettings.get('datasources').value;
+        return datasourcesHasOnlyComparisonAggregation(datasources);
+      }
     } else {
       return false;
     }
@@ -822,6 +833,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       });
     }
     return this.utils.getMaterialColor(i);
+  }
+
+  private fetchEntityAliases(): Array<EntityAlias> {
+    return this.aliasController ? Object.values(this.aliasController.getEntityAliases()) : [];
   }
 
   private createEntityAlias(alias: string, allowedEntityTypes: Array<EntityType>): Observable<EntityAlias> {
@@ -925,7 +940,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private fetchCellClickColumns(): Array<CellClickColumnInfo> {
     if (this.modelValue) {
       const configuredColumns = new Array<CellClickColumnInfo>();
-      if (this.modelValue.config?.datasources[0]?.dataKeys?.length) {
+      if (this.modelValue.config?.datasources?.[0]?.dataKeys?.length) {
         const {
           displayEntityLabel,
           displayEntityName,

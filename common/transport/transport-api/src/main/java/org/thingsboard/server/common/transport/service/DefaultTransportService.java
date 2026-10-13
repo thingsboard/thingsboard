@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,10 +14,8 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -85,6 +71,12 @@ import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetSnmpDevicesResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -127,9 +119,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-/**
- * Created by ashvayka on 17.10.18.
- */
 @Slf4j
 @Service
 @TbTransportComponent
@@ -156,10 +145,9 @@ public class DefaultTransportService extends TransportActivityManager implements
     private int notificationsPollDuration;
     @Value("${transport.stats.enabled:false}")
     private boolean statsEnabled;
+    @Value("${transport.callback_thread_pool_size:20}")
+    private int callbackThreadPoolSize;
 
-    @Autowired
-    @Lazy
-    private TbApiUsageReportClient apiUsageClient;
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
     private final Gson gson = new Gson();
@@ -173,7 +161,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     private final StatsFactory statsFactory;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final TransportTenantProfileCache tenantProfileCache;
-
+    private final TbApiUsageReportClient apiUsageClient;
     private final TransportRateLimitService rateLimitService;
     private final SchedulerComponent scheduler;
     private final ApplicationEventPublisher eventPublisher;
@@ -201,7 +189,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         this.ruleEngineProducerStats = statsFactory.createMessagesStats(StatsType.RULE_ENGINE.getName() + ".producer");
         this.tbCoreProducerStats = statsFactory.createMessagesStats(StatsType.CORE.getName() + ".producer");
         this.transportApiStats = statsFactory.createMessagesStats(StatsType.TRANSPORT.getName() + ".producer");
-        this.transportCallbackExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
+        this.transportCallbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreadPoolSize, getClass());
         this.scheduler.scheduleAtFixedRate(this::invalidateRateLimits, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
         transportApiRequestTemplate = queueProvider.createTransportApiRequestTemplate();
         transportApiRequestTemplate.setMessagesStats(transportApiStats);
@@ -298,7 +286,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
-    public TransportProtos.GetSnmpDevicesResponseMsg getSnmpDevicesIds(TransportProtos.GetSnmpDevicesRequestMsg requestMsg) {
+    public GetSnmpDevicesResponseMsg getSnmpDevicesIds(GetSnmpDevicesRequestMsg requestMsg) {
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(
                 UUID.randomUUID(), TransportApiRequestMsg.newBuilder()
                 .setSnmpDevicesRequestMsg(requestMsg)
@@ -314,7 +302,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
-    public TransportProtos.GetDeviceResponseMsg getDevice(TransportProtos.GetDeviceRequestMsg requestMsg) {
+    public GetDeviceResponseMsg getDevice(GetDeviceRequestMsg requestMsg) {
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(
                 UUID.randomUUID(), TransportApiRequestMsg.newBuilder()
                 .setDeviceRequestMsg(requestMsg)
@@ -334,7 +322,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
-    public TransportProtos.GetDeviceCredentialsResponseMsg getDeviceCredentials(TransportProtos.GetDeviceCredentialsRequestMsg requestMsg) {
+    public GetDeviceCredentialsResponseMsg getDeviceCredentials(GetDeviceCredentialsRequestMsg requestMsg) {
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(
                 UUID.randomUUID(), TransportApiRequestMsg.newBuilder()
                 .setDeviceCredentialsRequestMsg(requestMsg)
@@ -508,7 +496,9 @@ public class DefaultTransportService extends TransportActivityManager implements
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionEventMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            recordActivityInternal(sessionInfo);
+            if (msg.getEvent() != TransportProtos.SessionEvent.CLOSED) {
+                recordActivityInternal(sessionInfo);
+            }
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
                     .setSessionEvent(msg).build(), callback);
         }
@@ -789,7 +779,7 @@ public class DefaultTransportService extends TransportActivityManager implements
 
         TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder().setMessage("session timeout!").build();
 
-        ScheduledFuture executorFuture = scheduler.schedule(() -> {
+        ScheduledFuture<?> executorFuture = scheduler.schedule(() -> {
             listener.onRemoteSessionCloseCommand(sessionId, notification);
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
@@ -1169,6 +1159,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         public void onFailure(Throwable t) {
             DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
         }
+
     }
 
     private static class StatsCallback implements TbQueueCallback {
@@ -1183,16 +1174,19 @@ public class DefaultTransportService extends TransportActivityManager implements
         @Override
         public void onSuccess(TbQueueMsgMetadata metadata) {
             stats.incrementSuccessful();
-            if (callback != null)
+            if (callback != null) {
                 callback.onSuccess(metadata);
+            }
         }
 
         @Override
         public void onFailure(Throwable t) {
             stats.incrementFailed();
-            if (callback != null)
+            if (callback != null) {
                 callback.onFailure(t);
+            }
         }
+
     }
 
     private class MsgPackCallback implements TbQueueCallback {
@@ -1215,6 +1209,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         public void onFailure(Throwable t) {
             DefaultTransportService.this.transportCallbackExecutor.submit(() -> callback.onError(t));
         }
+
     }
 
     private class ApiStatsProxyCallback<T> implements TransportServiceCallback<T> {
@@ -1244,6 +1239,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         public void onError(Throwable e) {
             callback.onError(e);
         }
+
     }
 
     @Override
@@ -1257,9 +1253,21 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
-    public void createGaugeStats(String statsName, AtomicInteger number) {
-        statsFactory.createGauge(StatsType.TRANSPORT + "." + statsName, number);
-        statsMap.put(statsName, number);
+    public void createGaugeStats(String statsName, AtomicInteger number, String... tags) {
+        String key = "thingsboard" + "." + StatsType.TRANSPORT.getName() + "." + statsName;
+        statsFactory.createGauge(key, number, tags);
+        statsMap.put(statsName + tagsKey(tags), number);
+    }
+
+    private String tagsKey(String... tags) {
+        if (tags == null || tags.length < 2) return "";
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < tags.length; i += 2) {
+            if (i > 0) sb.append(',');
+            sb.append(tags[i]).append('=').append(i + 1 < tags.length ? tags[i + 1] : "");
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
     @Scheduled(fixedDelayString = "${transport.stats.print-interval-ms:60000}")
@@ -1270,4 +1278,5 @@ public class DefaultTransportService extends TransportActivityManager implements
             log.info("Transport Stats: {}", values);
         }
     }
+
 }

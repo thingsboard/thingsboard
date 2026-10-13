@@ -1,29 +1,23 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.ai.dto;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.TextContent;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 import static org.thingsboard.server.common.data.ai.dto.TbContent.TbTextContent;
 
+@Schema(
+        discriminatorProperty = "contentType",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "TEXT", schema = TbTextContent.class)
+        }
+)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -46,7 +40,8 @@ public sealed interface TbContent permits TbTextContent {
     }
 
     @Schema(
-            description = "Text-based content part of a user's prompt"
+            description = "Text-based content part of a user's prompt",
+            allOf = TbContent.class
     )
     record TbTextContent(
             @NotBlank

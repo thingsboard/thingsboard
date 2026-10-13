@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
@@ -52,21 +39,22 @@ import { CalculatedFieldArgument } from "@shared/models/calculated-field.models"
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
-  selector: 'tb-alarm-rule-filter-predicate-list',
-  templateUrl: './alarm-rule-filter-predicate-list.component.html',
-  styleUrls: ['./alarm-rule-filter-predicate-list.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-alarm-rule-filter-predicate-list',
+    templateUrl: './alarm-rule-filter-predicate-list.component.html',
+    styleUrls: ['./alarm-rule-filter-predicate-list.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => AlarmRuleFilterPredicateListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class AlarmRuleFilterPredicateListComponent implements ControlValueAccessor, Validator {
 
@@ -79,6 +67,8 @@ export class AlarmRuleFilterPredicateListComponent implements ControlValueAccess
   @Input() arguments: Record<string, CalculatedFieldArgument>;
 
   @Input() argumentInUse: string;
+
+  @Input() readonly: boolean;
 
   filterListFormGroup = this.fb.group({
     predicates: this.fb.array([])
@@ -197,7 +187,8 @@ export class AlarmRuleFilterPredicateListComponent implements ControlValueAccess
         valueType: this.valueType,
         isAdd: true,
         arguments: this.arguments,
-        argumentInUse: this.argumentInUse
+        argumentInUse: this.argumentInUse,
+        readonly: this.disabled
       }
     }).afterClosed().pipe(
       map(result => result)

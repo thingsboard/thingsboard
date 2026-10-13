@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
@@ -32,9 +19,6 @@ import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by ashvayka on 04.10.18.
- */
 @Slf4j
 @Component
 @TbMqttTransportComponent
@@ -88,20 +72,30 @@ public class MqttTransportContext extends TransportContext {
     @Value("${transport.mqtt.proxy_enabled:false}")
     private boolean proxyEnabled;
 
-    private final AtomicInteger connectionsCounter = new AtomicInteger();
+    private final AtomicInteger connectionsActiveCounterMQTT = new AtomicInteger();
+    private final AtomicInteger connectionsActiveCounterMQTTS = new AtomicInteger();
 
     @PostConstruct
     public void init() {
         super.init();
-        transportService.createGaugeStats("openConnections", connectionsCounter);
+        transportService.createGaugeStats("connections_active", connectionsActiveCounterMQTT, "protocol", "MQTT");
+        transportService.createGaugeStats("connections_active", connectionsActiveCounterMQTTS, "protocol", "MQTTS");
     }
 
-    public void channelRegistered() {
-        connectionsCounter.incrementAndGet();
+    public void channelRegistered(boolean isSSL) {
+        if (isSSL) {
+            connectionsActiveCounterMQTTS.incrementAndGet();
+        } else {
+            connectionsActiveCounterMQTT.incrementAndGet();
+        }
     }
 
-    public void channelUnregistered() {
-        connectionsCounter.decrementAndGet();
+    public void channelUnregistered(boolean isSSL) {
+        if (isSSL) {
+            connectionsActiveCounterMQTTS.decrementAndGet();
+        } else {
+            connectionsActiveCounterMQTT.decrementAndGet();
+        }
     }
 
     public boolean checkAddress(InetSocketAddress address) {

@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,16 +30,17 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -66,6 +56,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -116,7 +107,11 @@ public class DeviceProfileController extends BaseController {
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
         checkParameter(DEVICE_PROFILE_ID, strDeviceProfileId);
         DeviceProfileId deviceProfileId = new DeviceProfileId(toUUID(strDeviceProfileId));
-        return new DeviceProfileInfo(checkDeviceProfileId(deviceProfileId, Operation.READ));
+        DeviceProfileInfo deviceProfileInfo = checkNotNull(deviceProfileService.findDeviceProfileInfoById(getTenantId(), deviceProfileId));
+        if (!getTenantId().equals(deviceProfileInfo.getTenantId())) {
+            throw permissionDenied();
+        }
+        return deviceProfileInfo;
     }
 
     @ApiOperation(value = "Get Default Device Profile (getDefaultDeviceProfileInfo)",
@@ -126,19 +121,20 @@ public class DeviceProfileController extends BaseController {
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
     public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE_PROFILE, Operation.READ);
         return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
     }
 
-    @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
+    @ApiOperation(value = "Get time series keys (getDeviceProfileTimeseriesKeys)",
             notes = "Get a set of unique time series keys used by devices that belong to specified profile. " +
                     "If profile is not set returns a list of unique keys among all profiles. " +
                     "The call is used for auto-complete in the UI forms. " +
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +
                     TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
     @ResponseBody
-    public List<String> getTimeseriesKeys(
+    public List<String> getDeviceProfileTimeseriesKeys(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
         DeviceProfileId deviceProfileId;
@@ -149,6 +145,8 @@ public class DeviceProfileController extends BaseController {
             deviceProfileId = null;
         }
 
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ_TELEMETRY);
+
         return timeseriesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
     }
 
@@ -158,7 +156,7 @@ public class DeviceProfileController extends BaseController {
                     "The call is used for auto-complete in the UI forms. " +
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +
                     TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfile/devices/keys/attributes", method = RequestMethod.GET)
     @ResponseBody
     public List<String> getAttributesKeys(
@@ -171,6 +169,8 @@ public class DeviceProfileController extends BaseController {
         } else {
             deviceProfileId = null;
         }
+
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ_ATTRIBUTES);
 
         return attributesService.findAllKeysByDeviceProfileId(getTenantId(), deviceProfileId);
     }
@@ -228,8 +228,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a page of devices profile objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfiles")
     public PageData<DeviceProfile> getDeviceProfiles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -241,6 +240,7 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(deviceProfileService.findDeviceProfiles(getTenantId(), pageLink));
     }
@@ -249,8 +249,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a page of devices profile info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfos")
     public PageData<DeviceProfileInfo> getDeviceProfileInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -264,8 +263,39 @@ public class DeviceProfileController extends BaseController {
             @RequestParam(required = false) String sortOrder,
             @Parameter(description = "Type of the transport", schema = @Schema(allowableValues = {"DEFAULT", "MQTT", "COAP", "LWM2M", "SNMP"}))
             @RequestParam(required = false) String transportType) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(deviceProfileService.findDeviceProfileInfos(getTenantId(), pageLink, transportType));
+    }
+
+    @Hidden
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<DeviceProfileInfo> getDeviceProfilesByIdsV1(
+            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+        if (!accessControlService.hasPermission(getCurrentUser(), Resource.DEVICE_PROFILE, Operation.READ)) {
+            return Collections.emptyList();
+        }
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
+        for (UUID deviceProfileUUID : deviceProfileUUIDs) {
+            deviceProfileIds.add(new DeviceProfileId(deviceProfileUUID));
+        }
+        return deviceProfileService.findDeviceProfilesByIds(tenantId, deviceProfileIds);
+    }
+
+    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfileInfosByIds)",
+            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE + RBAC_READ_CHECK)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/deviceProfileInfos/list")
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(
+            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+        return getDeviceProfilesByIdsV1(deviceProfileUUIDs);
     }
 
     @ApiOperation(value = "Get Device Profile names (getDeviceProfileNames)",
@@ -278,24 +308,9 @@ public class DeviceProfileController extends BaseController {
             @Parameter(description = "Flag indicating whether to retrieve exclusively the names of device profiles that are referenced by tenant's devices.")
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.DEVICE_PROFILE, Operation.READ);
         TenantId tenantId = user.getTenantId();
         return checkNotNull(deviceProfileService.findDeviceProfileNamesByTenantId(tenantId, activeOnly));
-    }
-
-    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfilesByIds)",
-            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"})
-    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(
-            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
-        for (UUID deviceProfileUUID : deviceProfileUUIDs) {
-            deviceProfileIds.add(new DeviceProfileId(deviceProfileUUID));
-        }
-        return deviceProfileService.findDeviceProfilesByIds(tenantId, deviceProfileIds);
     }
 
 }

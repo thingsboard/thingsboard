@@ -1,24 +1,12 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import { isString } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 export enum ColorType {
   hex = 'hex',
@@ -35,18 +23,26 @@ const colorPresetsHex =
    '#A1ADB1', '#F9A19B', '#FFD190', '#FFF59D', '#C5E1A4', '#A5D7A7', '#80CBC3', '#81C4E9', '#B39CDB', '#CD93D7', '#F48FB1', '#BC91A4'];
 
 @Component({
-  selector: `tb-color-picker`,
-  templateUrl: `./color-picker.component.html`,
-  styleUrls: [`./color-picker.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ColorPickerComponent),
-      multi: true
-    }
-  ]
+    selector: `tb-color-picker`,
+    templateUrl: `./color-picker.component.html`,
+    styleUrls: [`./color-picker.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ColorPickerComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
+
+  @Input()
+  @coerceBoolean()
+  disableAlpha = false;
+
+  @Input()
+  defaultColor = '#fff';
 
   presentations = [ColorType.hex, ColorType.rgba, ColorType.hsla];
   control = new ColorPickerControl();
@@ -90,7 +86,7 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   writeValue(value: string): void {
     const valid = this.isValidColorValue(value);
     this.setValue = valid;
-    this.control.setValueFrom(valid ? value : '#fff');
+    this.control.setValueFrom(valid ? value : this.defaultColor);
     this.modelValue = value;
 
     if (this.control.initType === ColorType.hexa) {
@@ -123,13 +119,13 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   getValueByType(color: Color, type: ColorType): string {
     switch (type) {
       case ColorType.hex:
-        return color.toHexString(this.control.value.getRgba().getAlpha() !== 1);
+        return color.toHexString(!this.disableAlpha && this.control.value.getRgba().getAlpha() !== 1);
       case ColorType.rgba:
-        return this.control.value.getRgba().getAlpha() !== 1 ? color.toRgbaString() : color.toRgbString();
+        return !this.disableAlpha && this.control.value.getRgba().getAlpha() !== 1 ? color.toRgbaString() : color.toRgbString();
       case ColorType.hsla:
-        return this.control.value.getRgba().getAlpha() !== 1 ? color.toHslaString() : color.toHslString();
+        return !this.disableAlpha && this.control.value.getRgba().getAlpha() !== 1 ? color.toHslaString() : color.toHslString();
       default:
-        return color.toRgbaString();
+        return !this.disableAlpha ? color.toRgbaString() : color.toRgbString();
     }
   }
 }

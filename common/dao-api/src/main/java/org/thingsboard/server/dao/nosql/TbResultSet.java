@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.nosql;
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -34,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 public class TbResultSet implements AsyncResultSet {
@@ -89,9 +77,14 @@ public class TbResultSet implements AsyncResultSet {
     }
 
     public ListenableFuture<List<Row>> allRows(Executor executor) {
+        return allRows(executor, 0);
+    }
+
+    public ListenableFuture<List<Row>> allRows(Executor executor, long maxResultSetSizeBytes) {
         List<Row> allRows = new ArrayList<>();
         SettableFuture<List<Row>> resultFuture = SettableFuture.create();
-        this.processRows(originalStatement, delegate, allRows, resultFuture, executor);
+        AtomicLong accumulatedBytes = new AtomicLong(0);
+        this.processRows(originalStatement, delegate, allRows, resultFuture, executor, maxResultSetSizeBytes, accumulatedBytes);
         return resultFuture;
     }
 
@@ -99,7 +92,19 @@ public class TbResultSet implements AsyncResultSet {
                              AsyncResultSet resultSet,
                              List<Row> allRows,
                              SettableFuture<List<Row>> resultFuture,
-                             Executor executor) {
+                             Executor executor,
+                             long maxResultSetSizeBytes,
+                             AtomicLong accumulatedBytes) {
+        if (maxResultSetSizeBytes > 0) {
+            int pageSizeInBytes = resultSet.getExecutionInfo().getResponseSizeInBytes();
+            if (pageSizeInBytes > 0) {
+                accumulatedBytes.addAndGet(pageSizeInBytes);
+            }
+            if (accumulatedBytes.get() > maxResultSetSizeBytes) {
+                resultFuture.setException(new ResultSetSizeLimitExceededException(maxResultSetSizeBytes, accumulatedBytes.get()));
+                return;
+            }
+        }
         allRows.addAll(loadRows(resultSet));
         if (resultSet.hasMorePages()) {
             ByteBuffer nextPagingState = resultSet.getExecutionInfo().getPagingState();
@@ -110,7 +115,7 @@ public class TbResultSet implements AsyncResultSet {
                         @Override
                         public void onSuccess(@Nullable TbResultSet result) {
                             processRows(nextStatement, result,
-                                    allRows, resultFuture, executor);
+                                    allRows, resultFuture, executor, maxResultSetSizeBytes, accumulatedBytes);
                         }
 
                         @Override

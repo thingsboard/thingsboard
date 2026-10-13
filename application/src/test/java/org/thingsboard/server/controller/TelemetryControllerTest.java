@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -102,24 +89,29 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Assert.assertEquals(11L, thirdIntervalResult.get("value").asLong());
         Assert.assertEquals(thirdIntervalTs, thirdIntervalResult.get("ts").asLong());
 
-        result = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+        ObjectNode resultByMonth = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
                         "/values/timeseries?keys=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
                 ObjectNode.class, startTs, endTs, "SUM", "MONTH", "Europe/Kyiv");
 
-        Assert.assertNotNull(result);
-        Assert.assertNotNull(result.get("t"));
-        Assert.assertEquals(1, result.get("t").size());
+        Assert.assertNotNull(resultByMonth);
+        Assert.assertNotNull(resultByMonth.get("t"));
+        Assert.assertEquals(1, resultByMonth.get("t").size());
 
-        var monthResult = result.get("t").get(0);
+        var monthResult = resultByMonth.get("t").get(0);
         Assert.assertEquals(22L, monthResult.get("value").asLong());
         Assert.assertEquals(middleOfTheInterval, monthResult.get("ts").asLong());
 
-        // get all latest (without keys parameter)
-        ObjectNode allLatest = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+        // check timeseries history with key parameter (instead of keys) has the same result as with keys parameter
+        ObjectNode resultByKey = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+                        "/values/timeseries?key=t&startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
+                ObjectNode.class, startTs, endTs, "SUM", "WEEK_ISO", "Europe/Kyiv");
+        Assert.assertEquals(result, resultByKey);
+
+        // check timeseries history without keys and key results into empty object
+        ObjectNode resultWithoutKeyAndKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
                         "/values/timeseries?startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
                 ObjectNode.class, startTs, endTs, "SUM", "WEEK_ISO", "Europe/Kyiv");
-        Assert.assertNotNull(allLatest);
-        Assert.assertNotNull(allLatest.get("t"));
+        Assert.assertTrue(resultWithoutKeyAndKeys.isEmpty());
     }
 
     @Test

@@ -1,0 +1,80 @@
+/**
+ * Decodes the incoming payload and returns a structured object containing telemetry data and attributes.
+ *
+ * @param {number[]} input - The raw payload received as an array of bytes.
+ * @returns {Object} output - The structured output with decoded telemetry and attributes.
+ */
+
+function decodePayload(input) {
+    // Initialize the output object with empty attributes and telemetry for clarity.
+    var result = { attributes: {}, telemetry: {}};
+
+    // Decode serial number (SN) from the first 4 bytes of the payload.
+    // Press '?' icon in the top right corner to learn more about built in helper functions and capabilities.
+    result.attributes.sn = parseBytesToInt(input, 0, 4);
+
+    // Extract the timestamp from metadata (represented in milliseconds).
+    var timestamp = metadata.ts; // ts is the timestamp parsed from the incoming message's time, or returns the current time if it cannot be parsed.
+
+    // Initialize an object to store decoded key/value telemetry data.
+    var values = {};
+
+    // Decode battery level from the 5th byte of the payload.
+    values.battery = parseBytesToInt(input, 4, 1);
+
+    // Decode temperature from the 6th and 7th bytes of the payload (divided by 100).
+    values.temperature = parseBytesToInt(input, 5, 2) / 100.0;
+
+    // Decode saturation from the 8th byte of the payload.
+    values.saturation = parseBytesToInt(input, 7, 1);
+
+    // Combine the timestamp with values and add it to the telemetry.
+    result.telemetry = {
+        ts: timestamp,
+        values: values
+    };
+
+    // Return the fully constructed output object.
+    return result;
+    // Same logic, less code:
+    // return {
+    //     attributes: {
+    //         sn: parseBytesToInt(input, 0, 4)
+    //     },
+    //     telemetry: {
+    //         ts: convertDateToTimestamp(metadata.time),
+    //         values: {
+    //             battery: parseBytesToInt(input, 4, 1),
+    //             temperature: parseBytesToInt(input, 5, 2) / 100.0,
+    //             saturation: parseBytesToInt(input, 7, 1)
+    //         }
+    //     }
+    // };
+}
+
+var result = decodePayload(payload);
+// Uncomment this code block to overwrite values set in the main configuration window. Useful if you extract device/asset/customer/group names from the payload;
+// result.type = 'DEVICE'; // Entity type allows you to choose type of created entity. Can be 'DEVICE' or 'ASSET'.
+// result.name = 'Temperature Sensor'; // Device or asset name (the value must be unique)
+// result.profile = 'IndustrialSensorProfile'; // Device or asset profile name.
+// result.customer = 'MyCustomer'; // If customer is not null - created entity will be assigned to customer with such name.
+// result.group = 'SensorsGroup'; // If group is not null - created entity will be added to the entity group with such name.
+
+// Return the final result object.
+return result;
+
+/**
+ * Parse a slice of bytes from an array into an integer (big-endian).
+ *
+ * @param {number[]} input - The array of bytes.
+ * @param {number} offset - The starting index.
+ * @param {number} length - The number of bytes to convert.
+ * @returns {number} - The resulting integer.
+ */
+function parseBytesToInt(input, offset, length) {
+  var result = 0;
+  for (var i = offset; i < offset + length; i++) {
+    result = (result << 8) | (input[i] & 0xFF);
+  }
+  return result;
+}

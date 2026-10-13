@@ -17,6 +17,7 @@
     "gateway_widgets.gateway_custom_statistics",
     "gateway_widgets.gateway_general_chart_statistics",
     "gateway_widgets.service_rpc",
-    "gateway_widgets.gateway_status"
+    "gateway_widgets.gateway_status",
+    "gateway_widgets.markdown_card"
   ]
 }

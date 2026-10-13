@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -37,21 +23,22 @@ import { guid } from '@core/utils';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-tenant-profile-queues',
-  templateUrl: './tenant-profile-queues.component.html',
-  styleUrls: ['./tenant-profile-queues.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TenantProfileQueuesComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TenantProfileQueuesComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-tenant-profile-queues',
+    templateUrl: './tenant-profile-queues.component.html',
+    styleUrls: ['./tenant-profile-queues.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TenantProfileQueuesComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => TenantProfileQueuesComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class TenantProfileQueuesComponent implements ControlValueAccessor, Validator, OnDestroy, OnInit {
 
@@ -138,13 +125,6 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
         this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
       }
     }
-  }
-
-  public trackByQueue(index: number, queueControl: AbstractControl) {
-    if (queueControl) {
-      return queueControl.value.id;
-    }
-    return null;
   }
 
   public removeQueue(index: number) {

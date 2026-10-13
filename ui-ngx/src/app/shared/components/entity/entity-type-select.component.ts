@@ -1,37 +1,26 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@app/shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
+import { Operation } from '@shared/models/security.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-entity-type-select',
-  templateUrl: './entity-type-select.component.html',
-  styleUrls: ['./entity-type-select.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityTypeSelectComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-type-select',
+    templateUrl: './entity-type-select.component.html',
+    styleUrls: ['./entity-type-select.component.scss'],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityTypeSelectComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 
@@ -46,14 +35,28 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   useAliasEntityTypes: boolean;
 
   @Input()
+  operation: Operation;
+
+  @Input()
   filterAllowedEntityTypes = true;
+
+  @Input()
+  overrideEntityTypeTranslations: Map<EntityType | AliasEntityType, string>;
 
   @Input()
   @coerceBoolean()
   showLabel: boolean;
 
+  private labelValue = this.translate.instant('entity.type');
+
+  get label(): string {
+    return this.labelValue;
+  }
+
   @Input()
-  label = this.translate.instant('entity.type');
+  set label(value: string) {
+    this.labelValue = value ?? this.translate.instant('entity.type');
+  }
 
   @Input()
   @coerceBoolean()
@@ -97,7 +100,7 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
 
   ngOnInit() {
     this.entityTypes = this.filterAllowedEntityTypes
-      ? this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes)
+      ? this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes, this.operation)
       : this.allowedEntityTypes;
     const additionEntityTypes = Object.keys(this.additionEntityTypes);
     if (additionEntityTypes.length > 0) {
@@ -164,11 +167,15 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     }
   }
 
-  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | null): string | undefined {
+  displayEntityTypeFn(entityType?: EntityType | AliasEntityType | string | null): string | undefined {
     if (this.additionEntityTypes[entityType]) {
       return this.additionEntityTypes[entityType];
     } else if (entityType) {
-      return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
+      if (this.overrideEntityTypeTranslations && typeof entityType !== 'string' && this.overrideEntityTypeTranslations.has(entityType)) {
+        return this.translate.instant(this.overrideEntityTypeTranslations.get(entityType));
+      } else {
+        return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
+      }
     } else {
       return '';
     }

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2025 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.cf.ctx.state.propagation;
 
 import lombok.Data;
@@ -21,6 +8,8 @@ import org.thingsboard.script.api.tbel.TbelCfPropagationArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.HasEntityLimit;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,14 +18,14 @@ import java.util.List;
 import java.util.Set;
 
 @Data
-public class PropagationArgumentEntry implements ArgumentEntry {
+public class PropagationArgumentEntry implements ArgumentEntry, HasEntityLimit {
 
     private Set<EntityId> entityIds;
     private transient List<EntityId> added;
     private transient EntityId removed;
 
     private transient boolean forceResetPrevious;
-    private transient boolean ignoreRemovedEntities;
+    private transient boolean syncWithDb;
 
     public PropagationArgumentEntry() {
         this.entityIds = new HashSet<>();
@@ -59,24 +48,28 @@ public class PropagationArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (!(entry instanceof PropagationArgumentEntry updated)) {
             throw new IllegalArgumentException("Unsupported argument entry type for propagation argument entry: " + entry.getType());
         }
         if (updated.getAdded() != null) {
-            return checkAdded(updated.getAdded());
+            return checkAdded(updated.getAdded(), ctx);
         }
         if (updated.getRemoved() != null) {
             return entityIds.remove(updated.getRemoved());
         }
-        if (updated.isIgnoreRemovedEntities()) {
-            Set<EntityId> updatedIds = updated.getEntityIds();
-            if (updatedIds.isEmpty()) {
+        if (updated.isSyncWithDb()) {
+            Set<EntityId> dbEntityIds = updated.getEntityIds();
+            if (dbEntityIds.isEmpty()) {
+                if (entityIds.isEmpty()) {
+                    return false;
+                }
                 entityIds.clear();
-                return false;
+                return true;
             }
-            entityIds.retainAll(updatedIds);
-            return checkAdded(updatedIds);
+            boolean retained = entityIds.retainAll(dbEntityIds);
+            boolean added = checkAdded(dbEntityIds, ctx);
+            return retained || added;
         }
         if (updated.isEmpty()) {
             entityIds.clear();
@@ -86,8 +79,9 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         return true;
     }
 
-    private boolean checkAdded(Collection<EntityId> updatedIds) {
+    private boolean checkAdded(Collection<EntityId> updatedIds, CalculatedFieldCtx ctx) {
         for (EntityId id : updatedIds) {
+            checkEntityLimit(entityIds.size(), ctx);
             if (entityIds.add(id)) {
                 if (added == null) {
                     added = new ArrayList<>();

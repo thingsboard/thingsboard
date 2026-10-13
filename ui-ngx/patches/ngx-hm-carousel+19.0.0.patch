@@ -1,0 +1,31 @@
+diff --git a/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs b/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs
+index 117f782..70e49a7 100644
+--- a/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs
++++ b/node_modules/ngx-hm-carousel/fesm2022/ngx-hm-carousel.mjs
+@@ -1,5 +1,5 @@
+ import * as i0 from '@angular/core';
+-import { Directive, inject, ViewContainerRef, TemplateRef, input, PLATFORM_ID, DestroyRef, Renderer2, NgZone, ChangeDetectorRef, viewChild, ElementRef, contentChildren, contentChild, computed, signal, effect, forwardRef, Component, ChangeDetectionStrategy } from '@angular/core';
++import { Directive, inject, ViewContainerRef, TemplateRef, input, PLATFORM_ID, DestroyRef, Renderer2, NgZone, ChangeDetectorRef, viewChild, ElementRef, contentChildren, contentChild, computed, signal, effect, forwardRef, Component, ChangeDetectionStrategy, afterNextRender } from '@angular/core';
+ import { DOCUMENT, isPlatformBrowser, NgTemplateOutlet, AsyncPipe } from '@angular/common';
+ import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+ import { NG_VALUE_ACCESSOR } from '@angular/forms';
+@@ -340,7 +340,7 @@ class NgxHmCarouselComponent {
+                 });
+             });
+         });
+-        const effectRef = effect(() => {
++        afterNextRender(() => {
+             this.rootElm = this.container().nativeElement;
+             this.containerElm = this.rootElm.children[0];
+             this.init();
+@@ -365,10 +365,6 @@ class NgxHmCarouselComponent {
+             ])
+                 .pipe(takeUntilDestroyed(this._destroyRef))
+                 .subscribe();
+-            // only exec once
+-            effectRef.destroy();
+-        }, {
+-            allowSignalWrites: true,
+         });
+     }
+     ngOnDestroy() {

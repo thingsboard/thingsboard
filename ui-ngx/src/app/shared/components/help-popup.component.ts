@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -29,15 +16,17 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: '[tb-help-popup], [tb-help-popup-content], [tb-help-popup-content-base64], [tb-help-popup-async-content]',
-  templateUrl: './help-popup.component.html',
-  styleUrls: ['./help-popup.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: '[tb-help-popup], [tb-help-popup-content], [tb-help-popup-content-base64], [tb-help-popup-async-content]',
+    templateUrl: './help-popup.component.html',
+    styleUrls: ['./help-popup.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class HelpPopupComponent implements OnChanges {
 
@@ -91,7 +80,8 @@ export class HelpPopupComponent implements OnChanges {
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private popoverService: TbPopoverService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              public wl: WhiteLabelingService) {
   }
 
   ngOnChanges(_changes: SimpleChanges): void {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2025 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -43,13 +30,15 @@ import { TranslateService } from '@ngx-translate/core';
 export interface AIModelDialogData {
   AIModel?: AiModel;
   isAdd?: boolean;
+  readonly?: boolean;
   name?: string;
 }
 
 @Component({
-  selector: 'tb-ai-model-dialog',
-  templateUrl: './ai-model-dialog.component.html',
-  styleUrls: ['./ai-model-dialog.component.scss']
+    selector: 'tb-ai-model-dialog',
+    templateUrl: './ai-model-dialog.component.html',
+    styleUrls: ['./ai-model-dialog.component.scss'],
+    standalone: false
 })
 export class AIModelDialogComponent extends DialogComponent<AIModelDialogComponent, AiModel> {
 
@@ -72,6 +61,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
   aiModelForms: FormGroup;
 
   isAdd = false;
+  readonly = false;
 
   authenticationHint: string;
 
@@ -91,6 +81,9 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
     if (this.data.isAdd) {
       this.isAdd = true;
     }
+    if (this.data.readonly) {
+      this.readonly = true;
+    }
 
     this.provider = this.data.AIModel ? this.data.AIModel.configuration.provider : AiProvider.OPENAI;
 
@@ -107,7 +100,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           projectId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.projectId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           location: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.location : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           serviceAccountKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKey : '', [Validators.required]],
-          fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : '', [Validators.required]],
+          fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : ''],
           region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
@@ -171,7 +164,12 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       }
     });
 
-    this.updateValidation(this.provider);
+    if (this.readonly) {
+      this.dialogTitle = 'ai-models.ai-model-view';
+      this.aiModelForms.disable({emitEvent: false});
+    } else {
+      this.updateValidation(this.provider);
+    }
   }
 
   fetchOptions(searchText: string): Observable<Array<string>> {
