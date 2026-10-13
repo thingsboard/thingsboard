@@ -266,7 +266,7 @@
                   <mat-checkbox
                     [disabled]="wlSettings.get('hideConnectivityDialog')?.disabled"
                     [checked]="!wlSettings.get('hideConnectivityDialog')?.value"
-                    (change)="wlSettings.get('hideConnectivityDialog')?.setValue(!$event.checked)">
+                    (change)="onShowConnectivityDialogChange($event.checked)">
                     <div class="flex flex-col gap-1">
                       <div class="tb-wl-subtitle">{{ 'white-labeling.show-connectivity-dialog' | translate }}</div>
                       <div class="tb-wl-desc">{{ 'white-labeling.show-connectivity-dialog-desc' | translate }}</div>

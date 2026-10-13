@@ -298,19 +298,35 @@
             }
           }
           @if (isEdit) {
-            <button class="gt-md:!hidden" mat-icon-button
-                    matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
-                    matTooltipPosition="below"
-                    (click)="addWidget($event)">
-              <mat-icon>add</mat-icon>
-            </button>
-            <button class="lt-lg:!hidden" mat-stroked-button
-                    matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
-                    matTooltipPosition="below"
-                    (click)="addWidget($event)">
-              <mat-icon>add</mat-icon>
-              {{ 'dashboard.add-widget-button-text' | translate }}
-            </button>
+            @if (isHtml) {
+              <button class="gt-md:!hidden" mat-icon-button
+                      matTooltip="{{ 'dashboard.edit-html-page' | translate }}"
+                      matTooltipPosition="below"
+                      (click)="editHtmlPage($event)">
+                <mat-icon>edit_document</mat-icon>
+              </button>
+              <button class="lt-lg:!hidden" mat-stroked-button
+                      matTooltip="{{ 'dashboard.edit-html-page' | translate }}"
+                      matTooltipPosition="below"
+                      (click)="editHtmlPage($event)">
+                <mat-icon>edit</mat-icon>
+                {{ 'dashboard.edit-html-page' | translate }}
+              </button>
+            } @else {
+              <button class="gt-md:!hidden" mat-icon-button
+                      matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
+                      matTooltipPosition="below"
+                      (click)="addWidget($event)">
+                <mat-icon>add</mat-icon>
+              </button>
+              <button class="lt-lg:!hidden" mat-stroked-button
+                      matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
+                      matTooltipPosition="below"
+                      (click)="addWidget($event)">
+                <mat-icon>add</mat-icon>
+                {{ 'dashboard.add-widget-button-text' | translate }}
+              </button>
+            }
           }
           <tb-filters-edit [class.!hidden]="isEdit || !displayFilters()"
                            tooltipPosition="below"
@@ -355,7 +371,7 @@
           <section class="tb-dashboard-title"
                    [style.color]="dashboard.configuration.settings.titleColor">
             <h3 [class.!hidden]="isEdit || !displayTitle()">{{ translatedDashboardTitle }}</h3>
-            <mat-form-field [class.!hidden]="!isEdit" class="mat-block tb-appearance-transparent" subscriptSizing="dynamic">
+            <mat-form-field [class.!hidden]="!isEdit || !displayTitle()" class="mat-block tb-appearance-transparent" subscriptSizing="dynamic">
               <mat-label translate [style.color]="dashboard.configuration.settings.titleColor">dashboard.title</mat-label>
               <input matInput class="tb-dashboard-title"
                      [style.color]="dashboard.configuration.settings.titleColor"
@@ -478,7 +494,7 @@
                             [isReadOnly]="true"
                             (closeDetails)="onEditWidgetClosed()">
             <div class="details-buttons flex flex-row items-center justify-start gap-4">
-              @if (tbEditWidget.widgetConfig?.hasBasicMode) {
+              @if (tbEditWidget.widgetConfig?.hasBasicMode && !isHtml) {
                 <tb-toggle-select appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
                   <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
                   <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>

@@ -29,7 +29,7 @@
           </mat-select>
         </mat-form-field>
       </div>
-      @if (!isDividerLayout) {
+      @if (isBreakpointsLayout) {
         <div class="tb-form-panel stroked">
           <div class="tb-form-table tb-layout-breakpoints">
             <div class="tb-form-table-header no-padding-right">
@@ -85,11 +85,10 @@
             <mat-icon>add</mat-icon>
           </button>
         </div>
-      } @else {
+      } @else if (isDividerLayout) {
         <div class="flex flex-col items-center justify-start gap-5">
           <mat-button-toggle-group aria-label="Select width value type"
-                                   formControlName="type"
-                                   [class.!hidden]="!isDividerLayout">
+                                   formControlName="type">
             <mat-button-toggle class="flex-1" value="percentage">
               {{ 'layout.percentage-width' | translate }}
             </mat-button-toggle>
@@ -125,7 +124,7 @@
                   <span [matTooltip]="layoutButtonText('main')"
                         #mainLayoutTooltip="matTooltip"
                         matTooltipPosition="above">
-                    {{ (isDividerLayout ? 'layout.left' : 'layout.main')  | translate }}
+                    {{ 'layout.left' | translate }}
                   </span>
                 </button>
                 @if (showPreviewInputs('main')) {
@@ -140,7 +139,7 @@
                         required>
                     }
                     @if (layoutsFormGroup.get('type').value === layoutWidthType.FIXED &&
-                      layoutsFormGroup.get('fixedLayout').value === 'main') {
+                    layoutsFormGroup.get('fixedLayout').value === 'main') {
                       <input
                         formControlName="fixedWidth"
                         type="number"
@@ -152,92 +151,92 @@
                   </div>
                 }
               </div>
-              @if (isDividerLayout) {
-                <div class="flex flex-1 flex-col items-center justify-start" matTooltip="">
-                  <button mat-icon-button
-                          type="button"
-                          matTooltip="{{ 'layout.settings' | translate }}"
-                          matTooltipPosition="above"
-                          (click)="openLayoutSettings('right')"
-                          class="tb-layout-preview-element"
-                          aria-label="Layout settings"
-                          [class]="layoutButtonClass('right')">
-                    <mat-icon>settings</mat-icon>
-                  </button>
-                  <button type="button"
-                          mat-raised-button
-                          color="primary"
-                          class="tb-layout-button tb-layout-button-right flex-1"
-                          (mouseover)="rightLayoutTooltip.show()"
-                          (mouseleave)="rightLayoutTooltip.hide()"
-                          (click)="setFixedLayout('right')"
-                          [class]="layoutButtonClass('right')">
-                    <span [matTooltip]="layoutButtonText('right')"
-                          #rightLayoutTooltip="matTooltip"
-                          matTooltipPosition="above">
-                      {{ 'layout.right' | translate }}
-                    </span>
-                  </button>
-                  @if (showPreviewInputs('right')) {
-                    <div class="tb-layout-preview-element tb-layout-preview-input flex-1">
-                      @if (layoutsFormGroup.get('type').value !== layoutWidthType.FIXED) {
-                        <input
-                          formControlName="rightWidthPercentage"
-                          type="number"
-                          step="1"
-                          min="{{ layoutPercentageSize.MIN }}"
-                          max="{{ layoutPercentageSize.MAX }}"
-                          required>
-                      }
-                      @if (layoutsFormGroup.get('type').value === layoutWidthType.FIXED) {
-                        <input
-                          formControlName="fixedWidth"
-                          type="number"
-                          step="1"
-                          min="{{ layoutFixedSize.MIN }}"
-                          max="{{ layoutFixedSize.MAX }}"
-                          required>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-          @if (isDividerLayout) {
-            <div class="flex flex-col items-center justify-center gap-2" style="width: 80%">
-              @if (layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE) {
-                <mat-slider
-                  step="1"
-                  min="{{ layoutPercentageSize.MIN }}"
-                  max="{{ layoutPercentageSize.MAX }}"
-                  style="width: 100%;"
-                  color="accent"
-                  discrete
-                  [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderPercentage"/>
-                </mat-slider>
-              }
-              @if (layoutsFormGroup.get('type').value !== layoutWidthType.PERCENTAGE) {
-                <mat-slider
-                  step="1"
-                  min="{{ layoutFixedSize.MIN }}"
-                  max="{{ layoutFixedSize.MAX }}"
-                  style="width: 100%;"
-                  color="accent"
-                  discrete
-                  [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderFixed"/>
-                </mat-slider>
-              }
-              <div class="tb-hint tb-hint-group flex flex-row items-center justify-between" style="width: 100%;">
-                <label>
-                  {{layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE ? layoutPercentageSize.MIN + '%' : layoutFixedSize.MIN + 'px'}}
-                </label>
-                <label>
-                  {{layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE ? layoutPercentageSize.MAX + '%' : layoutFixedSize.MAX + 'px'}}
-                </label>
+              <div class="flex flex-1 flex-col items-center justify-start" matTooltip="">
+                <button mat-icon-button
+                        type="button"
+                        matTooltip="{{ 'layout.settings' | translate }}"
+                        matTooltipPosition="above"
+                        (click)="openLayoutSettings('right')"
+                        class="tb-layout-preview-element"
+                        aria-label="Layout settings"
+                        [class]="layoutButtonClass('right')">
+                  <mat-icon>settings</mat-icon>
+                </button>
+                <button type="button"
+                        mat-raised-button
+                        color="primary"
+                        class="tb-layout-button tb-layout-button-right flex-1"
+                        (mouseover)="rightLayoutTooltip.show()"
+                        (mouseleave)="rightLayoutTooltip.hide()"
+                        (click)="setFixedLayout('right')"
+                        [class]="layoutButtonClass('right')">
+                  <span [matTooltip]="layoutButtonText('right')"
+                        #rightLayoutTooltip="matTooltip"
+                        matTooltipPosition="above">
+                    {{ 'layout.right' | translate }}
+                  </span>
+                </button>
+                @if (showPreviewInputs('right')) {
+                  <div class="tb-layout-preview-element tb-layout-preview-input flex-1">
+                    @if (layoutsFormGroup.get('type').value !== layoutWidthType.FIXED) {
+                      <input
+                        formControlName="rightWidthPercentage"
+                        type="number"
+                        step="1"
+                        min="{{ layoutPercentageSize.MIN }}"
+                        max="{{ layoutPercentageSize.MAX }}"
+                        required>
+                    }
+                    @if (layoutsFormGroup.get('type').value === layoutWidthType.FIXED) {
+                      <input
+                        formControlName="fixedWidth"
+                        type="number"
+                        step="1"
+                        min="{{ layoutFixedSize.MIN }}"
+                        max="{{ layoutFixedSize.MAX }}"
+                        required>
+                    }
+                  </div>
+                }
               </div>
             </div>
-          }
+          </div>
+          <div class="flex flex-col items-center justify-center gap-2" style="width: 80%">
+            @if (layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE) {
+              <mat-slider
+                step="1"
+                min="{{ layoutPercentageSize.MIN }}"
+                max="{{ layoutPercentageSize.MAX }}"
+                style="width: 100%;"
+                color="accent"
+                discrete
+                [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderPercentage"/>
+              </mat-slider>
+            }
+            @if (layoutsFormGroup.get('type').value !== layoutWidthType.PERCENTAGE) {
+              <mat-slider
+                step="1"
+                min="{{ layoutFixedSize.MIN }}"
+                max="{{ layoutFixedSize.MAX }}"
+                style="width: 100%;"
+                color="accent"
+                discrete
+                [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderFixed"/>
+              </mat-slider>
+            }
+            <div class="tb-hint tb-hint-group flex flex-row items-center justify-between" style="width: 100%;">
+              <label>
+                {{layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE ? layoutPercentageSize.MIN + '%' : layoutFixedSize.MIN + 'px'}}
+              </label>
+              <label>
+                {{layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE ? layoutPercentageSize.MAX + '%' : layoutFixedSize.MAX + 'px'}}
+              </label>
+            </div>
+          </div>
+        </div>
+      } @else if (isHtmlLayout) {
+        <div class="tb-form-panel stroked h-[202px] items-center justify-center">
+          <div class="text-5xl font-bold text-slate-600">{{ 'dashboard.html-page' | translate }}</div>
         </div>
       }
     </section>

@@ -5,6 +5,7 @@ Put your PR description here instead of this sentence.
 ## General checklist
 
 - [ ] You have reviewed the [contributing guidelines](https://github.com/thingsboard/thingsboard/blob/master/CONTRIBUTING.md).
+- [ ] You have signed the [Contributor License Agreement](https://cla-assistant.io/thingsboard/thingsboard).
 - [ ] [Labels](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/managing-labels#about-labels) that classify your pull request have been added.
 - [ ] The [milestone](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones) is specified and corresponds to fix version.  
 - [ ] Description references specific [issue](https://github.com/thingsboard/thingsboard/issues).
