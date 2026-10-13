@@ -118,8 +118,8 @@
     {
       "path": "application/src/test/java/org/thingsboard/server/service/install/update/DefaultDataUpdateServiceTest.java",
       "header": "busl",
-      "reason": "CE deleted its DefaultDataUpdateServiceTest (version 3.3.0 device profile conversion tests) in ba440ba7c1f. PE recreated a test at the same path in cdae38adc6b with entirely new content covering the CE-to-PE upgrade chain; nothing of the CE file (last CE version 40527f3da02^1, blob abfab844917) remains beyond the class name.",
-      "contentHash": "sha256:c0ebbc47ce2ff97d2e00182781ed38ca137ad54393e706c064c0ca6919b27eb8"
+      "reason": "CE deleted its DefaultDataUpdateServiceTest (version 3.3.0 device profile conversion tests) in ba440ba7c1f. PE recreated a test at the same path in cdae38adc6b with entirely new content covering the CE-to-PE upgrade chain; nothing of the CE file (last CE version 40527f3da02^1, blob abfab844917) remains beyond the class name. Re-reviewed 2026-10-13: added a mock for the EdgeProfileMigrationService constructor dependency of the PE edge profiles feature; still no CE content beyond the class name.",
+      "contentHash": "sha256:229edb385257cc12820c4157c88545d592b6f3c4ed52f89cdd077e6cdc948cd7"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/integration/rpc/IntegrationRpcSslTest.java",
@@ -1500,12 +1500,6 @@
       "header": "busl",
       "reason": "Angular module/routing registration for a PE feature. Imports, declarations and routes select PE components using common Angular module scaffolding; no CE feature implementation is relocated. Reviewed candidate ui-ngx/src/app/modules/home/pages/alarm/alarm.module.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 9438e743d19cc4234935fed2a42ef0d8e7b9558f).",
       "contentHash": "sha256:7d8e38e285631d2a7a74ba52a9eb1bc050101a9460df8d1e7d635242acde7fa3"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/pages/rulechain/rulechains-table-config.ts",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE ui-ngx/src/app/modules/home/pages/rulechain/rulechains-table-config.resolver.ts, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file. Re-reviewed 2026-09-15: PE removed the per-edge rule chain scope in favour of edge profiles; still no CE file at this path. Re-reviewed 2026-09-18: edge-scope rule chains are deletable regardless of the legacy root flag (the server guards edge profile roots); still no CE file at this path. Re-reviewed 2026-09-23: dropped the unused MatDialog and EdgeService injections; still no CE file at this path.",
-      "contentHash": "sha256:d143f4c2b716fe7c2c34cae417bc7ebff37a18d26e13a8b689b422b1de659084"
     },
     {
       "path": "ui-ngx/src/app/modules/home/pages/scheduler/scheduler.module.ts",
