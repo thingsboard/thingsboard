@@ -14,6 +14,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.query.AliasEntityId;
@@ -306,9 +307,11 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         doGetAsync(url, device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
         doGetAsync(url + "&agg=SUM&interval=86400000", device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
         doGetAsync(url, UUID.randomUUID(), System.currentTimeMillis()).andExpect(status().isNotFound());
+        List<BaseReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery("t", 0, System.currentTimeMillis(), 10, "DESC"));
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", queries, String.class, status().isForbidden());
 
         loginTenantAdmin();
-        assignDeviceToCustomer(device.getId(), customerId);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + device.getId().getId()).andExpect(status().isOk());
 
         loginCustomerUser();
         ObjectNode result = doGetAsync(url, ObjectNode.class, device.getUuidId(), System.currentTimeMillis());
