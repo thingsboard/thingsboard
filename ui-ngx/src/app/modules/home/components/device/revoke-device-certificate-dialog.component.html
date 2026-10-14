@@ -33,7 +33,7 @@
           </span>
         </div>
       </div>
-      <div class="tb-form-hint tb-primary-fill">{{ 'device.certificate-revocation.revoke-device-certificate-hint' | translate }}</div>
+      <div class="tb-form-hint tb-primary-fill shrink-0">{{ 'device.certificate-revocation.revoke-device-certificate-hint' | translate }}</div>
     } @else {
       <tb-file-input formControlName="certificateFile"
                      accept=".pem,.crt,.cer"
@@ -44,14 +44,15 @@
       </tb-file-input>
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>device.certificate-pem-format</mat-label>
-        <textarea matInput formControlName="certificate" cdkTextareaAutosize cdkAutosizeMinRows="6" required></textarea>
+        <textarea matInput formControlName="certificate" cdkTextareaAutosize cdkAutosizeMinRows="6" cdkAutosizeMaxRows="12"
+                  spellcheck="false" required></textarea>
         @if (revokeFormGroup.get('certificate').hasError('required')) {
           <mat-error>{{ 'device.certificate-pem-format-required' | translate }}</mat-error>
         } @else if (revokeFormGroup.get('certificate').hasError('pattern')) {
           <mat-error>{{ 'device.certificate-revocation.certificate-pem-invalid' | translate }}</mat-error>
         }
       </mat-form-field>
-      <div class="tb-form-hint tb-primary-fill">{{ 'device.certificate-revocation.revoke-certificate-hint' | translate }}</div>
+      <div class="tb-form-hint tb-primary-fill shrink-0">{{ 'device.certificate-revocation.revoke-certificate-hint' | translate }}</div>
     }
     <mat-form-field class="mat-block" appearance="outline">
       <mat-label translate>device.certificate-revocation.reason</mat-label>
