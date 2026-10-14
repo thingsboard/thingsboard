@@ -22,7 +22,9 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
+import org.thingsboard.server.service.security.ValidationCallback;
 import org.thingsboard.server.service.security.ValidationResult;
+import org.thingsboard.server.service.security.ValidationResultCode;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
@@ -45,6 +47,10 @@ public class DefaultTbTelemetryService implements TbTelemetryService {
         accessValidator.validate(currentUser, Operation.READ_TELEMETRY, entityId, new FutureCallback<>() {
             @Override
             public void onSuccess(ValidationResult validationResult) {
+                if (validationResult.getResultCode() != ValidationResultCode.OK) {
+                    onFailure(ValidationCallback.getException(validationResult));
+                    return;
+                }
                 try {
                     AggregationParams params;
                     if (Aggregation.NONE.equals(agg)) {
