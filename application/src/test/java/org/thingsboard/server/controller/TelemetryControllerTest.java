@@ -31,7 +31,8 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES
 @DaoSqlTest
 @TestPropertySource(properties = {
         "sql.attributes.value_no_xss_validation=true",
-        "sql.ts.value_no_xss_validation=true"
+        "sql.ts.value_no_xss_validation=true",
+        "audit-log.logging-level.mask.device=RW"
 })
 public class TelemetryControllerTest extends AbstractControllerTest {
 
@@ -289,6 +290,19 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         ObjectNode tsDataAfterDeletion = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
         Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
         Assert.assertTrue(tsDataAfterDeletion.get("key3").get(0).get("value").isNull());
+    }
+
+    @Test
+    public void testGetAttributesWithoutScopeBySysAdmin() throws Exception {
+        loginSysAdmin();
+        doGetAsync("/api/plugins/telemetry/TENANT/" + tenantId + "/values/attributes").andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetAttributesWithoutScopeWhenReadAuditEnabled() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes").andExpect(status().isOk());
     }
 
     private Device createDevice() throws Exception {
