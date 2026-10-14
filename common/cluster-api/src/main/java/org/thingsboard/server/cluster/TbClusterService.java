@@ -113,8 +113,9 @@ public interface TbClusterService extends TbQueueClusterService {
     void onDeviceAssignedToTenant(TenantId oldTenantId, Device device);
 
     /**
-     * Notifies the CoAP and LwM2M transports, which keep authenticated DTLS state outside device sessions, about a revoked
-     * device certificate. Sessions of MQTT and LwM2M devices bound to the certificate are closed through the device actor.
+     * Notifies every transport service about a revoked device certificate: CoAP and LwM2M keep authenticated DTLS state
+     * outside device sessions, the other transports ignore it. Devices bound to the certificate are notified through the
+     * device actor that their credentials changed: MQTT closes the session, LwM2M unregisters the client.
      */
     void onDeviceCertificateRevoked(TenantId tenantId, String certificateHash, TbQueueCallback callback);
 

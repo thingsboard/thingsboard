@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
 import org.eclipse.californium.elements.auth.X509CertPath;
 import org.eclipse.californium.elements.util.CertPathUtil;
+import org.eclipse.californium.elements.util.DatagramReader;
+import org.eclipse.californium.elements.util.DatagramWriter;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
 import org.eclipse.californium.scandium.dtls.CertificateMessage;
 import org.eclipse.californium.scandium.dtls.CertificateType;
@@ -50,6 +52,9 @@ import java.util.List;
 @TbLwM2mBootstrapTransportComponent
 @RequiredArgsConstructor
 public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCertificateVerifier {
+
+    // Length prefixes of the certificate list and of each certificate in a TLS/DTLS Certificate message (RFC 5246, 7.4.2)
+    private static final int CERTIFICATE_LENGTH_BITS = 24;
 
     private final LwM2MTransportServerConfig config;
     private final LwM2MBootstrapSecurityStore bsSecurityStore;
@@ -119,8 +124,32 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
      * @throws LwM2MTransportUnavailableException if the core did not answer
      */
     public boolean isRegistered(X509CertPath certPath, InetSocketAddress remotePeer) {
-        List<X509Certificate> chain = certPath.getPath().getCertificates().stream().map(X509Certificate.class::cast).toList();
-        return isRegistered(ConnectionId.EMPTY, null, remotePeer, true, false, true, new CertificateMessage(chain));
+        CertificateMessage message;
+        try {
+            message = toCertificateMessage(certPath.getPath());
+        } catch (CertificateEncodingException | HandshakeException e) {
+            log.trace("[{}] Failed to encode the certificate chain of the DTLS session", remotePeer, e);
+            return false;
+        }
+        return isRegistered(ConnectionId.EMPTY, null, remotePeer, true, false, true, message);
+    }
+
+    /**
+     * The Certificate message of the chain as the client sent it, decoded the way the handshake decoded it:
+     * {@code new CertificateMessage(List)} rejects a chain whose certificates are not in issuer order, which the handshake accepts.
+     */
+    private static CertificateMessage toCertificateMessage(CertPath certPath) throws CertificateEncodingException, HandshakeException {
+        DatagramWriter certificates = new DatagramWriter();
+        for (Certificate certificate : certPath.getCertificates()) {
+            byte[] encoded = certificate.getEncoded();
+            certificates.write(encoded.length, CERTIFICATE_LENGTH_BITS);
+            certificates.writeBytes(encoded);
+        }
+        byte[] certificateList = certificates.toByteArray();
+        DatagramWriter message = new DatagramWriter();
+        message.write(certificateList.length, CERTIFICATE_LENGTH_BITS);
+        message.writeBytes(certificateList);
+        return CertificateMessage.fromReader(new DatagramReader(message.toByteArray()), CertificateType.X_509);
     }
 
     /**

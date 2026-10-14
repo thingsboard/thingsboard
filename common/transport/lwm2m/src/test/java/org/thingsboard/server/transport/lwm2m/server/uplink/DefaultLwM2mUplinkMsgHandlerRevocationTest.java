@@ -12,6 +12,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.X509CertificateRevokedEvent;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry.ClientCertificate;
@@ -108,6 +110,17 @@ class DefaultLwM2mUplinkMsgHandlerRevocationTest {
         when(clientContext.getLwM2mClients()).thenReturn(List.of());
 
         handler.onX509CertificateRevoked(new X509CertificateRevokedEvent(TENANT_ID, REVOKED_HASH));
+
+        verifySharedStateIsKept();
+    }
+
+    @Test
+    void givenClientUnregisteredByRevocation_whenCredentialsUpdateArrives_thenNothingIsUnregisteredAgain() throws Exception {
+        // Revoking the certificate a device is bound to also updates its credentials: the two can arrive in any order
+        SessionInfoProto sessionInfo = SessionInfoProto.newBuilder().setSessionIdMSB(1).setSessionIdLSB(2).build();
+        when(clientContext.getClientBySessionInfo(sessionInfo)).thenReturn(null);
+
+        handler.onToTransportUpdateCredentials(sessionInfo, ToTransportUpdateCredentialsProto.getDefaultInstance());
 
         verifySharedStateIsKept();
     }

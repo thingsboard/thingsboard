@@ -492,11 +492,16 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * registration and its shared state belong to that node, which handles a revocation of a certificate it saw itself.
      * An Update that this node handles at the same moment makes the registration look served elsewhere: it then expires
      * instead of being removed, while the terminated connections keep the client from using it.
+     * A registration that is not stored any more was removed already, e.g. by the credentials update of the device.
      */
     private boolean isRegistrationServedHere(LwM2mClient client) {
         Registration registration = client.getRegistration();
         Registration current = registrationStore.getRegistration(registration.getId());
-        if (current == null || !current.getLastUpdate().equals(registration.getLastUpdate())) {
+        if (current == null) {
+            log.info("[{}] Registration [{}] was removed or replaced", client.getEndpoint(), registration.getId());
+            return false;
+        }
+        if (!current.getLastUpdate().equals(registration.getLastUpdate())) {
             log.info("[{}] Registration [{}] is served by another node", client.getEndpoint(), registration.getId());
             return false;
         }
@@ -1115,7 +1120,11 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onToTransportUpdateCredentials(SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
         log.info("[{}] updateCredentials", sessionInfo);
-        clearAndUnregister(clientContext.getClientBySessionInfo(sessionInfo));
+        LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
+        // Not found if it was unregistered meanwhile, e.g. by the revocation of its certificate, which also updates its credentials
+        if (client != null) {
+            clearAndUnregister(client);
+        }
     }
 
     /**

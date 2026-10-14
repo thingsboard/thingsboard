@@ -160,8 +160,9 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
     }
 
     /**
-     * MQTT and LwM2M sessions are closed by the device actor when the revoked certificate is the one the device is bound to.
-     * CoAP and LwM2M also keep authenticated DTLS state outside device sessions, which the transports drop by the certificate hash.
+     * When the revoked certificate is the one the device is bound to, the device actor notifies the transports that the device
+     * credentials changed: MQTT closes the session, LwM2M unregisters the client. CoAP and LwM2M also keep authenticated
+     * DTLS state outside device sessions, which the transports drop by the certificate hash.
      */
     private void onRevoked(DeviceCertificateRevocation revocation, Device device, DeviceCredentials credentials) {
         TenantId tenantId = revocation.getTenantId();
