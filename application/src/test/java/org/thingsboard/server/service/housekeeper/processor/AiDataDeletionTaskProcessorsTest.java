@@ -15,11 +15,10 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.ai.TbAiTokenProvider;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +39,7 @@ class AiDataDeletionTaskProcessorsTest {
     @Mock
     TbAiOperations operations;
     @Mock
-    TbAiClientRequestFactory clientRequestFactory;
+    SystemSecurityService systemSecurityService;
 
     TenantId tenantId;
     UserId userId;
@@ -52,9 +51,9 @@ class AiDataDeletionTaskProcessorsTest {
     void setUp() {
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         userId = new UserId(UUID.randomUUID());
-        userDataProcessor = new AiUserDataDeletionTaskProcessor(Optional.of(tokenProvider), operations, clientRequestFactory);
-        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(Optional.of(tokenProvider), operations, clientRequestFactory);
-        lenient().when(clientRequestFactory.forTenant(any())).thenReturn(TbAiClientRequest.withDefaultOrigin("https://tb.example.com"));
+        userDataProcessor = new AiUserDataDeletionTaskProcessor(Optional.of(tokenProvider), operations, systemSecurityService);
+        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(Optional.of(tokenProvider), operations, systemSecurityService);
+        lenient().when(systemSecurityService.getBaseUrl(any(TenantId.class), any(), any())).thenReturn("https://tb.example.com");
         lenient().when(operations.execute(any(TbAiOperation.class), any(TbAiTurnContext.class)))
                 .thenReturn(TbAiResponse.builder().success(true).build());
     }
@@ -135,8 +134,8 @@ class AiDataDeletionTaskProcessorsTest {
     @Test
     void shouldThrowWithoutCallingAiService_whenNoTokenProviderIsConfigured() {
         // GIVEN
-        userDataProcessor = new AiUserDataDeletionTaskProcessor(Optional.empty(), operations, clientRequestFactory);
-        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(Optional.empty(), operations, clientRequestFactory);
+        userDataProcessor = new AiUserDataDeletionTaskProcessor(Optional.empty(), operations, systemSecurityService);
+        tenantDataProcessor = new AiTenantDataDeletionTaskProcessor(Optional.empty(), operations, systemSecurityService);
 
         // WHEN
         Throwable userTaskThrown = catchThrowable(() -> userDataProcessor.process(HousekeeperTask.deleteAiUserData(tenantId, userId)));

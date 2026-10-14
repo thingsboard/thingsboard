@@ -23,13 +23,11 @@ import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.Map;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -57,7 +55,7 @@ class DefaultAiSolutionServiceTest {
     @Mock
     SecurityUser user;
 
-    TbAiClientRequest clientRequest = new TbAiClientRequest("https://tb.example.com", Map.of());
+    String clientOrigin = "https://tb.example.com";
 
     DefaultAiSolutionService service;
 
@@ -211,7 +209,7 @@ class DefaultAiSolutionServiceTest {
         stubOperations();
 
         // WHEN
-        JsonNode result = service.installSolution(solutionId, tbAccessToken, clientRequest, user);
+        JsonNode result = service.installSolution(solutionId, tbAccessToken, clientOrigin, user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);
@@ -221,7 +219,7 @@ class DefaultAiSolutionServiceTest {
         TbAiOperation operation = captureOperation(context);
         assertThat(operation.type()).isEqualTo(ChannelProtocol.SOLUTION_INSTALL);
         assertThat(operation.payload()).isEqualTo(new SolutionOperationRequest(solutionId));
-        assertThat(context[0].clientRequest()).isSameAs(clientRequest);
+        assertThat(context[0].clientOrigin()).isEqualTo(clientOrigin);
         assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
         assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
         then(tbAiService).shouldHaveNoMoreInteractions();
@@ -237,7 +235,7 @@ class DefaultAiSolutionServiceTest {
         stubOperations();
 
         // WHEN
-        JsonNode result = service.uninstallSolution(solutionId, tbAccessToken, clientRequest, user);
+        JsonNode result = service.uninstallSolution(solutionId, tbAccessToken, clientOrigin, user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);
@@ -247,7 +245,7 @@ class DefaultAiSolutionServiceTest {
         TbAiOperation operation = captureOperation(context);
         assertThat(operation.type()).isEqualTo(ChannelProtocol.SOLUTION_UNINSTALL);
         assertThat(operation.payload()).isEqualTo(new SolutionOperationRequest(solutionId));
-        assertThat(context[0].clientRequest()).isSameAs(clientRequest);
+        assertThat(context[0].clientOrigin()).isEqualTo(clientOrigin);
         assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
         assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
         then(tbAiService).shouldHaveNoMoreInteractions();

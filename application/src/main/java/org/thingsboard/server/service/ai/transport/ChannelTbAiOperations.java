@@ -17,7 +17,6 @@ import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.time.Duration;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -27,8 +26,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Runs one operation on a pooled channel and waits for its {@code operation.result}. An operation the channel did not
- * start (a {@code draining} or {@code too_many_operations} refusal, or a 1001 close before any frame for it) is
- * retried once on a new channel; any other failure after it was sent is an error, so an operation never runs twice.
+ * start (a {@code draining} or {@code too_many_operations} refusal, or a 1001 close before any frame for it: TB AI
+ * closes with 1001 only when nothing runs on the connection) is retried once on a new channel; any other failure after
+ * it was sent is an error, so an operation never runs twice. That includes
+ * {@link ChannelProtocol#CLOSE_EXCHANGES_ABORTED}, the close of a connection whose running operations were aborted.
  */
 @Slf4j
 @Component
@@ -37,23 +38,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class ChannelTbAiOperations {
 
     static final Duration OPERATION_TIMEOUT = Duration.ofMinutes(30);
-    // Operations during which TB AI calls ThingsBoard back; the rest are api.v1 operations.
-    static final Set<String> CALLBACK_OPERATIONS = Set.of(
-            ChannelProtocol.SOLUTION_INSTALL, ChannelProtocol.SOLUTION_UNINSTALL, ChannelProtocol.DASHBOARD_GENERATE);
 
     private final TbAiChannelPool pool;
     private final TbAiRequestExecutor requestExecutor;
 
     TbAiResponse execute(TbAiOperation operation, TbAiTurnContext context) {
-        String capability = CALLBACK_OPERATIONS.contains(operation.type())
-                ? ChannelProtocol.CAPABILITY_OPERATIONS : ChannelProtocol.CAPABILITY_API;
         boolean fresh = false;
         for (int attempt = 1; ; attempt++) {
             TbAiPooledConnection connection = acquire(context, fresh);
-            if (!connection.supports(capability)) {
-                connection.unreserve(System.nanoTime());
-                throw new TbAiOperationsUnsupportedException("TB AI does not support '" + operation.type() + "' over the channel");
-            }
             var call = new OperationCall(operation, context, connection);
             try {
                 return call.run();
@@ -131,7 +123,8 @@ class ChannelTbAiOperations {
         }
 
         TbAiResponse run() {
-            ChannelFrame start = ChannelFrame.request(operation.type(), connection.codec().toPayload(operation.payload()));
+            ChannelFrame start = ChannelFrame.request(operation.type(), connection.codec().toPayload(operation.payload()))
+                    .withOrigin(context.clientOrigin());
             op = start.id();
             try {
                 connection.start(this, start);

@@ -9,6 +9,7 @@ import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 @Slf4j
 @Component
@@ -17,13 +18,14 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 public class TbAiOperations {
 
     private final ChannelTbAiOperations channelOperations;
-    private final TbAiClientRequestFactory clientRequestFactory;
+    private final SystemSecurityService systemSecurityService;
 
     /**
      * For a call made on the user's behalf with no browser request at hand and no callback into ThingsBoard.
      */
     public TbAiResponse execute(TbAiOperation operation, SecurityUser user, TbAiClient.TokenProvider tokenProvider) {
-        return execute(operation, new TbAiTurnContext(user, null, null, tokenProvider, clientRequestFactory.forUser(user)));
+        String clientOrigin = systemSecurityService.getBaseUrl(user.getAuthority(), user.getTenantId(), user.getCustomerId(), null);
+        return execute(operation, new TbAiTurnContext(user, null, null, tokenProvider, clientOrigin));
     }
 
     public TbAiResponse execute(TbAiOperation operation, TbAiTurnContext context) {
@@ -32,9 +34,6 @@ public class TbAiOperations {
         } catch (TbAiChannelUnavailableException e) {
             log.warn("[{}][{}] AI channel unavailable for '{}': {}", context.tenantId(), context.userId(), operation.type(), e.getMessage());
             return ChannelTbAiOperations.failure("Service unavailable");
-        } catch (TbAiOperationsUnsupportedException e) {
-            log.warn("[{}][{}] {}", context.tenantId(), context.userId(), e.getMessage());
-            return ChannelTbAiOperations.failure("The AI service does not support this ThingsBoard version");
         } catch (TbAiChannelRejectedException e) {
             return ChannelTbAiOperations.failure(e.getMessage());
         }

@@ -13,7 +13,6 @@ import org.thingsboard.ai.common.channel.SolutionDataRequest;
 import org.thingsboard.ai.common.channel.SolutionOperationRequest;
 import org.thingsboard.ai.common.channel.SolutionStepRequest;
 import org.thingsboard.server.service.ai.TbAiService;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
@@ -72,17 +71,17 @@ public class DefaultAiSolutionService implements AiSolutionService {
     }
 
     @Override
-    public JsonNode installSolution(UUID solutionId, String tbAccessToken, TbAiClientRequest clientRequest, SecurityUser user) {
+    public JsonNode installSolution(UUID solutionId, String tbAccessToken, String clientOrigin, SecurityUser user) {
         return tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId)),
-                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientRequest)), user, false);
+                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientOrigin)), user, false);
     }
 
     @Override
-    public JsonNode uninstallSolution(UUID solutionId, String tbAccessToken, TbAiClientRequest clientRequest, SecurityUser user) {
+    public JsonNode uninstallSolution(UUID solutionId, String tbAccessToken, String clientOrigin, SecurityUser user) {
         return tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.SOLUTION_UNINSTALL, new SolutionOperationRequest(solutionId)),
-                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientRequest)), user, false);
+                new TbAiTurnContext(user, tbAccessToken, null, tokenProvider, clientOrigin)), user, false);
     }
 
     @Override

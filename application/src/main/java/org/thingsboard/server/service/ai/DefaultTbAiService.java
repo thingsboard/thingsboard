@@ -52,7 +52,7 @@ class DefaultTbAiService implements TbAiService {
         if (checkCredits) {
             checkApiUsage(user);
         }
-        TbAiResponse response = call.apply(createTokenProvider(user));
+        TbAiResponse response = call.apply(createCheckedTokenProvider(user));
         return processResponse(response, user);
     }
 
@@ -60,11 +60,12 @@ class DefaultTbAiService implements TbAiService {
     public Flux<ServerSentEvent<String>> processStream(UUID chatId, TbAiCall<Flux<ServerSentEvent<String>>> call, SecurityUser user) {
         checkEnabled();
         checkApiUsage(user);
+        TbAiClient.TokenProvider tokenProvider = createCheckedTokenProvider(user);
         return Flux.defer(() -> {
             // Eager subscribe so client cancel does not drop the trailing creditsUsed event.
             Sinks.Many<ServerSentEvent<String>> clientSink = Sinks.many().unicast().onBackpressureBuffer();
 
-            call.apply(createTokenProvider(user))
+            call.apply(tokenProvider)
                     .timeout(Duration.ofSeconds(aiSettings.getSseInactivityTimeoutSeconds()))
                     .subscribe(
                             event -> {
@@ -113,8 +114,14 @@ class DefaultTbAiService implements TbAiService {
         }
     }
 
-    private TbAiClient.TokenProvider createTokenProvider(SecurityUser user) {
+    /**
+     * Reads the token before the call reaches the channel pool, so a token the user may not have (e.g. AI is not in the
+     * subscription plan) fails the call with its own error rather than as a channel that cannot be opened, and is
+     * checked on every call rather than only when a channel opens.
+     */
+    private TbAiClient.TokenProvider createCheckedTokenProvider(SecurityUser user) {
         TbAiTokenProvider provider = tokenProvider.orElseThrow(() -> new ThingsboardRuntimeException("AI feature is not available", ThingsboardErrorCode.BAD_REQUEST_PARAMS));
+        provider.getToken(user);
         return TbAiTokenProviderFactory.userScoped(provider, user);
     }
 

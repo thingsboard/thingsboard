@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.solution.AiSolutionService;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.util.UUID;
 
@@ -35,7 +35,7 @@ import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUT
 public class AiSolutionController extends BaseController {
 
     private final AiSolutionService aiSolutionService;
-    private final TbAiClientRequestFactory clientRequestFactory;
+    private final SystemSecurityService systemSecurityService;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/start")
@@ -104,7 +104,7 @@ public class AiSolutionController extends BaseController {
                                     HttpServletRequest httpRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return aiSolutionService.installSolution(solutionId, tbAccessToken, clientRequestFactory.create(user, httpRequest), user);
+        return aiSolutionService.installSolution(solutionId, tbAccessToken, systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest), user);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -114,7 +114,7 @@ public class AiSolutionController extends BaseController {
                                       HttpServletRequest httpRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return aiSolutionService.uninstallSolution(solutionId, tbAccessToken, clientRequestFactory.create(user, httpRequest), user);
+        return aiSolutionService.uninstallSolution(solutionId, tbAccessToken, systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest), user);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

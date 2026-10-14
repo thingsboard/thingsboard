@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.LongSupplier;
 
 /**
- * Channels to TB AI on this tb-core node, one per user and client origin in the common case.
+ * Channels to TB AI on this tb-core node, one per user in the common case: each call carries its own client origin.
  * <ul>
  * <li>Calls of one user share a channel; concurrent first calls share one handshake.</li>
  * <li>At most {@code maxConnections} pooled channels per node. When full, the least recently used idle channel is
@@ -44,6 +44,7 @@ import java.util.function.LongSupplier;
  * <li>One sweeper closes channels idle for {@code idleTimeout} and retires channels older than {@code maxAge}, which
  * bounds how long a revoked token or changed subscription keeps working on an open channel.</li>
  * <li>Background calls (housekeeper deletions) always use transient channels.</li>
+ * <li>After {@link #shutdown} no channel opens, so a call refused by the shutdown is not retried on a new one.</li>
  * </ul>
  */
 @Slf4j
@@ -66,6 +67,7 @@ class TbAiChannelPool {
     private final ConcurrentMap<PoolKey, Group> groups = new ConcurrentHashMap<>();
     private final AtomicInteger pooledConnections = new AtomicInteger();
     private final ScheduledExecutorService sweeper;
+    private volatile boolean shutdown;
 
     @Autowired
     TbAiChannelPool(TbAiChannelClient channelClient,
@@ -104,12 +106,13 @@ class TbAiChannelPool {
     }
 
     private CompletableFuture<TbAiPooledConnection> acquire(TbAiTurnContext context, boolean fresh, int attempt) {
+        if (shutdown) {
+            return CompletableFuture.failedFuture(new TbAiChannelUnavailableException("Server is shutting down", null));
+        }
         if (context.isBackground()) {
             return connect(context, null, false);
         }
         PoolKey key = new PoolKey(context.tenantId(), context.userId());
-        String origin = context.clientRequest().clientOrigin();
-        boolean exactOrigin = context.clientRequest().exactOrigin();
         CompletableFuture<TbAiPooledConnection> pending = null;
         if (!fresh) {
             Group group = groups.computeIfAbsent(key, k -> new Group());
@@ -117,11 +120,11 @@ class TbAiChannelPool {
                 long now = nanoClock.getAsLong();
                 for (int i = group.connections.size() - 1; i >= 0; i--) {
                     TbAiPooledConnection connection = group.connections.get(i);
-                    if ((!exactOrigin || origin.equals(connection.origin())) && connection.tryReserve(now)) {
+                    if (connection.tryReserve(now)) {
                         return CompletableFuture.completedFuture(connection);
                     }
                 }
-                pending = exactOrigin ? group.connecting.get(origin) : group.connecting.values().stream().findFirst().orElse(null);
+                pending = group.connecting;
             }
         }
         if (pending != null) {
@@ -137,7 +140,7 @@ class TbAiChannelPool {
         Group group = groups.computeIfAbsent(key, k -> new Group());
         synchronized (group) {
             if (!fresh) {
-                CompletableFuture<TbAiPooledConnection> started = group.connecting.get(origin);
+                CompletableFuture<TbAiPooledConnection> started = group.connecting;
                 if (started != null) {
                     pooledConnections.decrementAndGet();
                     return started.thenCompose(connection -> connection.tryReserve(nanoClock.getAsLong())
@@ -146,10 +149,12 @@ class TbAiChannelPool {
                 }
             }
             CompletableFuture<TbAiPooledConnection> ready = connect(context, key, true);
-            group.connecting.put(origin, ready);
+            group.connecting = ready;
             ready.whenComplete((connection, error) -> {
                 synchronized (group) {
-                    group.connecting.remove(origin, ready);
+                    if (group.connecting == ready) {
+                        group.connecting = null;
+                    }
                     // A channel closed right after hello has already left the pool (removed() then found nothing).
                     if (connection != null && !connection.isRemoved()) {
                         group.connections.add(connection);
@@ -167,18 +172,22 @@ class TbAiChannelPool {
         return acquire(context, true, attempt + 1);
     }
 
+    /**
+     * Opens a channel; its hello carries the opening call's origin, which TB AI uses for start frames without one. One
+     * timer bounds the whole handshake: when it fires the connection leaves the pool at once, and a WebSocket upgrade
+     * that completes later is closed as soon as its session arrives (see {@link TbAiPooledConnection#opened}).
+     */
     private CompletableFuture<TbAiPooledConnection> connect(TbAiTurnContext context, PoolKey key, boolean pooled) {
-        var connection = new TbAiPooledConnection(key, context.clientRequest().clientOrigin(), pooled,
+        var connection = new TbAiPooledConnection(key, context.clientOrigin(), pooled,
                 maxOperationsPerConnection, channelClient.codec(), this, nanoClock.getAsLong());
         channelClient.connect(handshakeTokenProvider(context), connection)
                 .subscribeOn(Schedulers.boundedElastic())
-                .timeout(CONNECT_TIMEOUT)
                 .subscribe(connection::opened, error -> connection.failed(toConnectError(error)));
         return connection.ready()
                 .orTimeout(CONNECT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
                 .whenComplete((ready, error) -> {
                     if (error != null) {
-                        connection.close(ChannelProtocol.CLOSE_NORMAL, "Handshake failed");
+                        connection.failed(error);
                     }
                 })
                 .exceptionallyCompose(error -> CompletableFuture.failedFuture(unwrap(error)));
@@ -223,7 +232,7 @@ class TbAiChannelPool {
                 }
                 groups.computeIfPresent(entry.getKey(), (key, group) -> {
                     synchronized (group) {
-                        return group.connections.isEmpty() && group.connecting.isEmpty() ? null : group;
+                        return group.connections.isEmpty() && group.connecting == null ? null : group;
                     }
                 });
             }
@@ -238,6 +247,7 @@ class TbAiChannelPool {
 
     @PreDestroy
     void shutdown() {
+        shutdown = true;
         if (sweeper != null) {
             sweeper.shutdownNow();
         }
@@ -337,7 +347,7 @@ class TbAiChannelPool {
     private static final class Group {
 
         private final List<TbAiPooledConnection> connections = new ArrayList<>();
-        private final Map<String, CompletableFuture<TbAiPooledConnection>> connecting = new HashMap<>();
+        private CompletableFuture<TbAiPooledConnection> connecting;
 
     }
 

@@ -14,6 +14,7 @@ import org.thingsboard.ai.common.channel.TbHttpRequest;
 import org.thingsboard.ai.common.channel.TbHttpResponse;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.time.Duration;
 import java.util.List;
@@ -33,11 +34,10 @@ import static org.mockito.Mockito.mock;
 
 class ChannelTbAiOperationsTest {
 
-    static final List<String> MUX = TbAiChannelPoolTest.MUX;
 
     UUID solutionId = UUID.randomUUID();
     TbAiRequestExecutor requestExecutor = mock(TbAiRequestExecutor.class);
-    TbAiTurnContext context = TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", true);
+    TbAiTurnContext context = TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com");
     TbAiOperation install = new TbAiOperation(ChannelProtocol.SOLUTION_INSTALL, new SolutionOperationRequest(solutionId));
     FakeTbAiServer server;
     TbAiChannelPool pool;
@@ -56,7 +56,7 @@ class ChannelTbAiOperationsTest {
     @Test
     void shouldRunOperationAndServeThingsBoardRequests() {
         // GIVEN
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> {
+        server = FakeTbAiServer.start((connection, frame) -> {
             switch (frame.type()) {
                 case ChannelProtocol.SOLUTION_INSTALL -> connection.request(frame, ChannelProtocol.TB_REQUEST, "r1",
                         new TbHttpRequest("POST", "/api/dashboard", null, Map.of(), "{}", "utf8", 5000L));
@@ -90,7 +90,7 @@ class ChannelTbAiOperationsTest {
     void shouldRunConcurrentOperationsOnOneChannel() throws Exception {
         // GIVEN
         CountDownLatch bothStarted = new CountDownLatch(2);
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> {
+        server = FakeTbAiServer.start((connection, frame) -> {
             bothStarted.countDown();
             CompletableFuture.runAsync(() -> {
                 await(bothStarted);
@@ -114,12 +114,12 @@ class ChannelTbAiOperationsTest {
     void shouldServeManyUsersConcurrently_withOneChannelPerUser() throws Exception {
         // GIVEN
         maxConnections = 100;
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> CompletableFuture.runAsync(() ->
+        server = FakeTbAiServer.start((connection, frame) -> CompletableFuture.runAsync(() ->
                 connection.result(frame, new OperationResult(200, JacksonUtil.toJsonNode("[]"), 0))));
         ChannelTbAiOperations operations = operations();
         TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null);
         List<TbAiTurnContext> users = java.util.stream.IntStream.range(0, 50)
-                .mapToObj(i -> TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", false))
+                .mapToObj(i -> TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com"))
                 .toList();
         var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor();
 
@@ -140,7 +140,7 @@ class ChannelTbAiOperationsTest {
     void shouldServeEveryCall_whenUsersOutnumberThePool() throws Exception {
         // GIVEN
         maxConnections = 5;
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> CompletableFuture.runAsync(() ->
+        server = FakeTbAiServer.start((connection, frame) -> CompletableFuture.runAsync(() ->
                 connection.result(frame, new OperationResult(200, JacksonUtil.toJsonNode("[]"), 0))));
         ChannelTbAiOperations operations = operations();
         TbAiOperation list = new TbAiOperation(ChannelProtocol.CHAT_LIST, null);
@@ -149,7 +149,7 @@ class ChannelTbAiOperationsTest {
         // WHEN
         List<CompletableFuture<TbAiResponse>> calls = java.util.stream.IntStream.range(0, 100)
                 .mapToObj(i -> CompletableFuture.supplyAsync(() -> operations.execute(list,
-                        TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", false)), executor))
+                        TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com")), executor))
                 .toList();
         CompletableFuture.allOf(calls.toArray(CompletableFuture[]::new)).get(30, TimeUnit.SECONDS);
 
@@ -163,7 +163,7 @@ class ChannelTbAiOperationsTest {
     void shouldRetryOnNewChannel_whenServerHasTooManyOperations() {
         // GIVEN
         AtomicBoolean refused = new AtomicBoolean();
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> {
+        server = FakeTbAiServer.start((connection, frame) -> {
             if (refused.compareAndSet(false, true)) {
                 connection.refuse(frame, ChannelError.TOO_MANY_OPERATIONS);
             } else {
@@ -182,7 +182,7 @@ class ChannelTbAiOperationsTest {
     @Test
     void shouldFailWithoutRetry_whenChannelDropsAfterOperationWasSent() {
         // GIVEN
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> connection.close(1011, "Crashed"));
+        server = FakeTbAiServer.start((connection, frame) -> connection.close(1011, "Crashed"));
 
         // WHEN
         TbAiResponse response = operations().execute(install, context);
@@ -197,7 +197,7 @@ class ChannelTbAiOperationsTest {
     void shouldRetryOnNewChannel_whenChannelGoesAwayBeforeAnyFrame() {
         // GIVEN
         AtomicBoolean wentAway = new AtomicBoolean();
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> {
+        server = FakeTbAiServer.start((connection, frame) -> {
             if (wentAway.compareAndSet(false, true)) {
                 connection.close(ChannelProtocol.CLOSE_GOING_AWAY, "Server is shutting down");
             } else {
@@ -216,7 +216,7 @@ class ChannelTbAiOperationsTest {
     @Test
     void shouldReturnErrorMessageFromBody_whenOperationFails() {
         // GIVEN
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> connection.result(frame,
+        server = FakeTbAiServer.start((connection, frame) -> connection.result(frame,
                 new OperationResult(404, JacksonUtil.newObjectNode().put("message", "Solution not found"), 0)));
 
         // WHEN
@@ -228,26 +228,38 @@ class ChannelTbAiOperationsTest {
     }
 
     @Test
-    void shouldSignalChannelUnavailable_whenServerHelloLacksMux() {
+    void shouldFailWithoutRetry_whenServerAbortsRunningOperations() {
         // GIVEN
-        server = FakeTbAiServer.start(List.of(ChannelProtocol.CAPABILITY_REST, ChannelProtocol.CAPABILITY_OPERATIONS),
-                (connection, frame) -> connection.result(frame, new OperationResult(200, null, 0)));
+        server = FakeTbAiServer.start((connection, frame) ->
+                connection.close(ChannelProtocol.CLOSE_EXCHANGES_ABORTED, "Server is shutting down"));
 
-        // WHEN-THEN
-        assertThatThrownBy(() -> operations().execute(install, context)).isInstanceOf(TbAiChannelUnavailableException.class);
-        assertThat(server.received(ChannelProtocol.SOLUTION_INSTALL)).isEmpty();
+        // WHEN
+        TbAiResponse response = operations().execute(install, context);
+
+        // THEN
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getError()).isEqualTo("Service unavailable");
+        assertThat(server.received(ChannelProtocol.SOLUTION_INSTALL)).hasSize(1);
+        assertThat(server.connections.get()).isEqualTo(1);
     }
 
     @Test
-    void shouldSignalUnsupported_whenServerLacksCapability() {
+    void shouldSendCallOrigin_whenChannelWasOpenedWithAnother() {
         // GIVEN
-        server = FakeTbAiServer.start(List.of(ChannelProtocol.CAPABILITY_REST, ChannelProtocol.CAPABILITY_OPERATIONS,
-                ChannelProtocol.CAPABILITY_MUX), (connection, frame) -> {});
+        server = FakeTbAiServer.start((connection, frame) -> connection.result(frame, new OperationResult(200, null, 0)));
+        TbAiChannelPool sharedPool = new TbAiChannelPool(server.client(), 10, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
+        SecurityUser user = TbAiChannelPoolTest.user();
+        var channelOperations = new ChannelTbAiOperations(sharedPool, requestExecutor);
 
-        // WHEN-THEN
-        assertThatThrownBy(() -> operations().execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null), context))
-                .isInstanceOf(TbAiOperationsUnsupportedException.class);
-        assertThat(server.received(ChannelProtocol.CHAT_LIST)).isEmpty();
+        // WHEN
+        channelOperations.execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null), TbAiChannelPoolTest.context(user, "https://tb.example.com"));
+        channelOperations.execute(new TbAiOperation(ChannelProtocol.CHAT_LIST, null), TbAiChannelPoolTest.context(user, "https://other.example.com"));
+
+        // THEN
+        assertThat(server.connections.get()).isEqualTo(1);
+        assertThat(server.received(ChannelProtocol.CHAT_LIST)).extracting(ChannelFrame::origin)
+                .containsExactly("https://tb.example.com", "https://other.example.com");
+        sharedPool.shutdown();
     }
 
     @Test

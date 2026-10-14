@@ -19,8 +19,8 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.dao.service.validator.DashboardDataValidator;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.dashboard.AiDeviceDashboardService;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.util.UUID;
 
@@ -34,7 +34,7 @@ class AiDeviceDashboardController extends BaseController {
 
     private final AiDeviceDashboardService aiDeviceDashboardService;
     private final DashboardDataValidator dashboardDataValidator;
-    private final TbAiClientRequestFactory clientRequestFactory;
+    private final SystemSecurityService systemSecurityService;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{deviceId}/dashboard")
@@ -49,7 +49,7 @@ class AiDeviceDashboardController extends BaseController {
         checkDeviceId(new DeviceId(deviceId), Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY);
         accessControlService.checkPermission(user, Resource.DASHBOARD, Operation.CREATE);
         dashboardDataValidator.validateMaxDashboardsPerTenant(user.getTenantId());
-        return aiDeviceDashboardService.generateDashboard(deviceId, request, tbAccessToken, clientRequestFactory.create(user, httpRequest), user);
+        return aiDeviceDashboardService.generateDashboard(deviceId, request, tbAccessToken, systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest), user);
     }
 
 }

@@ -39,10 +39,9 @@ import static org.mockito.Mockito.mock;
 class ChannelTbAiTransportTest {
 
     static final UUID EXECUTION_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
-    static final List<String> MUX = TbAiChannelPoolTest.MUX;
 
     TbAiRequestExecutor requestExecutor = mock(TbAiRequestExecutor.class);
-    TbAiTurnContext context = TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com", true);
+    TbAiTurnContext context = TbAiChannelPoolTest.context(TbAiChannelPoolTest.user(), "https://tb.example.com");
     JsonNode request = JacksonUtil.newObjectNode().put("message", "Create a device");
     FakeTbAiServer server;
     TbAiChannelPool pool;
@@ -60,7 +59,7 @@ class ChannelTbAiTransportTest {
     @Test
     void shouldRelayEventsServeRequestsAndKeepChannel() {
         // GIVEN
-        server = FakeTbAiServer.start(MUX, this::assistantWithToolCall);
+        server = FakeTbAiServer.start(this::assistantWithToolCall);
         stubExecutor();
 
         // WHEN
@@ -86,7 +85,7 @@ class ChannelTbAiTransportTest {
     void shouldRetryOnNewChannel_whenServerIsDraining() {
         // GIVEN
         AtomicBoolean drained = new AtomicBoolean();
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> {
+        server = FakeTbAiServer.start((connection, frame) -> {
             if (ChannelProtocol.CHAT_SEND.equals(frame.type())) {
                 if (drained.compareAndSet(false, true)) {
                     connection.refuse(frame, ChannelError.DRAINING);
@@ -109,7 +108,7 @@ class ChannelTbAiTransportTest {
     @Test
     void shouldCancelOnlyItsTurn_whenBrowserLeaves() {
         // GIVEN
-        server = FakeTbAiServer.start(MUX, (connection, frame) -> {
+        server = FakeTbAiServer.start((connection, frame) -> {
             if (ChannelProtocol.CHAT_SEND.equals(frame.type())) {
                 connection.sendFor(frame, ChannelProtocol.CHAT_EVENT, new ChatEventPayload("heartbeat", null));
             }
@@ -158,7 +157,7 @@ class ChannelTbAiTransportTest {
             pool = pool();
         }
         TbAiTurnContext turnContext = new TbAiTurnContext(context.tenantId(), context.userId(), context.user(), "Bearer user-jwt",
-                "de-DE", context.tokenProvider(), new TbAiClientRequest("https://tb.example.com", Map.of()));
+                "de-DE", context.tokenProvider(), "https://tb.example.com");
         return new ChannelTbAiTransport(pool, requestExecutor)
                 .sendChatMessage(UUID.randomUUID(), request, turnContext)
                 .collectList()

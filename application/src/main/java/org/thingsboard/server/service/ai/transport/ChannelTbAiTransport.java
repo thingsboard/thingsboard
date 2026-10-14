@@ -23,8 +23,9 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Runs a chat turn on a pooled channel and re-emits its events as SSE. A turn the channel did not start is retried
- * once on a new channel; a channel that cannot be opened fails the turn with "Service unavailable".
+ * Runs a chat turn on a pooled channel and re-emits its events as SSE. A turn the channel did not start (refused, or
+ * closed with 1001 before any frame for it) is retried once on a new channel; a channel that cannot be opened fails
+ * the turn with "Service unavailable".
  */
 @Slf4j
 @Component
@@ -153,7 +154,8 @@ class ChannelTbAiTransport implements TbAiTransport {
                 return;
             }
             ChannelFrame start = ChannelFrame.request(ChannelProtocol.CHAT_SEND,
-                    acquired.codec().toPayload(new ChatTurnRequest(chatId, request, context.acceptLanguage())));
+                    acquired.codec().toPayload(new ChatTurnRequest(chatId, request, context.acceptLanguage())))
+                    .withOrigin(context.clientOrigin());
             op = start.id();
             connection = acquired;
             try {

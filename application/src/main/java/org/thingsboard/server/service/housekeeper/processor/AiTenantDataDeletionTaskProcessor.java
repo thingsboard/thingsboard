@@ -7,8 +7,8 @@ import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiTokenProvider;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequestFactory;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.util.Optional;
 
@@ -17,8 +17,8 @@ import java.util.Optional;
 public class AiTenantDataDeletionTaskProcessor extends AiDataDeletionTaskProcessor {
 
     public AiTenantDataDeletionTaskProcessor(Optional<TbAiTokenProvider> tokenProvider, TbAiOperations operations,
-                                             TbAiClientRequestFactory clientRequestFactory) {
-        super(tokenProvider, operations, clientRequestFactory);
+                                             SystemSecurityService systemSecurityService) {
+        super(tokenProvider, operations, systemSecurityService);
     }
 
     @Override

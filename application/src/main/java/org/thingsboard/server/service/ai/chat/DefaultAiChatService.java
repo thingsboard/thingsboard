@@ -10,7 +10,6 @@ import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.channel.ChatOperationRequest;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.TbAiService;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTransport;
@@ -61,11 +60,11 @@ class DefaultAiChatService implements AiChatService {
 
     @Override
     public Flux<ServerSentEvent<String>> sendChatMessage(
-            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, TbAiClientRequest clientRequest,
+            UUID chatId, JsonNode request, String tbAccessToken, String acceptLanguage, String clientOrigin,
             SecurityUser user
     ) {
         return tbAiService.processStream(chatId, tokenProvider -> {
-            var context = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider, clientRequest);
+            var context = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider, clientOrigin);
             return tbAiTransport.sendChatMessage(chatId, request, context);
         }, user);
     }

@@ -59,6 +59,10 @@ public class TbAiRequestExecutor {
             "x-forwarded-host", "x-forwarded-proto", "x-forwarded-port", "x-forwarded-for");
     private static final Set<String> DROPPED_RESPONSE_HEADERS = Set.of(
             "set-cookie", "content-length", "transfer-encoding", "connection");
+    private static final String X_FORWARDED_HOST = "X-Forwarded-Host";
+    private static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
+    private static final String X_FORWARDED_PORT = "X-Forwarded-Port";
+    private static final String X_FORWARDED_FOR = "X-Forwarded-For";
 
     private final String baseUrl;
     private final WebClient webClient;
@@ -103,7 +107,7 @@ public class TbAiRequestExecutor {
                 .uri(URI.create(baseUrl + request.path() + query))
                 .headers(headers -> {
                     copyRequestHeaders(request.headers(), headers);
-                    context.clientRequest().forwardedHeaders().forEach(headers::set);
+                    forwardedHeaders(context).forEach(headers::set);
                     headers.set(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER, context.tbAccessToken());
                 });
         WebClient.RequestHeadersSpec<?> withBody = body.length > 0 ? spec.bodyValue(body) : spec;
@@ -162,6 +166,43 @@ public class TbAiRequestExecutor {
             }
         }
         return null;
+    }
+
+    /**
+     * Makes the loopback request look as if it came through the user's {@code clientOrigin} from the user's address,
+     * so ThingsBoard builds URLs (device connectivity commands) and records addresses as for the user's own request.
+     * The browser request's X-Forwarded-* headers cannot be copied: the forwarded-header filter consumes them.
+     */
+    static Map<String, String> forwardedHeaders(TbAiTurnContext context) {
+        var headers = new LinkedHashMap<String, String>();
+        URI origin = parseOrigin(context.clientOrigin());
+        if (origin != null) {
+            String scheme = origin.getScheme().toLowerCase(Locale.ROOT);
+            int port = origin.getPort() != -1 ? origin.getPort() : "https".equals(scheme) ? 443 : 80;
+            headers.put(X_FORWARDED_PROTO, scheme);
+            headers.put(X_FORWARDED_HOST, origin.getHost());
+            headers.put(X_FORWARDED_PORT, String.valueOf(port));
+        }
+        if (context.user() != null && StringUtils.isNotBlank(context.user().getClientAddress())) {
+            headers.put(X_FORWARDED_FOR, context.user().getClientAddress());
+        }
+        return headers;
+    }
+
+    private static URI parseOrigin(String clientOrigin) {
+        if (StringUtils.isBlank(clientOrigin)) {
+            return null;
+        }
+        try {
+            URI uri = URI.create(clientOrigin.trim());
+            String scheme = uri.getScheme();
+            if (uri.getHost() == null || !("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))) {
+                return null;
+            }
+            return uri;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static void copyRequestHeaders(Map<String, List<String>> source, HttpHeaders target) {

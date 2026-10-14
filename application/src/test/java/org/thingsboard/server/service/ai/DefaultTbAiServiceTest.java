@@ -56,6 +56,7 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultTbAiServiceTest {
@@ -214,9 +215,25 @@ class DefaultTbAiServiceTest {
         assertThat(tokenProvider.getToken()).isEqualTo("jwt-token");
         assertThat(tokenProvider.getAdditionalInfo()).containsExactlyInAnyOrderEntriesOf(Map.of("X-Forwarded-For", "198.51.100.10"));
 
-        then(tbAiTokenProvider).should().getToken(user);
+        // once before the call, to fail it early, and once through the scoped provider
+        then(tbAiTokenProvider).should(times(2)).getToken(user);
         then(tbAiTokenProvider).should().getAdditionalInfo(user);
         then(tbAiTokenProvider).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldThrowTokenErrorAndSkipCall_whenProcessAndUserHasNoAiToken() {
+        // GIVEN
+        given(tbAiTokenProvider.getToken(user)).willThrow(new ThingsboardRuntimeException(
+                "AI is not available for the current subscription plan", ThingsboardErrorCode.PERMISSION_DENIED));
+
+        // WHEN
+        Throwable thrown = catchThrowable(() -> service.process(call, user, false));
+
+        // THEN — the plan error reaches the controller as a 403, not as an unavailable channel
+        assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("AI is not available for the current subscription plan");
+        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.PERMISSION_DENIED);
+        then(call).should(never()).apply(any());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -321,6 +338,23 @@ class DefaultTbAiServiceTest {
         // THEN
         assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("Out of AI credits");
         assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.TOO_MANY_REQUESTS);
+        then(apiUsageReportClient).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldThrowTokenError_whenProcessStreamAndUserHasNoAiToken() {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        given(tbAiTokenProvider.getToken(user)).willThrow(new ThingsboardRuntimeException(
+                "AI is not available for the current subscription plan", ThingsboardErrorCode.PERMISSION_DENIED));
+
+        // WHEN
+        Throwable thrown = catchThrowable(() ->
+                service.processStream(chatId, tokenProvider -> Flux.empty(), user));
+
+        // THEN
+        assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("AI is not available for the current subscription plan");
+        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(ThingsboardErrorCode.PERMISSION_DENIED);
         then(apiUsageReportClient).shouldHaveNoInteractions();
     }
 

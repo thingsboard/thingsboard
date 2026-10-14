@@ -15,7 +15,6 @@ import org.thingsboard.ai.common.channel.TbAiChannelClient;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,8 +30,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 final class TbAiPooledConnection implements ChannelFrameListener {
 
-    static final List<String> CLIENT_CAPABILITIES = List.of(ChannelProtocol.CAPABILITY_REST,
-            ChannelProtocol.CAPABILITY_OPERATIONS, ChannelProtocol.CAPABILITY_API, ChannelProtocol.CAPABILITY_MUX);
+    // Protocol version 1 is the baseline. A later feature that this ThingsBoard handles goes here, so TB AI can tell
+    // before using it that this ThingsBoard understands it.
+    static final List<String> CLIENT_CAPABILITIES = List.of();
 
     private final TbAiChannelPool.PoolKey key;
     private final String origin;
@@ -52,7 +52,6 @@ final class TbAiPooledConnection implements ChannelFrameListener {
     private long lastUsedNanos;
 
     private volatile ChannelSession session;
-    private volatile Set<String> capabilities = Set.of();
     private volatile int maxFrameBytes = TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES;
 
     /**
@@ -89,16 +88,8 @@ final class TbAiPooledConnection implements ChannelFrameListener {
         return key;
     }
 
-    String origin() {
-        return origin;
-    }
-
     boolean isPooled() {
         return pooled;
-    }
-
-    boolean supports(String capability) {
-        return capabilities.contains(capability);
     }
 
     int maxFrameBytes() {
@@ -117,8 +108,17 @@ final class TbAiPooledConnection implements ChannelFrameListener {
         return ready;
     }
 
+    /**
+     * The session arrived. If the handshake already failed (the connect timed out), the session is closed: it is
+     * stored first and {@link #failed} closes whatever is stored after failing {@code ready}, so one of the two always
+     * sees the other and the channel never stays open outside the pool.
+     */
     void opened(ChannelSession openedSession) {
         session = openedSession;
+        if (ready.isDone()) {
+            close(ChannelProtocol.CLOSE_NORMAL, "Handshake failed");
+            return;
+        }
         try {
             openedSession.send(ChannelFrame.of(ChannelProtocol.HELLO, codec.toPayload(
                     new ChannelHello(ChannelProtocol.VERSION, CLIENT_CAPABILITIES, origin, null))));
@@ -127,9 +127,14 @@ final class TbAiPooledConnection implements ChannelFrameListener {
         }
     }
 
+    /**
+     * The handshake failed or timed out: the connection leaves the pool now and its session, if it has one or gets
+     * one later, is closed.
+     */
     void failed(Throwable error) {
         ready.completeExceptionally(error);
         markRemoved();
+        close(ChannelProtocol.CLOSE_NORMAL, "Handshake failed");
     }
 
     boolean tryReserve(long nowNanos) {
@@ -285,13 +290,6 @@ final class TbAiPooledConnection implements ChannelFrameListener {
             switch (frame.type()) {
                 case ChannelProtocol.HELLO -> {
                     ChannelHello hello = codec.fromPayload(frame.payload(), ChannelHello.class);
-                    capabilities = hello.capabilities() != null ? Set.copyOf(hello.capabilities()) : Set.of();
-                    if (!capabilities.contains(ChannelProtocol.CAPABILITY_MUX)) {
-                        ready.completeExceptionally(new TbAiChannelUnavailableException(
-                                "AI channel does not support " + ChannelProtocol.CAPABILITY_MUX, null));
-                        close(ChannelProtocol.CLOSE_PROTOCOL_ERROR, "Missing " + ChannelProtocol.CAPABILITY_MUX);
-                        return;
-                    }
                     if (hello.maxFrameBytes() != null && hello.maxFrameBytes() > 0 && hello.maxFrameBytes() < Integer.MAX_VALUE) {
                         maxFrameBytes = hello.maxFrameBytes().intValue();
                     }

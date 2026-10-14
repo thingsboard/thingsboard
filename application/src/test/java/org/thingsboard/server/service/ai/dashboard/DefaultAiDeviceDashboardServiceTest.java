@@ -16,13 +16,11 @@ import org.thingsboard.ai.common.channel.DashboardOperationRequest;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
-import org.thingsboard.server.service.ai.transport.TbAiClientRequest;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.Map;
 
 import java.util.UUID;
 
@@ -46,7 +44,7 @@ class DefaultAiDeviceDashboardServiceTest {
     @Mock
     SecurityUser user;
 
-    TbAiClientRequest clientRequest = new TbAiClientRequest("https://tb.example.com", Map.of());
+    String clientOrigin = "https://tb.example.com";
 
     DefaultAiDeviceDashboardService service;
 
@@ -67,7 +65,7 @@ class DefaultAiDeviceDashboardServiceTest {
         stubOperations();
 
         // WHEN
-        JsonNode result = service.generateDashboard(deviceId, request, tbAccessToken, clientRequest, user);
+        JsonNode result = service.generateDashboard(deviceId, request, tbAccessToken, clientOrigin, user);
 
         // THEN
         assertThat(result).isSameAs(expectedResponse);
@@ -77,7 +75,7 @@ class DefaultAiDeviceDashboardServiceTest {
         TbAiOperation operation = captureOperation(context);
         assertThat(operation.type()).isEqualTo(ChannelProtocol.DASHBOARD_GENERATE);
         assertThat(operation.payload()).isEqualTo(new DashboardOperationRequest(deviceId, request));
-        assertThat(context[0].clientRequest()).isSameAs(clientRequest);
+        assertThat(context[0].clientOrigin()).isEqualTo(clientOrigin);
         assertThat(context[0].tbAccessToken()).isEqualTo(tbAccessToken);
         assertThat(context[0].tokenProvider()).isSameAs(tokenProvider);
         then(tbAiService).shouldHaveNoMoreInteractions();

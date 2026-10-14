@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A scripted TB AI channel endpoint. It answers {@code hello} with the given capabilities and hands every other frame
+ * A scripted TB AI channel endpoint. It answers {@code hello} with the protocol version and frame limit and hands every other frame
  * to the script, which replies through {@link Connection}: tagged with the op of the operation it belongs to, as TB AI
  * does.
  */
@@ -38,7 +38,7 @@ class FakeTbAiServer implements AutoCloseable {
     final AtomicInteger openConnections = new AtomicInteger();
     private final DisposableServer server;
 
-    private FakeTbAiServer(List<String> capabilities, Script script) {
+    private FakeTbAiServer(Script script) {
         server = HttpServer.create().host("127.0.0.1").port(0)
                 .route(routes -> routes.ws(ChannelProtocol.WS_PATH, (inbound, outbound) -> {
                     connections.incrementAndGet();
@@ -49,7 +49,7 @@ class FakeTbAiServer implements AutoCloseable {
                         received.add(frame);
                         if (ChannelProtocol.HELLO.equals(frame.type())) {
                             connection.send(ChannelFrame.of(ChannelProtocol.HELLO, codec.toPayload(
-                                    new ChannelHello(1, capabilities, null, (long) TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES))));
+                                    new ChannelHello(1, null, null, (long) TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES))));
                         } else {
                             script.onFrame(connection, frame);
                         }
@@ -62,8 +62,8 @@ class FakeTbAiServer implements AutoCloseable {
                 .bindNow();
     }
 
-    static FakeTbAiServer start(List<String> capabilities, Script script) {
-        return new FakeTbAiServer(capabilities, script);
+    static FakeTbAiServer start(Script script) {
+        return new FakeTbAiServer(script);
     }
 
     static FakeTbAiServer rejecting(int status) {

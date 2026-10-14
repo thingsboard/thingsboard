@@ -6,9 +6,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.client.TbAiClient.TbAiResponse;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,12 +24,12 @@ import static org.mockito.Mockito.verify;
 class TbAiOperationsTest {
 
     TbAiTurnContext context = new TbAiTurnContext(mock(SecurityUser.class), "Bearer jwt", null, () -> "token",
-            new TbAiClientRequest("https://tb.example.com", Map.of()));
+            "https://tb.example.com");
     TbAiResponse channelResponse = TbAiResponse.builder().success(true).build();
     TbAiOperation operation = new TbAiOperation(ChannelProtocol.SOLUTION_INSTALL, null);
     ChannelTbAiOperations channel = mock(ChannelTbAiOperations.class);
-    TbAiClientRequestFactory clientRequestFactory = mock(TbAiClientRequestFactory.class);
-    TbAiOperations operations = new TbAiOperations(channel, clientRequestFactory);
+    SystemSecurityService systemSecurityService = mock(SystemSecurityService.class);
+    TbAiOperations operations = new TbAiOperations(channel, systemSecurityService);
 
     @Test
     void shouldReturnChannelResponse_whenChannelAnswers() {
@@ -50,19 +54,6 @@ class TbAiOperationsTest {
     }
 
     @Test
-    void shouldReturnUnsupported_whenAiServiceLacksTheOperation() {
-        // GIVEN
-        given(channel.execute(operation, context)).willThrow(new TbAiOperationsUnsupportedException("old TB AI"));
-
-        // WHEN
-        TbAiResponse response = operations.execute(operation, context);
-
-        // THEN
-        assertThat(response.isSuccess()).isFalse();
-        assertThat(response.getError()).isEqualTo("The AI service does not support this ThingsBoard version");
-    }
-
-    @Test
     void shouldReturnRejection_whenChannelHandshakeIsRefused() {
         // GIVEN
         given(channel.execute(operation, context)).willThrow(new TbAiChannelRejectedException("Unauthorized"));
@@ -76,11 +67,15 @@ class TbAiOperationsTest {
     }
 
     @Test
-    void shouldBuildDefaultOriginContext_whenCalledForUser() {
+    void shouldUseSettingsBaseUrlAsOrigin_whenCalledForUser() {
         // GIVEN
         SecurityUser user = mock(SecurityUser.class);
-        TbAiClientRequest defaultRequest = TbAiClientRequest.withDefaultOrigin("https://tb.example.com");
-        given(clientRequestFactory.forUser(user)).willReturn(defaultRequest);
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        CustomerId customerId = new CustomerId(UUID.randomUUID());
+        given(user.getAuthority()).willReturn(Authority.TENANT_ADMIN);
+        given(user.getTenantId()).willReturn(tenantId);
+        given(user.getCustomerId()).willReturn(customerId);
+        given(systemSecurityService.getBaseUrl(Authority.TENANT_ADMIN, tenantId, customerId, null)).willReturn("https://tb.example.com");
         given(channel.execute(any(), any())).willReturn(channelResponse);
 
         // WHEN
@@ -89,8 +84,7 @@ class TbAiOperationsTest {
         // THEN
         ArgumentCaptor<TbAiTurnContext> captured = ArgumentCaptor.forClass(TbAiTurnContext.class);
         verify(channel).execute(same(operation), captured.capture());
-        assertThat(captured.getValue().clientRequest()).isSameAs(defaultRequest);
-        assertThat(captured.getValue().clientRequest().exactOrigin()).isFalse();
+        assertThat(captured.getValue().clientOrigin()).isEqualTo("https://tb.example.com");
         assertThat(captured.getValue().tbAccessToken()).isNull();
     }
 

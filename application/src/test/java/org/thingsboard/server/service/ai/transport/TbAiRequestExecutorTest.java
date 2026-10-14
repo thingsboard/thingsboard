@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 class TbAiRequestExecutorTest {
@@ -37,8 +38,8 @@ class TbAiRequestExecutorTest {
     AtomicReference<String> receivedBody = new AtomicReference<>();
     DisposableServer tbServer;
     TbAiRequestExecutor executor;
-    TbAiTurnContext context = new TbAiTurnContext(mock(SecurityUser.class), "Bearer user-jwt", "en-US", () -> "ai-token",
-            new TbAiClientRequest("https://tb.example.com", Map.of("Host", "tb.example.com", "X-Forwarded-Proto", "https")));
+    TbAiTurnContext context = new TbAiTurnContext(user("203.0.113.7"), "Bearer user-jwt", "en-US", () -> "ai-token",
+            "https://tb.example.com");
 
     @BeforeEach
     void setUp() {
@@ -83,8 +84,10 @@ class TbAiRequestExecutorTest {
         assertThat(receivedUri.get()).isEqualTo("/api/tenant/devices?pageSize=10&page=0");
         HttpHeaders headers = receivedHeaders.get();
         assertThat(headers.get("X-Authorization")).isEqualTo("Bearer user-jwt");
-        assertThat(headers.get("Host")).isEqualTo("tb.example.com");
+        assertThat(headers.get("X-Forwarded-Host")).isEqualTo("tb.example.com");
         assertThat(headers.get("X-Forwarded-Proto")).isEqualTo("https");
+        assertThat(headers.get("X-Forwarded-Port")).isEqualTo("443");
+        assertThat(headers.get("X-Forwarded-For")).isEqualTo("203.0.113.7");
         assertThat(headers.get("Accept")).isEqualTo("application/json");
         assertThat(headers.contains("Authorization")).isFalse();
     }
@@ -152,6 +155,48 @@ class TbAiRequestExecutorTest {
         assertThat(reply.type()).isEqualTo(ChannelProtocol.ERROR);
         assertThat(codec.fromPayload(reply.payload(), ChannelError.class)).isEqualTo(new ChannelError("invalid_request", expectedMessage));
         assertThat(receivedUri.get()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', nullValues = "null", textBlock = """
+            https://tb.example.com         | 203.0.113.7 | https | tb.example.com | 443  | 203.0.113.7
+            http://tb.example.com          | null        | http  | tb.example.com | 80   | null
+            http://10.0.0.5:8080/          | 10.0.0.9    | http  | 10.0.0.5       | 8080 | 10.0.0.9
+            https://[2001:db8::1]:8443     | null        | https | [2001:db8::1]  | 8443 | null
+            """)
+    void shouldBuildForwardedHeadersFromClientOrigin(String clientOrigin, String clientAddress, String proto, String host,
+                                                     String port, String forwardedFor) {
+        // GIVEN
+        var turn = new TbAiTurnContext(user(clientAddress), "Bearer user-jwt", null, () -> "ai-token", clientOrigin);
+
+        // WHEN
+        Map<String, String> headers = TbAiRequestExecutor.forwardedHeaders(turn);
+
+        // THEN
+        assertThat(headers).containsEntry("X-Forwarded-Proto", proto)
+                .containsEntry("X-Forwarded-Host", host)
+                .containsEntry("X-Forwarded-Port", port);
+        if (forwardedFor != null) {
+            assertThat(headers).containsEntry("X-Forwarded-For", forwardedFor);
+        } else {
+            assertThat(headers).doesNotContainKey("X-Forwarded-For");
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource(nullValues = "null", value = {"null", "not a url", "ftp://tb.example.com", "/relative"})
+    void shouldForwardNoOrigin_whenClientOriginIsNotAnHttpUrl(String clientOrigin) {
+        // GIVEN
+        var turn = new TbAiTurnContext(user(null), "Bearer user-jwt", null, () -> "ai-token", clientOrigin);
+
+        // WHEN-THEN
+        assertThat(TbAiRequestExecutor.forwardedHeaders(turn)).isEmpty();
+    }
+
+    static SecurityUser user(String clientAddress) {
+        SecurityUser user = mock(SecurityUser.class);
+        given(user.getClientAddress()).willReturn(clientAddress);
+        return user;
     }
 
     ChannelFrame execute(TbHttpRequest request, int maxBodyBytes) {

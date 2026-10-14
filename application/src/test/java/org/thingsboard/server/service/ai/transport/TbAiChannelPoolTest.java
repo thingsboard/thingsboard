@@ -25,11 +25,8 @@ import static org.mockito.Mockito.mock;
 
 class TbAiChannelPoolTest {
 
-    static final List<String> MUX = List.of(ChannelProtocol.CAPABILITY_REST, ChannelProtocol.CAPABILITY_OPERATIONS,
-            ChannelProtocol.CAPABILITY_API, ChannelProtocol.CAPABILITY_MUX);
-
     AtomicLong now = new AtomicLong(1_000_000_000L);
-    FakeTbAiServer server = FakeTbAiServer.start(MUX, (connection, frame) -> {});
+    FakeTbAiServer server = FakeTbAiServer.start((connection, frame) -> {});
     TbAiChannelPool pool;
 
     @AfterEach
@@ -44,7 +41,7 @@ class TbAiChannelPoolTest {
     void shouldShareOneHandshake_whenUserMakesConcurrentFirstCalls() {
         // GIVEN
         pool = pool(10);
-        TbAiTurnContext context = context(user(), "https://tb.example.com", true);
+        TbAiTurnContext context = context(user(), "https://tb.example.com");
 
         // WHEN
         CompletableFuture<TbAiPooledConnection> first = pool.acquire(context, false);
@@ -60,7 +57,7 @@ class TbAiChannelPoolTest {
     void shouldReuseChannel_whenSameUserCallsAgain() {
         // GIVEN
         pool = pool(10);
-        TbAiTurnContext context = context(user(), "https://tb.example.com", true);
+        TbAiTurnContext context = context(user(), "https://tb.example.com");
         TbAiPooledConnection connection = join(pool.acquire(context, false));
         connection.unreserve(now.get());
 
@@ -73,29 +70,40 @@ class TbAiChannelPoolTest {
     }
 
     @Test
-    void shouldOpenSeparateChannels_whenUsersOrExactOriginsDiffer() {
+    void shouldShareChannel_whenUserComesThroughDifferentOrigins() {
         // GIVEN
         pool = pool(10);
         SecurityUser user = user();
-        TbAiPooledConnection mainOrigin = join(pool.acquire(context(user, "https://tb.example.com", true), false));
+        TbAiPooledConnection mainOrigin = join(pool.acquire(context(user, "https://tb.example.com"), false));
 
         // WHEN
-        TbAiPooledConnection otherOrigin = join(pool.acquire(context(user, "https://other.example.com", true), false));
-        TbAiPooledConnection anyOrigin = join(pool.acquire(context(user, "https://default.example.com", false), false));
-        TbAiPooledConnection otherUser = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
+        TbAiPooledConnection otherOrigin = join(pool.acquire(context(user, "https://other.example.com"), false));
+        TbAiPooledConnection otherUser = join(pool.acquire(context(user(), "https://tb.example.com"), false));
 
         // THEN
-        assertThat(otherOrigin).isNotSameAs(mainOrigin);
-        assertThat(anyOrigin).isIn(mainOrigin, otherOrigin);
-        assertThat(otherUser).isNotSameAs(mainOrigin).isNotSameAs(otherOrigin);
-        assertThat(server.connections.get()).isEqualTo(3);
+        assertThat(otherOrigin).isSameAs(mainOrigin);
+        assertThat(otherUser).isNotSameAs(mainOrigin);
+        assertThat(server.connections.get()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldOpenNoChannel_whenPoolIsShutDown() {
+        // GIVEN
+        pool = pool(10);
+        pool.shutdown();
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com"), false)))
+                .hasCauseInstanceOf(TbAiChannelUnavailableException.class)
+                .hasMessageEndingWith("Server is shutting down");
+        assertThat(server.connections.get()).isZero();
     }
 
     @Test
     void shouldCloseChannel_whenIdleLongerThanTimeout() {
         // GIVEN
         pool = pool(10);
-        TbAiPooledConnection connection = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
+        TbAiPooledConnection connection = join(pool.acquire(context(user(), "https://tb.example.com"), false));
         connection.unreserve(now.get());
 
         // WHEN
@@ -115,7 +123,7 @@ class TbAiChannelPoolTest {
     void shouldRetireBusyChannel_whenOlderThanMaxAge() {
         // GIVEN
         pool = pool(10);
-        TbAiTurnContext context = context(user(), "https://tb.example.com", true);
+        TbAiTurnContext context = context(user(), "https://tb.example.com");
         TbAiPooledConnection busy = join(pool.acquire(context, false));
 
         // WHEN
@@ -133,11 +141,11 @@ class TbAiChannelPoolTest {
     void shouldEvictIdleChannel_whenPoolIsFull() {
         // GIVEN
         pool = pool(1);
-        TbAiPooledConnection idle = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
+        TbAiPooledConnection idle = join(pool.acquire(context(user(), "https://tb.example.com"), false));
         idle.unreserve(now.get());
 
         // WHEN
-        TbAiPooledConnection next = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
+        TbAiPooledConnection next = join(pool.acquire(context(user(), "https://tb.example.com"), false));
 
         // THEN
         assertThat(next.isPooled()).isTrue();
@@ -148,10 +156,10 @@ class TbAiChannelPoolTest {
     void shouldUseTransientChannel_whenPoolIsFullOfBusyChannels() {
         // GIVEN
         pool = pool(1);
-        join(pool.acquire(context(user(), "https://tb.example.com", true), false));
+        join(pool.acquire(context(user(), "https://tb.example.com"), false));
 
         // WHEN
-        TbAiPooledConnection overflow = join(pool.acquire(context(user(), "https://tb.example.com", true), false));
+        TbAiPooledConnection overflow = join(pool.acquire(context(user(), "https://tb.example.com"), false));
         overflow.unreserve(now.get());
 
         // THEN
@@ -165,7 +173,7 @@ class TbAiChannelPoolTest {
         // GIVEN
         pool = pool(10);
         TbAiTurnContext context = TbAiTurnContext.background(TenantId.fromUUID(UUID.randomUUID()), new UserId(UUID.randomUUID()),
-                () -> "token", TbAiClientRequest.withDefaultOrigin("https://tb.example.com"));
+                () -> "token", "https://tb.example.com");
 
         // WHEN
         TbAiPooledConnection connection = join(pool.acquire(context, false));
@@ -178,21 +186,6 @@ class TbAiChannelPoolTest {
     }
 
     @Test
-    void shouldFailAsUnavailable_whenServerHelloLacksMux() {
-        // GIVEN
-        server.close();
-        server = FakeTbAiServer.start(List.of(ChannelProtocol.CAPABILITY_REST, ChannelProtocol.CAPABILITY_OPERATIONS), (connection, frame) -> {});
-        pool = pool(10);
-
-        // WHEN-THEN
-        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com", true), false)))
-                .hasCauseInstanceOf(TbAiChannelUnavailableException.class)
-                .hasMessageEndingWith("AI channel does not support mux.v1");
-        await().atMost(5, TimeUnit.SECONDS).until(() -> pool.pooledConnections() == 0);
-        await().atMost(5, TimeUnit.SECONDS).until(() -> server.openConnections.get() == 0);
-    }
-
-    @Test
     void shouldFailWithRejection_whenTokenIsRefused() {
         // GIVEN
         server.close();
@@ -200,7 +193,7 @@ class TbAiChannelPoolTest {
         pool = pool(10);
 
         // WHEN-THEN
-        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com", true), false)))
+        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com"), false)))
                 .hasCauseInstanceOf(TbAiChannelRejectedException.class);
         await().atMost(5, TimeUnit.SECONDS).until(() -> pool.pooledConnections() == 0);
     }
@@ -213,7 +206,7 @@ class TbAiChannelPoolTest {
         pool = pool(10);
 
         // WHEN-THEN
-        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com", true), false)))
+        assertThatThrownBy(() -> join(pool.acquire(context(user(), "https://tb.example.com"), false)))
                 .hasCauseInstanceOf(TbAiChannelUnavailableException.class);
         await().atMost(5, TimeUnit.SECONDS).until(() -> pool.pooledConnections() == 0);
     }
@@ -233,8 +226,8 @@ class TbAiChannelPoolTest {
         return user;
     }
 
-    static TbAiTurnContext context(SecurityUser user, String origin, boolean exactOrigin) {
-        return new TbAiTurnContext(user, null, null, () -> "token", new TbAiClientRequest(origin, Map.of(), exactOrigin));
+    static TbAiTurnContext context(SecurityUser user, String origin) {
+        return new TbAiTurnContext(user, null, null, () -> "token", origin);
     }
 
 }
