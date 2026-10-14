@@ -16,6 +16,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.awaitility.Awaitility;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -62,6 +63,18 @@ public class PubSubIntegrationTest extends AbstractIntegrationTest {
 
     private JsonNode uplinkConverterCode;
     private WsClient wsClient;
+    private String projectId;
+    private String subscriptionId;
+    private String topicId;
+    private String serviceAccountKey;
+
+    @BeforeClass
+    public void beforePubSubClass() throws Exception {
+        projectId = requireProperty("blackBoxTests.pubSubProjectId");
+        subscriptionId = requireProperty("blackBoxTests.pubSubSubscriptionId");
+        topicId = requireProperty("blackBoxTests.pubSubTopicId");
+        serviceAccountKey = resolveServiceAccountKey(requireProperty("blackBoxTests.pubSubServiceAccountKey"));
+    }
 
     @BeforeMethod
     public void setUp() {
@@ -79,11 +92,6 @@ public class PubSubIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void shouldReceiveUplinkFromPubSubSubscription() throws Exception {
-        String projectId = requireProperty("blackBoxTests.pubSubProjectId");
-        String subscriptionId = requireProperty("blackBoxTests.pubSubSubscriptionId");
-        String topicId = requireProperty("blackBoxTests.pubSubTopicId");
-        String serviceAccountKey = resolveServiceAccountKey(requireProperty("blackBoxTests.pubSubServiceAccountKey"));
-
         createPubSubIntegration(projectId, subscriptionId, serviceAccountKey);
 
         wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);

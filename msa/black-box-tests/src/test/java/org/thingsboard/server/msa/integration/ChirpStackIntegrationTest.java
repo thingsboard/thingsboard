@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -17,6 +18,7 @@ import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.msa.ContainerTestSuite;
 import org.thingsboard.server.msa.TestProperties;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.integration.chirpstack.ChirpStackTestClient;
@@ -74,6 +76,9 @@ public class ChirpStackIntegrationTest extends AbstractIntegrationTest {
 
     @BeforeClass
     public void beforeChirpStackClass() {
+        if (!ContainerTestSuite.getInstance().isActive()) {
+            throw new SkipException("ChirpStack tests need the docker-compose test environment");
+        }
         chirpStackClient = new ChirpStackTestClient(TestProperties.getChirpStackRestUrl());
     }
 

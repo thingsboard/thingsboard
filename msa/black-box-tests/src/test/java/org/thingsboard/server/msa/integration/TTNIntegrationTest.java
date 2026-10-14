@@ -9,6 +9,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.awaitility.Awaitility;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -107,6 +108,20 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
     // Coordinates for clearing the shared The Things Stack downlink queue in tearDown — set by the
     // downlink test so a leftover queued downlink does not bleed into other runs.
     private String[] downlinkQueueCoordinates;
+    private String region;
+    private String username;
+    private String password;
+    private String appId;
+    private String deviceId;
+
+    @BeforeClass
+    public void beforeTtnClass() {
+        region = requireProperty("blackBoxTests.ttnRegion");
+        username = requireProperty("blackBoxTests.ttnUsername");
+        password = requireProperty("blackBoxTests.ttnPassword");
+        appId = requireProperty("blackBoxTests.ttnAppId");
+        deviceId = requireProperty("blackBoxTests.ttnDeviceId");
+    }
 
     @BeforeMethod
     public void setUp() {
@@ -132,12 +147,6 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void shouldReceiveSimulatedUplinkFromTheThingsStack() throws Exception {
-        String region = requireProperty("blackBoxTests.ttnRegion");
-        String username = requireProperty("blackBoxTests.ttnUsername");
-        String password = requireProperty("blackBoxTests.ttnPassword");
-        String appId = requireProperty("blackBoxTests.ttnAppId");
-        String deviceId = requireProperty("blackBoxTests.ttnDeviceId");
-
         createTtnIntegration(region, username, password);
 
         wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
@@ -152,12 +161,6 @@ public class TTNIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void shouldEnqueueDownlinkInTheThingsStack() throws Exception {
-        String region = requireProperty("blackBoxTests.ttnRegion");
-        String username = requireProperty("blackBoxTests.ttnUsername");
-        String password = requireProperty("blackBoxTests.ttnPassword");
-        String appId = requireProperty("blackBoxTests.ttnAppId");
-        String deviceId = requireProperty("blackBoxTests.ttnDeviceId");
-
         JsonNode downlinkConverter = JacksonUtil.newObjectNode().put("encoder", DOWNLINK_CONVERTER_ENCODER);
         createTtnIntegration(region, username, password, downlinkConverter);
 
