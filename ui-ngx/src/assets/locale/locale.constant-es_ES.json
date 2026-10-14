@@ -6281,8 +6281,7 @@
     "type-rule-chain": "Cadena de reglas",
     "type-rule-chain-plural": "Cadenas de reglas",
     "type-device": "Dispositivo",
-    "type-device-plural": "Dispositivos",
-    "selected": "Seleccionado"
+    "type-device-plural": "Dispositivos"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7993,7 +7992,6 @@
     "endpoint-url-pattern": "Patrón de URL del endpoint",
     "endpoint-url-pattern-required": "Se requiere el patrón de URL del endpoint",
     "request-method": "Método de solicitud",
-    "use-simple-client-http-factory": "Usar cliente HTTP simple",
     "ignore-request-body": "Sin cuerpo de solicitud",
     "request-body-template": "Plantilla del cuerpo de la solicitud",
     "request-body-template-hint": "Usa <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> para los metadatos, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> para los valores del mensaje. Si está vacío, se usa la carga útil del mensaje como cuerpo de la solicitud. Para cargas útiles que no sean JSON, habilita 'Analizar como texto plano'. <br/><br/> Puedes inyectar un secreto usando el marcador de posición <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, donde 'name' es el identificador del secreto y 'type' es TEXT o TEXT_FILE. Esto es útil en los campos de configuración de nodos de regla que no admiten 'Usar secreto' directamente. Ejemplo: <code><span style=\"color: #000;\">$&#123;</span>secret:contraseña del inquilino;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8169,7 +8167,6 @@
     "proxy-port-range": "El puerto del proxy debe estar en el rango de 1 a 65535.",
     "proxy-user": "Usuario del proxy",
     "proxy-password": "Contraseña del proxy",
-    "proxy-scheme": "Esquema del proxy",
     "numbers-to-template": "Plantilla de números de teléfono de destino",
     "numbers-to-template-required": "Se requiere la plantilla de números de teléfono de destino",
     "numbers-to-template-hint": "Números de teléfono separados por comas, usa <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> para valores desde metadatos, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> para valores desde el cuerpo del mensaje",
@@ -8954,8 +8951,6 @@
     "single-entity": "Entidad única",
     "group-entities": "Grupo de entidades",
     "entities-group-owner": "Propietario del grupo de entidades",
-    "single-device": "Dispositivo único",
-    "group-of-devices": "Grupo de dispositivos",
     "devices-group-owner": "Propietario del grupo de dispositivos",
     "message-body": "Cuerpo del mensaje",
     "target": "Objetivo",
@@ -11367,22 +11362,6 @@
     "ai-credits-usage": "Créditos de IA: {{ used }} de {{ max }} utilizados",
     "ai-credits-description": "Has utilizado <strong>{{ used }}</strong> de tus <strong>{{ max }}</strong> créditos de IA este mes. El límite se restablece el {{ date }}. Para aumentar tu asignación de créditos de IA, contacta a tu administrador del sistema."
   },
-  "solution-template": {
-    "solution-template": "Plantilla de solución",
-    "solution-templates": "Plantillas de solución",
-    "management": "Gestionar plantillas de solución",
-    "details": "Detalles",
-    "install": "Instalar",
-    "level": "Nivel",
-    "install-title": "Plantilla de solución instalada con éxito",
-    "install-failed-title": "La instalación de la plantilla de solución falló",
-    "instructions": "Instrucciones",
-    "goto-main-dashboard": "Ir al tablero principal",
-    "delete": "Eliminar",
-    "delete-solution-title": "¿Está seguro de que desea eliminar la solución '{{solutionTitle}}'?",
-    "delete-solution-text": "Tenga cuidado, después de la confirmación, la solución y todos los datos relacionados serán irrecuperables.",
-    "installing": "Instalando plantilla de solución..."
-  },
   "markdown": {
     "edit": "Editar",
     "preview": "Vista previa",
@@ -11399,20 +11378,8 @@
     "app-title": "Título de la aplicación",
     "favicon": "Ícono del sitio web",
     "favicon-desc": "Ícono en la pestaña del navegador y en los marcadores. PNG o ICO, se recomienda 32×32 px",
-    "favicon-description": "Imagen *.ico, *.gif o *.png con un tamaño máximo de {{kbSize}} KBytes.",
-    "favicon-size-error": "La imagen del sitio web es demasiado grande. El tamaño máximo permitido es {{kbSize}} KBytes.",
-    "favicon-type-error": "Formato de archivo de imagen no válido. Solo se aceptan imágenes ICO, GIF o PNG.",
-    "drop-favicon-image": "Suelte una imagen de ícono del sitio web o haga clic para seleccionar un archivo para subir.",
-    "drop-favicon-image-or": "Arrastre y suelte una imagen de ícono del sitio web o",
-    "no-favicon-image": "Ningún ícono seleccionado",
     "logo": "Logo",
     "logo-desc": "SVG o PNG, altura mínima de 96px, hasta 200 KB",
-    "logo-description": "Cualquier imagen con un tamaño máximo de {{kbSize}} KBytes.",
-    "logo-size-error": "La imagen del logo es demasiado grande. El tamaño máximo permitido es {{kbSize}} KBytes.",
-    "logo-type-error": "Formato de archivo de logo no válido. Solo se aceptan imágenes.",
-    "drop-logo-image": "Suelte una imagen de logo o haga clic para seleccionar un archivo para subir.",
-    "drop-logo-image-or": "Arrastre y suelte una imagen de logo o",
-    "no-logo-image": "Ningún logo seleccionado",
     "logo-height": "Altura del logo, px",
     "logo-height-desc": "Escala el logotipo proporcionalmente y lo centra. Aumenta la altura (hasta 200px) para logotipos altos",
     "collapsed-logo": "Logotipo de la barra lateral contraída",
@@ -11456,11 +11423,9 @@
     "error-verification-url": "Un nombre de dominio no debe contener los símbolos '/' ni ':'. Ejemplo: thingsboard.io",
     "show-connectivity-dialog": "Mostrar diálogo de conectividad",
     "show-connectivity-dialog-desc": "Muestra el diálogo de conectividad del dispositivo con instrucciones de conexión después de crear un dispositivo",
-    "hide-connectivity-dialog": "Ocultar diálogo de conectividad",
     "override-trendz-add-on-name": "Anular nombre del complemento de analítica de Trendz",
     "override-trendz-add-on-name-desc": "Cambia el nombre del complemento \"Trendz\" a \"Analítica avanzada\" en toda la plataforma",
     "show-platform-name-version-bottom-left-corner": "Mostrar el nombre y la versión de la plataforma en la esquina inferior izquierda",
-    "override-trendz-add-on-name-hint": "Cuando está activado, \"Trendz analytics\" se mostrará como \"Analítica avanzada\" en toda la plataforma.",
     "show-platform-name-version": "Mostrar nombre y versión de la plataforma",
     "platform-name": "Nombre de la plataforma",
     "platform-version": "Versión de la plataforma",
@@ -12686,9 +12651,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13025,10 +12988,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Credenciales",
-      "here-app-id": "ID de la aplicación HERE",
-      "here-app-code": "Código de la aplicación HERE",
       "here-api-key": "Clave API de HERE",
-      "here-use-new-version-api-3": "Usar la versión 3 de la API",
       "tencent-maps-api-key": "Clave API de Tencent Maps",
       "tencent-map-type-roadmap": "Mapa de carreteras",
       "tencent-map-type-satelite": "Satélite",
@@ -13924,7 +13884,6 @@
       "roles-and-permissions": "Roles y permisos",
       "groups": "Grupos",
       "integrations": "Integraciones",
-      "solution-templates": "Plantillas de solución",
       "scheduler": "Planificador",
       "white-labeling": "Marca blanca"
     },
@@ -13938,11 +13897,6 @@
       "critical": "Crítico",
       "assigned-to-me": "Asignado a mí",
       "total": "Total"
-    },
-    "solution-templates": {
-      "title": "Plantillas de solución",
-      "prototype-plan": "Plan prototipo",
-      "startup-plan": "Plan inicial"
     },
     "getting-started": {
       "get-started": "Comenzar",
