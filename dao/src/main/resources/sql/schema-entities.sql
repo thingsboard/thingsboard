@@ -944,12 +944,26 @@ CREATE TABLE IF NOT EXISTS resource (
     CONSTRAINT resource_unq_key UNIQUE (tenant_id, resource_type, resource_key)
 );
 
+CREATE TABLE IF NOT EXISTS edge_profile (
+    id uuid NOT NULL CONSTRAINT edge_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    name varchar(255) NOT NULL,
+    description varchar,
+    is_default boolean NOT NULL DEFAULT false,
+    root_rule_chain_id uuid,
+    profile_data jsonb,
+    version BIGINT DEFAULT 1,
+    CONSTRAINT edge_profile_name_unq_key UNIQUE (tenant_id, name)
+);
+
 CREATE TABLE IF NOT EXISTS edge (
     id uuid NOT NULL CONSTRAINT edge_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     additional_info varchar,
     customer_id uuid,
     root_rule_chain_id uuid,
+    edge_profile_id uuid,
     type varchar(255),
     name varchar(255),
     label varchar(255),
@@ -960,7 +974,8 @@ CREATE TABLE IF NOT EXISTS edge (
     tenant_id uuid,
     version BIGINT DEFAULT 1,
     CONSTRAINT edge_name_unq_key UNIQUE (tenant_id, name),
-    CONSTRAINT edge_routing_key_unq_key UNIQUE (routing_key)
+    CONSTRAINT edge_routing_key_unq_key UNIQUE (routing_key),
+    CONSTRAINT fk_edge_profile FOREIGN KEY (edge_profile_id) REFERENCES edge_profile(id)
 );
 
 CREATE TABLE IF NOT EXISTS agent_profile (

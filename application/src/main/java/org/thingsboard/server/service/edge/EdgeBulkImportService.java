@@ -13,10 +13,8 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumnType;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -31,7 +29,6 @@ import java.util.Optional;
 public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
     private final EdgeService edgeService;
     private final TbEdgeService tbEdgeService;
-    private final RuleChainService ruleChainService;
 
     @Override
     protected void setEntityFields(Edge entity, Map<BulkImportColumnType, String> fields) {
@@ -43,6 +40,8 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
                     break;
                 case TYPE:
                     entity.setType(value);
+                    // an existing edge already carries a profile id, and that would win over the column
+                    entity.setEdgeProfileId(null);
                     break;
                 case LABEL:
                     entity.setLabel(value);
@@ -70,8 +69,7 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
     @SneakyThrows
     @Override
     protected Edge saveEntity(SecurityUser user, Edge entity, EntityGroup entityGroup, Map<BulkImportColumnType, String> fields) {
-        RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(user.getTenantId());
-        return tbEdgeService.save(entity, edgeTemplateRootRuleChain, entityGroup, user);
+        return tbEdgeService.save(entity, entityGroup, user);
     }
 
     @Override

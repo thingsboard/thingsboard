@@ -19,7 +19,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 })
 export class RuleChainComponent extends EntityComponent<RuleChain> {
 
-  ruleChainScope: 'tenant' | 'edges' | 'edge';
+  ruleChainScope: 'tenant' | 'edges';
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -75,29 +75,4 @@ export class RuleChainComponent extends EntityComponent<RuleChain> {
       }));
   }
 
-  isEdgeRootRuleChain() {
-    if (this.entitiesTableConfig && this.entityValue) {
-      return this.entitiesTableConfig.componentsData.edge?.rootRuleChainId?.id == this.entityValue.id.id;
-    } else {
-      return false;
-    }
-  }
-
-  isAutoAssignToEdgeRuleChain() {
-    if (this.entitiesTableConfig && this.entityValue) {
-      return !this.entityValue.root &&
-        this.entitiesTableConfig.componentsData?.autoAssignToEdgeRuleChainIds?.includes(this.entityValue.id.id);
-    } else {
-      return false;
-    }
-  }
-
-  isNotAutoAssignToEdgeRuleChain() {
-    if (this.entitiesTableConfig && this.entityValue) {
-      return !this.entityValue.root &&
-        !this.entitiesTableConfig.componentsData?.autoAssignToEdgeRuleChainIds?.includes(this.entityValue.id.id);
-    } else {
-      return false;
-    }
-  }
 }

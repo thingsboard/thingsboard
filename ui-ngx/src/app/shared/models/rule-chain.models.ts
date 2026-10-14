@@ -42,7 +42,7 @@ export interface NodeConnectionInfo {
 }
 
 export interface RuleChainParams extends EntityGroupParams {
-  ruleChainScope: string;
+  ruleChainScope: 'tenant' | 'edges';
 }
 
 export const ruleNodeTypeComponentTypes: ComponentType[] =

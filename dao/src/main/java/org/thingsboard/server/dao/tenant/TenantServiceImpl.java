@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.agent.AgentAppEventService;
 import org.thingsboard.server.dao.agent.AgentProfileService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -72,6 +73,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private DeviceProfileService deviceProfileService;
     @Autowired
     private AgentProfileService agentProfileService;
+    @Autowired
+    @Lazy
+    private EdgeProfileService edgeProfileService;
     @Lazy
     @Autowired
     private ApiUsageStateService apiUsageStateService;
@@ -181,6 +185,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
             deviceProfileService.createDefaultDeviceProfile(tenantId);
             assetProfileService.createDefaultAssetProfile(tenantId);
             agentProfileService.createDefaultAgentProfile(tenantId);
+            edgeProfileService.createDefaultEdgeProfile(tenantId);
             apiUsageStateService.createDefaultApiUsageState(tenantId, null);
             notificationSettingsService.createDefaultNotificationConfigs(tenantId);
             encryptionService.createEncryptionKey(tenantId);
@@ -212,7 +217,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         cleanUpService.removeTenantEntities(tenantId, // remember to implement deleteEntity from EntityDaoService when adding an entity type to this list
                 EntityType.ADMIN_SETTINGS, EntityType.JOB, EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
                 EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
-                EntityType.AGENT, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.INTEGRATION,
+                EntityType.AGENT, EntityType.DASHBOARD, EntityType.EDGE, EntityType.EDGE_PROFILE, EntityType.RULE_CHAIN, EntityType.INTEGRATION,
                 EntityType.CONVERTER, EntityType.SCHEDULER_EVENT, EntityType.BLOB_ENTITY, EntityType.REPORT,
                 EntityType.REPORT_TEMPLATE, EntityType.ENTITY_GROUP,
                 EntityType.GROUP_PERMISSION, EntityType.ROLE, EntityType.API_USAGE_STATE, EntityType.TB_RESOURCE,

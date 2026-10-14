@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.rule;
 
 import lombok.RequiredArgsConstructor;
@@ -303,48 +304,6 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN),
                     actionType, user, e, ruleChainId, edgeId);
-            throw e;
-        }
-    }
-
-    @Override
-    public RuleChain setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
-        RuleChainId ruleChainId = ruleChain.getId();
-        try {
-            ruleChainService.setEdgeTemplateRootRuleChain(tenantId, ruleChainId);
-            logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
-            return ruleChain;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
-                    user, e, ruleChainId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public RuleChain setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
-        RuleChainId ruleChainId = ruleChain.getId();
-        try {
-            ruleChainService.setAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
-            logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
-            return ruleChain;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
-                    user, e, ruleChainId.toString());
-            throw e;
-        }
-    }
-
-    @Override
-    public RuleChain unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChain ruleChain, User user) throws ThingsboardException {
-        RuleChainId ruleChainId = ruleChain.getId();
-        try {
-            ruleChainService.unsetAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
-            logEntityActionService.logEntityAction(tenantId, ruleChainId, ruleChain, ActionType.UPDATED, user);
-            return ruleChain;
-        } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.RULE_CHAIN), ActionType.UPDATED,
-                    user, e, ruleChainId.toString());
             throw e;
         }
     }

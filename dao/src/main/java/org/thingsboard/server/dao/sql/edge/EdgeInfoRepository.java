@@ -68,7 +68,7 @@ public interface EdgeInfoRepository extends JpaRepository<EdgeInfoEntity, UUID> 
     @Query(value = "SELECT e.*, e.owner_name as ownername, e.created_time as createdtime " +
             "FROM (select e.id, e.created_time, e.additional_info, e.customer_id, e.root_rule_chain_id, " +
             "e.type, e.name, e.label, e.routing_key, e.secret, e.edge_license_key, e.cloud_endpoint, " +
-            "e.tenant_id, e.version, e.groups, " +
+            "e.tenant_id, e.version, e.groups, e.edge_profile_id, " +
             "c.title as owner_name from edge_info_view e " +
             "LEFT JOIN customer c on c.id = e.customer_id AND c.id != :customerId) e " +
             "WHERE" + SUB_CUSTOMERS_QUERY +
@@ -88,7 +88,7 @@ public interface EdgeInfoRepository extends JpaRepository<EdgeInfoEntity, UUID> 
     @Query(value = "SELECT e.*, e.owner_name as ownername, e.created_time as createdtime " +
             "FROM (select e.id, e.created_time, e.additional_info, e.customer_id, e.root_rule_chain_id, " +
             "e.type, e.name, e.label, e.routing_key, e.secret, e.edge_license_key, e.cloud_endpoint, " +
-            "e.tenant_id, e.version, e.groups, " +
+            "e.tenant_id, e.version, e.groups, e.edge_profile_id, " +
             "c.title as owner_name from edge_info_view e " +
             "LEFT JOIN customer c on c.id = e.customer_id AND c.id != :customerId) e " +
             "WHERE" + SUB_CUSTOMERS_QUERY +

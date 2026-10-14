@@ -4,6 +4,7 @@ package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -61,6 +62,39 @@ public class SchedulerEventEdgeTest extends AbstractEdgeTest {
         // delete
         doDelete("/api/schedulerEvent/" + savedSchedulerEvent.getUuidId())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSchedulerEventIsSentOnEdgeSync() throws Exception {
+        SchedulerEvent savedSchedulerEvent = doPost("/api/schedulerEvent", createSchedulerEvent("Edge Sync Scheduler Event", tenantId), SchedulerEvent.class);
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/edge/" + edge.getUuidId() + "/schedulerEvent/" + savedSchedulerEvent.getUuidId(), SchedulerEventInfo.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // a sync is how a new or diverged edge receives what the cloud assigns to it, and its fetcher emits ADDED events
+        edgeImitator.expectMessageAmount(1); // also clears everything recorded so far
+        doPost("/api/edge/sync/" + edge.getUuidId());
+        Awaitility.await().atMost(30, TimeUnit.SECONDS).until(() -> edgeImitator.getDownlinkMsgs().stream()
+                .anyMatch(msg -> msg instanceof SchedulerEventUpdateMsg updateMsg
+                        && savedSchedulerEvent.getUuidId().equals(new UUID(updateMsg.getIdMSB(), updateMsg.getIdLSB()))));
+
+        doDelete("/api/edge/" + edge.getUuidId() + "/schedulerEvent/" + savedSchedulerEvent.getUuidId(), SchedulerEventInfo.class);
+        doDelete("/api/schedulerEvent/" + savedSchedulerEvent.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testCustomerSchedulerEventCannotBeAssignedToEdgeOfAnotherOwner() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("Scheduler Owner Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        SchedulerEvent savedSchedulerEvent = doPost("/api/schedulerEvent", createSchedulerEvent("Other Owner Scheduler Event", savedCustomer.getId()), SchedulerEvent.class);
+
+        doPost("/api/edge/" + edge.getUuidId() + "/schedulerEvent/" + savedSchedulerEvent.getUuidId())
+                .andExpect(status().isBadRequest());
+        Assert.assertTrue(getEdgeSchedulerEvents().getData().stream().noneMatch(event -> event.getId().equals(savedSchedulerEvent.getId())));
+
+        doDelete("/api/schedulerEvent/" + savedSchedulerEvent.getUuidId()).andExpect(status().isOk());
+        doDelete("/api/customer/" + savedCustomer.getUuidId()).andExpect(status().isOk());
     }
 
     @Test

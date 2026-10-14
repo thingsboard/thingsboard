@@ -66,12 +66,6 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
                 throw new DataValidationException("Another root rule chain is present in scope of current tenant!");
             }
         }
-        if (ruleChain.isRoot() && RuleChainType.EDGE.equals(ruleChain.getType())) {
-            RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(ruleChain.getTenantId());
-            if (edgeTemplateRootRuleChain != null && !edgeTemplateRootRuleChain.getId().equals(ruleChain.getId())) {
-                throw new DataValidationException("Another edge template root rule chain is present in scope of current tenant!");
-            }
-        }
     }
 
     public static List<Throwable> validateMetaData(RuleChainMetaData ruleChainMetaData) {

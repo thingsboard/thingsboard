@@ -5,9 +5,11 @@ package org.thingsboard.server.edge;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.protobuf.AbstractMessage;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -29,13 +31,16 @@ import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
+import org.thingsboard.server.gen.edge.v1.EntityGroupUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.GroupPermissionProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +51,9 @@ import static org.thingsboard.server.dao.customer.CustomerServiceImpl.PUBLIC_CUS
 
 @DaoSqlTest
 public class EntityGroupEdgeTest extends AbstractEdgeTest {
+
+    @Autowired
+    private EdgeEventStorageSettings edgeEventStorageSettings;
 
     @Test
     public void testAllEdgeEntityGroup_autoAssignedToEdgeAfterUnAssign() throws Exception {
@@ -146,6 +154,98 @@ public class EntityGroupEdgeTest extends AbstractEdgeTest {
                 Assert.assertEquals(tenantAdminGroup.getId(), groupPermission.getUserGroupId());
             }
             Assert.assertEquals(dashboardGroup.getId(), groupPermission.getEntityGroupId());
+        }
+    }
+
+    @Test
+    public void testEntityGroupEntitiesRequestForUnassignedGroupIsIgnored() throws Exception {
+        EntityGroup deviceGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "UnassignedGroupRequestTest", tenantId);
+
+        edgeImitator.expectMessageAmount(2);
+        saveDevice("Unassigned Group Request Device", THERMOSTAT_DEVICE_PROFILE_NAME, deviceGroup.getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        unAssignEntityGroupFromEdge(deviceGroup);
+
+        UUID deviceGroupUuid = deviceGroup.getUuidId();
+        UplinkMsg uplinkMsg = UplinkMsg.newBuilder()
+                .addEntityGroupEntitiesRequestMsg(EntityGroupRequestMsg.newBuilder()
+                        .setEntityGroupIdMSB(deviceGroupUuid.getMostSignificantBits())
+                        .setEntityGroupIdLSB(deviceGroupUuid.getLeastSignificantBits())
+                        .setType(EntityType.DEVICE.name())
+                        .build())
+                .build();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
+        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isEmpty());
+    }
+
+    @Test
+    public void testFailedEntityGroupDownlinkIsRetriedWhenEnabled() throws Exception {
+        EntityGroup deviceGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "Retried Unassign Group", tenantId);
+
+        edgeEventStorageSettings.setRetryFailedEntityDownlinks(true);
+        edgeImitator.setEntityGroupDownlinkFailures(1);
+        try {
+            unAssignEntityGroupFromEdge(deviceGroup);
+        } finally {
+            edgeImitator.setEntityGroupDownlinkFailures(0);
+            edgeEventStorageSettings.setRetryFailedEntityDownlinks(false);
+        }
+    }
+
+    @Test
+    public void testCustomerOwnedGroupReachesTenantEdgeWithItsOwnerCustomers() throws Exception {
+        Customer parent = saveCustomer("Group Owner Parent", null);
+        Customer child = saveCustomer("Group Owner Child", parent.getId());
+        EntityGroup group = new EntityGroup();
+        group.setType(EntityType.DEVICE);
+        group.setName("Group Owner Child Devices");
+        group.setOwnerId(child.getId());
+        EntityGroup savedGroup = doPost("/api/entityGroup", group, EntityGroup.class);
+
+        edgeImitator.expectMessageAmount(3);
+        doPost("/api/edge/" + edge.getUuidId() + "/entityGroup/" + savedGroup.getUuidId() + "/" + EntityType.DEVICE.name(), EntityGroup.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        List<AbstractMessage> downlinks = edgeImitator.getDownlinkMsgs();
+        List<UUID> customerIds = downlinks.stream().filter(CustomerUpdateMsg.class::isInstance).map(CustomerUpdateMsg.class::cast)
+                .map(msg -> new UUID(msg.getIdMSB(), msg.getIdLSB())).toList();
+        Assert.assertEquals(List.of(parent.getUuidId(), child.getUuidId()), customerIds);
+        int lastCustomerIndex = -1;
+        int groupIndex = -1;
+        for (int i = 0; i < downlinks.size(); i++) {
+            if (downlinks.get(i) instanceof CustomerUpdateMsg) {
+                lastCustomerIndex = i;
+            } else if (downlinks.get(i) instanceof EntityGroupUpdateMsg msg && new UUID(msg.getIdMSB(), msg.getIdLSB()).equals(savedGroup.getUuidId())) {
+                groupIndex = i;
+            }
+        }
+        Assert.assertTrue("the group has to follow its owner customers", groupIndex > lastCustomerIndex);
+
+        EntityGroup tenantGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "Tenant Devices For Owner Check", tenantId);
+        Assert.assertTrue(edgeImitator.findAllMessagesByType(CustomerUpdateMsg.class).isEmpty());
+
+        unAssignEntityGroupFromEdge(tenantGroup);
+        unAssignEntityGroupFromEdge(savedGroup);
+    }
+
+    @Test
+    public void testFailedEntityGroupDownlinkIsDroppedByDefault() throws Exception {
+        EntityGroup deviceGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "Dropped Unassign Group", tenantId);
+
+        edgeImitator.setEntityGroupDownlinkFailures(1);
+        try {
+            edgeImitator.expectMessageAmount(1);
+            doDelete("/api/edge/" + edge.getUuidId()
+                    + "/entityGroup/" + deviceGroup.getUuidId().toString() + "/" + deviceGroup.getType().name(), EntityGroup.class);
+            Assert.assertFalse(edgeImitator.waitForMessages(5));
+        } finally {
+            edgeImitator.setEntityGroupDownlinkFailures(0);
         }
     }
 
@@ -303,4 +403,5 @@ public class EntityGroupEdgeTest extends AbstractEdgeTest {
         dashboard.setConfiguration(TextNode.valueOf(""));
         return dashboard;
     }
+
 }

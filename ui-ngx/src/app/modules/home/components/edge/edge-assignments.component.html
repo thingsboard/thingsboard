@@ -1,0 +1,182 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-edge-assignments flex flex-col gap-3">
+  @if (assignments) {
+    @if (isProfile) {
+      <div class="tb-banner info flex flex-row items-center gap-2">
+        <mat-icon>info</mat-icon>
+        <span>{{ 'edge-profile.applied-to-edges' | translate: {count: assignments.edgesCount} }}</span>
+      </div>
+    } @else if (assignments.edgeProfileName) {
+      <div class="tb-banner locked flex flex-row flex-wrap items-center gap-2">
+        <mat-icon>lock_outline</mat-icon>
+        @if (rootOverridden && assignments.profileRootRuleChainId) {
+          <span>{{ 'edge.root-overridden' | translate: {ruleChainName: rootRuleChainName, profileName: assignments.edgeProfileName, profileRootName: profileRootRuleChainName} }}</span>
+        } @else if (rootOverridden) {
+          <span>{{ 'edge.root-set-on-edge' | translate: {ruleChainName: rootRuleChainName, profileName: assignments.edgeProfileName} }}</span>
+        } @else if (rootRuleChainName) {
+          <span>{{ 'edge-profile.root-from-profile' | translate: {ruleChainName: rootRuleChainName, profileName: assignments.edgeProfileName} }}</span>
+        } @else {
+          <!-- a caller without rule chain read gets an empty ruleChains list, so naming the chain here would render a blank -->
+          <span>{{ 'edge-profile.assignments-from-profile' | translate: {profileName: assignments.edgeProfileName} }}</span>
+        }
+        @if (canOpenProfile) {
+          <a mat-button color="primary" (click)="openProfile($event)">
+            <mat-icon>open_in_new</mat-icon>{{ 'edge-profile.open-profile' | translate }}
+          </a>
+        }
+      </div>
+    }
+    <div class="tb-toolbar flex flex-row items-center gap-2">
+      @if (textSearchMode) {
+        <mat-icon class="tb-search-icon">search</mat-icon>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-search flex-1">
+          <input #searchInput matInput [(ngModel)]="searchText" [placeholder]="'common.enter-search' | translate">
+        </mat-form-field>
+        <button mat-icon-button type="button" (click)="exitFilterMode()"
+                [matTooltip]="'action.close' | translate" matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      } @else {
+        @if (!isProfile) {
+          <div class="tb-source-toggle">
+            <tb-toggle-header [value]="sourceFilter" name="assignmentSource" appearance="fill" useSelectOnMdLg="false" ignoreMdLgSize="true"
+                              (valueChange)="sourceFilter = $event">
+              <tb-toggle-option value="all">{{ 'edge.all-sources' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="sourceValues.PROFILE">{{ 'edge.from-profile' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="sourceValues.EDGE">{{ 'edge.this-edge' | translate }}</tb-toggle-option>
+            </tb-toggle-header>
+          </div>
+        }
+        <span class="flex-1"></span>
+        <button mat-icon-button type="button" (click)="enterFilterMode()"
+                [matTooltip]="'action.search' | translate" matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <button mat-icon-button type="button" (click)="toggleAll()"
+                [matTooltip]="(allOpen ? 'edge-profile.collapse-all' : 'edge-profile.expand-all') | translate"
+                matTooltipPosition="above">
+          <mat-icon>{{ allOpen ? 'unfold_less' : 'unfold_more' }}</mat-icon>
+        </button>
+      }
+    </div>
+
+    @for (group of [{label: 'edge-profile.entity-groups', sections: entityGroupsSections}, {label: 'edge-profile.logic-and-processing', sections: logicSections}]; track group.label) {
+      <div class="tb-group-label">{{ group.label | translate }}</div>
+      <mat-accordion multi displayMode="flat">
+        @for (section of visibleSections(group.sections); track section.key) {
+          <mat-expansion-panel [expanded]="state[section.key].open" (opened)="state[section.key].open = true" (closed)="state[section.key].open = false">
+            <mat-expansion-panel-header>
+              <mat-panel-title class="flex flex-row items-center gap-2">
+                <mat-icon>{{ section.icon }}</mat-icon>
+                <span>{{ section.name | translate }}</span>
+              </mat-panel-title>
+              <mat-panel-description class="flex flex-row items-center justify-end gap-2">
+                @if (isProfile) {
+                  @if (allRows(section).length) {
+                    <span class="tb-count">{{ allRows(section).length }}</span>
+                  } @else {
+                    <span class="tb-none">{{ 'edge-profile.none' | translate }}</span>
+                  }
+                } @else {
+                  @if (countProfile(section)) {
+                    <span class="tb-chip profile">{{ 'edge.from-profile-count' | translate: {count: countProfile(section)} }}</span>
+                  }
+                  @if (countEdge(section)) {
+                    <span class="tb-chip local">{{ 'edge.this-edge-count' | translate: {count: countEdge(section)} }}</span>
+                  }
+                  @if (!allRows(section).length) {
+                    <span class="tb-none">{{ 'edge-profile.none' | translate }}</span>
+                  }
+                }
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <table class="tb-rows">
+              <thead>
+              <tr>
+                <th class="tb-col-name">{{ 'edge-profile.name' | translate }}</th>
+                @if (!isProfile) {
+                  <th class="tb-col-source">{{ 'edge-profile.source' | translate }}</th>
+                }
+                @if (isRuleChains(section)) {
+                  <th class="tb-col-root">{{ 'edge-profile.root' | translate }}</th>
+                } @else {
+                  <th class="tb-col-owner">{{ 'edge-profile.owner' | translate }}</th>
+                }
+                <th class="tb-actions"></th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (row of pageRows(section); track row.id.id) {
+                  <tr>
+                    <td class="tb-col-name">
+                      <span class="flex flex-row items-center gap-2">
+                        <mat-icon class="tb-row-icon">{{ section.icon }}</mat-icon>
+                        <span class="tb-ellipsis" [matTooltip]="row.name">{{ row.name }}</span>
+                      </span>
+                    </td>
+                    @if (!isProfile) {
+                      <td class="tb-col-source">
+                        @if (row.source === sourceValues.PROFILE) {
+                          @if (canOpenProfile) {
+                            <a class="tb-chip profile" (click)="openProfile($event)">{{ assignments.edgeProfileName }}</a>
+                          } @else {
+                            <span class="tb-chip profile">{{ assignments.edgeProfileName }}</span>
+                          }
+                        } @else {
+                          <span class="tb-chip local">{{ 'edge.this-edge' | translate }}</span>
+                        }
+                      </td>
+                    }
+                    @if (isRuleChains(section)) {
+                      <td class="tb-col-root">
+                        <mat-icon [class.tb-root-on]="row.root">
+                          {{ row.root ? 'check_box' : 'check_box_outline_blank' }}
+                        </mat-icon>
+                      </td>
+                    } @else {
+                      <td class="tb-col-owner"><span class="tb-ellipsis" [matTooltip]="row.ownerName">{{ row.ownerName }}</span></td>
+                    }
+                    <td class="tb-actions">
+                      @if (isRuleChains(section)) {
+                        <button mat-icon-button type="button" disabledInteractive [disabled]="!canSetRoot(section, row)"
+                                [matTooltip]="setRootTooltip(row)" matTooltipPosition="above"
+                                (click)="setRoot(row, $event)">
+                          <mat-icon>flag</mat-icon>
+                        </button>
+                      }
+                      <button mat-icon-button type="button" disabledInteractive [disabled]="!canRemove(section, row)"
+                              [matTooltip]="removeTooltip(row)" matTooltipPosition="above"
+                              (click)="remove(section, row, $event)">
+                        <mat-icon>{{ isLocked(row) ? 'lock_outline' : (isProfile ? 'close' : 'assignment_return') }}</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <div class="tb-section-footer flex flex-row items-center gap-2">
+              @if (canEdit(section)) {
+                <button mat-button color="primary" type="button" (click)="add(section, $event)">
+                  <mat-icon>add</mat-icon>{{ (isProfile ? section.addLabel : section.assignLabel) | translate }}
+                </button>
+              }
+              <span class="flex-1"></span>
+              <span class="tb-range">{{ range(section) }}</span>
+              <button mat-icon-button type="button" [disabled]="!hasPrev(section)" (click)="prev(section, $event)"><mat-icon>chevron_left</mat-icon></button>
+              <button mat-icon-button type="button" [disabled]="!hasNext(section)" (click)="next(section, $event)"><mat-icon>chevron_right</mat-icon></button>
+            </div>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    }
+  } @else if (loading) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+</div>

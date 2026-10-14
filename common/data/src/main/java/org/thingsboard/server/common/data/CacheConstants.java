@@ -16,6 +16,7 @@ public final class CacheConstants {
     public static final String AGENT_APPLICATION_CACHE = "agentApplications";
     public static final String AGENT_APP_PROFILE_CACHE = "agentAppProfiles";
     public static final String AGENT_PROFILE_CACHE = "agentProfiles";
+    public static final String EDGE_PROFILE_CACHE = "edgeProfiles";
     public static final String AGENT_SESSIONS_CACHE = "agentSessions";
     public static final String AGENT_APP_UNIT_CACHE = "agentAppUnits";
     public static final String CUSTOMER_CACHE = "customers";

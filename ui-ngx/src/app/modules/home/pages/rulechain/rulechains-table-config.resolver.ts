@@ -14,8 +14,6 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ItemBufferService } from '@core/services/item-buffer.service';
-import { EdgeService } from '@core/http/edge.service';
-import { MatDialog } from '@angular/material/dialog';
 import { UtilsService } from '@core/services/utils.service';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
@@ -27,10 +25,8 @@ export class RuleChainsTableConfigResolver  {
 
   constructor(private ruleChainService: RuleChainService,
               private dialogService: DialogService,
-              private dialog: MatDialog,
               private importExport: ImportExportService,
               private itembuffer: ItemBufferService,
-              private edgeService: EdgeService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
@@ -48,10 +44,8 @@ export class RuleChainsTableConfigResolver  {
     return new RuleChainsTableConfig (
       this.ruleChainService,
       this.dialogService,
-      this.dialog,
       this.importExport,
       this.itembuffer,
-      this.edgeService,
       this.translate,
       this.datePipe,
       this.router,

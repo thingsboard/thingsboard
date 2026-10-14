@@ -14,6 +14,7 @@ import { AgentProfileComponent } from '@home/pages/agent/agent-profile.component
 import { AgentProfileTabsComponent } from '@home/pages/agent/agent-profile-tabs.component';
 import { AgentProfileAutocompleteComponent } from '@home/pages/agent/agent-profile-autocomplete.component';
 import { AgentAppProfileComponent } from '@home/pages/agent/agent-app-profile.component';
+import { EdgeProfileModule } from '@home/pages/edge-profile/edge-profile.module';
 import {
   AgentInstallInstructionsDialogComponent
 } from '@home/pages/agent/agent-install-instructions-dialog.component';
@@ -162,6 +163,7 @@ import {
     HomeComponentsModule,
     AgentSharedComponentsModule,
     AgentRoutingModule,
+    EdgeProfileModule,
   ],
   providers: [
     DatePipe,

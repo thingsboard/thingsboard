@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
-import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -94,6 +93,7 @@ import org.thingsboard.server.common.data.notification.targets.NotificationTarge
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.ota.DeviceGroupOtaPackage;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -111,9 +111,9 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.common.data.wl.WhiteLabeling;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.ApiKeyUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
@@ -1038,6 +1038,9 @@ public class EdgeMsgConstructorUtils {
             return null;
         }
         String bodyStr = JacksonUtil.toString(body);
+        if (StringUtils.isEmpty(bodyStr)) {
+            return null;
+        }
         JsonObject jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
         if (jsonObject.has("ts") && latestByKey != null && !latestByKey.isEmpty()) {
             long ts = jsonObject.get("ts").getAsLong();
@@ -1085,16 +1088,35 @@ public class EdgeMsgConstructorUtils {
     }
 
     private static List<EdgeEvent> removeDownlinkDuplicates(List<EdgeEvent> edgeEvents) {
+        // the edge applies a pack's messages concurrently, so of an entity's assign/unassign events only the final state is sent
+        Map<AssignmentKey, EdgeEvent> lastAssignments = new HashMap<>();
+        for (EdgeEvent e : edgeEvents) {
+            if (isAssignmentAction(e.getAction())) {
+                lastAssignments.put(toAssignmentKey(e), e);
+            }
+        }
         Set<EventKey> seen = new HashSet<>();
         return edgeEvents.stream()
-                .filter(e -> seen.add(new EventKey(
-                        e.getTenantId(),
-                        e.getAction(),
-                        e.getEntityId(),
-                        e.getType().name(),
-                        (e.getBody() != null ? e.getBody().toString() : "null"),
-                        e.getEntityGroupId())))
+                .filter(e -> isAssignmentAction(e.getAction()) ? lastAssignments.get(toAssignmentKey(e)) == e : seen.add(toEventKey(e)))
                 .collect(Collectors.toList());
+    }
+
+    private static EventKey toEventKey(EdgeEvent e) {
+        return new EventKey(
+                e.getTenantId(),
+                e.getAction(),
+                e.getEntityId(),
+                e.getType().name(),
+                (e.getBody() != null ? e.getBody().toString() : "null"),
+                e.getEntityGroupId());
+    }
+
+    private static boolean isAssignmentAction(EdgeEventActionType action) {
+        return EdgeEventActionType.ASSIGNED_TO_EDGE.equals(action) || EdgeEventActionType.UNASSIGNED_FROM_EDGE.equals(action);
+    }
+
+    private static AssignmentKey toAssignmentKey(EdgeEvent e) {
+        return new AssignmentKey(e.getTenantId(), e.getEntityId(), e.getType().name(), e.getEntityGroupId());
     }
 
     private record EventKey(TenantId tenantId,
@@ -1105,10 +1127,14 @@ public class EdgeMsgConstructorUtils {
                             UUID entityGroupId) {
     }
 
-    private record AttrsTs(long ts, List<AttributeKvEntry> attrs) {
+    private record AssignmentKey(TenantId tenantId,
+                                 UUID entityId,
+                                 String type,
+                                 UUID entityGroupId) {
     }
 
-    private record AttrUpdateMsg(UUID entityId, JsonNode body) {
-    }
+    private record AttrsTs(long ts, List<AttributeKvEntry> attrs) {}
+
+    private record AttrUpdateMsg(UUID entityId, JsonNode body) {}
 
 }

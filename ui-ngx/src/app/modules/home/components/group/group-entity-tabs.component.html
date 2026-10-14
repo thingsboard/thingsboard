@@ -4,6 +4,17 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
+@if (entity && entityType === entityTypes.EDGE) {
+  <mat-tab
+    label="{{ 'edge.assignments' | translate }}" #assignmentsTab="matTab">
+    <tb-edge-assignments mode="edge"
+      [entityId]="entity.id"
+      [active]="assignmentsTab.isActive"
+      [readonly]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE)"
+      (assignmentsChanged)="entitiesTableConfig?.updateData(false, true)">
+    </tb-edge-assignments>
+  </mat-tab>
+}
 @if (entity && (entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.READ_ATTRIBUTES)) {
   <mat-tab
     label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">

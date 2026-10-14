@@ -44,15 +44,6 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
                                                   @Param("searchText") String searchText,
                                                   Pageable pageable);
 
-    @Query("SELECT rc FROM RuleChainEntity rc, RelationEntity re WHERE rc.tenantId = :tenantId " +
-            "AND rc.id = re.toId AND re.toType = 'RULE_CHAIN' AND re.relationTypeGroup = 'EDGE_AUTO_ASSIGN_RULE_CHAIN' " +
-            "AND re.relationType = 'Contains' AND re.fromId = :tenantId AND re.fromType = 'TENANT' " +
-            "AND (:searchText IS NULL OR ilike(rc.name, CONCAT('%', :searchText, '%')) = true)")
-    Page<RuleChainEntity> findAutoAssignByTenantId(@Param("tenantId") UUID tenantId,
-                                                   @Param("searchText") String searchText,
-                                                   Pageable pageable);
-
-
     RuleChainEntity findByTenantIdAndTypeAndRootIsTrue(UUID tenantId, RuleChainType ruleChainType);
 
     Long countByTenantId(UUID tenantId);

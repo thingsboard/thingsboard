@@ -26,6 +26,8 @@ import org.thingsboard.server.service.install.TbClusterSchema;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import org.springframework.core.io.ClassPathResource;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +43,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -225,6 +228,72 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
             // keeps user_info_view, which this test dropped CASCADE while reconstructing the pre-migration state.
             SchemaViews.recreate(jdbcTemplate);
         }
+    }
+
+    @Test
+    public void appliesSchemaForV4410CreatesEdgeProfileAndLinksEdgeToIt() throws Exception {
+        // Reconstruct the 4.4.0 state: no edge_profile table, no edge.edge_profile_id; two views select that column.
+        jdbcTemplate.execute("DROP VIEW IF EXISTS edge_info_view CASCADE");
+        jdbcTemplate.execute("DROP VIEW IF EXISTS edge_active_attribute_view CASCADE");
+        jdbcTemplate.execute("ALTER TABLE edge DROP COLUMN IF EXISTS edge_profile_id");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS edge_profile");
+
+        assertFalse(tableExists("edge_profile"));
+        assertFalse(columnExists("edge", "edge_profile_id"));
+        assertFalse(constraintExists("fk_edge_profile"));
+        assertFalse(indexExists("idx_edge_edge_profile_id"));
+
+        try {
+            // The offline PE upgrade runs exactly this: the schema SQL of every version in (db, package].
+            ltsMigrationService.runSchemaMigrations("4.4.0.0", "4.4.1.0", false);
+
+            assertTrue(tableExists("edge_profile"));
+            assertTrue(columnExists("edge", "edge_profile_id"));
+            assertTrue(constraintExists("fk_edge_profile"));
+            assertTrue(indexExists("idx_edge_edge_profile_id"));
+            // Existence is not enough: the same DDL lives in schema-entities.sql and in the CE->PE script. A literal
+            // list here would only be a third place to forget, so compare the upgraded table with the one a fresh
+            // install creates - that drift is what leaves upgraded installs a table the JPA entity cannot map.
+            assertThat(columnsOf("edge_profile"))
+                    .containsExactlyInAnyOrderElementsOf(declaredColumns("sql/schema-entities.sql", "edge_profile"));
+        } finally {
+            SchemaViews.recreate(jdbcTemplate);
+        }
+    }
+
+    @Test
+    public void ceToPeScriptCarriesTheSameEdgeProfileDdlAsTheLtsScript() throws Exception {
+        // The CE->PE script carries its own copy of the edge profile DDL. Executing it here is not an option (it is a
+        // whole-conversion script), and PeUpgradeAlarmShardingIntegrationTest runs it against a schema that already
+        // has the table, so every statement there is a no-op. Comparing the two blocks is what actually catches a
+        // column or constraint added to one script and forgotten in the other.
+        assertThat(edgeProfileDdlBlock("upgrade/pe/schema_update.sql"))
+                .isEqualTo(edgeProfileDdlBlock("upgrade/lts/4.4.1.0/schema_update.sql"));
+    }
+
+    // the columns a fresh install ends up with, read from the schema the JPA entities are mapped against
+    private List<String> declaredColumns(String classpathScript, String table) throws Exception {
+        String sql = new String(new ClassPathResource(classpathScript).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        int start = sql.indexOf("CREATE TABLE IF NOT EXISTS " + table + " (");
+        assertTrue("No CREATE TABLE for " + table + " in " + classpathScript, start >= 0);
+        String body = sql.substring(sql.indexOf('(', start) + 1, sql.indexOf("\n);", start));
+        List<String> columns = new ArrayList<>();
+        for (String line : body.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("--") || trimmed.startsWith("CONSTRAINT")) {
+                continue;
+            }
+            columns.add(trimmed.split("[\\s(]")[0].toLowerCase());
+        }
+        return columns;
+    }
+
+    private String edgeProfileDdlBlock(String scriptPath) throws Exception {
+        String sql = Files.readString(Paths.get(installScripts.getDataDir(), scriptPath));
+        int start = sql.indexOf("-- EDGE PROFILES START");
+        int end = sql.indexOf("-- EDGE PROFILES END");
+        assertTrue("No edge profile block markers in " + scriptPath, start >= 0 && end > start);
+        return sql.substring(start, end).trim();
     }
 
     @Test
@@ -700,6 +769,11 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         return Boolean.TRUE.equals(exists);
     }
 
+    private List<String> columnsOf(String table) {
+        return jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = ?", String.class, table);
+    }
+
     private boolean columnExists(String table, String column) {
         Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = ? AND column_name = ?)",
@@ -710,6 +784,12 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     private boolean constraintExists(String constraintName) {
         Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = ?)", Boolean.class, constraintName);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    private boolean indexExists(String indexName) {
+        Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = ?)", Boolean.class, indexName);
         return Boolean.TRUE.equals(exists);
     }
 }

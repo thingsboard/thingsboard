@@ -26,50 +26,10 @@
       {{'rulechain.set-root' | translate }}
     </button>
   }
-  @if (resource.EDGE | hasGenericPermission: operation.WRITE) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'setEdgeRoot')"
-      [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edge'">
-      {{'rulechain.set-root' | translate }}
-    </button>
-  }
-  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'setEdgeTemplateRoot')"
-      [class.!hidden]="isEdit || entity?.root || ruleChainScope !== 'edges'">
-      {{'rulechain.set-edge-template-root-rulechain' | translate }}
-    </button>
-  }
-  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'setAutoAssignToEdge')"
-      [class.!hidden]="isEdit || !isNotAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
-      {{'rulechain.set-auto-assign-to-edge' | translate }}
-    </button>
-  }
-  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'unsetAutoAssignToEdge')"
-      [class.!hidden]="isEdit || !isAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
-      {{'rulechain.unset-auto-assign-to-edge' | translate }}
-    </button>
-  }
-  @if (resource.EDGE | hasGenericPermission: operation.WRITE) {
-    <button mat-stroked-button color="primary"
-      [disabled]="(isLoading$ | async)"
-      (click)="onEntityAction($event, 'unassignFromEdge')"
-      [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edges'">
-      {{'edge.unassign-from-edge' | translate }}
-    </button>
-  }
   <button mat-stroked-button color="primary"
     [disabled]="(isLoading$ | async)"
     (click)="onEntityAction($event, 'delete')"
-    [class.!hidden]="hideDelete() || isEdit || ruleChainScope === 'edge'">
+    [class.!hidden]="hideDelete() || isEdit">
     {{'rulechain.delete' | translate }}
   </button>
   <div class="flex flex-row">

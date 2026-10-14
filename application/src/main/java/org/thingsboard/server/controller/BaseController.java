@@ -82,6 +82,7 @@ import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -110,6 +111,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -206,6 +208,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
@@ -553,6 +556,9 @@ public abstract class BaseController {
 
     @Autowired
     protected AgentProfileService agentProfileService;
+
+    @Autowired
+    protected EdgeProfileService edgeProfileService;
 
     @Autowired
     protected AgentBulkActionProcessingService agentBulkActionProcessingService;
@@ -1055,6 +1061,7 @@ public abstract class BaseController {
                 case AGENT_BULK_ACTION -> checkAgentBulkActionId(new AgentBulkActionId(entityId.getId()), operation);
                 case AGENT_APP_PROFILE -> checkAgentAppProfileId(new AgentAppProfileId(entityId.getId()), operation);
                 case AGENT_PROFILE -> checkAgentProfileId(new AgentProfileId(entityId.getId()), operation);
+                case EDGE_PROFILE -> checkEdgeProfileId(new EdgeProfileId(entityId.getId()), operation);
                 default -> (HasId<? extends EntityId>) checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
             };
         } catch (Exception e) {
@@ -1415,6 +1422,10 @@ public abstract class BaseController {
 
     AgentProfile checkAgentProfileId(AgentProfileId profileId, Operation operation) throws ThingsboardException {
         return checkEntityId(profileId, agentProfileService::findProfileById, operation);
+    }
+
+    EdgeProfile checkEdgeProfileId(EdgeProfileId edgeProfileId, Operation operation) throws ThingsboardException {
+        return checkEntityId(edgeProfileId, edgeProfileService::findEdgeProfileById, operation);
     }
 
     /**

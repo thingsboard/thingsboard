@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.group.EntityGroup;
@@ -84,6 +85,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.DockerComposeParams;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
@@ -106,6 +108,7 @@ import org.thingsboard.server.service.entitiy.asset.TbAssetService;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
+import org.thingsboard.server.service.entitiy.edge.profile.TbEdgeProfileService;
 import org.thingsboard.server.service.entitiy.entity.group.TbEntityGroupService;
 import org.thingsboard.server.service.entitiy.entity.relation.TbEntityRelationService;
 import org.thingsboard.server.service.rule.TbRuleChainService;
@@ -235,6 +238,8 @@ public class DefaultSolutionService implements SolutionService {
     private final CalculatedFieldReprocessingService calculatedFieldReprocessingService;
     private final EdgeService edgeService;
     private final TbEdgeService tbEdgeService;
+    private final EdgeProfileService edgeProfileService;
+    private final TbEdgeProfileService tbEdgeProfileService;
     private final EntityGroupService entityGroupService;
     private final TbEntityGroupService tbEntityGroupService;
     private final GroupPermissionService groupPermissionService;
@@ -1531,7 +1536,6 @@ public class DefaultSolutionService implements SolutionService {
     private void provisionEdges(User user, SolutionInstallContext ctx, HttpServletRequest request) throws Exception {
         List<EdgeDefinition> edges = loadListOfEntitiesIfFileExists(ctx.getTempDir(), "edges.json", new TypeReference<>() {
         });
-        RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(ctx.getTenantId());
         for (EdgeDefinition entityDef : edges) {
             if (!subscriptionService.isCreateEdgeAllowed(ctx.getTenantId())) {
                 log.warn("Skipping edge provisioning for tenant {}", ctx.getTenantId());
@@ -1542,24 +1546,20 @@ public class DefaultSolutionService implements SolutionService {
             entity.setName(entityDef.getName());
             entity.setLabel(entityDef.getLabel());
             entity.setType(entityDef.getType());
+            if (StringUtils.isNotBlank(entityDef.getRootRuleChainId())) {
+                String newId = ctx.getRealIds().get(entityDef.getRootRuleChainId());
+                if (newId == null) {
+                    log.error("[{}][{}] Edge: {} references non existing rule chain.", ctx.getTenantId(), ctx.getSolutionId(), entityDef.getName());
+                    throw solutionConfigurationError(EntityType.EDGE, entityDef.getName(), "non existing rule chain");
+                }
+                entity.setEdgeProfileId(getEdgeProfileWithRootRuleChain(ctx.getTenantId(), entityDef, new RuleChainId(UUID.fromString(newId)), user).getId());
+            }
             entity.setCustomerId(ctx.getIdFromMap(EntityType.CUSTOMER, entityDef.getCustomer()));
             entity.setRoutingKey(UUID.randomUUID().toString());
             entity.setSecret(StringUtils.randomAlphanumeric(20));
             entity.setEdgeLicenseKey(EdgeUtils.DEFAULT_EDGE_LICENSE_KEY);
             entity.setCloudEndpoint(systemSecurityService.getBaseUrl(ctx.getTenantId(), null, request));
-            RuleChainId rootRuleChainId = edgeTemplateRootRuleChain.getId();
-            if (StringUtils.isNotBlank(entityDef.getRootRuleChainId())) {
-                String newId = ctx.getRealIds().get(entityDef.getRootRuleChainId());
-                if (newId != null) {
-                    rootRuleChainId = new RuleChainId(UUID.fromString(newId));
-                } else {
-                    log.error("[{}][{}] Edge: {} references non existing rule chain.", ctx.getTenantId(), ctx.getSolutionId(), entity.getName());
-                    throw solutionConfigurationError(EntityType.EDGE, entity.getName(), "non existing rule chain");
-                }
-            }
-            entity.setRootRuleChainId(rootRuleChainId);
-            RuleChain rootRuleChain = ruleChainService.findRuleChainById(ctx.getTenantId(), rootRuleChainId);
-            entity = tbEdgeService.save(entity, rootRuleChain, Collections.emptyList(), user);
+            entity = tbEdgeService.save(entity, Collections.emptyList(), user);
             ctx.register(entityDef, entity);
             assignRuleChainsToEdge(ctx, entityDef.getRuleChainIds(), entity);
             assignEntityGroupsToEdge(ctx, EntityType.ASSET, entityDef.getAssetGroups(), entity);
@@ -1579,6 +1579,34 @@ public class DefaultSolutionService implements SolutionService {
             EdgeLinkInfo edgeLinkInfo = new EdgeLinkInfo(entity.getId(), entity.getOwnerId());
             ctx.addEdgeLinkInfo(entity.getName(), edgeLinkInfo);
         }
+    }
+
+    private EdgeProfile getEdgeProfileWithRootRuleChain(TenantId tenantId, EdgeDefinition entityDef, RuleChainId rootRuleChainId, User user) {
+        // never re-root the tenant default or a profile other edges may rely on; such an edge gets a profile of its own
+        String name = entityDef.getType();
+        if (StringUtils.isBlank(name) || hasAnotherRoot(tenantId, name, rootRuleChainId)) {
+            name = freeProfileName(tenantId, entityDef.getName(), rootRuleChainId);
+            log.info("[{}] Edge '{}': profile '{}' is rooted elsewhere or unnamed, using profile '{}'", tenantId, entityDef.getName(), entityDef.getType(), name);
+        }
+        EdgeProfile profile = edgeProfileService.findOrCreateEdgeProfile(tenantId, name);
+        if (rootRuleChainId.equals(profile.getRootRuleChainId())) {
+            return profile;
+        }
+        return tbEdgeProfileService.setRootRuleChain(profile, rootRuleChainId, user);
+    }
+
+    // the edge's own name collides just as easily - with the tenant default profile above all, whose root must not move
+    private String freeProfileName(TenantId tenantId, String baseName, RuleChainId rootRuleChainId) {
+        String name = baseName;
+        for (int i = 2; hasAnotherRoot(tenantId, name, rootRuleChainId); i++) {
+            name = baseName + " (" + i + ")";
+        }
+        return name;
+    }
+
+    private boolean hasAnotherRoot(TenantId tenantId, String profileName, RuleChainId rootRuleChainId) {
+        EdgeProfile profile = edgeProfileService.findEdgeProfileByName(tenantId, profileName);
+        return profile != null && profile.getRootRuleChainId() != null && !rootRuleChainId.equals(profile.getRootRuleChainId());
     }
 
     private void assignRuleChainsToEdge(SolutionInstallContext ctx, List<String> ruleChainIds, Edge entity) {

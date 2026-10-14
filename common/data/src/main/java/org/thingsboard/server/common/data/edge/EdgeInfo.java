@@ -9,12 +9,16 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityInfo;
 
+import java.io.Serial;
 import java.util.List;
 
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class EdgeInfo extends Edge {
+
+    @Serial
+    private static final long serialVersionUID = 8222200277464363837L;
 
     @Valid
     @Schema(description = "Owner name", accessMode = Schema.AccessMode.READ_ONLY)
@@ -33,4 +37,5 @@ public class EdgeInfo extends Edge {
         this.ownerName = ownerName;
         this.groups = groups;
     }
+
 }

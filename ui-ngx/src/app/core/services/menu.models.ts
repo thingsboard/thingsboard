@@ -954,7 +954,8 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/edgeManagement/profiles',
       icon: 'badge',
-      outlinedIcon: 'badge'
+      outlinedIcon: 'badge',
+      isNew: true
     }
   ],
   [
@@ -1708,6 +1709,7 @@ const menuFilters = new Map<MenuId, MenuFilter>([
   ],
   [
     MenuId.edge_profiles, (_authState, userPermissionsService) =>
+          userPermissionsService.hasReadGenericPermission(Resource.EDGE_PROFILE) ||
           userPermissionsService.hasReadGenericPermission(Resource.AGENT_PROFILE) ||
           userPermissionsService.hasReadGenericPermission(Resource.AGENT_APP_PROFILE)
   ],

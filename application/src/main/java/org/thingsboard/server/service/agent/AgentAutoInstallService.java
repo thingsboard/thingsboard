@@ -25,17 +25,18 @@ import org.thingsboard.server.common.data.agent.config.DockerComposeUtils;
 import org.thingsboard.server.common.data.agent.config.GatewayEnvSchema;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.AgentId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.agent.AgentAppProfileService;
 import org.thingsboard.server.dao.agent.AgentProfileService;
 import org.thingsboard.server.dao.agent.AgentService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.edge.TbEdgeService;
@@ -45,7 +46,6 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,8 +61,8 @@ public class AgentAutoInstallService {
     private final AgentAppProvisioner appProvisioner;
     private final AgentEventRateLimiter agentEventRateLimiter;
     private final TbEdgeService tbEdgeService;
-    private final RuleChainService ruleChainService;
     private final DeviceService deviceService;
+    private final EdgeProfileService edgeProfileService;
     private final SystemSecurityService systemSecurityService;
     private final SubscriptionService subscriptionService;
 
@@ -196,10 +196,6 @@ public class AgentAutoInstallService {
     }
 
     private Edge createEdge(TenantId tenantId, AgentAppProfile profile, String projectName) {
-        RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(tenantId);
-        if (edgeTemplateRootRuleChain == null) {
-            throw new NoSuchElementException("Root edge rule chain is not available!");
-        }
         if (!isSupportedEdgeVersion(subscriptionService.getLicenseVersion(), profile.getTemplateVersion())) {
             throw new IllegalStateException(String.format(
                     "Edge version %s of profile %s is not supported for add-on Edges, use Edge version %s or later",
@@ -208,14 +204,14 @@ public class AgentAutoInstallService {
         Edge edge = new Edge();
         edge.setTenantId(tenantId);
         edge.setName("Edge-" + projectName);
-        edge.setType("default");
         edge.setRoutingKey(StringUtils.randomAlphanumeric(20));
         edge.setSecret(StringUtils.randomAlphanumeric(20));
         edge.setEdgeLicenseKey(EdgeUtils.DEFAULT_EDGE_LICENSE_KEY);
         edge.setCloudEndpoint(systemSecurityService.getBaseUrl(tenantId, null, null));
+        edge.setEdgeProfileId(resolveEdgeProfileId(tenantId, profile));
         Edge saved;
         try {
-            saved = tbEdgeService.save(edge, edgeTemplateRootRuleChain, Collections.emptyList(), null);
+            saved = tbEdgeService.save(edge, Collections.emptyList(), null);
         } catch (Exception e) {
             throw new RuntimeException("Failed to auto-create Edge for profile " + profile.getId(), e);
         }
@@ -226,6 +222,29 @@ public class AgentAutoInstallService {
     static boolean isSupportedEdgeVersion(int licenseVersion, String templateVersion) {
         return !EdgeUtils.isAddonEdge(licenseVersion)
                 || TbVersionUtils.compare(TbVersionUtils.extractStartingDigits(templateVersion), MIN_ADD_ON_EDGE_VERSION) >= 0;
+    }
+
+    /**
+     * Null falls back to the tenant default, so an unusable link degrades to the previous behaviour
+     * instead of failing the whole auto-install.
+     */
+    private EdgeProfileId resolveEdgeProfileId(TenantId tenantId, AgentAppProfile profile) {
+        EdgeProfileId edgeProfileId = profileService.findEdgeProfileId(tenantId, profile.getId());
+        if (edgeProfileId == null) {
+            return null;
+        }
+        EdgeProfile edgeProfile = edgeProfileService.findEdgeProfileById(tenantId, edgeProfileId);
+        if (edgeProfile == null) {
+            log.warn("[{}] Application profile [{}] is linked to non-existent edge profile [{}], using the tenant default",
+                    tenantId, profile.getId(), edgeProfileId);
+            return null;
+        }
+        if (edgeProfile.getRootRuleChainId() == null) {
+            log.warn("[{}] Application profile [{}] is linked to edge profile [{}] without a root rule chain, using the tenant default",
+                    tenantId, profile.getId(), edgeProfileId);
+            return null;
+        }
+        return edgeProfileId;
     }
 
     /**

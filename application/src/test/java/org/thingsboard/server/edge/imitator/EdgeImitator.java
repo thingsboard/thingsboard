@@ -101,6 +101,8 @@ public class EdgeImitator {
     @Setter
     private double failureProbability = 0.0;
     private final Map<Integer, Integer> downlinkFailureCountMap = new HashMap<>();
+    @Setter
+    private volatile int entityGroupDownlinkFailures = 0;
 
     @Getter
     private EdgeConfiguration configuration;
@@ -342,7 +344,12 @@ public class EdgeImitator {
         }
         if (downlinkMsg.getEntityGroupUpdateMsgCount() > 0) {
             for (EntityGroupUpdateMsg entityGroupUpdateMsg : downlinkMsg.getEntityGroupUpdateMsgList()) {
-                result.add(saveDownlinkMsg(entityGroupUpdateMsg));
+                if (entityGroupDownlinkFailures > 0) {
+                    entityGroupDownlinkFailures--;
+                    result.add(Futures.immediateFailedFuture(new RuntimeException("Injected failure. This is expected error for edge test")));
+                } else {
+                    result.add(saveDownlinkMsg(entityGroupUpdateMsg));
+                }
             }
         }
         if (downlinkMsg.hasCustomMenuProto()) {

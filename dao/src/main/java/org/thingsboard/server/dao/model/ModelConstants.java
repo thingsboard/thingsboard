@@ -411,6 +411,17 @@ public class ModelConstants {
     public static final String AGENT_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
 
     /**
+     * Edge profile constants.
+     */
+    public static final String EDGE_PROFILE_TABLE_NAME = "edge_profile";
+    public static final String EDGE_PROFILE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String EDGE_PROFILE_NAME_PROPERTY = NAME_PROPERTY;
+    public static final String EDGE_PROFILE_DESCRIPTION_PROPERTY = "description";
+    public static final String EDGE_PROFILE_IS_DEFAULT_PROPERTY = "is_default";
+    public static final String EDGE_PROFILE_ROOT_RULE_CHAIN_ID_PROPERTY = "root_rule_chain_id";
+    public static final String EDGE_PROFILE_PROFILE_DATA_PROPERTY = "profile_data";
+
+    /**
      * Agent additional FK columns.
      */
     public static final String AGENT_PROFILE_ID_PROPERTY = "agent_profile_id";
@@ -901,6 +912,7 @@ public class ModelConstants {
     public static final String EDGE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EDGE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String EDGE_ROOT_RULE_CHAIN_ID_PROPERTY = "root_rule_chain_id";
+    public static final String EDGE_EDGE_PROFILE_ID_PROPERTY = "edge_profile_id";
     public static final String EDGE_NAME_PROPERTY = "name";
     public static final String EDGE_LABEL_PROPERTY = "label";
     public static final String EDGE_TYPE_PROPERTY = "type";

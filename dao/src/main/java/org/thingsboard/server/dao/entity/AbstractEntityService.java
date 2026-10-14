@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +19,11 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.debug.DebugSettings;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -99,6 +102,15 @@ public abstract class AbstractEntityService {
         } else {
             return saveFunction.get();
         }
+    }
+
+    // a plain re-save on the composite key would overwrite the stamp, and the row would survive the profile's removal
+    protected JsonNode edgeRelationInfo(TenantId tenantId, EntityId from, EntityId to, String relationType, JsonNode additionalInfo) {
+        if (additionalInfo != null) {
+            return additionalInfo;
+        }
+        EntityRelation existing = relationService.getRelation(tenantId, from, to, relationType, RelationTypeGroup.EDGE);
+        return existing != null ? existing.getAdditionalInfo() : null;
     }
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {

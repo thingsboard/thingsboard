@@ -16,6 +16,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -50,6 +51,8 @@ class InstallScriptsTest {
     RuleChainService ruleChainService;
     @MockitoBean
     DashboardService dashboardService;
+    @MockitoBean
+    EdgeProfileService edgeProfileService;
     @MockitoBean
     WidgetTypeService widgetTypeService;
     @MockitoBean

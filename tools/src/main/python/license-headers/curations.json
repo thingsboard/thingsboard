@@ -118,8 +118,8 @@
     {
       "path": "application/src/test/java/org/thingsboard/server/service/install/update/DefaultDataUpdateServiceTest.java",
       "header": "busl",
-      "reason": "CE deleted its DefaultDataUpdateServiceTest (version 3.3.0 device profile conversion tests) in ba440ba7c1f. PE recreated a test at the same path in cdae38adc6b with entirely new content covering the CE-to-PE upgrade chain; nothing of the CE file (last CE version 40527f3da02^1, blob abfab844917) remains beyond the class name.",
-      "contentHash": "sha256:c0ebbc47ce2ff97d2e00182781ed38ca137ad54393e706c064c0ca6919b27eb8"
+      "reason": "CE deleted its DefaultDataUpdateServiceTest (version 3.3.0 device profile conversion tests) in ba440ba7c1f. PE recreated a test at the same path in cdae38adc6b with entirely new content covering the CE-to-PE upgrade chain; nothing of the CE file (last CE version 40527f3da02^1, blob abfab844917) remains beyond the class name. Re-reviewed 2026-10-13: added a mock for the EdgeProfileMigrationService constructor dependency of the PE edge profiles feature; still no CE content beyond the class name.",
+      "contentHash": "sha256:229edb385257cc12820c4157c88545d592b6f3c4ed52f89cdd077e6cdc948cd7"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/integration/rpc/IntegrationRpcSslTest.java",
@@ -192,6 +192,24 @@
       "header": "busl",
       "reason": "PE agent cache added in 7a16579509e as part of the PE agent feature introduced on lts-4.4, which has no counterpart in CE. The candidate CE dao/src/main/java/org/thingsboard/server/dao/asset/AssetRedisCache.java shares only the Caffeine or Redis cache boilerplate and caches a different key and value type. Reviewed candidate at a0aff29ef42d3636473b017115a9334b48d54d15 (blob 488c9f37404).",
       "contentHash": "sha256:479b7a977e88848a1990e583ffafa3cc21661b5541be191225638ae32267c8ea"
+    },
+    {
+      "path": "common/cache/src/main/java/org/thingsboard/server/cache/edge/EdgeProfileCacheEvictEvent.java",
+      "header": "busl",
+      "reason": "Cache evict event for the PE-only edge profile entity. It was written by adapting CE common/cache/src/main/java/org/thingsboard/server/cache/edge/EdgeCacheEvictEvent.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file. Reviewed similarity candidate common/cache/src/main/java/org/thingsboard/server/cache/edge/EdgeCacheEvictEvent.java at 687d808ec1307b3c67f9621abc2789b2c004b652 (blob 803448d1be7b641e8a5aea860c41ee91303f84ed).",
+      "contentHash": "sha256:f7c4ce2758f3adb2ff90f37679a25b3b552c0d409a319a3856a52210a6b1b242"
+    },
+    {
+      "path": "common/cache/src/main/java/org/thingsboard/server/cache/edge/EdgeProfileCaffeineCache.java",
+      "header": "busl",
+      "reason": "Caffeine cache for the PE-only edge profile entity. It was written by adapting CE common/cache/src/main/java/org/thingsboard/server/cache/edge/RelatedEdgesCaffeineCache.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file. Reviewed similarity candidate common/cache/src/main/java/org/thingsboard/server/cache/edge/RelatedEdgesCaffeineCache.java at 687d808ec1307b3c67f9621abc2789b2c004b652 (blob afe2990ace826fdc6c5fc346e0c43a872268cabf).",
+      "contentHash": "sha256:252c536ee3dcb5d589a2703f9d5a746d750f84444a03976acbc1a38dde52231e"
+    },
+    {
+      "path": "common/cache/src/main/java/org/thingsboard/server/cache/edge/EdgeProfileRedisCache.java",
+      "header": "busl",
+      "reason": "Redis cache for the PE-only edge profile entity. It was written by adapting CE dao/src/main/java/org/thingsboard/server/dao/edge/EdgeSessionRedisCache.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file. Reviewed similarity candidate dao/src/main/java/org/thingsboard/server/dao/edge/EdgeSessionRedisCache.java at 687d808ec1307b3c67f9621abc2789b2c004b652 (blob 524de6d7e66d0dcef26b13c41b46975146ebb48e).",
+      "contentHash": "sha256:9379488f7478e314b4d8e61125ed7200b5ddcfae4ada5e80c96692b444166992"
     },
     {
       "path": "common/cache/src/main/java/org/thingsboard/server/cache/secret/SecretCaffeineCache.java",
@@ -344,6 +362,12 @@
       "contentHash": "sha256:6a1db9c609fe31e1dfb256bfb6ada0eb8e93168ad5c55f31dc37d66fc6b75c11"
     },
     {
+      "path": "common/data/src/main/java/org/thingsboard/server/common/data/id/EdgeProfileId.java",
+      "header": "busl",
+      "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/id/OtaPackageId.java at 687d808ec1307b3c67f9621abc2789b2c004b652 (blob 3d261f32152dfd377c0f5b1730fe718bceaba1f7).",
+      "contentHash": "sha256:3e5850967d63b54e08f24115458f1d31fe069d911890684b85756df3826036fa"
+    },
+    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/id/EncryptionKeyId.java",
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/id/UserCredentialsId.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 6c17ba5aec7d3e4b1e07f3a5e89fe144441fb0a4).",
@@ -448,8 +472,8 @@
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Resource.java",
       "header": "ce-modified",
-      "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Resource.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob d8b4dd8f4ef95df06ba22fd584813f437a8b453a); a move alone does not imply PE authorship.",
-      "contentHash": "sha256:635cb50f3945d1bca662a7100a6129bea1270755bf4fe7cd6bc9849f228a4f08"
+      "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Resource.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob d8b4dd8f4ef95df06ba22fd584813f437a8b453a); a move alone does not imply PE authorship. Re-reviewed 2026-09-15: PE added the EDGE_PROFILE resource and its permission wiring; origin unchanged.",
+      "contentHash": "sha256:7e7c418a56485cdc5e8608d30a2e01305a5f8e4467cad3723be30f8500fdbd75"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/EntityGroupNameFilter.java",
@@ -1400,6 +1424,12 @@
       "contentHash": "sha256:07f295f637db24d600798215d33391f4e966954899f644a41b9735f5ed5392db"
     },
     {
+      "path": "ui-ngx/src/app/modules/home/pages/edge-profile/edge-profile-dialog.component.html",
+      "header": "busl",
+      "reason": "PE-only edge profile feature: the Edge Profiles entity does not exist in CE, so this dialog template has no CE counterpart. It follows the standard ThingsBoard entity-dialog shape (toolbar, progress bar, mat-dialog-content wrapping the entity component, cancel/save actions), which is why it resembles the CE asset profile dialog at 67%, but it hosts tb-edge-profile and is new PE code rather than a relocation. Per the maintainer rule of 2026-09-09, a file that does not exist in CE and implements a PE feature is PE-only however closely it resembles a CE file. Reviewed candidate ui-ngx/src/app/modules/home/components/profile/asset-profile-dialog.component.html at ced7d9bd5e7dd9759a0fe912b142b1f4dd4361b8 (blob 105fca72b666ec9a1873297ca0cc46c6ebd014ec).",
+      "contentHash": "sha256:629209c2b8dd66a3f0acd199a1818ffca70d27549ce8daf2f699cd3bca3ee6a9"
+    },
+    {
       "path": "ui-ngx/src/app/modules/home/pages/entity-view/entity-view-table-header.component.scss",
       "header": "ce-modified",
       "reason": "Retained CE file subsequently deleted on the CE mainline in d81add6fd73 (Angular 15 migration). PE keeps the entity views table header stylesheet and updated it for the MDC slide toggle. Reviewed against last CE path version 80430897422ae13b600ee9c9dbc57f7d558a3b4b^1 (blob 66a9d55fb35).",
@@ -1470,12 +1500,6 @@
       "header": "busl",
       "reason": "Angular module/routing registration for a PE feature. Imports, declarations and routes select PE components using common Angular module scaffolding; no CE feature implementation is relocated. Reviewed candidate ui-ngx/src/app/modules/home/pages/alarm/alarm.module.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 9438e743d19cc4234935fed2a42ef0d8e7b9558f).",
       "contentHash": "sha256:7d8e38e285631d2a7a74ba52a9eb1bc050101a9460df8d1e7d635242acde7fa3"
-    },
-    {
-      "path": "ui-ngx/src/app/modules/home/pages/rulechain/rulechains-table-config.ts",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE ui-ngx/src/app/modules/home/pages/rulechain/rulechains-table-config.resolver.ts, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:f155dcd3181ac77f5a8ea303eeda6a8471b298c3cce8f496d2b4945630b3ed18"
     },
     {
       "path": "ui-ngx/src/app/modules/home/pages/scheduler/scheduler.module.ts",
@@ -1614,6 +1638,12 @@
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/audit-log-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 0b71456990b38a79ab3ca4b7a16ddb14028b7826).",
       "contentHash": "sha256:64061a7b1ea13d059e6d5b0540f09cd92fbe4579b1e4ae723ccce406d4be29a6"
+    },
+    {
+      "path": "ui-ngx/src/app/shared/models/id/edge-profile-id.ts",
+      "header": "busl",
+      "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/api-key-id.ts at 687d808ec1307b3c67f9621abc2789b2c004b652 (blob 75dad3036c086ecdcb8c9294e100c698aaeec096).",
+      "contentHash": "sha256:2d1e47eaaf401443bf5ce4598292e132207eb2858ff44e3bc6e358f0a6380ca9"
     },
     {
       "path": "ui-ngx/src/app/shared/models/id/entity-group-id.ts",

@@ -15,6 +15,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -141,6 +142,56 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
         foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
         Assert.assertNull(foundRuleChain);
+    }
+
+    @Test
+    public void testDeleteEdgeRootRuleChainNotReferencedByProfileOrEdge() {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Edge RuleChain");
+        ruleChain.setType(RuleChainType.EDGE);
+        ruleChain.setRoot(true);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
+
+        Assert.assertNull(ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId()));
+    }
+
+    @Test
+    public void testDeleteEdgeProfileRootRuleChainIsProhibited() {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Edge profile root RuleChain");
+        ruleChain.setType(RuleChainType.EDGE);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+        EdgeProfile profile = new EdgeProfile();
+        profile.setTenantId(tenantId);
+        profile.setName("Profile rooted on " + savedRuleChain.getName());
+        profile.getProfileData().getRuleChainIds().add(savedRuleChain.getId());
+        profile.setRootRuleChainId(savedRuleChain.getId());
+        profile = edgeProfileService.saveEdgeProfile(profile);
+
+        DataValidationException exception = Assertions.assertThrows(DataValidationException.class,
+                () -> ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId()));
+
+        Assert.assertEquals("Can't delete rule chain that is root for an edge profile. Set another root rule chain on the profile first!", exception.getMessage());
+        Assert.assertNotNull(ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId()));
+        edgeProfileService.deleteEdgeProfile(tenantId, profile.getId());
+    }
+
+    @Test
+    public void testDeleteCoreRootRuleChainIsProhibited() {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Core RuleChain");
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+        ruleChainService.setRootRuleChain(tenantId, savedRuleChain.getId());
+
+        DataValidationException exception = Assertions.assertThrows(DataValidationException.class,
+                () -> ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId()));
+
+        Assert.assertEquals("Deletion of Root Tenant Rule Chain is prohibited!", exception.getMessage());
     }
 
     @Test
@@ -401,34 +452,6 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testGetDefaultEdgeRuleChains() throws Exception {
-        RuleChainId ruleChainId = saveRuleChainAndSetAutoAssignToEdge("Default Edge Rule Chain 1");
-        saveRuleChainAndSetAutoAssignToEdge("Default Edge Rule Chain 2");
-        PageData<RuleChain> result = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, new PageLink(100));
-        Assert.assertEquals(2, result.getData().size());
-
-        ruleChainService.unsetAutoAssignToEdgeRuleChain(tenantId, ruleChainId);
-
-        result = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, new PageLink(100));
-        Assert.assertEquals(1, result.getData().size());
-    }
-
-    @Test
-    public void setEdgeTemplateRootRuleChain() throws Exception {
-        RuleChainId ruleChainId1 = saveRuleChainAndSetAutoAssignToEdge("Default Edge Rule Chain 1");
-        RuleChainId ruleChainId2 = saveRuleChainAndSetAutoAssignToEdge("Default Edge Rule Chain 2");
-
-        ruleChainService.setEdgeTemplateRootRuleChain(tenantId, ruleChainId1);
-        ruleChainService.setEdgeTemplateRootRuleChain(tenantId, ruleChainId2);
-
-        RuleChain ruleChainById = ruleChainService.findRuleChainById(tenantId, ruleChainId1);
-        Assert.assertFalse(ruleChainById.isRoot());
-
-        ruleChainById = ruleChainService.findRuleChainById(tenantId, ruleChainId2);
-        Assert.assertTrue(ruleChainById.isRoot());
-    }
-
-    @Test
     public void testSaveRuleChainWithInputNode() {
         RuleChain fromRuleChain = new RuleChain();
         fromRuleChain.setName("From RuleChain");
@@ -500,16 +523,6 @@ public class RuleChainServiceTest extends AbstractServiceTest {
             assertThat(relationToRuleChain2.getFrom()).isEqualTo(fromRuleChainId);
             assertThat(relationToRuleChain2.getTo()).isEqualTo(toRuleChain2Id);
         });
-    }
-
-    private RuleChainId saveRuleChainAndSetAutoAssignToEdge(String name) {
-        RuleChain edgeRuleChain = new RuleChain();
-        edgeRuleChain.setTenantId(tenantId);
-        edgeRuleChain.setType(RuleChainType.EDGE);
-        edgeRuleChain.setName(name);
-        RuleChain savedEdgeRuleChain = ruleChainService.saveRuleChain(edgeRuleChain);
-        ruleChainService.setAutoAssignToEdgeRuleChain(tenantId, savedEdgeRuleChain.getId());
-        return savedEdgeRuleChain.getId();
     }
 
     private RuleChainMetaData createRuleChainMetadata() throws Exception {

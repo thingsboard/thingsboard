@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -78,19 +79,11 @@ public interface RuleChainService extends EntityDaoService {
 
     RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId);
 
+    RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId, JsonNode additionalInfo);
+
     RuleChain unassignRuleChainFromEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId, boolean remove);
 
     PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink);
-
-    RuleChain getEdgeTemplateRootRuleChain(TenantId tenantId);
-
-    boolean setEdgeTemplateRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
-
-    boolean setAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
-
-    boolean unsetAutoAssignToEdgeRuleChain(TenantId tenantId, RuleChainId ruleChainId);
-
-    PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId, PageLink pageLink);
 
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
 

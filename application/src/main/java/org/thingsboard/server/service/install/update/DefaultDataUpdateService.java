@@ -95,6 +95,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private final EntityViewService entityViewService;
     private final EdgeService edgeService;
     private final AgentProfileService agentProfileService;
+    private final EdgeProfileMigrationService edgeProfileMigrationService;
     private final SystemDataLoaderService systemDataLoaderService;
     private final ComponentDiscoveryService componentDiscoveryService;
     private final DbUpgradeExecutorService executorService;
@@ -106,25 +107,28 @@ public class DefaultDataUpdateService implements DataUpdateService {
         log.info("Updating data ...");
         if (fromCe) {
             updateDataFromCe();
+            // the CE path never runs again, so a tenant left without profiles must fail the upgrade
+            backfillForExistingTenants(List.of(edgeProfileMigrationService::ensureEdgeProfiles), true);
         }
         //TODO: should be cleaned after each release
-        backfillForExistingTenants();
+        backfillForExistingTenants(List.of(
+                this::backfillAgentGroupAllForTenant,
+                this::ensureDefaultAgentProfile
+        ), false);
+        // the edge profile backfill for 4.4.0 -> 4.4.1 runs as part of the 4.4.1.0 LTS migration (V4_4_1_0Migration)
         ltsMigrationService.runDataMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion(),
                 schemaSettingsService.isForcedReUpgrade());
         log.info("Data updated.");
     }
 
-    private void backfillForExistingTenants() throws Exception {
+    // failOnError: every tenant is still attempted and logged, then the upgrade fails
+    private void backfillForExistingTenants(List<Consumer<TenantId>> tenantBackfillTasks, boolean failOnError) throws Exception {
         log.info("Starting backfill for existing tenants ...");
-
-        List<Consumer<TenantId>> tenantBackfillTasks = List.of(
-                this::backfillAgentGroupAllForTenant,
-                this::ensureDefaultAgentProfile
-        );
 
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, BACKFILL_BATCH_SIZE);
         List<ListenableFuture<?>> batch = new ArrayList<>(BACKFILL_BATCH_SIZE);
         AtomicInteger count = new AtomicInteger();
+        AtomicInteger failed = new AtomicInteger();
 
         for (TenantId tenantId : tenants) {
             batch.add(executorService.submit(() -> {
@@ -132,6 +136,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     try {
                         task.accept(tenantId);
                     } catch (Exception e) {
+                        failed.incrementAndGet();
                         log.error("Backfill task failed for tenant [{}]", tenantId, e);
                     }
                 }
@@ -146,6 +151,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
         Futures.allAsList(batch).get();
 
         log.info("Backfill for existing tenants completed. Processed {} tenants.", count.get());
+        if (failOnError && failed.get() > 0) {
+            throw new IllegalStateException("Backfill failed for " + failed.get() + " of " + count.get()
+                    + " tenant(s); fix the cause and re-run the upgrade before starting the service");
+        }
     }
 
     private void backfillAgentGroupAllForTenant(TenantId tenantId) {

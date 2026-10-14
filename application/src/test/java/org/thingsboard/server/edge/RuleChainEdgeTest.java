@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -8,8 +9,8 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.rule.engine.util.TbMsgSource;
-import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -196,66 +197,50 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
-    public void testSetRootRuleChain() throws Exception {
-        // create rule chain
+    public void testSetRootRuleChainViaProfile() throws Exception {
+        EdgeProfile profile = doGet("/api/edgeProfile/" + edge.getEdgeProfileId().getId(), EdgeProfile.class);
+        RuleChainId originalRoot = profile.getRootRuleChainId();
+
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("Edge New Root Rule Chain");
         ruleChain.setType(RuleChainType.EDGE);
         RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
 
-        edgeImitator.expectMessageAmount(4);
-        doPost("/api/edge/" + edge.getUuidId()
-                + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
+        // add to profile -> assigned to the edge asynchronously (rule chain + metadata); settle it first, because the
+        // metadata save below only reaches the edge through the EDGE->RULE_CHAIN relation the assignment creates
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/edgeProfile/" + profile.getUuidId() + "/ruleChain/" + savedRuleChain.getUuidId(), EdgeProfile.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        // metadata update -> rule chain + metadata
+        edgeImitator.expectMessageAmount(2);
         RuleChainMetaData metaData = createRuleChainMetadata(savedRuleChain);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        // set new rule chain as root
-        RuleChainId currentRootRuleChainId = edge.getRootRuleChainId();
+        // set new root on the profile -> edge receives the chain flagged root
         edgeImitator.expectMessageAmount(2);
-        doPost("/api/edge/" + edge.getUuidId()
-                + "/" + savedRuleChain.getUuidId() + "/root", Edge.class);
+        doPost("/api/edgeProfile/" + profile.getUuidId() + "/" + savedRuleChain.getUuidId() + "/root", "", EdgeProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
         Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
-        RuleChainUpdateMsg ruleChainUpdateMsg = ruleChainUpdateMsgOpt.get();
-        RuleChain ruleChainMsg = JacksonUtil.fromString(ruleChainUpdateMsg.getEntity(), RuleChain.class, true);
+        RuleChain ruleChainMsg = JacksonUtil.fromString(ruleChainUpdateMsgOpt.get().getEntity(), RuleChain.class, true);
         Assert.assertNotNull(ruleChainMsg);
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, ruleChainUpdateMsg.getMsgType());
         Assert.assertTrue(ruleChainMsg.isRoot());
         Assert.assertEquals(savedRuleChain.getId(), ruleChainMsg.getId());
+        Assert.assertEquals(savedRuleChain.getId(), doGet("/api/edge/" + edge.getUuidId(), Edge.class).getRootRuleChainId());
 
-        // update metadata for root rule chain
+        // revert root on the profile
         edgeImitator.expectMessageAmount(1);
-        metaData.getNodes().forEach(n -> n.setDebugSettings(DebugSettings.all()));
-        doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
-        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
-        ruleChainUpdateMsg = ruleChainUpdateMsgOpt.get();
-        ruleChainMsg = JacksonUtil.fromString(ruleChainUpdateMsg.getEntity(), RuleChain.class, true);
-        Assert.assertNotNull(ruleChainMsg);
-        Assert.assertTrue(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(ruleChainUpdateMsg.getMsgType()) ||
-                UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE.equals(ruleChainUpdateMsg.getMsgType()));
-        Assert.assertEquals(savedRuleChain.getId(), ruleChainMsg.getId());
-        Assert.assertEquals(savedRuleChain.getName(), ruleChainMsg.getName());
-        Assert.assertTrue(ruleChainMsg.isRoot());
-
-        // revert root rule chain
-        edgeImitator.expectMessageAmount(1);
-        doPost("/api/edge/" + edge.getUuidId()
-                + "/" + currentRootRuleChainId.getId() + "/root", Edge.class);
+        doPost("/api/edgeProfile/" + profile.getUuidId() + "/" + originalRoot.getId() + "/root", "", EdgeProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        // unassign rule chain from edge
+        // remove from profile -> stamped relation unassigned
         edgeImitator.expectMessageAmount(1);
-        doDelete("/api/edge/" + edge.getUuidId()
-                + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
+        doDelete("/api/edgeProfile/" + profile.getUuidId() + "/ruleChain/" + savedRuleChain.getUuidId()).andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        // delete rule chain
         edgeImitator.expectMessageAmount(1);
-        doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
-                .andExpect(status().isOk());
+        doDelete("/api/ruleChain/" + savedRuleChain.getUuidId()).andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages(5));
     }
 

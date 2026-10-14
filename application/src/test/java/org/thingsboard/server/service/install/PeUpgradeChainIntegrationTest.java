@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.lts.LtsMigrationService;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
+import org.thingsboard.server.service.install.update.EdgeProfileMigrationService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -134,6 +135,8 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
     private EntityViewService entityViewService;
     @Autowired
     private EdgeService edgeService;
+    @Autowired
+    private EdgeProfileMigrationService edgeProfileMigrationService;
 
     /** Held rather than created inline, so the backfill this test drives can be verified against it. */
     private final AgentProfileService agentProfileService = mock(AgentProfileService.class);
@@ -287,7 +290,7 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
     private DefaultDataUpdateService ceDataUpdateService() {
         return new DefaultDataUpdateService(tenantService, relationService, ruleChainService, integrationService,
                 entityGroupService, userService, whiteLabelingService, customerService, assetService, deviceService,
-                dashboardService, entityViewService, edgeService, agentProfileService,
+                dashboardService, entityViewService, edgeService, agentProfileService, edgeProfileMigrationService,
                 mock(SystemDataLoaderService.class), mock(ComponentDiscoveryService.class),
                 inlineUpgradeExecutor(), schemaSettingsStubbedAt("4.3.1.4"),
                 mock(LtsMigrationService.class));

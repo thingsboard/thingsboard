@@ -1011,6 +1011,9 @@ cache:
     agentProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_AGENT_PROFILE_TTL:1440}" # Agent profile cache TTL
       maxSize: "${CACHE_SPECS_AGENT_PROFILE_MAX_SIZE:10000}" # 0 means the cache is disabled
+    edgeProfiles:
+      timeToLiveInMinutes: "${CACHE_SPECS_EDGE_PROFILE_TTL:1440}" # Edge profile cache TTL
+      maxSize: "${CACHE_SPECS_EDGE_PROFILE_MAX_SIZE:10000}" # 0 means the cache is disabled
     apiKeys:
       timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
       maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -1987,6 +1990,14 @@ agents:
 edges:
   # Enable/disable Edge instance
   enabled: "${EDGES_ENABLED:true}"
+  profile:
+    applier:
+      # Threads that push edge profile assignments out to the profile's edges. The work is per-edge and database
+      # bound; raise this if fan-outs visibly lag behind profile edits on a large installation.
+      pool_size: "${EDGES_PROFILE_APPLIER_POOL_SIZE:1}"
+      # Maximum queued fan-outs. Past this point new ones are dropped with a warning rather than run on the calling
+      # request's thread; re-applying the affected edge profile finishes whatever was dropped.
+      queue_capacity: "${EDGES_PROFILE_APPLIER_QUEUE_CAPACITY:10000}"
   rpc:
     # RPC port bind
     port: "${EDGES_RPC_PORT:7070}"
@@ -2027,6 +2038,9 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+    # Resend entity downlinks (not only time-series and attributes) that the edge failed to process, within the same batch attempts.
+    # Keeps the edge in step after transient edge failures, but a downlink that always fails delays the edge's next batches (including sync) until the attempts run out
+    retry_failed_entity_downlinks: "${EDGES_RETRY_FAILED_ENTITY_DOWNLINKS:false}"
     # Time (in milliseconds) to subtract from the start timestamp when fetching edge events.
     # This compensates for possible misordering between `created_time` (used for partitioning)
     # and `seqId` (used for sorting). Without this, events with smaller seqId but larger created_time

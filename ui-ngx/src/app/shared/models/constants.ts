@@ -201,6 +201,7 @@ export const HelpLinks = {
     devices: `${docsBase}/user-guide/devices/`,
     deviceProfiles: `${docsBase}/user-guide/device-profiles/`,
     assetProfiles: `${docsBase}/user-guide/asset-profiles/`,
+    edgeProfiles: `${docsBase}/user-guide/edge-profiles/`,
     edges: `${helpBaseUrl}/docs/edge${docPlatformPrefix}/why-thingsboard-edge/`,
     agents: `${docsBase}/user-guide/agents/`,
     agentInstall: `${docsBase}/user-guide/agents/installation/`,

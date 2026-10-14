@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.google.common.util.concurrent.Futures;
@@ -14,6 +15,8 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -22,6 +25,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +40,21 @@ public class BaseEdgeProcessorTest {
             return Futures.immediateFuture(null);
         }
     };
+
+    @Test
+    public void edgeAssignmentChangesAreQueuedWhileEdgeIsOffline() {
+        for (EdgeEventType type : List.of(EdgeEventType.ENTITY_GROUP, EdgeEventType.RULE_CHAIN,
+                EdgeEventType.INTEGRATION, EdgeEventType.SCHEDULER_EVENT)) {
+            assertThat(savedWhileOffline(type, EdgeEventActionType.ASSIGNED_TO_EDGE))
+                    .as("assign %s", type).isTrue();
+            assertThat(savedWhileOffline(type, EdgeEventActionType.UNASSIGNED_FROM_EDGE))
+                    .as("unassign %s", type).isTrue();
+        }
+    }
+
+    private boolean savedWhileOffline(EdgeEventType type, EdgeEventActionType action) {
+        return Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(processor, "doSaveIfEdgeIsOffline", type, action));
+    }
 
     @Test
     public void dashboardSaveRequiredWhenConfigurationChanges() {

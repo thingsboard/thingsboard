@@ -9,6 +9,7 @@ import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { forkJoin, Observable } from 'rxjs';
+import { map, mergeMap, shareReplay } from 'rxjs/operators';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -16,6 +17,13 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
 import { SchedulerEventService } from '@core/http/scheduler-event.service';
 import { IntegrationService } from '@core/http/integration.service';
 import { IntegrationSubType } from '@shared/models/integration.models';
+import { EdgeService } from '@core/http/edge.service';
+import { EntityService } from '@core/http/entity.service';
+import { Edge } from '@shared/models/edge.models';
+import { SchedulerEventInfo } from '@shared/models/scheduler-event.models';
+import { BaseData } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export interface AddEntitiesToEdgeDialogData {
   edgeId: string;
@@ -39,6 +47,7 @@ export class AddEntitiesToEdgeDialogComponent extends
   entityType: EntityType;
   subType: string;
   edgeId: string;
+  fetchEntitiesFunction: (searchText?: string) => Observable<Array<BaseData<EntityId>>>;
 
   assignToEdgeTitle: string;
   assignToEdgeText: string;
@@ -49,6 +58,8 @@ export class AddEntitiesToEdgeDialogComponent extends
               private ruleChainService: RuleChainService,
               private schedulerEventService: SchedulerEventService,
               private integrationService: IntegrationService,
+              private edgeService: EdgeService,
+              private entityService: EntityService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddEntitiesToEdgeDialogComponent, Array<string>>,
               public fb: UntypedFormBuilder) {
@@ -69,6 +80,7 @@ export class AddEntitiesToEdgeDialogComponent extends
       case EntityType.SCHEDULER_EVENT:
         this.assignToEdgeTitle = 'edge.assign-scheduler-event-to-edge-title';
         this.assignToEdgeText = 'edge.assign-scheduler-event-to-edge-text';
+        this.fetchEntitiesFunction = this.schedulerEventsReachingEdge();
         break;
       case EntityType.INTEGRATION:
         this.assignToEdgeTitle = 'edge.assign-integration-to-edge-title';
@@ -102,6 +114,24 @@ export class AddEntitiesToEdgeDialogComponent extends
         this.dialogRef.close(entityIds);
       }
     );
+  }
+
+  private schedulerEventsReachingEdge(): (searchText?: string) => Observable<Array<BaseData<EntityId>>> {
+    const edge$ = this.edgeService.getEdge(this.data.edgeId, {ignoreLoading: true}).pipe(shareReplay(1));
+    return (searchText) => edge$.pipe(
+      mergeMap(edge => this.entityService.getEntitiesByNameFilter(EntityType.SCHEDULER_EVENT, searchText, 50, '', {ignoreLoading: true}).pipe(
+        map(events => (events ?? []).filter(event => this.reachesEdge(event as SchedulerEventInfo, edge)))
+      ))
+    );
+  }
+
+  // the edge holds only its owner's customer, so another customer's event would be assigned but never arrive there
+  private reachesEdge(event: SchedulerEventInfo, edge: Edge): boolean {
+    const eventCustomerId = event.customerId?.id;
+    if (!eventCustomerId || eventCustomerId === NULL_UUID) {
+      return true;
+    }
+    return eventCustomerId === edge.customerId?.id;
   }
 
   private getAssignToEdgeTask(edgeId: string, entityId: string, entityType: EntityType): Observable<any> {

@@ -111,8 +111,10 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeAssignments;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
+import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.event.EventType;
@@ -139,6 +141,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -3225,10 +3228,14 @@ public class RestClient implements Closeable {
         }
     }
 
+    public EdgeAssignments getEdgeAssignments(EdgeId edgeId) {
+        return restTemplate.getForEntity(baseURL + "/api/edge/{edgeId}/assignments", EdgeAssignments.class, edgeId.getId()).getBody();
+    }
+
     public Optional<Edge> setEdgeRootRuleChain(EdgeId edgeId, RuleChainId ruleChainId) {
         try {
-            ResponseEntity<Edge> ruleChain = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, Edge.class, edgeId.getId(), ruleChainId.getId());
-            return Optional.ofNullable(ruleChain.getBody());
+            ResponseEntity<Edge> edge = restTemplate.postForEntity(baseURL + "/api/edge/{edgeId}/{ruleChainId}/root", null, Edge.class, edgeId.getId(), ruleChainId.getId());
+            return Optional.ofNullable(edge.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -3374,53 +3381,6 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public Optional<RuleChain> setAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
-        try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/autoAssignToEdge", null, RuleChain.class, ruleChainId.getId());
-            return Optional.ofNullable(ruleChain.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public Optional<RuleChain> unsetAutoAssignToEdgeRuleChain(RuleChainId ruleChainId) {
-        try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.exchange(baseURL + "/api/ruleChain/{ruleChainId}/autoAssignToEdge", HttpMethod.DELETE, HttpEntity.EMPTY, RuleChain.class, ruleChainId.getId());
-            return Optional.ofNullable(ruleChain.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
-    public List<RuleChain> getAutoAssignToEdgeRuleChains() {
-        return restTemplate.exchange(baseURL + "/api/ruleChain/autoAssignToEdgeRuleChains",
-                HttpMethod.GET,
-                HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<RuleChain>>() {
-                }).getBody();
-    }
-
-    public Optional<RuleChain> setRootEdgeTemplateRuleChain(RuleChainId ruleChainId) {
-        try {
-            ResponseEntity<RuleChain> ruleChain = restTemplate.postForEntity(baseURL + "/api/ruleChain/{ruleChainId}/edgeTemplateRoot", null, RuleChain.class, ruleChainId.getId());
-            return Optional.ofNullable(ruleChain.getBody());
-        } catch (HttpClientErrorException exception) {
-            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return Optional.empty();
-            } else {
-                throw exception;
-            }
-        }
-    }
-
     public PageData<Edge> getTenantEdges(String type, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
@@ -3535,6 +3495,112 @@ public class RestClient implements Closeable {
         ResponseEntity<EdgeInstructions> edgeUpgradeInstructionsResult =
                 restTemplate.getForEntity(baseURL + "/api/edge/instructions/upgrade/{edgeVersion}/{method}", EdgeInstructions.class, edgeVersion, method);
         return Optional.ofNullable(edgeUpgradeInstructionsResult.getBody());
+    }
+
+    // Edge Profile Controller
+
+    public Optional<EdgeProfile> getEdgeProfileById(EdgeProfileId edgeProfileId) {
+        try {
+            ResponseEntity<EdgeProfile> edgeProfile = restTemplate.getForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}", EdgeProfile.class, edgeProfileId.getId());
+            return Optional.ofNullable(edgeProfile.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public EdgeProfile getDefaultEdgeProfile() {
+        return restTemplate.getForEntity(baseURL + "/api/edgeProfile/default", EdgeProfile.class).getBody();
+    }
+
+    public PageData<EdgeProfile> getEdgeProfiles(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edgeProfiles?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<EdgeProfile>>() {
+                }, params).getBody();
+    }
+
+    public EdgeProfile saveEdgeProfile(EdgeProfile edgeProfile) {
+        return restTemplate.postForEntity(baseURL + "/api/edgeProfile", edgeProfile, EdgeProfile.class).getBody();
+    }
+
+    public void deleteEdgeProfile(EdgeProfileId edgeProfileId) {
+        restTemplate.delete(baseURL + "/api/edgeProfile/{edgeProfileId}", edgeProfileId.getId());
+    }
+
+    public EdgeProfile setDefaultEdgeProfile(EdgeProfileId edgeProfileId) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/default",
+                HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId()).getBody();
+    }
+
+    public EdgeAssignments getEdgeProfileAssignments(EdgeProfileId edgeProfileId) {
+        return restTemplate.getForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}/assignments", EdgeAssignments.class, edgeProfileId.getId()).getBody();
+    }
+
+    public EdgeProfile setEdgeProfileRootRuleChain(EdgeProfileId edgeProfileId, RuleChainId ruleChainId) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/{ruleChainId}/root",
+                HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), ruleChainId.getId()).getBody();
+    }
+
+    public EdgeProfile addRuleChainToEdgeProfile(EdgeProfileId edgeProfileId, RuleChainId ruleChainId) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/ruleChain/{ruleChainId}",
+                HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), ruleChainId.getId()).getBody();
+    }
+
+    public EdgeProfile removeRuleChainFromEdgeProfile(EdgeProfileId edgeProfileId, RuleChainId ruleChainId) {
+        return restTemplate.exchange(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/ruleChain/{ruleChainId}",
+                HttpMethod.DELETE, HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), ruleChainId.getId()).getBody();
+    }
+
+    public EdgeProfile addEntityGroupToEdgeProfile(EdgeProfileId edgeProfileId, EntityGroupId entityGroupId, EntityType groupType) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/entityGroup/{entityGroupId}/{groupType}",
+                HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), entityGroupId.getId(), groupType.name()).getBody();
+    }
+
+    public EdgeProfile removeEntityGroupFromEdgeProfile(EdgeProfileId edgeProfileId, EntityGroupId entityGroupId, EntityType groupType) {
+        return restTemplate.exchange(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/entityGroup/{entityGroupId}/{groupType}",
+                HttpMethod.DELETE, HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), entityGroupId.getId(), groupType.name()).getBody();
+    }
+
+    public EdgeProfile addIntegrationToEdgeProfile(EdgeProfileId edgeProfileId, IntegrationId integrationId) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/integration/{integrationId}",
+                HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), integrationId.getId()).getBody();
+    }
+
+    public EdgeProfile removeIntegrationFromEdgeProfile(EdgeProfileId edgeProfileId, IntegrationId integrationId) {
+        return restTemplate.exchange(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/integration/{integrationId}",
+                HttpMethod.DELETE, HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), integrationId.getId()).getBody();
+    }
+
+    public EdgeProfile addSchedulerEventToEdgeProfile(EdgeProfileId edgeProfileId, SchedulerEventId schedulerEventId) {
+        return restTemplate.postForEntity(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/schedulerEvent/{schedulerEventId}",
+                HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), schedulerEventId.getId()).getBody();
+    }
+
+    public EdgeProfile removeSchedulerEventFromEdgeProfile(EdgeProfileId edgeProfileId, SchedulerEventId schedulerEventId) {
+        return restTemplate.exchange(
+                baseURL + "/api/edgeProfile/{edgeProfileId}/schedulerEvent/{schedulerEventId}",
+                HttpMethod.DELETE, HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), schedulerEventId.getId()).getBody();
+    }
+
+    public void applyEdgeProfile(EdgeProfileId edgeProfileId) {
+        restTemplate.postForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}/apply",
+                HttpEntity.EMPTY, Void.class, edgeProfileId.getId());
     }
 
     // Agent Controller
