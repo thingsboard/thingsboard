@@ -55,22 +55,23 @@ public class TbLwM2MAuthorizer implements Authorizer {
             log.debug("[{}] Request declined: failed to validate the credentials", registration.getEndpoint());
             return Authorization.declined();
         } catch (LwM2MAuthException e) {
-            onAuthResult(sender, address, false);
+            onAuthResult(request, sender, address, false);
             throw e;
         }
-        onAuthResult(sender, address, authorization.isApproved());
+        onAuthResult(request, sender, address, authorization.isApproved());
         return authorization;
     }
 
-    private void onAuthResult(LwM2mPeer sender, InetSocketAddress address, boolean authorized) {
+    private void onAuthResult(UplinkRequest<?> request, LwM2mPeer sender, InetSocketAddress address, boolean authorized) {
         // The source address of an unsecured request can be forged: counting it would let anybody get a victim's address blocked
         if (address == null || !sender.getIdentity().isSecure()) {
             return;
         }
-        if (authorized) {
-            rateLimitService.onAuthSuccess(address);
-        } else {
+        if (!authorized) {
             rateLimitService.onAuthFailure(address);
+        } else if (request instanceof RegisterRequest) {
+            // Only requests that the block gates: an update of an existing registration would lift the block of its address
+            rateLimitService.onAuthSuccess(address);
         }
     }
 

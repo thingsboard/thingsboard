@@ -12,8 +12,8 @@ import org.eclipse.californium.scandium.dtls.ConnectionId;
 import org.eclipse.californium.scandium.dtls.DTLSContext;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.Handshaker;
-import org.eclipse.californium.scandium.dtls.ResumingServerHandshaker;
 import org.eclipse.californium.scandium.dtls.SessionListener;
+import org.thingsboard.server.common.transport.limits.DtlsHandshakeRateLimits;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 
 import java.security.Principal;
@@ -37,20 +37,18 @@ public class TbLwM2mDtlsHandshakeListener implements SessionListener {
 
     @Override
     public void handshakeStarted(Handshaker handshaker) throws HandshakeException {
-        if (!rateLimitService.checkAddress(handshaker.getPeerAddress())) {
-            throw new HandshakeException("IP address is blocked due to repeatedly failed authentication",
-                    new AlertMessage(AlertLevel.FATAL, AlertDescription.ACCESS_DENIED));
-        }
+        DtlsHandshakeRateLimits.checkAddress(rateLimitService, handshaker);
         handshakes.put(handshaker.getConnection().getConnectionId(), handshaker);
     }
 
     @Override
-    public void contextEstablished(Handshaker handshaker, DTLSContext establishedContext) {
+    public void contextEstablished(Handshaker handshaker, DTLSContext establishedContext) throws HandshakeException {
         // Called after the client's Finished message is verified, so after its CertificateVerify or with the right pre-shared key
         ConnectionId cid = handshaker.getConnection().getConnectionId();
         handshakes.remove(cid, handshaker);
-        if (certificateRegistry != null) {
-            certificateRegistry.commitPending(cid);
+        if (certificateRegistry != null && !certificateRegistry.commitPending(cid)) {
+            throw new HandshakeException("Certificate was revoked during the handshake",
+                    new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_REVOKED));
         }
         Principal peerIdentity = establishedContext.getSession().getPeerIdentity();
         if (peerIdentity instanceof X509CertPath || peerIdentity instanceof PreSharedKeyIdentity) {
@@ -69,7 +67,7 @@ public class TbLwM2mDtlsHandshakeListener implements SessionListener {
         if (certificateRegistry != null) {
             certificateRegistry.dropPending(cid);
         }
-        if (isFailedProofOfPossession(handshaker, error)) {
+        if (DtlsHandshakeRateLimits.isFailedProofOfPossession(handshaker, error)) {
             rateLimitService.onAuthFailure(handshaker.getPeerAddress());
         }
     }
@@ -84,21 +82,6 @@ public class TbLwM2mDtlsHandshakeListener implements SessionListener {
         if (handshaker != null) {
             rateLimitService.onAuthFailure(handshaker.getPeerAddress());
         }
-    }
-
-    /**
-     * The client could not prove that it holds the private key of its certificate (CertificateVerify, or a Finished
-     * message that does not match the handshake). Alerts that the client sent, e.g. because it does not trust the server
-     * certificate, reach this listener as well and are not counted: Scandium reports them as "Received 'fatal alert/...'"
-     * (DTLSConnector.processAlertRecord in Scandium 3.12, re-check on upgrade).
-     * Resumption handshakes are not counted, since their ClientHello may skip the cookie exchange that verifies the address.
-     */
-    static boolean isFailedProofOfPossession(Handshaker handshaker, Throwable error) {
-        return !(handshaker instanceof ResumingServerHandshaker)
-                && error instanceof HandshakeException handshakeException
-                && handshakeException.getAlert() != null
-                && handshakeException.getAlert().getDescription() == AlertDescription.DECRYPT_ERROR
-                && (handshakeException.getMessage() == null || !handshakeException.getMessage().startsWith("Received "));
     }
 
 }

@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
+import org.eclipse.californium.elements.auth.X509CertPath;
 import org.eclipse.californium.elements.util.CertPathUtil;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
 import org.eclipse.californium.scandium.dtls.CertificateMessage;
@@ -36,6 +37,7 @@ import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -90,54 +92,10 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
             try {
                 boolean x509CredentialsFound = false;
                 boolean coreUnavailable = false;
-                X509Certificate[] chain = certChain.getCertificates().toArray(new X509Certificate[0]);
-                for (X509Certificate cert : chain) {
-                    try {
-                        if (!skipValidityCheckForClientCert) {
-                            cert.checkValidity();
-                        }
-                        // Sent along with every lookup, so the core rejects a revoked certificate also in trust mode
-                        String strCert = SslUtil.getCertificateString(cert);
-                        String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        TbLwM2MSecurityInfo securityInfo = null;
-                        // verify if trust
-                        if (staticCertificateVerifier != null) {
-                            HandshakeException exception = staticCertificateVerifier.verifyCertificate(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message).getException();
-                            if (exception == null) {
-                                String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
-                                if (StringUtils.isNotEmpty(endpoint)) {
-                                    try {
-                                        securityInfo = bsSecurityStore.getX509ByEndpoint(endpoint, sha3Hash);
-                                    } catch (LwM2MTransportUnavailableException e) {
-                                        coreUnavailable = true;
-                                    } catch (LwM2MAuthException e) {
-                                        log.trace("Failed to find security info: [{}]", endpoint, e);
-                                    }
-                                }
-                            } else {
-                                log.trace("Certificate validation failed.", exception);
-                            }
-                        }
-                        // if not trust or cert trust securityInfo == null
-                        if (securityInfo == null || securityInfo.getMsg() == null) {
-                            try {
-                                securityInfo = bsSecurityStore.getX509ByEndpoint(sha3Hash, sha3Hash);
-                            } catch (LwM2MTransportUnavailableException e) {
-                                coreUnavailable = true;
-                            } catch (LwM2MAuthException e) {
-                                log.trace("Failed to find security info: [{}]", sha3Hash, e);
-                            }
-                        }
-                        ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
-                        if (msg != null && StringUtils.isNotEmpty(msg.getCredentials())) {
-                            x509CredentialsFound = true;
-                            break;
-                        }
-                    } catch (CertificateEncodingException |
-                            CertificateExpiredException |
-                            CertificateNotYetValidException e) {
-                        log.trace("Failed to find security info: [{}]", cert.getSubjectX500Principal().getName(), e);
-                    }
+                try {
+                    x509CredentialsFound = isRegistered(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message);
+                } catch (LwM2MTransportUnavailableException e) {
+                    coreUnavailable = true;
                 }
                 if (!x509CredentialsFound) {
                     if (!coreUnavailable) {
@@ -152,6 +110,80 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                 return new CertificateVerificationResult(cid, e, null);
             }
         }
+    }
+
+    /**
+     * Checks the certificate of an established DTLS session the way a handshake does: a kept or resumed session skips the
+     * handshake, and its certificate may have been revoked or removed from the device credentials since.
+     *
+     * @throws LwM2MTransportUnavailableException if the core did not answer
+     */
+    public boolean isRegistered(X509CertPath certPath, InetSocketAddress remotePeer) {
+        List<X509Certificate> chain = certPath.getPath().getCertificates().stream().map(X509Certificate.class::cast).toList();
+        return isRegistered(ConnectionId.EMPTY, null, remotePeer, true, false, true, new CertificateMessage(chain));
+    }
+
+    /**
+     * @throws LwM2MTransportUnavailableException if the credentials were not found and the core did not answer
+     */
+    private boolean isRegistered(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage,
+                                 boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
+        boolean x509CredentialsFound = false;
+        boolean coreUnavailable = false;
+        // Only the leaf: the client proves that it holds the private key of the leaf, not of the other certificates
+        // in the chain, which are not validated in X.509 mode and are never compared with the endpoint
+        List<? extends Certificate> chain = message.getCertificateChain().getCertificates();
+        if (!chain.isEmpty() && chain.get(0) instanceof X509Certificate cert) {
+            try {
+                if (!skipValidityCheckForClientCert) {
+                    cert.checkValidity();
+                }
+                // Sent along with every lookup, so the core rejects a revoked certificate also in trust mode
+                String strCert = SslUtil.getCertificateString(cert);
+                String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+                TbLwM2MSecurityInfo securityInfo = null;
+                // verify if trust
+                if (staticCertificateVerifier != null) {
+                    HandshakeException exception = staticCertificateVerifier.verifyCertificate(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message).getException();
+                    if (exception == null) {
+                        String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
+                        if (StringUtils.isNotEmpty(endpoint)) {
+                            try {
+                                securityInfo = bsSecurityStore.getX509ByEndpoint(endpoint, sha3Hash);
+                            } catch (LwM2MTransportUnavailableException e) {
+                                coreUnavailable = true;
+                            } catch (LwM2MAuthException e) {
+                                log.trace("Failed to find security info: [{}]", endpoint, e);
+                            }
+                        }
+                    } else {
+                        log.trace("Certificate validation failed.", exception);
+                    }
+                }
+                // if not trust or cert trust securityInfo == null
+                if (securityInfo == null || securityInfo.getMsg() == null) {
+                    try {
+                        securityInfo = bsSecurityStore.getX509ByEndpoint(sha3Hash, sha3Hash);
+                    } catch (LwM2MTransportUnavailableException e) {
+                        coreUnavailable = true;
+                    } catch (LwM2MAuthException e) {
+                        log.trace("Failed to find security info: [{}]", sha3Hash, e);
+                    }
+                }
+                ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
+                if (msg != null && StringUtils.isNotEmpty(msg.getCredentials())) {
+                    x509CredentialsFound = true;
+                }
+            } catch (CertificateEncodingException |
+                    CertificateExpiredException |
+                    CertificateNotYetValidException e) {
+                log.trace("Failed to find security info: [{}]", cert.getSubjectX500Principal().getName(), e);
+            }
+        }
+        if (!x509CredentialsFound && coreUnavailable) {
+            throw new LwM2MTransportUnavailableException();
+        }
+        return x509CredentialsFound;
     }
 
     @Override

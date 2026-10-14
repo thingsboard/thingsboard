@@ -172,7 +172,7 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
 
 
-        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore, lwM2MInMemoryBootstrapConfigStore, transportService, rateLimitService);
+        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore, lwM2MInMemoryBootstrapConfigStore, transportService, rateLimitService, certificateVerifier);
         builder.setSessionManager(sessionManager);
 
         /* Create BootstrapServer */

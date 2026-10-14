@@ -61,11 +61,20 @@ public class TbLwM2MAuthorizerTest {
     }
 
     @Test
-    public void givenSecureClientWithExpectedCredentials_whenAuthorized_thenSuccessIsReported() {
+    public void givenSecureClientWithExpectedCredentials_whenRegistering_thenSuccessIsReported() {
         when(securityStore.getByEndpoint(ENDPOINT)).thenReturn(SecurityInfo.newPreSharedKeyInfo(ENDPOINT, ENDPOINT, new byte[]{1, 2, 3}));
 
-        assertThat(authorizer.isAuthorized(null, registration, new IpPeer(PEER, new PskIdentity(ENDPOINT))).isApproved()).isTrue();
+        assertThat(authorizer.isAuthorized(mock(RegisterRequest.class), registration, new IpPeer(PEER, new PskIdentity(ENDPOINT))).isApproved()).isTrue();
         verify(rateLimitService).onAuthSuccess(PEER);
+    }
+
+    @Test
+    public void givenRegisteredClient_whenItUpdatesItsRegistration_thenSuccessIsNotReported() {
+        // Updates are not gated by a block: reporting their success would lift the block of their address
+        when(securityStore.getByEndpoint(ENDPOINT)).thenReturn(SecurityInfo.newPreSharedKeyInfo(ENDPOINT, ENDPOINT, new byte[]{1, 2, 3}));
+
+        assertThat(authorizer.isAuthorized(mock(UpdateRequest.class), registration, new IpPeer(PEER, new PskIdentity(ENDPOINT))).isApproved()).isTrue();
+        verify(rateLimitService, never()).onAuthSuccess(any());
     }
 
     @Test

@@ -13,7 +13,6 @@ import org.eclipse.californium.scandium.dtls.DTLSContext;
 import org.eclipse.californium.scandium.dtls.DTLSSession;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.Handshaker;
-import org.eclipse.californium.scandium.dtls.ResumingServerHandshaker;
 import org.eclipse.californium.scandium.dtls.ServerHandshaker;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -69,7 +68,7 @@ public class TbLwM2mDtlsHandshakeListenerTest {
     }
 
     @Test
-    public void givenX509OrPskIdentity_whenContextIsEstablished_thenSuccessIsReported() {
+    public void givenX509OrPskIdentity_whenContextIsEstablished_thenSuccessIsReported() throws Exception {
         listener.contextEstablished(handshaker(ServerHandshaker.class), context(new PreSharedKeyIdentity("client")));
 
         verify(rateLimitService).onAuthSuccess(PEER);
@@ -86,26 +85,43 @@ public class TbLwM2mDtlsHandshakeListenerTest {
     }
 
     @Test
-    public void givenClientCertificate_whenHandshakeSucceedsOrFails_thenItIsRegisteredOnlyOnSuccess() {
-        certificateRegistry.registerPending(cid, "client", tenantId, "hash");
+    public void givenClientCertificate_whenHandshakeSucceedsOrFails_thenItIsRegisteredOnlyOnSuccess() throws Exception {
+        certificateRegistry.registerPending(cid, certificate(), System.currentTimeMillis());
         listener.handshakeFailed(handshaker(ServerHandshaker.class), new RuntimeException("Handshake flight timeout"));
         listener.contextEstablished(handshaker(ServerHandshaker.class), context(new PreSharedKeyIdentity("client")));
         assertThat(certificateRegistry.findByCertificate(tenantId, "hash")).isEmpty();
 
-        certificateRegistry.registerPending(cid, "client", tenantId, "hash");
+        certificateRegistry.registerPending(cid, certificate(), System.currentTimeMillis());
         listener.contextEstablished(handshaker(ServerHandshaker.class), context(new PreSharedKeyIdentity("client")));
         assertThat(certificateRegistry.findByCertificate(tenantId, "hash")).hasSize(1);
     }
 
     @Test
+    public void givenCertificateRevokedDuringHandshake_whenContextIsEstablished_thenHandshakeFails() {
+        // The core answered before the revocation, which reaches the transport before the client's Finished message
+        certificateRegistry.registerPending(cid, certificate(), System.currentTimeMillis() - 1);
+        certificateRegistry.revoke(tenantId, "hash");
+
+        assertThatThrownBy(() -> listener.contextEstablished(handshaker(ServerHandshaker.class), context(new PreSharedKeyIdentity("client"))))
+                .isInstanceOf(HandshakeException.class)
+                .extracting(e -> ((HandshakeException) e).getAlert().getDescription())
+                .isEqualTo(AlertDescription.CERTIFICATE_REVOKED);
+        assertThat(certificateRegistry.findByCertificate(tenantId, "hash")).isEmpty();
+        verify(rateLimitService, never()).onAuthSuccess(any());
+    }
+
+    @Test
     public void givenHandshakeFailures_whenClassified_thenOnlyFailedProofOfPossessionIsCounted() {
+        // The classification itself is covered by DtlsHandshakeRateLimitsTest
         listener.handshakeFailed(handshaker(ServerHandshaker.class), failure("Verification of signature failed", AlertDescription.DECRYPT_ERROR));
         verify(rateLimitService).onAuthFailure(PEER);
 
         listener.handshakeFailed(handshaker(ServerHandshaker.class), failure("Received 'fatal alert/DECRYPT_ERROR'", AlertDescription.DECRYPT_ERROR));
-        listener.handshakeFailed(handshaker(ServerHandshaker.class), failure("Bad Certificate", AlertDescription.BAD_CERTIFICATE));
-        listener.handshakeFailed(handshaker(ResumingServerHandshaker.class), failure("Verification of FINISHED message failed", AlertDescription.DECRYPT_ERROR));
         verify(rateLimitService).onAuthFailure(PEER);
+    }
+
+    private LwM2mClientCertificateRegistry.ClientCertificate certificate() {
+        return new LwM2mClientCertificateRegistry.ClientCertificate("client", tenantId, "hash", Long.MAX_VALUE);
     }
 
     private <T extends Handshaker> T handshaker(Class<T> type) {
@@ -114,6 +130,7 @@ public class TbLwM2mDtlsHandshakeListenerTest {
         when(connection.getConnectionId()).thenReturn(cid);
         when(handshaker.getConnection()).thenReturn(connection);
         when(handshaker.getPeerAddress()).thenReturn(PEER);
+        when(handshaker.isFullHandshake()).thenReturn(true);
         return handshaker;
     }
 

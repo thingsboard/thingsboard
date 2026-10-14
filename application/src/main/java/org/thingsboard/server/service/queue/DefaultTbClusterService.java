@@ -482,7 +482,9 @@ public class DefaultTbClusterService implements TbClusterService {
                 .setCertificateHash(certificateHash)
                 .build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setX509CertificateRevokedMsg(revokedMsg).build();
-        broadcast(transportMsg, List.of(DataConstants.COAP_TRANSPORT_NAME, DataConstants.LWM2M_TRANSPORT_NAME), callback);
+        // To every transport service, not only the CoAP and LwM2M ones: the service info that such a filter relies on loses
+        // the transports of a service once it is regenerated with fresh system info, so the filter would skip them
+        broadcast(transportMsg, callback);
     }
 
     @Override
@@ -576,12 +578,8 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void broadcast(ToTransportMsg transportMsg, String transportType, TbQueueCallback callback) {
-        broadcast(transportMsg, List.of(transportType), callback);
-    }
-
-    private void broadcast(ToTransportMsg transportMsg, List<String> transportTypes, TbQueueCallback callback) {
         Set<String> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT).stream()
-                .filter(info -> info.getTransportsList().stream().anyMatch(transportTypes::contains))
+                .filter(info -> info.getTransportsList().contains(transportType))
                 .map(TransportProtos.ServiceInfo::getServiceId).collect(Collectors.toSet());
         broadcast(transportMsg, tbTransportServices, callback);
     }

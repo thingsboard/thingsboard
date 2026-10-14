@@ -32,13 +32,34 @@ public class TbCoapDtlsSessionInMemoryStorageTest {
         assertThat(storage.getDtlsSessionsMap()).containsKeys(otherCertificate, otherTenant);
     }
 
+    @Test
+    public void givenRevokedCertificate_whenSessionChecked_thenOnlySessionsCheckedAfterTheRevocationAreStored() {
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        long checkedBeforeRevocation = System.currentTimeMillis() - 1;
+        storage.evictSessions(tenantId, "revoked-hash");
+
+        assertThat(storage.put(key(5683, "revoked-hash"), sessionInfo(tenantId, "revoked-hash"), checkedBeforeRevocation)).isFalse();
+        assertThat(storage.put(key(5684, "other-hash"), sessionInfo(tenantId, "other-hash"), checkedBeforeRevocation)).isTrue();
+        // E.g. the certificate was restored, and the core saw that when the device connected again
+        assertThat(storage.put(key(5685, "revoked-hash"), sessionInfo(tenantId, "revoked-hash"), System.currentTimeMillis() + 1)).isTrue();
+        assertThat(storage.getDtlsSessionsMap()).containsOnlyKeys(key(5684, "other-hash"), key(5685, "revoked-hash"));
+    }
+
     private TbCoapDtlsSessionKey put(int port, TenantId tenantId, String certificateHash) {
+        TbCoapDtlsSessionKey key = key(port, certificateHash);
+        storage.put(key, sessionInfo(tenantId, certificateHash), System.currentTimeMillis());
+        return key;
+    }
+
+    private static TbCoapDtlsSessionKey key(int port, String certificateHash) {
+        return new TbCoapDtlsSessionKey(new InetSocketAddress("127.0.0.1", port), certificateHash + port);
+    }
+
+    private static TbCoapDtlsSessionInfo sessionInfo(TenantId tenantId, String certificateHash) {
         TransportDeviceInfo deviceInfo = new TransportDeviceInfo();
         deviceInfo.setTenantId(tenantId);
         ValidateDeviceCredentialsResponse msg = ValidateDeviceCredentialsResponse.builder().deviceInfo(deviceInfo).build();
-        TbCoapDtlsSessionKey key = new TbCoapDtlsSessionKey(new InetSocketAddress("127.0.0.1", port), certificateHash + port);
-        storage.put(key, new TbCoapDtlsSessionInfo(msg, new DeviceProfile(), certificateHash));
-        return key;
+        return new TbCoapDtlsSessionInfo(msg, new DeviceProfile(), certificateHash);
     }
 
 }

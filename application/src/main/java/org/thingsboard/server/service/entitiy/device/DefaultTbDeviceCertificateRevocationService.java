@@ -15,6 +15,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCertificateInfo;
 import org.thingsboard.server.common.data.security.DeviceCertificateRevocation;
@@ -131,7 +132,7 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
     }
 
     @Override
-    public void validateNotRevoked(TenantId tenantId, DeviceCredentials credentials) {
+    public void validateNotRevoked(TenantId tenantId, DeviceId deviceId, DeviceCredentials credentials) {
         if (credentials == null || (credentials.getCredentialsType() != DeviceCredentialsType.X509_CERTIFICATE
                 && credentials.getCredentialsType() != DeviceCredentialsType.LWM2M_CREDENTIALS)) {
             return;
@@ -143,7 +144,11 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
         } catch (Exception e) {
             return; // invalid credentials are rejected with a proper message when saved
         }
-        if (revocationService.isRevoked(tenantId, formatted.getCredentialsId())) {
+        if (!revocationService.isRevoked(tenantId, formatted.getCredentialsId())) {
+            return;
+        }
+        DeviceCredentials stored = deviceId != null ? deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId) : null;
+        if (stored == null || !formatted.getCredentialsId().equals(stored.getCredentialsId())) {
             throw new DataValidationException("Certificate is revoked! Remove it from the revoked certificates to use it again.");
         }
     }

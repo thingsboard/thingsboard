@@ -12,7 +12,8 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { EntityType, EntityTypeResource } from '@shared/models/entity-type.models';
+import { getEntityDetailsPageURL } from '@core/utils';
 import { Direction } from '@shared/models/page/sort-order';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -31,6 +32,9 @@ import {
   RevokeDeviceCertificateDialogComponent,
   RevokeDeviceCertificateDialogData
 } from '@home/components/device/revoke-device-certificate-dialog.component';
+
+const escapeHtml = (text: string): string =>
+  (text ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 @Component({
   selector: 'tb-revoked-certificates-table',
@@ -74,8 +78,9 @@ export class RevokedCertificatesTableComponent implements OnInit {
     config.columns.push(
       new DateEntityTableColumn<DeviceCertificateRevocationInfo>('createdTime', 'device.certificate-revocation.revoked-time',
         this.datePipe, '150px'),
+      // Cells are rendered as HTML, and the subject is chosen by whoever made the certificate. Tooltips are plain text.
       new EntityTableColumn<DeviceCertificateRevocationInfo>('subject', 'device.certificate-revocation.subject', '30%',
-        revocation => revocation.subject, () => ({}), true, () => ({}), revocation => revocation.subject),
+        revocation => escapeHtml(revocation.subject), () => ({}), true, () => ({}), revocation => revocation.subject),
       new EntityTableColumn<DeviceCertificateRevocationInfo>('serialNumber', 'device.certificate-revocation.serial-number', '20%',
         revocation => revocation.serialNumber?.toUpperCase()),
       new EntityTableColumn<DeviceCertificateRevocationInfo>('notAfter', 'device.certificate-revocation.expires', '150px',
@@ -85,10 +90,10 @@ export class RevokedCertificatesTableComponent implements OnInit {
         revocation => revocation.expired ? this.translate.instant('device.certificate-revocation.expired-hint',
           {date: this.datePipe.transform(revocation.notAfter, 'yyyy-MM-dd')}) : undefined),
       new EntityLinkTableColumn<DeviceCertificateRevocationInfo>('deviceName', 'device.certificate-revocation.device', '20%',
-        revocation => revocation.deviceName ?? '',
-        revocation => revocation.deviceId ? `/entities/devices/all/${revocation.deviceId.id}` : '', false),
+        revocation => escapeHtml(revocation.deviceName),
+        revocation => revocation.deviceId ? getEntityDetailsPageURL(revocation.deviceId.id, EntityType.DEVICE) : '', false),
       new EntityTableColumn<DeviceCertificateRevocationInfo>('reason', 'device.certificate-revocation.reason', '30%',
-        revocation => revocation.reason ?? '', () => ({}), true, () => ({}), revocation => revocation.reason)
+        revocation => escapeHtml(revocation.reason), () => ({}), true, () => ({}), revocation => revocation.reason)
     );
 
     config.cellActionDescriptors.push({

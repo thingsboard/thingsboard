@@ -89,7 +89,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         ActionType actionType = isCreate ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
-            certificateRevocationService.validateNotRevoked(tenantId, credentials);
+            certificateRevocationService.validateNotRevoked(tenantId, device.getId(), credentials);
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithCredentials(device, credentials, nameConflictStrategy));
             createOrUpdateGroupEntity(tenantId, savedDevice, entityGroups, actionType, user);
             return savedDevice;
@@ -144,7 +144,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
         try {
-            certificateRevocationService.validateNotRevoked(tenantId, deviceCredentials);
+            certificateRevocationService.validateNotRevoked(tenantId, deviceId, deviceCredentials);
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials));
             logEntityActionService.logEntityAction(tenantId, deviceId, device, device.getCustomerId(),
                     actionType, user, result);

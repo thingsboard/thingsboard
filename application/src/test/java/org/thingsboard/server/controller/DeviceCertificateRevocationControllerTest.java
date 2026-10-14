@@ -94,6 +94,64 @@ public class DeviceCertificateRevocationControllerTest extends AbstractControlle
     }
 
     @Test
+    public void testDeviceKeepsItsRevokedCertificateWhenSavedAgain() throws Exception {
+        String pem = toPem(generateCertificate("CN=device-5", false));
+        Device device = createDevice("device-5");
+        setX509Credentials(device, pem);
+        revokeDeviceCertificate(device, null);
+
+        // E.g. a bulk import that changes the label of the device sends its stored credentials back
+        DeviceCredentials storedCredentials = doGet("/api/device/" + device.getId() + "/credentials", DeviceCredentials.class);
+        doPost("/api/device/credentials", storedCredentials).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testRevokeLwM2MDeviceCertificate() throws Exception {
+        X509Certificate certificate = generateCertificate("CN=lwm2m-device", false);
+        Device device = createDevice("lwm2m-device");
+        DeviceCredentials credentials = setLwM2MX509Credentials(device, "lwm2m-device", certificate);
+
+        DeviceCertificateInfo certificateInfo = doGet("/api/device/" + device.getId() + "/credentials/certificate", DeviceCertificateInfo.class);
+        assertThat(certificateInfo.getSubject()).isEqualTo("CN=lwm2m-device");
+        DeviceCertificateRevocation revocation = revokeDeviceCertificate(device, null);
+        assertThat(revocation.getCertificateHash()).isEqualTo(credentials.getCredentialsId());
+        assertThat(revocation.getDeviceId()).isEqualTo(device.getId());
+
+        Device otherDevice = createDevice("lwm2m-device-other");
+        DeviceCredentials otherCredentials = doGet("/api/device/" + otherDevice.getId() + "/credentials", DeviceCredentials.class);
+        otherCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
+        otherCredentials.setCredentialsValue(lwm2mX509Credentials("lwm2m-device-other", certificate));
+        doPost("/api/device/credentials", otherCredentials)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Certificate is revoked!")));
+    }
+
+    @Test
+    public void testCustomerUserSeesRevocationWithoutRevokedBy() throws Exception {
+        String pem = toPem(generateCertificate("CN=customer-device", false));
+        loginCustomerAdminUser();
+        Device device = new Device();
+        device.setName("customer-device");
+        device.setType("default");
+        device.setCustomerId(customerId);
+        device = doPost("/api/device", device, Device.class);
+        setX509Credentials(device, pem);
+        // A revocation applies to the whole tenant
+        doPost("/api/device/" + device.getId() + "/credentials/revoke", request(null, null)).andExpect(status().isForbidden());
+
+        loginTenantAdmin();
+        revokeDeviceCertificate(device, null);
+
+        loginCustomerAdminUser();
+        assertThat(doGet("/api/device/" + device.getId() + "/credentials/certificate", DeviceCertificateInfo.class)
+                .getRevocation().getRevokedBy()).isNull();
+        // The customer's copy is redacted, not the cached revocation
+        loginTenantAdmin();
+        assertThat(doGet("/api/device/" + device.getId() + "/credentials/certificate", DeviceCertificateInfo.class)
+                .getRevocation().getRevokedBy()).isEqualTo(tenantAdminUserId);
+    }
+
+    @Test
     public void testRevokeByPemAndDeleteRevocation() throws Exception {
         String pem = toPem(generateCertificate("CN=previous-certificate", false));
 
@@ -154,6 +212,19 @@ public class DeviceCertificateRevocationControllerTest extends AbstractControlle
         credentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
         credentials.setCredentialsValue(pem);
         return doPost("/api/device/credentials", credentials, DeviceCredentials.class);
+    }
+
+    private DeviceCredentials setLwM2MX509Credentials(Device device, String endpoint, X509Certificate certificate) throws Exception {
+        DeviceCredentials credentials = doGet("/api/device/" + device.getId() + "/credentials", DeviceCredentials.class);
+        credentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
+        credentials.setCredentialsValue(lwm2mX509Credentials(endpoint, certificate));
+        return doPost("/api/device/credentials", credentials, DeviceCredentials.class);
+    }
+
+    private static String lwm2mX509Credentials(String endpoint, X509Certificate certificate) throws Exception {
+        return "{\"client\": {\"securityConfigClientMode\": \"X509\", \"endpoint\": \"" + endpoint + "\", " +
+                "\"cert\": \"" + Base64.getEncoder().encodeToString(certificate.getEncoded()) + "\"}, " +
+                "\"bootstrap\": {\"bootstrapServer\": {\"securityMode\": \"NO_SEC\"}, \"lwm2mServer\": {\"securityMode\": \"NO_SEC\"}}}";
     }
 
     private DeviceCertificateRevocation revokeDeviceCertificate(Device device, String reason) {

@@ -30,7 +30,8 @@ public class DeviceCertificateRevocation extends BaseData<DeviceCertificateRevoc
     @Schema(description = "JSON object with Id of the device the certificate was bound to when it was revoked. " +
             "Empty when the certificate was revoked by its PEM and no device used it at that moment.", accessMode = Schema.AccessMode.READ_ONLY)
     private DeviceId deviceId;
-    @Schema(description = "SHA3-256 hash of the DER-encoded certificate. Same value as the credentials id of X.509 device credentials.",
+    @Schema(description = "SHA3-256 hash of the Base64-encoded DER of the certificate (single line, no PEM armor). " +
+            "Same value as the credentials id of X.509 device credentials.",
             accessMode = Schema.AccessMode.READ_ONLY)
     private String certificateHash;
     @Schema(description = "Certificate serial number in hexadecimal form.", accessMode = Schema.AccessMode.READ_ONLY)

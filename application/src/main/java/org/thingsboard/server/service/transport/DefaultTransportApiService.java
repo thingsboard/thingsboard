@@ -266,9 +266,12 @@ public class DefaultTransportApiService implements TransportApiService {
         String deviceCertificateHash = chain.isEmpty() ? null : EncryptionUtil.getSha3Hash(chain.get(0));
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
-            DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
-            if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
-                return getDeviceInfo(credentials, deviceCertificateHash);
+            // Credentials only of the leaf: the client proves that it holds its private key, not the keys of the CAs in the chain
+            if (certificateHash.equals(deviceCertificateHash)) {
+                DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
+                if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
+                    return getDeviceInfo(credentials, deviceCertificateHash);
+                }
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
             if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {

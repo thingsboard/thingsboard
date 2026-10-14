@@ -225,6 +225,24 @@ public class DefaultTbClusterServiceTest {
     }
 
     @Test
+    public void testOnDeviceCertificateRevokedNotifiesEveryTransportService() {
+        // Service info regenerated with fresh system info lists no transports
+        when(partitionService.getAllServices(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(
+                TransportProtos.ServiceInfo.newBuilder().setServiceId(MONOLITH).build(),
+                TransportProtos.ServiceInfo.newBuilder().setServiceId(TRANSPORT).build()));
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(MONOLITH, TRANSPORT));
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> tbTransportQueueProducer = mock(TbQueueProducer.class);
+        when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
+
+        clusterService.onDeviceCertificateRevoked(TenantId.fromUUID(UUID.randomUUID()), "hash", null);
+
+        verify(tbTransportQueueProducer, times(1))
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
+        verify(tbTransportQueueProducer, times(1))
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT)), any(TbProtoQueueMsg.class), isNull());
+    }
+
+    @Test
     public void testOnQueueChangeMultipleMicroservices() {
         String monolith1 = MONOLITH + 1;
         String monolith2 = MONOLITH + 2;

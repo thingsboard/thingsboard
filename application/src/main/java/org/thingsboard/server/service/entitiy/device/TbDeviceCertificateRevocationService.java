@@ -5,6 +5,7 @@ package org.thingsboard.server.service.entitiy.device;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCertificateInfo;
 import org.thingsboard.server.common.data.security.DeviceCertificateRevocation;
@@ -32,7 +33,11 @@ public interface TbDeviceCertificateRevocationService {
 
     /**
      * Rejects credentials holding a revoked certificate: they could never authenticate.
+     * The device's own certificate is accepted while it is unchanged, so that a device keeps its revoked certificate
+     * and can still be saved, e.g. by a bulk import or with other LwM2M settings.
+     *
+     * @param deviceId the device the credentials are saved for, or null for a new device
      */
-    void validateNotRevoked(TenantId tenantId, DeviceCredentials credentials);
+    void validateNotRevoked(TenantId tenantId, DeviceId deviceId, DeviceCredentials credentials);
 
 }

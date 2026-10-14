@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
@@ -26,6 +27,7 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.List;
@@ -40,15 +42,18 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TbCoapDtlsCertificateVerifierTest {
 
     private static final InetSocketAddress PEER = new InetSocketAddress("10.0.0.1", 5684);
 
+    private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
+
     private final TransportService transportService = mock(TransportService.class);
     private final TransportRateLimitService rateLimitService = mock(TransportRateLimitService.class);
     private final TbCoapDtlsCertificateVerifier verifier = new TbCoapDtlsCertificateVerifier(transportService, null, rateLimitService,
-            TimeUnit.DAYS.toMillis(1), TimeUnit.MINUTES.toMillis(30), false);
+            new TbCoapDtlsSessionInMemoryStorage(TimeUnit.DAYS.toMillis(1), TimeUnit.MINUTES.toMillis(30)), false);
     private final ConnectionId cid = new ConnectionId(new byte[]{1, 2, 3, 4});
 
     @Test
@@ -75,6 +80,44 @@ public class TbCoapDtlsCertificateVerifierTest {
 
         verifier.dropSession(cid);
 
+        assertThat(verifier.commitSession(cid)).isFalse();
+        assertThat(verifier.getTbCoapDtlsSessionsMap()).isEmpty();
+    }
+
+    @Test
+    public void givenCertificateRevokedDuringHandshake_whenCommitted_thenSessionIsNotStored() throws Exception {
+        X509Certificate certificate = generateCertificate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+        String credentials = SslUtil.getCertificateString(certificate);
+        answer(callback -> callback.onSuccess(deviceResponse(credentials)));
+        verifyCertificate(certificate);
+
+        // The core answered before the revocation, which reaches the transport before the handshake completes
+        verifier.evictSessions(TENANT_ID, EncryptionUtil.getSha3Hash(credentials));
+
+        assertThat(verifier.commitSession(cid)).isFalse();
+        assertThat(verifier.getTbCoapDtlsSessionsMap()).isEmpty();
+    }
+
+    @Test
+    public void givenRegisteredCertificateAfterUnknownLeaf_whenVerified_thenItIsNotMatched() throws Exception {
+        // Certificates are sent in clear text: the client could append the certificate of any device to its own one
+        X509Certificate leaf = generateCertificate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+        X509Certificate deviceCertificate = generateCertificate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
+        String deviceCredentials = SslUtil.getCertificateString(deviceCertificate);
+        doAnswer(invocation -> {
+            ValidateDeviceX509CertRequestMsg request = invocation.getArgument(1);
+            TransportServiceCallback<ValidateDeviceCredentialsResponse> callback = invocation.getArgument(2);
+            callback.onSuccess(request.getHash().equals(EncryptionUtil.getSha3Hash(deviceCredentials)) ?
+                    deviceResponse(deviceCredentials) : ValidateDeviceCredentialsResponse.builder().build());
+            return null;
+        }).when(transportService).process(eq(DeviceTransportType.COAP), any(ValidateDeviceX509CertRequestMsg.class), any());
+
+        // Decoded from the wire the way Scandium does: the certificates are not checked to form a chain
+        CertificateMessage message = mock(CertificateMessage.class);
+        when(message.getCertificateChain()).thenReturn(CertificateFactory.getInstance("X.509").generateCertPath(List.of(leaf, deviceCertificate)));
+        verifier.verifyCertificate(cid, null, PEER, true, false, false, message);
+
+        verify(rateLimitService).onAuthFailure(PEER);
         assertThat(verifier.commitSession(cid)).isFalse();
         assertThat(verifier.getTbCoapDtlsSessionsMap()).isEmpty();
     }
@@ -125,7 +168,7 @@ public class TbCoapDtlsCertificateVerifierTest {
 
     private static ValidateDeviceCredentialsResponse deviceResponse(String credentials) {
         TransportDeviceInfo deviceInfo = new TransportDeviceInfo();
-        deviceInfo.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        deviceInfo.setTenantId(TENANT_ID);
         return ValidateDeviceCredentialsResponse.builder().deviceInfo(deviceInfo).deviceProfile(new DeviceProfile()).credentials(credentials).build();
     }
 

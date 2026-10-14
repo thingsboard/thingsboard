@@ -48,10 +48,15 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
     private final DeviceCredentialsService deviceCredentialsService;
     private final DeviceService deviceService;
 
+    /**
+     * With Redis, a plain evict of a key that is not cached does not abort a concurrent lookup that is about to cache the value
+     * it read before the change: the certificate would stay "not revoked" (or "revoked") for the cache TTL.
+     * {@code evictOrPut} puts the current value for a short time in that case.
+     */
     @TransactionalEventListener(classes = DeviceCertificateRevocationEvictEvent.class)
     @Override
     public void handleEvictEvent(DeviceCertificateRevocationEvictEvent event) {
-        cache.evict(DeviceCertificateRevocationCacheKey.of(event.tenantId(), event.certificateHash()));
+        cache.evictOrPut(DeviceCertificateRevocationCacheKey.of(event.tenantId(), event.certificateHash()), event.revocation());
     }
 
     @Override
@@ -79,7 +84,7 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
         revocationValidator.validate(revocation, DeviceCertificateRevocation::getTenantId);
         try {
             DeviceCertificateRevocation saved = revocationDao.save(tenantId, revocation);
-            publishEvictEvent(new DeviceCertificateRevocationEvictEvent(tenantId, saved.getCertificateHash()));
+            publishEvictEvent(new DeviceCertificateRevocationEvictEvent(tenantId, saved.getCertificateHash(), saved));
             return saved;
         } catch (Exception e) {
             ConstraintViolationException cve = DaoUtil.extractConstraintViolationException(e).orElse(null);
@@ -106,9 +111,11 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
         log.trace("[{}] Executing findRevocationByCertificatePem", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         String certificateHash = getCertificateHash(parseCertificate(certificatePem));
-        return cache.getAndPutInTransaction(DeviceCertificateRevocationCacheKey.of(tenantId, certificateHash),
+        DeviceCertificateRevocation revocation = cache.getAndPutInTransaction(DeviceCertificateRevocationCacheKey.of(tenantId, certificateHash),
                 () -> revocationDao.findByTenantIdAndCertificateHash(tenantId, certificateHash),
                 true);
+        // A copy: Caffeine returns the cached instance, which callers must not be able to change
+        return revocation != null ? new DeviceCertificateRevocation(revocation) : null;
     }
 
     @Override
@@ -135,7 +142,7 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
             return;
         }
         revocationDao.removeById(tenantId, revocationId.getId());
-        publishEvictEvent(new DeviceCertificateRevocationEvictEvent(revocation.getTenantId(), revocation.getCertificateHash()));
+        publishEvictEvent(new DeviceCertificateRevocationEvictEvent(revocation.getTenantId(), revocation.getCertificateHash(), null));
     }
 
     @Override

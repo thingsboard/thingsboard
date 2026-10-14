@@ -70,7 +70,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry.ClientCertificate;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
@@ -460,21 +459,48 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * in trust mode, where the core identifies the device by its endpoint and does not see the certificate.
      * Only clients that this node saw authenticate with the certificate for the tenant are affected, so that a tenant can't
      * disconnect devices of another tenant by revoking their certificates.
+     * <p>
+     * If the endpoint authenticated with another certificate after the revoked one, e.g. the revoked certificate was replaced
+     * before, only the connections of the revoked certificate are terminated: the registration most likely uses the new one.
+     * <p>
+     * The registration and the client state in the stores shared by the nodes are removed only if this node serves the
+     * registration: the endpoint may have moved to another node since, possibly with another certificate.
      */
     @EventListener(X509CertificateRevokedEvent.class)
     public void onX509CertificateRevoked(X509CertificateRevokedEvent event) {
-        for (ClientCertificate certificate : certificateRegistry.findByCertificate(event.getTenantId(), event.getCertificateHash())) {
-            executor.submit(() -> {
-                log.info("[{}] Closing LwM2M client with revoked certificate", certificate.endpoint());
-                terminateDtlsConnections(certificate.certificateHash());
-                clientContext.getLwM2mClients().stream()
-                        .filter(client -> certificate.endpoint().equals(client.getEndpoint()) && client.getRegistration() != null)
-                        .findFirst()
-                        .ifPresent(this::clearAndUnregister);
-                sessionStore.remove(certificate.endpoint());
-                certificateRegistry.unregister(certificate.endpoint());
-            });
+        Map<String, Boolean> endpoints = certificateRegistry.revoke(event.getTenantId(), event.getCertificateHash());
+        if (endpoints.isEmpty()) {
+            return;
         }
+        executor.submit(() -> {
+            terminateDtlsConnections(event.getCertificateHash());
+            endpoints.forEach((endpoint, lastCertificate) -> {
+                log.info("[{}] Closing LwM2M client with revoked certificate", endpoint);
+                if (lastCertificate) {
+                    clientContext.getLwM2mClients().stream()
+                            .filter(client -> endpoint.equals(client.getEndpoint()) && client.getRegistration() != null)
+                            .findFirst()
+                            .filter(this::isRegistrationServedHere)
+                            .ifPresent(this::clearAndUnregister);
+                }
+            });
+        });
+    }
+
+    /**
+     * Whether this node handled the latest Register or Update of the client's registration. If another node did, the
+     * registration and its shared state belong to that node, which handles a revocation of a certificate it saw itself.
+     * An Update that this node handles at the same moment makes the registration look served elsewhere: it then expires
+     * instead of being removed, while the terminated connections keep the client from using it.
+     */
+    private boolean isRegistrationServedHere(LwM2mClient client) {
+        Registration registration = client.getRegistration();
+        Registration current = registrationStore.getRegistration(registration.getId());
+        if (current == null || !current.getLastUpdate().equals(registration.getLastUpdate())) {
+            log.info("[{}] Registration [{}] is served by another node", client.getEndpoint(), registration.getId());
+            return false;
+        }
+        return true;
     }
 
     private void terminateDtlsConnections(String certificateHash) {

@@ -5,6 +5,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.elements.auth.X509CertPath;
 import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.peer.LwM2mPeer;
 import org.eclipse.leshan.core.peer.PskIdentity;
@@ -52,6 +53,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     private final LwM2mBootstrapModelProvider modelProvider;
     private TransportService transportService;
     private TransportRateLimitService rateLimitService;
+    private TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier;
 
     /**
      * Create a {@link DefaultBootstrapSessionManager} using a default {@link SecurityChecker} to accept or refuse new
@@ -60,11 +62,12 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
     public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService,
-                                               TransportRateLimitService rateLimitService) {
+                                               TransportRateLimitService rateLimitService, TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier) {
         this(bsSecurityStore, configStore, new SecurityChecker(), new LwM2MBootstrapConfigStoreTaskProvider(configStore),
                 new StandardBootstrapModelProvider());
         this.transportService = transportService;
         this.rateLimitService = rateLimitService;
+        this.certificateVerifier = certificateVerifier;
     }
 
     /**
@@ -103,7 +106,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
                 else if (!((IpPeer) sender).isX509()) {
                     securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
                 }
-                authorized = this.checkSecurityInfo(request.getEndpointName(), sender, securityInfos);
+                // The lookup of the certificate also refreshes the bootstrap configuration that checkSecurityInfo looks for
+                authorized = (!((IpPeer) sender).isX509() || isCertificateRegistered(request, address))
+                        && this.checkSecurityInfo(request.getEndpointName(), sender, securityInfos);
             }
         } catch (LwM2MTransportUnavailableException e) {
             authorized = false;
@@ -262,6 +267,21 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     private void sendLogs(String endpointName, String logMsg) {
         log.info("Endpoint: [{}] [{}]", endpointName, logMsg);
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
+    }
+
+    /**
+     * The certificate verifier runs on full handshakes only: a client that kept its DTLS connection, or resumed its DTLS session,
+     * would otherwise get its bootstrap configuration with a certificate revoked since.
+     */
+    private boolean isCertificateRegistered(BootstrapRequest request, InetSocketAddress address) {
+        if (certificateVerifier == null) {
+            return true;
+        }
+        if (request.getCoapRequest() instanceof Request coapRequest
+                && coapRequest.getSourceContext().getPeerIdentity() instanceof X509CertPath certPath) {
+            return certificateVerifier.isRegistered(certPath, address);
+        }
+        return false;
     }
 
     private boolean checkSecurityInfo(String endpoint, LwM2mPeer clientIdentity, Iterator<SecurityInfo> securityInfos) {

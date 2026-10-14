@@ -31,6 +31,7 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
 import java.security.cert.CertPath;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -55,13 +56,17 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     private TransportRateLimitService rateLimitService;
     private boolean skipValidityCheckForClientCert;
 
+    /**
+     * @param tbCoapDtlsSessionInMemoryStorage shared by the verifiers of every DTLS endpoint that is recreated on a certificate
+     *                                         reload: the CoAP resources keep using the storage they got first
+     */
     public TbCoapDtlsCertificateVerifier(TransportService transportService, TbServiceInfoProvider serviceInfoProvider, TransportRateLimitService rateLimitService,
-                                         long dtlsSessionInactivityTimeout, long dtlsSessionReportTimeout, boolean skipValidityCheckForClientCert) {
+                                         TbCoapDtlsSessionInMemoryStorage tbCoapDtlsSessionInMemoryStorage, boolean skipValidityCheckForClientCert) {
         this.transportService = transportService;
         this.serviceInfoProvider = serviceInfoProvider;
         this.rateLimitService = rateLimitService;
         this.skipValidityCheckForClientCert = skipValidityCheckForClientCert;
-        this.tbCoapDtlsSessionInMemoryStorage = new TbCoapDtlsSessionInMemoryStorage(dtlsSessionInactivityTimeout, dtlsSessionReportTimeout);
+        this.tbCoapDtlsSessionInMemoryStorage = tbCoapDtlsSessionInMemoryStorage;
     }
 
     @Override
@@ -73,10 +78,12 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
         try {
             CertPath certpath = message.getCertificateChain();
-            X509Certificate[] chain = certpath.getCertificates().toArray(new X509Certificate[0]);
+            // Only the leaf: the client proves that it holds the private key of the leaf, not of the other certificates in the chain
+            List<? extends Certificate> chain = certpath.getCertificates();
+            X509Certificate cert = !chain.isEmpty() && chain.get(0) instanceof X509Certificate leaf ? leaf : null;
             boolean found = false;
             boolean coreUnavailable = false;
-            for (X509Certificate cert : chain) {
+            if (cert != null) {
                 try {
                     if (!skipValidityCheckForClientCert) {
                         cert.checkValidity();
@@ -87,6 +94,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                     final ValidateDeviceCredentialsResponse[] deviceCredentialsResponse = new ValidateDeviceCredentialsResponse[1];
                     final boolean[] failed = new boolean[1];
                     CountDownLatch latch = new CountDownLatch(1);
+                    long checkedTime = System.currentTimeMillis();
                     transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash(sha3Hash).build(),
                             new TransportServiceCallback<>() {
                                 @Override
@@ -106,17 +114,16 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                             });
                     if (!latch.await(10, TimeUnit.SECONDS) || failed[0]) {
                         coreUnavailable = true;
-                        continue;
-                    }
-                    ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
-                    if (msg != null && strCert.equals(msg.getCredentials())) {
-                        found = true;
-                        DeviceProfile deviceProfile = msg.getDeviceProfile();
-                        if (msg.hasDeviceInfo() && deviceProfile != null) {
-                            TbCoapDtlsSessionKey tbCoapDtlsSessionKey = new TbCoapDtlsSessionKey(remotePeer, msg.getCredentials());
-                            pendingSessions.put(cid, new PendingSession(tbCoapDtlsSessionKey, new TbCoapDtlsSessionInfo(msg, deviceProfile, sha3Hash), System.currentTimeMillis()));
+                    } else {
+                        ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
+                        if (msg != null && strCert.equals(msg.getCredentials())) {
+                            found = true;
+                            DeviceProfile deviceProfile = msg.getDeviceProfile();
+                            if (msg.hasDeviceInfo() && deviceProfile != null) {
+                                TbCoapDtlsSessionKey tbCoapDtlsSessionKey = new TbCoapDtlsSessionKey(remotePeer, msg.getCredentials());
+                                pendingSessions.put(cid, new PendingSession(tbCoapDtlsSessionKey, new TbCoapDtlsSessionInfo(msg, deviceProfile, sha3Hash), checkedTime));
+                            }
                         }
-                        break;
                     }
                 } catch (InterruptedException |
                         CertificateEncodingException |
@@ -151,8 +158,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
         if (pendingSession == null) {
             return false;
         }
-        tbCoapDtlsSessionInMemoryStorage.put(pendingSession.key(), pendingSession.info());
-        return true;
+        return tbCoapDtlsSessionInMemoryStorage.put(pendingSession.key(), pendingSession.info(), pendingSession.checkedTime());
     }
 
     public void dropSession(ConnectionId cid) {
@@ -179,10 +185,11 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     }
 
     public void evictTimeoutSessions() {
-        tbCoapDtlsSessionInMemoryStorage.evictTimeoutSessions();
-        // Handshakes end by completing or failing, this only guards against a handshake that is never reported
+        // Handshakes end by completing or failing, this only guards against a handshake that is never reported.
+        // Before the storage forgets old revocations, which could still refuse such a handshake.
         long expirationTime = System.currentTimeMillis() - getDtlsSessionReportTimeout();
-        pendingSessions.values().removeIf(pendingSession -> pendingSession.createdTime() < expirationTime);
+        pendingSessions.values().removeIf(pendingSession -> pendingSession.checkedTime() < expirationTime);
+        tbCoapDtlsSessionInMemoryStorage.evictTimeoutSessions();
     }
 
     public void evictSessions(TenantId tenantId, String certificateHash) {
@@ -193,6 +200,9 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
         return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionReportTimeout();
     }
 
-    private record PendingSession(TbCoapDtlsSessionKey key, TbCoapDtlsSessionInfo info, long createdTime) {}
+    /**
+     * @param checkedTime when the core was asked about the certificate: a revocation received later may not have been seen
+     */
+    private record PendingSession(TbCoapDtlsSessionKey key, TbCoapDtlsSessionInfo info, long checkedTime) {}
 
 }

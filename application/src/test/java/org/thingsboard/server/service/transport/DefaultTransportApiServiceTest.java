@@ -224,6 +224,21 @@ public class DefaultTransportApiServiceTest {
     }
 
     @Test
+    public void credentialsOfCaCertificateInChainAreNotMatched() {
+        // A device whose credentials hold a CA certificate: a leaf signed by that CA must not authenticate as the device
+        var device = createDevice();
+        String caHash = EncryptionUtil.getSha3Hash(EncryptionUtil.certTrimNewLines(chain[1]));
+        var caCredentials = createDeviceCredentials(EncryptionUtil.certTrimNewLines(chain[1]), device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(caHash)).thenReturn(caCredentials);
+        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
+
+        TransportProtos.TransportApiResponseMsg response = service.validateOrCreateDeviceX509Certificate(certificateChain);
+
+        assertThat(response.getValidateCredResponseMsg().hasDeviceInfo()).isFalse();
+        verify(deviceCredentialsService, never()).findDeviceCredentialsByCredentialsId(caHash);
+    }
+
+    @Test
     public void certificateRevokedByAnotherTenantIsAccepted() {
         var device = createDevice();
         var deviceCredentials = createDeviceCredentials(chain[0], device.getId());

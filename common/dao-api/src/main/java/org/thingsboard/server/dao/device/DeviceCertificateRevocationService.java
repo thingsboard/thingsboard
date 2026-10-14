@@ -15,13 +15,15 @@ public interface DeviceCertificateRevocationService {
     /**
      * Revokes a single X.509 device certificate for the tenant.
      *
-     * @param certificatePem PEM of exactly one certificate; CA certificates are rejected
-     * @param deviceId       device the certificate is bound to at the moment of revocation, if any
+     * @param certificatePem PEM of exactly one certificate. CA certificates are rejected unless they are bound to a device:
+     *                       a self-signed device certificate is often marked as CA.
+     * @param deviceId       device whose credentials hold this certificate, or null to look it up by the certificate.
+     *                       Must not be any other device: a supplied device id skips the CA check.
      */
     DeviceCertificateRevocation revokeCertificate(TenantId tenantId, String certificatePem, DeviceId deviceId, String reason, UserId revokedBy);
 
     /**
-     * Hot path of device authentication: the hash is the SHA3-256 of the DER-encoded certificate,
+     * Hot path of device authentication: the hash is the SHA3-256 of the Base64-encoded DER (single line, no PEM armor),
      * the same value transports compute and X.509 device credentials use as credentials id.
      */
     boolean isRevoked(TenantId tenantId, String certificateHash);

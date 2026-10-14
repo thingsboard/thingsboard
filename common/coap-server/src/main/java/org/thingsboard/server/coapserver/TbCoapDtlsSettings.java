@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.coapserver;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.config.Configuration;
@@ -92,6 +93,10 @@ public class TbCoapDtlsSettings {
     @Autowired(required = false)
     private TransportRateLimitService rateLimitService;
 
+    // Shared by the DTLS endpoints recreated on certificate reloads: the CoAP resources keep the sessions map they got first
+    @Getter(AccessLevel.NONE)
+    private TbCoapDtlsSessionInMemoryStorage dtlsSessionStorage;
+
     public void registerReloadCallback(Runnable callback) {
         coapDtlsCredentialsConfig.registerReloadCallback(callback);
     }
@@ -126,8 +131,7 @@ public class TbCoapDtlsSettings {
                 transportService,
                 serviceInfoProvider,
                 rateLimitService,
-                dtlsSessionInactivityTimeout,
-                dtlsSessionReportTimeout,
+                getDtlsSessionStorage(),
                 skipValidityCheckForClientCert
         );
         configBuilder.setAdvancedCertificateVerifier(certificateVerifier);
@@ -135,6 +139,13 @@ public class TbCoapDtlsSettings {
         configBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
                 Collections.singletonList(CertificateType.X_509)));
         return configBuilder.build();
+    }
+
+    public synchronized TbCoapDtlsSessionInMemoryStorage getDtlsSessionStorage() {
+        if (dtlsSessionStorage == null) {
+            dtlsSessionStorage = new TbCoapDtlsSessionInMemoryStorage(dtlsSessionInactivityTimeout, dtlsSessionReportTimeout);
+        }
+        return dtlsSessionStorage;
     }
 
     private InetSocketAddress getInetSocketAddress() throws UnknownHostException {

@@ -16,6 +16,8 @@ import { forkJoin, of, throwError, Observable } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
 import { catchError, filter, map, mergeMap } from 'rxjs/operators';
 import { HttpStatusCode } from '@angular/common/http';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DeviceCertificateInfo, DeviceCertificateRevocationRequest } from '@shared/models/device-certificate-revocation.models';
@@ -48,6 +50,8 @@ export class DeviceCredentialsDialogComponent extends
   certificateInfo: DeviceCertificateInfo;
   // LwM2M trust mode: the certificate is not stored with the credentials
   certificateNotStored = false;
+  // Revocations apply to the whole tenant: customer users can see them, but not revoke certificates
+  readonly canManageRevocations: boolean;
 
   private deviceCredentials: DeviceCredentials;
   private submitted = false;
@@ -65,6 +69,7 @@ export class DeviceCredentialsDialogComponent extends
     super(store, router, dialogRef);
 
     this.isReadOnly = data.isReadOnly;
+    this.canManageRevocations = !this.isReadOnly && getCurrentAuthUser(store).authority === Authority.TENANT_ADMIN;
   }
 
   ngOnInit(): void {
@@ -107,7 +112,7 @@ export class DeviceCredentialsDialogComponent extends
   }
 
   get canRevokeCertificate(): boolean {
-    return !this.isReadOnly && !!this.certificateInfo && !this.certificateInfo.revocation && !this.deviceCredentialsFormGroup.dirty;
+    return this.canManageRevocations && !!this.certificateInfo && !this.certificateInfo.revocation && !this.deviceCredentialsFormGroup.dirty;
   }
 
   revokeCertificate(): void {
