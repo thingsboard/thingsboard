@@ -91,6 +91,10 @@ public class DefaultTbTelemetryService implements TbTelemetryService {
         accessValidator.validate(currentUser, Operation.READ_TELEMETRY, entityId, new FutureCallback<>() {
             @Override
             public void onSuccess(ValidationResult validationResult) {
+                if (validationResult.getResultCode() != ValidationResultCode.OK) {
+                    onFailure(ValidationCallback.getException(validationResult));
+                    return;
+                }
                 try {
                     Futures.addCallback(tsService.findAllByQueries(currentUser.getTenantId(), entityId, new ArrayList<>(queries)), new FutureCallback<>() {
                         @Override
