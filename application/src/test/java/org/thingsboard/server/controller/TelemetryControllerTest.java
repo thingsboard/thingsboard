@@ -302,7 +302,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Device device = createDevice();
         tsService.save(tenantId, device.getId(), new BasicTsKvEntry(1000L, new LongDataEntry("t", 1L))).get();
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         String url = "/api/plugins/telemetry/DEVICE/{entityId}/values/timeseries?keys=t&startTs=0&endTs={endTs}";
         doGetAsync(url, device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
         doGetAsync(url + "&agg=SUM&interval=86400000", device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
@@ -313,7 +313,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + device.getId().getId()).andExpect(status().isOk());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         ObjectNode result = doGetAsync(url, ObjectNode.class, device.getUuidId(), System.currentTimeMillis());
         Assert.assertEquals(1L, result.get("t").get(0).get("value").asLong());
     }
