@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,9 +12,9 @@ import java.io.Serializable;
 public class LwM2MServerSecurityConfig implements Serializable {
 
     @Schema(description = "Server short Id. Used as link to associate server Object Instance. This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client. " +
-            "This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'. " +
-            "The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.", example = "123", accessMode = Schema.AccessMode.READ_ONLY)
-    protected Integer shortServerId = 123;
+            "This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false' and MUST be null when Bootstrap-Server is 'true'. " +
+            "The values 0 and 65535 MUST NOT be used for identifying the LwM2M Server.", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
+    protected Integer shortServerId;
     /** Security -> ObjectId = 0 'LWM2M Security' */
     @Schema(description = "Is Bootstrap Server or Lwm2m Server. " +
             "The LwM2M Client MAY be configured to use one or more LwM2M Server Account(s). " +

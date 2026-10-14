@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.utils;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -24,6 +12,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -35,6 +24,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -78,6 +68,23 @@ public class EntityPrototypes {
         return customer;
     }
 
+    public static User defaultTenantAdmin(TenantId tenantId, String email) {
+        User user = new User();
+        user.setTenantId(tenantId);
+        user.setEmail(email);
+        user.setAuthority(Authority.TENANT_ADMIN);
+        return user;
+    }
+
+    public static User defaultCustomerAdmin(TenantId tenantId, CustomerId customerId, String email) {
+        User user = new User();
+        user.setTenantId(tenantId);
+        user.setCustomerId(customerId);
+        user.setEmail(email);
+        user.setAuthority(Authority.CUSTOMER_USER);
+        return user;
+    }
+
     public static RuleChain defaultRuleChainPrototype(String entityName) {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(entityName);
@@ -96,6 +103,22 @@ public class EntityPrototypes {
         ruleChain.setName(entityName);
         ruleChain.setDebugMode(debugMode);
         return ruleChain;
+    }
+
+    public static EntityGroup defaultEntityGroupPrototype(String entityName, EntityType entityType) {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName(entityName);
+        entityGroup.setType(entityType);
+        return entityGroup;
+    }
+
+    public static EntityGroup defaultEntityGroupPrototype(String entityName, EntityType entityType, String
+            description) {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName(entityName);
+        entityGroup.setType(entityType);
+        entityGroup.setAdditionalInfo(JacksonUtil.newObjectNode().put("description", description));
+        return entityGroup;
     }
 
     public static DeviceProfile defaultDeviceProfile(String entityName) {
@@ -180,23 +203,6 @@ public class EntityPrototypes {
         User user = new User();
         user.setEmail(email);
         user.setCustomerId(customerId);
-        user.setAuthority(Authority.CUSTOMER_USER);
-        return user;
-    }
-
-    public static User defaultTenantAdmin(TenantId tenantId, String email) {
-        User user = new User();
-        user.setTenantId(tenantId);
-        user.setEmail(email);
-        user.setAuthority(Authority.TENANT_ADMIN);
-        return user;
-    }
-
-    public static User defaultCustomerAdmin(TenantId tenantId, CustomerId customerId, String email) {
-        User user = new User();
-        user.setTenantId(tenantId);
-        user.setCustomerId(customerId);
-        user.setEmail(email);
         user.setAuthority(Authority.CUSTOMER_USER);
         return user;
     }

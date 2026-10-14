@@ -13,7 +13,8 @@
       "emailAttributeKey": "email",
       "firstNameAttributeKey": "first_name",
       "lastNameAttributeKey": "last_name",
-      "tenantNameStrategy": "DOMAIN"
+      "tenantNameStrategy": "DOMAIN",
+      "userGroupsNamePattern": ["Tenant Administrators"]
     }
   },
   "comment": null,

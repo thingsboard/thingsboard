@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, ReplaySubject, Subscription, throwError } from 'rxjs';
@@ -175,16 +162,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
           this.entitySubtypes = null;
         });
         break;
-      case EntityType.EDGE:
-        this.placeholder = this.required ? this.translate.instant('edge.enter-edge-type')
-          : this.translate.instant('edge.any-edge');
-        this.secondaryPlaceholder = '+' + this.translate.instant('edge.edge-type');
-        this.noSubtypesMathingText = 'edge.no-edge-types-matching';
-        this.subtypeListEmptyText = 'edge.edge-type-list-empty';
-        this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
-          this.entitySubtypes = null;
-        });
-        break;
       case EntityType.ENTITY_VIEW:
         this.placeholder = this.required ? this.translate.instant('entity-view.enter-entity-view-type')
           : this.translate.instant('entity-view.any-entity-view');
@@ -192,6 +169,16 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
         this.noSubtypesMathingText = 'entity-view.no-entity-view-types-matching';
         this.subtypeListEmptyText = 'entity-view.entity-view-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('entityViewSaved', () => {
+          this.entitySubtypes = null;
+        });
+        break;
+      case EntityType.EDGE:
+        this.placeholder = this.required ? this.translate.instant('edge.enter-edge-type')
+          : this.translate.instant('edge.any-edge');
+        this.secondaryPlaceholder = '+' + this.translate.instant('edge.edge-type');
+        this.noSubtypesMathingText = 'edge.no-edge-types-matching';
+        this.subtypeListEmptyText = 'edge.edge-type-list-empty';
+        this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.entitySubtypes = null;
         });
         break;

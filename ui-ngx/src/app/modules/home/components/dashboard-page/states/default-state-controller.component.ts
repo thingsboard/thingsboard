@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardState } from '@shared/models/dashboard.models';
@@ -26,9 +13,11 @@ import { UtilsService } from '@core/services/utils.service';
 import { base64toObj, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { WINDOW } from '@core/services/window.service';
 import { MobileService } from '@core/services/mobile.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
+// @dynamic
 @Component({
     selector: 'tb-default-state-controller',
     templateUrl: './default-state-controller.component.html',
@@ -40,15 +29,16 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   constructor(protected router: Router,
+              @Inject(WINDOW) protected window: Window,
               protected route: ActivatedRoute,
               protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
-              private utils: UtilsService,
+              protected utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
               private dashboardUtils: DashboardUtilsService,
               private breadcrumbService: BreadcrumbService) {
-    super(router, route, ngZone, statesControllerService);
+    super(router, route, utils, window, ngZone, statesControllerService);
   }
 
   ngOnInit(): void {

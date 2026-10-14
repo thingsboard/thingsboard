@@ -1,20 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataToValueType,
   GetValueAction,
@@ -28,7 +14,8 @@ import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/model
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { TbUnit } from '@shared/models/unit.models';
 
-const defaultMainColor = '#305680';
+
+const defaultMainColor = '#00695C';
 
 export enum ValueStepperType {
   simplified = 'simplified',
@@ -131,7 +118,7 @@ export const valueStepperButtonDefaultAppearance: ValueStepperButtonAppearance =
   iconSize: 24,
   iconSizeUnit: 'px',
 
-  mainColorOn: '#3F52DD',
+  mainColorOn: '#00695C',
   backgroundColorOn: '#FFFFFF',
   mainColorOff: '#A2A2A2',
   backgroundColorOff: '#FFFFFF',

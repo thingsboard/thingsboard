@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
@@ -76,6 +64,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
@@ -318,6 +307,8 @@ public interface TbContext {
 
     OtaPackageService getOtaPackageService();
 
+    OtaPackageStateService getOtaPackageStateService();
+
     RuleEngineDeviceProfileCache getDeviceProfileCache();
 
     RuleEngineAssetProfileCache getAssetProfileCache();
@@ -342,7 +333,7 @@ public interface TbContext {
 
     ExecutorProvider getPubSubRuleNodeExecutorProvider();
 
-    MailService getMailService(boolean isSystem);
+    MailService getMailService();
 
     SmsService getSmsService();
 
@@ -391,6 +382,13 @@ public interface TbContext {
 
     ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
+    EventService getEventService();
+
+    /**
+     * This context is available only in TB PE.
+     */
+    TbPeContext getPeContext();
+
     String getServiceId();
 
     EventLoopGroup getSharedEventLoop();
@@ -428,8 +426,6 @@ public interface TbContext {
     RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
 
     EntityService getEntityService();
-
-    EventService getEventService();
 
     AuditLogService getAuditLogService();
 

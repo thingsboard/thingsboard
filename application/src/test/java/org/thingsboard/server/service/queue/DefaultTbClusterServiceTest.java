@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
@@ -31,11 +20,23 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.agent.AgentAppEvent;
+import org.thingsboard.server.common.data.agent.AgentAppEventActionType;
+import org.thingsboard.server.common.data.agent.AgentBulkAction;
+import org.thingsboard.server.common.data.agent.BulkOperationRequest;
+import org.thingsboard.server.common.data.agent.ProcessingStartStatus;
+import org.thingsboard.server.common.data.agent.step.state.AgentAppStepState;
+import org.thingsboard.server.common.data.agent.step.state.ComposeDownStepState;
+import org.thingsboard.server.common.data.agent.step.state.StepField;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AgentAppEventId;
+import org.thingsboard.server.common.data.id.AgentApplicationId;
+import org.thingsboard.server.common.data.id.AgentBulkActionId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.AgentId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -47,6 +48,8 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -56,12 +59,15 @@ import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
-import org.thingsboard.server.service.ota.OtaPackageStateService;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -97,7 +103,11 @@ public class DefaultTbClusterServiceTest {
     @MockitoBean
     protected GatewayNotificationsService gatewayNotificationsService;
     @MockitoBean
+    protected EntityGroupService entityGroupService;
+    @MockitoBean
     protected EdgeService edgeService;
+    @MockitoBean
+    protected DbCallbackExecutorService dbCallbackExecutor;
     @MockitoBean
     protected PartitionService partitionService;
     @MockitoBean
@@ -106,6 +116,8 @@ public class DefaultTbClusterServiceTest {
     protected TbRuleEngineProducerService ruleEngineProducerService;
     @MockitoBean
     protected TbTransactionalCache<EdgeId, String> edgeCache;
+    @MockitoBean
+    protected TbTransactionalCache<AgentId, String> agentIdServiceIdCache;
     @MockitoBean
     protected CalculatedFieldService calculatedFieldService;
 
@@ -396,6 +408,159 @@ public class DefaultTbClusterServiceTest {
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         verify(ruleEngineProducerService).sendToRuleEngine(eq(tbREQueueProducer), eq(tenantId), actualMsg.capture(), eq(callback));
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    @Test
+    public void testRouteToAgentOnCacheHitTargetsTheOwningServiceOnly() {
+        AgentId agentId = new AgentId(UUID.randomUUID());
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToAgentNotificationMsg>> producer = mockAgentNotificationsProducer();
+        when(agentIdServiceIdCache.get(agentId)).thenReturn(() -> CORE);
+
+        clusterService.onAgentAppEvent(TenantId.SYS_TENANT_ID, agentId, agentAppEvent(ProcessingStartStatus.PENDING, null));
+
+        verify(topicService, times(1)).getAgentNotificationsTopic(CORE);
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_CORE);
+        verify(producer, times(1)).send(any(), any(), isNull());
+    }
+
+    @Test
+    public void testRouteToAgentOnCacheMissBroadcastsToEveryCore() {
+        AgentId agentId = new AgentId(UUID.randomUUID());
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToAgentNotificationMsg>> producer = mockAgentNotificationsProducer();
+        when(agentIdServiceIdCache.get(agentId)).thenReturn(null);
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE, MONOLITH));
+
+        clusterService.onAgentAppEvent(TenantId.SYS_TENANT_ID, agentId, agentAppEvent(ProcessingStartStatus.PENDING, null));
+
+        verify(topicService, times(1)).getAgentNotificationsTopic(CORE);
+        verify(topicService, times(1)).getAgentNotificationsTopic(MONOLITH);
+        verify(producer, times(2)).send(any(), any(), isNull());
+    }
+
+    @Test
+    public void testOnAgentAppEventCarriesTheDeliveredFlagAndZeroFillsAMissingApplicationId() {
+        AgentId agentId = new AgentId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        mockAgentNotificationsProducer();
+        when(agentIdServiceIdCache.get(agentId)).thenReturn(() -> CORE);
+
+        AgentAppEvent event = agentAppEvent(ProcessingStartStatus.DELIVERED, null);
+        clusterService.onAgentAppEvent(tenantId, agentId, event);
+
+        TransportProtos.AgentAppEventNotificationProto proto = capturedAgentAppEventProto();
+        assertThat(proto.getDelivered()).isTrue();
+        assertThat(proto.getCancelled()).isFalse();
+        assertThat(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())).isEqualTo(tenantId.getId());
+        assertThat(new UUID(proto.getAgentIdMSB(), proto.getAgentIdLSB())).isEqualTo(agentId.getId());
+        assertThat(new UUID(proto.getEventIdMSB(), proto.getEventIdLSB())).isEqualTo(event.getId().getId());
+        assertThat(proto.getApplicationIdMSB()).isZero();
+        assertThat(proto.getApplicationIdLSB()).isZero();
+        assertThat(proto.getActionType()).isEqualTo(AgentAppEventActionType.AGENT_UPGRADE.name());
+    }
+
+    @Test
+    public void testOnAgentAppEventOfANotYetDeliveredEventClearsTheDeliveredFlag() {
+        AgentId agentId = new AgentId(UUID.randomUUID());
+        AgentApplicationId applicationId = new AgentApplicationId(UUID.randomUUID());
+        mockAgentNotificationsProducer();
+        when(agentIdServiceIdCache.get(agentId)).thenReturn(() -> CORE);
+
+        clusterService.onAgentAppEvent(TenantId.SYS_TENANT_ID, agentId, agentAppEvent(ProcessingStartStatus.PENDING, applicationId));
+
+        TransportProtos.AgentAppEventNotificationProto proto = capturedAgentAppEventProto();
+        assertThat(proto.getDelivered()).isFalse();
+        assertThat(proto.getCancelled()).isFalse();
+        assertThat(new UUID(proto.getApplicationIdMSB(), proto.getApplicationIdLSB())).isEqualTo(applicationId.getId());
+    }
+
+    @Test
+    public void testOnAgentAppEventCancelledCarriesTheCancelledFlag() {
+        AgentId agentId = new AgentId(UUID.randomUUID());
+        mockAgentNotificationsProducer();
+        when(agentIdServiceIdCache.get(agentId)).thenReturn(() -> CORE);
+
+        clusterService.onAgentAppEventCancelled(TenantId.SYS_TENANT_ID, agentId, agentAppEvent(ProcessingStartStatus.DELIVERED, null));
+
+        TransportProtos.AgentAppEventNotificationProto proto = capturedAgentAppEventProto();
+        assertThat(proto.getCancelled()).isTrue();
+        assertThat(proto.getDelivered()).isFalse();
+    }
+
+    @Test
+    public void testPushMsgToAgentBulkOpsSerializesStepInputs() {
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.AgentBulkOperationMsg>> producer = mock(TbQueueProducer.class);
+        when(producerProvider.getTbAgentBulkOpsMsgProducer()).thenReturn(producer);
+
+        AgentBulkAction bulkAction = new AgentBulkAction(new AgentBulkActionId(UUID.randomUUID()));
+        bulkAction.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        bulkAction.setAgentProfileId(UUID.randomUUID());
+        bulkAction.setApplicationProfileId(UUID.randomUUID());
+        bulkAction.setActionType(AgentAppEventActionType.DELETE);
+
+        UUID stepId = UUID.randomUUID();
+        ComposeDownStepState stepState = new ComposeDownStepState();
+        stepState.setRemoveVolumes(new StepField<>(true, true));
+        BulkOperationRequest request = new BulkOperationRequest();
+        request.setActionType(AgentAppEventActionType.DELETE);
+        request.setStepInputs(Map.of(stepId, stepState));
+
+        clusterService.pushMsgToAgentBulkOps(bulkAction, request);
+
+        ArgumentCaptor<TbProtoQueueMsg<TransportProtos.AgentBulkOperationMsg>> captor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(producer).send(any(), captor.capture(), isNull());
+        TransportProtos.AgentBulkOperationMsg msg = captor.getValue().getValue();
+        assertThat(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB())).isEqualTo(bulkAction.getTenantId().getId());
+        assertThat(new UUID(msg.getBulkActionIdMSB(), msg.getBulkActionIdLSB())).isEqualTo(bulkAction.getId().getId());
+        assertThat(msg.getActionType()).isEqualTo(AgentAppEventActionType.DELETE.name());
+
+        Map<UUID, AgentAppStepState> decoded = JacksonUtil.fromString(msg.getStepInputs(), new TypeReference<>() { });
+        assertThat(decoded.keySet()).isEqualTo(Set.of(stepId));
+        assertThat(((ComposeDownStepState) decoded.get(stepId)).getRemoveVolumes().getValue()).isTrue();
+    }
+
+    @Test
+    public void testPushMsgToAgentBulkOpsLeavesStepInputsUnsetWhenThereAreNone() {
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.AgentBulkOperationMsg>> producer = mock(TbQueueProducer.class);
+        when(producerProvider.getTbAgentBulkOpsMsgProducer()).thenReturn(producer);
+
+        AgentBulkAction bulkAction = new AgentBulkAction(new AgentBulkActionId(UUID.randomUUID()));
+        bulkAction.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        bulkAction.setAgentProfileId(UUID.randomUUID());
+        bulkAction.setApplicationProfileId(UUID.randomUUID());
+        bulkAction.setActionType(AgentAppEventActionType.RESTART);
+
+        BulkOperationRequest request = new BulkOperationRequest();
+        request.setActionType(AgentAppEventActionType.RESTART);
+
+        clusterService.pushMsgToAgentBulkOps(bulkAction, request);
+
+        ArgumentCaptor<TbProtoQueueMsg<TransportProtos.AgentBulkOperationMsg>> captor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(producer).send(any(), captor.capture(), isNull());
+        assertThat(captor.getValue().getValue().getStepInputs()).isEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToAgentNotificationMsg>> mockAgentNotificationsProducer() {
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToAgentNotificationMsg>> producer = mock(TbQueueProducer.class);
+        when(producerProvider.getTbAgentNotificationsMsgProducer()).thenReturn(producer);
+        lenient().when(topicService.getAgentNotificationsTopic(any())).thenAnswer(invocation ->
+                new TopicPartitionInfo("agent.notifications." + invocation.<String>getArgument(0), null, null, false));
+        return producer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private TransportProtos.AgentAppEventNotificationProto capturedAgentAppEventProto() {
+        ArgumentCaptor<TbProtoQueueMsg<TransportProtos.ToAgentNotificationMsg>> captor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(producerProvider.getTbAgentNotificationsMsgProducer()).send(any(), captor.capture(), isNull());
+        return captor.getValue().getValue().getAgentAppEventNotification();
+    }
+
+    private AgentAppEvent agentAppEvent(ProcessingStartStatus startStatus, AgentApplicationId applicationId) {
+        AgentAppEvent event = new AgentAppEvent(new AgentAppEventId(UUID.randomUUID()));
+        event.setActionType(AgentAppEventActionType.AGENT_UPGRADE);
+        event.setStartStatus(startStatus);
+        event.setApplicationId(applicationId);
+        return event;
     }
 
     protected Queue createTestQueue() {

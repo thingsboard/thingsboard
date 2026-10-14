@@ -9,7 +9,7 @@ Install <a href="https://docs.docker.com/engine/install/" target="_blank"> Docke
 ThingsBoard Edge supports both **in-memory** and **Kafka** queues for message storage and communication between ThingsBoard services.
 It also supports **SQL** and **hybrid** database configurations.
 In this guide, we’ll use the **in-memory** queue and an **SQL** database.
-For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/edge/docker/#step-2-choose-queue-andor-database-services" target="_blank">ThingsBoard documentation site</a>.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/pe/edge/docker/#step-2-choose-queue-andor-database-services" target="_blank">ThingsBoard documentation site</a>.
 
 Now, create a Docker Compose file for the ThingsBoard Edge service:
 
@@ -24,13 +24,14 @@ Add the following lines to the yml file:
 services:
   mytbedge:
     restart: always
-    image: "thingsboard/tb-edge:${TB_EDGE_VERSION}"
+    image: "thingsboard/tb-edge-pe:${TB_EDGE_VERSION}"
     ports:
       - "8080:8080"
       - "1883:1883"
       - "5683-5688:5683-5688/udp"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
+      EDGE_LICENSE_INSTANCE_DATA_FILE: /data/instance-edge-license.data
       CLOUD_ROUTING_KEY: ${CLOUD_ROUTING_KEY}
       CLOUD_ROUTING_SECRET: ${CLOUD_ROUTING_SECRET}
       CLOUD_RPC_HOST: ${BASE_URL}
@@ -85,4 +86,4 @@ docker compose up -d && docker compose logs -f mytbedge
 
 Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Live Demo**.
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Cloud**.

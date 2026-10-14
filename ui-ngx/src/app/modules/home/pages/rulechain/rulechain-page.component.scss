@@ -1,19 +1,8 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import './rule-node-colors';
+@import "../../../../../scss/constants";
 
 .tb-rulechain {
   width: 100%;
@@ -63,6 +52,10 @@
     z-index: 2;
   }
 
+  &:not(:has(button.mdc-fab.version-control-button)) button.mdc-fab.add-note-button {
+    right: 60px;
+  }
+
   .tb-library-node-btn {
     width: 20px;
     height: 90px;
@@ -86,7 +79,7 @@
       content: "";
       pointer-events: none;
       border-radius: 0 0 0 15px;
-      box-shadow: -10px 0px 0 0px #fff;
+      box-shadow: -10px 0px 0 0px var(--mat-fab-small-container-color);
       border: none;
     }
     &:after {
@@ -98,7 +91,7 @@
       content: "";
       pointer-events: none;
       border-top-left-radius: 15px;
-      box-shadow: -10px 0px 0px 0px #fff;
+      box-shadow: -10px 0px 0px 0px var(--mat-fab-small-container-color);
       border: none;
     }
   }

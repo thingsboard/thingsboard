@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -49,20 +37,21 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -304,8 +293,8 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam int pageSize,
                                                  @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                  @RequestParam int page,
-                                                 @Parameter(description = RESOURCE_TYPE, schema = @Schema(allowableValues = {"LWM2M_MODEL", "JKS", "PKCS_12", "JS_MODULE"}))
-                                                 @RequestParam(required = false) String resourceType,
+                                                 @Parameter(description = RESOURCE_TYPE)
+                                                 @RequestParam(name = "resourceType", required = false) Set<ResourceType> resourceTypes,
                                                  @Parameter(description = RESOURCE_SUB_TYPE, schema = @Schema(allowableValues = {"EXTENSION", "MODULE"}))
                                                  @RequestParam(required = false) String resourceSubType,
                                                  @Parameter(description = RESOURCE_TEXT_SEARCH_DESCRIPTION)
@@ -314,22 +303,26 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam(required = false) String sortProperty,
                                                  @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter.TbResourceInfoFilterBuilder filter = TbResourceInfoFilter.builder();
         filter.tenantId(getTenantId());
-        Set<ResourceType> resourceTypes = new HashSet<>();
-        if (StringUtils.isNotEmpty(resourceType)) {
-            resourceTypes.add(ResourceType.valueOf(resourceType));
+        Set<ResourceType> filterResourceTypes = new HashSet<>();
+        if (resourceTypes != null && !resourceTypes.isEmpty()) {
+            if (resourceTypes.contains(null)) {
+                throw new ThingsboardException("Invalid resource type value!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+            filterResourceTypes.addAll(resourceTypes);
             if (StringUtils.isNotEmpty(resourceSubType)) {
                 filter.resourceSubTypes(Set.of(ResourceSubType.valueOf(resourceSubType)));
             }
         } else {
-            Collections.addAll(resourceTypes, ResourceType.values());
-            resourceTypes.remove(ResourceType.JS_MODULE);
-            resourceTypes.remove(ResourceType.IMAGE);
-            resourceTypes.remove(ResourceType.DASHBOARD);
+            Collections.addAll(filterResourceTypes, ResourceType.values());
+            filterResourceTypes.remove(ResourceType.JS_MODULE);
+            filterResourceTypes.remove(ResourceType.IMAGE);
+            filterResourceTypes.remove(ResourceType.DASHBOARD);
         }
-        filter.resourceTypes(resourceTypes);
+        filter.resourceTypes(filterResourceTypes);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(resourceService.findTenantResourcesByTenantId(filter.build(), pageLink));
         } else {
@@ -347,7 +340,11 @@ public class TbResourceController extends BaseController {
         for (UUID resourceId : resourceUuids) {
             resourceIds.add(new TbResourceId(resourceId));
         }
-        return resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
+        List<TbResourceInfo> resources = resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
+        for (TbResourceInfo resourceInfo : resources) {
+            checkEntity(user, resourceInfo, Operation.READ);
+        }
+        return resources;
     }
 
     @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
@@ -374,6 +371,7 @@ public class TbResourceController extends BaseController {
                                                        @RequestParam(required = false) String sortProperty,
                                                        @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(getTenantId())

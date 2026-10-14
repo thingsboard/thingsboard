@@ -1,0 +1,229 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "217335c0-87ee-4f89-b134-0953a7d544ea"
+  },
+  "type": "ALARM",
+  "name": "Input average voltage",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "running": {
+        "refEntityKey": {
+          "key": "running",
+          "type": "TS_LATEST"
+        }
+      },
+      "inputAvgVoltage": {
+        "refEntityKey": {
+          "key": "inputAvgVoltage",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "WARNING": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "inputAvgVoltage",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "COMPLEX",
+                        "operation": "AND",
+                        "predicates": [
+                          {
+                            "type": "NUMERIC",
+                            "operation": "GREATER_OR_EQUAL",
+                            "value": {
+                              "staticValue": 240.0,
+                              "dynamicValueArgument": null
+                            }
+                          },
+                          {
+                            "type": "NUMERIC",
+                            "operation": "LESS",
+                            "value": {
+                              "staticValue": 265.0,
+                              "dynamicValueArgument": null
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "COMPLEX",
+                        "operation": "AND",
+                        "predicates": [
+                          {
+                            "type": "NUMERIC",
+                            "operation": "GREATER_OR_EQUAL",
+                            "value": {
+                              "staticValue": 170.0,
+                              "dynamicValueArgument": null
+                            }
+                          },
+                          {
+                            "type": "NUMERIC",
+                            "operation": "LESS",
+                            "value": {
+                              "staticValue": 190.0,
+                              "dynamicValueArgument": null
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "SECONDS",
+          "value": {
+            "staticValue": 5,
+            "dynamicValueArgument": null
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      },
+      "CRITICAL": {
+        "condition": {
+          "type": "DURATION",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "running",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "inputAvgVoltage",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "COMPLEX",
+                    "operation": "OR",
+                    "predicates": [
+                      {
+                        "type": "NUMERIC",
+                        "operation": "GREATER_OR_EQUAL",
+                        "value": {
+                          "staticValue": 265.0,
+                          "dynamicValueArgument": null
+                        }
+                      },
+                      {
+                        "type": "NUMERIC",
+                        "operation": "LESS",
+                        "value": {
+                          "staticValue": 170.0,
+                          "dynamicValueArgument": null
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null,
+          "unit": "SECONDS",
+          "value": {
+            "staticValue": 5,
+            "dynamicValueArgument": null
+          }
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "inputAvgVoltage",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "GREATER_OR_EQUAL",
+                  "value": {
+                    "staticValue": 190.0,
+                    "dynamicValueArgument": null
+                  }
+                },
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS",
+                  "value": {
+                    "staticValue": 240.0,
+                    "dynamicValueArgument": null
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

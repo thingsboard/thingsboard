@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -25,8 +12,9 @@ import { DeviceCredentials, DeviceProfileInfo, DeviceTransportType } from '@shar
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { forkJoin, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { forkJoin, throwError, Observable } from 'rxjs';
+import { isDefinedAndNotNull } from '@core/utils';
+import { catchError, mergeMap } from 'rxjs/operators';
 import { HttpStatusCode } from '@angular/common/http';
 
 export interface DeviceCredentialsDialogData {
@@ -85,7 +73,7 @@ export class DeviceCredentialsDialogComponent extends
   loadDeviceCredentials() {
     const task = [
       this.deviceService.getDeviceCredentials(this.data.deviceId),
-      this.deviceProfileService.getDeviceProfileInfo(this.data.deviceProfileId)
+      this.deviceProfileInfo(this.data.deviceProfileId, this.data.deviceId)
     ];
     forkJoin(task).subscribe(([deviceCredentials, deviceProfile]: [DeviceCredentials, DeviceProfileInfo]) => {
       this.deviceTransportType = deviceProfile.transportType;
@@ -95,6 +83,16 @@ export class DeviceCredentialsDialogComponent extends
       }, {emitEvent: false});
       this.loadingCredentials = false;
     });
+  }
+
+  private deviceProfileInfo(deviceProfileId, deviceId): Observable<DeviceProfileInfo> {
+    if (isDefinedAndNotNull(deviceProfileId)) {
+      return this.deviceProfileService.getDeviceProfileInfo(deviceProfileId);
+    } else {
+      return this.deviceService.getDevice(deviceId).pipe(
+        mergeMap(device => this.deviceProfileService.getDeviceProfileInfo(device.deviceProfileId.id))
+      );
+    }
   }
 
   cancel(): void {

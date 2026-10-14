@@ -1,0 +1,245 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="tb-bulk-dialog-header">
+  <h2 class="flex-1">{{ titleKey | translate: { profile: profile?.name } }}</h2>
+  <div tb-help="agentBulkActions"></div>
+  <button mat-icon-button (click)="cancel()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content class="tb-bulk-dialog-body">
+
+  <p class="tb-bulk-hint">
+    {{ 'agent.profiles-bulk-hint' | translate: { appProfile: profile?.name, agentProfile: agentProfile?.name } }}
+  </p>
+
+  <!-- Action summary -->
+  <div class="tb-bulk-summary">
+    <div class="tb-bulk-summary-row">
+      <span class="label" translate>agent.profile-name</span>
+      <span class="value">{{ profile?.name }}</span>
+    </div>
+    <div class="tb-bulk-summary-row">
+      <span class="label" translate>agent.app-type</span>
+      <span class="value">
+        <span class="tb-type-badge"
+          [class.edge]="profile?.appType === 'EDGE'"
+          [class.gateway]="profile?.appType === 'GATEWAY'"
+          [class.generic]="profile?.appType === 'GENERIC'">
+          {{ profile?.appType }}
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Step inputs. Rendered per binding, one block per classified step.
+  Ordering follows the BE step-list. -->
+  @for (binding of bindings; track binding.step.id) {
+    @switch (binding.kind) {
+      @case ('backupVolume') {
+        <div class="tb-bulk-step">
+          <div class="tb-bulk-step-header">
+            {{ binding.step.title }}
+            <span class="tb-bulk-step-type">{{ binding.step.type }}</span>
+          </div>
+          <p class="tb-bulk-step-hint" translate>agent.bulk-backup-volumes-hint</p>
+          @if (binding.backupVolumes?.length) {
+            <div class="tb-bulk-volume-list">
+              @for (v of binding.backupVolumes; track v.key) {
+                <label class="tb-bulk-volume-row">
+                  <mat-checkbox [checked]="v.selected" (change)="toggleBackupVolume(v)">
+                    <span class="tb-bulk-volume-name">{{ v.key }}</span>
+                  </mat-checkbox>
+                </label>
+              }
+            </div>
+          } @else {
+            <div class="tb-bulk-empty-hint" translate>agent.bulk-no-volumes-in-profile</div>
+          }
+        </div>
+      }
+      @case ('pullImages') {
+        <div class="tb-bulk-step">
+          <div class="tb-bulk-step-header">
+            {{ binding.step.title || ('agent.app-install-pull-images' | translate) }}
+            <span class="tb-bulk-step-type">{{ binding.step.type }}</span>
+          </div>
+          <p class="tb-bulk-step-hint" translate>agent.app-install-pull-images</p>
+          <tb-toggle-select class="pull-policy-toggle" [(ngModel)]="binding.pullImages" appearance="fill" disablePagination>
+            <tb-toggle-option [value]="false">{{ 'agent.app-image-pull-policy-if-not-present' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="true">{{ 'agent.app-image-pull-policy-always' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+      }
+      @case ('composeDown') {
+        <div class="tb-bulk-step">
+          <div class="tb-bulk-step-header">
+            {{ binding.step.title }}
+            <span class="tb-bulk-step-type">{{ binding.step.type }}</span>
+          </div>
+          <mat-checkbox [(ngModel)]="binding.removeVolumes" color="warn">
+            <span translate>agent.app-delete-remove-volumes</span>
+          </mat-checkbox>
+          <div class="tb-bulk-step-hint" translate>agent.app-delete-remove-volumes-hint</div>
+          @if (profileVolumeKeys.length) {
+            <div class="tb-bulk-volume-chips">
+              @for (k of profileVolumeKeys; track k) {
+                <span class="tb-bulk-volume-chip">{{ k }}</span>
+              }
+            </div>
+          } @else {
+            <div class="tb-bulk-empty-hint" translate>
+              agent.bulk-no-volumes-in-profile
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+
+  <!-- Preview summary -->
+  @if (preview) {
+    <div class="tb-bulk-preview">
+      <div class="tb-bulk-preview-header" translate>agent.bulk-preview</div>
+      <div class="tb-bulk-preview-counts">
+        <div class="tb-bulk-count">
+          <span class="value">{{ preview.total }}</span>
+          <span class="label" translate>agent.bulk-preview-total</span>
+        </div>
+        <div class="tb-bulk-count eligible">
+          <span class="value">{{ preview.eligible }}</span>
+          <span class="label" translate>agent.bulk-preview-eligible</span>
+        </div>
+        @if (totalSkipped) {
+          <div class="tb-bulk-count skipped">
+            <span class="value">{{ totalSkipped }}</span>
+            <span class="label" translate>agent.bulk-preview-skipped</span>
+          </div>
+        }
+      </div>
+      @if (skippedCount(SkipReason.VERSION_MISMATCH)) {
+        <div class="tb-bulk-skipped-block">
+          <div class="tb-bulk-skipped-header">
+            <mat-icon>info_outline</mat-icon>
+            <span translate>agent.bulk-skipped-version-mismatch</span>
+            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.VERSION_MISMATCH) }}</span>
+          </div>
+          <ul>
+            @for (s of skippedByReasonMap[SkipReason.VERSION_MISMATCH]; track s.applicationId.id) {
+              <li>
+                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+              </li>
+            }
+            @if (skippedExtraCount(SkipReason.VERSION_MISMATCH)) {
+              <li class="tb-bulk-skipped-more">
+                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.VERSION_MISMATCH) } }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (skippedCount(SkipReason.ACTIVE_EVENT)) {
+        <div class="tb-bulk-skipped-block">
+          <div class="tb-bulk-skipped-header">
+            <mat-icon>hourglass_empty</mat-icon>
+            <span translate>agent.bulk-skipped-active-event</span>
+            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.ACTIVE_EVENT) }}</span>
+          </div>
+          <ul>
+            @for (s of skippedByReasonMap[SkipReason.ACTIVE_EVENT]; track s.applicationId.id) {
+              <li>
+                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+              </li>
+            }
+            @if (skippedExtraCount(SkipReason.ACTIVE_EVENT)) {
+              <li class="tb-bulk-skipped-more">
+                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.ACTIVE_EVENT) } }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (skippedCount(SkipReason.RATE_LIMIT_EXCEEDED)) {
+        <div class="tb-bulk-skipped-block">
+          <div class="tb-bulk-skipped-header">
+            <mat-icon>speed</mat-icon>
+            <span translate>agent.bulk-skipped-rate-limit</span>
+            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.RATE_LIMIT_EXCEEDED) }}</span>
+          </div>
+          <ul>
+            @for (s of skippedByReasonMap[SkipReason.RATE_LIMIT_EXCEEDED]; track s.applicationId.id) {
+              <li>
+                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+              </li>
+            }
+            @if (skippedExtraCount(SkipReason.RATE_LIMIT_EXCEEDED)) {
+              <li class="tb-bulk-skipped-more">
+                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.RATE_LIMIT_EXCEEDED) } }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      @if (skippedCount(SkipReason.ERROR)) {
+        <div class="tb-bulk-skipped-block">
+          <div class="tb-bulk-skipped-header error">
+            <mat-icon>error_outline</mat-icon>
+            <span translate>agent.bulk-skipped-error</span>
+            <span class="tb-bulk-skipped-count">{{ skippedCount(SkipReason.ERROR) }}</span>
+          </div>
+          <ul>
+            @for (s of skippedByReasonMap[SkipReason.ERROR]; track s.applicationId.id) {
+              <li>
+                <ng-container *ngTemplateOutlet="skippedRow; context: { s: s }"></ng-container>
+              </li>
+            }
+            @if (skippedExtraCount(SkipReason.ERROR)) {
+              <li class="tb-bulk-skipped-more">
+                {{ 'agent.bulk-skipped-more' | translate: { count: skippedExtraCount(SkipReason.ERROR) } }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+      <ng-template #skippedRow let-s="s">
+        <span class="tb-bulk-skipped-agent">{{ s.agentName || '—' }}</span>
+        <span class="tb-bulk-skipped-sep">/</span>
+        @if (appLink(s); as link) {
+          <a class="tb-bulk-skipped-app" role="link" tabindex="0"
+            (click)="navigateToApp(link, $event)"
+            (keydown.enter)="navigateToApp(link, $event)">
+            {{ s.applicationName || s.applicationId?.id }}
+          </a>
+        }
+        @if (!appLink(s)) {
+          <span class="tb-bulk-skipped-app">
+            {{ s.applicationName || s.applicationId?.id }}
+          </span>
+        }
+        @if (s.msg) {
+          <span class="tb-bulk-skipped-msg">— {{ s.msg }}</span>
+        }
+      </ng-template>
+      @if (preview.eligible === 0) {
+        <div class="tb-bulk-no-eligible">
+          <mat-icon>block</mat-icon>
+          <span translate>agent.bulk-no-eligible</span>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<div mat-dialog-actions align="end" class="tb-bulk-dialog-footer">
+  <button mat-button (click)="cancel()" [disabled]="submitting">
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-raised-button [color]="confirmColor" (click)="confirm()" [disabled]="confirmDisabled">
+    <span>{{ confirmKey | translate }}</span>
+  </button>
+</div>

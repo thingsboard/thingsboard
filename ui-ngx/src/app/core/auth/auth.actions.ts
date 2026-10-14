@@ -1,24 +1,10 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Action } from '@ngrx/store';
 import { AuthUser, User } from '@shared/models/user.model';
 import { AuthPayload } from '@core/auth/auth.models';
 import { UserSettings } from '@shared/models/user-settings.models';
-import { TrendzSettings } from "@shared/models/trendz-settings.models";
 
 export enum AuthActionTypes {
   AUTHENTICATED = '[Auth] Authenticated',
@@ -32,7 +18,7 @@ export enum AuthActionTypes {
   UPDATE_OPENED_MENU_SECTION = '[Preferences] Update Opened Menu Section',
   PUT_USER_SETTINGS = '[Preferences] Put user settings',
   DELETE_USER_SETTINGS = '[Preferences] Delete user settings',
-  UPDATE_TRENDZ_SETTINGS = '[Auth] Update Trendz Settings',
+  UPDATE_LICENSE_PARAMS = '[Auth] Update License Parameters',
 }
 
 export class ActionAuthAuthenticated implements Action {
@@ -99,13 +85,13 @@ export class ActionPreferencesDeleteUserSettings implements Action {
   constructor(readonly payload: Array<NestedKeyOf<UserSettings>>) {}
 }
 
-export class ActionAuthUpdateTrendzSettings implements Action {
-  readonly type = AuthActionTypes.UPDATE_TRENDZ_SETTINGS;
+export class ActionUpdateLicenseParams implements Action {
+  readonly type = AuthActionTypes.UPDATE_LICENSE_PARAMS;
 
-  constructor(readonly payload: TrendzSettings) {}
+  constructor(readonly payload: { edgeEnabled: boolean, trendzEnabled: boolean, communityGrantLicense: boolean }) {}
 }
 
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
   ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository |
   ActionPreferencesUpdateOpenedMenuSection | ActionPreferencesPutUserSettings | ActionPreferencesDeleteUserSettings |
-  ActionAuthUpdateAuthUser | ActionUpdateMobileQrCodeEnabled | ActionAuthUpdateTrendzSettings;
+  ActionAuthUpdateAuthUser | ActionUpdateMobileQrCodeEnabled | ActionUpdateLicenseParams;

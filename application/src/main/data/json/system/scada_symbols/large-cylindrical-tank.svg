@@ -58,7 +58,7 @@
     },
     {
       "tag": "value-text",
-      "stateRenderFunction": "if (ctx.properties.valueBox) {\n  var valueTextFont = ctx.properties.valueTextFont;\n  var valueTextColor = ctx.properties.valueTextColor;\n  var currentVolume = ctx.values.currentVolume;\n  var valueText = ctx.api.formatValue(currentVolume, 0, ctx.properties.valueUnits, false);\n  ctx.api.font(element, valueTextFont, valueTextColor);\n  ctx.api.text(element, valueText);\n}",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n  var valueTextFont = ctx.properties.valueTextFont;\n  var valueTextColor = ctx.properties.valueTextColor;\n  var currentVolume = ctx.values.currentVolume;\n  var valueText = ctx.api.formatValue(currentVolume, ctx.properties.valueDecimals, ctx.properties.valueUnits, false);\n  ctx.api.font(element, valueTextFont, valueTextColor);\n  ctx.api.text(element, valueText);\n}",
       "actions": null
     }
   ],
@@ -313,6 +313,18 @@
       "default": "gal",
       "subLabel": "{i18n:scada.symbol.units}",
       "supportsUnitConversion": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "valueDecimals",
+      "name": "{i18n:scada.symbol.value-text}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
       "disabled": false,
       "visible": true
     },

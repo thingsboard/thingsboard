@@ -1,0 +1,5 @@
+{
+  "configuration": {
+    "decoder": "var data = decodeToJson(payload);\n\nvar assetName = 'http_asset';\nvar assetType = 'http';\n\nvar result = {\n   assetName: assetName,\n   assetType: assetType,\n   attributes: {\n   },\n   telemetry: data\n};\n\nfunction decodeToString(payload) {\n   return String.fromCharCode.apply(String, payload);\n}\n\nfunction decodeToJson(payload) {\n   var str = decodeToString(payload);\n\n   var data = JSON.parse(str);\n   return data;\n}\n\nreturn result;"
+  }
+}

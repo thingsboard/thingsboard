@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.discovery;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -40,6 +28,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.settings.TbQueueIntegrationExecutorSettings;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -64,6 +53,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,6 +69,7 @@ public class HashPartitionServiceTest {
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
     private QueueRoutingInfoService queueRoutingInfoService;
+    private TbQueueIntegrationExecutorSettings integrationExecutorSettings;
     private TopicService topicService;
 
     private String hashFunctionName = "murmur3_128";
@@ -89,6 +80,9 @@ public class HashPartitionServiceTest {
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
         queueRoutingInfoService = mock(QueueRoutingInfoService.class);
+        integrationExecutorSettings = spy(TbQueueIntegrationExecutorSettings.class);
+        ReflectionTestUtils.setField(integrationExecutorSettings, "downlinkTopic", "tb_ie.downlink");
+        ReflectionTestUtils.setField(integrationExecutorSettings, "downlinkTopics", new HashMap<>());
         topicService = mock(TopicService.class);
         when(topicService.buildTopicName(Mockito.any())).thenAnswer(i -> i.getArguments()[0]);
         partitionService = createPartitionService();
@@ -105,6 +99,15 @@ public class HashPartitionServiceTest {
         }
 
         partitionService.recalculatePartitions(currentServer, otherServers);
+    }
+
+    @Test
+    public void testPartitionsCreatedWithCorrectName() {
+        partitionService.getPartitionTopicsMap().forEach((queueKey, s) -> {
+            if (queueKey.getType().equals(ServiceType.TB_INTEGRATION_EXECUTOR)) {
+                Assertions.assertEquals("tb_ie.downlink" + "." + queueKey.getQueueName().toLowerCase(), s);
+            }
+        });
     }
 
     @Test
@@ -425,6 +428,7 @@ public class HashPartitionServiceTest {
                 serviceInfoProvider,
                 Optional.of(routingInfoService),
                 Optional.of(queueRoutingInfoService),
+                integrationExecutorSettings,
                 topicService);
         ReflectionTestUtils.setField(partitionService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(partitionService, "corePartitions", 10);
@@ -432,6 +436,7 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(partitionService, "cfStateTopic", "tb_cf_state");
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
         ReflectionTestUtils.setField(partitionService, "vcPartitions", 10);
+        ReflectionTestUtils.setField(partitionService, "integrationPartitions", 3);
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
         ReflectionTestUtils.setField(partitionService, "edgeTopic", "tb.edge");
         ReflectionTestUtils.setField(partitionService, "edgePartitions", 10);

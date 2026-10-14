@@ -1,27 +1,17 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
   <div tb-help="ruleNotifications"></div>
   <button mat-icon-button
-          (click)="cancel()"
-          type="button">
+    (click)="cancel()"
+    type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
@@ -32,7 +22,7 @@
 }
 <div mat-dialog-content class="xs:p-0">
   <mat-horizontal-stepper [linear]="true" labelPosition="end" #addNotificationRule [orientation]="(stepperOrientation | async)"
-                          (selectionChange)="changeStep($event)">
+    (selectionChange)="changeStep($event)">
     <ng-template matStepperIcon="edit">
       <mat-icon>check</mat-icon>
     </ng-template>
@@ -74,14 +64,14 @@
               required
               appearance="outline"
               formControlName="targets"
-              subType="{{ ruleNotificationForm.get('triggerType').value }}"
+              entitySubType="{{ ruleNotificationForm.get('triggerType').value }}"
               [entityType]="entityType.NOTIFICATION_TARGET"
               labelText="{{ 'notification.recipients' | translate }}"
               requiredText="{{ 'notification.recipients-required' | translate }}"
               placeholderText="{{ 'notification.recipient' | translate }}">
               <button #createTargetButton
-                      mat-button color="primary" matSuffix
-                      (click)="createTarget($event, createTargetButton)">
+                mat-button color="primary" matSuffix
+                (click)="createTarget($event, createTargetButton)">
                 <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
               </button>
             </tb-entity-list>
@@ -103,7 +93,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always" style="margin-right: 48px">
                 <mat-label translate>alarm.alarm-status-list</mat-label>
                 <mat-select formControlName="alarmStatuses" multiple
-                            placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                  placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
                   @for (searchStatus of alarmSearchStatuses; track searchStatus) {
                     <mat-option [value]="searchStatus">
                       {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
@@ -134,7 +124,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>alarm.alarm-severity-list</mat-label>
                 <mat-select formControlName="alarmSeverities" multiple
-                            placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                  placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
                   @for (alarmSeverity of alarmSeverities; track alarmSeverity) {
                     <mat-option [value]="alarmSeverity">
                       {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
@@ -234,10 +224,10 @@
           <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
             <legend translate>notification.filter</legend>
             <tb-entity-type-list required
-                                 ignoreAuthorityFilter
-                                 appearance="outline"
-                                 [allowedEntityTypes]="allowEntityTypeForEntityAction"
-                                 formControlName="entityTypes">
+              ignoreAuthorityFilter
+              appearance="outline"
+              [allowedEntityTypes]="allowEntityTypeForEntityAction"
+              formControlName="entityTypes">
             </tb-entity-type-list>
             <section class="flex flex-col gap-2">
               <span class="flex-1" translate>notification.status</span>
@@ -276,7 +266,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>alarm.alarm-severity-list</mat-label>
                 <mat-select formControlName="alarmSeverities" multiple
-                            placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                  placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
                   @for (alarmSeverity of alarmSeverities; track alarmSeverity) {
                     <mat-option [value]="alarmSeverity">
                       {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
@@ -287,7 +277,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>alarm.alarm-status-list</mat-label>
                 <mat-select formControlName="alarmStatuses" multiple
-                            placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                  placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
                   @for (searchStatus of alarmSearchStatuses; track searchStatus) {
                     <mat-option [value]="searchStatus">
                       {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
@@ -335,7 +325,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>alarm.alarm-severity-list</mat-label>
                 <mat-select formControlName="alarmSeverities" multiple
-                            placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
+                  placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
                   @for (alarmSeverity of alarmSeverities; track alarmSeverity) {
                     <mat-option [value]="alarmSeverity">
                       {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
@@ -346,7 +336,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>alarm.alarm-status-list</mat-label>
                 <mat-select formControlName="alarmStatuses" multiple
-                            placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
+                  placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
                   @for (searchStatus of alarmSearchStatuses; track searchStatus) {
                     <mat-option [value]="searchStatus">
                       {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
@@ -400,7 +390,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>rulechain.rulechain-events</mat-label>
                 <mat-select formControlName="ruleChainEvents" multiple
-                            placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleChainEvents').value?.length ? ('event.all-events' | translate) : '' }}">
+                  placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleChainEvents').value?.length ? ('event.all-events' | translate) : '' }}">
                   @for (componentLifecycleEvent of componentLifecycleEvents; track componentLifecycleEvent) {
                     <mat-option [value]="componentLifecycleEvent">
                       {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
@@ -422,7 +412,7 @@
                   <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                     <mat-label translate>rulenode.rule-node-events</mat-label>
                     <mat-select formControlName="ruleNodeEvents" multiple
-                                placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleNodeEvents').value?.length ? ('event.all-events' | translate) : '' }}">
+                      placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleNodeEvents').value?.length ? ('event.all-events' | translate) : '' }}">
                       @for (componentLifecycleEvent of componentLifecycleEvents; track componentLifecycleEvent) {
                         <mat-option [value]="componentLifecycleEvent">
                           {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
@@ -468,7 +458,7 @@
               <mat-form-field class="mat-block flex-1" appearance="outline" floatLabel="always">
                 <mat-label translate>notification.notify-on</mat-label>
                 <mat-select formControlName="notifyOn" multiple
-                            placeholder="{{ !edgeConnectionTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
+                  placeholder="{{ !edgeConnectionTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
                   @for (edgeEvent of edgeConnectionEvents; track edgeEvent) {
                     <mat-option [value]="edgeEvent">
                       {{ edgeConnectionEventTranslationMap.get(edgeEvent) | translate }}
@@ -525,8 +515,9 @@
           <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
             <legend translate>notification.filter</legend>
             <tb-entity-type-list formControlName="entityTypes"
-                                 ignoreAuthorityFilter
-                                 [allowedEntityTypes]="allowEntityTypeForEntitiesLimit">
+              appearance="outline"
+              ignoreAuthorityFilter
+              [allowedEntityTypes]="allowEntityTypeForEntitiesLimit">
             </tb-entity-type-list>
             <div class="limit-slider-container mb-4 flex flex-row items-center justify-start xs:flex-col xs:items-stretch">
               <span translate>notification.threshold</span>
@@ -536,8 +527,8 @@
                 </mat-slider>
                 <mat-form-field class="limit-slider-value" appearance="outline" subscriptSizing="dynamic">
                   <input matInput formControlName="threshold" type="number" step="1"
-                         [value]="entitiesLimitTemplateForm.get('triggerConfig.threshold').value"
-                         min="0" max="100"/>
+                    [value]="entitiesLimitTemplateForm.get('triggerConfig.threshold').value"
+                    min="0" max="100"/>
                   <span class="mr-2" matSuffix>%</span>
                 </mat-form-field>
               </div>
@@ -596,7 +587,67 @@
         </form>
       </mat-step>
     }
-
+    @if (ruleNotificationForm.get('triggerType').value === triggerType.INTEGRATION_LIFECYCLE_EVENT) {
+      <mat-step [stepControl]="integrationEventsTemplateForm">
+        <ng-template matStepLabel>{{ 'notification.integration-action-trigger-settings' | translate }}</ng-template>
+        <form [formGroup]="integrationEventsTemplateForm">
+          <fieldset class="fields-group tb-margin" formGroupName="triggerConfig">
+            <legend translate>notification.filter</legend>
+            <div class="mb-5 flex justify-center">
+              <tb-toggle-select class="w-80" appearance="fill" formControlName="filterByIntegration">
+                <tb-toggle-option [value]=false>{{ 'integration.type' | translate }}</tb-toggle-option>
+                <tb-toggle-option [value]=true>{{ 'integration.integration' | translate }}</tb-toggle-option>
+              </tb-toggle-select>
+            </div>
+            @if (integrationEventsTemplateForm.get('triggerConfig.filterByIntegration').value) {
+              <tb-entity-list
+                formControlName="integrations"
+                subscriptSizing="dynamic"
+                appearance="outline"
+                labelText="{{ 'integration.integrations' | translate }}"
+                placeholderText="{{ 'integration.integrations' | translate }}"
+                hint="{{ 'notification.integration-list-rule-hint' | translate }}"
+                [entityType]="entityType.INTEGRATION">
+              </tb-entity-list>
+            } @else {
+              <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
+                <mat-label translate>integration.type</mat-label>
+                <mat-select formControlName="integrationTypes" multiple
+                  placeholder="{{ !integrationEventsTemplateForm.get('triggerConfig.integrationTypes').value?.length ? ('integration.all-types' | translate) : '' }}">
+                  @for ( integrationType of integrationTypes; track integrationType) {
+                    <mat-option [value]="integrationType">
+                      {{ integrationTypeInfoMap.get(integrationType).name | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            <mat-form-field class="mat-block flex-1" floatLabel="always" appearance="outline">
+              <mat-label translate>notification.notify-on</mat-label>
+              <mat-select formControlName="notifyOn" multiple
+                placeholder="{{ !integrationEventsTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
+                @for (componentLifecycleEvent of componentLifecycleEvents; track componentLifecycleEvent) {
+                  <mat-option [value]="componentLifecycleEvent">
+                    {{ componentLifecycleEventTranslationMap.get(componentLifecycleEvent) | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-slide-toggle formControlName="onlyOnError">
+              {{ 'notification.notify-only-integrations-errors' | translate }}
+            </mat-slide-toggle>
+          </fieldset>
+        </form>
+        <form [formGroup]="ruleNotificationForm">
+          <section formGroupName="additionalConfig">
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>notification.description</mat-label>
+              <input matInput formControlName="description">
+            </mat-form-field>
+          </section>
+        </form>
+      </mat-step>
+    }
     @if (ruleNotificationForm.get('triggerType').value === triggerType.NEW_PLATFORM_VERSION) {
       <mat-step [stepControl]="newPlatformVersionTemplateForm">
         <ng-template matStepLabel>{{ 'notification.new-platform-version-trigger-settings' | translate }}</ng-template>
@@ -664,8 +715,8 @@
                 </mat-slider>
                 <mat-form-field class="limit-slider-value" appearance="outline" subscriptSizing="dynamic">
                   <input matInput formControlName="cpuThreshold" type="number" step="1"
-                         [value]="resourceUsageShortageTemplateForm.get('triggerConfig.cpuThreshold').value"
-                         min="0" max="100"/>
+                    [value]="resourceUsageShortageTemplateForm.get('triggerConfig.cpuThreshold').value"
+                    min="0" max="100"/>
                   <span class="mr-2" matSuffix>%</span>
                 </mat-form-field>
               </div>
@@ -678,8 +729,8 @@
                 </mat-slider>
                 <mat-form-field class="limit-slider-value" appearance="outline" subscriptSizing="dynamic">
                   <input matInput formControlName="ramThreshold" type="number" step="1"
-                         [value]="resourceUsageShortageTemplateForm.get('triggerConfig.ramThreshold').value"
-                         min="0" max="100"/>
+                    [value]="resourceUsageShortageTemplateForm.get('triggerConfig.ramThreshold').value"
+                    min="0" max="100"/>
                   <span class="mr-2" matSuffix>%</span>
                 </mat-form-field>
               </div>
@@ -692,8 +743,8 @@
                 </mat-slider>
                 <mat-form-field class="limit-slider-value" appearance="outline" subscriptSizing="dynamic">
                   <input matInput formControlName="storageThreshold" type="number" step="1"
-                         [value]="resourceUsageShortageTemplateForm.get('triggerConfig.storageThreshold').value"
-                         min="0" max="100"/>
+                    [value]="resourceUsageShortageTemplateForm.get('triggerConfig.storageThreshold').value"
+                    min="0" max="100"/>
                   <span class="mr-2" matSuffix>%</span>
                 </mat-form-field>
               </div>
@@ -719,7 +770,9 @@
     <button mat-stroked-button (click)="backStep()">{{ 'action.back' | translate }}</button>
   }
   <span class="flex-1"></span>
-  <button mat-raised-button
-          color="primary"
-          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  @if (!data?.readonly || selectedIndex < maxStepperIndex) {
+    <button mat-raised-button
+      color="primary"
+    (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  }
 </div>

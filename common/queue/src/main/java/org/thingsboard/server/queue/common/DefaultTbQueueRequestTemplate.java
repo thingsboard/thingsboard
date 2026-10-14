@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.common;
 
 import com.google.common.util.concurrent.Futures;
@@ -166,18 +154,23 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
 
     void processResponse(Response response) {
         byte[] requestIdHeader = response.getHeaders().get(REQUEST_ID_HEADER);
-        UUID requestId;
         if (requestIdHeader == null) {
             log.error("[{}] Missing requestId in header and body", response);
+            return;
+        }
+        UUID requestId = bytesToUuid(requestIdHeader);
+        log.trace("[{}] Response received: {}", requestId, response);
+        ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
+        if (expectedResponse == null) {
+            log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
+            return;
+        }
+        byte[] errorHeader = response.getHeaders().get(ERROR_MESSAGE_HEADER);
+        if (errorHeader == null) {
+            expectedResponse.future.set(response);
         } else {
-            requestId = bytesToUuid(requestIdHeader);
-            log.trace("[{}] Response received: {}", requestId, response);
-            ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
-            if (expectedResponse == null) {
-                log.debug("[{}] Invalid or stale request, response: {}", requestId, String.valueOf(response).replace("\n", " "));
-            } else {
-                expectedResponse.future.set(response);
-            }
+            String msg = bytesToString(errorHeader);
+            expectedResponse.future.setException(new RuntimeException(msg));
         }
     }
 

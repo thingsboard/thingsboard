@@ -1,0 +1,9 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use './agent-shared' as *;
+
+@include agent-virtual-profile-badge;
+
+.tb-materialize-error {
+  color: var(--mat-theme-error, #d32f2f);
+}

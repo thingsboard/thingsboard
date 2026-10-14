@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.job;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -35,6 +23,7 @@ import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -182,7 +171,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     .entity(job)
                     .build());
         }
-        log.info("[{}] Saved job: {}", tenantId, job);
+        log.debug("[{}] Saved job: {}", tenantId, job);
         if (prevStatus != null && job.getStatus() != prevStatus) {
             log.info("[{}][{}][{}] New job status: {} -> {}", tenantId, job.getId(), job.getType(), prevStatus, job.getStatus());
             if (job.getStatus().isOneOf(CANCELLED, COMPLETED, FAILED) && prevStatus != QUEUED) { // if prev status is QUEUED - means there are already running jobs with this type, no need to check for waiting job
@@ -208,7 +197,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         Set<EntityId> entityIds = jobs.getData().stream()
                 .map(Job::getEntityId)
                 .collect(Collectors.toSet());
-        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds);
+        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds, MergedUserPermissions.ALL);
         jobs.getData().forEach(job -> {
             EntityInfo entityInfo = entityInfos.get(job.getEntityId());
             if (entityInfo != null) {

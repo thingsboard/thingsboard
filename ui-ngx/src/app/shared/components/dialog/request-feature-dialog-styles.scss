@@ -1,0 +1,150 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import '../../../../scss/constants';
+
+.request-feature-dialog {
+
+  max-width: 100%;
+
+  @media #{$mat-lg} {
+    max-width: 650px;
+  }
+  @media #{$mat-xl} {
+    max-width: 900px;
+  }
+
+  height: 100%;
+
+  @media #{$mat-gt-md} {
+    max-height: 80vh;
+  }
+
+  padding: 40px 40px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+
+  .request-feature-title {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 32px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .request-feature-text {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px;
+    color: rgba(0, 0, 0, 0.76);
+  }
+  .request-feature-cards-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .request-feature-cards {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    @media #{$mat-xs} {
+      flex-direction: column;
+      flex-wrap: nowrap;
+    }
+    .request-feature-card {
+      flex: 0 0 calc(33.33% - 8px);
+      width: calc(33.33% - 8px);
+      @media #{$mat-lt-lg} {
+        @media #{$mat-xs} {
+          flex: 0;
+          width: 100%;
+        }
+        flex: 0 0 calc(50% - 8px);
+        width: calc(50% - 8px);
+      }
+      border-radius: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+
+      .feature-title {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+
+        @media #{$mat-gt-md} {
+          flex-grow: 1;
+        }
+        @media #{$mat-gt-xl} {
+          flex-grow: 0;
+        }
+
+        .feature-title-text {
+          font-size: 16px;
+          font-style: normal;
+          font-weight: 500;
+          line-height: 24px;
+          color: rgba(0, 0, 0, 0.87);
+        }
+        .feature-title-hint {
+          display: none;
+          @media #{$mat-gt-md} {
+            display: flex;
+          }
+          @media #{$mat-gt-xl} {
+            display: none;
+          }
+        }
+      }
+
+      .feature-text {
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        color: rgba(0, 0, 0, 0.76);
+        display: none;
+        @media #{$mat-lt-lg} {
+          display: block;
+        }
+        @media #{$mat-gt-xl} {
+          display: block;
+        }
+      }
+    }
+  }
+
+  .request-feature-actions {
+    background-color: rgba(0, 0, 0, 0.04);
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    .request-feature-action-text {
+      text-align: center;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 24px;
+      color: rgba(0, 0, 0, 0.76);
+    }
+  }
+
+  .request-feature-sysadmin-prompt {
+    text-align: center;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}

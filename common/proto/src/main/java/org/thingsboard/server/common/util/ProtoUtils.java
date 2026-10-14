@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,8 +13,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.AssetCacheInfo;
+import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -38,6 +30,11 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.converter.ConverterType;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
@@ -46,6 +43,9 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -54,11 +54,16 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.integration.AbstractIntegration;
+import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.integration.IntegrationInfo;
+import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -97,9 +102,13 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNoti
 import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.gen.integration.ConverterProto;
+import org.thingsboard.server.gen.integration.IntegrationInfoProto;
+import org.thingsboard.server.gen.integration.IntegrationProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ApiUsageRecordKeyProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -248,6 +257,10 @@ public class ProtoUtils {
         if (edgeEvent.getBody() != null) {
             builder.setBody(JacksonUtil.toString(edgeEvent.getBody()));
         }
+        if (edgeEvent.getEntityGroupId() != null) {
+            builder.setEntityGroupIdMSB(edgeEvent.getEntityGroupId().getMostSignificantBits());
+            builder.setEntityGroupIdLSB(edgeEvent.getEntityGroupId().getLeastSignificantBits());
+        }
 
         return builder.build();
     }
@@ -267,6 +280,10 @@ public class ProtoUtils {
         }
         if (proto.hasBody()) {
             edgeEvent.setBody(JacksonUtil.toJsonNode(proto.getBody()));
+        }
+
+        if (proto.hasEntityGroupIdMSB() && proto.hasEntityGroupIdLSB()) {
+            edgeEvent.setEntityGroupId(new UUID(proto.getEntityGroupIdMSB(), proto.getEntityGroupIdLSB()));
         }
 
         return edgeEvent;
@@ -459,6 +476,8 @@ public class ProtoUtils {
             case CREATED_ALARMS_COUNT -> ApiUsageRecordKeyProto.CREATED_ALARMS_COUNT;
             case ACTIVE_DEVICES -> ApiUsageRecordKeyProto.ACTIVE_DEVICES;
             case INACTIVE_DEVICES -> ApiUsageRecordKeyProto.INACTIVE_DEVICES;
+            case GENERATED_REPORTS_COUNT -> ApiUsageRecordKeyProto.GENERATED_REPORTS_COUNT;
+            case AI_CREDITS_COUNT -> ApiUsageRecordKeyProto.AI_CREDITS_COUNT;
         };
     }
 
@@ -476,6 +495,8 @@ public class ProtoUtils {
             case CREATED_ALARMS_COUNT -> ApiUsageRecordKey.CREATED_ALARMS_COUNT;
             case ACTIVE_DEVICES -> ApiUsageRecordKey.ACTIVE_DEVICES;
             case INACTIVE_DEVICES -> ApiUsageRecordKey.INACTIVE_DEVICES;
+            case GENERATED_REPORTS_COUNT -> ApiUsageRecordKey.GENERATED_REPORTS_COUNT;
+            case AI_CREDITS_COUNT -> ApiUsageRecordKey.AI_CREDITS_COUNT;
         };
     }
 
@@ -989,6 +1010,198 @@ public class ProtoUtils {
         return deviceProfile;
     }
 
+    public static TransportProtos.DeviceProfileCacheInfoProto toCacheProto(DeviceProfile deviceProfile) {
+        var builder = TransportProtos.DeviceProfileCacheInfoProto.newBuilder()
+                .setDeviceProfileIdMSB(getMsb(deviceProfile.getId()))
+                .setDeviceProfileIdLSB(getLsb(deviceProfile.getId()))
+                .setName(deviceProfile.getName())
+                .setTenantIdMSB(getMsb(deviceProfile.getTenantId()))
+                .setTenantIdLSB(getLsb(deviceProfile.getTenantId()));
+
+        if (isNotNull(deviceProfile.getDefaultRuleChainId())) {
+            builder.setDefaultRuleChainIdMSB(getMsb(deviceProfile.getDefaultRuleChainId()))
+                    .setDefaultRuleChainIdLSB(getLsb(deviceProfile.getDefaultRuleChainId()));
+        }
+        if (isNotNull(deviceProfile.getDefaultQueueName())) {
+            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
+        }
+        return builder.build();
+    }
+
+    public static TransportProtos.DeviceProfileCacheInfoProto toCacheProto(DeviceProfileCacheInfo cacheInfo) {
+        var builder = TransportProtos.DeviceProfileCacheInfoProto.newBuilder()
+                .setDeviceProfileIdMSB(cacheInfo.id().getMostSignificantBits())
+                .setDeviceProfileIdLSB(cacheInfo.id().getLeastSignificantBits())
+                .setName(cacheInfo.name())
+                .setTenantIdMSB(cacheInfo.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(cacheInfo.tenantId().getId().getLeastSignificantBits());
+
+        if (isNotNull(cacheInfo.defaultRuleChainId())) {
+            builder.setDefaultRuleChainIdMSB(getMsb(cacheInfo.defaultRuleChainId()))
+                    .setDefaultRuleChainIdLSB(getLsb(cacheInfo.defaultRuleChainId()));
+        }
+        if (isNotNull(cacheInfo.defaultQueueName())) {
+            builder.setDefaultQueueName(cacheInfo.defaultQueueName());
+        }
+        return builder.build();
+    }
+
+    public static DeviceProfileCacheInfo fromCacheProto(TransportProtos.DeviceProfileCacheInfoProto proto) {
+        DeviceProfileId deviceProfileId = getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new);
+        TenantId tenantId = getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID);
+        RuleChainId defaultRuleChainId = null;
+        if (proto.hasDefaultRuleChainIdMSB() && proto.hasDefaultRuleChainIdLSB()) {
+            defaultRuleChainId = getEntityId(proto.getDefaultRuleChainIdMSB(), proto.getDefaultRuleChainIdLSB(), RuleChainId::new);
+        }
+        String defaultQueueName = proto.hasDefaultQueueName() ? proto.getDefaultQueueName() : null;
+        return new DeviceProfileCacheInfo(deviceProfileId.getId(), tenantId, proto.getName(), defaultRuleChainId, defaultQueueName);
+    }
+
+    public static TransportProtos.DeviceCacheInfoProto toCacheProto(Device device) {
+        var builder = TransportProtos.DeviceCacheInfoProto.newBuilder()
+                .setTenantIdMSB(getMsb(device.getTenantId()))
+                .setTenantIdLSB(getLsb(device.getTenantId()))
+                .setDeviceIdMSB(getMsb(device.getId()))
+                .setDeviceIdLSB(getLsb(device.getId()))
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setDeviceProfileIdMSB(getMsb(device.getDeviceProfileId()))
+                .setDeviceProfileIdLSB(getLsb(device.getDeviceProfileId()));
+
+        if (isNotNull(device.getCustomerId())) {
+            builder.setCustomerIdMSB(getMsb(device.getCustomerId()))
+                    .setCustomerIdLSB(getLsb(device.getCustomerId()));
+        }
+
+        return builder.build();
+    }
+
+    public static TransportProtos.DeviceCacheInfoProto toCacheProto(org.thingsboard.server.common.data.DeviceCacheInfo cacheInfo) {
+        var builder = TransportProtos.DeviceCacheInfoProto.newBuilder()
+                .setTenantIdMSB(cacheInfo.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(cacheInfo.tenantId().getId().getLeastSignificantBits())
+                .setDeviceIdMSB(cacheInfo.getId().getMostSignificantBits())
+                .setDeviceIdLSB(cacheInfo.getId().getLeastSignificantBits())
+                .setDeviceName(cacheInfo.name())
+                .setDeviceType(cacheInfo.type())
+                .setDeviceProfileIdMSB(cacheInfo.deviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(cacheInfo.deviceProfileId().getId().getLeastSignificantBits());
+
+        if (isNotNull(cacheInfo.customerId())) {
+            builder.setCustomerIdMSB(cacheInfo.customerId().getId().getMostSignificantBits())
+                    .setCustomerIdLSB(cacheInfo.customerId().getId().getLeastSignificantBits());
+        }
+
+        return builder.build();
+    }
+
+    public static org.thingsboard.server.common.data.DeviceCacheInfo fromCacheProto(TransportProtos.DeviceCacheInfoProto proto) {
+        TenantId tenantId = getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID);
+        DeviceId deviceId = getEntityId(proto.getDeviceIdMSB(), proto.getDeviceIdLSB(), DeviceId::new);
+        DeviceProfileId deviceProfileId = getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new);
+        CustomerId customerId = null;
+        if (proto.hasCustomerIdMSB() && proto.hasCustomerIdLSB()) {
+            customerId = getEntityId(proto.getCustomerIdMSB(), proto.getCustomerIdLSB(), CustomerId::new);
+        }
+        return new org.thingsboard.server.common.data.DeviceCacheInfo(deviceId.getId(), tenantId, customerId, proto.getDeviceName(), proto.getDeviceType(), deviceProfileId);
+    }
+
+    public static TransportProtos.AssetCacheInfoProto toCacheProto(Asset asset) {
+        var builder = TransportProtos.AssetCacheInfoProto.newBuilder()
+                .setTenantIdMSB(getMsb(asset.getTenantId()))
+                .setTenantIdLSB(getLsb(asset.getTenantId()))
+                .setAssetIdMSB(getMsb(asset.getId()))
+                .setAssetIdLSB(getLsb(asset.getId()))
+                .setAssetName(asset.getName())
+                .setAssetType(asset.getType())
+                .setAssetProfileIdMSB(getMsb(asset.getAssetProfileId()))
+                .setAssetProfileIdLSB(getLsb(asset.getAssetProfileId()));
+
+        if (isNotNull(asset.getCustomerId())) {
+            builder.setCustomerIdMSB(getMsb(asset.getCustomerId()))
+                    .setCustomerIdLSB(getLsb(asset.getCustomerId()));
+        }
+
+        return builder.build();
+    }
+
+    public static TransportProtos.AssetCacheInfoProto toCacheProto(org.thingsboard.server.common.data.AssetCacheInfo cacheInfo) {
+        var builder = TransportProtos.AssetCacheInfoProto.newBuilder()
+                .setTenantIdMSB(cacheInfo.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(cacheInfo.tenantId().getId().getLeastSignificantBits())
+                .setAssetIdMSB(cacheInfo.getId().getMostSignificantBits())
+                .setAssetIdLSB(cacheInfo.getId().getLeastSignificantBits())
+                .setAssetName(cacheInfo.name())
+                .setAssetType(cacheInfo.type())
+                .setAssetProfileIdMSB(cacheInfo.assetProfileId().getId().getMostSignificantBits())
+                .setAssetProfileIdLSB(cacheInfo.assetProfileId().getId().getLeastSignificantBits());
+
+        if (isNotNull(cacheInfo.customerId())) {
+            builder.setCustomerIdMSB(cacheInfo.customerId().getId().getMostSignificantBits())
+                    .setCustomerIdLSB(cacheInfo.customerId().getId().getLeastSignificantBits());
+        }
+
+        return builder.build();
+    }
+
+    public static AssetCacheInfo fromCacheProto(TransportProtos.AssetCacheInfoProto proto) {
+        TenantId tenantId = getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID);
+        AssetId assetId = getEntityId(proto.getAssetIdMSB(), proto.getAssetIdLSB(), AssetId::new);
+        AssetProfileId assetProfileId = getEntityId(proto.getAssetProfileIdMSB(), proto.getAssetProfileIdLSB(), AssetProfileId::new);
+        CustomerId customerId = null;
+        if (proto.hasCustomerIdMSB() && proto.hasCustomerIdLSB()) {
+            customerId = getEntityId(proto.getCustomerIdMSB(), proto.getCustomerIdLSB(), CustomerId::new);
+        }
+        return new AssetCacheInfo(assetId.getId(), tenantId, customerId, proto.getAssetName(), proto.getAssetType(), assetProfileId);
+    }
+
+    public static TransportProtos.AssetProfileCacheInfoProto toCacheProto(AssetProfile assetProfile) {
+        var builder = TransportProtos.AssetProfileCacheInfoProto.newBuilder()
+                .setAssetProfileIdMSB(getMsb(assetProfile.getId()))
+                .setAssetProfileIdLSB(getLsb(assetProfile.getId()))
+                .setName(assetProfile.getName())
+                .setTenantIdMSB(getMsb(assetProfile.getTenantId()))
+                .setTenantIdLSB(getLsb(assetProfile.getTenantId()));
+
+        if (isNotNull(assetProfile.getDefaultRuleChainId())) {
+            builder.setDefaultRuleChainIdMSB(getMsb(assetProfile.getDefaultRuleChainId()))
+                    .setDefaultRuleChainIdLSB(getLsb(assetProfile.getDefaultRuleChainId()));
+        }
+        if (isNotNull(assetProfile.getDefaultQueueName())) {
+            builder.setDefaultQueueName(assetProfile.getDefaultQueueName());
+        }
+        return builder.build();
+    }
+
+    public static TransportProtos.AssetProfileCacheInfoProto toCacheProto(AssetProfileCacheInfo cacheInfo) {
+        var builder = TransportProtos.AssetProfileCacheInfoProto.newBuilder()
+                .setAssetProfileIdMSB(cacheInfo.id().getMostSignificantBits())
+                .setAssetProfileIdLSB(cacheInfo.id().getLeastSignificantBits())
+                .setName(cacheInfo.name())
+                .setTenantIdMSB(cacheInfo.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(cacheInfo.tenantId().getId().getLeastSignificantBits());
+
+        if (isNotNull(cacheInfo.defaultRuleChainId())) {
+            builder.setDefaultRuleChainIdMSB(getMsb(cacheInfo.defaultRuleChainId()))
+                    .setDefaultRuleChainIdLSB(getLsb(cacheInfo.defaultRuleChainId()));
+        }
+        if (isNotNull(cacheInfo.defaultQueueName())) {
+            builder.setDefaultQueueName(cacheInfo.defaultQueueName());
+        }
+        return builder.build();
+    }
+
+    public static AssetProfileCacheInfo fromCacheProto(TransportProtos.AssetProfileCacheInfoProto proto) {
+        AssetProfileId assetProfileId = getEntityId(proto.getAssetProfileIdMSB(), proto.getAssetProfileIdLSB(), AssetProfileId::new);
+        TenantId tenantId = getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID);
+        RuleChainId defaultRuleChainId = null;
+        if (proto.hasDefaultRuleChainIdMSB() && proto.hasDefaultRuleChainIdLSB()) {
+            defaultRuleChainId = getEntityId(proto.getDefaultRuleChainIdMSB(), proto.getDefaultRuleChainIdLSB(), RuleChainId::new);
+        }
+        String defaultQueueName = proto.hasDefaultQueueName() ? proto.getDefaultQueueName() : null;
+        return new AssetProfileCacheInfo(assetProfileId.getId(), tenantId, proto.getName(), defaultRuleChainId, defaultQueueName);
+    }
+
     public static TransportProtos.TenantProto toProto(Tenant tenant) {
         var builder = TransportProtos.TenantProto.newBuilder()
                 .setTenantIdMSB(getMsb(tenant.getTenantId()))
@@ -1141,6 +1354,10 @@ public class ProtoUtils {
         if (isNotNull(resource.getPreview())) {
             builder.setPreview(ByteString.copyFrom(resource.getPreview()));
         }
+        if (isNotNull(resource.getCustomerId())) {
+            builder.setCustomerIdMSB(getMsb(resource.getCustomerId()))
+                    .setCustomerIdLSB(getLsb(resource.getCustomerId()));
+        }
         if (isNotNull(resource.getResourceSubType())) {
             builder.setResourceSubType(resource.getResourceSubType().name());
         }
@@ -1175,6 +1392,9 @@ public class ProtoUtils {
         if (proto.hasPreview()) {
             resource.setPreview(proto.getPreview().toByteArray());
         }
+        if (proto.hasCustomerIdMSB() && proto.hasCustomerIdLSB()) {
+            resource.setCustomerId(getEntityId(proto.getCustomerIdMSB(), proto.getCustomerIdLSB(), CustomerId::new));
+        }
         if (proto.hasResourceSubType()) {
             resource.setResourceSubType(ResourceSubType.valueOf(proto.getResourceSubType()));
         }
@@ -1199,6 +1419,8 @@ public class ProtoUtils {
                 .setEmailExecState(apiUsageState.getEmailExecState().name())
                 .setSmsExecState(apiUsageState.getSmsExecState().name())
                 .setAlarmExecState(apiUsageState.getAlarmExecState().name())
+                .setReportExecState(apiUsageState.getReportExecState().name())
+                .setAiState(apiUsageState.getAiState().name())
                 .setVersion(apiUsageState.getVersion())
                 .build();
     }
@@ -1216,6 +1438,8 @@ public class ProtoUtils {
         apiUsageState.setEmailExecState(ApiUsageStateValue.valueOf(proto.getEmailExecState()));
         apiUsageState.setSmsExecState(ApiUsageStateValue.valueOf(proto.getSmsExecState()));
         apiUsageState.setAlarmExecState(ApiUsageStateValue.valueOf(proto.getAlarmExecState()));
+        apiUsageState.setReportExecState(ApiUsageStateValue.valueOf(proto.getReportExecState()));
+        apiUsageState.setAiState(proto.getAiState().isEmpty() ? ApiUsageStateValue.ENABLED : ApiUsageStateValue.valueOf(proto.getAiState()));
         apiUsageState.setVersion(proto.getVersion());
         return apiUsageState;
     }
@@ -1365,6 +1589,257 @@ public class ProtoUtils {
         return builder.build();
     }
 
+    /**
+     * Builds the lightweight {@link IntegrationInfoProto} that carries only the base integration scalars
+     * (id, tenantId, name, type, enabled, remote, allowCreateDevicesOrAssets). Named explicitly rather than
+     * overloading {@code toProto} because {@link Integration} also has a {@code toProto(Integration)} overload
+     * that produces the full {@link IntegrationProto}; overload resolution on an {@link Integration} argument
+     * would silently pick that fuller mapping, so callers wanting the info projection must call this by name.
+     */
+    public static IntegrationInfoProto toIntegrationInfoProto(AbstractIntegration integrationInfo) {
+        return IntegrationInfoProto.newBuilder()
+                .setIntegrationIdMSB(integrationInfo.getId().getId().getMostSignificantBits())
+                .setIntegrationIdLSB(integrationInfo.getId().getId().getLeastSignificantBits())
+                .setTenantIdMSB(integrationInfo.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(integrationInfo.getTenantId().getId().getLeastSignificantBits())
+                .setName(integrationInfo.getName())
+                .setType(integrationInfo.getType().name())
+                .setEnabled(integrationInfo.isEnabled())
+                .setRemote(integrationInfo.isRemote())
+                .setAllowCreateDevicesOrAssets(integrationInfo.isAllowCreateDevicesOrAssets())
+                .build();
+    }
+
+    public static IntegrationInfo fromProto(IntegrationInfoProto proto) {
+        var result = new IntegrationInfo(new IntegrationId(new UUID(proto.getIntegrationIdMSB(), proto.getIntegrationIdLSB())));
+        result.setTenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())));
+        result.setName(proto.getName());
+        result.setType(IntegrationType.valueOf(proto.getType()));
+        result.setRemote(proto.getRemote());
+        result.setEnabled(proto.getEnabled());
+        result.setAllowCreateDevicesOrAssets(proto.getAllowCreateDevicesOrAssets());
+        return result;
+    }
+
+    /**
+     * WARNING: returns a PARTIALLY populated {@link Integration}. Only the base fields carried by
+     * {@link IntegrationInfoProto} are set (id, tenantId, name, type, enabled, remote,
+     * allowCreateDevicesOrAssets); configuration, defaultConverterId and additionalInfo are left null.
+     * Do not hand the result to consumers that expect a fully loaded Integration.
+     */
+    public static Integration fromProtoToIntegration(IntegrationInfoProto proto) {
+        return new Integration(
+                new UUID(proto.getIntegrationIdMSB(), proto.getIntegrationIdLSB()),
+                new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
+                proto.getName(),
+                IntegrationType.valueOf(proto.getType()),
+                proto.getEnabled(),
+                proto.getRemote(),
+                proto.getAllowCreateDevicesOrAssets());
+    }
+
+    public static IntegrationProto toProto(Integration integration) {
+        var builder = IntegrationProto.newBuilder()
+                .setIntegrationIdMSB(getMsb(integration.getId()))
+                .setIntegrationIdLSB(getLsb(integration.getId()))
+                .setCreatedTime(integration.getCreatedTime())
+                .setTenantIdMSB(getMsb(integration.getTenantId()))
+                .setTenantIdLSB(getLsb(integration.getTenantId()))
+                .setType(integration.getType().name())
+                .setName(integration.getName())
+                .setEnabled(integration.isEnabled())
+                .setRemote(integration.isRemote())
+                .setAllowCreateDevicesOrAssets(integration.isAllowCreateDevicesOrAssets())
+                .setIsEdgeTemplate(integration.isEdgeTemplate())
+                .setDefaultConverterIdMSB(getMsb(integration.getDefaultConverterId()))
+                .setDefaultConverterIdLSB(getLsb(integration.getDefaultConverterId()))
+                .setRoutingKey(integration.getRoutingKey())
+                .setConfiguration(JacksonUtil.toString(integration.getConfiguration()));
+
+        if (isNotNull(integration.getDebugSettings())) {
+            builder.setDebugSettings(JacksonUtil.toString(integration.getDebugSettings()));
+        }
+
+        if (isNotNull(integration.getSecret())) {
+            builder.setSecret(integration.getSecret());
+        }
+
+        if (isNotNull(integration.getDownlinkConverterId())) {
+            builder.setDownlinkConverterIdMSB(getMsb(integration.getDownlinkConverterId()))
+                    .setDownlinkConverterIdLSB(getLsb(integration.getDownlinkConverterId()));
+        }
+        if (isNotNull(integration.getAdditionalInfo())) {
+            builder.setAdditionalInfo(JacksonUtil.toString(integration.getAdditionalInfo()));
+        }
+        if (isNotNull(integration.getExternalId())) {
+            builder.setExternalIdMSB(getMsb(integration.getExternalId()))
+                    .setExternalIdLSB(getLsb(integration.getExternalId()));
+        }
+        if (isNotNull(integration.getVersion())) {
+            builder.setVersion(integration.getVersion());
+        }
+
+        return builder.build();
+    }
+
+    public static Integration fromProto(IntegrationProto proto) {
+        var integration = new Integration(getEntityId(proto.getIntegrationIdMSB(), proto.getIntegrationIdLSB(), IntegrationId::new));
+        integration.setCreatedTime(proto.getCreatedTime());
+        integration.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
+        integration.setType(IntegrationType.valueOf(proto.getType()));
+        integration.setName(proto.getName());
+        integration.setEnabled(proto.getEnabled());
+        integration.setRemote(proto.getRemote());
+        integration.setAllowCreateDevicesOrAssets(proto.getAllowCreateDevicesOrAssets());
+        integration.setEdgeTemplate(proto.getIsEdgeTemplate());
+        integration.setDefaultConverterId(getEntityId(proto.getDefaultConverterIdMSB(), proto.getDefaultConverterIdLSB(), ConverterId::new));
+        integration.setRoutingKey(proto.getRoutingKey());
+        integration.setConfiguration(JacksonUtil.toJsonNode(proto.getConfiguration()));
+
+        if (proto.hasDebugSettings()) {
+            integration.setDebugSettings(JacksonUtil.fromString(proto.getDebugSettings(), DebugSettings.class));
+        }
+
+        if (proto.hasSecret()) {
+            integration.setSecret(proto.getSecret());
+        }
+
+        if (proto.hasDownlinkConverterIdMSB() && proto.hasDownlinkConverterIdLSB()) {
+            integration.setDownlinkConverterId(getEntityId(proto.getDownlinkConverterIdMSB(), proto.getDownlinkConverterIdLSB(), ConverterId::new));
+        }
+        if (proto.hasAdditionalInfo()) {
+            integration.setAdditionalInfo(JacksonUtil.toJsonNode(proto.getAdditionalInfo()));
+        }
+        if (proto.hasExternalIdMSB() && proto.hasExternalIdLSB()) {
+            integration.setExternalId(getEntityId(proto.getExternalIdMSB(), proto.getExternalIdLSB(), IntegrationId::new));
+        }
+        if (proto.hasVersion()) {
+            integration.setVersion(proto.getVersion());
+        }
+
+        return integration;
+    }
+
+    public static ConverterProto toProto(Converter converter) {
+        var builder = ConverterProto.newBuilder()
+                .setConverterIdMSB(getMsb(converter.getId()))
+                .setConverterIdLSB(getLsb(converter.getId()))
+                .setCreatedTime(converter.getCreatedTime())
+                .setTenantIdMSB(getMsb(converter.getTenantId()))
+                .setTenantIdLSB(getLsb(converter.getTenantId()))
+                .setType(converter.getType().name())
+                .setName(converter.getName())
+                .setIsEdgeTemplate(converter.isEdgeTemplate())
+                .setConfiguration(JacksonUtil.toString(converter.getConfiguration()));
+
+        if (isNotNull(converter.getIntegrationType())) {
+            builder.setIntegrationType(converter.getIntegrationType().name());
+        }
+        if (isNotNull(converter.getDebugSettings())) {
+            builder.setDebugSettings(JacksonUtil.toString(converter.getDebugSettings()));
+        }
+        if (isNotNull(converter.getAdditionalInfo())) {
+            builder.setAdditionalInfo(JacksonUtil.toString(converter.getAdditionalInfo()));
+        }
+        if (isNotNull(converter.getExternalId())) {
+            builder.setExternalIdMSB(getMsb(converter.getExternalId()))
+                    .setExternalIdLSB(getLsb(converter.getExternalId()));
+        }
+        if (isNotNull(converter.getVersion())) {
+            builder.setVersion(converter.getVersion());
+        }
+        builder.setConverterVersion(converter.getConverterVersion());
+        return builder.build();
+    }
+
+    public static Converter fromProto(ConverterProto proto) {
+        var converter = new Converter(getEntityId(proto.getConverterIdMSB(), proto.getConverterIdLSB(), ConverterId::new));
+        converter.setCreatedTime(proto.getCreatedTime());
+        converter.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
+        converter.setType(ConverterType.valueOf(proto.getType()));
+        converter.setName(proto.getName());
+        converter.setEdgeTemplate(proto.getIsEdgeTemplate());
+        converter.setConfiguration(JacksonUtil.toJsonNode(proto.getConfiguration()));
+
+        if (proto.hasIntegrationType()) {
+            converter.setIntegrationType(IntegrationType.valueOf(proto.getIntegrationType()));
+        }
+        if (proto.hasDebugSettings()) {
+            converter.setDebugSettings(JacksonUtil.fromString(proto.getDebugSettings(), DebugSettings.class));
+        }
+        if (proto.hasAdditionalInfo()) {
+            converter.setAdditionalInfo(JacksonUtil.toJsonNode(proto.getAdditionalInfo()));
+        }
+        if (proto.hasExternalIdMSB() && proto.hasExternalIdLSB()) {
+            converter.setExternalId(getEntityId(proto.getExternalIdMSB(), proto.getExternalIdLSB(), ConverterId::new));
+        }
+        if (proto.hasVersion()) {
+            converter.setVersion(proto.getVersion());
+        }
+        converter.setConverterVersion(proto.getConverterVersion());
+        return converter;
+    }
+
+    public static SessionInfoProto toSessionInfo(UUID sessionId, Device device) {
+        return toSessionInfo(sessionId, null, device, null, false);
+    }
+
+    public static SessionInfoProto toSessionInfo(UUID sessionId, String nodeId, Device device) {
+        return toSessionInfo(sessionId, nodeId, device, null, false);
+    }
+
+    public static SessionInfoProto toSessionInfo(UUID sessionId, String nodeId, Device device, DeviceId gatewayId, boolean isGateway) {
+        TransportProtos.SessionInfoProto.Builder builder = TransportProtos.SessionInfoProto.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(device.getTenantId().getId().getLeastSignificantBits())
+                .setDeviceIdMSB(device.getId().getId().getMostSignificantBits())
+                .setDeviceIdLSB(device.getId().getId().getLeastSignificantBits())
+                .setDeviceName(device.getName())
+                .setDeviceType(device.getType())
+                .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
+                .setIsGateway(isGateway);
+
+        if (device.getCustomerId() != null && !device.getCustomerId().isNullUid()) {
+            builder.setCustomerIdMSB(device.getCustomerId().getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(device.getCustomerId().getId().getLeastSignificantBits());
+        }
+
+        if (nodeId != null) {
+            builder.setNodeId(nodeId);
+        }
+
+        if (gatewayId != null && !gatewayId.isNullUid()) {
+            builder.setGatewayIdMSB(gatewayId.getId().getMostSignificantBits());
+            builder.setGatewayIdLSB(gatewayId.getId().getLeastSignificantBits());
+        }
+
+        return builder.build();
+    }
+
+    public static SessionInfoProto toSessionInfo(UUID sessionId, DeviceCacheInfo deviceCacheInfo) {
+        TransportProtos.SessionInfoProto.Builder builder = TransportProtos.SessionInfoProto.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setTenantIdMSB(deviceCacheInfo.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(deviceCacheInfo.tenantId().getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceCacheInfo.id().getMostSignificantBits())
+                .setDeviceIdLSB(deviceCacheInfo.id().getLeastSignificantBits())
+                .setDeviceName(deviceCacheInfo.name())
+                .setDeviceType(deviceCacheInfo.type())
+                .setDeviceProfileIdMSB(deviceCacheInfo.deviceProfileId().getId().getMostSignificantBits())
+                .setDeviceProfileIdLSB(deviceCacheInfo.deviceProfileId().getId().getLeastSignificantBits());
+
+        if (deviceCacheInfo.customerId() != null && !deviceCacheInfo.customerId().isNullUid()) {
+            builder.setCustomerIdMSB(deviceCacheInfo.customerId().getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(deviceCacheInfo.customerId().getId().getLeastSignificantBits());
+        }
+
+        return builder.build();
+    }
+
     @Deprecated(forRemoval = true, since = "4.1")
     public static MsgProtos.TbMsgProto getTbMsgProto(TransportProtos.ToRuleEngineMsg ruleEngineMsg) throws InvalidProtocolBufferException {
         if (ruleEngineMsg.getTbMsg().isEmpty()) {
@@ -1389,7 +1864,12 @@ public class ProtoUtils {
     }
 
     public static EntityId fromProto(TransportProtos.EntityIdProto entityIdProto) {
-        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getType()), new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB()));
+        UUID uuid = new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB());
+        if (TransportProtos.EntityTypeProto.UNSPECIFIED.equals(entityIdProto.getType()) ||
+                TransportProtos.EntityTypeProto.UNRECOGNIZED.equals(entityIdProto.getType())) {
+            return EntityIdFactory.getByTypeAndUuid(entityIdProto.getEntityType(), uuid);
+        }
+        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getType()), uuid);
     }
 
     private static boolean isNotNull(Object obj) {

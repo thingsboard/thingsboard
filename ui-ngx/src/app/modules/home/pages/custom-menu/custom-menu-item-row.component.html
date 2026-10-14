@@ -1,0 +1,129 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-custom-menu-item-row-component-container">
+  <div class="tb-custom-menu-item-row-component">
+    <div class="tb-form-row" [class.tb-no-padding-left]="childDrag" [formGroup]="menuItemRowFormGroup">
+      <div class="tb-custom-menu-item-start-block">
+        <ng-content select=".tb-custom-menu-item-row-prefix"></ng-content>
+        <div class="tb-custom-menu-item-icon-name-block" [style.width]="iconNameBlockWidth">
+          @if (!isHomeMenuItem) {
+            <mat-slide-toggle
+              matTooltip="{{ (menuItemRowFormGroup.get('visible').value ? 'custom-menu.visible' : 'custom-menu.hidden') | translate }}"
+              matTooltipPosition="above"
+            formControlName="visible"></mat-slide-toggle>
+          }
+          @if (isHomeMenuItem) {
+            <div style="width: 40px;"></div>
+          }
+          <tb-material-icon-select asBoxInput
+            allowedCustomIcon
+            color="var(--tb-primary-500)"
+            formControlName="icon">
+          </tb-material-icon-select>
+          <div tbTruncateWithTooltip> {{ itemName }} </div>
+        </div>
+      </div>
+      <div class="tb-custom-menu-item-input-block xs:!hidden">
+        <mat-form-field class="flex tb-suffix-absolute" appearance="outline" subscriptSizing="dynamic">
+          <input matInput [required]="isCustomMenuItem" formControlName="name" placeholder="{{ itemNamePlaceholder }}">
+          @if (menuItemRowFormGroup.get('name').hasError('required') && menuItemRowFormGroup.get('name').touched) {
+            <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              matTooltip="{{ 'custom-menu.menu-item-name-is-required' | translate }}"
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
+        @if (isHomeMenuItem || isCustomMenuItem) {
+          <mat-form-field
+            class="flex tb-custom-menu-item-info" appearance="outline" subscriptSizing="dynamic">
+            <input matInput readonly [placeholder]="itemInfo">
+          </mat-form-field>
+        }
+      </div>
+    </div>
+    @if (!disabled) {
+      <button
+        type="button"
+        mat-icon-button
+        #editButton
+        (click)="edit($event, editButton)"
+        matTooltip="{{ 'custom-menu.edit-menu-item' | translate }}"
+        matTooltipPosition="above">
+        <mat-icon>edit</mat-icon>
+      </button>
+    }
+    @if (!disabled && isDefaultMenuItem) {
+      <button mat-icon-button
+        [disabled]="!isCleanupEnabled"
+        matTooltip="{{ 'custom-menu.reset-to-menu-item-defaults' | translate }}"
+        matTooltipPosition="above"
+        (click)="cleanup()">
+        <tb-icon>mdi:broom</tb-icon>
+      </button>
+    }
+    @if (!disabled && isCustomMenuItem) {
+      <button mat-icon-button
+        matTooltip="{{ 'custom-menu.delete-menu-item' | translate }}"
+        matTooltipPosition="above"
+        (click)="delete()">
+        <mat-icon>delete</mat-icon>
+      </button>
+    }
+  </div>
+  @if (visiblePagesControls().length) {
+    <div class="tb-custom-menu-item-pages-container">
+      <div class="tb-custom-menu-item-pages-left"></div>
+      <div class="tb-custom-menu-item-pages-right">
+        <div class="tb-drop-list tb-custom-menu-item-pages-list"
+          cdkDropList
+          cdkDropListOrientation="vertical"
+          cdkDropListAutoScrollStep="20"
+          (cdkDropListDropped)="pageDrop($event)"
+          [cdkDropListDisabled]="!pagesDragEnabled">
+          @for (pageControl of visiblePagesControls(); track pageControl) {
+            <div class="tb-custom-menu-item-page-item">
+              <div class="tb-custom-menu-item-page-line"></div>
+              <tb-custom-menu-item-row cdkDrag
+                [cdkDragDisabled]="!pagesDragEnabled"
+                class="tb-draggable tb-custom-menu-item-page"
+                style="flex: 1; min-width: 0;"
+                [formControl]="pageControl"
+                [scope]="scope"
+                [showHidden]="showHidden"
+                [childDrag]="pagesDragEnabled"
+                [level]="level + 1"
+                [maxIconNameBlockWidth]="maxIconNameBlockWidth"
+                [hideItems]="hideItems"
+                (menuItemRemoved)="removeCustomPage($index)">
+                @if (pagesDragEnabled) {
+                  <button cdkDragHandle
+                    class="tb-mat-40 tb-drag-handle tb-custom-menu-item-row-prefix"
+                    mat-icon-button
+                    matTooltip="{{ 'action.drag' | translate }}"
+                    matTooltipPosition="above">
+                    <tb-icon>drag_indicator</tb-icon>
+                  </button>
+                }
+              </tb-custom-menu-item-row>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+  @if (isCustomSection && !disabled) {
+    <button
+      (click)="addCustomPage(addSubitem)" #addSubitem
+      mat-button color="primary" class="tb-add-custom-menu-subitem-button tb-primary-fill">
+      <mat-icon color="primary">add</mat-icon>
+      <span translate>custom-menu.add-subitem</span>
+    </button>
+  }
+</div>

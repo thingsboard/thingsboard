@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.transport;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -44,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 @Slf4j
 @Service
 @TbCoreComponent
+@RequiredArgsConstructor
 public class TbCoreTransportApiService {
     private final TbCoreQueueFactory tbCoreQueueFactory;
     private final TransportApiService transportApiService;
@@ -55,18 +45,12 @@ public class TbCoreTransportApiService {
     private long requestTimeout;
     @Value("${queue.transport_api.request_poll_interval:25}")
     private int responsePollDuration;
-    @Value("${queue.transport_api.max_callback_threads:100}")
+    @Value("${queue.transport_api.max_callback_threads:10}")
     private int maxCallbackThreads;
 
     private ExecutorService transportCallbackExecutor;
     private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>,
             TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
-
-    public TbCoreTransportApiService(TbCoreQueueFactory tbCoreQueueFactory, TransportApiService transportApiService, StatsFactory statsFactory) {
-        this.tbCoreQueueFactory = tbCoreQueueFactory;
-        this.transportApiService = transportApiService;
-        this.statsFactory = statsFactory;
-    }
 
     @PostConstruct
     public void init() {
@@ -85,7 +69,6 @@ public class TbCoreTransportApiService {
         builder.requestTimeout(requestTimeout);
         builder.pollInterval(responsePollDuration);
         builder.executor(transportCallbackExecutor);
-        builder.handler(transportApiService);
         builder.stats(queueStats);
         transportApiTemplate = builder.build();
     }

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Bus A",
+    "type": "bus",
+    "group": "Bus devices",
+    "emulator": "onRouteBus",
+    "attributes": {},
+    "relations": []
+  },
+  {
+    "name": "Bus B",
+    "type": "bus",
+    "group": "Bus devices",
+    "emulator": "onRouteBus",
+    "attributes": {},
+    "relations": []
+  },
+  {
+    "name": "Bus C",
+    "type": "bus",
+    "group": "Bus devices",
+    "emulator": "brokenBus",
+    "attributes": {},
+    "relations": []
+  },
+  {
+    "name": "Bus D",
+    "type": "bus",
+    "group": "Bus devices",
+    "emulator": "refuelingBus",
+    "attributes": {},
+    "relations": []
+  }
+]

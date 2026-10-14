@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -28,11 +15,10 @@ import { TbIotHubUnpublishedWarningDialogComponent } from './iot-hub-unpublished
 import { TbDeviceInstallDialogComponent } from './device-install-dialog/device-install-dialog.component';
 import { InstallFormRendererComponent } from './device-install-dialog/install-form-renderer/install-form-renderer.component';
 import { TbIotHubSearchComponent } from './iot-hub-search.component';
+import { TbIotHubFacetListComponent } from './iot-hub-facet-list.component';
 import { TbIotHubInstalledItemsTableComponent } from './iot-hub-installed-items-table.component';
 import { TbIotHubInstalledItemsDialogComponent } from './iot-hub-installed-items-dialog.component';
 import { TbIotHubSelectCfEntityDialogComponent } from './iot-hub-select-cf-entity-dialog.component';
-import { TbPeConnectivityMethodPromptComponent } from './pe-connectivity-method-prompt.component';
-import { TbIotHubPeRequiredDialogComponent } from './iot-hub-pe-required-dialog.component';
 import { TbIotHubUpgradeRequiredDialogComponent } from './iot-hub-upgrade-required-dialog.component';
 import { TbIotHubMarkdownComponent } from './iot-hub-markdown.component';
 import { SolutionInstallDialogComponent } from './solution-install-dialog.component';
@@ -51,14 +37,13 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubUnpublishedWarningDialogComponent,
     TbDeviceInstallDialogComponent,
     TbIotHubSearchComponent,
+    TbIotHubFacetListComponent,
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
     TbIotHubSelectCfEntityDialogComponent,
-    TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,
     InstallFormRendererComponent,
-    TbIotHubPeRequiredDialogComponent,
     TbIotHubUpgradeRequiredDialogComponent
   ],
   imports: [
@@ -80,13 +65,12 @@ import { IotHubItemLinkModule } from './iot-hub-item-link-card/iot-hub-item-link
     TbIotHubUnpublishedWarningDialogComponent,
     TbDeviceInstallDialogComponent,
     TbIotHubSearchComponent,
+    TbIotHubFacetListComponent,
     TbIotHubInstalledItemsTableComponent,
     TbIotHubInstalledItemsDialogComponent,
     TbIotHubSelectCfEntityDialogComponent,
-    TbPeConnectivityMethodPromptComponent,
     TbIotHubMarkdownComponent,
     SolutionInstallDialogComponent,
-    TbIotHubPeRequiredDialogComponent,
     TbIotHubUpgradeRequiredDialogComponent
   ]
 })

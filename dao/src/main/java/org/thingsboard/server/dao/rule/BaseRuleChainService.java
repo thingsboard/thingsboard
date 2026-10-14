@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.rule;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -23,8 +11,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
@@ -59,11 +49,13 @@ import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.relation.RelationWriteLock;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -116,6 +108,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private DataValidator<RuleChain> ruleChainValidator;
+
+    @Autowired
+    private RelationWriteLock relationWriteLock;
+
+    /**
+     * Self-reference to the Spring proxy, so non-transactional entry points (importTenantRuleChains, which is invoked
+     * straight from the controller) can re-enter the {@code @Transactional} methods through the proxy. A direct
+     * self-invocation of {@code saveRuleChainMetaData} would bypass the transactional proxy, leaving
+     * {@link RelationWriteLock#withCoveringLock} without the active transaction it asserts. Field-injected with
+     * {@code @Lazy} to avoid a self-dependency cycle.
+     */
+    @Autowired
+    @Lazy
+    private RuleChainService self;
 
     @Override
     @Transactional
@@ -200,11 +206,38 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         RuleChainDataValidator.validateMetaDataFieldsAndConnections(ruleChainMetaData);
 
+        RuleChain ruleChainToSave = ruleChain;
+        // Serialize concurrent edits of this rule chain behind one covering advisory lock on the rule chain id (Citus
+        // only; no-op on plain PG), suppressing the per-endpoint locking of the inner graph relation writes (the
+        // per-node deleteEntityRelations loop, deleteRuleNodes, and the final batched saveRelations). The rule_chain
+        // reference-table row write is pulled INSIDE the block, AFTER those graph relation writes, so the covering lock
+        // is acquired before the rule_chain row — see RelationWriteLock's "Covering locks" / "Lock-acquisition order"
+        // contract for why locking the rule chain id alone is correct and why this ordering avoids the save-vs-delete
+        // distributed deadlock. The node prep (singleton-mode + the add/update vs delete partition + the index map)
+        // lives inside doSaveRuleChainMetaData; it is pure in-memory work, so running it under the covering lock is
+        // harmless.
+        Pair<List<RuleNodeUpdateResult>, RuleChain> saveResult = relationWriteLock.withCoveringLock(ruleChainToSave.getId(), () -> {
+            List<RuleNodeUpdateResult> result = doSaveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, ruleChainToSave);
+            // RuleChainDetails maps to the same rule_chain reference-table row (plus the notes), so this is the
+            // rule_chain row write the covering lock pulls inside the block, after the graph relation writes.
+            RuleChainDetails ruleChainDetails = new RuleChainDetails(ruleChainToSave);
+            ruleChainDetails.setNotes(ruleChainMetaData.getNotes());
+            RuleChain savedRuleChain = ruleChainDetailsDao.save(tenantId, ruleChainDetails);
+            return Pair.of(result, savedRuleChain);
+        });
+        ruleChain = saveResult.getRight();
+        List<RuleNodeUpdateResult> updatedRuleNodes = saveResult.getLeft();
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain)
+                .entityId(ruleChain.getId()).broadcastEvent(publishSaveEvent).build());
+        return RuleChainUpdateResult.successful(updatedRuleNodes);
+    }
+
+    private List<RuleNodeUpdateResult> doSaveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData,
+                                                               Function<RuleNode, RuleNode> ruleNodeUpdater, RuleChain ruleChain) {
+        RuleChainId ruleChainId = ruleChain.getId();
         List<RuleNode> nodes = ruleChainMetaData.getNodes();
         List<RuleNode> toAddOrUpdate = new ArrayList<>();
         List<RuleNode> toDelete = new ArrayList<>();
-        List<EntityRelation> relations = new ArrayList<>();
-
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
         if (nodes != null) {
             for (RuleNode node : nodes) {
@@ -216,7 +249,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 }
             }
         }
-        RuleChainId ruleChainId = ruleChain.getId();
+        List<EntityRelation> relations = new ArrayList<>();
         List<RuleNodeUpdateResult> updatedRuleNodes = new ArrayList<>();
         List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
         for (RuleNode existingNode : existingRuleNodes) {
@@ -224,6 +257,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if (existingNode.getType().equals(TB_RULE_CHAIN_INPUT_NODE)) {
                 EntityRelation relation = getRuleChainInputRelation(ruleChainId, existingNode);
                 if (relation != null) {
+                    // Accepted residual: this cross-chain USES row (thisChain -> targetChain, COMMON group) is
+                    // deleted (and later re-saved via the batched saveRelations below) inside the caller's
+                    // withCoveringLock(thisChainId), so the transaction holds only advisoryKey(thisChain) — the
+                    // targetChain endpoint is never locked. A concurrent deletion of the TARGET chain cleans its
+                    // relations post-commit via CleanUpService.deleteEntityRelations(targetChainId), which locks only
+                    // advisoryKey(targetChain), so the two writers mutate this one row under disjoint advisory keys.
+                    // Accepted because the window requires an admin saving this chain's metadata while the referenced
+                    // chain is being deleted, and the equivalent stale-USES-row race pre-exists on plain PostgreSQL.
+                    // See the "Covering locks" javadoc of RelationWriteLock, which names this exception.
                     relationService.deleteRelation(tenantId, relation);
                 }
             }
@@ -254,6 +296,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 if (node.getType().equals(TB_RULE_CHAIN_INPUT_NODE)) {
                     EntityRelation relation = getRuleChainInputRelation(ruleChainId, node);
                     if (relation != null) {
+                        // Cross-chain USES row saved under advisoryKey(thisChain) only — accepted residual race with
+                        // the target chain's deletion cleanup; see the comment at the deleteRelation call above.
                         relations.add(relation);
                     }
                 }
@@ -320,12 +364,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
-        RuleChainDetails ruleChainDetails = new RuleChainDetails(ruleChain);
-        ruleChainDetails.setNotes(ruleChainMetaData.getNotes());
-        ruleChainDetails = ruleChainDetailsDao.save(tenantId, ruleChainDetails);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChainDetails)
-                .entityId(ruleChainDetails.getId()).broadcastEvent(publishSaveEvent).build());
-        return RuleChainUpdateResult.successful(updatedRuleNodes);
+        return updatedRuleNodes;
     }
 
     private EntityRelation getRuleChainInputRelation(RuleChainId ruleChainId, RuleNode inputNode) {
@@ -402,6 +441,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public ListenableFuture<RuleChain> findRuleChainByIdAsync(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for search request.");
         return ruleChainDao.findByIdAsync(tenantId, ruleChainId.getId());
+    }
+
+    @Override
+    public ListenableFuture<List<RuleChain>> findRuleChainsByIdsAsync(TenantId tenantId, List<RuleChainId> ruleChainIds) {
+        log.trace("Executing findRuleChainsByIdsAsync, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(ruleChainIds, ids -> "Incorrect ruleChainIds " + ids);
+        return ruleChainDao.findRuleChainsByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(ruleChainIds));
+    }
+
+    @Override
+    public List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds) {
+        log.trace("Executing findRuleChainsByIds, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
+        return ruleChainDao.findRuleChainsByTenantIdAndIds(tenantId.getId(), toUUIDs(ruleChainIds));
     }
 
     @Override
@@ -528,6 +581,24 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public void deleteRuleChainsByTenantId(TenantId tenantId) {
         Validator.validateId(tenantId, id -> "Incorrect tenant id for delete rule chains request.");
+        // This holds one covering advisory xact-lock per chain (acquired in checkRuleNodesAndDelete) until this outer
+        // transaction commits, so it accumulates an unsorted, page-order set of locks. That is deadlock-safe only because
+        // every invocation operates on the disjoint chain set of a single tenant: distinct tenants never share a chain id,
+        // and a tenant's chains are not bulk-deleted concurrently with themselves. A future caller that bulk-locks an
+        // OVERLAPPING set of chain ids in a different order would need to pre-sort the ids to stay deadlock-free.
+        //
+        // Lock-budget caveat (test/administrative-only path): each per-chain covering lock (plus the rule_chain
+        // reference-table placement locks the deletes take) is an xact lock held until this single transaction commits,
+        // and removeEntities paginates the SELECT but does NOT commit per page, so the lock set grows with the tenant's
+        // rule-chain count in a SINGLE transaction — uncapped by default (tenant-profile maxRuleChains defaults to
+        // unlimited). This uncapped-lock concern applies ONLY to direct invocations of this method, which are
+        // test/administrative-only. Production tenant deletion does NOT flow through here: it goes through the
+        // Housekeeper (CleanUpService.removeTenantEntities -> DELETE_TENANT_ENTITIES ->
+        // TenantEntitiesDeletionTaskProcessor), which deletes entities in bounded 128-id batches, each in its own
+        // transaction, so the per-transaction lock set stays bounded regardless of the tenant's chain count. A direct
+        // caller deleting a tenant with very many chains could still press against max_locks_per_transaction and surface
+        // as "out of shared memory"; such callers should raise max_locks_per_transaction (Citus recommends this) or
+        // delete in smaller batches.
         tenantRuleChainsRemover.removeEntities(tenantId, tenantId);
     }
 
@@ -590,7 +661,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
 
         if (CollectionUtils.isNotEmpty(ruleChainData.getMetadata())) {
-            ruleChainData.getMetadata().forEach(md -> saveRuleChainMetaData(tenantId, md, ruleNodeUpdater));
+            // Must go through the self proxy: this method is not @Transactional (deliberately — one transaction per
+            // metadata save, so a single chain's DB failure cannot poison the whole import), and a direct
+            // saveRuleChainMetaData self-invocation would bypass the proxy and run without the active transaction
+            // that RelationWriteLock.withCoveringLock asserts.
+            ruleChainData.getMetadata().forEach(md -> self.saveRuleChainMetaData(tenantId, md, ruleNodeUpdater));
         }
 
         return importResults;
@@ -843,25 +918,37 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChain ruleChain, Set<RuleChainId> referencingRuleChainIds) {
-        try {
-            entityCountService.publishCountEntityEvictEvent(tenantId, EntityType.RULE_CHAIN);
-            ruleChainDao.removeById(tenantId, ruleChain.getUuidId());
+        // Serialize this rule chain's deletion against a concurrent saveRuleChainMetaData of the same chain behind the
+        // same covering advisory lock on the rule chain id (Citus only; no-op on plain PG). The lock is acquired FIRST,
+        // before the rule_chain reference-table removal, to match the save path's order and avoid the save-vs-delete
+        // cross-lock deadlock — see RelationWriteLock's "Lock-acquisition order" contract. deleteRuleNodes runs its
+        // per-node relation cleanup synchronously on this thread/transaction, so inner endpoint locking is suppressed,
+        // and all three deletion entry points reach here under an active @Transactional boundary.
+        //
+        // NOTE: the post-commit CleanUpService.handleEntityDeletionEvent listener (triggered by the DeleteEntityEvent
+        // published below) cleans up the RULE_CHAIN entity's own relations asynchronously on a separate thread/transaction;
+        // it is intentionally NOT wrapped here (cannot span threads) and correctly falls back to endpoint locking.
+        relationWriteLock.withCoveringLock(ruleChain.getId(), () -> {
+            try {
+                entityCountService.publishCountEntityEvictEvent(tenantId, EntityType.RULE_CHAIN);
+                ruleChainDao.removeById(tenantId, ruleChain.getUuidId());
 
-            if (referencingRuleChainIds != null) {
-                referencingRuleChainIds.remove(ruleChain.getId());
+                if (referencingRuleChainIds != null) {
+                    referencingRuleChainIds.remove(ruleChain.getId());
+                }
+                eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).entity(ruleChain).body(JacksonUtil.toString(referencingRuleChainIds)).build());
+            } catch (Exception t) {
+                ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
+                if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_default_rule_chain_device_profile")) {
+                    throw new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!");
+                } else if (e != null && DaoUtil.constraintNameMatches(e.getConstraintName(), "fk_default_rule_chain_asset_profile")) {
+                    throw new DataValidationException("The rule chain referenced by the asset profiles cannot be deleted!");
+                } else {
+                    throw t;
+                }
             }
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).entity(ruleChain).body(JacksonUtil.toString(referencingRuleChainIds)).build());
-        } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {
-                throw new DataValidationException("The rule chain referenced by the device profiles cannot be deleted!");
-            } else if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_asset_profile")) {
-                throw new DataValidationException("The rule chain referenced by the asset profiles cannot be deleted!");
-            } else {
-                throw t;
-            }
-        }
-        deleteRuleNodes(tenantId, ruleChain.getId());
+            deleteRuleNodes(tenantId, ruleChain.getId());
+        });
     }
 
     private void deleteRuleNodes(TenantId tenantId, List<RuleNode> ruleNodes) {
@@ -875,18 +962,18 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     @Transactional
     public void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId) {
-        List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
-        for (EntityRelation relation : nodeRelations) {
-            deleteRuleNode(tenantId, relation.getTo());
-        }
+        // Take the same covering advisory lock on the rule chain id that checkRuleNodesAndDelete holds, so a direct
+        // caller of this public API cannot race saveRuleChainMetaData (which holds only advisoryKey(ruleChainId)) and
+        // write the same RULE_CHAIN->RULE_NODE relation rows under disjoint advisory keys (the divergence/deadlock
+        // class the covering lock prevents). withCoveringLock is re-entrant, so the sole production caller
+        // (checkRuleNodesAndDelete, already inside the lock) is unaffected.
+        relationWriteLock.withCoveringLock(ruleChainId, () -> {
+            List<EntityRelation> nodeRelations = getRuleChainToNodeRelations(tenantId, ruleChainId);
+            for (EntityRelation relation : nodeRelations) {
+                deleteRuleNode(tenantId, relation.getTo());
+            }
+        });
     }
-
-    @Override
-    public List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds) {
-        log.trace("Executing findRuleChainsByIds, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
-        return ruleChainDao.findRuleChainsByTenantIdAndIds(tenantId.getId(), toUUIDs(ruleChainIds));
-    }
-
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
