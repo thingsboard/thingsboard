@@ -26,6 +26,7 @@ export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
 interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
+  enabled: boolean;
   additionalInfo?: any;
 }
 

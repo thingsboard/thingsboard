@@ -209,6 +209,15 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     if (!this.readonly) {
       this.cellActionDescriptors.push(
         {
+          name: '',
+          nameFunction: (entity) =>
+            this.translate.instant(entity.enabled ? 'calculated-fields.disable' : 'calculated-fields.enable'),
+          icon: 'mdi:toggle-switch',
+          isEnabled: (entity) => this.allowWritePermission(entity),
+          iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+          onAction: ($event, entity) => this.toggleEnabled($event, entity),
+        },
+        {
           name: this.translate.instant('alarm-rule.copy'),
           icon: 'content_copy',
           isEnabled: () => true,
@@ -425,6 +434,20 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     }
 
     return calculatedField;
+  }
+
+  private toggleEnabled($event: Event, entity: AlarmRuleTableEntity): void {
+    $event?.stopPropagation();
+    this.alarmRulesService.getAlarmRuleById(entity.id.id).pipe(
+      switchMap(rule => this.alarmRulesService.saveAlarmRule({...rule, enabled: !rule.enabled}, {ignoreLoading: true})),
+      catchError(() => of(null)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((saved) => {
+        if (saved) {
+          entity.enabled = saved.enabled;
+          this.getTable().detectChanges();
+        }
+      });
   }
 
   private onDebugConfigChanged(id: string, debugSettings: EntityDebugSettings): void {

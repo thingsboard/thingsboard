@@ -14,6 +14,12 @@ ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes varchar(1000000);
 
 -- RULE CHAIN NOTES MIGRATION END
 
+-- CALCULATED FIELD ENABLED ADDITION START
+
+ALTER TABLE calculated_field ADD COLUMN IF NOT EXISTS enabled boolean NOT NULL DEFAULT true;
+
+-- CALCULATED FIELD ENABLED ADDITION END
+
 -- PE-only 4.4 baseline DDL below (carried over from basic/schema_update.sql; these columns/index have no
 -- owning bean of their own). report.* live on the PE-only report table; job.customer_id is a PE column on the
 -- shared job table.
