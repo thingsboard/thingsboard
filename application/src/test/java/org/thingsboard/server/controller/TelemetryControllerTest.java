@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -12,8 +14,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
@@ -303,6 +309,16 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice();
         doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes").andExpect(status().isOk());
+
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            PageData<AuditLog> auditLogs = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + device.getId().getId() + "?",
+                    new TypeReference<>() {
+                    }, new TimePageLink(10));
+            assertThat(auditLogs.getData()).anySatisfy(auditLog -> {
+                assertThat(auditLog.getActionType()).isEqualTo(ActionType.ATTRIBUTES_READ);
+                assertThat(auditLog.getActionData().path("scope").isNull()).isTrue();
+            });
+        });
     }
 
     private Device createDevice() throws Exception {
