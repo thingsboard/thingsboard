@@ -46,6 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
@@ -761,7 +762,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doPost("/api/auth/logout").andExpect(status().isOk());
     }
 
-    protected void setJwtToken(MockHttpServletRequestBuilder request) {
+    protected void setJwtToken(AbstractMockHttpServletRequestBuilder<?> request) {
         if (this.token != null) {
             request.header(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER, BEARER_HEADER_PREFIX + this.token);
         }
