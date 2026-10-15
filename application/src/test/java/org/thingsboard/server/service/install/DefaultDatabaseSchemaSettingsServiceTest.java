@@ -23,8 +23,8 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class DefaultDatabaseSchemaSettingsServiceTest {
 
-    private static final String PACKAGE_VERSION = "4.4.0";
-    private static final long V_4_3_1_4 = 4_003_001_004L;
+    private static final String PACKAGE_VERSION = "4.4.1";
+    private static final long V_4_3_1_6 = 4_003_001_006L;
 
     @Mock
     private ProjectInfo projectInfo;
@@ -49,7 +49,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
 
     @Test
     void aCeDatabaseAtTheSupportedVersionIsAcceptedAndTakesTheConversionBranch() {
-        givenSchemaSettings("CE", V_4_3_1_4);
+        givenSchemaSettings("CE", V_4_3_1_6);
 
         service.validateSchemaSettings();
 
@@ -58,7 +58,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
 
     @Test
     void aPeDatabaseAtASupportedVersionIsAcceptedAndTakesThePlainUpgradeBranch() {
-        givenSchemaSettings("PE", V_4_3_1_4);
+        givenSchemaSettings("PE", V_4_3_1_6);
 
         service.validateSchemaSettings();
 
@@ -68,7 +68,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
     @Test
     void aCeDatabaseOnALaterPatchOfTheSupportedLineIsAlsoAccepted() {
         // 4.3 keeps receiving patches, so the CE floor is a minimum rather than a single release.
-        givenSchemaSettings("CE", 4_003_001_005L);
+        givenSchemaSettings("CE", 4_003_001_007L);
 
         service.validateSchemaSettings();
 
@@ -77,7 +77,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
 
     @Test
     void aCeDatabaseNewerThanThePePackageIsRejected() {
-        givenSchemaSettings("CE", 4_004_000_001L);
+        givenSchemaSettings("CE", 4_004_002_000L);
 
         assertThatThrownBy(() -> service.validateSchemaSettings())
                 .hasMessageContaining("newer than this ThingsBoard PE package");
@@ -85,20 +85,51 @@ class DefaultDatabaseSchemaSettingsServiceTest {
 
     @Test
     void aCeDatabaseBelowTheSupportedVersionIsRejectedAtTheWall() {
-        // 4.3.0.0: within the versions the PE branch accepts, but below the CE release that converts.
-        givenSchemaSettings("CE", 4_003_000_000L);
+        // 4.3.1.5: within the versions the PE branch accepts, but below the CE release that converts.
+        givenSchemaSettings("CE", 4_003_001_005L);
 
         assertThatThrownBy(() -> service.validateSchemaSettings())
                 .hasMessageContaining("transitioning from CE to PE")
-                .hasMessageContaining("4.3.1.4");
+                .hasMessageContaining("4.3.1.6");
     }
 
     @Test
     void aPeDatabaseAlreadyAtThePackageVersionIsRejected() {
-        givenSchemaSettings("PE", 4_004_000_000L);
+        givenSchemaSettings("PE", 4_004_001_000L);
 
         assertThatThrownBy(() -> service.validateSchemaSettings())
                 .hasMessageContaining("already upgraded to current version");
+    }
+
+    @Test
+    void aPeDatabaseAtTheFirstVersionOfTheSupportedFamilyIsAccepted() {
+        givenSchemaSettings("PE", 4_003_000_000L);
+
+        service.validateSchemaSettings();
+    }
+
+    @Test
+    void aPeDatabaseOnAFutureMaintenanceVersionOfTheSupportedFamilyIsAccepted() {
+        givenSchemaSettings("PE", 4_003_002_000L);
+
+        service.validateSchemaSettings();
+    }
+
+    @Test
+    void aPeDatabaseOnAnOlderVersionOfThePackageFamilyIsRejectedAsNotNeedingAnUpgrade() {
+        givenSchemaSettings("PE", 4_004_000_001L);
+
+        assertThatThrownBy(() -> service.validateSchemaSettings())
+                .hasMessageContaining("same LTS family")
+                .hasMessageContaining("applied automatically when ThingsBoard starts");
+    }
+
+    @Test
+    void aPeDatabaseOnANewerVersionOfThePackageFamilyIsRejected() {
+        givenSchemaSettings("PE", 4_004_002_000L);
+
+        assertThatThrownBy(() -> service.validateSchemaSettings())
+                .hasMessageContaining("is not supported for upgrade");
     }
 
     @Test
@@ -113,7 +144,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
     void aDatabaseWithAnUnknownProductMarkerIsRejected() {
         // Neither CE nor PE: unchecked, the marker would silently select the PE branch and the CE-to-PE
         // conversion would be skipped on a database that needs it.
-        givenSchemaSettings("TB", V_4_3_1_4);
+        givenSchemaSettings("TB", V_4_3_1_6);
 
         assertThatThrownBy(() -> service.validateSchemaSettings())
                 .hasMessageContaining("unrecognized product");
@@ -121,7 +152,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
 
     @Test
     void aDatabaseWithoutAProductMarkerIsRejected() {
-        givenSchemaSettings(null, V_4_3_1_4);
+        givenSchemaSettings(null, V_4_3_1_6);
 
         assertThatThrownBy(() -> service.validateSchemaSettings())
                 .hasMessageContaining("unrecognized product");
@@ -131,7 +162,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
     void anUnrecognizedProductMarkerIsRejectedByTheBranchSelectorItself() {
         // The guard has to live where the branch is chosen: validateSchemaSettings() returns early when
         // SKIP_SCHEMA_VERSION_CHECK is set, and the upgrade then asks isUpgradeFromCe() regardless.
-        givenSchemaSettings("TB", V_4_3_1_4);
+        givenSchemaSettings("TB", V_4_3_1_6);
 
         assertThatThrownBy(() -> service.isUpgradeFromCe())
                 .hasMessageContaining("unrecognized product");
@@ -139,7 +170,7 @@ class DefaultDatabaseSchemaSettingsServiceTest {
 
     @Test
     void aMissingProductMarkerIsRejectedByTheBranchSelectorItself() {
-        givenSchemaSettings(null, V_4_3_1_4);
+        givenSchemaSettings(null, V_4_3_1_6);
 
         assertThatThrownBy(() -> service.isUpgradeFromCe())
                 .hasMessageContaining("unrecognized product");

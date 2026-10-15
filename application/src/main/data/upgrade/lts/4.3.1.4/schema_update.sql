@@ -16,7 +16,7 @@ ALTER TABLE alarm_comment DROP CONSTRAINT IF EXISTS fk_alarm_comment_alarm_id;
 -- change (nullable, no default), so the ACCESS EXCLUSIVE lock it takes is released as soon as this
 -- migration transaction commits.
 --
--- The originator_id backfill for pre-existing rows is intentionally NOT done here. LtsMigrationService runs
+-- The originator_id backfill for pre-existing rows is intentionally NOT done here. MigrationService runs
 -- this whole file inside a single transaction, so an in-line UPDATE would hold the ADD COLUMN's
 -- ACCESS EXCLUSIVE lock for the entire backfill -- blocking all reads and writes on entity_alarm while the
 -- no-downtime patch path (SystemPatchApplier) runs it on a serving node. Instead the backfill runs after
