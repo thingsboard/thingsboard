@@ -50,6 +50,7 @@ import { CustomMenuRoutes } from '@home/pages/custom-menu/custom-menu-routing.mo
 import { catchError, tap } from 'rxjs/operators';
 import { JsLibraryTableConfigResolver } from '@home/pages/admin/resource/js-library-table-config.resolver';
 import { secretsRoutes } from '@home/pages/secret-storage/secret-storage-routing.module';
+import { revokedCertificatesRoutes } from '@home/pages/device-certificate-revocation/device-certificate-revocation-routing.module';
 import { aiModelRoutes } from '@home/pages/ai-model/ai-model-routing.module';
 import { LicenseManagementComponent } from '@home/pages/admin/license-management.component';
 import { SubscriptionInfo } from '@shared/models/subscription.models';
@@ -514,6 +515,7 @@ const routes: Routes = [
       ...oAuth2Routes,
       ...rolesRoutes,
       ...secretsRoutes,
+      ...revokedCertificatesRoutes,
       {
         path: 'selfRegistration',
         component: SelfRegistrationComponent,

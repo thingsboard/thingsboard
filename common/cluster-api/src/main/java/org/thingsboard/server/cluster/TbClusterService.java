@@ -112,6 +112,8 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onDeviceAssignedToTenant(TenantId oldTenantId, Device device);
 
+    void onDeviceCertificateRevoked(TenantId tenantId, String certificateHash, TbQueueCallback callback);
+
     void onAssetUpdated(Asset asset, Asset old);
 
     void onAssetDeleted(TenantId tenantId, Asset asset, TbQueueCallback callback);

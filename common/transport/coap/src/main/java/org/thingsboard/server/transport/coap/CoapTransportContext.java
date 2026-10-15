@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.elements.DtlsEndpointContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -60,5 +63,20 @@ public class CoapTransportContext extends TransportContext {
     private CoapClientContext clientContext;
 
     private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck = new ConcurrentHashMap<>();
+
+    public boolean checkAddress(Request request) {
+        return rateLimitService.checkAddress(request.getSourceContext().getPeerAddress());
+    }
+
+    public void onAuthSuccess(Request request) {
+        rateLimitService.onAuthSuccess(request.getSourceContext().getPeerAddress());
+    }
+
+    public void onAuthFailure(Request request) {
+        // The source address of a plain UDP request can be forged: counting it would let anybody get a victim's address blocked
+        if (request.getSourceContext() instanceof DtlsEndpointContext) {
+            rateLimitService.onAuthFailure(request.getSourceContext().getPeerAddress());
+        }
+    }
 
 }

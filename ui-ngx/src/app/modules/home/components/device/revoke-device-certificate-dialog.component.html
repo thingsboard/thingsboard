@@ -1,0 +1,77 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="revokeFormGroup" (ngSubmit)="revoke()" class="tb-revoke-certificate-dialog">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ 'device.certificate-revocation.revoke-certificate' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content class="flex flex-col gap-4">
+    @if (certificateInfo) {
+      <div class="flex flex-col gap-2">
+        <div class="flex flex-row gap-4">
+          <span class="tb-revoke-certificate-label" translate>device.certificate-revocation.serial-number</span>
+          <span class="tb-revoke-certificate-value">{{ certificateInfo.serialNumber | uppercase }}</span>
+        </div>
+        <div class="flex flex-row gap-4">
+          <span class="tb-revoke-certificate-label" translate>device.certificate-revocation.validity</span>
+          <span class="tb-revoke-certificate-value">
+            {{ certificateInfo.notBefore | date:'yyyy-MM-dd' }} – {{ certificateInfo.notAfter | date:'yyyy-MM-dd' }}
+          </span>
+        </div>
+      </div>
+      <div class="tb-form-hint tb-primary-fill shrink-0">{{ 'device.certificate-revocation.revoke-device-certificate-hint' | translate }}</div>
+    } @else {
+      <tb-file-input formControlName="certificateFile"
+                     accept=".pem,.crt,.cer"
+                     allowedExtensions="pem,crt,cer"
+                     [maxSizeByte]="65536"
+                     hideClearButtonOnEmpty
+                     dropLabel="{{ 'device.certificate-revocation.drop-certificate-file-or' | translate }}">
+      </tb-file-input>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>device.certificate-pem-format</mat-label>
+        <textarea matInput formControlName="certificate" cdkTextareaAutosize cdkAutosizeMinRows="6" cdkAutosizeMaxRows="12"
+                  spellcheck="false" required></textarea>
+        @if (revokeFormGroup.get('certificate').hasError('required')) {
+          <mat-error>{{ 'device.certificate-pem-format-required' | translate }}</mat-error>
+        } @else if (revokeFormGroup.get('certificate').hasError('pattern')) {
+          <mat-error>{{ 'device.certificate-revocation.certificate-pem-invalid' | translate }}</mat-error>
+        }
+      </mat-form-field>
+      <div class="tb-form-hint tb-primary-fill shrink-0">{{ 'device.certificate-revocation.revoke-certificate-hint' | translate }}</div>
+    }
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>device.certificate-revocation.reason</mat-label>
+      <input #reasonInput matInput formControlName="reason" [maxlength]="reasonMaxLength"
+             placeholder="{{ 'device.certificate-revocation.reason-placeholder' | translate }}">
+      <mat-hint align="end">{{ reasonInput.value?.length || 0 }}/{{ reasonMaxLength }}</mat-hint>
+    </mat-form-field>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="warn"
+            type="submit"
+            [disabled]="(isLoading$ | async) || revokeFormGroup.invalid">
+      {{ 'device.certificate-revocation.revoke' | translate }}
+    </button>
+  </div>
+</form>

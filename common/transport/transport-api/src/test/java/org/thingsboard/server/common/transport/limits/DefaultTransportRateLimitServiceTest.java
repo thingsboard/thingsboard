@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport.limits;
 
 import org.junit.jupiter.api.AfterEach;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -16,6 +18,9 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -43,6 +48,83 @@ class DefaultTransportRateLimitServiceTest {
     @AfterEach
     void tearDown() {
         executor.shutdownNow();
+    }
+
+    @Test
+    void givenWrongCredentials_whenMaxFailuresReached_thenAddressIsBlockedUntilSuccess() {
+        DefaultTransportRateLimitService service = ipLimitedService(3, 60000);
+        InetSocketAddress address = new InetSocketAddress("10.0.0.1", 1000);
+
+        service.onAuthFailure(address);
+        service.onAuthFailure(address);
+        assertThat(service.checkAddress(address)).isTrue();
+        service.onAuthFailure(address);
+
+        assertThat(service.checkAddress(address)).isFalse();
+        assertThat(service.checkAddress(new InetSocketAddress("10.0.0.1", 2000))).as("other port, same address").isFalse();
+        assertThat(service.checkAddress(new InetSocketAddress("10.0.0.2", 1000))).isTrue();
+
+        service.onAuthSuccess(address);
+        assertThat(service.checkAddress(address)).isTrue();
+    }
+
+    @Test
+    void givenBlockedAddress_whenBlockExpires_thenItGetsAFreshFailureBudget() {
+        DefaultTransportRateLimitService service = ipLimitedService(2, 60000);
+        InetSocketAddress address = new InetSocketAddress("10.0.0.1", 1000);
+        service.onAuthFailure(address);
+        service.onAuthFailure(address);
+        assertThat(service.checkAddress(address)).isFalse();
+
+        expireLastActivity(service, address, 60001);
+        assertThat(service.checkAddress(address)).isTrue();
+        service.onAuthFailure(address);
+
+        assertThat(service.checkAddress(address)).as("one failure after the block expired").isTrue();
+    }
+
+    @Test
+    void givenBlockedAddress_whenTableIsInvalidatedAfterBlockTimeout_thenItIsUnblockedWithFreshBudget() {
+        DefaultTransportRateLimitService service = ipLimitedService(2, 60000);
+        InetSocketAddress address = new InetSocketAddress("10.0.0.1", 1000);
+        service.onAuthFailure(address);
+        service.onAuthFailure(address);
+
+        expireLastActivity(service, address, 60001);
+        service.invalidateRateLimitsIpTable(TimeUnit.MINUTES.toMillis(10));
+        service.onAuthFailure(address);
+
+        assertThat(service.checkAddress(address)).isTrue();
+    }
+
+    @Test
+    void givenAddressesWithoutFailures_whenCheckedOrAuthenticated_thenNoEntriesAreCreated() {
+        DefaultTransportRateLimitService service = ipLimitedService(3, 60000);
+
+        for (int i = 0; i < 100; i++) {
+            InetSocketAddress address = new InetSocketAddress("10.0.1." + i, 5683);
+            assertThat(service.checkAddress(address)).isTrue();
+            service.onAuthSuccess(address);
+        }
+
+        assertThat(ipMap(service)).isEmpty();
+    }
+
+    private DefaultTransportRateLimitService ipLimitedService(int maxWrongCredentialsPerIp, long ipBlockTimeout) {
+        DefaultTransportRateLimitService service = new DefaultTransportRateLimitService(tenantProfileCache);
+        ReflectionTestUtils.setField(service, "ipRateLimitsEnabled", true);
+        ReflectionTestUtils.setField(service, "maxWrongCredentialsPerIp", maxWrongCredentialsPerIp);
+        ReflectionTestUtils.setField(service, "ipBlockTimeout", ipBlockTimeout);
+        return service;
+    }
+
+    private static void expireLastActivity(DefaultTransportRateLimitService service, InetSocketAddress address, long ago) {
+        ipMap(service).get(address.getAddress()).setLastActivityTs(System.currentTimeMillis() - ago);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<InetAddress, InetAddressRateLimitStats> ipMap(DefaultTransportRateLimitService service) {
+        return (Map<InetAddress, InetAddressRateLimitStats>) ReflectionTestUtils.getField(service, "ipMap");
     }
 
     @Test

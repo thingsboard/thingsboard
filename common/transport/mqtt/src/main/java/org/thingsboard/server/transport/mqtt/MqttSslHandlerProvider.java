@@ -12,15 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
-import org.thingsboard.server.common.transport.util.SslUtil;
-import org.thingsboard.server.gen.transport.TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -31,8 +25,6 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component("MqttSslHandlerProvider")
@@ -41,9 +33,6 @@ public class MqttSslHandlerProvider implements SmartInitializingSingleton {
 
     @Value("${transport.mqtt.ssl.protocol}")
     private String sslProtocol;
-
-    @Autowired
-    private TransportService transportService;
 
     @Bean
     @ConfigurationProperties(prefix = "transport.mqtt.ssl.credentials")
@@ -122,17 +111,17 @@ public class MqttSslHandlerProvider implements SmartInitializingSingleton {
                 break;
             }
         }
-        return new ThingsboardMqttX509TrustManager(x509Tm, transportService);
+        return new ThingsboardMqttX509TrustManager(x509Tm);
     }
 
+    // Must not ask the core: it runs before the client proves that it holds the private key, and chain provisioning
+    // creates devices. The device is authenticated at CONNECT.
     static class ThingsboardMqttX509TrustManager implements X509TrustManager {
 
         private final X509TrustManager trustManager;
-        private final TransportService transportService;
 
-        ThingsboardMqttX509TrustManager(X509TrustManager trustManager, TransportService transportService) {
+        ThingsboardMqttX509TrustManager(X509TrustManager trustManager) {
             this.trustManager = trustManager;
-            this.transportService = transportService;
         }
 
         @Override
@@ -150,40 +139,6 @@ public class MqttSslHandlerProvider implements SmartInitializingSingleton {
         public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
             if (!validateCertificateChain(chain)) {
                 throw new CertificateException("Invalid Chain of X509 Certificates. ");
-            }
-            String clientDeviceCertValue = SslUtil.getCertificateString(chain[0]);
-            final String[] credentialsBodyHolder = new String[1];
-            CountDownLatch latch = new CountDownLatch(1);
-            try {
-                String certificateChain = SslUtil.getCertificateChainString(chain);
-                transportService.process(DeviceTransportType.MQTT, ValidateOrCreateDeviceX509CertRequestMsg
-                                .newBuilder().setCertificateChain(certificateChain).build(),
-                        new TransportServiceCallback<>() {
-                            @Override
-                            public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                if (!StringUtils.isEmpty(msg.getCredentials())) {
-                                    credentialsBodyHolder[0] = msg.getCredentials();
-                                }
-                                latch.countDown();
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                log.trace("Failed to process certificate chain: {}", certificateChain, e);
-                                latch.countDown();
-                            }
-                        });
-                latch.await(10, TimeUnit.SECONDS);
-                if (!clientDeviceCertValue.equals(credentialsBodyHolder[0])) {
-                    log.debug("Failed to find credentials for device certificate chain: {}", chain);
-                    if (chain.length == 1) {
-                        throw new CertificateException("Invalid Device Certificate");
-                    } else {
-                        throw new CertificateException("Invalid Chain of X509 Certificates");
-                    }
-                }
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
             }
         }
 

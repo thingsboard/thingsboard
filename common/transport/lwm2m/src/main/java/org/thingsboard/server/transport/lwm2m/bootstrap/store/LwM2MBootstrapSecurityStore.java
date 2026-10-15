@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -65,6 +67,15 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     @Override
     public SecurityInfo getByIdentity(String identity) {
         try {
+            return getByPskIdentity(identity);
+        } catch (LwM2MTransportUnavailableException e) {
+            return null;
+        }
+    }
+
+    // Like getByIdentity, but throws LwM2MTransportUnavailableException if the core did not answer
+    public SecurityInfo getByPskIdentity(String identity) {
+        try {
             TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(identity, BOOTSTRAP);
             if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
                 /* add value to store  from BootstrapJson */
@@ -80,6 +91,8 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 }
             }
             return store.getSecurityInfo();
+        } catch (LwM2MTransportUnavailableException e) {
+            throw e;
         } catch (LwM2MAuthException e) {
             log.trace("Bootstrap Registration failed: No pre-shared key found for [identity: {}]", identity);
             return null;
@@ -91,8 +104,8 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         return null;
     }
 
-    public TbLwM2MSecurityInfo getX509ByEndpoint(String endPoint) {
-            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
+    public TbLwM2MSecurityInfo getX509ByEndpoint(String endPoint, String certificateHash) {
+            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP, certificateHash);
             this.addValueToStore(store, store.getEndpoint());
             return store;
     }

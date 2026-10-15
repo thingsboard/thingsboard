@@ -176,6 +176,7 @@ export enum MenuId {
   task_manager = 'task_manager',
   trendz_settings = 'trendz_settings',
   secrets = 'secrets',
+  revoked_certificates = 'revoked_certificates',
   ai_models = 'ai_models',
   iot_hub = 'iot_hub',
   reporting = 'reporting',
@@ -1453,6 +1454,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.revoked_certificates,
+    {
+      id: MenuId.revoked_certificates,
+      name: 'device.certificate-revocation.revoked-certificates',
+      type: 'link',
+      path: '/security-settings/revoked-certificates',
+      icon: 'mdi:certificate-outline',
+      outlinedIcon: 'mdi:certificate-outline'
+    }
+  ],
+  [
     MenuId.self_registration,
     {
       id: MenuId.self_registration,
@@ -1861,6 +1873,11 @@ const menuFilters = new Map<MenuId, MenuFilter>([
             userPermissionsService.hasReadGenericPermission(Resource.SECRET)
   ],
   [
+    MenuId.revoked_certificates, (authState, userPermissionsService) =>
+            authState.authUser.authority === Authority.TENANT_ADMIN &&
+            userPermissionsService.hasGenericPermission(Resource.DEVICE, Operation.READ_CREDENTIALS)
+  ],
+  [
     MenuId.roles, (_authState, userPermissionsService) =>
             userPermissionsService.hasReadGenericPermission(Resource.ROLE)
   ],
@@ -2155,6 +2172,7 @@ export const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           },
           {id: MenuId.self_registration},
           {id: MenuId.secrets},
+          {id: MenuId.revoked_certificates},
           {id: MenuId.audit_log}
         ]
       },

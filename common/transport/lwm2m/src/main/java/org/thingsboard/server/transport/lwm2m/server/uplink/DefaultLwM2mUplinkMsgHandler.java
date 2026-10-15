@@ -12,6 +12,11 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.core.network.Endpoint;
+import org.eclipse.californium.elements.auth.X509CertPath;
+import org.eclipse.californium.elements.util.Filter;
+import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -35,9 +40,13 @@ import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.server.LeshanServer;
+import org.eclipse.leshan.server.californium.endpoint.CaliforniumServerEndpointsProvider;
+import org.eclipse.leshan.server.endpoint.LwM2mServerEndpointsProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.Device;
@@ -51,12 +60,16 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveS
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.X509CertificateRevokedEvent;
+import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
@@ -97,6 +110,8 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.security.Principal;
+import java.security.cert.CertificateEncodingException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,6 +126,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -165,6 +181,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final RegistrationStore registrationStore;
     private final TbLwM2mSecurityStore securityStore;
     private final LwM2MModelConfigService modelConfigService;
+    private final LwM2mClientCertificateRegistry certificateRegistry;
 
     @PostConstruct
     public void init() {
@@ -434,6 +451,76 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onDeviceDelete(DeviceId deviceId) {
         clearAndUnregister(clientContext.getClientByDeviceId(deviceId.getId()));
+    }
+
+    @EventListener(X509CertificateRevokedEvent.class)
+    public void onX509CertificateRevoked(X509CertificateRevokedEvent event) {
+        Map<String, Boolean> endpoints = certificateRegistry.revoke(event.getTenantId(), event.getCertificateHash());
+        if (endpoints.isEmpty()) {
+            return;
+        }
+        executor.submit(() -> {
+            // Also drops the sessions: a resumed session skips the certificate check and could register again in trust mode
+            terminateDtlsConnections(event.getCertificateHash());
+            endpoints.forEach((endpoint, lastCertificate) -> {
+                log.info("[{}] Closing LwM2M client with revoked certificate", endpoint);
+                // Otherwise the registration most likely uses the certificate that replaced the revoked one
+                if (lastCertificate) {
+                    clientContext.getLwM2mClients().stream()
+                            .filter(client -> endpoint.equals(client.getEndpoint()) && client.getRegistration() != null)
+                            .findFirst()
+                            .filter(this::isRegistrationServedHere)
+                            .ifPresent(this::clearAndUnregister);
+                }
+            });
+        });
+    }
+
+    // Served here if this node handled the latest Register or Update; otherwise that node owns the shared state
+    private boolean isRegistrationServedHere(LwM2mClient client) {
+        Registration registration = client.getRegistration();
+        Registration current = registrationStore.getRegistration(registration.getId());
+        if (current == null) {
+            log.info("[{}] Registration [{}] was removed or replaced", client.getEndpoint(), registration.getId());
+            return false;
+        }
+        if (!current.getLastUpdate().equals(registration.getLastUpdate())) {
+            log.info("[{}] Registration [{}] is served by another node", client.getEndpoint(), registration.getId());
+            return false;
+        }
+        return true;
+    }
+
+    private void terminateDtlsConnections(String certificateHash) {
+        LeshanServer server = context.getServer();
+        if (server == null) {
+            return;
+        }
+        for (LwM2mServerEndpointsProvider provider : server.getEndpointsProvider()) {
+            if (provider instanceof CaliforniumServerEndpointsProvider californiumProvider && californiumProvider.getCoapServer() != null) {
+                for (Endpoint endpoint : californiumProvider.getCoapServer().getEndpoints()) {
+                    if (endpoint instanceof CoapEndpoint coapEndpoint && coapEndpoint.getConnector() instanceof DTLSConnector dtlsConnector) {
+                        try {
+                            Filter<Principal> revokedCertificate = principal -> isCertificate(principal, certificateHash);
+                            dtlsConnector.startTerminateConnectionsForPrincipal(revokedCertificate, true);
+                        } catch (RejectedExecutionException e) {
+                            log.debug("[{}] Failed to terminate DTLS connections, connector is stopping", certificateHash, e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isCertificate(Principal principal, String certificateHash) {
+        if (principal instanceof X509CertPath certPath) {
+            try {
+                return certificateHash.equals(EncryptionUtil.getSha3Hash(SslUtil.getCertificateString(certPath.getTarget())));
+            } catch (CertificateEncodingException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -1016,7 +1103,10 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     @Override
     public void onToTransportUpdateCredentials(SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
         log.info("[{}] updateCredentials", sessionInfo);
-        clearAndUnregister(clientContext.getClientBySessionInfo(sessionInfo));
+        LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
+        if (client != null) {
+            clearAndUnregister(client);
+        }
     }
 
     /**

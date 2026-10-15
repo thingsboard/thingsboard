@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt;
 
 import org.bouncycastle.asn1.x500.X500Name;
@@ -11,10 +12,8 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
@@ -42,9 +41,6 @@ public class MqttSslCertificateReloadIntegrationTest {
 
     @TempDir
     Path tempDir;
-
-    @Mock
-    private TransportService transportService;
 
     @Test
     public void givenMqttSslProvider_whenCertFileChangedAndReloadTriggered_thenNewConnectionSeesNewCert() throws Exception {
@@ -169,7 +165,6 @@ public class MqttSslCertificateReloadIntegrationTest {
         MqttSslHandlerProvider provider = new MqttSslHandlerProvider();
         ReflectionTestUtils.setField(provider, "sslProtocol", "TLSv1.2");
         ReflectionTestUtils.setField(provider, "mqttSslCredentialsConfig", credentialsConfig);
-        ReflectionTestUtils.setField(provider, "transportService", transportService);
         provider.afterSingletonsInstantiated();
         return provider;
     }

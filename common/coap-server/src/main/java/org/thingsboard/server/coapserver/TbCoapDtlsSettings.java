@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.coapserver;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.config.Configuration;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 import java.net.InetAddress;
@@ -87,6 +90,13 @@ public class TbCoapDtlsSettings {
     @Autowired(required = false)
     private TbServiceInfoProvider serviceInfoProvider;
 
+    @Autowired(required = false)
+    private TransportRateLimitService rateLimitService;
+
+    // Shared by the DTLS endpoints recreated on certificate reloads: the CoAP resources keep the sessions map they got first
+    @Getter(AccessLevel.NONE)
+    private TbCoapDtlsSessionInMemoryStorage dtlsSessionStorage;
+
     public void registerReloadCallback(Runnable callback) {
         coapDtlsCredentialsConfig.registerReloadCallback(callback);
     }
@@ -117,18 +127,25 @@ public class TbCoapDtlsSettings {
                 configBuilder.set(DTLS_MAX_FRAGMENT_LENGTH, length);
             }
         }
-        configBuilder.setAdvancedCertificateVerifier(
-                new TbCoapDtlsCertificateVerifier(
-                        transportService,
-                        serviceInfoProvider,
-                        dtlsSessionInactivityTimeout,
-                        dtlsSessionReportTimeout,
-                        skipValidityCheckForClientCert
-                )
+        TbCoapDtlsCertificateVerifier certificateVerifier = new TbCoapDtlsCertificateVerifier(
+                transportService,
+                serviceInfoProvider,
+                rateLimitService,
+                getDtlsSessionStorage(),
+                skipValidityCheckForClientCert
         );
+        configBuilder.setAdvancedCertificateVerifier(certificateVerifier);
+        configBuilder.setSessionListener(new TbCoapDtlsHandshakeListener(certificateVerifier, rateLimitService));
         configBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
                 Collections.singletonList(CertificateType.X_509)));
         return configBuilder.build();
+    }
+
+    public synchronized TbCoapDtlsSessionInMemoryStorage getDtlsSessionStorage() {
+        if (dtlsSessionStorage == null) {
+            dtlsSessionStorage = new TbCoapDtlsSessionInMemoryStorage(dtlsSessionInactivityTimeout, dtlsSessionReportTimeout);
+        }
+        return dtlsSessionStorage;
     }
 
     private InetSocketAddress getInetSocketAddress() throws UnknownHostException {

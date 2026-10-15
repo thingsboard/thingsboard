@@ -344,6 +344,12 @@
       "contentHash": "sha256:6a1db9c609fe31e1dfb256bfb6ada0eb8e93168ad5c55f31dc37d66fc6b75c11"
     },
     {
+      "path": "common/data/src/main/java/org/thingsboard/server/common/data/id/DeviceCertificateRevocationId.java",
+      "header": "busl",
+      "reason": "Entity id of the device X.509 certificate revocation list added in PROD-6524, which has no counterpart in CE. The candidate CE common/data/src/main/java/org/thingsboard/server/common/data/id/QrCodeSettingsId.java shares only the entity id boilerplate for a different entity type. Reviewed candidate at 5954190c32f7f86c52650780078b323ad3b30b5b (blob 0ac91a36a89).",
+      "contentHash": "sha256:b687700d0af515d57ff4e1bde3bbfe8017409cb2fe639bf83b6e965353a0c822"
+    },
+    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/id/EncryptionKeyId.java",
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/id/UserCredentialsId.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 6c17ba5aec7d3e4b1e07f3a5e89fe144441fb0a4).",
@@ -594,6 +600,18 @@
       "header": "busl",
       "reason": "PE alarm type names cache added in 96e98fab02d (PR #4809), a new cache of HashSet<String> per tenant. The candidate CE AlarmTypesRedisCache.java shares only the Redis cache boilerplate and caches a different value type. Reviewed candidate at 317a75614137ab5ddd1aecef1abd4c2fcdcb8710 (blob 5a194f53c90).",
       "contentHash": "sha256:b81968eeb66338075a41b39a4cc23969afc1549034ec8d22ee271db558ecabd3"
+    },
+    {
+      "path": "dao/src/main/java/org/thingsboard/server/dao/device/DeviceCertificateRevocationCaffeineCache.java",
+      "header": "busl",
+      "reason": "Typed cache adapter for the revoked certificates cache of the device X.509 certificate revocation list added in PROD-6524, which has no counterpart in CE. Cache name, key and value types are new; the overlap with the candidate CE dao/src/main/java/org/thingsboard/server/dao/device/DeviceCredentialsCaffeineCache.java is the constructor and Spring annotations of the shared cache framework. Reviewed candidate at 5954190c32f7f86c52650780078b323ad3b30b5b (blob bc0b23eae4c).",
+      "contentHash": "sha256:e8c586ab6919ec3dc068163981763f2d439cfe6a70cf730e5d6f144752260333"
+    },
+    {
+      "path": "dao/src/main/java/org/thingsboard/server/dao/device/DeviceCertificateRevocationRedisCache.java",
+      "header": "busl",
+      "reason": "Typed cache adapter for the revoked certificates cache of the device X.509 certificate revocation list added in PROD-6524, which has no counterpart in CE. Cache name, key and value types are new; the overlap with the candidate CE dao/src/main/java/org/thingsboard/server/dao/device/DeviceCredentialsRedisCache.java is the constructor and Spring annotations of the shared cache framework. Reviewed candidate at 5954190c32f7f86c52650780078b323ad3b30b5b (blob 58e59bc7d02).",
+      "contentHash": "sha256:77ee006ac8aeccd9192a23853eb89c497d26e0118700c37b4b8599674d49e468"
     },
     {
       "path": "dao/src/main/java/org/thingsboard/server/dao/group/EntityGroupCaffeineCache.java",
@@ -1632,6 +1650,12 @@
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/audit-log-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 0b71456990b38a79ab3ca4b7a16ddb14028b7826).",
       "contentHash": "sha256:64061a7b1ea13d059e6d5b0540f09cd92fbe4579b1e4ae723ccce406d4be29a6"
+    },
+    {
+      "path": "ui-ngx/src/app/shared/models/id/device-certificate-revocation-id.ts",
+      "header": "busl",
+      "reason": "Id model of the device X.509 certificate revocation list added in PROD-6524, which has no counterpart in CE. The candidate CE ui-ngx/src/app/shared/models/id/device-credentials-id.ts shares only the id model boilerplate for a different entity type. Reviewed candidate at 5954190c32f7f86c52650780078b323ad3b30b5b (blob 0afef7748c6).",
+      "contentHash": "sha256:74d41fe0f0408276f810c070fa07577abdbe58a9fdb90383681a02d154aa04e4"
     },
     {
       "path": "ui-ngx/src/app/shared/models/id/entity-group-id.ts",

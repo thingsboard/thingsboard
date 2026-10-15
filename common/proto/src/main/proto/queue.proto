@@ -671,6 +671,8 @@ message GetResourceResponseMsg {
 
 message ValidateDeviceLwM2MCredentialsRequestMsg {
   string credentialsId = 1;
+  // X.509 clients only: in trust mode credentialsId is the endpoint, not the certificate
+  optional string certificateHash = 2;
 }
 
 message ToTransportUpdateCredentialsProto {
@@ -760,6 +762,12 @@ message ResourceDeleteMsg {
   int64 tenantIdLSB = 2;
   string resourceType = 3;
   string resourceKey = 4;
+}
+
+message X509CertificateRevokedMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string certificateHash = 3;
 }
 
 enum SessionCloseReason {
@@ -1966,6 +1974,7 @@ message ToTransportMsg {
   UplinkNotificationMsg uplinkNotificationMsg = 14;
   repeated QueueUpdateMsg queueUpdateMsgs = 15;
   repeated QueueDeleteMsg queueDeleteMsgs = 16;
+  X509CertificateRevokedMsg x509CertificateRevokedMsg = 17;
 }
 
 message UsageStatsKVProto {

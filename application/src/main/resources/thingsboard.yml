@@ -610,6 +610,11 @@ sql:
     api_keys:
       enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
       checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+    device_certificate_revocations:
+      # Disable this TTL if any transport skips the validity check of client certificates (*_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT), otherwise removed revocations make expired certificates usable again.
+      enabled: "${SQL_TTL_DEVICE_CERTIFICATE_REVOCATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for revoked device certificates records
+      ttl: "${SQL_TTL_DEVICE_CERTIFICATE_REVOCATIONS_SECS:604800}" # Time after the certificate expiration. Default value - 7 days
+      checking_interval_ms: "${SQL_TTL_DEVICE_CERTIFICATE_REVOCATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
     agent_bulk_actions:
       enabled: "${SQL_TTL_AGENT_BULK_ACTIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for agent bulk action records
       ttl: "${SQL_TTL_AGENT_BULK_ACTIONS_SECS:604800}" # Default value - 7 days; removing a bulk action also removes the agent app events it created, so those events are retained for the shorter of this TTL and 'agent_app_events.ttl'
@@ -877,6 +882,9 @@ cache:
     deviceCredentials:
       timeToLiveInMinutes: "${CACHE_SPECS_DEVICE_CREDENTIALS_TTL:1440}" # Device credentials cache TTL
       maxSize: "${CACHE_SPECS_DEVICE_CREDENTIALS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    deviceCertificateRevocations:
+      timeToLiveInMinutes: "${CACHE_SPECS_DEVICE_CERTIFICATE_REVOCATIONS_TTL:1440}" # Revoked device certificates cache TTL
+      maxSize: "${CACHE_SPECS_DEVICE_CERTIFICATE_REVOCATIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
     devices:
       timeToLiveInMinutes: "${CACHE_SPECS_DEVICES_TTL:1440}" # Device cache TTL
       maxSize: "${CACHE_SPECS_DEVICES_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -1305,6 +1313,7 @@ audit-log:
       "role": "${AUDIT_LOG_MASK_ROLE:W}" # Roles logging levels.
       "group_permission": "${AUDIT_LOG_MASK_GROUP_PERMISSION:W}" # Group permission logging levels.
       "report_template": "${AUDIT_LOG_MASK_REPORT_TEMPLATE:W}" # Report template logging levels.
+      "tenant": "${AUDIT_LOG_MASK_TENANT:W}" # Tenant logging levels.
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"

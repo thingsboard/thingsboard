@@ -1,0 +1,82 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+package org.thingsboard.server.transport.lwm2m.secure;
+
+import lombok.RequiredArgsConstructor;
+import org.eclipse.californium.elements.auth.PreSharedKeyIdentity;
+import org.eclipse.californium.elements.auth.X509CertPath;
+import org.eclipse.californium.scandium.dtls.AlertMessage;
+import org.eclipse.californium.scandium.dtls.AlertMessage.AlertDescription;
+import org.eclipse.californium.scandium.dtls.AlertMessage.AlertLevel;
+import org.eclipse.californium.scandium.dtls.ConnectionId;
+import org.eclipse.californium.scandium.dtls.DTLSContext;
+import org.eclipse.californium.scandium.dtls.HandshakeException;
+import org.eclipse.californium.scandium.dtls.Handshaker;
+import org.eclipse.californium.scandium.dtls.SessionListener;
+import org.thingsboard.server.common.transport.limits.DtlsHandshakeRateLimits;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
+
+import java.security.Principal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+@RequiredArgsConstructor
+public class TbLwM2mDtlsHandshakeListener implements SessionListener {
+
+    private final TransportRateLimitService rateLimitService;
+    // Null for the bootstrap server
+    private final LwM2mClientCertificateRegistry certificateRegistry;
+    // The pre-shared key store doesn't know the client's address
+    private final Map<ConnectionId, Handshaker> handshakes = new ConcurrentHashMap<>();
+
+    @Override
+    public void handshakeStarted(Handshaker handshaker) throws HandshakeException {
+        DtlsHandshakeRateLimits.checkAddress(rateLimitService, handshaker);
+        handshakes.put(handshaker.getConnection().getConnectionId(), handshaker);
+    }
+
+    @Override
+    public void contextEstablished(Handshaker handshaker, DTLSContext establishedContext) throws HandshakeException {
+        // After the client's Finished is verified: it proved it holds the private key or pre-shared key
+        ConnectionId cid = handshaker.getConnection().getConnectionId();
+        handshakes.remove(cid, handshaker);
+        if (certificateRegistry != null && !certificateRegistry.commitPending(cid)) {
+            throw new HandshakeException("Certificate was revoked during the handshake",
+                    new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_REVOKED));
+        }
+        // Raw public keys are checked on registration, see TbLwM2MAuthorizer
+        Principal peerIdentity = establishedContext.getSession().getPeerIdentity();
+        if (peerIdentity instanceof X509CertPath || peerIdentity instanceof PreSharedKeyIdentity) {
+            rateLimitService.onAuthSuccess(handshaker.getPeerAddress());
+        }
+    }
+
+    @Override
+    public void handshakeCompleted(Handshaker handshaker) {
+    }
+
+    @Override
+    public void handshakeFailed(Handshaker handshaker, Throwable error) {
+        ConnectionId cid = handshaker.getConnection().getConnectionId();
+        handshakes.remove(cid, handshaker);
+        if (certificateRegistry != null) {
+            certificateRegistry.dropPending(cid);
+        }
+        if (DtlsHandshakeRateLimits.isFailedProofOfPossession(handshaker, error)) {
+            rateLimitService.onAuthFailure(handshaker.getPeerAddress());
+        }
+    }
+
+    @Override
+    public void handshakeFlightRetransmitted(Handshaker handshaker, int flight) {
+    }
+
+    public void onUnknownPskIdentity(ConnectionId cid) {
+        // Removed so it's counted once: the store is asked again on every retransmission of the key exchange
+        Handshaker handshaker = handshakes.remove(cid);
+        if (handshaker != null) {
+            rateLimitService.onAuthFailure(handshaker.getPeerAddress());
+        }
+    }
+
+}

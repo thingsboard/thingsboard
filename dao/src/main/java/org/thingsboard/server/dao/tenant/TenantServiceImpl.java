@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.agent.AgentAppEventService;
 import org.thingsboard.server.dao.agent.AgentProfileService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.device.DeviceCertificateRevocationService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
@@ -82,6 +83,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private NotificationSettingsService notificationSettingsService;
     @Autowired
     private QrCodeSettingService qrCodeSettingService;
+    @Autowired
+    @Lazy
+    private DeviceCertificateRevocationService deviceCertificateRevocationService;
     @Autowired
     private CustomMenuService customMenuService;
     @Autowired
@@ -204,6 +208,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         encryptionService.deleteEncryptionKeyByTenantId(tenantId);
         iotHubInstalledItemService.deleteByTenantId(tenantId);
         agentAppEventService.deleteByTenantId(tenantId);
+        deviceCertificateRevocationService.deleteRevocationsByTenantId(tenantId);
 
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));

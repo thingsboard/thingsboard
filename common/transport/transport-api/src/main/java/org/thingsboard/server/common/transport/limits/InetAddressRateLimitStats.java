@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport.limits;
 
 import lombok.Data;
@@ -12,9 +13,10 @@ public class InetAddressRateLimitStats {
 
     private final Lock lock = new ReentrantLock();
 
-    private boolean blocked;
-    private long lastActivityTs;
-    private int failureCount;
+    // Read without the lock on the hot path; written under it
+    private volatile boolean blocked;
+    private volatile long lastActivityTs;
+    private volatile int failureCount;
     private int connectionsCount;
 
 }

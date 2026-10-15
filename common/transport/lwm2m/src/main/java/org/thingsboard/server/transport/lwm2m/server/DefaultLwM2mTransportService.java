@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server;
 
 import jakarta.annotation.PreDestroy;
@@ -15,7 +16,6 @@ import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.server.LeshanServer;
 import org.eclipse.leshan.server.LeshanServerBuilder;
-import org.eclipse.leshan.server.californium.LwM2mPskStore;
 import org.eclipse.leshan.server.californium.endpoint.CaliforniumServerEndpointsProvider;
 import org.eclipse.leshan.server.californium.endpoint.coap.CoapServerProtocolProvider;
 import org.eclipse.leshan.server.californium.endpoint.coaps.CoapsServerProtocolProvider;
@@ -27,11 +27,15 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2mDtlsHandshakeListener;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2mPskStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
@@ -71,6 +75,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
     private final TbLwM2MAuthorizer authorizer;
     private final LwM2mVersionedModelProvider modelProvider;
+    private final TransportRateLimitService rateLimitService;
+    private final LwM2mClientCertificateRegistry certificateRegistry;
 
     private volatile LeshanServer server;
     private volatile LwM2mServerListener serverListener;
@@ -130,6 +136,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
         builder.setAuthorizer(authorizer);
 
 
+        TbLwM2mDtlsHandshakeListener handshakeListener = new TbLwM2mDtlsHandshakeListener(rateLimitService, certificateRegistry);
+
         // Create Californium Endpoints Provider:
         // ------------------
         // Create Server Endpoints Provider
@@ -139,13 +147,14 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService, Smar
 
                 // Add coaps/dtls protocol support
                 new CoapsServerProtocolProvider(c -> {
+                    c.setSessionListener(handshakeListener);
+                    // Also with X.509 credentials: the cipher suites include PSK ones, and Leshan would use its own store otherwise
+                    c.setAdvancedPskStore(new TbLwM2mPskStore(securityStore, registrationStore, handshakeListener));
                     if (this.config.getSslCredentials() != null) {
                         c.setAdvancedCertificateVerifier(certificateVerifier);
                         c.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
                     } else {
                         log.info("Unable to load X509 files for LWM2MServer");
-                        LwM2mPskStore lwM2mPskStore = new LwM2mPskStore(securityStore, registrationStore);
-                        c.setAdvancedPskStore(lwM2mPskStore);
                         c.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
                     }
                 }));

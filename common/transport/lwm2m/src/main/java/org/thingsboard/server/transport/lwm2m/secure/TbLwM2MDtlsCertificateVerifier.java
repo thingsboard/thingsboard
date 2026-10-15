@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import jakarta.annotation.PostConstruct;
@@ -27,11 +28,14 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurity
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mClientCertificateRegistry.ClientCertificate;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
@@ -39,6 +43,7 @@ import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -58,6 +63,8 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
     private final TbMainSecurityStore securityStore;
+    private final LwM2mClientCertificateRegistry certificateRegistry;
+    private final TransportRateLimitService rateLimitService;
 
     private StaticNewAdvancedCertificateVerifier staticCertificateVerifier;
 
@@ -94,12 +101,18 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
         } else {
             try {
                 boolean x509CredentialsFound = false;
-                X509Certificate[] chain = certChain.getCertificates().toArray(new X509Certificate[0]);
-                for (X509Certificate cert : chain) {
+                boolean coreUnavailable = false;
+                // Only the leaf: the client proves it holds the leaf's private key, not the other certificates'
+                List<? extends Certificate> chain = certChain.getCertificates();
+                if (!chain.isEmpty() && chain.get(0) instanceof X509Certificate cert) {
                     try {
                         if (!skipValidityCheckForClientCert) {
                             cert.checkValidity();
                         }
+                        // Sent with every lookup, so the core rejects a revoked certificate also in trust mode
+                        String strCert = SslUtil.getCertificateString(cert);
+                        String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+                        long checkedTime = System.currentTimeMillis();
                         TbLwM2MSecurityInfo securityInfo = null;
                         if (staticCertificateVerifier != null) {
                             HandshakeException exception = staticCertificateVerifier.verifyCertificate(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message).getException();
@@ -107,8 +120,10 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                                 try {
                                     String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
                                     if (StringUtils.isNotEmpty(endpoint)) {
-                                        securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT);
+                                        securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT, sha3Hash);
                                     }
+                                } catch (LwM2MTransportUnavailableException e) {
+                                    coreUnavailable = true;
                                 } catch (LwM2MAuthException e) {
                                     log.trace("Certificate trust validation failed.", e);
                                 }
@@ -117,21 +132,19 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             }
                         }
                         // if not trust or cert trust securityInfo == null
-                        String strCert = SslUtil.getCertificateString(cert);
-                        String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                         if (securityInfo == null || securityInfo.getMsg() == null) {
                             try {
-                                securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
+                                securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT, sha3Hash);
+                            } catch (LwM2MTransportUnavailableException e) {
+                                coreUnavailable = true;
                             } catch (LwM2MAuthException e) {
                                 log.trace("Failed find security info: {}", sha3Hash, e);
                             }
                         }
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
-                        if (msg != null && StringUtils.isNotEmpty(msg.getCredentials())) {
-                            LwM2MClientCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class);
-                            if (!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)) {
-                                continue;
-                            }
+                        LwM2MClientCredentials credentials = msg != null && StringUtils.isNotEmpty(msg.getCredentials()) ?
+                                JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class) : null;
+                        if (credentials != null && credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)) {
                             X509ClientCredential config = (X509ClientCredential) credentials.getClient();
                             String certBody = config.getCert();
                             String endpoint = config.getEndpoint();
@@ -140,12 +153,13 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                                 DeviceProfile deviceProfile = msg.getDeviceProfile();
                                 if (msg.hasDeviceInfo() && deviceProfile != null) {
                                     sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
+                                    long expirationTime = skipValidityCheckForClientCert ? Long.MAX_VALUE : cert.getNotAfter().getTime();
+                                    certificateRegistry.registerPending(cid, new ClientCertificate(endpoint, msg.getDeviceInfo().getTenantId(), sha3Hash, expirationTime), checkedTime);
                                     try {
                                         securityStore.putX509(securityInfo);
                                     } catch (NonUniqueSecurityInfoException e) {
                                         log.trace("Failed to add security info: {}", securityInfo, e);
                                     }
-                                    break;
                                 }
                             } else {
                                 log.trace("[{}][{}] Certificate mismatch. Expected: {}, Actual: {}", endpoint, sha3Hash, strCert, certBody);
@@ -158,6 +172,9 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                     }
                 }
                 if (!x509CredentialsFound) {
+                    if (!coreUnavailable) {
+                        rateLimitService.onAuthFailure(remotePeer);
+                    }
                     AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR);
                     throw new HandshakeException("x509 verification not enabled!", alert);
                 }

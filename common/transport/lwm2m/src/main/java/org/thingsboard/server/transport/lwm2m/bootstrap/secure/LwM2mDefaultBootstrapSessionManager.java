@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.elements.auth.X509CertPath;
 import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.peer.LwM2mPeer;
 import org.eclipse.leshan.core.peer.PskIdentity;
@@ -25,11 +27,14 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapConfigStoreTaskProvider;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapTaskProvider;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +52,8 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     private final LwM2MBootstrapTaskProvider tasksProvider;
     private final LwM2mBootstrapModelProvider modelProvider;
     private TransportService transportService;
+    private TransportRateLimitService rateLimitService;
+    private TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier;
 
     /**
      * Create a {@link DefaultBootstrapSessionManager} using a default {@link SecurityChecker} to accept or refuse new
@@ -54,10 +61,13 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      *
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
-    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService) {
+    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService,
+                                               TransportRateLimitService rateLimitService, TbLwM2MDtlsBootstrapCertificateVerifier certificateVerifier) {
         this(bsSecurityStore, configStore, new SecurityChecker(), new LwM2MBootstrapConfigStoreTaskProvider(configStore),
                 new StandardBootstrapModelProvider());
         this.transportService = transportService;
+        this.rateLimitService = rateLimitService;
+        this.certificateVerifier = certificateVerifier;
     }
 
     /**
@@ -77,21 +87,42 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public BootstrapSession begin(BootstrapRequest request, LwM2mPeer sender, URI endpointUsed) {
+        InetSocketAddress address = ((IpPeer) sender).getSocketAddress();
+        if (rateLimitService != null && !rateLimitService.checkAddress(address)) {
+            log.debug("[{}][{}] Bootstrap declined: IP address is blocked due to repeatedly failed authentication", request.getEndpointName(), address);
+            return new DefaultBootstrapSession(request, sender, false, null, endpointUsed);
+        }
         boolean authorized = sender.getIdentity().isSecure();
+        boolean coreUnavailable = false;
         Iterator<SecurityInfo> securityInfos = null;
           try {
             if (bsSecurityStore != null && securityChecker != null) {
                 if (((IpPeer) sender).isPSK()) {
-                    SecurityInfo securityInfo = bsSecurityStore.getByIdentity(((PskIdentity) sender.getIdentity()).getPskIdentity());
+                    String pskIdentity = ((PskIdentity) sender.getIdentity()).getPskIdentity();
+                    SecurityInfo securityInfo = bsSecurityStore instanceof LwM2MBootstrapSecurityStore tbSecurityStore ?
+                            tbSecurityStore.getByPskIdentity(pskIdentity) : bsSecurityStore.getByIdentity(pskIdentity);
                     securityInfos = Collections.singletonList(securityInfo).iterator();
                 }
                 else if (!((IpPeer) sender).isX509()) {
                     securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
                 }
-                authorized = this.checkSecurityInfo(request.getEndpointName(), sender, securityInfos);
+                // The lookup of the certificate also refreshes the bootstrap configuration that checkSecurityInfo looks for
+                authorized = (!((IpPeer) sender).isX509() || isCertificateRegistered(request, address))
+                        && this.checkSecurityInfo(request.getEndpointName(), sender, securityInfos);
             }
+        } catch (LwM2MTransportUnavailableException e) {
+            authorized = false;
+            coreUnavailable = true;
         } catch (LwM2MAuthException e) {
             authorized = false;
+        }
+        // An unsecured request can forge its source address: counting it would let anybody get a victim's address blocked
+        if (rateLimitService != null && sender.getIdentity().isSecure() && !coreUnavailable) {
+            if (authorized) {
+                rateLimitService.onAuthSuccess(address);
+            } else {
+                rateLimitService.onAuthFailure(address);
+            }
         }
         DefaultBootstrapSession session = new DefaultBootstrapSession(request, sender, authorized, null, endpointUsed);
         if (authorized) {
@@ -236,6 +267,18 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     private void sendLogs(String endpointName, String logMsg) {
         log.info("Endpoint: [{}] [{}]", endpointName, logMsg);
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
+    }
+
+    // The certificate verifier runs on full handshakes only, so a kept or resumed session must be checked here
+    private boolean isCertificateRegistered(BootstrapRequest request, InetSocketAddress address) {
+        if (certificateVerifier == null) {
+            return true;
+        }
+        if (request.getCoapRequest() instanceof Request coapRequest
+                && coapRequest.getSourceContext().getPeerIdentity() instanceof X509CertPath certPath) {
+            return certificateVerifier.isRegistered(certPath, address);
+        }
+        return false;
     }
 
     private boolean checkSecurityInfo(String endpoint, LwM2mPeer clientIdentity, Iterator<SecurityInfo> securityInfos) {

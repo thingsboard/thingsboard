@@ -101,6 +101,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.ToTbReportNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.X509CertificateRevokedMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
@@ -470,6 +471,19 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onDeviceAssignedToTenant(TenantId oldTenantId, Device device) {
         onDeviceDeleted(oldTenantId, device, null);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), true, false, false);
+    }
+
+    @Override
+    public void onDeviceCertificateRevoked(TenantId tenantId, String certificateHash, TbQueueCallback callback) {
+        log.trace("[{}] Processing revoked device certificate [{}]", tenantId, certificateHash);
+        X509CertificateRevokedMsg revokedMsg = X509CertificateRevokedMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setCertificateHash(certificateHash)
+                .build();
+        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setX509CertificateRevokedMsg(revokedMsg).build();
+        // Not filtered to CoAP and LwM2M: the service info drops a service's transports when it is regenerated
+        broadcast(transportMsg, callback);
     }
 
     @Override

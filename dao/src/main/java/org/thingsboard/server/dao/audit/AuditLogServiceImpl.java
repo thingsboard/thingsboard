@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.security.DeviceCertificateRevocation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.audit.sink.AuditLogSink;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
@@ -245,6 +246,14 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.put("entityId", entityId.toString());
                 DeviceCredentials deviceCredentials = extractParameter(DeviceCredentials.class, additionalInfo);
                 actionData.set("credentials", JacksonUtil.valueToTree(deviceCredentials));
+                break;
+            case CREDENTIALS_REVOKED:
+            case CREDENTIALS_REVOCATION_DELETED:
+                actionData.put("entityId", entityId.toString());
+                DeviceCertificateRevocation revocation = extractParameter(DeviceCertificateRevocation.class, additionalInfo);
+                if (revocation != null) {
+                    actionData.set("revocation", JacksonUtil.valueToTree(revocation));
+                }
                 break;
             case ASSIGNED_TO_CUSTOMER:
                 strEntityId = extractParameter(String.class, 0, additionalInfo);

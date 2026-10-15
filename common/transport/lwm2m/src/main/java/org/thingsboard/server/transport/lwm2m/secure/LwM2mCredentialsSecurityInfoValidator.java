@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
 
 import java.io.IOException;
@@ -47,10 +49,19 @@ public class LwM2mCredentialsSecurityInfoValidator {
     private final LwM2MTransportServerConfig config;
 
     public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTypeServer keyValue) {
+        return getEndpointSecurityInfoByCredentialsId(credentialsId, keyValue, null);
+    }
+
+    public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTypeServer keyValue, String certificateHash) {
         CountDownLatch latch = new CountDownLatch(1);
         final TbLwM2MSecurityInfo[] resultSecurityStore = new TbLwM2MSecurityInfo[1];
+        final boolean[] failed = new boolean[1];
         log.trace("Validating credentials [{}]", credentialsId);
-        context.getTransportService().process(ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(credentialsId).build(),
+        ValidateDeviceLwM2MCredentialsRequestMsg.Builder request = ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(credentialsId);
+        if (certificateHash != null) {
+            request.setCertificateHash(certificateHash);
+        }
+        context.getTransportService().process(request.build(),
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
@@ -62,16 +73,18 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     @Override
                     public void onError(Throwable e) {
                         log.info("[{}] [{}] Failed to process credentials ", credentialsId, e);
-                        TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
-                        result.setEndpoint(credentialsId);
-                        resultSecurityStore[0] = result;
+                        failed[0] = true;
                         latch.countDown();
                     }
                 });
+        boolean answered = false;
         try {
-            latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
+            answered = latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("Failed to await credentials!", e);
+        }
+        if (!answered || failed[0]) {
+            throw new LwM2MTransportUnavailableException();
         }
 
         TbLwM2MSecurityInfo securityInfo = resultSecurityStore[0];
