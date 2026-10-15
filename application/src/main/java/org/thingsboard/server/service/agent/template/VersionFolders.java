@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Version-named folders of the templates repo (e.g. {@code templates/since/4.4.0.1}, {@code compose/edge/4.4}): a
+ * Version-named folders of the templates repo (e.g. {@code templates/since/4.4.1}, {@code compose/edge/4.4}): a
  * folder applies to its own version and every later one, until a newer folder exists.
  */
 final class VersionFolders {

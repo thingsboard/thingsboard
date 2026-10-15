@@ -169,8 +169,8 @@ public class AppTemplateMaterializer {
 
     /**
      * Load the compose body for {@code path}, taking the file from the newest version folder that has it. For version
-     * {@code 4.4.1} and {@code compose/edge/4.4/kafka.yml} with folders {@code 4.3, 4.4, 4.4.0.1} under
-     * {@code compose/edge}, this tries {@code compose/edge/4.4.0.1/kafka.yml}, then {@code compose/edge/4.4/kafka.yml},
+     * {@code 4.4.2} and {@code compose/edge/4.4/kafka.yml} with folders {@code 4.3, 4.4, 4.4.1} under
+     * {@code compose/edge}, this tries {@code compose/edge/4.4.1/kafka.yml}, then {@code compose/edge/4.4/kafka.yml},
      * then {@code compose/edge/4.3/kafka.yml}. Falls through to an error (so the version is skipped) only when no
      * candidate exists.
      */

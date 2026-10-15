@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AppTemplateMaterializerTest {
 
     private static final Function<String, List<String>> EDGE_FOLDERS = parent -> parent.equals("compose/edge")
-            ? List.of("3.9", "4.3", "4.4", "4.4.0.1", "4.10", "latest")
+            ? List.of("3.9", "4.3", "4.4", "4.4.1", "4.10", "latest")
             : List.of();
 
     @Test
@@ -27,25 +27,25 @@ class AppTemplateMaterializerTest {
 
     @Test
     void versionWithItsOwnFolderUsesItFirst() {
-        assertThat(candidates("compose/edge/4.4/kafka.yml", "4.4", "4.4.0.1EDGE")).startsWith(
-                "compose/edge/4.4.0.1/kafka.yml",
+        assertThat(candidates("compose/edge/4.4/kafka.yml", "4.4", "4.4.1EDGE")).startsWith(
+                "compose/edge/4.4.1/kafka.yml",
                 "compose/edge/4.4/kafka.yml");
     }
 
     @Test
     void versionWithoutItsOwnFolderFallsBackToTheNewestLowerOne() {
-        assertThat(candidates("compose/edge/4.4/kafka.yml", "4.4", "4.4.1EDGE")).startsWith(
-                "compose/edge/4.4.0.1/kafka.yml",
+        assertThat(candidates("compose/edge/4.4/kafka.yml", "4.4", "4.4.2EDGE")).startsWith(
+                "compose/edge/4.4.1/kafka.yml",
                 "compose/edge/4.4/kafka.yml");
         assertThat(candidates("compose/edge/4.5/kafka.yml", "4.5", "4.5.0EDGE")).startsWith(
-                "compose/edge/4.4.0.1/kafka.yml");
+                "compose/edge/4.4.1/kafka.yml");
     }
 
     @Test
     void foldersAreComparedAsVersions() {
         assertThat(candidates("compose/edge/4.10/kafka.yml", "4.10", "4.10.0EDGE")).startsWith(
                 "compose/edge/4.10/kafka.yml",
-                "compose/edge/4.4.0.1/kafka.yml");
+                "compose/edge/4.4.1/kafka.yml");
     }
 
     @Test
