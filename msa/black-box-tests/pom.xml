@@ -38,11 +38,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>software.xdev</groupId>
-            <artifactId>testcontainers-junit4-mock</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.microsoft.azure.sdk.iot</groupId>
             <artifactId>iot-service-client</artifactId>
             <scope>test</scope>

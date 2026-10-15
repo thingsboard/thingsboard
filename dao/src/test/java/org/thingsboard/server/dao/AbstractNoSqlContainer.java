@@ -7,8 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
-import org.testcontainers.containers.CassandraContainer;
-import org.testcontainers.containers.delegate.CassandraDatabaseDelegate;
+import org.testcontainers.cassandra.CassandraContainer;
+import org.testcontainers.cassandra.CassandraDatabaseDelegate;
 import org.testcontainers.delegate.DatabaseDelegate;
 import org.testcontainers.ext.ScriptUtils;
 
