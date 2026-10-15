@@ -10,6 +10,9 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8081}"
+  tomcat:
+    # Maximum number of GET and POST request parameters Tomcat parses per request
+    max-parameter-count: "${SERVER_TOMCAT_MAX_PARAMETER_COUNT:10000}"
   # Server SSL configuration
   ssl:
     # Enable/disable SSL support

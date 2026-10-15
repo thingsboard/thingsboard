@@ -13,6 +13,9 @@ server:
   port: "${HTTP_BIND_PORT:8080}"
   # Server forward headers strategy. Required for SWAGGER UI when reverse proxy is used
   forward_headers_strategy: "${HTTP_FORWARD_HEADERS_STRATEGY:framework}"
+  tomcat:
+    # Maximum number of GET and POST request parameters Tomcat parses per request
+    max-parameter-count: "${SERVER_TOMCAT_MAX_PARAMETER_COUNT:10000}"
   # Server SSL configuration
   ssl:
     # Enable/disable SSL support
