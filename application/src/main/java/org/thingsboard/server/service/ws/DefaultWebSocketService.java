@@ -991,72 +991,36 @@ public class DefaultWebSocketService implements WebSocketService {
                 }, executor);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (AttributeScope scope : AttributeScope.values()) {
-                    futures.add(attributesService.find(tenantId, entityId, scope, keys));
-                }
-
-                ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-                Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> {
+            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+            for (AttributeScope scope : AttributeScope.values()) {
+                futures.add(attributesService.find(tenantId, entityId, scope, keys));
             }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+            ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+            Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+        }, callback::onFailure);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor());
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor()), callback::onFailure);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (AttributeScope scope : AttributeScope.values()) {
-                    futures.add(attributesService.findAll(tenantId, entityId, scope));
-                }
-
-                ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-                Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> {
+            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+            for (AttributeScope scope : AttributeScope.values()) {
+                futures.add(attributesService.findAll(tenantId, entityId, scope));
             }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+            ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+            Futures.addCallback(future, callback, MoreExecutors.directExecutor());
+        }, callback::onFailure);
     }
 
-    private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return new FutureCallback<ValidationResult>() {
-            @Override
-            public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor());
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
+    private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final FutureCallback<List<AttributeKvEntry>> callback) {
+        return on(r -> Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor()), callback::onFailure);
     }
 
     private FutureCallback<ValidationResult> on(Consumer<Void> success, Consumer<Throwable> failure) {
