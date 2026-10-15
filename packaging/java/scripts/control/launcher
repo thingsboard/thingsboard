@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
-CONF_FOLDER=${pkg.installFolder}/conf
+[ -z "$CONF_FOLDER" ] && CONF_FOLDER=${pkg.installFolder}/conf
 jarfile=${pkg.installFolder}/bin/${pkg.name}.jar
 
 [ -r "$CONF_FOLDER/${pkg.name}.conf" ] && source "$CONF_FOLDER/${pkg.name}.conf"
