@@ -22,14 +22,14 @@ import java.util.Set;
 import static org.thingsboard.server.dao.trendz.TrendzSyncService.TRENDZ_API_KEY_DESCRIPTION;
 
 /**
- * LTS migration for version {@code 4.3.1.5}.
+ * Migration for version {@code 4.3.1.5}.
  * <p>
- * {@link LtsMigrationService} selects migrations from the injected {@link LtsMigration} beans, not from the on-disk
+ * {@link MigrationService} selects migrations from the injected {@link Migration} beans, not from the on-disk
  * {@code data/upgrade/lts/<version>/} directories, so this bean is what makes the runner discover version
  * {@code 4.3.1.5} at all.
  * <p>
  * There is no {@code data/upgrade/lts/4.3.1.5/} directory: everything this version changes is programmatic, so the
- * version is listed in {@code SQL_LESS_ALLOWED} in {@code LtsMigrationIntegrationTest}, which otherwise fails a bean
+ * version is listed in {@code SQL_LESS_ALLOWED} in {@code MigrationIntegrationTest}, which otherwise fails a bean
  * that has no matching directory. Should this version later need DDL, add the directory and drop that entry.
  * <p>
  * Each thing this version migrates lives in its own private method called from {@link #apply()}, with the constants
@@ -39,7 +39,7 @@ import static org.thingsboard.server.dao.trendz.TrendzSyncService.TRENDZ_API_KEY
 @Component
 @TbCoreComponent
 @RequiredArgsConstructor
-public class V4_3_1_5Migration implements LtsMigration {
+public class V4_3_1_5Migration implements Migration {
 
     private final ApiKeyService apiKeyService;
 
@@ -50,7 +50,7 @@ public class V4_3_1_5Migration implements LtsMigration {
 
     /**
      * Runs in the same transaction as the version's schema SQL on the no-downtime path, and outside any transaction
-     * on the offline path (see {@link LtsMigration#apply}). Every step below must therefore be light enough to sit in
+     * on the offline path (see {@link Migration#apply}). Every step below must therefore be light enough to sit in
      * a schema transaction, and idempotent, since a crash before the version is recorded re-runs it.
      */
     @Override
