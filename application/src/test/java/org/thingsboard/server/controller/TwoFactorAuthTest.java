@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
@@ -23,6 +25,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
@@ -40,6 +44,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -139,6 +144,43 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         User currentUser = readResponse(doGet("/api/auth/user")
                 .andExpect(status().isOk()), User.class);
         assertThat(currentUser.getId()).isEqualTo(user.getId());
+    }
+
+    @Test
+    public void testWsAuthCmd_preVerificationTokenRejected() throws Exception {
+        configureTotpTwoFa();
+        logInWithPreVerificationToken(username, password);
+
+        wsClient = buildAndConnectWebSocketClient();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(wsClient::isClosed);
+    }
+
+    @Test
+    public void testWsQueryToken_preVerificationTokenRejected() throws Exception {
+        configureTotpTwoFa();
+        logInWithPreVerificationToken(username, password);
+
+        wsClient = buildAndConnectWebSocketClient("/api/ws?token=" + token);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(wsClient::isClosed);
+    }
+
+    @Test
+    public void testWs_accessTokenAcceptedAfterTwoFa() throws Exception {
+        TotpTwoFaAccountConfig totpTwoFaAccountConfig = configureTotpTwoFa();
+        logInWithPreVerificationToken(username, password);
+        JsonNode tokenPair = readResponse(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + getCorrectTotp(totpTwoFaAccountConfig))
+                .andExpect(status().isOk()), JsonNode.class);
+        validateAndSetJwtToken(tokenPair, username);
+        Device device = createDevice("2FA device", "2FA device token");
+
+        EntityTypeFilter deviceFilter = new EntityTypeFilter();
+        deviceFilter.setEntityType(EntityType.DEVICE);
+        EntityDataUpdate update = getWsClient().sendEntityDataQuery(deviceFilter);
+
+        assertThat(update.getData().getData()).singleElement()
+                .extracting(EntityData::getEntityId).isEqualTo(device.getId());
     }
 
     @Test
