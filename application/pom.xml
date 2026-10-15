@@ -239,6 +239,10 @@
             <artifactId>spring-boot-security-oauth2-client</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-validation</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-client</artifactId>
         </dependency>
@@ -496,6 +500,12 @@
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-open-ai-official</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.swagger.core.v3</groupId>
+                    <artifactId>swagger-annotations</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.langchain4j</groupId>

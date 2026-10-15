@@ -1048,6 +1048,8 @@
                                         <exclude>javax.annotation:javax.annotation-api</exclude>
                                         <exclude>org.springframework.boot:*:[,4.0.0)</exclude>
                                         <exclude>org.springframework:*:[,7.0.0)</exclude>
+                                        <exclude>org.springframework.security:*:[,7.0.0)</exclude>
+                                        <exclude>org.springframework.integration:*:[,7.0.0)</exclude>
                                         <exclude>tools.jackson*:*</exclude>
                                         <exclude>org.testcontainers:postgresql</exclude>
                                         <exclude>org.testcontainers:cassandra</exclude>
