@@ -9124,6 +9124,7 @@
         "image-size": "Image size",
         "width": "Width",
         "height": "Height",
+        "style": "Style",
         "preserve-image-proportions": "Preserve image proportions",
         "text-style": "Text style",
         "background-color": "Background color",
