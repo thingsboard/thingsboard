@@ -74,7 +74,7 @@
         <amqp-client.version>5.34.0</amqp-client.version> <!-- to fix CVE-2026-63337, CVE-2026-69219, CVE-2026-69220 and CVE-2026-75516. Pinned via the amqp-client override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
         <zstd-jni.version>1.5.7-14</zstd-jni.version> <!-- to fix CVE-2026-87795, CVE-2026-87823, CVE-2026-87824, CVE-2026-87825, CVE-2026-87877, CVE-2026-90560 and CVE-2026-90852. Transitive dependency of kafka-clients 3.9.2; not managed by any BOM, so the override below is the sole source of the version. TODO: remove once kafka-clients pulls zstd-jni >= 1.5.7-14 -->
         <freemarker.version>2.3.35</freemarker.version> <!-- to fix CVE-2026-84939. Pinned via the freemarker override below: spring-boot-dependencies is imported as a BOM, so this property alone would not win. TODO: remove when fixed in spring-boot-dependencies -->
-        <jjwt.version>0.12.5</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <metrics.version>4.2.25</metrics.version>
         <cassandra-all.version>5.0.7</cassandra-all.version> <!-- tools; 5.0.7 fixes CVE-2026-27314 -->
