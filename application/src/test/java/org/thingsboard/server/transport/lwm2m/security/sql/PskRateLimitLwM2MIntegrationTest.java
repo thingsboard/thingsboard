@@ -33,8 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unknown pre-shared key identities are decided by the PSK store of the DTLS connector, which does not see the client's
- * address: checks that the IP rate limits are wired into the LwM2M server.
+ * The PSK store of the DTLS connector doesn't see the client's address: checks the IP rate limits are wired into the LwM2M server.
  */
 @TestPropertySource(properties = {
         "transport.rate_limits.ip_limits_enabled=true",

@@ -55,7 +55,7 @@ public class DeviceCertificateRevocationServiceTest extends AbstractServiceTest 
 
         DeviceCertificateRevocation revocation = revocationService.revokeCertificate(tenantId, toPem(certificate), null, " Device lost ", null);
 
-        // The same value transports compute for a presented certificate (SslUtil.getCertificateString + getSha3Hash)
+        // The hash transports compute for a presented certificate
         String transportHash = EncryptionUtil.getSha3Hash(Base64.getEncoder().encodeToString(certificate.getEncoded()));
         assertThat(revocation.getId()).isNotNull();
         assertThat(revocation.getCertificateHash()).isEqualTo(transportHash);
@@ -85,7 +85,6 @@ public class DeviceCertificateRevocationServiceTest extends AbstractServiceTest 
 
             assertThat(revocationService.isRevoked(otherTenant.getId(), revocation.getCertificateHash())).isTrue();
             assertThat(revocationService.isRevoked(tenantId, revocation.getCertificateHash())).isFalse();
-            // The same certificate can be revoked independently by another tenant
             revocationService.revokeCertificate(tenantId, toPem(certificate), null, null, null);
             assertThat(revocationService.isRevoked(tenantId, revocation.getCertificateHash())).isTrue();
         } finally {
@@ -119,7 +118,6 @@ public class DeviceCertificateRevocationServiceTest extends AbstractServiceTest 
 
     @Test
     public void testSelfSignedDeviceCertificateMarkedAsCaCanBeRevoked() throws Exception {
-        // "openssl req -x509" makes a CA certificate by default, and devices use such certificates as their own
         String pem = toPem(generateCertificate("CN=self-signed-device", true, System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)));
         Device device = new Device();
         device.setTenantId(tenantId);

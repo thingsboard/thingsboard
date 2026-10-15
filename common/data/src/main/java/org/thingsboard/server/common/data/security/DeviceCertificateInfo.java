@@ -5,10 +5,6 @@ package org.thingsboard.server.common.data.security;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-/**
- * X.509 certificate stored in device credentials, described so that an administrator can make sure it is the certificate
- * to revoke: after a certificate leaks, the device and the holder of the leaked certificate bind alternately.
- */
 @Schema
 @Data
 public class DeviceCertificateInfo {

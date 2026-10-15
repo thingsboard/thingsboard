@@ -20,19 +20,13 @@ import java.security.Principal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Applies the IP rate limits for repeatedly failed authentication to the DTLS handshakes of LwM2M clients, and registers
- * a client's certificate once the handshake proved that the client holds its private key.
- * <p>
- * Raw public keys are trusted during the handshake and checked when the client registers, see {@link TbLwM2MAuthorizer}.
- */
 @RequiredArgsConstructor
 public class TbLwM2mDtlsHandshakeListener implements SessionListener {
 
     private final TransportRateLimitService rateLimitService;
     // Null for the bootstrap server
     private final LwM2mClientCertificateRegistry certificateRegistry;
-    // The pre-shared key store decides on the identity of a handshake, but does not know the client's address
+    // The pre-shared key store doesn't know the client's address
     private final Map<ConnectionId, Handshaker> handshakes = new ConcurrentHashMap<>();
 
     @Override
@@ -43,13 +37,14 @@ public class TbLwM2mDtlsHandshakeListener implements SessionListener {
 
     @Override
     public void contextEstablished(Handshaker handshaker, DTLSContext establishedContext) throws HandshakeException {
-        // Called after the client's Finished message is verified, so after its CertificateVerify or with the right pre-shared key
+        // After the client's Finished is verified: it proved it holds the private key or pre-shared key
         ConnectionId cid = handshaker.getConnection().getConnectionId();
         handshakes.remove(cid, handshaker);
         if (certificateRegistry != null && !certificateRegistry.commitPending(cid)) {
             throw new HandshakeException("Certificate was revoked during the handshake",
                     new AlertMessage(AlertLevel.FATAL, AlertDescription.CERTIFICATE_REVOKED));
         }
+        // Raw public keys are checked on registration, see TbLwM2MAuthorizer
         Principal peerIdentity = establishedContext.getSession().getPeerIdentity();
         if (peerIdentity instanceof X509CertPath || peerIdentity instanceof PreSharedKeyIdentity) {
             rateLimitService.onAuthSuccess(handshaker.getPeerAddress());
@@ -77,7 +72,7 @@ public class TbLwM2mDtlsHandshakeListener implements SessionListener {
     }
 
     public void onUnknownPskIdentity(ConnectionId cid) {
-        // Counted once per handshake: the store is asked again for every retransmission of the client's key exchange
+        // Removed so it's counted once: the store is asked again on every retransmission of the key exchange
         Handshaker handshaker = handshakes.remove(cid);
         if (handshaker != null) {
             rateLimitService.onAuthFailure(handshaker.getPeerAddress());

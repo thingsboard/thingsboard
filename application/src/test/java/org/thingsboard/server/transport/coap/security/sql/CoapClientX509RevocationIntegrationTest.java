@@ -35,9 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
-/**
- * CoAP over DTLS with X.509 device certificates: revocation of the certificate of an active DTLS session and IP rate limits.
- */
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -91,7 +88,6 @@ public class CoapClientX509RevocationIntegrationTest extends AbstractCoapSecurit
         revoke(device);
 
         for (int i = 0; i < 3; i++) {
-            // Every attempt is a new DTLS handshake from a new port
             CoapClientX509Test client = new CoapClientX509Test(certPrivateKey, FeatureType.TELEMETRY, COAPS_BASE_URL, null);
             try {
                 assertThat(client.postMethod(PAYLOAD_VALUES_STR).getCode()).isEqualTo(CoAP.ResponseCode.UNAUTHORIZED);

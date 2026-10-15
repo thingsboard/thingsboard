@@ -453,19 +453,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         clearAndUnregister(clientContext.getClientByDeviceId(deviceId.getId()));
     }
 
-    /**
-     * Besides unregistering the client, terminates its DTLS connections and removes their sessions from the session cache:
-     * a client that resumed the DTLS session would skip the certificate check of a full handshake and could register again
-     * in trust mode, where the core identifies the device by its endpoint and does not see the certificate.
-     * Only clients that this node saw authenticate with the certificate for the tenant are affected, so that a tenant can't
-     * disconnect devices of another tenant by revoking their certificates.
-     * <p>
-     * If the endpoint authenticated with another certificate after the revoked one, e.g. the revoked certificate was replaced
-     * before, only the connections of the revoked certificate are terminated: the registration most likely uses the new one.
-     * <p>
-     * The registration and the client state in the stores shared by the nodes are removed only if this node serves the
-     * registration: the endpoint may have moved to another node since, possibly with another certificate.
-     */
     @EventListener(X509CertificateRevokedEvent.class)
     public void onX509CertificateRevoked(X509CertificateRevokedEvent event) {
         Map<String, Boolean> endpoints = certificateRegistry.revoke(event.getTenantId(), event.getCertificateHash());
@@ -473,9 +460,11 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             return;
         }
         executor.submit(() -> {
+            // Also drops the sessions: a resumed session skips the certificate check and could register again in trust mode
             terminateDtlsConnections(event.getCertificateHash());
             endpoints.forEach((endpoint, lastCertificate) -> {
                 log.info("[{}] Closing LwM2M client with revoked certificate", endpoint);
+                // Otherwise the registration most likely uses the certificate that replaced the revoked one
                 if (lastCertificate) {
                     clientContext.getLwM2mClients().stream()
                             .filter(client -> endpoint.equals(client.getEndpoint()) && client.getRegistration() != null)
@@ -487,13 +476,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         });
     }
 
-    /**
-     * Whether this node handled the latest Register or Update of the client's registration. If another node did, the
-     * registration and its shared state belong to that node, which handles a revocation of a certificate it saw itself.
-     * An Update that this node handles at the same moment makes the registration look served elsewhere: it then expires
-     * instead of being removed, while the terminated connections keep the client from using it.
-     * A registration that is not stored any more was removed already, e.g. by the credentials update of the device.
-     */
+    // Served here if this node handled the latest Register or Update; otherwise that node owns the shared state
     private boolean isRegistrationServedHere(LwM2mClient client) {
         Registration registration = client.getRegistration();
         Registration current = registrationStore.getRegistration(registration.getId());
@@ -1121,7 +1104,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     public void onToTransportUpdateCredentials(SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
         log.info("[{}] updateCredentials", sessionInfo);
         LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
-        // Not found if it was unregistered meanwhile, e.g. by the revocation of its certificate, which also updates its credentials
         if (client != null) {
             clearAndUnregister(client);
         }

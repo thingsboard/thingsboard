@@ -13,30 +13,16 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 public interface TbDeviceCertificateRevocationService {
 
-    /**
-     * Revokes the X.509 certificate stored in the device credentials and disconnects the device.
-     */
     DeviceCertificateRevocation revokeDeviceCertificate(Device device, String reason, User user) throws ThingsboardException;
 
-    /**
-     * Revokes a certificate by its PEM, e.g. a previous certificate of a device that chain provisioning would bind again,
-     * or the certificate of a device that is not provisioned yet. Disconnects the device the certificate is bound to.
-     */
     DeviceCertificateRevocation revokeCertificate(TenantId tenantId, String certificatePem, String reason, User user) throws ThingsboardException;
 
-    /**
-     * The certificate stored in the device credentials with its revocation, or null if the credentials hold no valid certificate.
-     */
     DeviceCertificateInfo getDeviceCertificateInfo(Device device);
 
     void deleteRevocation(DeviceCertificateRevocation revocation, User user) throws ThingsboardException;
 
     /**
-     * Rejects credentials holding a revoked certificate: they could never authenticate.
-     * The device's own certificate is accepted while it is unchanged, so that a device keeps its revoked certificate
-     * and can still be saved, e.g. by a bulk import or with other LwM2M settings.
-     *
-     * @param deviceId the device the credentials are saved for, or null for a new device
+     * Rejects a revoked certificate, except the device's own unchanged one, so that the device can still be saved.
      */
     void validateNotRevoked(TenantId tenantId, DeviceId deviceId, DeviceCredentials credentials);
 

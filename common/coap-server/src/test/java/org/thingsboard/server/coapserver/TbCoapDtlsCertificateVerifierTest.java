@@ -100,7 +100,6 @@ public class TbCoapDtlsCertificateVerifierTest {
 
     @Test
     public void givenRegisteredCertificateAfterUnknownLeaf_whenVerified_thenItIsNotMatched() throws Exception {
-        // Certificates are sent in clear text: the client could append the certificate of any device to its own one
         X509Certificate leaf = generateCertificate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
         X509Certificate deviceCertificate = generateCertificate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1));
         String deviceCredentials = SslUtil.getCertificateString(deviceCertificate);

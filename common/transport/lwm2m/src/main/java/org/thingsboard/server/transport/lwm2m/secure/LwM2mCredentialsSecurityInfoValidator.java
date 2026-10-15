@@ -52,12 +52,6 @@ public class LwM2mCredentialsSecurityInfoValidator {
         return getEndpointSecurityInfoByCredentialsId(credentialsId, keyValue, null);
     }
 
-    /**
-     * @param certificateHash hash of the X.509 certificate the client presented, so that the core can reject a revoked
-     *                        certificate; null for clients that do not authenticate with a certificate
-     * @throws LwM2MAuthException                 if there are no such credentials
-     * @throws LwM2MTransportUnavailableException if the core did not answer
-     */
     public TbLwM2MSecurityInfo getEndpointSecurityInfoByCredentialsId(String credentialsId, LwM2mTypeServer keyValue, String certificateHash) {
         CountDownLatch latch = new CountDownLatch(1);
         final TbLwM2MSecurityInfo[] resultSecurityStore = new TbLwM2MSecurityInfo[1];

@@ -73,11 +73,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         }
     }
 
-    /**
-     * Like {@link #getByIdentity(String)}, but tells a missing pre-shared key from a core that did not answer.
-     *
-     * @throws LwM2MTransportUnavailableException if the core did not answer
-     */
+    // Like getByIdentity, but throws LwM2MTransportUnavailableException if the core did not answer
     public SecurityInfo getByPskIdentity(String identity) {
         try {
             TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(identity, BOOTSTRAP);

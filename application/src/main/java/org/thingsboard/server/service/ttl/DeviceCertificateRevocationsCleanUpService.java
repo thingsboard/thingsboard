@@ -13,15 +13,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Removes revocations of certificates that expired more than the TTL ago: every transport rejects an expired certificate,
- * so such a revocation no longer blocks anything.
- * <p>
- * That holds only while transports check the validity period of client certificates. A transport configured to skip the
- * check accepts expired certificates, and removing their revocations would make them usable again. Skip flags of transports
- * running in this process are detected and stop the cleanup; standalone transport services must be accounted for by
- * disabling this TTL.
- */
 @Slf4j
 @Service
 @TbCoreComponent

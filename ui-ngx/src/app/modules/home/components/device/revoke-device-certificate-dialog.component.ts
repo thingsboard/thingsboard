@@ -14,7 +14,6 @@ import {
 } from '@shared/models/device-certificate-revocation.models';
 
 export interface RevokeDeviceCertificateDialogData {
-  // The certificate stored in device credentials; without it the dialog asks for the certificate to revoke
   certificateInfo?: DeviceCertificateInfo;
 }
 
@@ -44,7 +43,6 @@ export class RevokeDeviceCertificateDialogComponent extends
   ngOnInit(): void {
     this.certificateInfo = this.data?.certificateInfo;
     this.revokeFormGroup = this.fb.group({
-      // The server reads PEM only: a DER .crt or .cer file is read as text and can't be parsed
       certificate: [null, this.certificateInfo ? [] : [Validators.required, Validators.pattern(/-----BEGIN CERTIFICATE-----/)]],
       certificateFile: [null],
       reason: [null, [Validators.maxLength(this.reasonMaxLength)]]

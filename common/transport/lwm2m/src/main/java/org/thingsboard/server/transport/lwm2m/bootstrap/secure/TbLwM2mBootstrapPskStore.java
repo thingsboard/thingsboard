@@ -15,9 +15,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavai
 
 import javax.crypto.SecretKey;
 
-/**
- * Counts unknown pre-shared key identities as failed authentication of the client's address.
- */
 public class TbLwM2mBootstrapPskStore extends LwM2mBootstrapPskStore {
 
     private final LwM2MBootstrapSecurityStore bsSecurityStore;

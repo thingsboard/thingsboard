@@ -153,7 +153,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         if (!ipRateLimitsEnabled) {
             return true;
         }
-        // Looked up, not created: an entry for every source address would let forged UDP sources fill the map
+        // Not computeIfAbsent: forged UDP source addresses would fill the map
         var stats = ipMap.get(address.getAddress());
         if (stats == null || !stats.isBlocked()) {
             return true;
@@ -174,7 +174,6 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         if (!ipRateLimitsEnabled) {
             return;
         }
-        // Called for every authenticated CoAP request: nothing to reset for addresses without failures
         var stats = ipMap.get(address.getAddress());
         if (stats == null || (!stats.isBlocked() && stats.getFailureCount() == 0)) {
             return;
@@ -238,10 +237,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         }
     }
 
-    /**
-     * Gives the address a fresh failure budget: otherwise a single failure after the block expires blocks it again,
-     * which keeps an address shared by many devices behind a NAT blocked as long as one of them keeps failing.
-     */
+    // Resets the failures too: otherwise one failure after the block expires blocks an address shared behind a NAT again
     private void unblock(InetAddress address, InetAddressRateLimitStats stats, String reason) {
         stats.setBlocked(false);
         stats.setFailureCount(0);

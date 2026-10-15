@@ -78,7 +78,7 @@ export class RevokedCertificatesTableComponent implements OnInit {
     config.columns.push(
       new DateEntityTableColumn<DeviceCertificateRevocationInfo>('createdTime', 'device.certificate-revocation.revoked-time',
         this.datePipe, '150px'),
-      // Cells are rendered as HTML, and the subject is chosen by whoever made the certificate. Tooltips are plain text.
+      // Cells are rendered as HTML and the subject comes from the certificate
       new EntityTableColumn<DeviceCertificateRevocationInfo>('subject', 'device.certificate-revocation.subject', '30%',
         revocation => escapeHtml(revocation.subject), () => ({}), true, () => ({}), revocation => revocation.subject),
       new EntityTableColumn<DeviceCertificateRevocationInfo>('serialNumber', 'device.certificate-revocation.serial-number', '20%',
@@ -118,7 +118,6 @@ export class RevokedCertificatesTableComponent implements OnInit {
         if (!deviceIds.length) {
           return of(pageData);
         }
-        // A deleted device is missing from the result and its revocation is shown without a device
         return this.deviceService.getDevices(deviceIds, {ignoreErrors: true}).pipe(
           catchError(() => of([] as Device[])),
           map(devices => {

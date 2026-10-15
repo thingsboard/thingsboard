@@ -264,7 +264,6 @@ public class DefaultTransportApiServiceTest {
 
         TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.Builder request = TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder()
                 .setCredentialsId("lwm2m-endpoint");
-        // In trust mode the credentials id is the endpoint: only the certificate hash sent by the transport identifies the certificate
         assertThat(validateLwM2M(request.clone().setCertificateHash("revoked-certificate-hash").build()).hasDeviceInfo()).isFalse();
         assertThat(validateLwM2M(request.clone().setCertificateHash("other-certificate-hash").build()).hasDeviceInfo()).isTrue();
         // Transports of previous versions don't send the hash

@@ -21,6 +21,4 @@ CREATE TABLE IF NOT EXISTS device_certificate_revocation (
     CONSTRAINT device_certificate_revocation_hash_unq_key UNIQUE (tenant_id, certificate_hash)
 );
 
-CREATE INDEX IF NOT EXISTS idx_device_certificate_revocation_not_after ON device_certificate_revocation(not_after);
-
 -- DEVICE CERTIFICATE REVOCATION END

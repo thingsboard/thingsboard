@@ -48,7 +48,7 @@ class CoapDeviceAuthCallbackTest {
 
     @Test
     void givenWrongTokenOverPlainUdp_whenValidated_thenFailureIsNotCounted() {
-        // The source address of a plain UDP request can be forged: counting it would let anybody get a victim's address blocked
+        // A plain UDP source address can be forged: counting it would let anyone get a victim's address blocked
         callback(new UdpEndpointContext(PEER)).onSuccess(ValidateDeviceCredentialsResponse.builder().build());
 
         verify(rateLimitService, never()).onAuthFailure(any());

@@ -112,7 +112,6 @@ public class TbLwM2mDtlsHandshakeListenerTest {
 
     @Test
     public void givenHandshakeFailures_whenClassified_thenOnlyFailedProofOfPossessionIsCounted() {
-        // The classification itself is covered by DtlsHandshakeRateLimitsTest
         listener.handshakeFailed(handshaker(ServerHandshaker.class), failure("Verification of signature failed", AlertDescription.DECRYPT_ERROR));
         verify(rateLimitService).onAuthFailure(PEER);
 

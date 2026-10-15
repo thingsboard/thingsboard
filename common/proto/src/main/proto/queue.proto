@@ -671,8 +671,7 @@ message GetResourceResponseMsg {
 
 message ValidateDeviceLwM2MCredentialsRequestMsg {
   string credentialsId = 1;
-  // SHA3-256 of the client X.509 certificate presented in the DTLS handshake, checked against revoked certificates.
-  // Set for X.509 clients only: in trust mode credentialsId is the endpoint and does not identify the certificate.
+  // X.509 clients only: in trust mode credentialsId is the endpoint, not the certificate
   optional string certificateHash = 2;
 }
 
@@ -765,7 +764,6 @@ message ResourceDeleteMsg {
   string resourceKey = 4;
 }
 
-// Broadcast to CoAP and LwM2M transports: drop sessions they keep for the revoked device certificate.
 message X509CertificateRevokedMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;

@@ -482,8 +482,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 .setCertificateHash(certificateHash)
                 .build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setX509CertificateRevokedMsg(revokedMsg).build();
-        // To every transport service, not only the CoAP and LwM2M ones: the service info that such a filter relies on loses
-        // the transports of a service once it is regenerated with fresh system info, so the filter would skip them
+        // Not filtered to CoAP and LwM2M: the service info drops a service's transports when it is regenerated
         broadcast(transportMsg, callback);
     }
 

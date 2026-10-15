@@ -39,10 +39,6 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
-/**
- * Revoked device certificates of the tenant. Limited to tenant administrators: a revocation applies to every device of the
- * tenant, so revoking by PEM or removing a revocation is not something a customer user may do for other customers' devices.
- */
 @RestController
 @TbCoreComponent
 @Slf4j

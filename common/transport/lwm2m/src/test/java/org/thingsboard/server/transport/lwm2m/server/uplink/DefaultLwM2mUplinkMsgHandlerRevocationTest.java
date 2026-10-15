@@ -116,7 +116,6 @@ class DefaultLwM2mUplinkMsgHandlerRevocationTest {
 
     @Test
     void givenClientUnregisteredByRevocation_whenCredentialsUpdateArrives_thenNothingIsUnregisteredAgain() throws Exception {
-        // Revoking the certificate a device is bound to also updates its credentials: the two can arrive in any order
         SessionInfoProto sessionInfo = SessionInfoProto.newBuilder().setSessionIdMSB(1).setSessionIdLSB(2).build();
         when(clientContext.getClientBySessionInfo(sessionInfo)).thenReturn(null);
 

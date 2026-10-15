@@ -102,16 +102,14 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
             try {
                 boolean x509CredentialsFound = false;
                 boolean coreUnavailable = false;
-                // Only the leaf: the client proves that it holds the private key of the leaf, not of the other certificates
-                // in the chain, which are not validated in X.509 mode and are never compared with the endpoint
+                // Only the leaf: the client proves it holds the leaf's private key, not the other certificates'
                 List<? extends Certificate> chain = certChain.getCertificates();
                 if (!chain.isEmpty() && chain.get(0) instanceof X509Certificate cert) {
                     try {
                         if (!skipValidityCheckForClientCert) {
                             cert.checkValidity();
                         }
-                        // Sent along with every lookup, so the core rejects a revoked certificate also in trust mode,
-                        // where the credentials id is the endpoint and does not identify the certificate.
+                        // Sent with every lookup, so the core rejects a revoked certificate also in trust mode
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
                         long checkedTime = System.currentTimeMillis();

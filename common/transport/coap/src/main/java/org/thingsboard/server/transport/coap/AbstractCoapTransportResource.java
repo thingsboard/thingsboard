@@ -43,10 +43,6 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
     protected abstract void processHandlePost(CoapExchange exchange);
 
-    /**
-     * Validates the access token of the request. Requests from an address blocked due to repeatedly failed authentication
-     * are rejected before the token is validated.
-     */
     protected void validateAccessToken(CoapExchange exchange, String token, BiConsumer<ValidateDeviceCredentialsResponse, DeviceProfile> onSuccess) {
         if (!transportContext.checkAddress(exchange.advanced().getRequest())) {
             exchange.respond(CoAP.ResponseCode.TOO_MANY_REQUESTS);

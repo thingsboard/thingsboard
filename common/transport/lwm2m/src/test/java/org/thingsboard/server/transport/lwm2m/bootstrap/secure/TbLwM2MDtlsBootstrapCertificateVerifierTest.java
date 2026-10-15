@@ -61,7 +61,6 @@ class TbLwM2MDtlsBootstrapCertificateVerifierTest {
         String leafHash = EncryptionUtil.getSha3Hash(SslUtil.getCertificateString(leaf));
         when(bsSecurityStore.getX509ByEndpoint(leafHash, leafHash)).thenReturn(securityInfo());
 
-        // A DTLS client may send its chain in any order, which the handshake accepts
         boolean registered = verifier.isRegistered(certPath(leaf, root, intermediate), PEER);
 
         assertThat(registered).isTrue();

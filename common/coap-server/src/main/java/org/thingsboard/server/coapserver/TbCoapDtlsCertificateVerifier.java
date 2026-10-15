@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVerifier {
 
     private final TbCoapDtlsSessionInMemoryStorage tbCoapDtlsSessionInMemoryStorage;
-    // Sessions of handshakes in progress, by connection: stored once the client proved that it holds the private key
+    // Stored only once the client proved that it holds the private key, see TbCoapDtlsHandshakeListener
     private final ConcurrentMap<ConnectionId, PendingSession> pendingSessions = new ConcurrentHashMap<>();
 
     private TransportService transportService;
@@ -56,10 +56,6 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     private TransportRateLimitService rateLimitService;
     private boolean skipValidityCheckForClientCert;
 
-    /**
-     * @param tbCoapDtlsSessionInMemoryStorage shared by the verifiers of every DTLS endpoint that is recreated on a certificate
-     *                                         reload: the CoAP resources keep using the storage they got first
-     */
     public TbCoapDtlsCertificateVerifier(TransportService transportService, TbServiceInfoProvider serviceInfoProvider, TransportRateLimitService rateLimitService,
                                          TbCoapDtlsSessionInMemoryStorage tbCoapDtlsSessionInMemoryStorage, boolean skipValidityCheckForClientCert) {
         this.transportService = transportService;
@@ -78,7 +74,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
         try {
             CertPath certpath = message.getCertificateChain();
-            // Only the leaf: the client proves that it holds the private key of the leaf, not of the other certificates in the chain
+            // Only the leaf: the client proves that it holds the private key of the leaf, not of the rest of the chain
             List<? extends Certificate> chain = certpath.getCertificates();
             X509Certificate cert = !chain.isEmpty() && chain.get(0) instanceof X509Certificate leaf ? leaf : null;
             boolean found = false;
@@ -149,8 +145,6 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     }
 
     /**
-     * Stores the session found for the certificate of the handshake, once the client proved that it holds its private key.
-     *
      * @return whether the client authenticated with the certificate of a device
      */
     public boolean commitSession(ConnectionId cid) {
@@ -185,8 +179,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     }
 
     public void evictTimeoutSessions() {
-        // Handshakes end by completing or failing, this only guards against a handshake that is never reported.
-        // Before the storage forgets old revocations, which could still refuse such a handshake.
+        // Handshakes that are never reported, dropped before the storage forgets the revocations they are checked against
         long expirationTime = System.currentTimeMillis() - getDtlsSessionReportTimeout();
         pendingSessions.values().removeIf(pendingSession -> pendingSession.checkedTime() < expirationTime);
         tbCoapDtlsSessionInMemoryStorage.evictTimeoutSessions();
@@ -200,9 +193,6 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
         return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionReportTimeout();
     }
 
-    /**
-     * @param checkedTime when the core was asked about the certificate: a revocation received later may not have been seen
-     */
     private record PendingSession(TbCoapDtlsSessionKey key, TbCoapDtlsSessionInfo info, long checkedTime) {}
 
 }

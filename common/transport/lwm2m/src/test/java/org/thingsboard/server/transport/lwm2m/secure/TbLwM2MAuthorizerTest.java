@@ -53,7 +53,6 @@ public class TbLwM2MAuthorizerTest {
 
     @Test
     public void givenBlockedAddress_whenRegisteredClientUpdates_thenItIsNotBlocked() {
-        // A block stops new registrations only, like a block of new MQTT connections
         when(rateLimitService.checkAddress(PEER)).thenReturn(false);
         when(securityStore.getByEndpoint(ENDPOINT)).thenReturn(SecurityInfo.newPreSharedKeyInfo(ENDPOINT, ENDPOINT, new byte[]{1, 2, 3}));
 

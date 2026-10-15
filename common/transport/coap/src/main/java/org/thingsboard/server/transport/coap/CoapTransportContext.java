@@ -64,9 +64,6 @@ public class CoapTransportContext extends TransportContext {
 
     private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck = new ConcurrentHashMap<>();
 
-    /**
-     * @return false if the address of the request is blocked due to repeatedly failed authentication
-     */
     public boolean checkAddress(Request request) {
         return rateLimitService.checkAddress(request.getSourceContext().getPeerAddress());
     }

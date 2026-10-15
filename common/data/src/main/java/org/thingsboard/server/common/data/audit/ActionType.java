@@ -66,12 +66,12 @@ public enum ActionType {
      */
     CREDENTIALS_UPDATED,
     /**
-     * Device certificate revoked: it can no longer authenticate or be bound to a device. Does not push to rule engine.
-     * Audit log payload: the revocation (certificate hash, serial number, issuer, subject, reason).
+     * Device certificate revoked. Does not push to rule engine.
+     * Audit log payload: the revocation.
      */
     CREDENTIALS_REVOKED,
     /**
-     * Revocation of a device certificate removed: the certificate is accepted again. Does not push to rule engine.
+     * Device certificate revocation removed. Does not push to rule engine.
      * Audit log payload: the removed revocation.
      */
     CREDENTIALS_REVOCATION_DELETED,

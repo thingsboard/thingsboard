@@ -48,9 +48,7 @@ export class DeviceCredentialsDialogComponent extends
   isReadOnly: boolean;
   loadingCredentials = true;
   certificateInfo: DeviceCertificateInfo;
-  // LwM2M trust mode: the certificate is not stored with the credentials
   certificateNotStored = false;
-  // Revocations apply to the whole tenant: customer users can see them, but not revoke certificates
   readonly canManageRevocations: boolean;
 
   private deviceCredentials: DeviceCredentials;

@@ -61,7 +61,6 @@ public class TbCoapDtlsHandshakeListenerTest {
 
     @Test
     public void givenFailuresOtherThanProofOfPossession_whenHandshakeFails_thenTheyAreNotCounted() {
-        // The classification itself is covered by DtlsHandshakeRateLimitsTest
         listener.handshakeFailed(handshaker(), failure("Received 'fatal alert/DECRYPT_ERROR'", AlertDescription.DECRYPT_ERROR));
         listener.handshakeFailed(handshaker(), new RuntimeException("Handshake flight timeout"));
 
@@ -80,7 +79,6 @@ public class TbCoapDtlsHandshakeListenerTest {
 
     @Test
     public void givenUnknownCertificate_whenContextIsEstablished_thenSuccessIsNotReported() {
-        // The client may still authenticate its requests with an access token
         when(verifier.commitSession(cid)).thenReturn(false);
 
         listener.contextEstablished(handshaker(), mock(DTLSContext.class));

@@ -108,7 +108,6 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
             info.setRevocation(revocationService.findRevocationByCertificatePem(device.getTenantId(), certificatePem));
             return info;
         } catch (Exception e) {
-            // e.g. a placeholder value of a pre-registered device
             log.debug("[{}][{}] Device credentials hold an invalid certificate: {}", device.getTenantId(), device.getId(), e.getMessage());
             return null;
         }
@@ -137,7 +136,6 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
                 && credentials.getCredentialsType() != DeviceCredentialsType.LWM2M_CREDENTIALS)) {
             return;
         }
-        // Same id the transports look the credentials up by: the certificate hash for X.509 credentials
         DeviceCredentials formatted = new DeviceCredentials(credentials);
         try {
             deviceCredentialsService.formatCredentials(formatted);
@@ -153,22 +151,17 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
         }
     }
 
-    // Revocations of certificates no device is bound to have no device to log the action for
     private void logTenantAction(TenantId tenantId, ActionType actionType, User user, DeviceCertificateRevocation revocation) {
         Tenant tenant = tenantService.findTenantById(tenantId);
         logEntityActionService.logEntityAction(tenantId, tenantId, tenant, actionType, user, revocation);
     }
 
-    /**
-     * When the revoked certificate is the one the device is bound to, the device actor notifies the transports that the device
-     * credentials changed: MQTT closes the session, LwM2M unregisters the client. CoAP and LwM2M also keep authenticated
-     * DTLS state outside device sessions, which the transports drop by the certificate hash.
-     */
     private void onRevoked(DeviceCertificateRevocation revocation, Device device, DeviceCredentials credentials) {
         TenantId tenantId = revocation.getTenantId();
         if (device != null && credentials != null && revocation.getCertificateHash().equals(credentials.getCredentialsId())) {
             tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(tenantId, device.getId(), credentials), null);
         }
+        // Also when the device is notified: CoAP and LwM2M keep DTLS state outside device sessions
         tbClusterService.onDeviceCertificateRevoked(tenantId, revocation.getCertificateHash(), null);
     }
 
@@ -179,13 +172,12 @@ public class DefaultTbDeviceCertificateRevocationService extends AbstractTbEntit
         } else if (credentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
             LwM2MDeviceCredentials lwM2MCredentials = JacksonUtil.fromString(credentials.getCredentialsValue(), LwM2MDeviceCredentials.class);
             if (lwM2MCredentials != null && lwM2MCredentials.getClient() instanceof X509ClientCredential x509Credential) {
-                certificate = x509Credential.getCert(); // empty in trust mode: the certificate is not stored
+                certificate = x509Credential.getCert();
             }
         }
         if (StringUtils.isBlank(certificate)) {
             return null;
         }
-        // Stored values may lack the PEM armor: X.509 credentials keep only the Base64 body
         return certificate.contains("-----BEGIN CERTIFICATE-----") ? certificate :
                 "-----BEGIN CERTIFICATE-----\n" + certificate.trim() + "\n-----END CERTIFICATE-----";
     }

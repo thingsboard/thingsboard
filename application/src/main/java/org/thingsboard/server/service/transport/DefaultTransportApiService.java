@@ -220,10 +220,6 @@ public class DefaultTransportApiService implements TransportApiService {
         return validateCredentials(credentialsId, credentialsType, null);
     }
 
-    /**
-     * @param certificateHash hash of the X.509 certificate the device presented, checked against the certificates revoked
-     *                        in the device's tenant; null when the device does not authenticate with a certificate
-     */
     private TransportApiResponseMsg validateCredentials(String credentialsId, DeviceCredentialsType credentialsType, String certificateHash) {
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
@@ -266,7 +262,7 @@ public class DefaultTransportApiService implements TransportApiService {
         String deviceCertificateHash = chain.isEmpty() ? null : EncryptionUtil.getSha3Hash(chain.get(0));
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
-            // Credentials only of the leaf: the client proves that it holds its private key, not the keys of the CAs in the chain
+            // Only the leaf: the client proves it holds the leaf's private key, not the keys of the CAs in the chain
             if (certificateHash.equals(deviceCertificateHash)) {
                 DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
                 if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
@@ -275,8 +271,7 @@ public class DefaultTransportApiService implements TransportApiService {
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
             if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
-                // Must run before provisioning: binding a revoked certificate would replace the device's stored credentials
-                // and close its sessions, and with "create new devices" enabled it would create a device for it.
+                // Before provisioning, which would bind the revoked certificate to a device or create one for it
                 if (deviceCertificateRevocationService.isRevoked(deviceProfile.getTenantId(), deviceCertificateHash)) {
                     log.debug("[{}][{}] Rejected revoked device certificate [{}]", deviceProfile.getTenantId(), deviceProfile.getId(), deviceCertificateHash);
                     return getEmptyTransportApiResponse();

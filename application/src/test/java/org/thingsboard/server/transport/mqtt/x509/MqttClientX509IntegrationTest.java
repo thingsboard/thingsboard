@@ -64,9 +64,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * MQTT over TLS with X.509 device certificates: chain provisioning, revocation and IP rate limits, with a real client.
- */
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -144,7 +141,6 @@ public class MqttClientX509IntegrationTest extends AbstractMqttIntegrationTest {
         KeyPair deviceKeys = generateKeyPair();
         X509Certificate deviceCertificate = generateCertificate("CN=" + deviceName, deviceKeys, caCertificate, caKeys.getPrivate(), false);
 
-        // Holds the certificate chain only, e.g. seen in a TLS 1.2 handshake: it can't sign the CertificateVerify message
         assertThatThrownBy(() -> connect(deviceCertificate, generateKeyPair().getPrivate())).isInstanceOf(MqttException.class);
 
         await().during(2, TimeUnit.SECONDS).atMost(3, TimeUnit.SECONDS).untilAsserted(() ->

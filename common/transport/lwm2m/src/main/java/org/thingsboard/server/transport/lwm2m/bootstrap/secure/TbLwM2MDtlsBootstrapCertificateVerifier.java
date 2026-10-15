@@ -53,7 +53,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCertificateVerifier {
 
-    // Length prefixes of the certificate list and of each certificate in a TLS/DTLS Certificate message (RFC 5246, 7.4.2)
+    // Length prefixes in a TLS/DTLS Certificate message (RFC 5246, 7.4.2)
     private static final int CERTIFICATE_LENGTH_BITS = 24;
 
     private final LwM2MTransportServerConfig config;
@@ -117,12 +117,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
         }
     }
 
-    /**
-     * Checks the certificate of an established DTLS session the way a handshake does: a kept or resumed session skips the
-     * handshake, and its certificate may have been revoked or removed from the device credentials since.
-     *
-     * @throws LwM2MTransportUnavailableException if the core did not answer
-     */
+    // A kept or resumed session skips the handshake: its certificate may have been revoked since
     public boolean isRegistered(X509CertPath certPath, InetSocketAddress remotePeer) {
         CertificateMessage message;
         try {
@@ -134,10 +129,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
         return isRegistered(ConnectionId.EMPTY, null, remotePeer, true, false, true, message);
     }
 
-    /**
-     * The Certificate message of the chain as the client sent it, decoded the way the handshake decoded it:
-     * {@code new CertificateMessage(List)} rejects a chain whose certificates are not in issuer order, which the handshake accepts.
-     */
+    // Not new CertificateMessage(List): it rejects a chain out of issuer order, which the handshake accepts
     private static CertificateMessage toCertificateMessage(CertPath certPath) throws CertificateEncodingException, HandshakeException {
         DatagramWriter certificates = new DatagramWriter();
         for (Certificate certificate : certPath.getCertificates()) {
@@ -152,15 +144,11 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
         return CertificateMessage.fromReader(new DatagramReader(message.toByteArray()), CertificateType.X_509);
     }
 
-    /**
-     * @throws LwM2MTransportUnavailableException if the credentials were not found and the core did not answer
-     */
     private boolean isRegistered(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage,
                                  boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
         boolean x509CredentialsFound = false;
         boolean coreUnavailable = false;
-        // Only the leaf: the client proves that it holds the private key of the leaf, not of the other certificates
-        // in the chain, which are not validated in X.509 mode and are never compared with the endpoint
+        // Only the leaf: the client proves it holds the leaf's private key, not the other certificates'
         List<? extends Certificate> chain = message.getCertificateChain().getCertificates();
         if (!chain.isEmpty() && chain.get(0) instanceof X509Certificate cert) {
             try {

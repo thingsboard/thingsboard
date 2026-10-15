@@ -116,7 +116,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         } catch (LwM2MAuthException e) {
             authorized = false;
         }
-        // The source address of an unsecured request can be forged: counting it would let anybody get a victim's address blocked
+        // An unsecured request can forge its source address: counting it would let anybody get a victim's address blocked
         if (rateLimitService != null && sender.getIdentity().isSecure() && !coreUnavailable) {
             if (authorized) {
                 rateLimitService.onAuthSuccess(address);
@@ -269,10 +269,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
     }
 
-    /**
-     * The certificate verifier runs on full handshakes only: a client that kept its DTLS connection, or resumed its DTLS session,
-     * would otherwise get its bootstrap configuration with a certificate revoked since.
-     */
+    // The certificate verifier runs on full handshakes only, so a kept or resumed session must be checked here
     private boolean isCertificateRegistered(BootstrapRequest request, InetSocketAddress address) {
         if (certificateVerifier == null) {
             return true;

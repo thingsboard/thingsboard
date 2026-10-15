@@ -63,14 +63,14 @@ public class TbLwM2MAuthorizer implements Authorizer {
     }
 
     private void onAuthResult(UplinkRequest<?> request, LwM2mPeer sender, InetSocketAddress address, boolean authorized) {
-        // The source address of an unsecured request can be forged: counting it would let anybody get a victim's address blocked
+        // An unsecured request can forge its source address: counting it would let anybody get a victim's address blocked
         if (address == null || !sender.getIdentity().isSecure()) {
             return;
         }
         if (!authorized) {
             rateLimitService.onAuthFailure(address);
         } else if (request instanceof RegisterRequest) {
-            // Only requests that the block gates: an update of an existing registration would lift the block of its address
+            // Only Register, which the block gates: an Update would lift the block of its address
             rateLimitService.onAuthSuccess(address);
         }
     }

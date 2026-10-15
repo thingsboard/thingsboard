@@ -38,9 +38,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
-/**
- * In trust mode the core identifies a LwM2M client by its endpoint: the certificate is checked only in a full DTLS handshake.
- */
 public class X509_TrustRevocationLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     @Autowired

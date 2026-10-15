@@ -11,11 +11,7 @@ public interface TbSecurityStore extends SecurityStore {
 
     TbLwM2MSecurityInfo getTbLwM2MSecurityInfoByEndpoint(String endpoint);
 
-    /**
-     * Like {@link #getByIdentity(String)}, but tells a missing pre-shared key from a core that did not answer.
-     *
-     * @throws org.thingsboard.server.transport.lwm2m.server.client.LwM2MTransportUnavailableException if the core did not answer
-     */
+    // Like getByIdentity, but throws LwM2MTransportUnavailableException if the core did not answer
     default SecurityInfo getByPskIdentity(String pskIdentity) {
         return getByIdentity(pskIdentity);
     }

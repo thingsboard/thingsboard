@@ -48,11 +48,7 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
     private final DeviceCredentialsService deviceCredentialsService;
     private final DeviceService deviceService;
 
-    /**
-     * With Redis, a plain evict of a key that is not cached does not abort a concurrent lookup that is about to cache the value
-     * it read before the change: the certificate would stay "not revoked" (or "revoked") for the cache TTL.
-     * {@code evictOrPut} puts the current value for a short time in that case.
-     */
+    // Not a plain evict: with Redis, it doesn't stop a concurrent lookup from caching the value it read before the change
     @TransactionalEventListener(classes = DeviceCertificateRevocationEvictEvent.class)
     @Override
     public void handleEvictEvent(DeviceCertificateRevocationEvictEvent event) {
@@ -103,7 +99,7 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
         }
         return cache.getAndPutInTransaction(DeviceCertificateRevocationCacheKey.of(tenantId, certificateHash),
                 () -> revocationDao.findByTenantIdAndCertificateHash(tenantId, certificateHash),
-                true) != null; // caching null values is essential: almost every lookup is for a certificate that is not revoked
+                true) != null;
     }
 
     @Override
@@ -114,7 +110,7 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
         DeviceCertificateRevocation revocation = cache.getAndPutInTransaction(DeviceCertificateRevocationCacheKey.of(tenantId, certificateHash),
                 () -> revocationDao.findByTenantIdAndCertificateHash(tenantId, certificateHash),
                 true);
-        // A copy: Caffeine returns the cached instance, which callers must not be able to change
+        // A copy: Caffeine returns the cached instance
         return revocation != null ? new DeviceCertificateRevocation(revocation) : null;
     }
 
@@ -149,13 +145,11 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
     public void deleteRevocationsByTenantId(TenantId tenantId) {
         log.trace("[{}] Executing deleteRevocationsByTenantId", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        // Cached entries of a deleted tenant are left to expire: nothing can authenticate within that tenant anymore.
         revocationDao.removeByTenantId(tenantId);
     }
 
     @Override
     public int deleteRevocationsExpiredBefore(long ts) {
-        // Cached "revoked" entries are left to expire: they keep an already expired certificate blocked a bit longer.
         return revocationDao.deleteAllByNotAfterBefore(ts);
     }
 
@@ -175,7 +169,6 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
         }
         List<X509Certificate> certificates;
         try {
-            // PEM pasted from e-mails or chats often comes indented, which the PEM reader rejects
             certificates = SslUtil.readCertFile(certificatePem.lines().map(String::trim).collect(Collectors.joining("\n")));
         } catch (Exception e) {
             throw new DataValidationException("Invalid certificate: " + e.getMessage());
@@ -189,11 +182,7 @@ public class DeviceCertificateRevocationServiceImpl extends AbstractCachedEntity
         return certificates.get(0);
     }
 
-    /**
-     * Same value as the transports compute for a presented certificate and as X.509 device credentials use as
-     * credentials id: SHA3-256 of the Base64-encoded DER. Computed from the parsed certificate, never from the
-     * submitted text, so that whitespace or line endings in the PEM can't produce a hash that never matches.
-     */
+    // The hash transports compute and X.509 credentials use as id: from the parsed certificate, not the PEM text
     private static String getCertificateHash(X509Certificate certificate) {
         try {
             return EncryptionUtil.getSha3Hash(Base64.getEncoder().encodeToString(certificate.getEncoded()));

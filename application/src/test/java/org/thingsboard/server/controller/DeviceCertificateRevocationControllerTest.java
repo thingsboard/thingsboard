@@ -62,7 +62,6 @@ public class DeviceCertificateRevocationControllerTest extends AbstractControlle
         assertThat(certificateInfo.getSha256Fingerprint()).matches("([0-9A-F]{2}:){31}[0-9A-F]{2}");
         assertThat(certificateInfo.getRevocation().getId()).isEqualTo(revocation.getId());
         assertThat(getRevocations().getData()).extracting(DeviceCertificateRevocation::getId).containsExactly(revocation.getId());
-        // The device keeps its credentials: chain provisioning binds a renewed certificate to it
         assertThat(doGet("/api/device/" + device.getId() + "/credentials", DeviceCredentials.class).getCredentialsId())
                 .isEqualTo(credentials.getCredentialsId());
 
@@ -100,7 +99,6 @@ public class DeviceCertificateRevocationControllerTest extends AbstractControlle
         setX509Credentials(device, pem);
         revokeDeviceCertificate(device, null);
 
-        // E.g. a bulk import that changes the label of the device sends its stored credentials back
         DeviceCredentials storedCredentials = doGet("/api/device/" + device.getId() + "/credentials", DeviceCredentials.class);
         doPost("/api/device/credentials", storedCredentials).andExpect(status().isOk());
     }
@@ -136,7 +134,6 @@ public class DeviceCertificateRevocationControllerTest extends AbstractControlle
         device.setCustomerId(customerId);
         device = doPost("/api/device", device, Device.class);
         setX509Credentials(device, pem);
-        // A revocation applies to the whole tenant
         doPost("/api/device/" + device.getId() + "/credentials/revoke", request(null, null)).andExpect(status().isForbidden());
 
         loginTenantAdmin();
@@ -165,7 +162,6 @@ public class DeviceCertificateRevocationControllerTest extends AbstractControlle
 
         assertThat(getRevocations().getData()).isEmpty();
         assertThat(revokeCertificate(pem, null).getId()).isNotEqualTo(revocation.getId());
-        // A certificate that is not bound to a device is audited on the tenant
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
             PageData<AuditLog> auditLogs = doGetTypedWithPageLink("/api/audit/logs/entity/TENANT/" + tenantId.getId() + "?",
                     new TypeReference<>() {}, new PageLink(10));

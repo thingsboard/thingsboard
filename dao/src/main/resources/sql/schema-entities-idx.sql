@@ -176,8 +176,6 @@ CREATE INDEX IF NOT EXISTS idx_report_template_tenant_id ON report_template(tena
 
 CREATE INDEX IF NOT EXISTS idx_api_key_tenant_id_user_id ON api_key(tenant_id, user_id);
 
-CREATE INDEX IF NOT EXISTS idx_device_certificate_revocation_not_after ON device_certificate_revocation(not_after);
-
 CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_tenant_id ON iot_hub_installed_item(tenant_id);
 
 CREATE INDEX IF NOT EXISTS idx_iot_hub_installed_item_item_type ON iot_hub_installed_item(tenant_id, item_type);

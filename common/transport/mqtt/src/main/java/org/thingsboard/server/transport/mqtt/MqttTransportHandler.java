@@ -1133,8 +1133,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
             String strCert = SslUtil.getCertificateString(cert);
             String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-            // Asked only now, not by the trust manager during the handshake: the handshake has proved that the client holds the
-            // private key of the certificate, and chain provisioning may create the device or replace its credentials.
             String certificateChain = SslUtil.getCertificateChainString(sslHandler.engine().getSession().getPeerCertificates());
             transportService.process(DeviceTransportType.MQTT, ValidateOrCreateDeviceX509CertRequestMsg.newBuilder().setCertificateChain(certificateChain).build(),
                     new TransportServiceCallback<>() {

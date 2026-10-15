@@ -309,8 +309,7 @@ public class DeviceController extends BaseController {
                     "The device keeps its credentials, so a new certificate with the same CN is bound again by chain provisioning. " +
                     "To revoke a certificate that is not stored in the credentials, use 'revokeCertificate'." +
                     TENANT_AUTHORITY_PARAGRAPH + RBAC_WRITE_CREDENTIALS_CHECK)
-    // Not for customer users: a revocation applies to the whole tenant, and a customer user could store any certificate in the
-    // credentials of its device first, e.g. the certificate of a device of another customer that is not stored in its credentials
+    // Not for customer users: a revocation applies to the whole tenant
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(value = "/device/{deviceId}/credentials/revoke")
     public DeviceCertificateRevocation revokeDeviceCertificate(
@@ -338,7 +337,7 @@ public class DeviceController extends BaseController {
         Device device = checkDeviceId(new DeviceId(toUUID(strDeviceId)), Operation.READ_CREDENTIALS);
         DeviceCertificateInfo info = tbDeviceCertificateRevocationService.getDeviceCertificateInfo(device);
         if (info != null && info.getRevocation() != null && getCurrentUser().isCustomerUser()) {
-            info.getRevocation().setRevokedBy(null); // a tenant user id; the revocation is a copy, not the cached instance
+            info.getRevocation().setRevokedBy(null);
         }
         return info;
     }

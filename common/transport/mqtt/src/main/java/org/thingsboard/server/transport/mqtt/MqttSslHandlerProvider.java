@@ -114,12 +114,8 @@ public class MqttSslHandlerProvider implements SmartInitializingSingleton {
         return new ThingsboardMqttX509TrustManager(x509Tm);
     }
 
-    /**
-     * Accepts any client certificate chain whose certificates are signed by each other: the device is authenticated at CONNECT.
-     * A trust manager runs before the client proves that it holds the private key of the certificate, so it must not ask the core
-     * about it: X.509 chain provisioning creates devices and replaces their credentials, and anybody who has seen the certificate
-     * could trigger it.
-     */
+    // Must not ask the core: it runs before the client proves that it holds the private key, and chain provisioning
+    // creates devices. The device is authenticated at CONNECT.
     static class ThingsboardMqttX509TrustManager implements X509TrustManager {
 
         private final X509TrustManager trustManager;

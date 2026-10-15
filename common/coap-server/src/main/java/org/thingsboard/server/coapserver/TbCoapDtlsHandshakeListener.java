@@ -10,10 +10,6 @@ import org.eclipse.californium.scandium.dtls.SessionListener;
 import org.thingsboard.server.common.transport.limits.DtlsHandshakeRateLimits;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 
-/**
- * Stores the DTLS session of a device once the handshake proved that the client holds the private key of its certificate,
- * and applies the IP rate limits for repeatedly failed authentication to DTLS handshakes.
- */
 @RequiredArgsConstructor
 public class TbCoapDtlsHandshakeListener implements SessionListener {
 
