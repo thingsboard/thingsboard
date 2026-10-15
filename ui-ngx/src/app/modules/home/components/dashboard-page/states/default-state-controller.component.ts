@@ -29,8 +29,8 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
               private utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService) {
-    super(router, route, ngZone, statesControllerService);
+              dashboardUtils: DashboardUtilsService) {
+    super(router, route, ngZone, statesControllerService, dashboardUtils);
   }
 
   ngOnInit(): void {
@@ -43,7 +43,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.preservedState;
+      this.stateObject = this.normalizeStateObject(this.preservedState);
       setTimeout(() => {
         this.gotoState(this.stateObject[0].id, true);
       }, 1);
@@ -63,6 +63,13 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   }
 
   protected onStatesChanged() {
+    const prevStateId = this.getStateId();
+    this.stateObject = this.normalizeStateObject(this.stateObject);
+    const newStateId = this.getStateId();
+    if (newStateId !== prevStateId) {
+      this.gotoState(newStateId, false);
+      this.updateStateParam(objToBase64(this.stateObject), true);
+    }
   }
 
   protected onStateChanged() {
@@ -196,33 +203,13 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
       try {
         result = base64toObj(stateBase64);
       } catch (e) {
-        result = [ { id: null, params: {} } ];
+        result = [];
       }
     }
-    if (!result) {
-      result = [];
+    if (result && result.length > 1) {
+      result = [ result[result.length - 1] ];
     }
-    if (!result.length) {
-      result[0] = { id: null, params: {} };
-    } else if (result.length > 1) {
-      const newResult = [];
-      newResult.push(result[result.length - 1]);
-      result = newResult;
-    }
-    const rootStateId = this.dashboardUtils.getRootStateId(this.states);
-    if (!result[0].id) {
-      result[0].id = rootStateId;
-    }
-    if (!this.states[result[0].id]) {
-      result[0].id = rootStateId;
-    }
-    let i = result.length;
-    while (i--) {
-      if (!result[i].id || !this.states[result[i].id]) {
-        result.splice(i, 1);
-      }
-    }
-    return result;
+    return this.normalizeStateObject(result);
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
