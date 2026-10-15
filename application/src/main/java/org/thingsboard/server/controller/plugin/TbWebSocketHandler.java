@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller.plugin;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PongMessage;
@@ -34,11 +36,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationProvider;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -55,6 +59,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -76,6 +81,8 @@ import static org.thingsboard.server.service.ws.DefaultWebSocketService.NUMBER_O
 @RequiredArgsConstructor
 public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocketMsgEndpoint {
 
+    private static final Set<Authority> USER_AUTHORITIES = EnumSet.of(Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER);
+
     private final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
@@ -87,6 +94,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private RateLimitService rateLimitService;
     @Autowired
     private JwtAuthenticationProvider authenticationProvider;
+    @Autowired
+    private ApiKeyAuthenticationProvider apiKeyAuthenticationProvider;
 
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
@@ -181,7 +190,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             log.trace("{} Authenticating session", sessionRef);
             SecurityUser securityCtx;
             try {
-                securityCtx = authenticationProvider.authenticate(authCmd.getToken());
+                if (StringUtils.isNotEmpty(authCmd.getApiKey())) {
+                    securityCtx = apiKeyAuthenticationProvider.authenticate(authCmd.getApiKey());
+                } else {
+                    securityCtx = authenticate(authCmd.getToken());
+                }
             } catch (Exception e) {
                 close(sessionRef, CloseStatus.BAD_DATA.withReason(e.getMessage()));
                 return;
@@ -315,9 +328,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         SecurityUser securityCtx = null;
-        String token = StringUtils.substringAfter(session.getUri().getQuery(), "token=");
-        if (StringUtils.isNotEmpty(token)) {
-            securityCtx = authenticationProvider.authenticate(token);
+        String query = session.getUri().getQuery();
+        if (query != null) {
+            String token = extractQueryParam(query, "token");
+            if (StringUtils.isNotEmpty(token)) {
+                securityCtx = authenticate(token);
+            }
         }
         return WebSocketSessionRef.builder()
                 .sessionId(UUID.randomUUID().toString())
@@ -326,6 +342,23 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 .remoteAddress(session.getRemoteAddress())
                 .sessionType(sessionType)
                 .build();
+    }
+
+    private String extractQueryParam(String query, String paramName) {
+        for (String param : query.split("&")) {
+            if (param.startsWith(paramName + "=")) {
+                return param.substring(paramName.length() + 1);
+            }
+        }
+        return null;
+    }
+
+    private SecurityUser authenticate(String token) {
+        SecurityUser securityUser = authenticationProvider.authenticate(token);
+        if (!USER_AUTHORITIES.contains(securityUser.getAuthority())) {
+            throw new BadCredentialsException("Token is invalid");
+        }
+        return securityUser;
     }
 
     private SessionMetaData getSessionMd(String internalSessionId) {
@@ -469,6 +502,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 }
             }
         }
+
     }
 
     @Override

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.tbel;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,6 +29,8 @@ import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -369,6 +372,8 @@ public class TbUtils {
                 double.class, double.class, String.class)));
         parserConfig.addImport("isInsideCircle", new MethodStub(TbUtils.class.getMethod("isInsideCircle",
                 double.class, double.class, String.class)));
+        parserConfig.addImport("parseDateToTimestampOrNow", new MethodStub(TbUtils.class.getMethod("parseDateToTimestampOrNow",
+                String.class)));
         parserConfig.addImport("isMap", new MethodStub(TbUtils.class.getMethod("isMap",
                 Object.class)));
         parserConfig.addImport("isList", new MethodStub(TbUtils.class.getMethod("isList",
@@ -778,6 +783,15 @@ public class TbUtils {
                 throw new NumberFormatException("Value \"" + valueP + "\" is  less than the minimum " + minValue.getClass().getSimpleName() + " value " + minValue + " !");
             }
             throw new NumberFormatException(e.getMessage());
+        }
+    }
+
+    public static long parseDateToTimestampOrNow(String dateString) {
+        try {
+            Instant instant = Instant.parse(dateString);
+            return instant.toEpochMilli();
+        } catch (DateTimeParseException e) {
+            return System.currentTimeMillis();
         }
     }
 

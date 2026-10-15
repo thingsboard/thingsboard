@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 :host {
@@ -58,11 +59,12 @@
   .tb-markdown-view {
     padding: 16px 16px 32px 16px;
     div {
-      background-color: #F3F6FA;
+      background-color: #F0F6F6;
+
       &.code-wrapper button.clipboard-btn {
         right: -2px !important;
         p {
-          color: $tb-primary-color !important;
+          color: var(--tb-primary-500) !important;
         }
         p, div {
           background-color: unset !important;
@@ -77,7 +79,7 @@
             display: block;
             width: 18px;
             height: 18px;
-            background: $tb-primary-color;
+            background: var(--tb-primary-500);
             mask-image: url(/assets/copy-code-icon.svg);
             -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;
@@ -94,7 +96,7 @@
       padding-left: unset !important;
     }
     pre[class*="language-"] {
-      border: 1px solid $tb-primary-color !important;
+      border: 1px solid var(--tb-primary-500) !important;
     }
   }
   .mdc-button__label > span {
@@ -113,6 +115,27 @@
 
   .tabs-icon {
     margin-right: 8px;
+  }
+
+  .tb-agent-tab-desc {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 16px 0 4px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.76);
+
+    > mat-icon {
+      flex-shrink: 0;
+      color: var(--tb-primary-500);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
   }
 
   .tb-form-panel.tb-tab-body {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,15 +16,21 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.encryptionkey.EncryptionService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.install.update.ResourcesUpdater;
 
 import java.nio.file.Path;
@@ -48,13 +55,25 @@ class InstallScriptsTest {
     @MockitoBean
     WidgetsBundleService widgetsBundleService;
     @MockitoBean
+    AdminSettingsService adminSettingsService;
+    @MockitoBean
+    EntityGroupService entityGroupService;
+    @MockitoBean
     OAuth2ConfigTemplateService oAuth2TemplateService;
     @MockitoBean
     ResourceService resourceService;
     @MockitoBean
+    WhiteLabelingService whiteLabelingService;
+    @MockitoBean
     ImageService imageService;
     @MockitoBean
+    NotificationSettingsService notificationSettingsService;
+    @MockitoBean
+    NotificationTemplateService notificationTemplateService;
+    @MockitoBean
     ResourcesUpdater resourcesUpdater;
+    @MockitoBean
+    EncryptionService encryptionService;
     @MockitoSpyBean
     InstallScripts installScripts;
 
@@ -77,6 +96,11 @@ class InstallScriptsTest {
         Path dir = installScripts.getTenantRuleChainsDir();
         installScripts.findRuleChainsFromPath(dir)
                 .forEach(this::validateRuleChainTemplate);
+    }
+
+    @Test
+    void testRootTenantRuleChainTemplate() {
+        validateRuleChainTemplate(installScripts.getRootTenantRuleChainFile());
     }
 
     @Test

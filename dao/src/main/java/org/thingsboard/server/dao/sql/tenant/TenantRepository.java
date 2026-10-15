@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.data.domain.Limit;
@@ -27,6 +28,8 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     Page<TenantEntity> findTenantsNextPage(@Param("textSearch") String textSearch,
                                            Pageable pageable);
 
+    List<TenantEntity> findTenantsByIdIn(List<UUID> tenantIds);
+
     @Query("SELECT new org.thingsboard.server.dao.model.sql.TenantInfoEntity(t, p.name) " +
             "FROM TenantEntity t " +
             "LEFT JOIN TenantProfileEntity p on p.id = t.tenantProfileId " +
@@ -45,7 +48,5 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     List<TenantFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
     TenantEntity findFirstByTitle(String name);
-
-    List<TenantEntity> findTenantsByIdIn(List<UUID> tenantIds);
 
 }

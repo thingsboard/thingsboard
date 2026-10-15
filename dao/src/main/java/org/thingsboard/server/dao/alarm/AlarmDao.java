@@ -1,17 +1,21 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
+import org.thingsboard.server.common.data.alarm.AlarmFilter;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
+import org.thingsboard.server.common.data.alarm.AlarmRef;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
@@ -23,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -51,6 +56,8 @@ public interface AlarmDao extends Dao<Alarm> {
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, UUID key);
 
+    AlarmInfo findAlarmInfoByOriginatorAndId(TenantId tenantId, EntityId originator, AlarmId alarmId);
+
     Alarm save(TenantId tenantId, Alarm alarm);
 
     PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
@@ -61,19 +68,31 @@ public interface AlarmDao extends Dao<Alarm> {
 
     PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
 
-    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
+    long findAlarmCount(TenantId tenantId, AlarmQuery query, AlarmFilter filter);
+
+    PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions,
+                                                        AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, AlarmStatusFilter asf, String assigneeId);
 
-    PageData<AlarmId> findAlarmsIdsByEndTsBeforeAndTenantId(Long time, TenantId tenantId, PageLink pageLink);
+    /**
+     * The returned {@link PageData} carries no totals: the count query is deliberately skipped (it would be
+     * a cross-shard count(*) on every TTL batch), so totalPages/totalElements are always 0. Callers may only
+     * rely on {@link PageData#getData()} and {@link PageData#hasNext()}.
+     */
+    PageData<AlarmRef> findExpiredAlarmRefsByTenantId(Long time, TenantId tenantId, PageLink pageLink);
 
-    PageData<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, long createdTimeOffset, AlarmId idOffset, int limit);
+    PageData<AlarmRef> findAlarmRefsByAssigneeId(TenantId tenantId, UserId userId, long createdTimeOffset, AlarmId idOffset, int limit);
+
+    int unassignAlarmsByAssignee(TenantId tenantId, UserId assigneeId, long unassignTs);
 
     PageData<TbPair<UUID, Long>> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, long createdTimeOffset, AlarmId idOffset, int limit);
 
     void createEntityAlarmRecord(EntityAlarm entityAlarm);
 
-    List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, AlarmId id);
+    List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, EntityId originator, AlarmId id);
+
+    List<EntityAlarm> findEntityAlarmRecordsByEntityTypes(TenantId tenantId, EntityId originator, AlarmId id, List<EntityType> types);
 
     List<EntityAlarm> findEntityAlarmRecordsByEntityId(TenantId tenantId, EntityId entityId);
 
@@ -85,17 +104,23 @@ public interface AlarmDao extends Dao<Alarm> {
 
     AlarmApiCallResult updateAlarm(AlarmUpdateRequest request);
 
-    AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId id, long ackTs);
+    AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, EntityId originator, AlarmId id, long ackTs);
 
-    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
+    AlarmApiCallResult clearAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, long clearTs, JsonNode details);
 
-    AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTime);
+    AlarmApiCallResult assignAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, UserId assigneeId, long assignTime);
 
-    AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long unassignTime);
+    AlarmApiCallResult unassignAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, long unassignTime);
 
-    long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds);
+    void removeByOriginatorAndId(TenantId tenantId, EntityId originator, AlarmId alarmId);
+
+    long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmCountQuery query, Collection<EntityId> orderedEntityIds);
 
     PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink);
+
+    List<String> findTenantAlarmTypeNames(UUID tenantId, int limit);
+
+    boolean addAlarmType(UUID tenantId, String type);
 
     boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types);
 

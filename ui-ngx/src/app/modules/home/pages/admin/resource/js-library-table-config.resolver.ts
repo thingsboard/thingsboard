@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import {
   CellActionDescriptor,
   checkBoxCell,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -33,11 +35,12 @@ import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-lib
 import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourceTabsComponent } from '@home/pages/admin/resource/resource-tabs.component';
-import { forkJoin, Observable, of } from 'rxjs';
-import { parseHttpErrorMessage } from '@core/utils';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogService } from '@core/services/dialog.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { forkJoin, Observable, of } from "rxjs";
+import { parseHttpErrorMessage } from "@core/utils";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { MatDialog } from "@angular/material/dialog";
+import { DialogService } from "@core/services/dialog.service";
 import {
   ResourcesInUseDialogComponent,
   ResourcesInUseDialogData
@@ -51,6 +54,7 @@ export class JsLibraryTableConfigResolver  {
 
   constructor(private store: Store<AppState>,
               private resourceService: ResourceService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private dialog: MatDialog,
               private dialogService: DialogService,
@@ -78,7 +82,7 @@ export class JsLibraryTableConfigResolver  {
     this.config.columns.push(
       new DateEntityTableColumn<ResourceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<ResourceInfo>('title', 'resource.title', '60%'),
-      new EntityTableColumn<ResourceInfo>('resourceSubType', 'javascript.javascript-type', '40%',
+      new EntityTableColumn<ResourceInfo>('resourceSubType', 'javascript.script-type', '40%',
         entity => this.translate.instant(ResourceSubTypeTranslationMap.get(entity.resourceSubType))),
       new EntityTableColumn<ResourceInfo>('tenantId', 'resource.system', '60px',
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
@@ -130,7 +134,7 @@ export class JsLibraryTableConfigResolver  {
   }
 
   resolve(): EntityTableConfig<Resource, PageLink, ResourceInfo> {
-    this.config.tableTitle = this.translate.instant('javascript.javascript-library');
+    this.config.tableTitle = this.translate.instant('javascript.scripts');
     this.config.componentsData = {
       resourceSubType: ''
     };
@@ -138,6 +142,7 @@ export class JsLibraryTableConfigResolver  {
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

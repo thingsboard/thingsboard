@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -16,14 +16,16 @@
       [activated]="state === widgetButtonState.activated"
       [disabled]="state === widgetButtonState.disabled">
     </tb-widget-button>
-    <button *ngIf="modelValue"
-            mat-icon-button
-            [matTooltip]="'widgets.button.clear-style' | translate"
-            matTooltipPosition="above"
-            class="tb-mat-32"
-            (click)="clearStyle()">
-      <tb-icon>mdi:broom</tb-icon>
-    </button>
+    @if (modelValue) {
+      <button
+        mat-icon-button
+        [matTooltip]="'widgets.button.clear-style' | translate"
+        matTooltipPosition="above"
+        class="tb-mat-32"
+        (click)="clearStyle()">
+        <tb-icon>mdi:broom</tb-icon>
+      </button>
+    }
   </div>
   <button mat-icon-button
           class="tb-mat-32"

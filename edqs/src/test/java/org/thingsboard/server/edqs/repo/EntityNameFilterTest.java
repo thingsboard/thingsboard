@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.repo;
 
 import org.junit.After;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.query.EntityNameFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -48,7 +50,7 @@ public class EntityNameFilterTest extends AbstractEDQTest {
         device.setDeviceProfileId(new DeviceProfileId(defaultDeviceProfileId));
         addOrUpdate(EntityType.DEVICE, device);
 
-        var result = repository.findEntityDataByQuery(tenantId, null, getDeviceNameQuery("LoRa"), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getDeviceNameQuery("LoRa"), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var first = result.getData().get(0);
@@ -56,15 +58,15 @@ public class EntityNameFilterTest extends AbstractEDQTest {
         Assert.assertEquals("LoRa-1", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
         Assert.assertEquals("42", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue());
 
-        result = repository.findEntityDataByQuery(tenantId, null, getDeviceNameQuery("Not LoRa"), false);
+        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getDeviceNameQuery("Not LoRa"), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         device.setCustomerId(customerId);
         addOrUpdate(EntityType.DEVICE, device);
 
-        result = repository.findEntityDataByQuery(tenantId, null, getDeviceNameQuery("%1"), false);
+        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getDeviceNameQuery("%1"), false);
         Assert.assertEquals(1, result.getTotalElements());
-        result = repository.findEntityDataByQuery(tenantId, null, getDeviceNameQuery("L%"), false);
+        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getDeviceNameQuery("L%"), false);
         Assert.assertEquals(1, result.getTotalElements());
     }
 
@@ -80,13 +82,13 @@ public class EntityNameFilterTest extends AbstractEDQTest {
         addOrUpdate(EntityType.DEVICE, device);
         addOrUpdate(new LatestTsKv(deviceId, new BasicTsKvEntry(43, new StringDataEntry("state", "TEST")), 0L));
 
-        var result = repository.findEntityDataByQuery(tenantId, customerId, getDeviceNameQuery("LoRa"), false);
+        var result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getDeviceNameQuery("LoRa"), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         device.setCustomerId(customerId);
         addOrUpdate(EntityType.DEVICE, device);
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, getDeviceNameQuery("LoRa"), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getDeviceNameQuery("LoRa"), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var first = result.getData().get(0);

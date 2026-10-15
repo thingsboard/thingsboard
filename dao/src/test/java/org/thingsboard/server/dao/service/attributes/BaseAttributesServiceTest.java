@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.attributes;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -105,6 +107,35 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
         equalsIgnoreVersion(attrANew, saved.get(0));
         equalsIgnoreVersion(attrBNew, saved.get(1));
+    }
+
+    @Test
+    public void removeAllRoundTrip() throws Exception {
+        // Runs the delete-with-version path against a real database: the routed branch under
+        // CitusAttributesServiceSqlTest and the plain branch under AttributesServiceSqlTest.
+        var deviceId = new DeviceId(UUID.randomUUID());
+        var scope = AttributeScope.SERVER_SCOPE;
+        saveAttribute(tenantId, deviceId, scope, "removedKey1", "value1");
+        saveAttribute(tenantId, deviceId, scope, "removedKey2", "value2");
+
+        List<String> removedKeys = attributesService.removeAll(tenantId, deviceId, scope, List.of("removedKey1")).get(10, TimeUnit.SECONDS);
+        Assert.assertEquals(List.of("removedKey1"), removedKeys);
+        Optional<AttributeKvEntry> removedEntry = attributesService.find(tenantId, deviceId, scope, "removedKey1").get(10, TimeUnit.SECONDS);
+        Assert.assertTrue(removedEntry.isEmpty());
+
+        List<TbPair<String, Long>> removedWithVersions = Futures.allAsList(
+                attributesDao.removeAllWithVersions(tenantId, deviceId, scope, List.of("removedKey2"))).get(10, TimeUnit.SECONDS);
+        assertThat(removedWithVersions).hasSize(1);
+        Assert.assertEquals("removedKey2", removedWithVersions.get(0).getFirst());
+        Assert.assertNotNull("Deleting an existing attribute must return its version", removedWithVersions.get(0).getSecond());
+
+        List<AttributeKvEntry> remaining = attributesService.findAll(tenantId, deviceId, scope).get(10, TimeUnit.SECONDS);
+        Assert.assertTrue(remaining.isEmpty());
+
+        // Deleting an already-absent key reports a null version instead of failing.
+        List<TbPair<String, Long>> removedAgain = Futures.allAsList(
+                attributesDao.removeAllWithVersions(tenantId, deviceId, scope, List.of("removedKey2"))).get(10, TimeUnit.SECONDS);
+        assertThat(removedAgain).containsExactly(TbPair.of("removedKey2", null));
     }
 
     @Test

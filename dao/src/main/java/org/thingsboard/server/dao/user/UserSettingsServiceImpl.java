@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.user;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,8 +18,8 @@ import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -51,7 +52,7 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserSettingsC
         UserSettings newUserSettings = new UserSettings();
         newUserSettings.setUserId(userId);
         newUserSettings.setType(type);
-        newUserSettings.setSettings(update(oldSettingsJson, settings));
+        newUserSettings.setSettings(JacksonUtil.update(oldSettingsJson, settings));
         doSaveUserSettings(tenantId, newUserSettings);
     }
 
@@ -114,28 +115,6 @@ public class UserSettingsServiceImpl extends AbstractCachedService<UserSettingsC
                 throw new DataValidationException("Json field name should not contain \".\" or \",\" symbols");
             }
         }
-    }
-
-    public JsonNode update(JsonNode mainNode, JsonNode updateNode) {
-        Iterator<String> fieldNames = updateNode.fieldNames();
-        while (fieldNames.hasNext()) {
-            String fieldExpression = fieldNames.next();
-            String[] fieldPath = fieldExpression.trim().split("\\.");
-            var node = (ObjectNode) mainNode;
-            for (int i = 0; i < fieldPath.length; i++) {
-                var fieldName = fieldPath[i];
-                var last = i == (fieldPath.length - 1);
-                if (last) {
-                    node.set(fieldName, updateNode.get(fieldExpression));
-                } else {
-                    if (!node.has(fieldName)) {
-                        node.set(fieldName, JacksonUtil.newObjectNode());
-                    }
-                    node = (ObjectNode) node.get(fieldName);
-                }
-            }
-        }
-        return mainNode;
     }
 
 }

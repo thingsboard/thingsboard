@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
@@ -39,7 +40,7 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
     @Description("Remove several devices by mark in the checkbox and then click on the trash can icon in the menu " +
             "that appears at the top")
     public void deleteSeveralDevicesByTopBtn() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.deleteSelectedDevices(deviceName1, deviceName2);
         devicePage.refreshBtn().click();
 
@@ -51,7 +52,7 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
     @Description("Remove several devices by mark all the devices on the page by clicking in the topmost checkbox" +
             " and then clicking on the trash icon in the menu that appears")
     public void selectAllDevices() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.selectAllCheckBox().click();
         devicePage.deleteSelectedBtn().click();
 
@@ -64,7 +65,7 @@ public class DeleteSeveralDevicesTest extends AbstractDeviceTest {
     @Description("Remove several devices by mark in the checkbox and then click on the trash can icon in the menu " +
             "that appears at the top without refresh")
     public void deleteSeveralWithoutRefresh() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.deleteSelectedDevices(deviceName1, deviceName2);
 
         List.of(deviceName1, deviceName2)

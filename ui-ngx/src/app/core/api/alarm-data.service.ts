@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { Datasource, DatasourceType } from '@shared/models/widget.models';
@@ -71,6 +71,7 @@ export class AlarmDataService {
       alarmDataSubscriptionOptions.entityFilter = alarmSource.entityFilter;
       alarmDataSubscriptionOptions.pageLink = pageLink;
       alarmDataSubscriptionOptions.keyFilters = alarmSource.keyFilters;
+      alarmDataSubscriptionOptions.keyFiltersOperation = alarmSource.keyFiltersOperation;
       alarmDataSubscriptionOptions.additionalKeyFilters = additionalKeyFilters;
     }
     return alarmDataSubscriptionOptions;

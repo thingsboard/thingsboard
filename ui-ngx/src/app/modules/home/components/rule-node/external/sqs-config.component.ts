@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -16,7 +16,7 @@ export class SqsConfigComponent extends RuleNodeConfigurationComponent {
   sqsConfigForm: UntypedFormGroup;
 
   sqsQueueType = SqsQueueType;
-  sqsQueueTypes = Object.keys(SqsQueueType);
+  sqsQueueTypes = Object.values(SqsQueueType);
   sqsQueueTypeTranslationsMap = sqsQueueTypeTranslations;
 
   constructor(private fb: UntypedFormBuilder) {

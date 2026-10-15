@@ -1,0 +1,37 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2 translate>solution-creator.no-telemetry-title</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-dialog-content>
+  <div class="no-telemetry-content">
+    <mat-icon class="error-icon tb-error" >sensors_off</mat-icon>
+    <span class="mat-subtitle-1 message">{{ 'solution-creator.no-telemetry-message' | translate }}</span>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button color="primary"
+          type="button"
+          [disabled]="(isLoading$ | async)"
+          (click)="cancel()">
+    {{ 'action.cancel' | translate }}
+  </button>
+  @if (!data.hideSendTelemetry) {
+    <button mat-raised-button
+            color="primary"
+            (click)="moveToCheckConnectivityModal()">
+      <mat-icon>send</mat-icon>
+      {{ 'solution-creator.send-telemetry' | translate }}
+    </button>
+  }
+</mat-dialog-actions>

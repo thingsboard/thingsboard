@@ -1,9 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DeviceInfo } from '@shared/models/device.models';
+import { Device, DeviceInfo } from '@shared/models/device.models';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { EntityId } from "@shared/models/id/entity-id";
 
@@ -13,7 +14,7 @@ import { EntityId } from "@shared/models/id/entity-id";
     styleUrls: [],
     standalone: false
 })
-export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
+export class DeviceTabsComponent extends EntityTabsComponent<Device> {
 
   ownerId: EntityId;
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.edqs.query;
 
@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKeyType;
@@ -28,10 +29,10 @@ public class EdqsDataQuery extends EdqsQuery {
     private final List<DataKey> latestValues;
 
     @Builder
-    public EdqsDataQuery(EntityFilter entityFilter, List<EdqsFilter> keyFilters,
+    public EdqsDataQuery(EntityFilter entityFilter, List<EdqsFilter> keyFilters, ComplexOperation keyFiltersOperation,
                          int pageSize, int page, String textSearch, DataKey sortKey, EntityDataSortOrder.Direction sortDirection,
                          List<DataKey> entityFields, List<DataKey> latestValues) {
-        super(entityFilter, CollectionsUtil.isNotEmpty(keyFilters), keyFilters);
+        super(entityFilter, CollectionsUtil.isNotEmpty(keyFilters), keyFilters, keyFiltersOperation);
         this.pageSize = pageSize;
         this.page = page;
         this.hasTextSearch = StringUtils.isNotBlank(textSearch);

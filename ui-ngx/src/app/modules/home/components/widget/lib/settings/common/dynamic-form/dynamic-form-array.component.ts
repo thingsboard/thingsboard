@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -45,6 +46,9 @@ export class DynamicFormArrayComponent implements ControlValueAccessor, OnInit, 
 
   @Input()
   title: string;
+
+  @Input()
+  hint: string;
 
   propertiesFormGroup: UntypedFormGroup;
 
@@ -111,10 +115,6 @@ export class DynamicFormArrayComponent implements ControlValueAccessor, OnInit, 
 
   propertiesFormArray(): UntypedFormArray {
     return this.propertiesFormGroup.get('properties') as UntypedFormArray;
-  }
-
-  trackByProperty(_index: number, propertyControl: AbstractControl): any {
-    return propertyControl;
   }
 
   removeProperty(index: number, emitEvent = true) {

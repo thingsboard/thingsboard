@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 :host {
@@ -165,7 +166,7 @@
     cursor: pointer;
 
     &:hover {
-      color: $tb-primary-color;
+      color: var(--tb-primary-500);
       text-decoration: underline;
     }
   }
@@ -242,7 +243,7 @@
       cursor: pointer;
 
       &:hover {
-        color: $tb-primary-color;
+        color: var(--tb-primary-500);
         text-decoration: underline;
       }
     }
@@ -288,7 +289,7 @@
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: transparent;
-  color: $tb-primary-color;
+  color: var(--tb-primary-500);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
@@ -299,7 +300,7 @@
   transition: background 0.15s;
 
   &:hover {
-    background: rgba($tb-primary-color, 0.04);
+    background: color-mix(in srgb, var(--tb-primary-500) 4%, transparent);
   }
 }
 

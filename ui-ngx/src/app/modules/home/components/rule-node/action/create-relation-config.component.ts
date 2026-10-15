@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -14,7 +14,7 @@ import { EntityType } from '@app/shared/models/entity-type.models';
 })
 export class CreateRelationConfigComponent extends RuleNodeConfigurationComponent {
 
-  directionTypes = Object.keys(EntitySearchDirection);
+  directionTypes = Object.values(EntitySearchDirection);
   directionTypeTranslations  = new Map<EntitySearchDirection, string>(
     [
       [EntitySearchDirection.FROM, 'rule-node-config.search-direction-from'],

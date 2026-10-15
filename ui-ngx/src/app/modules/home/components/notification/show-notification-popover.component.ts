@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, Input, NgZone, OnDestroy } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -32,8 +32,8 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
 
   private notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone, 6);
 
-  notifications$: Observable<Notification[]> = this.notificationSubscriber.notifications$.pipe(
-    filter(value => Array.isArray(value)),
+  notifications$: Observable<Notification[]> = (this.notificationSubscriber.notifications$ as Observable<Notification[] | null>).pipe(
+    filter((value): value is Notification[] => Array.isArray(value)),
     shareReplay(1),
     tap(() => setTimeout(() => this.cd.markForCheck()))
   );
@@ -76,9 +76,5 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
     }
     this.onClose();
     this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
-  }
-
-  trackById(index: number, item: NotificationRequest): string {
-    return item.id.id;
   }
 }

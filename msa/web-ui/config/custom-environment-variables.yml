@@ -1,5 +1,5 @@
 #
-# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -8,6 +8,10 @@ server:
   address: "HTTP_BIND_ADDRESS"
   # Server bind port
   port: "HTTP_BIND_PORT"
+  # HTTP response compression
+  compression:
+    # Enable/disable HTTP response compression
+    enabled: "HTTP_COMPRESSION_ENABLED"
 thingsboard:
   enableProxy: "TB_ENABLE_PROXY"
   # ThingsBoard node host

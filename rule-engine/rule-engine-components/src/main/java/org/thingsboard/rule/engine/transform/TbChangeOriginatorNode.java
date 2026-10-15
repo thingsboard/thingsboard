@@ -1,7 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.transform;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -31,6 +35,7 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Change message originator to Tenant/Customer/Related Entity/Alarm Originator/Entity by name pattern.",
         nodeDetails = "Configuration: <ul><li><strong>Customer</strong> - use customer of incoming message originator as new originator. " +
                 "Only for assigned to customer originators with one of the following type: 'User', 'Asset', 'Device'.</li>" +
@@ -61,6 +66,9 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
             if (newOriginator == null || newOriginator.isNullUid()) {
                 return Futures.immediateFailedFuture(new NoSuchElementException("Failed to find new originator!"));
             }
+            if (msg.getOriginator().equals(newOriginator)) {
+                return Futures.immediateFuture(List.of(msg));
+            }
             return immediateFuture(List.of(ctx.transformMsgOriginator(msg, newOriginator)));
         }, ctx.getDbCallbackExecutor());
     }
@@ -68,7 +76,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
         switch (config.getOriginatorSource()) {
             case CUSTOMER:
-                if (msg.getOriginator().getEntityType() == EntityType.CUSTOMER) {
+                if (config.isPreserveOriginatorIfCustomer() && msg.getOriginator().getEntityType() == EntityType.CUSTOMER) {
                     return immediateFuture(msg.getOriginator());
                 }
                 return ctx.getEntityService().fetchEntityCustomerIdAsync(ctx.getTenantId(), msg.getOriginator())
@@ -113,6 +121,22 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
             }
             EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                ObjectNode oldConfig = (ObjectNode) oldConfiguration;
+                if (!oldConfiguration.has("preserveOriginatorIfCustomer")) {
+                    oldConfig.put("preserveOriginatorIfCustomer", true);
+                    hasChanges = true;
+                }
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DoCheck,
+  HostBinding,
   Input,
   IterableDiffers,
   KeyValueDiffers,
@@ -41,6 +43,7 @@ import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct, take } from 'rxjs/operators';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -57,6 +60,11 @@ import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 export class DashboardComponent extends PageComponent implements IDashboardComponent, DoCheck, OnInit, OnDestroy, AfterViewInit, OnChanges {
 
   authUser: AuthUser;
+
+  @HostBinding('style.backgroundColor')
+  get backgroundColor(): string {
+    return this.embedded ? this.embeddedDashboardBackground : 'initial';
+  }
 
   @Input()
   widgets: Iterable<Widget>;
@@ -152,10 +160,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   dashboardTimewindow: Timewindow;
 
   @Input()
+  embedded = false;
+
+  @Input()
   parentDashboard?: IDashboardComponent = null;
 
   @Input()
   popoverComponent?: TbPopoverComponent = null;
+
+  embeddedDashboardBackground = this.whiteLabelingService.getPrimaryColor('A100');
 
   dashboardTimewindowChangedSubject: Subject<Timewindow> = new ReplaySubject<Timewindow>();
 
@@ -201,6 +214,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
               private breakpointObserver: BreakpointObserver,
               private differs: IterableDiffers,
               private kvDiffers: KeyValueDiffers,
+              private whiteLabelingService: WhiteLabelingService,
               private ngZone: NgZone) {
     super(store);
     this.authUser = getCurrentAuthUser(store);

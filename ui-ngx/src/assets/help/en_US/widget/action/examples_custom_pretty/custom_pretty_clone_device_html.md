@@ -3,7 +3,7 @@
 ```html
 {:code-style="max-height: 400px;"}
 <form [formGroup]="cloneDeviceFormGroup" (ngSubmit)="save()" style="min-width:320px;">
-    <mat-toolbar class="flex flex-row" color="primary">
+    <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
         <h2>Clone device: {{ deviceName }}</h2>
         <span class="flex-1"></span>
         <button mat-icon-button (click)="cancel()"

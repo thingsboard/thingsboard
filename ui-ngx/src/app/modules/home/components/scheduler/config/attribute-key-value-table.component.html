@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-attribute-kv-table flex flex-col" [formGroup]="kvListFormGroup">
+  <label translate class="tb-title no-padding">{{ titleText }}</label>
+  @for (keyValControl of keyValsFormArray().controls; track keyValControl) {
+    <div class="flex flex-row items-center justify-start gap-2"
+      formArrayName="keyVals"
+      >
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute max-w-40% flex-full">
+        <input placeholder="{{'key-val.key' | translate}}" [formControl]="keyValControl.get('key')" matInput/>
+        @if (keyValControl.get('key').hasError('required') && keyValControl.get('key').touched) {
+          <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="'attribute.key-required' | translate"
+            class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+      <tb-value-input class="max-w-60% flex-full"
+        stringNotRequired
+        requiredText="attribute.value-required"
+        [formControl]="keyValControl.get('value')">
+      </tb-value-input>
+      <button mat-icon-button color="primary"
+        [class.!hidden]="disabled"
+        type="button"
+        (click)="removeKeyVal($index)"
+        [disabled]="isLoading$ | async"
+        matTooltip="{{ 'key-val.remove-entry' | translate }}"
+        matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+  <span [class.!hidden]="keyValsFormArray().length"
+    [class.disabled]="disabled"
+    [class.required]="required"
+  class="no-data-found flex items-center justify-center" translate>{{required ? requiredPrompt : 'key-val.no-data'}}</span>
+  <div style="margin-top: 8px;">
+    <button mat-button mat-raised-button color="primary"
+      [class.!hidden]="disabled"
+      [disabled]="isLoading$ | async"
+      (click)="addKeyVal()"
+      type="button"
+      matTooltip="{{ 'key-val.add-entry' | translate }}"
+      matTooltipPosition="above">
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</section>

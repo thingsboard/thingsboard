@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -35,6 +36,8 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.queue.util.TbPackCallback;
+import org.thingsboard.server.queue.util.TbPackProcessingContext;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
@@ -115,15 +118,15 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, Object consumerKey, QueueConfig edgeQueueConfig) throws InterruptedException {
         List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
-                Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
+                Collectors.toConcurrentMap(IdMsgPair::uuid, IdMsgPair::msg));
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
         TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
         PendingMsgHolder<ToEdgeMsg> pendingMsgHolder = new PendingMsgHolder<>();
         Future<?> submitFuture = consumersExecutor.submit(() -> {
             orderedMsgList.forEach((element) -> {
-                UUID id = element.getUuid();
-                TbProtoQueueMsg<ToEdgeMsg> msg = element.getMsg();
+                UUID id = element.uuid();
+                TbProtoQueueMsg<ToEdgeMsg> msg = element.msg();
                 TbCallback callback = new TbPackCallback<>(id, ctx);
                 try {
                     ToEdgeMsg toEdgeMsg = msg.getValue();

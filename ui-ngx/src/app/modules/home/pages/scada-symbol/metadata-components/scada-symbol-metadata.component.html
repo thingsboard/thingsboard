@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -26,8 +26,10 @@
           <div class="fixed-title-width" translate>scada.description</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <textarea matInput
+                      cdkTextareaAutosize
+                      cdkAutosizeMinRows="1"
                       formControlName="description"
-                      rows="2"></textarea>
+                      rows="1"></textarea>
           </mat-form-field>
         </div>
         <div class="tb-form-row">

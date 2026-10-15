@@ -1,0 +1,238 @@
+{
+  "CHIRPSTACK": {
+    "type": "DEVICE",
+    "name": "Device $eui",
+    "profile": "$deviceProfileName",
+    "label": "$deviceName",
+    "attributes": [
+      "eui",
+      "devAddr",
+      "fPort",
+      "tenantId",
+      "tenantName",
+      "applicationId",
+      "applicationName",
+      "adr",
+      "dr",
+      "frequency",
+      "bandwidth",
+      "spreadingFactor",
+      "codeRate"
+    ],
+    "telemetry": [
+      "fCnt",
+      "data",
+      "decoded",
+      "latitude",
+      "longitude",
+      "rssi",
+      "snr",
+      "channel",
+      "altitude"
+    ],
+    "updateOnlyKeys": [
+      "eui",
+      "devAddr",
+      "fPort",
+      "tenantId",
+      "tenantName",
+      "applicationId",
+      "applicationName",
+      "adr",
+      "dr",
+      "frequency",
+      "bandwidth",
+      "spreadingFactor",
+      "codeRate"
+    ]
+  },
+  "TPE": {
+    "type": "DEVICE",
+    "name": "Device $eui",
+    "profile": null,
+    "label": null,
+    "attributes": [
+      "eui",
+      "fPort",
+      "adr",
+      "spreadingFactor",
+      "bandwidth",
+      "devAddr",
+      "frequency",
+      "class"
+    ],
+    "telemetry": [
+      "fCnt",
+      "data",
+      "rssi",
+      "snr",
+      "channel",
+      "decoded"
+    ],
+    "updateOnlyKeys": [
+      "eui",
+      "fPort",
+      "adr",
+      "spreadingFactor",
+      "bandwidth",
+      "devAddr",
+      "frequency",
+      "class"
+    ]
+  },
+  "THINGPARK": {
+    "type": "DEVICE",
+    "name": "Device $eui",
+    "profile": null,
+    "label": null,
+    "attributes": [
+      "eui",
+      "fPort",
+      "adr",
+      "spreadingFactor",
+      "bandwidth",
+      "devAddr",
+      "frequency",
+      "class"
+    ],
+    "telemetry": [
+      "fCnt",
+      "data",
+      "rssi",
+      "snr",
+      "channel",
+      "decoded"
+    ],
+    "updateOnlyKeys": [
+      "eui",
+      "fPort",
+      "adr",
+      "spreadingFactor",
+      "bandwidth",
+      "devAddr",
+      "frequency",
+      "class"
+    ]
+  },
+  "LORIOT": {
+    "type": "DEVICE",
+    "name": "Device $eui",
+    "profile": null,
+    "label": null,
+    "attributes": [
+      "eui",
+      "fPort",
+      "frequency",
+      "dr"
+    ],
+    "telemetry": [
+      "battery",
+      "fСnt",
+      "rssi",
+      "snr",
+      "data",
+      "decoded",
+      "encdata"
+    ],
+    "updateOnlyKeys": [
+      "eui",
+      "fPort",
+      "frequency",
+      "dr"
+    ]
+  },
+  "TTN": {
+    "type": "DEVICE",
+    "name": "Device $eui",
+    "profile": "$applicationId",
+    "label": "$deviceId",
+    "attributes": [
+      "eui",
+      "devAddr",
+      "fPort",
+      "bandwidth",
+      "spreadingFactor",
+      "codeRate",
+      "frequency",
+      "brandId",
+      "modelId",
+      "hardwareVersion",
+      "firmwareVersion",
+      "attributes",
+      "tenantId"
+    ],
+    "telemetry": [
+      "fCnt",
+      "data",
+      "decoded",
+      "latitude",
+      "longitude",
+      "altitude",
+      "rssi",
+      "snr",
+      "channel"
+    ],
+    "updateOnlyKeys": [
+      "eui",
+      "devAddr",
+      "fPort",
+      "bandwidth",
+      "spreadingFactor",
+      "codeRate",
+      "frequency",
+      "brandId",
+      "modelId",
+      "hardwareVersion",
+      "firmwareVersion",
+      "attributes",
+      "tenantId"
+    ]
+  },
+  "TTI": {
+    "type": "DEVICE",
+    "name": "Device $eui",
+    "profile": "$applicationId",
+    "label": "$deviceId",
+    "attributes": [
+      "eui",
+      "devAddr",
+      "fPort",
+      "bandwidth",
+      "spreadingFactor",
+      "codeRate",
+      "frequency",
+      "brandId",
+      "modelId",
+      "hardwareVersion",
+      "firmwareVersion",
+      "attributes",
+      "tenantId"
+    ],
+    "telemetry": [
+      "fCnt",
+      "data",
+      "decoded",
+      "latitude",
+      "longitude",
+      "altitude",
+      "rssi",
+      "snr",
+      "channel"
+    ],
+    "updateOnlyKeys": [
+      "eui",
+      "devAddr",
+      "fPort",
+      "bandwidth",
+      "spreadingFactor",
+      "codeRate",
+      "frequency",
+      "brandId",
+      "modelId",
+      "hardwareVersion",
+      "firmwareVersion",
+      "attributes",
+      "tenantId"
+    ]
+  }
+}

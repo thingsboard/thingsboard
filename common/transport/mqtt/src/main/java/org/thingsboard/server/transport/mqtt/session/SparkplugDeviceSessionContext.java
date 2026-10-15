@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt.session;
 
@@ -115,5 +115,5 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
                             rpcRequest.getMethodName() + ". " + e.getMessage());
         }
     }
-
+    
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   Component,
@@ -118,10 +118,6 @@ export class AggregatedDataKeysPanelComponent implements ControlValueAccessor, O
 
   keysFormArray(): UntypedFormArray {
     return this.keysListFormGroup.get('keys') as UntypedFormArray;
-  }
-
-  trackByKey(index: number, keyControl: AbstractControl): any {
-    return keyControl;
   }
 
   removeKey(index: number) {

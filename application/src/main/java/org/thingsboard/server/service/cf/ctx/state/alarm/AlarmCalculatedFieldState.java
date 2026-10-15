@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf.ctx.state.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,7 +28,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionTyp
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionFilter;
-import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.BooleanFilterPredicate;
@@ -282,7 +283,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                     clearState(state);
                 }
                 AlarmApiCallResult clearResult = ctx.getAlarmService().clearAlarm(
-                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), false
+                        ctx.getTenantId(), currentAlarm.getOriginator(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), false
                 );
                 if (clearResult.isCleared()) {
                     result = TbAlarmResult.builder()
@@ -357,6 +358,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             newAlarm.setTenantId(ctx.getTenantId());
             newAlarm.setPropagate(configuration.isPropagate());
             newAlarm.setPropagateToOwner(configuration.isPropagateToOwner());
+            newAlarm.setPropagateToOwnerHierarchy(configuration.isPropagateToOwnerHierarchy());
             newAlarm.setPropagateToTenant(configuration.isPropagateToTenant());
             if (configuration.getPropagateRelationTypes() != null) {
                 newAlarm.setPropagateRelationTypes(configuration.getPropagateRelationTypes());

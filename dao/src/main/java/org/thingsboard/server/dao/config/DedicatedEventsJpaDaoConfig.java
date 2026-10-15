@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.config;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -16,9 +17,12 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
+import org.thingsboard.server.dao.model.sql.ConverterDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.ErrorEventEntity;
+import org.thingsboard.server.dao.model.sql.IntegrationDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
+import org.thingsboard.server.dao.model.sql.RawDataEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleNodeDebugEventEntity;
 import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
@@ -56,7 +60,8 @@ public class DedicatedEventsJpaDaoConfig {
                                                                              EntityManagerFactoryBuilder builder) {
         return builder
                 .dataSource(eventsDataSource)
-                .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class)
+                .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class,
+                        ConverterDebugEventEntity.class, IntegrationDebugEventEntity.class, RawDataEventEntity.class, AuditLogEntity.class, CalculatedFieldDebugEventEntity.class)
                 .persistenceUnit(EVENTS_PERSISTENCE_UNIT)
                 .build();
     }

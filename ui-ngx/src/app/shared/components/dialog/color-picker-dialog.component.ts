@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -9,7 +10,10 @@ import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface ColorPickerDialogData {
   color: string;
+  defaultColor: string;
   colorClearButton: boolean;
+  useThemePalette?: boolean;
+  disableAlpha?: boolean;
 }
 
 export interface ColorPickerDialogResult {
@@ -26,7 +30,10 @@ export interface ColorPickerDialogResult {
 export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialogComponent, ColorPickerDialogResult> {
 
   color: string;
+  defaultColor: string;
   colorClearButton: boolean;
+  useThemePalette: boolean;
+  disableAlpha: boolean;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -34,7 +41,10 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
               public dialogRef: MatDialogRef<ColorPickerDialogComponent, ColorPickerDialogResult>) {
     super(store, router, dialogRef);
     this.color = data.color;
+    this.defaultColor = data.defaultColor;
     this.colorClearButton = data.colorClearButton;
+    this.useThemePalette = data.useThemePalette;
+    this.disableAlpha = data.disableAlpha;
   }
 
   selectColor(color: string) {

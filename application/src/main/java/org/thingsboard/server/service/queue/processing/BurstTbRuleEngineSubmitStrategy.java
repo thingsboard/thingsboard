@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue.processing;
 
@@ -21,7 +21,7 @@ public class BurstTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
         if (log.isDebugEnabled()) {
             log.debug("[{}] submitting [{}] messages to rule engine", queueName, orderedMsgList.size());
         }
-        orderedMsgList.forEach(pair -> msgConsumer.accept(pair.uuid, pair.msg));
+        orderedMsgList.forEach(pair -> msgConsumer.accept(pair.uuid(), pair.msg()));
     }
 
     @Override

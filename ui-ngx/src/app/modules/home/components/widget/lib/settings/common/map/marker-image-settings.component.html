@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -10,8 +10,9 @@
         [disabled]="disabled"
         #matButton
         (click)="openImageSettingsPopup($event, matButton)">
-  <tb-icon matButtonIcon *ngIf="modelValue?.type === MarkerImageType.function; else imagePreview">mdi:function-variant</tb-icon>
+  @if (modelValue?.type === MarkerImageType.function) {
+    <tb-icon matButtonIcon>mdi:function-variant</tb-icon>
+  } @else {
+    <img width="24px" height="24px" style="object-fit: contain;" [src]="modelValue?.image | image : {preview: true} | async" [class.disabled]="disabled"/>
+  }
 </button>
-<ng-template #imagePreview>
-  <img width="24px" height="24px" style="object-fit: contain;" [src]="modelValue?.image | image : {preview: true} | async" [class.disabled]="disabled"/>
-</ng-template>

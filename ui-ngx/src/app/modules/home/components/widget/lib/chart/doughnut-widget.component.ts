@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, Input, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Input, OnInit, Optional, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   doughnutDefaultSettings,
   doughnutPieChartSettings,
@@ -15,6 +16,8 @@ import {
   LatestChartComponent,
   LatestChartComponentCallbacks
 } from '@home/components/widget/lib/chart/latest-chart.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
     selector: 'tb-doughnut-widget',
@@ -23,7 +26,7 @@ import {
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class DoughnutWidgetComponent implements OnInit {
+export class DoughnutWidgetComponent implements OnInit, ChartWidgetComponent {
 
   @ViewChild('latestChart')
   latestChart: LatestChartComponent;
@@ -32,19 +35,23 @@ export class DoughnutWidgetComponent implements OnInit {
   ctx: WidgetContext;
 
   @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
   widgetTitlePanel: TemplateRef<any>;
 
   settings: DoughnutWidgetSettings;
 
   callbacks: LatestChartComponentCallbacks;
 
-  constructor(private widgetComponent: WidgetComponent,
+  constructor(@Optional() private widgetComponent: WidgetComponent,
               private translate: TranslateService) {
   }
 
   ngOnInit(): void {
-    const params = this.widgetComponent.typeParameters as any;
-    const horizontal  = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
+    const params = this.widgetComponent?.typeParameters as any;
+    const horizontal  = isDefinedAndNotNull(params?.horizontal) ? params?.horizontal : false;
     this.ctx.$scope.doughnutWidget = this;
     this.settings = {...doughnutDefaultSettings(horizontal), ...this.ctx.settings};
     this.callbacks = {

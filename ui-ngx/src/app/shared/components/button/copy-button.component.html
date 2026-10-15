@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -12,10 +12,11 @@
         [matTooltip]="matTooltipText"
         [matTooltipPosition]="matTooltipPosition"
         (click)="copy($event)">
-  <tb-icon [style]="style" *ngIf="!copied; else copiedTemplate">
-    {{  icon || mdiIcon }}
-  </tb-icon>
-  <ng-template #copiedTemplate>
+  @if (!copied) {
+    <tb-icon [style]="style">
+      {{  icon || mdiIcon }}
+    </tb-icon>
+  } @else {
     <mat-icon [style]="style" class="copied">done</mat-icon>
-  </ng-template>
+  }
 </button>

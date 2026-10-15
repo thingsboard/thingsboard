@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable, NgZone } from '@angular/core';
 import {
   AlarmCountCmd,
@@ -22,8 +23,12 @@ import {
   isAlarmStatusUpdateMsg,
   isEntityCountUpdateMsg,
   isEntityDataUpdateMsg,
+  isLogsUpdateMsg,
   isNotificationCountUpdateMsg,
   isNotificationsUpdateMsg,
+  LogsSubscriptionCmd,
+  LogsUnsubscribeCmd,
+  LogsUpdate,
   MarkAllAsReadCmd,
   MarkAsReadCmd,
   NotificationCountUpdate,
@@ -42,6 +47,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AuthService } from '@core/auth/auth.service';
 import { WINDOW } from '@core/services/window.service';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 import { WebsocketService } from '@core/ws/websocket.service';
 
 // @dynamic
@@ -55,11 +61,12 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
   constructor(protected store: Store<AppState>,
               protected authService: AuthService,
               protected ngZone: NgZone,
+              protected reportService: DashboardReportService,
               @Inject(WINDOW) protected window: Window) {
-    super(store, authService, ngZone, 'api/ws', new TelemetryPluginCmdsWrapper(), window);
+    super(store, authService, ngZone, 'api/ws', new TelemetryPluginCmdsWrapper(), window, reportService);
   }
 
-  public subscribe(subscriber: TelemetrySubscriber) {
+  public subscribe(subscriber: TelemetrySubscriber, skipPublish?: boolean) {
     this.isActive = true;
     subscriber.subscriptionCommands.forEach(
       (subscriptionCommand) => {
@@ -72,7 +79,9 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
       }
     );
     this.subscribersCount++;
-    this.publishCommands();
+    if (!skipPublish) {
+      this.publishCommands();
+    }
   }
 
   public update(subscriber: TelemetrySubscriber) {
@@ -88,7 +97,7 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
     }
   }
 
-  public unsubscribe(subscriber: TelemetrySubscriber) {
+  public unsubscribe(subscriber: TelemetrySubscriber, skipPublish?: boolean) {
     if (this.isActive) {
       subscriber.subscriptionCommands.forEach(
         (subscriptionCommand) => {
@@ -119,6 +128,10 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
             const notificationsUnsubCmds = new UnsubscribeCmd();
             notificationsUnsubCmds.cmdId = subscriptionCommand.cmdId;
             this.cmdWrapper.cmds.push(notificationsUnsubCmds);
+          } else if (subscriptionCommand instanceof LogsSubscriptionCmd) {
+            const logsUnsubscribeCmd = new LogsUnsubscribeCmd();
+            logsUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
+            this.cmdWrapper.cmds.push(logsUnsubscribeCmd);
           }
           const cmdId = subscriptionCommand.cmdId;
           if (cmdId) {
@@ -128,7 +141,9 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
       );
       this.reconnectSubscribers.delete(subscriber);
       this.subscribersCount--;
-      this.publishCommands();
+      if (!skipPublish) {
+        this.publishCommands();
+      }
     }
   }
 
@@ -153,6 +168,8 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
           subscriber.onAlarmCount(new AlarmCountUpdate(message));
         } else if (isAlarmStatusUpdateMsg(message)) {
           subscriber.onAlarmStatus(new AlarmStatusUpdate(message))
+        } else if (isLogsUpdateMsg(message)) {
+          subscriber.onLogs(new LogsUpdate(message));
         }
       }
     } else if ('subscriptionId' in message && message.subscriptionId) {

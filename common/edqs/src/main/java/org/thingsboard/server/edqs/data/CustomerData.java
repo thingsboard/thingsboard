@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.data;
 
 import org.thingsboard.server.common.data.EntityType;
@@ -17,6 +18,11 @@ public class CustomerData extends BaseEntityData<CustomerFields> {
 
     public CustomerData(UUID entityId) {
         super(entityId);
+    }
+
+    @Override
+    public UUID getPermissionCustomerId() {
+        return getId();
     }
 
     @Override

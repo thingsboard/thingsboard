@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -13,7 +13,7 @@ import { AttributeScope, telemetryTypeTranslations } from '@shared/models/teleme
 })
 export class PushToCloudConfigComponent extends RuleNodeConfigurationComponent {
 
-  attributeScopes = Object.keys(AttributeScope);
+  attributeScopes = Object.values(AttributeScope);
   telemetryTypeTranslationsMap = telemetryTypeTranslations;
 
   pushToCloudConfigForm: UntypedFormGroup;

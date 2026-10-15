@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
@@ -25,6 +25,8 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  cartoLayerTranslationMap,
+  cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
   googleMapLayerTranslationMap,
@@ -35,6 +37,10 @@ import {
   MapProvider,
   mapProviders,
   mapProviderTranslationMap,
+  openFreeMapStyleTranslationMap,
+  openFreeMapStyleTypes,
+  mapProviderHasApiKey,
+  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
@@ -67,9 +73,17 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
 
   mapProviderTranslationMap = mapProviderTranslationMap;
 
+  openFreeMapStyleTypes = openFreeMapStyleTypes;
+
+  openFreeMapStyleTranslationMap = openFreeMapStyleTranslationMap;
+
   openStreetLayerTypes = openStreetLayerTypes;
 
   openStreetMapLayerTranslationMap = openStreetMapLayerTranslationMap;
+
+  cartoLayerTypes = cartoLayerTypes;
+
+  cartoLayerTranslationMap = cartoLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -110,6 +124,8 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       provider: [null, [Validators.required]],
       layerType: [null, [Validators.required]],
       tileUrl: [null, [Validators.required]],
+      vectorTiles: [false, []],
+      customAttribution: [null, []],
       apiKey: [null, [Validators.required]],
       referenceLayer: [null, []]
     });
@@ -202,12 +218,17 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
     const provider: MapProvider = this.layerFormGroup.get('provider').value;
     if (provider === MapProvider.custom) {
       this.layerFormGroup.get('tileUrl').enable({emitEvent: false});
+      this.layerFormGroup.get('vectorTiles').enable({emitEvent: false});
+      this.layerFormGroup.get('customAttribution').enable({emitEvent: false});
       this.layerFormGroup.get('layerType').disable({emitEvent: false});
     } else {
       this.layerFormGroup.get('tileUrl').disable({emitEvent: false});
+      this.layerFormGroup.get('vectorTiles').disable({emitEvent: false});
+      this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if ([MapProvider.google, MapProvider.here].includes(provider)) {
+    if (mapProviderHasApiKey(provider)) {
+      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});

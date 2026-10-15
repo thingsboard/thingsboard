@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -16,10 +17,11 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
 
 @Component({
     selector: 'tb-key-val-map',
@@ -53,8 +55,15 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   @Input() noDataText: string;
 
+  @Input() singlePredefinedKey: string;
+
+  @Input() isStrokedButton = false;
+
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   kvListFormGroup: UntypedFormGroup;
 
@@ -103,7 +112,7 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   writeValue(keyValMap: {[key: string]: string}): void {
     const keyValsControls: Array<AbstractControl> = [];
-    if (keyValMap) {
+    if (keyValMap && !isEqual(keyValMap, {})) {
       for (const property of Object.keys(keyValMap)) {
         if (Object.prototype.hasOwnProperty.call(keyValMap, property)) {
           keyValsControls.push(this.fb.group({
@@ -114,6 +123,9 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
       }
     }
     this.kvListFormGroup.setControl('keyVals', this.fb.array(keyValsControls), {emitEvent: false});
+    if (this.isSinglePredefinedKey && !keyValsControls.length) {
+      this.addKeyVal();
+    }
     if (this.disabled) {
       this.kvListFormGroup.disable({emitEvent: false});
     } else {
@@ -128,13 +140,21 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   public addKeyVal() {
     const keyValsFormArray = this.kvListFormGroup.get('keyVals') as UntypedFormArray;
     keyValsFormArray.push(this.fb.group({
-      key: ['', [Validators.required]],
+      key: [this.isSinglePredefinedKey ? this.singlePredefinedKey : '', [Validators.required]],
       value: ['', this.isValueRequired ? [Validators.required] : []]
     }));
   }
 
   public validate(): ValidationErrors | null {
     return this.kvListFormGroup.valid ? null : { keyVals: { valid: false } };
+  }
+
+  get isSingleMode(): boolean {
+    return isDefinedAndNotNull(this.singlePredefinedKey);
+  }
+
+  get isSinglePredefinedKey(): boolean {
+    return isDefinedAndNotNull(this.singlePredefinedKey);
   }
 
   private updateModel() {

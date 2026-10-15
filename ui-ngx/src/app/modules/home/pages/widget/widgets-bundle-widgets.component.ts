@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -71,10 +71,6 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
   }
 
   ngOnInit(): void {
-  }
-
-  trackByWidget(index: number, widget: WidgetTypeBundle): any {
-    return widget;
   }
 
   widgetDrop(event: CdkDragDrop<string[]>) {

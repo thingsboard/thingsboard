@@ -1,32 +1,35 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.EntityViewId;
 
+import java.util.List;
+
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class EntityViewInfo extends EntityView {
 
-    @Schema(description = "Title of the Customer that owns the entity view.", accessMode = Schema.AccessMode.READ_ONLY)
-    private String customerTitle;
-    @Schema(description = "Indicates special 'Public' Customer that is auto-generated to use the entity view on public dashboards.", accessMode = Schema.AccessMode.READ_ONLY)
-    private boolean customerIsPublic;
+    @Valid
+    @Schema(description = "Owner name", accessMode = Schema.AccessMode.READ_ONLY)
+    private String ownerName;
+
+    @Valid
+    @Schema(description = "Groups", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<EntityInfo> groups;
 
     public EntityViewInfo() {
         super();
     }
 
-    public EntityViewInfo(EntityViewId entityViewId) {
-        super(entityViewId);
-    }
-
-    public EntityViewInfo(EntityView entityView, String customerTitle, boolean customerIsPublic) {
+    public EntityViewInfo(EntityView entityView, String ownerName, List<EntityInfo> groups) {
         super(entityView);
-        this.customerTitle = customerTitle;
-        this.customerIsPublic = customerIsPublic;
+        this.ownerName = ownerName;
+        this.groups = groups;
     }
 }

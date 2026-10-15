@@ -1,0 +1,106 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="updConfigForm">
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.port</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="port">
+      @if (updConfigForm.get('port').hasError('required')) {
+        <mat-error translate>
+          integration.port-required
+        </mat-error>
+      }
+      @if (updConfigForm.get('port').hasError('min') || updConfigForm.get('port').hasError('max')) {
+        <mat-error translate>
+          integration.port-range
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.so-rcv-buf</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="soRcvBuf">
+      @if (updConfigForm.get('soRcvBuf').hasError('required')) {
+        <mat-error translate>integration.so-rcv-buf-required</mat-error>
+      }
+      @if (updConfigForm.get('soRcvBuf').hasError('min') || updConfigForm.get('soRcvBuf').hasError('max')) {
+        <mat-error translate>
+          integration.so-rcv-buf-range
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+  @if (isSetDownlink) {
+    <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.cache-size</mat-label>
+        <input matInput type="number" min="0" pattern="[0-9]+" formControlName="cacheSize">
+        @if (updConfigForm.get('cacheSize').hasError('min')) {
+          <mat-error translate>
+            integration.min-cache-size
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.cache-time-to-live</mat-label>
+        <input matInput type="number" min="0" max="525600" pattern="[0-9]+" formControlName="timeToLiveInMinutes">
+        @if (updConfigForm.get('timeToLiveInMinutes').hasError('min')) {
+          <mat-error translate>
+            integration.min-cache-time-to-live
+          </mat-error>
+        }
+        @if (updConfigForm.get('timeToLiveInMinutes').hasError('max')) {
+          <mat-error translate>
+            integration.max-cache-time-to-live
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+  }
+
+  <mat-slide-toggle class="toggle" [aria-label]="'integration.so-broadcast' | translate" formControlName="soBroadcast">
+    {{ 'integration.so-broadcast' | translate }}
+  </mat-slide-toggle>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <fieldset class="fields-group" formGroupName="handlerConfiguration">
+    <legend class="group-title" translate>integration.handler-configuration</legend>
+    <mat-form-field appearance="outline" class="mat-block">
+      <mat-select required formControlName="handlerType">
+        @for (handlerConfigurationType of HandlerConfigurationType | keyvalue; track handlerConfigurationType.key) {
+          <mat-option [value]="handlerConfigurationType.value">
+            {{ HandlerConfigurationTypeTranslation.get(handlerConfigurationType.value) | translate}}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (updConfigForm.get('handlerConfiguration.handlerType').value === HandlerConfigurationType.TEXT) {
+      <section>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.charset-name</mat-label>
+          <input matInput type="text" required formControlName="charsetName">
+          @if (updConfigForm.get('handlerConfiguration').get('charsetName').hasError('required')) {
+            <mat-error translate>integration.charset-name-required</mat-error>
+          }
+        </mat-form-field>
+      </section>
+    }
+  </fieldset>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

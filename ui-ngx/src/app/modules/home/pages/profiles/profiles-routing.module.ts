@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
@@ -13,7 +13,8 @@ const routes: Routes = [
     data: {
       auth: [Authority.TENANT_ADMIN],
       breadcrumb: {
-        menuId: MenuId.profiles
+        menuId: MenuId.profiles,
+        skip: true
       }
     },
     children: [

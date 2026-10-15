@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.model;
 
 import lombok.Getter;
@@ -8,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -24,7 +26,11 @@ public class SecurityUser extends User {
     @Getter @Setter
     private UserPrincipal userPrincipal;
     @Getter @Setter
+    private MergedUserPermissions userPermissions;
+    @Getter @Setter
     private String sessionId = UUID.randomUUID().toString();
+    @Getter @Setter
+    private String clientAddress;
 
     public SecurityUser() {
         super();
@@ -34,10 +40,11 @@ public class SecurityUser extends User {
         super(id);
     }
 
-    public SecurityUser(User user, boolean enabled, UserPrincipal userPrincipal) {
+    public SecurityUser(User user, boolean enabled, UserPrincipal userPrincipal, MergedUserPermissions userPermissions) {
         super(user);
         this.enabled = enabled;
         this.userPrincipal = userPrincipal;
+        this.userPermissions = userPermissions;
     }
 
     public Collection<GrantedAuthority> getAuthorities() {

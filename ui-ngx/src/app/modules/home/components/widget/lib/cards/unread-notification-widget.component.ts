@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
@@ -23,7 +23,7 @@ import {
   unreadNotificationDefaultSettings,
   UnreadNotificationWidgetSettings
 } from '@home/components/widget/lib/cards/unread-notification-widget.models';
-import { Notification, NotificationRequest, NotificationType } from '@shared/models/notification.models';
+import { Notification, NotificationType } from '@shared/models/notification.models';
 import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { distinctUntilChanged, map, share, skip, take, tap } from 'rxjs/operators';
@@ -214,10 +214,6 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
       }
       this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
     }
-  }
-
-  trackById(index: number, item: NotificationRequest): string {
-    return item.id.id;
   }
 
   private editNotificationTypeFilter($event: Event) {

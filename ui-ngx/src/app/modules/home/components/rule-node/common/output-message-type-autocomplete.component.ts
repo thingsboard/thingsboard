@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input } from '@angular/core';
 import {
@@ -10,7 +10,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/public-api';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -46,6 +46,9 @@ export class OutputMessageTypeAutocompleteComponent implements ControlValueAcces
   @Input()
   @coerceBoolean()
   disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   @coerceBoolean()

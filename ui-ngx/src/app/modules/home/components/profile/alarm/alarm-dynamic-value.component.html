@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -24,9 +24,11 @@
               <mat-option [value]="null">
                 {{'filter.no-dynamic-value' | translate}}
               </mat-option>
-              <mat-option *ngFor="let sourceType of dynamicValueSourceTypes" [value]="sourceType">
-                {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
-              </mat-option>
+              @for (sourceType of dynamicValueSourceTypes; track sourceType) {
+                <mat-option [value]="sourceType">
+                  {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>

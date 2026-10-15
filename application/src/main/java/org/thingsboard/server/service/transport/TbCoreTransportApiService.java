@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.transport;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -31,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 @Slf4j
 @Service
 @TbCoreComponent
+@RequiredArgsConstructor
 public class TbCoreTransportApiService {
     private final TbCoreQueueFactory tbCoreQueueFactory;
     private final TransportApiService transportApiService;
@@ -42,18 +45,12 @@ public class TbCoreTransportApiService {
     private long requestTimeout;
     @Value("${queue.transport_api.request_poll_interval:25}")
     private int responsePollDuration;
-    @Value("${queue.transport_api.max_callback_threads:100}")
+    @Value("${queue.transport_api.max_callback_threads:10}")
     private int maxCallbackThreads;
 
     private ExecutorService transportCallbackExecutor;
     private TbQueueResponseTemplate<TbProtoQueueMsg<TransportApiRequestMsg>,
             TbProtoQueueMsg<TransportApiResponseMsg>> transportApiTemplate;
-
-    public TbCoreTransportApiService(TbCoreQueueFactory tbCoreQueueFactory, TransportApiService transportApiService, StatsFactory statsFactory) {
-        this.tbCoreQueueFactory = tbCoreQueueFactory;
-        this.transportApiService = transportApiService;
-        this.statsFactory = statsFactory;
-    }
 
     @PostConstruct
     public void init() {
@@ -72,7 +69,6 @@ public class TbCoreTransportApiService {
         builder.requestTimeout(requestTimeout);
         builder.pollInterval(responsePollDuration);
         builder.executor(transportCallbackExecutor);
-        builder.handler(transportApiService);
         builder.stats(queueStats);
         transportApiTemplate = builder.build();
     }

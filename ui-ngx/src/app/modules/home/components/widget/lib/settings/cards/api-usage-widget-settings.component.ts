@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef } from '@angular/core';
 import {
@@ -74,10 +74,6 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
   dataKeysFormArray(): UntypedFormArray {
     return this.apiUsageWidgetSettingsForm.get('apiUsageDataKeys') as UntypedFormArray;
-  }
-
-  trackByDataKey(index: number): any {
-    return index;
   }
 
   get dragEnabled(): boolean {

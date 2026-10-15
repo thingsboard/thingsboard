@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -60,7 +61,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
     ListeningExecutorService executor;
 
     @Before
-    public void before() {
+    public void beforeRun() {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
     }
 
@@ -312,6 +313,17 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindOrCreatePublicCustomer_Concurrency() throws Exception {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("My customer");
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Assert.assertNotNull(savedCustomer);
+        Assert.assertNotNull(savedCustomer.getId());
+        Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
+        Assert.assertEquals(customer.getTenantId(), savedCustomer.getTenantId());
+        Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
+
         CountDownLatch allThreadsReadyLatch = new CountDownLatch(2);
         final Customer[] customers = new Customer[2];
 
@@ -324,7 +336,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
                     allThreadsReadyLatch.countDown();
                     try {
                         allThreadsReadyLatch.await();
-                        customers[threadIndex] = customerService.findOrCreatePublicCustomer(tenantId);
+                        customers[threadIndex] = customerService.findOrCreatePublicCustomer(tenantId, savedCustomer.getId());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }

@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -12,16 +12,21 @@
       <tb-toggle-option [value]="targetDeviceType.entity">{{ 'entity.entity-alias' | translate }}</tb-toggle-option>
     </tb-toggle-select>
   </div>
-  <tb-entity-autocomplete *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.device"
-                          [required]="(!widgetEditMode && !targetDeviceOptional)"
-                          [entityType]="entityType.DEVICE"
-                          formControlName="deviceId">
-  </tb-entity-autocomplete>
-  <tb-entity-alias-select
-    *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.entity"
-    [tbRequired]="(!widgetEditMode && !targetDeviceOptional)"
-    [aliasController]="aliasController"
-    [callbacks]="entityAliasSelectCallbacks"
-    formControlName="entityAliasId">
-  </tb-entity-alias-select>
+  @if (targetDeviceFormGroup.get('type').value === targetDeviceType.device) {
+    <tb-entity-autocomplete
+      [appearance]="appearance"
+      [required]="(!widgetEditMode && !targetDeviceOptional)"
+      [entityType]="entityType.DEVICE"
+      formControlName="deviceId">
+    </tb-entity-autocomplete>
+  }
+  @if (targetDeviceFormGroup.get('type').value === targetDeviceType.entity) {
+    <tb-entity-alias-select
+      [appearance]="appearance"
+      [tbRequired]="(!widgetEditMode && !targetDeviceOptional)"
+      [aliasController]="aliasController"
+      [callbacks]="entityAliasSelectCallbacks"
+      formControlName="entityAliasId">
+    </tb-entity-alias-select>
+  }
 </div>

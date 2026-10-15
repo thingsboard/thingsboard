@@ -1,12 +1,21 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ul class="tb-side-menu flex flex-col items-stretch justify-start">
-  <li *ngFor="let section of menuSections$ | async; trackBy: trackByMenuSection" [ngSwitch]="section.type === 'link'">
-    <tb-menu-link *ngSwitchCase="true" [section]="section"></tb-menu-link>
-    <tb-menu-toggle *ngSwitchCase="false" [section]="section"></tb-menu-toggle>
-  </li>
+  @for (section of menuSections$ | async; track section.id) {
+    <li>
+      @switch (section.type) {
+        @case ('link') {
+          <tb-menu-link [section]="section" [collapsed]="collapsed"></tb-menu-link>
+        }
+        @case ('toggle') {
+          <tb-menu-toggle [section]="section" [collapsed]="collapsed"></tb-menu-toggle>
+        }
+      }
+    </li>
+  }
 </ul>

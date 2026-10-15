@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -14,6 +15,12 @@ import java.util.List;
 
 /**
  * Created by ashvayka on 25.04.17.
+ *
+ * <p><b>Write-path convention.</b> Every relation-mutating path (implemented here and orchestrated by the relation
+ * service) must run inside a {@code @Transactional} boundary and take the appropriate {@link RelationWriteLock} before
+ * its DML — the advisory lock and the DML must share one transaction/connection. See {@link RelationWriteLock} for the
+ * full locking contract (per-endpoint {@code lockEntities}, covering locks, lock-acquisition order, and the transaction
+ * assertion that fails fast in both Citus and plain-PostgreSQL modes).
  */
 public interface RelationDao {
 

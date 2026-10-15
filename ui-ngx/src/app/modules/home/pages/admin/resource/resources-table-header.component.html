@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -12,8 +12,10 @@
     <mat-option value="">
       {{ "resource.all-types" | translate }}
     </mat-option>
-    <mat-option *ngFor="let resourceType of resourceTypes" [value]="resourceType">
-      {{ resourceTypesTranslationMap.get(resourceType) | translate }}
-    </mat-option>
+    @for (resourceType of resourceTypes; track resourceType) {
+      <mat-option [value]="resourceType">
+        {{ resourceTypesTranslationMap.get(resourceType) | translate }}
+      </mat-option>
+    }
   </mat-select>
 </mat-form-field>

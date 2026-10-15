@@ -1,13 +1,16 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<button mat-icon-button
-        type="button"
-        (click)="gotoHelpPage()"
-        matTooltip="{{'help.goto-help-page' | translate}}"
-        matTooltipPosition="above">
-  <mat-icon class="material-icons">help</mat-icon>
-</button>
+@if (wl.isEnableHelpLinks$() | async) {
+  <button mat-icon-button
+    type="button"
+    (click)="gotoHelpPage()"
+    matTooltip="{{'help.goto-help-page' | translate}}"
+    matTooltipPosition="above">
+    <mat-icon class="material-icons">help</mat-icon>
+  </button>
+}

@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -12,9 +12,11 @@
   <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.default-map-type</mat-label>
     <mat-select required formControlName="tmDefaultMapType">
-      <mat-option *ngFor="let type of tencentMapTypes" [value]="type">
-        {{tencentMapTypeTranslations.get(type) | translate}}
-      </mat-option>
+      @for (type of tencentMapTypes; track type) {
+        <mat-option [value]="type">
+          {{tencentMapTypeTranslations.get(type) | translate}}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
 </section>

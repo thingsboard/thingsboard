@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -27,15 +28,16 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.asset.profile.TbAssetProfileService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -50,6 +52,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -97,7 +100,11 @@ public class AssetProfileController extends BaseController {
             @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId) throws ThingsboardException {
         checkParameter(ASSET_PROFILE_ID, strAssetProfileId);
         AssetProfileId assetProfileId = new AssetProfileId(toUUID(strAssetProfileId));
-        return new AssetProfileInfo(checkAssetProfileId(assetProfileId, Operation.READ));
+        AssetProfileInfo assetProfileInfo = checkNotNull(assetProfileService.findAssetProfileInfoById(getTenantId(), assetProfileId));
+        if (!getTenantId().equals(assetProfileInfo.getTenantId())) {
+            throw permissionDenied();
+        }
+        return assetProfileInfo;
     }
 
     @ApiOperation(value = "Get Default Asset Profile (getDefaultAssetProfileInfo)",
@@ -107,6 +114,7 @@ public class AssetProfileController extends BaseController {
     @RequestMapping(value = "/assetProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
     public AssetProfileInfo getDefaultAssetProfileInfo() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ);
         return checkNotNull(assetProfileService.findDefaultAssetProfileInfo(getTenantId()));
     }
 
@@ -175,6 +183,7 @@ public class AssetProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(assetProfileService.findAssetProfiles(getTenantId(), pageLink));
     }
@@ -195,8 +204,39 @@ public class AssetProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(assetProfileService.findAssetProfileInfos(getTenantId(), pageLink));
+    }
+
+    @Hidden
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/assetProfileInfos", params = {"assetProfileIds"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<AssetProfileInfo> getAssetProfilesByIdsV1(
+            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        if (!accessControlService.hasPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ)) {
+            return Collections.emptyList();
+        }
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<AssetProfileId> assetProfileIds = new ArrayList<>();
+        for (UUID assetProfileUUID : assetProfileUUIDs) {
+            assetProfileIds.add(new AssetProfileId(assetProfileUUID));
+        }
+        return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
+    }
+
+    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIds)",
+            notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE + RBAC_READ_CHECK)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/assetProfileInfos/list")
+    public List<AssetProfileInfo> getAssetProfilesByIds(
+            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        return getAssetProfilesByIdsV1(assetProfileUUIDs);
     }
 
     @ApiOperation(value = "Get Asset Profile names (getAssetProfileNames)",
@@ -210,32 +250,8 @@ public class AssetProfileController extends BaseController {
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
+        accessControlService.checkPermission(user, Resource.ASSET_PROFILE, Operation.READ);
         return checkNotNull(assetProfileService.findAssetProfileNamesByTenantId(tenantId, activeOnly));
-    }
-
-    @Hidden
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/assetProfileInfos", params = {"assetProfileIds"})
-    public List<AssetProfileInfo> getAssetProfilesByIdsV1(
-            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        List<AssetProfileId> assetProfileIds = new ArrayList<>();
-        for (UUID assetProfileUUID : assetProfileUUIDs) {
-            assetProfileIds.add(new AssetProfileId(assetProfileUUID));
-        }
-        return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
-    }
-
-    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIds)",
-            notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
-                    NEW_LINE)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/assetProfileInfos/list")
-    public List<AssetProfileInfo> getAssetProfilesByIds(
-            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
-        return getAssetProfilesByIdsV1(assetProfileUUIDs);
     }
 
 }

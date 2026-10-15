@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.Data;
@@ -105,6 +106,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_LWM2M_TEST_OBJECT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 import static org.thingsboard.server.utils.PortFinder.isUDPPortAvailable;
@@ -179,7 +181,7 @@ public class LwM2MTestClient {
         LwM2mTemperatureSensor lwM2mTemperatureSensor0 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0);
         lwM2MTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
         initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2MTemperatureSensor12);
-
+        initializer.setInstancesForObject(OBJECT_ID_LWM2M_TEST_OBJECT, new LwM2mTestObject());
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
 
         // Create Californium Endpoints Provider:
@@ -441,7 +443,6 @@ public class LwM2MTestClient {
         lwM2MTemperatureSensor12 = null;
     }
 
-
     private void destroySafe(Object obj) {
         if (obj == null) return;
         try {
@@ -453,7 +454,6 @@ public class LwM2MTestClient {
             log.warn("Failed to destroy {}", obj.getClass().getSimpleName(), e);
         }
     }
-
 
     public void start(boolean isStartLw) {
         if (leshanClient != null) {

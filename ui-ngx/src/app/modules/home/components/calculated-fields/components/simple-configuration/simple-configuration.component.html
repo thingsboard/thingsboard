@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="simpleConfiguration" class="tb-form-panel no-border no-padding">
@@ -17,7 +18,8 @@
                                          [entityName]="entityName"
                                          [isEditValue]="isEditValue"
                                          [watchKeyChange]="true"
-                                         [isScript]="isScript" />
+                                         [isScript]="isScript"
+                                         [readonly]="readonly" />
   </div>
   <div class="tb-form-panel no-gap">
     <div class="tb-form-panel-title tb-required"
@@ -66,19 +68,21 @@
                 matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                 matTooltipPosition="above"
                 class="tb-mat-32"
-                [disabled]="simpleConfiguration.get('arguments').invalid || disabled"
+                [disabled]="simpleConfiguration.get('arguments').invalid || disabled || readonly"
                 (click)="onTestScript()">
           <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
         </button>
       </tb-js-func>
-      <div>
-        <button mat-button mat-raised-button color="primary"
-                type="button"
-                (click)="onTestScript()"
-                [disabled]="simpleConfiguration.get('arguments').invalid || disabled">
-          {{ 'calculated-fields.test-script-function' | translate }}
-        </button>
-      </div>
+      @if(!readonly) {
+        <div>
+          <button mat-button mat-raised-button color="primary"
+                  type="button"
+                  (click)="onTestScript()"
+                  [disabled]="simpleConfiguration.get('arguments').invalid || disabled">
+            {{ 'calculated-fields.test-script-function' | translate }}
+          </button>
+        </div>
+      }
     </div>
   </div>
   <tb-calculate-field-output formControlName="output" [simpleMode]="!isScript" [entityId]="entityId">

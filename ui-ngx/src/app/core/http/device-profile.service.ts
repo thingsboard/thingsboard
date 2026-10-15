@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -17,6 +18,8 @@ import { SortOrder } from '@shared/models/page/sort-order';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
+import { Integration } from '@shared/models/integration.models';
+import { sortEntitiesByIds } from '@shared/models/base-data';
 import { EntityInfoData } from '@shared/models/entity.models';
 
 @Injectable({
@@ -34,11 +37,6 @@ export class DeviceProfileService {
 
   public getDeviceProfiles(pageLink: PageLink, config?: RequestConfig): Observable<PageData<DeviceProfile>> {
     return this.http.get<PageData<DeviceProfile>>(`/api/deviceProfiles${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public getDeviceProfilesByIds(deviceProfileIds: Array<string>, config?: RequestConfig): Observable<Array<DeviceProfileInfo>> {
-    return this.http.get<Array<DeviceProfileInfo>>(`/api/deviceProfileInfos?deviceProfileIds=${deviceProfileIds.join(',')}`,
-      defaultHttpOptionsFromConfig(config));
   }
 
   public getDeviceProfile(deviceProfileId: string, config?: RequestConfig): Observable<DeviceProfile> {
@@ -143,6 +141,13 @@ export class DeviceProfileService {
       url += `&transportType=${transportType}`;
     }
     return this.http.get<PageData<DeviceProfileInfo>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDeviceProfilesByIds(deviceProfileIds: Array<string>, config?: RequestConfig): Observable<Array<DeviceProfileInfo>> {
+    return this.http.get<Array<DeviceProfileInfo>>(`/api/deviceProfileInfos?deviceProfileIds=${deviceProfileIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((integrations) => sortEntitiesByIds(integrations, deviceProfileIds))
+    );
   }
 
   public getDeviceProfileDevicesAttributesKeys(deviceProfileId?: string, config?: RequestConfig): Observable<Array<string>> {

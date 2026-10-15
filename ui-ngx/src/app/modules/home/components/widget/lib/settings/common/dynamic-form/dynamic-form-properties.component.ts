@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   Component,
@@ -195,10 +195,6 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
 
   propertiesFormArray(): UntypedFormArray {
     return this.propertiesFormGroup.get('properties') as UntypedFormArray;
-  }
-
-  trackByProperty(_index: number, propertyControl: AbstractControl): any {
-    return propertyControl;
   }
 
   removeProperty(index: number, emitEvent = true) {

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input } from '@angular/core';
 import {
@@ -18,6 +18,7 @@ import {
 } from '@home/components/rule-node/action/timeseries-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-advanced-processing-setting-row',
@@ -37,6 +38,9 @@ export class AdvancedProcessingSettingRowComponent implements ControlValueAccess
 
   @Input()
   title: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   processingSettingRowForm = this.fb.group({
     type: [defaultAdvancedProcessingConfig.type],

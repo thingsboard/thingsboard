@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.rule;
 
 import org.springframework.data.domain.Limit;
@@ -77,6 +78,12 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.RuleChainFields(r.id, r.createdTime, r.tenantId," +
             "r.name, r.version, r.additionalInfo) FROM RuleChainEntity r WHERE r.id > :id ORDER BY r.id")
     List<RuleChainFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(rc.id, 'RULE_CHAIN', rc.name) FROM RuleChainEntity rc " +
+            "WHERE rc.tenantId = :tenantId AND EXISTS (SELECT 1 FROM RuleNodeEntity r JOIN ComponentDescriptorEntity cd ON r.type = cd.clazz " +
+            "WHERE r.ruleChainId = rc.id AND cd.hasSecrets = true AND ilike(r.configuration, CONCAT('%', :placeholder, '%')))")
+    List<EntityInfo> findByTenantIdAndSecretPlaceholder(@Param("tenantId") UUID tenantId,
+                                                        @Param("placeholder") String placeholder);
 
     List<RuleChainEntity> findRuleChainsByTenantIdAndIdIn(UUID tenantId, List<UUID> ruleChainIds);
 

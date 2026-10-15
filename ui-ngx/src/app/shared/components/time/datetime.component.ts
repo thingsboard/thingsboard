@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -26,7 +26,7 @@ export class DatetimeComponent implements OnInit, ControlValueAccessor {
     return this.requiredValue;
   }
   @Input()
-  set required(value: boolean) {
+  set required(value: unknown) {
     this.requiredValue = coerceBooleanProperty(value);
   }
 

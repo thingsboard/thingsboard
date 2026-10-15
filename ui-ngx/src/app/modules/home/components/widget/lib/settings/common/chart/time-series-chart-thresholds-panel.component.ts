@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -75,6 +76,14 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
   @coerceBoolean()
   supportsUnitConversion = true;
 
+  @Input()
+  @coerceBoolean()
+  stroked = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
   thresholdsFormGroup: UntypedFormGroup;
 
   private propagateChange = (_val: any) => {};
@@ -133,10 +142,6 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
 
   thresholdsFormArray(): UntypedFormArray {
     return this.thresholdsFormGroup.get('thresholds') as UntypedFormArray;
-  }
-
-  trackByThreshold(index: number, thresholdControl: AbstractControl): any {
-    return thresholdControl;
   }
 
   removeThreshold(index: number) {

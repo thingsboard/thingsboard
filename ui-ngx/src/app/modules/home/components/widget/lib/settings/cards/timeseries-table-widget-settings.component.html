@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="timeseriesTableWidgetSettingsForm">
@@ -20,11 +21,29 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.table.columns</div>
 
-    <div  class="tb-form-row column-xs">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
         {{ 'widgets.table.display-timestamp' | translate }}
       </mat-slide-toggle>
       <tb-date-format-select class="flex-1" excludeLastUpdateAgo formControlName="dateFormat"></tb-date-format-select>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width">
+        {{ 'widgets.table.include-timestamp-in-export' | translate }}
+      </div>
+      <mat-form-field class="medium-width flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="timestampExportOption">
+          <mat-option [value]="'always'">
+            {{ 'widgets.table.column-export-option-always' | translate }}
+          </mat-option>
+          <mat-option [value]="'onlyVisible'">
+            {{ 'widgets.table.column-export-option-only-visible' | translate }}
+          </mat-option>
+          <mat-option [value]="'never'">
+            {{ 'widgets.table.column-export-option-never' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
 
     <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
@@ -57,34 +76,36 @@
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
                  placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
+          @if (timeseriesTableWidgetSettingsForm.get('pageStepIncrement').invalid
+            && timeseriesTableWidgetSettingsForm.get('pageStepIncrement').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                     [matTooltip]="(timeseriesTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-increment-format-message') | translate"
-                    *ngIf="timeseriesTableWidgetSettingsForm.get('pageStepIncrement').invalid
-                    && timeseriesTableWidgetSettingsForm.get('pageStepIncrement').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
         <mat-divider vertical class="xs:hidden"></mat-divider>
         <div class="tb-small-label" translate>widgets.table.page-step-count</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
                  placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
+          @if (timeseriesTableWidgetSettingsForm.get('pageStepCount').invalid
+            && timeseriesTableWidgetSettingsForm.get('pageStepCount').touched) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                     [matTooltip]="(timeseriesTableWidgetSettingsForm.get('pageStepCount').hasError('required')
                                      ? 'widgets.value-source.value-required'
                                      : 'widgets.table.page-step-count-format-message') | translate"
-                    *ngIf="timeseriesTableWidgetSettingsForm.get('pageStepCount').invalid
-                    && timeseriesTableWidgetSettingsForm.get('pageStepCount').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
+              class="tb-error">
+              warning
+            </mat-icon>
+          }
         </mat-form-field>
       </div>
     </div>
@@ -92,9 +113,11 @@
       <div translate>widgets.table.default-page-size</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
-          <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
-            {{ size }}
-          </mat-option>
+          @for (size of pageStepSizeValues; track size) {
+            <mat-option [value]="size">
+              {{ size }}
+            </mat-option>
+          }
         </mat-select>
       </mat-form-field>
     </div>
@@ -104,23 +127,23 @@
     <mat-slide-toggle class="mat-slide" formControlName="useEntityLabel">
       {{ 'widgets.table.use-entity-label-tab-name' | translate }}
     </mat-slide-toggle>
-   <div class="tb-form-row justify-between column-xs" formGroupName="sortOrder">
-    <div class="fixed-title-width" translate>widgets.table.sort-by</div>
-     <div class="flex flex-1 flex-row justify-end gap-2 ">
-       <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
-         <mat-select formControlName="property" placeholder="{{ 'widget-config.set' | translate }}">
-           <mat-option [value]="entityFields.createdTime.value">{{ entityFields.createdTime.name | translate }}</mat-option>
-           <mat-option  [value]="entityFields.name.value">{{ entityFields.name.name | translate }}</mat-option>
-         </mat-select>
-       </mat-form-field>
-       <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
-         <mat-select formControlName="direction" placeholder="{{ 'widget-config.set' | translate }}">
-           <mat-option  [value]="Direction.ASC">{{ 'common.sort-asc' | translate }}</mat-option>
-           <mat-option  [value]="Direction.DESC">{{ 'common.sort-desc' | translate }}</mat-option>
-         </mat-select>
-       </mat-form-field>
-     </div>
-   </div>
+    <div class="tb-form-row justify-between column-xs" formGroupName="sortOrder">
+      <div class="fixed-title-width" translate>widgets.table.sort-by</div>
+      <div class="flex flex-1 flex-row justify-end gap-2 ">
+        <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="property" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-option [value]="entityFields.createdTime.value">{{ entityFields.createdTime.name | translate }}</mat-option>
+            <mat-option  [value]="entityFields.name.value">{{ entityFields.name.name | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="direction" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-option  [value]="Direction.ASC">{{ 'common.sort-asc' | translate }}</mat-option>
+            <mat-option  [value]="Direction.DESC">{{ 'common.sort-desc' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" style="padding-bottom: 16px;" translate>widgets.table.rows</div>

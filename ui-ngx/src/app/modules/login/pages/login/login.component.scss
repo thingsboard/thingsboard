@@ -1,19 +1,27 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import '../../../../../scss/constants';
-@import '../../../../../theme';
+@import '../../../../../theme/login-theme-constants';
 
 :host {
   display: flex;
   flex: 1 1 0;
   .tb-login-content {
-    margin-top: 36px;
-    margin-bottom: 76px;
     background-color: #eee;
     --mat-card-elevated-container-elevation: none;
     .tb-login-form {
       @media #{$mat-gt-xs} {
         width: 480px !important;
+      }
+      .version {
+        margin-top: 16px;
+        font-size: .75em;
+        text-align: right;
+
+        &.center{
+          text-align: center;
+        }
       }
 
       .forgot-password {
@@ -23,6 +31,21 @@
 
       .tb-action-button{
         margin: 20px 0 16px;
+      }
+
+      .no-account-section {
+        span.no-account-message {
+          font-size: 14px;
+          opacity: .8;
+        }
+        a {
+          font-size: 14px;
+          color: var(--mat-app-text-color);
+          font-weight: 500;
+          &:hover {
+            border-bottom-color: var(--mat-app-text-color);
+          }
+        }
       }
     }
 
@@ -62,7 +85,7 @@
 
       a.login-with-button {
         color: rgba(black, 0.87);
-        background-color: #ffffff;
+        background-color: map-get($mat-tb-primary, 50);
       }
 
       .login-button-container {
@@ -94,4 +117,3 @@
     }
   }
 }
-

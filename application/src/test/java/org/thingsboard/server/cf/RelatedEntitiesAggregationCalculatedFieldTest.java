@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cf;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -8,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -35,6 +37,7 @@ import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
@@ -55,6 +58,9 @@ import static org.thingsboard.server.cf.CalculatedFieldIntegrationTest.POLL_INTE
 
 @DaoSqlTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@TestPropertySource(properties = {
+        "queue.calculated_fields.telemetry_fetch_pack_size=5"
+})
 public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
@@ -686,6 +692,128 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
                 });
     }
 
+    @Test
+    public void testReprocessing() throws Exception {
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        long d_1_1Ts = currentTime - TimeUnit.SECONDS.toMillis(130); // outside the TW (but telemetry will be used for initial processing)
+        long d_2_1Ts = currentTime - TimeUnit.SECONDS.toMillis(100); // inside the TW
+        long d_1_2_2Ts = currentTime - TimeUnit.SECONDS.toMillis(80); // inside the TW
+        long d_1_3Ts = currentTime - TimeUnit.SECONDS.toMillis(60); // inside the TW
+        long d_2_3Ts = currentTime - TimeUnit.SECONDS.toMillis(30); // outside the TW
+
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":112}}", d_1_1Ts));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":160}}", d_1_2_2Ts));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":135}}", d_1_3Ts));
+
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":185}}", d_2_1Ts));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":130}}", d_1_2_2Ts));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":171}}", d_2_3Ts));
+
+        /*      telemetry flow:
+                          startTs               endTs
+                             |_____________________|
+               |  ts   |  1  |    2      3      4  |   5
+               |device1| 112 |->     -> 160 -> 135 |
+               |device2|     |-> 185 -> 130 ->     |-> 171
+                             |_____________________|
+                                        |--- reprocessing time window
+               the result should be: 66 -> 149 -> 145 -> 133
+        */
+
+        CalculatedField cf = createAvgTemperatureCF(asset.getId());
+
+        doGet("/api/calculatedField/" + cf.getUuidId() + "/reprocess?startTs={startTs}&endTs={endTs}", Job.class, startTs, endTs);
+
+        await().alias("reprocess -> perform aggregation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode airDensity = getTimeSeries(asset.getId(), startTs, endTs, "avgTemperature");
+                    assertThat(airDensity).isNotNull();
+
+                    assertThat(airDensity.get("avgTemperature").get(0).get("ts").asText()).isEqualTo(Long.toString(d_1_3Ts));
+                    assertThat(airDensity.get("avgTemperature").get(0).get("value").asText()).isEqualTo("133");
+
+                    assertThat(airDensity.get("avgTemperature").get(1).get("ts").asText()).isEqualTo(Long.toString(d_1_2_2Ts));
+                    assertThat(airDensity.get("avgTemperature").get(1).get("value").asText()).isEqualTo("145");
+
+                    assertThat(airDensity.get("avgTemperature").get(2).get("ts").asText()).isEqualTo(Long.toString(d_2_1Ts));
+                    assertThat(airDensity.get("avgTemperature").get(2).get("value").asText()).isEqualTo("149");
+
+                    assertThat(airDensity.get("avgTemperature").get(3).get("ts").asText()).isEqualTo(Long.toString(startTs));
+                    assertThat(airDensity.get("avgTemperature").get(3).get("value").asText()).isEqualTo("66");
+                });
+    }
+
+    @Test
+    public void testReprocessing_whenTelemetryExceedsFetchPackSize() throws Exception {
+        long currentTime = System.currentTimeMillis();
+        // reprocessing time window(TW)
+        long startTs = currentTime - TimeUnit.SECONDS.toMillis(120);
+        long endTs = currentTime - TimeUnit.SECONDS.toMillis(45);
+
+        // 7 datapoints per related entity, all inside the reprocessing window.
+        // Fetch pack size is 5, so each per-entity buffer
+        // drains after t5 and must be refilled to reach t6 and t7.
+        long t1 = currentTime - TimeUnit.SECONDS.toMillis(105);
+        long t2 = currentTime - TimeUnit.SECONDS.toMillis(90);
+        long t3 = currentTime - TimeUnit.SECONDS.toMillis(70);
+        long t4 = currentTime - TimeUnit.SECONDS.toMillis(65);
+        long t5 = currentTime - TimeUnit.SECONDS.toMillis(60);
+        long t6 = currentTime - TimeUnit.SECONDS.toMillis(55);
+        long t7 = currentTime - TimeUnit.SECONDS.toMillis(50);
+
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":20}}", t1));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":30}}", t2));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":40}}", t3));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":50}}", t4));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":60}}", t5));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":70}}", t6));
+        postTelemetry(device1.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":80}}", t7));
+
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":22}}", t1));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":32}}", t2));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":42}}", t3));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":52}}", t4));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":62}}", t5));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":72}}", t6));
+        postTelemetry(device2.getId(), String.format("{\"ts\":%s, \"values\":{\"temperature\":82}}", t7));
+
+        CalculatedField cf = createAvgTemperatureCF(asset.getId());
+
+        doGet("/api/calculatedField/" + cf.getUuidId() + "/reprocess?startTs={startTs}&endTs={endTs}", Job.class, startTs, endTs);
+
+        await().alias("reprocess -> perform aggregation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getTimeSeries(asset.getId(), startTs, endTs, "avgTemperature");
+                    assertThat(result).isNotNull();
+
+                    assertThat(result.get("avgTemperature").get(0).get("ts").asText()).isEqualTo(Long.toString(t7));
+                    assertThat(result.get("avgTemperature").get(0).get("value").asText()).isEqualTo("81");
+
+                    assertThat(result.get("avgTemperature").get(1).get("ts").asText()).isEqualTo(Long.toString(t6));
+                    assertThat(result.get("avgTemperature").get(1).get("value").asText()).isEqualTo("71");
+
+                    assertThat(result.get("avgTemperature").get(2).get("ts").asText()).isEqualTo(Long.toString(t5));
+                    assertThat(result.get("avgTemperature").get(2).get("value").asText()).isEqualTo("61");
+
+                    assertThat(result.get("avgTemperature").get(3).get("ts").asText()).isEqualTo(Long.toString(t4));
+                    assertThat(result.get("avgTemperature").get(3).get("value").asText()).isEqualTo("51");
+
+                    assertThat(result.get("avgTemperature").get(4).get("ts").asText()).isEqualTo(Long.toString(t3));
+                    assertThat(result.get("avgTemperature").get(4).get("value").asText()).isEqualTo("41");
+
+                    assertThat(result.get("avgTemperature").get(5).get("ts").asText()).isEqualTo(Long.toString(t2));
+                    assertThat(result.get("avgTemperature").get(5).get("value").asText()).isEqualTo("31");
+
+                    assertThat(result.get("avgTemperature").get(6).get("ts").asText()).isEqualTo(Long.toString(t1));
+                    assertThat(result.get("avgTemperature").get(6).get("value").asText()).isEqualTo("21");
+                });
+    }
 
     @Test
     public void testTheSameRelationTypeAndKeyButDifferentCfs_checkAggregation() throws Exception {
@@ -952,6 +1080,10 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
         ObjectNode result = getLatestTelemetry(entityId, expectedResults.keySet().toArray(new String[0]));
         assertThat(result).isNotNull();
         expectedResults.forEach((key, value) -> assertThat(result.get(key).get(0).get("value").asText()).isEqualTo(value));
+    }
+
+    private ObjectNode getTimeSeries(EntityId entityId, long startTs, long endTs, String... keys) throws Exception {
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}", ObjectNode.class, String.join(",", keys), startTs, endTs);
     }
 
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {

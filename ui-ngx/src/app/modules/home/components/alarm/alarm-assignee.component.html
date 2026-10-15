@@ -1,20 +1,22 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field class="mat-block flex-1" style="margin-bottom: 25px"
+<mat-form-field class="mat-block flex-1" appearance="outline" style="margin-bottom: 25px"
                 (click)="openAlarmAssigneePanel($event, alarm)"
                 subscriptSizing="dynamic">
   <mat-label translate>alarm.assignee</mat-label>
   <input matInput readonly [value]="getAssignee()">
-  <span *ngIf="userAssigned; else unassigned" matPrefix class="user-avatar"
-        [style.background-color]="getAvatarBgColor(alarm.assignee)">
-    {{ getUserInitials(alarm.assignee) }}
-  </span>
-  <ng-template #unassigned>
+  @if (userAssigned) {
+    <span matPrefix class="user-avatar"
+          [style.background-color]="getAvatarBgColor(alarm.assignee)">
+      {{ getUserInitials(alarm.assignee) }}
+    </span>
+  } @else {
     <mat-icon matPrefix class="material-icons unassigned-icon">{{ alarm?.assigneeId ? 'no_accounts' : 'account_circle' }}</mat-icon>
-  </ng-template>
+  }
   <mat-icon matSuffix>arrow_drop_down</mat-icon>
 </mat-form-field>

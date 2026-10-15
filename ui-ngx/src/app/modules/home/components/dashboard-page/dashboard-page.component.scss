@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
-$toolbar-height: 50px !default;
-$fullscreen-toolbar-height: 64px !default;
-$mobile-toolbar-height: 84px !default;
-$mobile-app-toolbar-height: 40px !default;
+$toolbar-height: 56px !default;
+$fullscreen-toolbar-height: 56px !default;
+$mobile-toolbar-height: 96px !default;
+$mobile-app-toolbar-height: 48px !default;
 
 tb-dashboard-page {
   display: flex;
@@ -66,8 +67,7 @@ div.tb-dashboard-page {
   }
 
   .mat-divider-vertical.tb-toolbar-divider {
-    border-right-color: rgba(255,255,255,0.75);
-    height: 30px;
+    height: 100%;
   }
 
   .tb-dashboard-container {
@@ -159,7 +159,18 @@ div.tb-dashboard-page {
   section.tb-header-buttons.tb-enter-edit-mode {
     top: 2px;
     .mdc-fab.tb-btn-edit {
-      opacity: .5;
+      --tb-anim-visible-opacity: .5;
+    }
+  }
+
+  section.tb-header-buttons.tb-side-menu-toggle {
+    top: 2px;
+    left: 2px;
+    .mdc-fab.tb-btn-menu-toggle {
+      --tb-anim-visible-opacity: .5;
+    }
+    @media #{$mat-gt-sm} {
+      display: none;
     }
   }
 

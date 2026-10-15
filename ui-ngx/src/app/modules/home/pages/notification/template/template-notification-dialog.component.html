@@ -1,60 +1,103 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar color="primary">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
   <div tb-help="templateNotifications"></div>
   <button mat-icon-button
-          (click)="cancel()"
-          type="button">
+    (click)="cancel()"
+    type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-</mat-progress-bar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+} @else {
+  <div style="height: 4px;"></div>
+}
 <div mat-dialog-content>
   <mat-horizontal-stepper linear #notificationTemplateStepper
-                          labelPosition="end"
-                          [orientation]="(stepperOrientation | async)"
-                          (selectionChange)="changeStep($event)">
+    labelPosition="end"
+    [orientation]="(stepperOrientation | async)"
+    (selectionChange)="changeStep($event)">
     <ng-template matStepperIcon="edit">
       <mat-icon>check</mat-icon>
     </ng-template>
     <mat-step [stepControl]="templateNotificationForm">
       <ng-template matStepLabel>{{ 'notification.setup' | translate }}</ng-template>
       <form [formGroup]="templateNotificationForm" style="padding-bottom: 16px;">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>notification.name</mat-label>
           <input matInput formControlName="name" required>
-          <mat-error *ngIf="templateNotificationForm.get('name').hasError('required')">
-            {{ 'notification.name-required' | translate }}
-          </mat-error>
+          @if (templateNotificationForm.get('name').hasError('required')) {
+            <mat-error>{{ 'notification.name-required' | translate }}</mat-error>
+          }
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1" *ngIf="!hideSelectType">
-          <mat-label translate>notification.type</mat-label>
-          <mat-select formControlName="notificationType">
-            <mat-option *ngFor="let notificationType of notificationTypes" [value]="notificationType">
-              {{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+        @if (!hideSelectType) {
+          <mat-form-field class="mat-block flex-1" appearance="outline">
+            <mat-label translate>notification.type</mat-label>
+            <mat-select formControlName="notificationType">
+              @for (notificationType of notificationTypes; track notificationType) {
+                <mat-option [value]="notificationType">
+                  {{ notificationTemplateTypeTranslateMap.get(notificationType).name | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
         <section formGroupName="configuration">
           <label [class.tb-error]="templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')"
-            class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
+          class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
           <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
           <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
-            <section *ngFor="let deliveryMethods of notificationDeliveryMethods"
-                     class="tb-form-panel stroked"
-                     [formGroupName]="deliveryMethods">
-              <mat-slide-toggle formControlName="enabled">
-                {{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}
-              </mat-slide-toggle>
-            </section>
+            @for (deliveryMethods of notificationDeliveryMethods; track deliveryMethods) {
+              <section class="tb-form-panel stroked" [formGroupName]="deliveryMethods">
+                <mat-slide-toggle formControlName="enabled">
+                  {{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}
+                </mat-slide-toggle>
+              </section>
+            }
           </section>
+          @if (!isSysAdmin() && templateNotificationForm.get('notificationType').value !== notificationType.REPORT_GENERATED) {
+            <div class="tb-form-panel stroked no-padding-bottom no-gap">
+              <mat-slide-toggle class="toggle" formControlName="attachReport">
+                <div tb-hint-tooltip-icon="{{ 'notification.attach-report-hint' | translate }}" translate>
+                  notification.attach-report
+                </div>
+              </mat-slide-toggle>
+              @if (templateNotificationForm.get('configuration.attachReport').value) {
+                <div class="tb-form-panel outlined">
+                  <tb-report-template-autocomplete
+                    required
+                    appearance="outline"
+                    [type]="ReportTemplateType.REPORT"
+                    includeCustomers
+                    showError
+                    formControlName="reportTemplateId">
+                    <span tb-error>{{'report-template.report-template-required' | translate}}</span>
+                  </tb-report-template-autocomplete>
+                  <tb-entity-autocomplete
+                    appearance="outline"
+                    required
+                    useFullEntityId
+                    [entityType]="entityType.USER"
+                    formControlName="userId">
+                  </tb-entity-autocomplete>
+                  <tb-timezone-select
+                    appearance="outline"
+                    userTimezoneByDefault
+                    required
+                    formControlName="timezone">
+                  </tb-timezone-select>
+                </div>
+              }
+            </div>
+          }
         </section>
       </form>
     </mat-step>
@@ -75,10 +118,14 @@
 </div>
 <mat-divider></mat-divider>
 <div mat-dialog-actions class="tb-dialog-actions">
-  <button mat-stroked-button *ngIf="selectedIndex > 0"
-          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  @if (selectedIndex > 0) {
+    <button mat-stroked-button
+    (click)="backStep()">{{ 'action.back' | translate }}</button>
+  }
   <span class="flex-1"></span>
-  <button mat-raised-button
-          color="primary"
-          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  @if (!data.readonly || selectedIndex < maxStepperIndex) {
+    <button mat-raised-button
+      color="primary"
+    (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+  }
 </div>

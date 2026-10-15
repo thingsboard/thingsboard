@@ -1,17 +1,24 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  CartoMapLayerSettings,
   CustomMapLayerSettings,
+  defaultCartoMapLayerSettings,
   defaultCustomMapLayerSettings,
   defaultGoogleMapLayerSettings,
   defaultHereMapLayerSettings,
   defaultLayerTitle,
+  defaultOpenFreeMapLayerSettings,
   defaultOpenStreetMapLayerSettings,
   defaultTencentMapLayerSettings,
   GoogleMapLayerSettings,
   HereMapLayerSettings,
+  hereV3Provider,
   MapLayerSettings,
   MapProvider,
+  OpenFreeMapLayerSettings,
+  OpenFreeMapStyleType,
+  normalizeMapLayerSettings,
   OpenStreetMapLayerSettings,
   ReferenceLayerType,
   TencentMapLayerSettings, WEBGL_ERROR_EVENT
@@ -46,9 +53,14 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
   static fromSettings(ctx: WidgetContext,
                       inputSettings: DeepPartial<MapLayerSettings>) {
 
+    inputSettings = normalizeMapLayerSettings(inputSettings as MapLayerSettings);
     switch (inputSettings.provider) {
+      case MapProvider.openfreemap:
+        return new TbOpenFreeMapLayer(ctx, inputSettings);
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
+      case MapProvider.carto:
+        return new TbCartoMapLayer(ctx, inputSettings);
       case MapProvider.google:
         return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.tencent:
@@ -212,6 +224,50 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
 
 }
 
+const openFreeMapStyleUrl = (style: OpenFreeMapStyleType): string =>
+  `https://tiles.openfreemap.org/styles/${style}`;
+
+class TbOpenFreeMapLayer extends TbMapLayer<OpenFreeMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): OpenFreeMapLayerSettings {
+    return defaultOpenFreeMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const styleUrl = openFreeMapStyleUrl(this.settings.layerType);
+    const layer = L.TB.MapLibreGL.mapLibreGLLayer({
+      style: styleUrl,
+      attributionControl: {
+        customAttribution: 'OpenFreeMap, &copy; OpenMapTiles, Data from OpenStreetMap'
+      }
+    });
+    return of(layer);
+  }
+}
+
+class TbCartoMapLayer extends TbMapLayer<CartoMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): CartoMapLayerSettings {
+    return defaultCartoMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.tileLayer.provider(this.settings.layerType, {apikey: this.settings.apiKey || ''});
+    return of(layer);
+  }
+
+}
+
 class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
 
   static loadedApiKeysGlobal: {[key: string]: boolean} = {};
@@ -293,7 +349,7 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
 
   protected createLayer(): Observable<L.Layer> {
     const apiKey = this.settings.apiKey || defaultHereMapLayerSettings.apiKey;
-    const layer = L.tileLayer.provider(this.settings.layerType, {useV3: true, apiKey} as any);
+    const layer = L.tileLayer.provider(hereV3Provider(this.settings.layerType), {apiKey});
     return of(layer);
   }
 
@@ -311,7 +367,20 @@ class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer(this.settings.tileUrl);
+    if (this.settings.vectorTiles) {
+      const options: any = {
+        style: this.settings.tileUrl
+      };
+      if (this.settings.customAttribution) {
+        options.attributionControl = {
+          customAttribution: this.settings.customAttribution
+        };
+      }
+      return of(L.TB.MapLibreGL.mapLibreGLLayer(options));
+    }
+    const layer = L.tileLayer(this.settings.tileUrl, this.settings.customAttribution ? {
+      attribution: this.settings.customAttribution
+    } : undefined);
     return of(layer);
   }
 

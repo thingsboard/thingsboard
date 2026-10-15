@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.component.ComponentDiscoveryService;
 
 /**
  * @author Andrew Shvayka
@@ -34,7 +36,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private final String ruleChainName;
     private final TbApiUsageReportClient apiUsageClient;
     private final DefaultTbContext defaultCtx;
-    private RuleNode ruleNode;
+    private final ComponentDiscoveryService componentService;
     private TbNode tbNode;
     private RuleNodeInfo info;
 
@@ -43,16 +45,18 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         super(systemContext, tenantId, ruleNodeId);
         this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChainName;
-        this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
-        this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, selfActor, ruleNode));
+        this.componentService = systemContext.getComponentService();
+        RuleNode ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, getName(ruleNode));
+        replaceSecretUsages(ruleNode);
+        this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, selfActor, ruleNode));
     }
 
     @Override
     public void start(TbActorCtx context) throws Exception {
         if (isMyNodePartition()) {
             log.debug("[{}][{}] Starting", tenantId, entityId);
-            tbNode = initComponent(ruleNode);
+            tbNode = initComponent(defaultCtx.getSelf());
             if (tbNode != null) {
                 state = ComponentLifecycleState.ACTIVE;
             }
@@ -64,11 +68,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         if (isMyNodePartition(newRuleNode)) {
             this.info = new RuleNodeInfo(entityId, ruleChainName, getName(newRuleNode));
+            replaceSecretUsages(newRuleNode);
             boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
-                    !(ruleNode.getType().equals(newRuleNode.getType()) &&
-                            ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
-            this.ruleNode = newRuleNode;
-            this.defaultCtx.updateSelf(newRuleNode);
+                    !(defaultCtx.getSelf().getType().equals(newRuleNode.getType()) &&
+                            defaultCtx.getSelf().getConfiguration().equals(newRuleNode.getConfiguration()));
+            defaultCtx.updateSelf(newRuleNode);
             if (restartRequired) {
                 if (tbNode != null) {
                     tbNode.destroy();
@@ -124,7 +128,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 defaultCtx.tellFailure(msg.getMsg(), e);
             }
         } else {
-            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+            tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, defaultCtx.getSelf()));
         }
     }
 
@@ -147,14 +151,14 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                     msg.getCtx().tellFailure(msg.getMsg(), e);
                 }
             } else {
-                tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, ruleNode));
+                tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, defaultCtx.getSelf()));
             }
         }
     }
 
     @Override
     public String getComponentName() {
-        return getName(ruleNode);
+        return getName(defaultCtx.getSelf());
     }
 
     private String getName(RuleNode ruleNode) {
@@ -173,11 +177,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     protected RuleNodeException getInactiveException() {
-        return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, ruleNode);
+        return new RuleNodeException("Rule Node is not active! Failed to initialize.", ruleChainName, defaultCtx.getSelf());
     }
 
     private boolean isMyNodePartition() {
-        return isMyNodePartition(this.ruleNode);
+        return isMyNodePartition(defaultCtx.getSelf());
     }
 
     private boolean isMyNodePartition(RuleNode ruleNode) {
@@ -193,7 +197,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     //Message will return after processing. See RuleChainActorMessageProcessor.pushToTarget.
     private void putToNodePartition(TbMsg source) {
         TbMsg tbMsg = TbMsg.newMsg(source, source.getQueueName(), source.getRuleChainId(), entityId);
-        TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, ruleNode.getId());
+        TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, defaultCtx.getSelf().getId());
         TransportProtos.ToRuleEngineMsg toQueueMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -204,8 +208,14 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private void persistDebugInputIfAllowed(TbMsg msg, String fromNodeConnectionType) {
-        if (DebugModeUtil.isDebugAllAvailable(ruleNode)) {
+        if (DebugModeUtil.isDebugAllAvailable(defaultCtx.getSelf())) {
             systemContext.persistDebugInput(tenantId, entityId, msg, fromNodeConnectionType);
+        }
+    }
+
+    private void replaceSecretUsages(RuleNode ruleNode) {
+        if (componentService.getRuleNodeInfo(ruleNode.getType()).map(info -> info.getAnnotation().hasSecrets()).orElse(false)) {
+            systemContext.getSecretConfigurationService().replaceSecretUsages(tenantId, ruleNode.getConfiguration());
         }
     }
 

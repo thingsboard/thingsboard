@@ -1,14 +1,15 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { BaseData } from './base-data';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { BaseData, GroupEntityInfo } from './base-data';
 import { UserId } from './id/user-id';
 import { CustomerId } from './id/customer-id';
 import { Authority } from './authority.enum';
 import { TenantId } from './id/tenant-id';
-import { HasTenantId } from '@shared/models/entity.models';
+import { CustomMenuId } from '@shared/models/id/custom-menu-id';
 import { UnitSystem } from '@shared/models/unit.models';
 
-export interface User extends BaseData<UserId>, HasTenantId {
+export interface User extends BaseData<UserId> {
   tenantId: TenantId;
   customerId: CustomerId;
   email: string;
@@ -16,6 +17,7 @@ export interface User extends BaseData<UserId>, HasTenantId {
   authority: Authority;
   firstName: string;
   lastName: string;
+  customMenuId?: CustomMenuId;
   additionalInfo: Partial<UserAdditionalInfo>;
 }
 
@@ -31,6 +33,8 @@ export interface UserAdditionalInfo {
   lang: string;
   [key: string]: any;
 }
+
+export type UserInfo = User & GroupEntityInfo<UserId>;
 
 export enum ActivationMethod {
   DISPLAY_ACTIVATION_LINK = 'DISPLAY_ACTIVATION_LINK',

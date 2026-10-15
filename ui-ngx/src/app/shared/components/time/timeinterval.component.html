@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -8,11 +8,15 @@
   <section class="tb-form-row column-xs no-border no-padding tb-standard-fields">
     <ng-content></ng-content>
     <mat-form-field class="flex flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-      <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
+      @if (predefinedName) {
+        <mat-label translate>{{ predefinedName }}</mat-label>
+      }
       <mat-select formControlName="interval">
-        <mat-option *ngFor="let interval of intervals" [value]="interval.value">
-          {{ interval.name | translate:interval.translateParams }}
-        </mat-option>
+        @for (interval of intervals; track interval) {
+          <mat-option [value]="interval.value">
+            {{ interval.name | translate:interval.translateParams }}
+          </mat-option>
+        }
       </mat-select>
       <ng-container matSuffix>
         <ng-content select="[matSuffix]"></ng-content>

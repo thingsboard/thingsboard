@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.jwt;
 
 import org.springframework.security.authentication.CredentialsExpiredException;
@@ -16,6 +17,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.service.user.cache.UserAuthDetailsCache;
 
 @Component
@@ -25,8 +27,9 @@ public class RefreshTokenAuthenticationProvider extends AbstractAuthenticationPr
     private final TokenOutdatingService tokenOutdatingService;
 
     public RefreshTokenAuthenticationProvider(JwtTokenFactory jwtTokenFactory, UserAuthDetailsCache userAuthDetailsCache,
-                                              CustomerService customerService, TokenOutdatingService tokenOutdatingService) {
-        super(customerService, userAuthDetailsCache);
+                                              UserPermissionsService userPermissionsService, CustomerService customerService,
+                                              TokenOutdatingService tokenOutdatingService) {
+        super(customerService, userAuthDetailsCache, userPermissionsService);
         this.tokenFactory = jwtTokenFactory;
         this.tokenOutdatingService = tokenOutdatingService;
     }
@@ -40,7 +43,7 @@ public class RefreshTokenAuthenticationProvider extends AbstractAuthenticationPr
 
         SecurityUser securityUser;
         if (principal.getType() == UserPrincipal.Type.USER_NAME) {
-            securityUser = authenticateByUserId(TenantId.SYS_TENANT_ID, unsafeUser.getId());
+            securityUser = authenticateByUserId(TenantId.SYS_TENANT_ID, unsafeUser.getId(), null, false);
         } else {
             securityUser = authenticateByPublicId(principal.getValue());
         }

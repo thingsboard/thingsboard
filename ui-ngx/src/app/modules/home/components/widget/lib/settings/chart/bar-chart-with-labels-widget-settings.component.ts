@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import {
@@ -64,6 +64,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
     this.barChartWidgetSettingsForm = this.fb.group({
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
 
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
@@ -116,16 +117,23 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected validatorTriggers(): string[] {
-    return ['showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['dataZoom', 'showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
+    const dataZoom: boolean = this.barChartWidgetSettingsForm.get('dataZoom').value;
     const showBarLabel: boolean = this.barChartWidgetSettingsForm.get('showBarLabel').value;
     const showBarValue: boolean = this.barChartWidgetSettingsForm.get('showBarValue').value;
     const showBarBorder: boolean = this.barChartWidgetSettingsForm.get('showBarBorder').value;
     const showLegend: boolean = this.barChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.barChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.barChartWidgetSettingsForm.get('tooltipShowDate').value;
+
+    if (dataZoom) {
+      this.barChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.barChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (showBarLabel) {
       this.barChartWidgetSettingsForm.get('barLabelFont').enable();

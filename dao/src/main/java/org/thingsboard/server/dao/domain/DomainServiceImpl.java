@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.domain;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -11,6 +12,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.domain.DomainOauth2Client;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -23,6 +25,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
+import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.validator.DomainDataValidator;
 
 import java.util.Comparator;
@@ -82,8 +85,13 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     @Override
     public void deleteDomainById(TenantId tenantId, DomainId domainId) {
         log.trace("Executing deleteDomainById [{}]", domainId.getId());
-        domainDao.removeById(tenantId, domainId.getId());
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(domainId).build());
+        try {
+            domainDao.removeById(tenantId, domainId.getId());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(domainId).build());
+        } catch (Exception e) {
+            checkConstraintViolation(e, "fk_white_labeling_domain_id", "The domain is referenced by a white labeling settings");
+            throw e;
+        }
     }
 
     @Override
@@ -93,9 +101,9 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     }
 
     @Override
-    public PageData<DomainInfo> findDomainInfosByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findDomainInfosByTenantId [{}]", tenantId);
-        PageData<Domain> domains = domainDao.findByTenantId(tenantId, pageLink);
+    public PageData<DomainInfo> findDomainInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+        log.trace("Executing findDomainInfosByTenantIdAndCustomerId [{}]", tenantId);
+        PageData<Domain> domains = domainDao.findByTenantIdAndCustomerId(tenantId, customerId, pageLink);
         return domains.mapData(this::getDomainInfo);
     }
 
@@ -113,14 +121,9 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     }
 
     @Override
-    public void deleteDomainsByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteDomainsByTenantId, tenantId [{}]", tenantId);
-        domainDao.deleteByTenantId(tenantId);
-    }
-
-    @Override
-    public void deleteByTenantId(TenantId tenantId) {
-        deleteDomainsByTenantId(tenantId);
+    public void deleteDomainsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId) {
+        log.trace("Executing deleteDomainsByTenantIdAndCustomerId, tenantId [{}], customerId [{}]", tenantId, customerId);
+        customerDomainsRemover.removeEntities(tenantId, customerId);
     }
 
     @Override
@@ -139,6 +142,30 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteDomainById(tenantId, (DomainId) id);
     }
+
+    @Override
+    public void deleteDomainsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteDomainsByTenantId, tenantId [{}]", tenantId);
+        domainDao.deleteByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteDomainsByTenantId(tenantId);
+    }
+
+    private final PaginatedRemover<CustomerId, Domain> customerDomainsRemover = new PaginatedRemover<>() {
+
+        @Override
+        protected PageData<Domain> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
+            return domainDao.findByTenantIdAndCustomerId(tenantId, id, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, Domain entity) {
+            deleteEntity(tenantId, new DomainId(entity.getUuidId()), true);
+        }
+    };
 
     private DomainInfo getDomainInfo(Domain domain) {
         if (domain == null) {

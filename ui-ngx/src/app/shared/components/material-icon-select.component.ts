@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
@@ -22,6 +22,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { MatButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-material-icon-select',
@@ -61,6 +62,9 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   @Input()
   @coerceBoolean()
   allowedCustomIcon = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

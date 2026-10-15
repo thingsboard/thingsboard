@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FunctionData, MathFunction, MathFunctionMap } from '../rule-node-config.models';
 import { map, tap } from 'rxjs/operators';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-math-function-autocomplete',
@@ -35,6 +36,9 @@ export class MathFunctionAutocompleteComponent implements ControlValueAccessor, 
   }
 
   @Input() disabled: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('operationInput', {static: true}) operationInput: ElementRef;
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,10 +21,9 @@ public class AdminSettingsEdgeTest extends AbstractEdgeTest {
     private AdminSettingsService adminSettingsService;
 
     @Test
-    public void testAdminSettings() throws Exception {
+    public void testAdminSettings_sysAdmin() throws Exception {
         loginSysAdmin();
 
-        // save
         AdminSettings adminSettings = new AdminSettings();
         adminSettings.setKey("edgeTest");
         ObjectNode jsonValue = JacksonUtil.newObjectNode();
@@ -42,7 +42,6 @@ public class AdminSettingsEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals("edgeTest", adminSettingsMsg.getKey());
         Assert.assertEquals("value1", adminSettingsMsg.getJsonValue().get("key1").asText());
 
-        // update
         ObjectNode updatedJsonValue = (ObjectNode) savedAdminSettings.getJsonValue();
         updatedJsonValue.put("key2", "value2");
         savedAdminSettings.setJsonValue(updatedJsonValue);
@@ -61,6 +60,50 @@ public class AdminSettingsEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals("value2", adminSettingsMsg.getJsonValue().get("key2").asText());
 
         adminSettingsService.deleteAdminSettingsByTenantIdAndKey(savedAdminSettings.getTenantId(), "edgeTest");
+    }
+
+    @Test
+    public void testAdminSettings_tenant() throws Exception {
+        loginTenantAdmin();
+
+        AdminSettings tenantAdminSettings = new AdminSettings();
+        tenantAdminSettings.setTenantId(tenantId);
+        tenantAdminSettings.setKey("tenantEdgeTest");
+        ObjectNode tenantJsonValue = JacksonUtil.newObjectNode();
+        tenantJsonValue.put("tenantKey1", "tenantValue1");
+        tenantAdminSettings.setJsonValue(tenantJsonValue);
+
+        edgeImitator.expectMessageAmount(1);
+        AdminSettings savedTenantAdminSettings = doPost("/api/admin/settings", tenantAdminSettings, AdminSettings.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof AdminSettingsUpdateMsg);
+        AdminSettingsUpdateMsg adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) latestMessage;
+        AdminSettings adminSettingsMsg = JacksonUtil.fromString(adminSettingsUpdateMsg.getEntity(), AdminSettings.class, true);
+        Assert.assertNotNull(adminSettingsMsg);
+        Assert.assertEquals("tenantEdgeTest", adminSettingsMsg.getKey());
+        Assert.assertEquals("tenantValue1", adminSettingsMsg.getJsonValue().get("tenantKey1").asText());
+
+        // TENANT update
+        ObjectNode updatedTenantJsonValue = (ObjectNode) savedTenantAdminSettings.getJsonValue();
+        updatedTenantJsonValue.put("tenantKey2", "tenantValue2");
+        savedTenantAdminSettings.setJsonValue(updatedTenantJsonValue);
+
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/admin/settings", savedTenantAdminSettings, AdminSettings.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof AdminSettingsUpdateMsg);
+        adminSettingsUpdateMsg = (AdminSettingsUpdateMsg) latestMessage;
+        adminSettingsMsg = JacksonUtil.fromString(adminSettingsUpdateMsg.getEntity(), AdminSettings.class, true);
+        Assert.assertNotNull(adminSettingsMsg);
+        Assert.assertEquals("tenantEdgeTest", adminSettingsMsg.getKey());
+        Assert.assertEquals("tenantValue1", adminSettingsMsg.getJsonValue().get("tenantKey1").asText());
+        Assert.assertEquals("tenantValue2", adminSettingsMsg.getJsonValue().get("tenantKey2").asText());
+
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(savedTenantAdminSettings.getTenantId(), "tenantEdgeTest");
     }
 
 }

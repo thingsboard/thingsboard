@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -65,6 +66,8 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { WidgetService } from '@core/http/widget.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
@@ -135,6 +138,8 @@ export class ScadaSymbolComponent extends PageComponent
 
   showHiddenElements = false;
 
+  showCreateWidgetButton = true;
+
   get isDirty(): boolean {
     return (this.scadaSymbolFormGroup.dirty || this.symbolEditorDirty) && !this.forcePristine;
   }
@@ -152,8 +157,16 @@ export class ScadaSymbolComponent extends PageComponent
               private translate: TranslateService,
               private imageService: ImageService,
               private widgetService: WidgetService,
+              private userPermissionsService: UserPermissionsService,
               private dialog: MatDialog) {
     super(store);
+
+    const authUser = getCurrentAuthUser(store);
+    if (authUser.authority === Authority.CUSTOMER_USER) {
+      this.showCreateWidgetButton = false;
+    } else {
+      this.showCreateWidgetButton = this.userPermissionsService.hasGenericPermission(Resource.WIDGET_TYPE, Operation.CREATE);
+    }
   }
 
   ngOnInit(): void {
@@ -469,11 +482,7 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   private init(data: ScadaSymbolData) {
-    if (this.authUser.authority === Authority.TENANT_ADMIN) {
-      this.readonly = data.imageResource.tenantId.id === NULL_UUID;
-    } else {
-      this.readonly = this.authUser.authority !== Authority.SYS_ADMIN;
-    }
+    this.readonly = this.authUser.authority !== Authority.SYS_ADMIN && data.imageResource.tenantId.id === NULL_UUID;
     this.origSymbolData = data;
     this.symbolData = deepClone(data);
     this.symbolEditorData = {

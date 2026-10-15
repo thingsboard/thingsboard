@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-padding no-border" [formGroup]="headingFormGroup">
+  <div class="tb-form-row">
+    <div translate>report-template.component.heading.text</div>
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
+      <tb-string-pattern-autocomplete formControlName="text"
+                                      class="flex-1"
+                                      appearance="outline" subscriptSizing="dynamic"
+                                      brackets="curly"
+                                      predefinedValuesButton
+                                      [predefinedValues]="variableNames"></tb-string-pattern-autocomplete>
+      @if (withLayout) {
+        <tb-font-settings formControlName="font"
+                          disabledLineHeight
+                          forceSizeUnit="pt"
+                          [allowedFontWeights]="['normal', 'bold', '500']"
+                          [allowedFontStyles]="['normal', 'italic']"
+                          clearButton
+                          [previewText]="headingFormGroup.get('text').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="color">
+        </tb-color-input>
+      }
+    </div>
+  </div>
+  @if (withLayout) {
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>widgets.alignment.alignment</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.alignment.horizontal</div>
+        <tb-alignment horizontal formControlName="textAlignment"></tb-alignment>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>widgets.alignment.vertical</div>
+        <tb-alignment horizontal="false" formControlName="verticalAlignment"></tb-alignment>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.heading.height' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="height" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        <div matSuffix>pt</div>
+      </mat-form-field>
+    </div>
+  }
+</div>

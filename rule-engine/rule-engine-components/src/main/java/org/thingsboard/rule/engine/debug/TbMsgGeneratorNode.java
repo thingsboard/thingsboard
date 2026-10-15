@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.debug;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +58,8 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 public class TbMsgGeneratorNode implements TbNode {
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,
-            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE);
+            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE,
+            EntityType.CONVERTER, EntityType.INTEGRATION, EntityType.SCHEDULER_EVENT, EntityType.BLOB_ENTITY, EntityType.ROLE, EntityType.ENTITY_GROUP);
 
     private TbMsgGeneratorNodeConfiguration config;
     private ScriptEngine scriptEngine;
@@ -208,6 +211,12 @@ public class TbMsgGeneratorNode implements TbNode {
                 if (!hasOriginatorFields) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(originatorType, EntityType.RULE_NODE.name());
+                }
+                String groupOwnerId = "groupOwnerId";
+                String groupType = "groupType";
+                if (oldConfiguration.has(groupType) || oldConfiguration.has(groupOwnerId)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(List.of(groupOwnerId, groupType));
                 }
                 break;
             default:

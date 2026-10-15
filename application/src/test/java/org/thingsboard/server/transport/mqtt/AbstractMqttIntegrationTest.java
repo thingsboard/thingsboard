@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt;
 
@@ -75,7 +75,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
             assertNotNull(accessToken);
         }
         if (config.getGatewayName() != null) {
-            savedGateway = createDevice(config.getGatewayName(), deviceProfile.getName(), true);
+            savedGateway = createDevice(config.getGatewayName(), deviceProfile.getName(), !config.isSparkplug);
             DeviceCredentials gatewayCredentials =
                     doGet("/api/device/" + savedGateway.getId().getId().toString() + "/credentials", DeviceCredentials.class);
             assertNotNull(gatewayCredentials);

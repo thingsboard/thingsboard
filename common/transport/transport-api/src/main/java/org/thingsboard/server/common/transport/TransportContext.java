@@ -1,8 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
@@ -20,8 +20,6 @@ import java.util.concurrent.ExecutorService;
 @Slf4j
 @Data
 public abstract class TransportContext {
-
-    protected final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     protected TransportService transportService;

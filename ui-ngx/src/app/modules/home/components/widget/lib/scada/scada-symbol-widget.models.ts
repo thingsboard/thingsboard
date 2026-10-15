@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { ScadaSymbolObjectSettings } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';

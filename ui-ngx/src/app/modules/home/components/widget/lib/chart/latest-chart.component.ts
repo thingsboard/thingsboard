@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -7,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -28,6 +29,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LegendPosition } from '@shared/models/widget.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 export interface LatestChartComponentCallbacks {
   createChart: (chartShape: ElementRef<HTMLElement>, renderer: Renderer2) => TbLatestChart<LatestChartSettings>;
@@ -56,6 +58,10 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
   ctx: WidgetContext;
 
   @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
   callbacks: LatestChartComponentCallbacks;
 
   @Input()
@@ -82,7 +88,7 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private latestChart: TbLatestChart<LatestChartSettings>;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,

@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
-import { MenuSection } from '@core/services/menu.models';
-import { Router } from '@angular/router';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { MenuSection, sectionPath } from '@core/services/menu.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.actions';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-menu-toggle',
@@ -14,19 +15,19 @@ import { ActionPreferencesUpdateOpenedMenuSection } from '@core/auth/auth.action
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
-export class MenuToggleComponent implements OnInit {
+export class MenuToggleComponent {
 
   @Input() section: MenuSection;
 
-  constructor(private router: Router,
-              private store: Store<AppState>) {
-  }
+  @Input()
+  @coerceBoolean()
+  collapsed = false;
 
-  ngOnInit() {
+  constructor(private store: Store<AppState>) {
   }
 
   sectionHeight(): string {
-    if (this.section.opened) {
+    if (this.section.opened && !this.collapsed) {
       return this.section.pages.length * 40 + 'px';
     } else {
       return '0px';
@@ -35,11 +36,14 @@ export class MenuToggleComponent implements OnInit {
 
   toggleSection(event: MouseEvent) {
     event.stopPropagation();
-    this.section.opened = !this.section.opened;
-    this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({path: this.section.path, opened: this.section.opened}));
-  }
-
-  trackBySectionPages(index: number, section: MenuSection){
-    return section.id;
+    if (this.collapsed) {
+      event.preventDefault();
+    } else {
+      this.section.opened = !this.section.opened;
+      this.store.dispatch(new ActionPreferencesUpdateOpenedMenuSection({
+        path: sectionPath(this.section),
+        opened: this.section.opened
+      }));
+    }
   }
 }

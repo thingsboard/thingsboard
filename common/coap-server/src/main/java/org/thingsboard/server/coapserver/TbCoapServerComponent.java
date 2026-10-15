@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.coapserver;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -10,5 +11,6 @@ import java.lang.annotation.RetentionPolicy;
 
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${coap.server.enabled}'=='true')")
+@ConditionalOnExpression("('${service.type:null}'=='tb-core' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-integration-executor') " +
+        "&& '${coap.server.enabled:false}'=='true' || '${service.type:null}'=='tb-transport' || '${service.type:null}'=='tb-integration'")
 public @interface TbCoapServerComponent {}

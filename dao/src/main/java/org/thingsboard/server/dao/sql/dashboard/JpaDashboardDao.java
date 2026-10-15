@@ -1,9 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.dashboard;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
@@ -26,6 +29,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
+@Slf4j
 @Component
 @SqlDao
 public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> implements DashboardDao {
@@ -70,6 +74,22 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     }
 
     @Override
+    public Long countDashboards() {
+        return dashboardRepository.count();
+    }
+
+    @Override
+    public PageData<DashboardId> findIdsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
+        Page<UUID> page;
+        if (customerId == null) {
+            page = dashboardRepository.findIdsByTenantIdAndNullCustomerId(tenantId, DaoUtil.toPageable(pageLink));
+        } else {
+            page = dashboardRepository.findIdsByTenantIdAndCustomerId(tenantId, customerId, DaoUtil.toPageable(pageLink));
+        }
+        return DaoUtil.pageToPageData(page, DashboardId::new);
+    }
+
+    @Override
     public PageData<DashboardId> findIdsByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.pageToPageData(dashboardRepository.findIdsByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)).map(DashboardId::new));
     }
@@ -77,6 +97,11 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     @Override
     public PageData<DashboardId> findAllIds(PageLink pageLink) {
         return DaoUtil.pageToPageData(dashboardRepository.findAllIds(DaoUtil.toPageable(pageLink)).map(DashboardId::new));
+    }
+
+    @Override
+    public Long countScadaDashboards() {
+        return dashboardRepository.countAllDashboardsByLayoutType("scada");
     }
 
     @Override
@@ -92,6 +117,24 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
+    }
+
+    @Override
+    public void replacePatternInAllDashboardsConfigurations(String pattern, String replacement) {
+        int rowCount = dashboardRepository.replaceStringInAllDashboardConfigs(pattern, replacement);
+        log.trace("replacePatternInAllDashboardsConfigurations: Affected row count: {}", rowCount);
+    }
+
+    @Override
+    public void replaceWidgetTypeFullFqn(String oldLink, String newLink) {
+        int rowCount = dashboardRepository.replaceWidgetTypeFullFqn(oldLink, newLink);
+        log.trace("replaceWidgetTypeFullFqn: Affected row count: {}", rowCount);
+    }
+
+    @Override
+    public void setTrendzWidgetsTypeLatestBySystemFqn(String systemFqn) {
+        int rowCount = dashboardRepository.setTrendzWidgetsTypeLatestBySystemFqn(systemFqn);
+        log.trace("setTrendzWidgetsTypeLatestBySystemFqn: Affected row count: {}", rowCount);
     }
 
 }

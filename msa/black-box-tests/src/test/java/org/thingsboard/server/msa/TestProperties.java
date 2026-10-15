@@ -1,12 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TestProperties {
-
     private static final String HTTPS_URL = "https://localhost";
 
     private static final String WSS_URL = "wss://localhost";
@@ -36,12 +36,44 @@ public class TestProperties {
         return System.getProperty("tb.wsUrl", "ws://localhost:8080");
     }
 
-    public static String getMqttBrokerUrl() {
+    public static String getRemoteHttpUrl(){
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("tb-http-integration", 8082);
+            Integer port = instance.getTestContainer().getServicePort("tb-http-integration", 8082);
+            return "http://" + host + ":" + port;
+        }
+        return System.getProperty("remote.httpUrl", "http://localhost:8082");
+    }
+
+    public static String getIntegrationExecutorHttpUrl() {
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("tb-integration-executor1", 8082);
+            Integer port = instance.getTestContainer().getServicePort("tb-integration-executor1", 8082);
+            return "http://" + host + ":" + port;
+        }
+        return System.getProperty("integrationExecutor.httpUrl", "http://localhost:8082");
+    }
+
+    public static String getMqttBrokerUrl(){
         if (instance.isActive()) {
             String host = instance.getTestContainer().getServiceHost("broker", 1883);
             Integer port = instance.getTestContainer().getServicePort("broker", 1883);
             return "tcp://" + host + ":" + port;
         }
         return System.getProperty("mqtt.broker", "tcp://localhost:1883");
+    }
+
+    public static String getRemoteCoapHost(){
+        if (instance.isActive()) {
+            return "localhost";
+        }
+        return System.getProperty("remote.coap.host", "localhost");
+    }
+
+    public static int getRemoteCoapPort(){
+        if (instance.isActive()) {
+            return 15683;
+        }
+        return Integer.parseInt(System.getProperty("remote.coap.port", "15683"));
     }
 }

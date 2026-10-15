@@ -1,11 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -18,13 +20,17 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.DeviceGroupOtaPackage;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.ota.DeviceGroupOtaPackageService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -42,9 +48,15 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 public class DeviceProfileServiceTest extends AbstractServiceTest {
 
     @Autowired
+    DeviceGroupOtaPackageService deviceGroupOtaPackageService;
+    @Autowired
     DeviceProfileService deviceProfileService;
+    @Getter
     @Autowired
     DeviceService deviceService;
+    @Getter
+    @Autowired
+    EntityGroupService entityGroupService;
     @Autowired
     OtaPackageService otaPackageService;
 
@@ -271,6 +283,37 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
 
         assertThat(deviceProfileService.findDeviceProfileById(tenantId, deviceProfile.getId())).isNull();
         assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNull();
+    }
+
+    @Test
+    public void testDeleteDeviceProfileWithOta_cascadeOtaDelete_unassignedOtaFromDeviceGroup() {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        OtaPackage otaPackage = constructDefaultOtaPackage(tenantId, deviceProfile.getId());
+        otaPackage = otaPackageService.saveOtaPackage(otaPackage);
+        deviceProfile.setFirmwareId(otaPackage.getId());
+        deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = createDevice(tenantId, "Test device", deviceProfile.getId());
+
+        EntityGroup deviceGroup = createDeviceGroup(tenantId, "Test devices");
+        entityGroupService.addEntityToEntityGroup(tenantId, deviceGroup.getId(), device.getId());
+
+        DeviceGroupOtaPackage deviceGroupOtaPackage = new DeviceGroupOtaPackage();
+        deviceGroupOtaPackage.setOtaPackageId(otaPackage.getId());
+        deviceGroupOtaPackage.setOtaPackageType(otaPackage.getType());
+        deviceGroupOtaPackage.setGroupId(deviceGroup.getId());
+        deviceGroupOtaPackageService.saveDeviceGroupOtaPackage(tenantId, deviceGroupOtaPackage);
+
+        assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNotNull();
+        assertThat(deviceGroupOtaPackageService.findDeviceGroupOtaPackageByGroupIdAndType(deviceGroup.getId(), otaPackage.getType())).isNotNull();
+
+        deviceService.deleteDevice(tenantId, device.getId());
+        deviceProfileService.deleteDeviceProfile(tenantId, deviceProfile.getId());
+
+        assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNull();
+        assertThat(deviceGroupOtaPackageService.findDeviceGroupOtaPackageByGroupIdAndType(deviceGroup.getId(), otaPackage.getType())).isNull();
     }
 
     @Test

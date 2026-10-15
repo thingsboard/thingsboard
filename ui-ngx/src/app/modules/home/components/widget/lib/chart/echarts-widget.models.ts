@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import * as echarts from 'echarts/core';
 import AxisModel from 'echarts/types/src/coord/cartesian/AxisModel';
@@ -248,3 +248,9 @@ export const getFocusedSeriesIndex = (chart: ECharts): number => {
   }
   return -1;
 };
+
+export interface DataZoomEvent {
+  start: number;
+  end: number;
+  batch?: Array<{ start: number; end: number }>;
+}

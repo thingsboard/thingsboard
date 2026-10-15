@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -25,6 +26,9 @@ import { deepTrim } from '@core/utils';
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 import { FormGroup } from '@angular/forms';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation } from '@shared/models/security.models';
+import { TenantId } from '@shared/models/id/tenant-id';
 import { AssetInfo } from '@shared/models/asset.models';
 import { DeviceInfo } from '@shared/models/device.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -40,6 +44,7 @@ export interface CalculatedFieldDialogData {
   getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
   disabledSelectType?: boolean;
+  readonly: boolean;
 }
 
 @Component({
@@ -60,12 +65,14 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   entityName = this.data.entityName;
   ownerId = this.data.ownerId;
+  defaultEntityType: EntityType;
 
   disabledConfiguration = false;
   isLoading = false;
 
   readonly EntityType = EntityType;
-  readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
+  readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList.filter(entityType =>
+    this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.WRITE_CALCULATED_FIELD, entityType));
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly fieldTypes = calculatedFieldTypes;
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
@@ -76,7 +83,8 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               protected dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
               private calculatedFieldsService: CalculatedFieldsService,
               private destroyRef: DestroyRef,
-              private cfFormService: CalculatedFieldFormService) {
+              private cfFormService: CalculatedFieldFormService,
+              private userPermissionsService: UserPermissionsService) {
     super(store, router, dialogRef);
     this.fieldFormGroup = this.cfFormService.buildForm();
     this.cfFormService.setupTypeChange(this.fieldFormGroup, this.destroyRef);
@@ -98,10 +106,20 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
           this.fieldFormGroup.get('configuration').updateValueAndValidity({emitEvent: false});
         }
       });
+      if (this.calculatedFieldsEntityTypeList.includes(EntityType.DEVICE_PROFILE)) {
+        this.defaultEntityType = EntityType.DEVICE_PROFILE;
+      } else if (this.calculatedFieldsEntityTypeList.length === 1) {
+        this.defaultEntityType = this.calculatedFieldsEntityTypeList[0];
+      }
     }
 
     if (this.data.disabledSelectType) {
       this.fieldFormGroup.get('type').disable({emitEvent: false});
+    }
+
+    if (this.data.readonly) {
+      this.fieldFormGroup.disable();
+      this.disabledConfiguration = true;
     }
   }
 
@@ -139,9 +157,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   changeEntity(entity: BaseData<EntityId>): void {
     this.entityName = entity.name;
-    if (this.isAssignedToCustomer(entity as AssetInfo | DeviceInfo)) {
-      this.ownerId = (entity as AssetInfo | DeviceInfo).customerId;
-    }
+    this.ownerId = entity.ownerId ?? new TenantId(this.data.tenantId);
   }
 
   get entityId(): EntityId {
@@ -157,9 +173,5 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       this.fieldFormGroup.get('configuration').disable({emitEvent: false});
       this.disabledConfiguration = true;
     }
-  }
-
-  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 }

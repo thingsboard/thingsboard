@@ -1,9 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import {
   CellActionDescriptor,
-  DateEntityTableColumn,
+  DateEntityTableColumn, defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -19,6 +20,8 @@ import { AiModelService } from '@core/http/ai-model.service';
 import { AiModelTableHeaderComponent } from '@home/pages/ai-model/ai-model-table-header.component';
 import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-model/ai-model-dialog.component';
 import { map } from 'rxjs/operators';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class AiModelsTableConfigResolver {
@@ -28,6 +31,7 @@ export class AiModelsTableConfigResolver {
   constructor(
     private datePipe: DatePipe,
     private aiModelService: AiModelService,
+    private userPermissionsService: UserPermissionsService,
     private translate : TranslateService,
     private dialog: MatDialog
   ) {
@@ -71,6 +75,7 @@ export class AiModelsTableConfigResolver {
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<AiModel> {
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 
@@ -96,7 +101,8 @@ export class AiModelsTableConfigResolver {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
-        AIModel
+        AIModel,
+        readonly: !this.userPermissionsService.hasGenericPermission(Resource.AI_MODEL, Operation.WRITE)
       }
     }).afterClosed();
   }

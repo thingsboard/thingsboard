@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -100,8 +101,11 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
                     notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
                 } catch (Exception e) {
                     log.error("Failed to process scheduled notification request {}", notificationRequest.getId(), e);
-                    NotificationRequestStats stats = new NotificationRequestStats();
-                    stats.setError(e.getMessage());
+                    NotificationRequestStats stats = notificationRequest.getStats();
+                    if (stats == null) {
+                        stats = new NotificationRequestStats();
+                    }
+                    stats.reportGeneralError(e);
                     notificationRequestService.updateNotificationRequest(tenantId, request.getId(), NotificationRequestStatus.SENT, stats);
                 }
             });

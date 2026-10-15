@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -130,6 +131,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
     this.debugSettingsFormGroup.patchValue(settings, {emitEvent: false});
     this.allEnabledSubject.next(settings?.allEnabled);
     this.debugSettingsFormGroup.get('allEnabled').updateValueAndValidity({onlySelf: true});
+    this.cd.markForCheck();
   }
 
   setDisabledState(isDisabled: boolean): void {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.exporting;
 
 import org.thingsboard.server.common.data.EntityType;
@@ -29,5 +30,7 @@ public interface ExportableEntitiesService {
     <I extends EntityId> I getExternalIdByInternal(I internalId);
 
     <I extends EntityId> void removeById(TenantId tenantId, I id);
+
+    <E extends ExportableEntity<I>, I extends EntityId> PageData<I> findEntityIdsByTenantIdAndCustomerId(TenantId tenantId, EntityId ownerId, EntityType entityType, PageLink pageLink);
 
 }

@@ -1,0 +1,107 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col" [class.!hidden]="standalone">
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit || isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'setDefault')"
+    [class.!hidden]="isEdit || entity?.default">
+    {{'agent.set-default-profile' | translate }}
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'delete')"
+    [class.!hidden]="hideDelete() || isEdit">
+    {{'agent.delete-profile' | translate }}
+  </button>
+  <div class="flex flex-row flex-wrap xs:flex-col">
+    <button mat-stroked-button
+      ngxClipboard
+      (cbOnSuccess)="onProfileIdCopied()"
+      [cbContent]="entity?.id?.id"
+      [disabled]="(isLoading$ | async)"
+      [class.!hidden]="isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>agent.copy-profile-id</span>
+    </button>
+  </div>
+</div>
+<div class="mat-padding flex flex-col">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.profile-name</mat-label>
+        <input matInput formControlName="name" required>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'agent.profile-name-required' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.description</mat-label>
+        <textarea matInput formControlName="description" rows="2"></textarea>
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.provisioning-strategy</mat-label>
+        <mat-select formControlName="provisionType">
+          @for (type of agentProvisionTypes; track type) {
+            <mat-option [value]="type">
+              {{ agentProvisionTypeTranslationMap.get(type) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </fieldset>
+    <div class="tb-agent-profile-strategy-hint">
+      <mat-icon class="hint-icon">help_outline</mat-icon>
+      <div>
+        <div class="hint-title">
+          {{ 'agent.provisioning-strategy-label' | translate: {
+          strategy: agentProvisionTypeTranslationMap.get(entityForm.get('provisionType').value) | translate
+          } }}
+        </div>
+        <div class="hint-body">
+          {{ agentProvisionTypeDescriptionMap.get(entityForm.get('provisionType').value) | translate }}
+        </div>
+      </div>
+    </div>
+
+    @if (!standalone && entity?.id?.id
+      && entity?.provisionType && entity?.provisionType !== AgentProvisionType.DISABLED) {
+      <div class="tb-section-title" translate>agent.docker-run-command</div>
+      <div class="tb-command-block">
+        <button mat-flat-button class="tb-copy-command-btn"
+          ngxClipboard
+          [cbContent]="dockerCommand"
+          (cbOnSuccess)="onProvisioningCopied()">
+          <mat-icon>content_copy</mat-icon>
+          <span translate>action.copy</span>
+        </button>
+        <pre>{{ dockerCommand }}</pre>
+      </div>
+      <div class="tb-hint-note info">
+        <mat-icon>info_outline</mat-icon>
+        <div>
+          <div>{{ 'agent.agent-profile-created-hint' | translate }}</div>
+          <ol>
+            <li>{{ 'agent.agent-profile-created-step-1' | translate }}</li>
+            <li>{{ 'agent.agent-profile-created-step-2' | translate }}</li>
+            @if (autoInstallEnabled) {
+              <li>{{ 'agent.agent-profile-created-step-3' | translate }}</li>
+            }
+          </ol>
+        </div>
+      </div>
+    }
+  </form>
+</div>

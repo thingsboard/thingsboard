@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
-  DateEntityTableColumn,
+  DateEntityTableColumn, defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig,
   HeaderActionDescriptor
@@ -18,6 +19,9 @@ import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { TenantProfileComponent } from '@home/components/profile/tenant-profile.component';
 import { TenantProfileTabsComponent } from './tenant-profile-tabs.component';
 import { DialogService } from '@core/services/dialog.service';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { UtilsService } from '@core/services/utils.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
@@ -32,13 +36,18 @@ export class TenantProfilesTableConfigResolver  {
               private datePipe: DatePipe,
               private router: Router,
               private dialogService: DialogService,
-              private customTranslate: CustomTranslatePipe) {
+              private customTranslate: CustomTranslatePipe,
+              private utils: UtilsService,
+              private userPermissionService: UserPermissionsService) {
 
     this.config.entityType = EntityType.TENANT_PROFILE;
     this.config.entityComponent = TenantProfileComponent;
     this.config.entityTabsComponent = TenantProfileTabsComponent;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TENANT_PROFILE);
     this.config.entityResources = entityTypeResources.get(EntityType.TENANT_PROFILE);
+
+    this.config.entityTitle = (tenantProfile) => tenantProfile ?
+      this.utils.customTranslation(tenantProfile.name, tenantProfile.name) : '';
 
     this.config.columns.push(
       new DateEntityTableColumn<TenantProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
@@ -61,7 +70,8 @@ export class TenantProfilesTableConfigResolver  {
       {
         name: this.translate.instant('tenant-profile.set-default'),
         icon: 'flag',
-        isEnabled: (tenantProfile) => !tenantProfile.default,
+        isEnabled: (tenantProfile) => !tenantProfile.default &&
+          this.userPermissionService.hasGenericPermission(Resource.TENANT_PROFILE, Operation.WRITE),
         onAction: ($event, entity) => this.setDefaultTenantProfile($event, entity)
       }
     );
@@ -84,7 +94,7 @@ export class TenantProfilesTableConfigResolver  {
 
   resolve(): EntityTableConfig<TenantProfile> {
     this.config.tableTitle = this.translate.instant('tenant-profile.tenant-profiles');
-
+    defaultEntityTablePermissions(this.userPermissionService, this.config);
     return this.config;
   }
 

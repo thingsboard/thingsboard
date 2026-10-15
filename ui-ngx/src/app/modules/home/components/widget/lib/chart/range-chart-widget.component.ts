@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -7,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -38,6 +39,8 @@ import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TbUnit } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-range-chart-widget',
@@ -46,7 +49,7 @@ import { UnitService } from '@core/services/unit.service';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class RangeChartWidgetComponent implements ChartWidgetComponent, OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('chartShape', {static: false})
   chartShape: ElementRef<HTMLElement>;
@@ -58,6 +61,10 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   showLegend: boolean;
   legendClass: string;
@@ -77,7 +84,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   private timeSeriesChart: TbTimeSeriesChart;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,

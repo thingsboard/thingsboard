@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.common.util;
 
@@ -20,9 +20,7 @@ public class ThingsBoardThreadFactory implements ThreadFactory {
     }
 
     private ThingsBoardThreadFactory(String name) {
-        SecurityManager s = System.getSecurityManager();
-        group = (s != null) ? s.getThreadGroup() :
-                Thread.currentThread().getThreadGroup();
+        group = Thread.currentThread().getThreadGroup();
         namePrefix = name + "-" +
                 poolNumber.getAndIncrement() +
                 "-thread-";

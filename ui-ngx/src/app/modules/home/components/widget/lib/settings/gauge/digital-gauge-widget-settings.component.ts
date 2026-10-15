@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Datasource, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { Component } from '@angular/core';
@@ -375,10 +375,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
 
   tickValuesFormArray(): UntypedFormArray {
     return this.digitalGaugeWidgetSettingsForm.get('ticksValue') as UntypedFormArray;
-  }
-
-  public trackByTickValue(index: number, tickValueControl: AbstractControl): any {
-    return tickValueControl;
   }
 
   public removeTickValue(index: number) {

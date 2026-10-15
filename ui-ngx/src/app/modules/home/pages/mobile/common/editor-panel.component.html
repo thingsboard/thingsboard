@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -14,13 +14,14 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            *ngIf="!disabled"
-            (click)="apply()"
-            [disabled]="editorControl.invalid || !editorControl.dirty">
-      {{ 'action.apply' | translate }}
-    </button>
+    @if (!disabled) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="apply()"
+              [disabled]="editorControl.invalid || !editorControl.dirty">
+        {{ 'action.apply' | translate }}
+      </button>
+    }
   </div>
 </div>

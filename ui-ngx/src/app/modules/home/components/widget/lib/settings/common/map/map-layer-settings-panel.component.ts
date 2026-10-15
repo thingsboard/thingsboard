@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  cartoLayerTranslationMap,
+  cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
   googleMapLayerTranslationMap,
@@ -15,6 +17,10 @@ import {
   MapProvider,
   mapProviders,
   mapProviderTranslationMap,
+  openFreeMapStyleTranslationMap,
+  openFreeMapStyleTypes,
+  mapProviderHasApiKey,
+  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap, referenceLayerTypes, referenceLayerTypeTranslationMap,
   tencentLayerTranslationMap,
@@ -38,9 +44,17 @@ export class MapLayerSettingsPanelComponent implements OnInit {
 
   mapProviderTranslationMap = mapProviderTranslationMap;
 
+  openFreeMapStyleTypes = openFreeMapStyleTypes;
+
+  openFreeMapStyleTranslationMap = openFreeMapStyleTranslationMap;
+
   openStreetLayerTypes = openStreetLayerTypes;
 
   openStreetMapLayerTranslationMap = openStreetMapLayerTranslationMap;
+
+  cartoLayerTypes = cartoLayerTypes;
+
+  cartoLayerTranslationMap = cartoLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -81,6 +95,8 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         provider: [null, [Validators.required]],
         layerType: [null, [Validators.required]],
         tileUrl: [null, [Validators.required]],
+        vectorTiles: [false, []],
+        customAttribution: [null, []],
         apiKey: [null, [Validators.required]],
         referenceLayer: [null, []]
       }
@@ -92,6 +108,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
+    });
+    this.layerFormGroup.get('vectorTiles').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
     });
     this.updateValidators();
   }
@@ -106,6 +127,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       translationKey = 'widget-config.set';
     }
     return this.translate.instant(translationKey);
+  }
+
+  hasApiKey(): boolean {
+    return mapProviderHasApiKey(this.layerFormGroup.get('provider').value);
   }
 
   applyLayerSettings() {
@@ -126,12 +151,17 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     const provider: MapProvider = this.layerFormGroup.get('provider').value;
     if (provider === MapProvider.custom) {
       this.layerFormGroup.get('tileUrl').enable({emitEvent: false});
+      this.layerFormGroup.get('vectorTiles').enable({emitEvent: false});
+      this.layerFormGroup.get('customAttribution').enable({emitEvent: false});
       this.layerFormGroup.get('layerType').disable({emitEvent: false});
     } else {
       this.layerFormGroup.get('tileUrl').disable({emitEvent: false});
+      this.layerFormGroup.get('vectorTiles').disable({emitEvent: false});
+      this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if ([MapProvider.google, MapProvider.here].includes(provider)) {
+    if (mapProviderHasApiKey(provider)) {
+      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});

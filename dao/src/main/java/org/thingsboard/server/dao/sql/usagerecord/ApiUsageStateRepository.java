@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.usagerecord;
 
 import org.springframework.data.domain.Limit;
@@ -37,8 +38,8 @@ public interface ApiUsageStateRepository extends JpaRepository<ApiUsageStateEnti
     void deleteByEntityIdAndEntityType(@Param("entityId") UUID entityId, @Param("entityType") String entityType);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.ApiUsageStateFields(a.id, a.createdTime, a.tenantId," +
-            "a.entityId, a.entityType, a.transportState, a.dbStorageState, a.reExecState, a.jsExecState, a.tbelExecState, " +
-            "a.emailExecState, a.smsExecState, a.alarmExecState, a.version) FROM ApiUsageStateEntity a WHERE a.id > :id ORDER BY a.id")
+           "a.entityId, a.entityType, a.transportState, a.dbStorageState, a.reExecState, a.jsExecState, a.tbelExecState, " +
+           "a.emailExecState, a.smsExecState, a.alarmExecState, a.reportExecState, a.aiState, a.version) FROM ApiUsageStateEntity a WHERE a.id > :id ORDER BY a.id")
     List<ApiUsageStateFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

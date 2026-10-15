@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form (ngSubmit)="add()" class="dialog-container">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2 translate>rulenode.add</h2>
     <span class="flex-1">: {{ruleNode.component.name}}</span>
     <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
@@ -15,8 +16,10 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  }
   <div mat-dialog-content>
     <tb-rule-node #tbRuleNode
                   [ruleNode]="ruleNode"

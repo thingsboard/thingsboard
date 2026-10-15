@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   Component,
@@ -21,7 +22,7 @@ import { ContentType } from '@shared/models/constants';
 import { JsonContentComponent } from '@shared/components/json-content.component';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { beautifyJs } from '@shared/models/beautify.models';
+import { beautifyJs, beautifyTbel } from '@shared/models/beautify.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
@@ -38,6 +39,7 @@ export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTest
   argumentsEditorCompleter: TbEditorCompleter;
   argumentsHighlightRules: AceHighlightRules;
   openCalculatedFieldEdit?: boolean;
+  readonly: boolean;
 }
 
 @Component({
@@ -81,7 +83,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
               private destroyRef: DestroyRef,
               private calculatedFieldService: CalculatedFieldsService) {
     super(store, router, dialogRef);
-    beautifyJs(this.data.expression, {indent_size: 4}).pipe(filter(Boolean), takeUntilDestroyed()).subscribe(
+    beautifyTbel(this.data.expression, {indent_size: 4}).pipe(filter(Boolean), takeUntilDestroyed()).subscribe(
       (res) => this.calculatedFieldScriptTestFormGroup.get('expression').patchValue(res, {emitEvent: false})
     );
     this.calculatedFieldScriptTestFormGroup.get('arguments').patchValue(this.getArgumentsValue());

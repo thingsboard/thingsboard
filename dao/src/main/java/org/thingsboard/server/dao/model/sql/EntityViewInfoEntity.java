@@ -1,45 +1,45 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Immutable;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.EntityInfosConverter;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @Data
+@Slf4j
 @EqualsAndHashCode(callSuper = true)
+@Entity
+@Immutable
+@Table(name = ModelConstants.ENTITY_VIEW_INFO_VIEW_TABLE_NAME)
 public class EntityViewInfoEntity extends AbstractEntityViewEntity<EntityViewInfo> {
 
-    public static final Map<String,String> entityViewInfoColumnMap = new HashMap<>();
-    static {
-        entityViewInfoColumnMap.put("customerTitle", "c.title");
-    }
+    @Column(name = ModelConstants.OWNER_NAME_COLUMN)
+    private String ownerName;
 
-    private String customerTitle;
-    private boolean customerIsPublic;
+    @Convert(converter = EntityInfosConverter.class)
+    @Column(name = ModelConstants.GROUPS_COLUMN)
+    private List<EntityInfo> groups;
 
     public EntityViewInfoEntity() {
         super();
     }
 
-    public EntityViewInfoEntity(EntityViewEntity entityViewEntity,
-                                String customerTitle,
-                                Object customerAdditionalInfo) {
-        super(entityViewEntity);
-        this.customerTitle = customerTitle;
-        if (customerAdditionalInfo != null && ((JsonNode)customerAdditionalInfo).has("isPublic")) {
-            this.customerIsPublic = ((JsonNode)customerAdditionalInfo).get("isPublic").asBoolean();
-        } else {
-            this.customerIsPublic = false;
-        }
-    }
-
     @Override
     public EntityViewInfo toData() {
-        return new EntityViewInfo(super.toEntityView(), customerTitle, customerIsPublic);
+        return new EntityViewInfo(super.toEntityView(), this.ownerName, this.groups);
     }
+
 }

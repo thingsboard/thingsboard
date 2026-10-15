@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 $text-color: rgba(0,0,0,0.76);
 $link-color: #2a7dec;
@@ -116,6 +116,10 @@ $gallery-border-hover-color: #2a7dec;
 
     img {
       max-width: 100%;
+    }
+
+    img.tb-readme-gallery-image {
+      cursor: zoom-in;
     }
 
     a:not(.mdc-button):not(.tb-iot-hub-item-link-card) {

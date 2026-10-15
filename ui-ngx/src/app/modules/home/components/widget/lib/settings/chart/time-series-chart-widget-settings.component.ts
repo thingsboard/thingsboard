@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Injector } from '@angular/core';
 import {
@@ -121,6 +121,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       thresholds: [settings.thresholds, []],
 
       dataZoom: [settings.dataZoom, []],
+      dataZoomUpdateTimewindow: [settings.dataZoomUpdateTimewindow, []],
       stack: [settings.stack, []],
 
       grid: [settings.grid, []],
@@ -167,15 +168,22 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['comparisonEnabled', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
+    return ['comparisonEnabled', 'dataZoom', 'showLegend', 'showTooltip', 'tooltipShowDate', 'stack'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const comparisonEnabled: boolean = this.timeSeriesChartWidgetSettingsForm.get('comparisonEnabled').value;
+    const dataZoom: boolean = this.timeSeriesChartWidgetSettingsForm.get('dataZoom').value;
     const showLegend: boolean = this.timeSeriesChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
     const stack: boolean = this.timeSeriesChartWidgetSettingsForm.get('stack').value;
+
+    if (dataZoom) {
+      this.timeSeriesChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').enable();
+    } else {
+      this.timeSeriesChartWidgetSettingsForm.get('dataZoomUpdateTimewindow').disable();
+    }
 
     if (comparisonEnabled) {
       this.timeSeriesChartWidgetSettingsForm.get('timeForComparison').enable();

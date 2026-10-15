@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, ElementRef, Input, NgZone, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
@@ -75,7 +76,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   ngOnInit(): void {
     if (!this.mobileAppSettings) {
-      this.mobileAppService.getMobileAppSettings().subscribe((settings => {
+      this.mobileAppService.getMergedMobileAppSettings().subscribe((settings => {
         this.mobileAppSettings = settings;
 
         this.appStoreLink = this.mobileAppSettings.appStoreLink;

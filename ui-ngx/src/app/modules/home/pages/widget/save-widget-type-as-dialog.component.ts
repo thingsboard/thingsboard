@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -9,6 +10,8 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 export interface SaveWidgetTypeAsDialogResult {
   widgetName: string;
@@ -35,11 +38,14 @@ export class SaveWidgetTypeAsDialogComponent extends
   dialogTitle = 'widget.save-widget-as';
   saveAsActionTitle = 'action.saveAs';
 
+  showSelectWidgetBundle = true;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) private data: SaveWidgetTypeAsDialogData,
               public dialogRef: MatDialogRef<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult>,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private userPermissionsService: UserPermissionsService) {
     super(store, router, dialogRef);
 
     const authUser = getCurrentAuthUser(store);
@@ -48,6 +54,8 @@ export class SaveWidgetTypeAsDialogComponent extends
     } else {
       this.bundlesScope = 'system';
     }
+
+    this.showSelectWidgetBundle = this.userPermissionsService.hasGenericPermission(Resource.WIDGETS_BUNDLE, Operation.WRITE);
 
     if (this.data?.dialogTitle) {
       this.dialogTitle = this.data.dialogTitle;

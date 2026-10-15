@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   AlarmDataCmd,
@@ -9,6 +9,7 @@ import { DatasourceType } from '@shared/models/widget.models';
 import {
   AlarmData,
   AlarmDataPageLink,
+  ComplexOperation,
   EntityFilter,
   EntityKey,
   EntityKeyType,
@@ -33,6 +34,7 @@ export interface AlarmDataSubscriptionOptions {
   pageLink?: AlarmDataPageLink;
   keyFilters?: Array<KeyFilter>;
   additionalKeyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
   subscriptionTimewindow?: SubscriptionTimewindow;
 }
 
@@ -106,6 +108,7 @@ export class AlarmDataSubscription {
         entityFilter: this.alarmDataSubscriptionOptions.entityFilter,
         pageLink: deepClone(this.alarmDataSubscriptionOptions.pageLink),
         keyFilters,
+        keyFiltersOperation: this.alarmDataSubscriptionOptions.keyFiltersOperation,
         alarmFields,
         entityFields,
         latestValues

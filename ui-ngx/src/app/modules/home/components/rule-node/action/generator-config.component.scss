@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   ::ng-deep {
     .mat-button-toggle-group {
@@ -15,6 +16,28 @@
             font-size: 14px !important;
             line-height: 20px !important;
           }
+        }
+      }
+    }
+    .tb-owner-autocomplete {
+      flex: 1;
+      mat-form-field {
+        width: 100% !important;
+      }
+    }
+    .entity-group-select {
+      tb-entity-group-autocomplete {
+        mat-form-field {
+          width: 100% !important;
+        }
+      }
+      .tb-entity-group-select {
+        gap: 16px;
+      }
+      tb-entity-type-select {
+        padding-right: 0 !important;
+        mat-form-field {
+          width: 100% !important;
         }
       }
     }

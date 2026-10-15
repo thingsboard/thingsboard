@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../scss/constants";
 
 .tb-color-picker-panel {
@@ -11,12 +12,30 @@
   @media #{$mat-sm} {
     width: 578px;
   }
+  &.singleTab {
+    width: 370px;
+    @media #{$mat-sm} {
+      width: 578px;
+    }
+  }
   .tb-color-picker-title {
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
+  }
+  .mat-mdc-tab-body-wrapper {
+    height: 100%;
+  }
+  .mat-mdc-tab-group {
+    width: 100%;
+    overflow: auto;
+  }
+  .tb-color-picker-tab {
+    height: 100%;
+    padding: 8px 0 0;
+    display: flex;
   }
   .tb-color-picker {
     padding-right: 4px;

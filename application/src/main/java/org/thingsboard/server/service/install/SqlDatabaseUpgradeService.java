@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.MigrationService;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,25 +32,31 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
     private final DatabaseSchemaSettingsService schemaSettingsService;
-    private final LtsMigrationService ltsMigrationService;
+    private final MigrationService migrationService;
 
     public SqlDatabaseUpgradeService(InstallScripts installScripts, JdbcTemplate jdbcTemplate,
                                      PlatformTransactionManager transactionManager,
                                      DatabaseSchemaSettingsService schemaSettingsService,
-                                     LtsMigrationService ltsMigrationService) {
+                                     MigrationService migrationService) {
         this.installScripts = installScripts;
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setTimeout((int) TimeUnit.MINUTES.toSeconds(120));
         this.schemaSettingsService = schemaSettingsService;
-        this.ltsMigrationService = ltsMigrationService;
+        this.migrationService = migrationService;
     }
 
     @Override
-    public void upgradeDatabase() {
+    public void upgradeDatabase(boolean fromCe) {
         log.info("Updating schema...");
-        loadSql(getSchemaUpdateFile("basic"));
-        ltsMigrationService.runSchemaMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion());
+        if (fromCe) {
+            // The delta is not confined to the version the database is already at - it also carries package-version
+            // DDL that the migration chain below adds again (the job.customer_id and tb_cluster columns, for instance).
+            // Running it first is safe because every statement in it is repeat-safe, not because it is version-scoped.
+            loadSql(getSchemaUpdateFile("pe"));
+        }
+        migrationService.runSchemaMigrations(schemaSettingsService.getDbSchemaVersion(), schemaSettingsService.getPackageSchemaVersion(),
+                schemaSettingsService.isForcedReUpgrade());
         log.info("Schema updated.");
     }
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
@@ -410,8 +410,8 @@ export class FlotWidgetSettingsComponent extends PageComponent implements OnInit
     return this.flotSettingsFormGroup.get('dataKeysListForLabels') as UntypedFormArray;
   }
 
-  public trackByLabelDataKey(index: number, labelDataKeyControl: AbstractControl): any {
-    return labelDataKeyControl;
+  get typedSelectOptions() {
+    return this.dataKeysListForLabelsFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public removeLabelDataKey(index: number) {

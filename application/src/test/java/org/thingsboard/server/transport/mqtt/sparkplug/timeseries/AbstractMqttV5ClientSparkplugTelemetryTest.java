@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt.sparkplug.timeseries;
 
@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.awaitility.Awaitility.await;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_SEPARATOR;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -103,7 +104,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         createdAddMetricValuePrimitiveTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
 
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + messageTypeName + TOPIC_SPLIT_SEPARATOR + edgeNode,
                     ndataPayload.build().toByteArray(), 0, false);
         }
 
@@ -132,7 +133,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
         createdAddMetricValueArraysPrimitiveTsKv(listTsKvEntry, listKeys, ndataPayload, ts);
 
         if (client.isConnected()) {
-            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + messageTypeName + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + TOPIC_SPLIT_SEPARATOR + groupId + TOPIC_SPLIT_SEPARATOR + messageTypeName + TOPIC_SPLIT_SEPARATOR + edgeNode,
                     ndataPayload.build().toByteArray(), 0, false);
         }
 
