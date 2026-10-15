@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 package org.thingsboard.server.cache;
 
@@ -60,6 +61,7 @@ class TBRedisCacheConfigurationTest {
                 return null;
             }
         };
+        configuration.setKeyPrefix("");
         RedisCacheManager cacheManager = (RedisCacheManager) configuration.cacheManager(mock(RedisConnectionFactory.class), cacheSpecsMap);
         cacheManager.afterPropertiesSet();
         return cacheManager;
