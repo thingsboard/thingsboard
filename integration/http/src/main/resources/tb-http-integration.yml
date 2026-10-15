@@ -11,6 +11,8 @@ server:
   tomcat:
     # Maximum size of data that could be sent over HTTP form POST request
     max-http-form-post-size: "${MAX_HTTP_FORM_POST_SIZE:10000000}" # 10Mb
+    # Maximum number of GET and POST request parameters Tomcat parses per request
+    max-parameter-count: "${SERVER_TOMCAT_MAX_PARAMETER_COUNT:10000}"
 
 integration:
   routingKey: "${INTEGRATION_ROUTING_KEY:PUT_YOUR_ROUTING_KEY_HERE}"
