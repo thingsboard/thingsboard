@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
-spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
-
 server:
   # Server bind address
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
@@ -29,6 +27,8 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  main:
+    allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
 
 storage:
   # Location of the folder to store data files
