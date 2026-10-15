@@ -124,19 +124,16 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private RuleChainService self;
 
     @Override
-    @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain) {
         return saveRuleChain(ruleChain, true);
     }
 
     @Override
-    @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent) {
         return saveRuleChain(ruleChain, publishSaveEvent, true);
     }
 
     @Override
-    @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent, boolean doValidate) {
         return saveEntity(ruleChain, () -> doSaveRuleChain(ruleChain, publishSaveEvent, doValidate));
     }
