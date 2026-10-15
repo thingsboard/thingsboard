@@ -76,9 +76,17 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-core</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.stephenc.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>

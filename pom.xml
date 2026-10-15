@@ -77,7 +77,6 @@
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jjwt.version>0.12.5</jjwt.version>
         <rat.version>0.10</rat.version> <!-- unused -->
-        <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
         <cassandra-all.version>5.0.7</cassandra-all.version> <!-- tools; 5.0.7 fixes CVE-2026-27314 -->
         <guava.version>33.7.2-jre</guava.version> <!-- to fix CVE-2026-102554 -->
@@ -112,6 +111,8 @@
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
         <jts.version>1.19.0</jts.version>
+        <spotbugs-annotations.version>3.1.12</spotbugs-annotations.version>
+        <jcip-annotations.version>1.0-1</jcip-annotations.version>
         <bouncycastle.version>1.86</bouncycastle.version> <!-- to fix CVE-2026-18036, CVE-2026-71888, CVE-2026-71889, CVE-2026-71891, CVE-2026-8763, CVE-2026-12185, CVE-2026-12802, CVE-2026-12803, CVE-2026-12816, CVE-2026-12860, CVE-2026-13506, CVE-2026-14682, CVE-2026-58059, CVE-2026-58060, CVE-2026-58061, CVE-2026-58062, CVE-2026-59639, CVE-2026-59642, CVE-2026-59645, CVE-2026-59650, CVE-2026-59651 (supersedes the earlier 1.84 pin for CVE-2026-5588, CVE-2026-5598, CVE-2025-14813). Not managed by the Spring Boot BOM — this pin is the sole source of the bouncycastle version. -->
         <winsw.version>2.0.1</winsw.version>
         <azure-iot-service-client.version>1.13.0</azure-iot-service-client.version>
@@ -1056,6 +1057,7 @@
                                         <exclude>org.testcontainers:hivemq</exclude>
                                         <exclude>io.hypersistence:*</exclude>
                                         <exclude>org.glassfish:jakarta.el</exclude>
+                                        <exclude>com.datastax.oss:java-driver-core</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>
@@ -1667,16 +1669,6 @@
                 <classifier>osx-x86_64</classifier>
             </dependency>
             <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-core</artifactId>
-                <version>${cassandra.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.datastax.oss</groupId>
-                <artifactId>java-driver-query-builder</artifactId>
-                <version>${cassandra.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-jmx</artifactId>
                 <version>${metrics.version}</version>
@@ -1848,6 +1840,16 @@
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-x-discovery</artifactId>
                 <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>${spotbugs-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.stephenc.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>${jcip-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard</groupId>
