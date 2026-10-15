@@ -250,7 +250,7 @@
         <dependency>
             <groupId>org.thingsboard.license</groupId>
             <artifactId>client</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.5-SNAPSHOT</version> <!-- FIXME: release license client 3.0.5 (thingsboard/license-server#132) before merge -->
         </dependency>
     </dependencies>
     <build>
