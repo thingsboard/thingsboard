@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.secret;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,19 +11,26 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.SecretType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.secret.SecretService;
 
 import java.lang.reflect.Field;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SecretConfigurationServiceTest {
@@ -39,11 +47,13 @@ public class SecretConfigurationServiceTest {
     private DefaultSecretConfigurationService secretConfigurationService;
 
     private TenantId tenantId;
+    private CustomerId tenantScopeCustomerId;
 
     @BeforeEach
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        tenantId = new TenantId(java.util.UUID.randomUUID());
+        tenantId = TenantId.fromUUID(UUID.randomUUID());
+        tenantScopeCustomerId = new CustomerId(EntityId.NULL_UUID);
 
         Field patternField = DefaultSecretConfigurationService.class.getDeclaredField("SECRET_PATTERN");
         patternField.setAccessible(true);
@@ -95,14 +105,14 @@ public class SecretConfigurationServiceTest {
         String secretName = "mySecret";
         String input = "${secret:mySecret;type:TEXT}";
         String decryptedValue = "decryptedPassword123";
-        byte[] encryptedValue = "encryptedValue" .getBytes();
+        byte[] encryptedValue = "encryptedValue".getBytes();
 
         Secret secret = new Secret();
         secret.setName(secretName);
         secret.setType(SecretType.TEXT);
         secret.setEncryptedValue(encryptedValue);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(secret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encryptedValue)))
                 .thenReturn(decryptedValue);
 
@@ -116,7 +126,7 @@ public class SecretConfigurationServiceTest {
         String secretName = "missingSecret";
         String input = "${secret:missingSecret;type:TEXT}";
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(null);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(null);
 
         String result = secretConfigurationService.replaceSecretUsage(tenantId, input);
 
@@ -137,14 +147,14 @@ public class SecretConfigurationServiceTest {
         String secretName = "apiKey";
         String input = "prefix_${secret:apiKey;type:TEXT}_suffix";
         String decryptedValue = "abc123";
-        byte[] encryptedApiKey = "encryptedApiKey" .getBytes();
+        byte[] encryptedApiKey = "encryptedApiKey".getBytes();
 
         Secret secret = new Secret();
         secret.setName(secretName);
         secret.setType(SecretType.TEXT);
         secret.setEncryptedValue(encryptedApiKey);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(secret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encryptedApiKey)))
                 .thenReturn(decryptedValue);
 
@@ -158,14 +168,14 @@ public class SecretConfigurationServiceTest {
         String secretName = "specialSecret";
         String input = "${secret:specialSecret;type:TEXT}";
         String decryptedValue = "$100 & special\\chars";
-        byte[] encryptedSpecial = "encryptedSpecial" .getBytes();
+        byte[] encryptedSpecial = "encryptedSpecial".getBytes();
 
         Secret secret = new Secret();
         secret.setName(secretName);
         secret.setType(SecretType.TEXT);
         secret.setEncryptedValue(encryptedSpecial);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(secret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encryptedSpecial)))
                 .thenReturn(decryptedValue);
 
@@ -189,14 +199,14 @@ public class SecretConfigurationServiceTest {
         String secretName = "中文密码";
         String input = "${secret:中文密码;type:TEXT}";
         String decryptedValue = "chinesePassword";
-        byte[] encryptedChinese = "encryptedChinese" .getBytes();
+        byte[] encryptedChinese = "encryptedChinese".getBytes();
 
         Secret secret = new Secret();
         secret.setName(secretName);
         secret.setType(SecretType.TEXT);
         secret.setEncryptedValue(encryptedChinese);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(secret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encryptedChinese)))
                 .thenReturn(decryptedValue);
 
@@ -210,14 +220,14 @@ public class SecretConfigurationServiceTest {
         String secretName = "dbPassword";
         String input = "jdbc:postgresql://localhost:5432/db?password=${secret:dbPassword;type:TEXT}&user=admin";
         String decryptedValue = "mySecurePassword!123";
-        byte[] encryptedDbPassword = "encryptedDbPassword" .getBytes();
+        byte[] encryptedDbPassword = "encryptedDbPassword".getBytes();
 
         Secret secret = new Secret();
         secret.setName(secretName);
         secret.setType(SecretType.TEXT);
         secret.setEncryptedValue(encryptedDbPassword);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(secret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encryptedDbPassword)))
                 .thenReturn(decryptedValue);
 
@@ -233,8 +243,8 @@ public class SecretConfigurationServiceTest {
         String input = "Test ${secret:secret1;type:TEXT} and ${secret:secret2;type:TEXT} here";
         String decryptedValue1 = "value1";
         String decryptedValue2 = "value2";
-        byte[] encrypted1 = "encrypted1" .getBytes();
-        byte[] encrypted2 = "encrypted2" .getBytes();
+        byte[] encrypted1 = "encrypted1".getBytes();
+        byte[] encrypted2 = "encrypted2".getBytes();
 
         Secret secret1 = new Secret();
         secret1.setName(secretName1);
@@ -246,8 +256,8 @@ public class SecretConfigurationServiceTest {
         secret2.setType(SecretType.TEXT);
         secret2.setEncryptedValue(encrypted2);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName1))).thenReturn(secret1);
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName2))).thenReturn(secret2);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName1))).thenReturn(secret1);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName2))).thenReturn(secret2);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encrypted1)))
                 .thenReturn(decryptedValue1);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encrypted2)))
@@ -263,20 +273,71 @@ public class SecretConfigurationServiceTest {
         String secretName = "mySecret";
         String input = "Test ${secret:mySecret;type:TEXT}";
         String decryptedValue = "replacedValue";
-        byte[] encrypted = "encrypted" .getBytes();
+        byte[] encrypted = "encrypted".getBytes();
 
         Secret secret = new Secret();
         secret.setName(secretName);
         secret.setType(SecretType.TEXT);
         secret.setEncryptedValue(encrypted);
 
-        when(secretService.findSecretByName(eq(tenantId), eq(secretName))).thenReturn(secret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
         when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encrypted)))
                 .thenReturn(decryptedValue);
 
         String result = secretConfigurationService.replaceSecretUsage(tenantId, input);
 
         assertEquals("Test replacedValue", result);
+    }
+
+    @Test
+    public void testReplaceSecretUsages_NullCustomerIdFallsBackToTenantScope() {
+        String secretName = "oauthSecret";
+        String decryptedValue = "decrypted";
+        byte[] encrypted = "enc".getBytes();
+
+        Secret secret = new Secret();
+        secret.setName(secretName);
+        secret.setType(SecretType.TEXT);
+        secret.setEncryptedValue(encrypted);
+
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(secret);
+        when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(encrypted)))
+                .thenReturn(decryptedValue);
+
+        ObjectNode entity = JacksonUtil.newObjectNode().put("token", "${secret:oauthSecret;type:TEXT}");
+        ObjectNode result = secretConfigurationService.replaceSecretUsages(tenantId, null, entity, ObjectNode.class);
+
+        assertEquals(decryptedValue, result.get("token").asText());
+    }
+
+    @Test
+    public void testReplaceSecretUsages_CustomerIdResolvesCustomerSecret() {
+        String secretName = "oauthSecret";
+        CustomerId customerId = new CustomerId(UUID.randomUUID());
+        byte[] customerEncrypted = "customerEnc".getBytes();
+        byte[] tenantEncrypted = "tenantEnc".getBytes();
+
+        Secret customerSecret = new Secret();
+        customerSecret.setName(secretName);
+        customerSecret.setType(SecretType.TEXT);
+        customerSecret.setEncryptedValue(customerEncrypted);
+        Secret tenantSecret = new Secret();
+        tenantSecret.setName(secretName);
+        tenantSecret.setType(SecretType.TEXT);
+        tenantSecret.setEncryptedValue(tenantEncrypted);
+
+        when(secretService.findSecretByName(eq(tenantId), eq(customerId), eq(secretName))).thenReturn(customerSecret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(tenantSecret);
+        when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(customerEncrypted))).thenReturn("customer-value");
+        when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(tenantEncrypted))).thenReturn("tenant-value");
+
+        ObjectNode entity = JacksonUtil.newObjectNode().put("clientSecret", "${secret:oauthSecret;type:TEXT}");
+        entity.putObject("mapperConfig").put("password", "${secret:oauthSecret;type:TEXT}");
+        ObjectNode result = secretConfigurationService.replaceSecretUsages(tenantId, customerId, entity, ObjectNode.class);
+
+        assertEquals("customer-value", result.get("clientSecret").asText());
+        assertEquals("customer-value", result.get("mapperConfig").get("password").asText());
+        verify(secretService, never()).findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), any());
     }
 
 }

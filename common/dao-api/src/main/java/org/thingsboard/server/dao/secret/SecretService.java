@@ -5,6 +5,7 @@ package org.thingsboard.server.dao.secret;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbSecretDeleteResult;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -26,15 +27,17 @@ public interface SecretService extends EntityDaoService {
 
     Secret findSecretById(TenantId tenantId, SecretId secretId);
 
-    Secret findSecretByName(TenantId tenantId, String name);
+    Secret findSecretByName(TenantId tenantId, CustomerId customerId, String name);
 
-    SecretInfo findSecretInfoByName(TenantId tenantId, String name);
+    SecretInfo findSecretInfoByName(TenantId tenantId, CustomerId customerId, String name);
 
-    List<String> findSecretNamesByTenantId(TenantId tenantId);
+    List<String> findSecretNamesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId);
 
-    PageData<Secret> findSecretsByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<Secret> findSecretsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
-    PageData<SecretInfo> findSecretInfosByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<SecretInfo> findSecretInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
+
+    void deleteSecretsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId);
 
     Map<EntityType, List<EntityInfo>> findEntitiesBySecret(TenantId tenantId, SecretInfo secretInfo);
 

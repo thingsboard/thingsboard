@@ -58,6 +58,12 @@ public class SecretDataValidator extends DataValidator<Secret> {
         if (old == null) {
             throw new DataValidationException("Can't update non existing secret!");
         }
+        if (!old.getTenantId().equals(secret.getTenantId())) {
+            throw new DataValidationException("Can't update secret tenant!");
+        }
+        if (!old.getCustomerId().equals(secret.getCustomerId())) {
+            throw new DataValidationException("Can't update secret customer!");
+        }
         if (!old.getName().equals(secret.getName())) {
             throw new DataValidationException("Can't update secret name!");
         }

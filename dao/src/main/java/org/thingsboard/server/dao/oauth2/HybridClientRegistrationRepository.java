@@ -33,7 +33,7 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
         if (oAuth2Client == null) {
             return null;
         }
-        oAuth2Client = secretConfigurationService.replaceSecretUsages(oAuth2Client.getTenantId(), oAuth2Client, OAuth2Client.class);
+        oAuth2Client = secretConfigurationService.replaceSecretUsages(oAuth2Client.getTenantId(), oAuth2Client.getCustomerId(), oAuth2Client, OAuth2Client.class);
         return toSpringClientRegistration(oAuth2Client);
     }
 

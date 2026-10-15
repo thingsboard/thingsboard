@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -28,18 +29,19 @@ public class JpaSecretInfoDao extends JpaAbstractDao<SecretInfoEntity, SecretInf
     private SecretInfoRepository secretInfoRepository;
 
     @Override
-    public PageData<SecretInfo> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(secretInfoRepository.findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    public PageData<SecretInfo> findByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
+        return DaoUtil.toPageData(secretInfoRepository.findByTenantIdAndCustomerId(
+                tenantId.getId(), customerId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public SecretInfo findByName(TenantId tenantId, String name) {
-        return DaoUtil.getData(secretInfoRepository.findByTenantIdAndName(tenantId.getId(), name));
+    public SecretInfo findByName(TenantId tenantId, CustomerId customerId, String name) {
+        return DaoUtil.getData(secretInfoRepository.findByTenantIdAndCustomerIdAndName(tenantId.getId(), customerId.getId(), name));
     }
 
     @Override
-    public List<String> findAllNamesByTenantId(TenantId tenantId) {
-        return secretInfoRepository.findAllNamesByTenantId(tenantId.getId());
+    public List<String> findAllNamesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId) {
+        return secretInfoRepository.findAllNamesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId());
     }
 
     @Override

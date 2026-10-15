@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.secret;
 
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -12,9 +13,9 @@ import java.util.Map;
 
 public interface SecretDao extends Dao<Secret> {
 
-    PageData<Secret> findByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<Secret> findByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
-    Secret findByName(TenantId tenantId, String key);
+    Secret findByName(TenantId tenantId, CustomerId customerId, String name);
 
     void deleteByTenantId(TenantId tenantId);
 

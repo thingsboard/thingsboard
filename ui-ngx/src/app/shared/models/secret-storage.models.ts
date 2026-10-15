@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { BaseData, HasId } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { CustomerId } from '@shared/models/id/customer-id';
 import { SecretStorageId } from '@shared/models/id/secret-storage-id';
 import { ResourceReferences, TbResourceInfo } from '@shared/models/resource.models';
 import { isNotEmptyStr } from '@core/utils';
@@ -9,6 +10,7 @@ import { WhiteLabeling } from '@shared/models/white-labeling.models';
 
 export interface SecretStorage extends BaseData<SecretStorageId> {
   tenantId?: TenantId;
+  customerId?: CustomerId;
   name: string;
   type: SecretStorageType;
   description?: any;

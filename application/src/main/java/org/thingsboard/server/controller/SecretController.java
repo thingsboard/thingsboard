@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.TbSecretDeleteResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -28,8 +29,10 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.common.data.secret.SecretInfo;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.secret.TbSecretService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +45,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DE
 import static org.thingsboard.server.controller.ControllerConstants.SECRET_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @Slf4j
@@ -59,22 +62,26 @@ public class SecretController extends BaseController {
                     "The newly created Secret Id will be present in the response. " +
                     "Specify existing Secret Id to update the secret. Secret name is not updatable, only value could be changed. " +
                     "Referencing non-existing Secret Id will cause 'Not Found' error." + NEW_LINE +
-                    "Secret name is unique in the scope of tenant.")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    "Tenant Id and Customer Id are derived from the current user and cannot be overridden by the request body. " +
+                    "Secret name is unique within the owner scope: per tenant for sysadmin/tenant-admin secrets, " +
+                    "and per customer for customer-user secrets." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/secret")
     public SecretInfo saveSecret(
             @Parameter(description = "A JSON value representing the Secret.", required = true)
             @RequestBody @Valid Secret secret) throws Exception {
-        secret.setTenantId(getTenantId());
+        SecurityUser securityUser = getCurrentUser();
+        secret.setTenantId(securityUser.getTenantId());
+        secret.setCustomerId(getCustomerId(securityUser));
         checkEntity(secret.getId(), secret, Resource.SECRET);
-        return tbSecretService.save(secret, getCurrentUser());
+        return tbSecretService.save(secret, securityUser);
     }
 
     @ApiOperation(value = "Update Secret Description",
             notes = "Updates the description of the existing Secret by secretId. " +
                     "Only the description can be updated. " +
-                    "Referencing a non-existing Secret Id will cause a 'Not Found' error.")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    "Referencing a non-existing Secret Id will cause a 'Not Found' error." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping("/secret/{id}/description")
     public SecretInfo updateSecretDescription(
             @Parameter(description = "Unique identifier of the Secret to update", required = true)
@@ -89,8 +96,8 @@ public class SecretController extends BaseController {
 
     @ApiOperation(value = "Update Secret value",
             notes = "Updates the value of the existing Secret by secretId. " +
-                    "Referencing a non-existing Secret Id will cause a 'Not Found' error.")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    "Referencing a non-existing Secret Id will cause a 'Not Found' error." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PutMapping("/secret/{id}/value")
     public SecretInfo updateSecretValue(
             @Parameter(description = "Unique identifier of the Secret to update", required = true)
@@ -104,8 +111,8 @@ public class SecretController extends BaseController {
     }
 
     @ApiOperation(value = "Delete secret by ID (deleteSecret)",
-            notes = "Deletes the secret. Referencing non-existing Secret Id will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+            notes = "Deletes the secret. Referencing non-existing Secret Id will cause an error." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/secret/{id}")
     public ResponseEntity<TbSecretDeleteResult> deleteSecret(@PathVariable UUID id) throws ThingsboardException {
         SecretId secretId = new SecretId(id);
@@ -114,9 +121,11 @@ public class SecretController extends BaseController {
         return (result.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(result);
     }
 
-    @ApiOperation(value = "Get Tenant Secret infos (getSecretInfos)",
-            notes = "Returns a page of secret infos owned by tenant. " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Get Secret infos (getSecretInfos)",
+            notes = "Returns a page of secret infos visible to the current user. " +
+                    "Sysadmin and tenant-admin users see secrets owned by their tenant; " +
+                    "customer users see only secrets owned by their customer. " + PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/secrets", params = {"pageSize", "page"})
     public PageData<SecretInfo> getSecretInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                @RequestParam int pageSize,
@@ -128,35 +137,50 @@ public class SecretController extends BaseController {
                                                @RequestParam(required = false) String sortProperty,
                                                @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
                                                @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.SECRET, Operation.READ);
+        SecurityUser securityUser = getCurrentUser();
+        accessControlService.checkPermission(securityUser, Resource.SECRET, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(secretService.findSecretInfosByTenantId(getTenantId(), pageLink));
+        return checkNotNull(secretService.findSecretInfosByTenantIdAndCustomerId(securityUser.getTenantId(), getCustomerId(securityUser), pageLink));
     }
 
-    @ApiOperation(value = "Get Tenant Secret names (getSecretNames)",
-            notes = "Returns a page of secret names owned by tenant. " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Get Secret names (getSecretNames)",
+            notes = "Returns the list of secret names visible to the current user. " +
+                    "Sysadmin and tenant-admin users see secrets owned by their tenant; " +
+                    "customer users see only secrets owned by their customer." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/secret/names")
     public List<String> getSecretNames() throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.SECRET, Operation.READ);
-        return checkNotNull(secretService.findSecretNamesByTenantId(getTenantId()));
+        SecurityUser securityUser = getCurrentUser();
+        accessControlService.checkPermission(securityUser, Resource.SECRET, Operation.READ);
+        return checkNotNull(secretService.findSecretNamesByTenantIdAndCustomerId(securityUser.getTenantId(), getCustomerId(securityUser)));
     }
 
-    @ApiOperation(value = "Get Secret info by Id (getSecretInfoById)", notes = TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Get Secret info by Id (getSecretInfoById)",
+            notes = "Returns the secret info by id. " +
+                    "Access is restricted to the owner scope: tenant-admin users cannot access customer-owned secrets, " +
+                    "and customer users cannot access tenant-owned secrets." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/secret/{id}/info")
     public SecretInfo getSecretInfoById(@PathVariable UUID id) throws ThingsboardException {
         SecretId secretId = new SecretId(id);
         return checkSecretId(secretId, Operation.READ);
     }
 
-    @ApiOperation(value = "Get Secret info by name (getSecretInfoByName)", notes = TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @ApiOperation(value = "Get Secret info by name (getSecretInfoByName)",
+            notes = "Returns the secret info by name within the current user's owner scope. " +
+                    "Sysadmin and tenant-admin users look up names among tenant-owned secrets; " +
+                    "customer users look up names among their own customer-owned secrets." + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/secret")
     public SecretInfo getSecretInfoByName(@RequestParam String name) throws ThingsboardException {
+        SecurityUser securityUser = getCurrentUser();
         checkParameter("name", name);
-        accessControlService.checkPermission(getCurrentUser(), Resource.SECRET, Operation.READ);
-        return checkNotNull(secretService.findSecretInfoByName(getTenantId(), name));
+        accessControlService.checkPermission(securityUser, Resource.SECRET, Operation.READ);
+        return checkNotNull(secretService.findSecretInfoByName(securityUser.getTenantId(), getCustomerId(securityUser), name));
+    }
+
+    private static CustomerId getCustomerId(SecurityUser user) {
+        return user.isCustomerUser() ? user.getCustomerId() : BaseEntityService.NULL_CUSTOMER_ID;
     }
 
 }

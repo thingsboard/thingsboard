@@ -11,16 +11,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RoleId;
+import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.role.Role;
+import org.thingsboard.server.common.data.secret.SecretInfo;
 import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.role.RoleService;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeEntityProcessor;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -49,6 +53,8 @@ public class EdgeEntityProcessorTest {
     private RoleService roleService;
     @Mock
     private EntityGroupService entityGroupService;
+    @Mock
+    private SecretService secretService;
 
     private EdgeEntityProcessor processor;
 
@@ -80,19 +86,8 @@ public class EdgeEntityProcessorTest {
         Role role2 = new Role();
         role2.setId(new RoleId(UUID.randomUUID()));
 
-        when(edgeCtx.getRoleService()).thenReturn(roleService);
-        when(roleService.findRolesByTenantIdAndCustomerId(eq(tenantId), eq(customer.getId()), any()))
-                .thenReturn(new PageData<>(List.of(role1, role2), 1, 2, false));
-        when(edgeCtx.getEntityGroupService()).thenReturn(entityGroupService);
-        when(entityGroupService.findOrCreateCustomerAdminsGroup(any(), any(), any())).thenReturn(new EntityGroup());
-        when(entityGroupService.findOrCreateCustomerUsersGroup(any(), any(), any())).thenReturn(new EntityGroup());
-
         // The CUSTOMER-edge event is held open; the ROLE events must not be enqueued until it completes.
-        SettableFuture<Void> customerEventSaved = SettableFuture.create();
-        doReturn(Futures.immediateFuture(null))
-                .when(processor).saveEdgeEvent(any(), any(), any(), any(), any(), any(), any());
-        doReturn(customerEventSaved)
-                .when(processor).saveEdgeEvent(any(), any(), eq(EdgeEventType.CUSTOMER), any(), any(), any(), any());
+        SettableFuture<Void> customerEventSaved = stubCustomerSync(customer, List.of(role1, role2), List.of());
 
         ReflectionTestUtils.invokeMethod(processor, "syncCustomer", tenantId, edgeId, customer);
 
@@ -102,6 +97,41 @@ public class EdgeEntityProcessorTest {
         // Customer event completes -> roles are now enqueued.
         customerEventSaved.set(null);
         verify(processor, times(2)).saveEdgeEvent(any(), any(), eq(EdgeEventType.ROLE), any(), any(), any(), any());
+    }
+
+    @Test
+    public void syncCustomerSendsCustomerSecretsAfterCustomer() {
+        Customer customer = new Customer();
+        customer.setId(new CustomerId(UUID.randomUUID()));
+        customer.setTenantId(tenantId);
+        SecretInfo secret = new SecretInfo(new SecretId(UUID.randomUUID()));
+
+        SettableFuture<Void> customerEventSaved = stubCustomerSync(customer, List.of(), List.of(secret));
+
+        ReflectionTestUtils.invokeMethod(processor, "syncCustomer", tenantId, edgeId, customer);
+        verify(processor, never()).saveEdgeEvent(any(), any(), eq(EdgeEventType.SECRET), any(), any(), any(), any());
+
+        customerEventSaved.set(null);
+        verify(processor).saveEdgeEvent(eq(tenantId), eq(edgeId), eq(EdgeEventType.SECRET), eq(EdgeEventActionType.ADDED), eq(secret.getId()), any(), any());
+    }
+
+    private SettableFuture<Void> stubCustomerSync(Customer customer, List<Role> roles, List<SecretInfo> secrets) {
+        when(edgeCtx.getRoleService()).thenReturn(roleService);
+        when(roleService.findRolesByTenantIdAndCustomerId(eq(tenantId), eq(customer.getId()), any()))
+                .thenReturn(new PageData<>(roles, 1, roles.size(), false));
+        when(edgeCtx.getSecretService()).thenReturn(secretService);
+        when(secretService.findSecretInfosByTenantIdAndCustomerId(eq(tenantId), eq(customer.getId()), any()))
+                .thenReturn(new PageData<>(secrets, 1, secrets.size(), false));
+        when(edgeCtx.getEntityGroupService()).thenReturn(entityGroupService);
+        when(entityGroupService.findOrCreateCustomerAdminsGroup(any(), any(), any())).thenReturn(new EntityGroup());
+        when(entityGroupService.findOrCreateCustomerUsersGroup(any(), any(), any())).thenReturn(new EntityGroup());
+
+        SettableFuture<Void> customerEventSaved = SettableFuture.create();
+        doReturn(Futures.immediateFuture(null))
+                .when(processor).saveEdgeEvent(any(), any(), any(), any(), any(), any(), any());
+        doReturn(customerEventSaved)
+                .when(processor).saveEdgeEvent(any(), any(), eq(EdgeEventType.CUSTOMER), any(), any(), any(), any());
+        return customerEventSaved;
     }
 
 }

@@ -672,11 +672,12 @@ CREATE TABLE IF NOT EXISTS secret (
     id uuid NOT NULL CONSTRAINT secret_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid,
+    customer_id uuid NOT NULL DEFAULT '13814000-1dd2-11b2-8080-808080808080',
     name varchar(255),
     type varchar(255),
     description varchar(255),
     value bytea,
-    CONSTRAINT secret_unq_key UNIQUE (tenant_id, name)
+    CONSTRAINT secret_unq_key UNIQUE (tenant_id, customer_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS encryption_key (

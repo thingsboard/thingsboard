@@ -2324,6 +2324,7 @@ export const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
               {id: MenuId.clients}
             ]
           },
+          {id: MenuId.secrets},
           {id: MenuId.audit_log}
         ]
       },

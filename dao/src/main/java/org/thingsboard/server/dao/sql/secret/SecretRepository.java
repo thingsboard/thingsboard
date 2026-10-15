@@ -18,15 +18,16 @@ import java.util.UUID;
 
 public interface SecretRepository extends JpaRepository<SecretEntity, UUID> {
 
-    @Query("SELECT d FROM SecretEntity d WHERE d.tenantId = :tenantId AND " +
+    @Query("SELECT d FROM SecretEntity d WHERE d.tenantId = :tenantId AND d.customerId = :customerId AND " +
             "(:searchText is NULL OR " +
             "ilike(d.name, concat('%', :searchText, '%')) = true OR " +
             "ilike(d.description, concat('%', :searchText, '%')) = true)")
-    Page<SecretEntity> findByTenantId(@Param("tenantId") UUID tenantId,
-                                      @Param("searchText") String searchText,
-                                      Pageable pageable);
+    Page<SecretEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
+                                                   @Param("customerId") UUID customerId,
+                                                   @Param("searchText") String searchText,
+                                                   Pageable pageable);
 
-    SecretEntity findByTenantIdAndName(UUID id, String name);
+    SecretEntity findByTenantIdAndCustomerIdAndName(UUID tenantId, UUID customerId, String name);
 
     @Transactional
     @Modifying

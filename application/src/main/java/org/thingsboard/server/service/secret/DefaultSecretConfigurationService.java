@@ -7,9 +7,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.dao.encryptionkey.EncryptionService;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.dao.secret.SecretService;
 
@@ -29,23 +31,33 @@ public class DefaultSecretConfigurationService implements SecretConfigurationSer
 
     @Override
     public void replaceSecretUsages(TenantId tenantId, JsonNode config) {
-        replaceAllSecretUsages(tenantId, config);
+        replaceAllSecretUsages(tenantId, null, config);
     }
 
     @Override
     public <T> T replaceSecretUsages(TenantId tenantId, T entity, Class<T> clazz) {
+        return replaceSecretUsages(tenantId, null, entity, clazz);
+    }
+
+    @Override
+    public <T> T replaceSecretUsages(TenantId tenantId, CustomerId customerId, T entity, Class<T> clazz) {
         JsonNode config = JacksonUtil.valueToTree(entity);
-        JsonNode replaced = replaceAllSecretUsages(tenantId, config);
+        JsonNode replaced = replaceAllSecretUsages(tenantId, customerId, config);
         return JacksonUtil.treeToValue(replaced, clazz);
     }
 
     @Override
     public String replaceSecretUsage(TenantId tenantId, String value) {
+        return replaceSecretUsage(tenantId, null, value);
+    }
+
+    private String replaceSecretUsage(TenantId tenantId, CustomerId customerId, String value) {
+        CustomerId customerUuid = customerId != null ? customerId : BaseEntityService.NULL_CUSTOMER_ID;
         Matcher matcher = SECRET_PATTERN.matcher(value);
         StringBuilder result = new StringBuilder();
         while (matcher.find()) {
             String name = matcher.group(1);
-            Secret secret = secretService.findSecretByName(tenantId, name);
+            Secret secret = secretService.findSecretByName(tenantId, customerUuid, name);
             String replacement = "";
             if (secret != null) {
                 replacement = encryptionService.decryptToString(tenantId, secret.getType(), secret.getEncryptedValue());
@@ -56,8 +68,8 @@ public class DefaultSecretConfigurationService implements SecretConfigurationSer
         return result.toString();
     }
 
-    private JsonNode replaceAllSecretUsages(TenantId tenantId, JsonNode config) {
-        JacksonUtil.replaceAll(config, "", (path, value) -> replaceSecretUsage(tenantId, value));
+    private JsonNode replaceAllSecretUsages(TenantId tenantId, CustomerId customerId, JsonNode config) {
+        JacksonUtil.replaceAll(config, "", (_, value) -> replaceSecretUsage(tenantId, customerId, value));
         return config;
     }
 

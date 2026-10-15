@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.report.ReportService;
 import org.thingsboard.server.dao.report.ReportTemplateService;
 import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.scheduler.SchedulerEventService;
+import org.thingsboard.server.dao.secret.SecretService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -141,6 +142,9 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
 
     @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private SecretService secretService;
 
     @Autowired
     private JpaExecutorService executor;
@@ -328,6 +332,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         reportTemplateService.deleteReportTemplatesByTenantIdAndCustomerId(customer.getTenantId(), customerId);
         entityGroupService.deleteAllEntityGroups(tenantId, customerId);
         roleService.deleteRolesByTenantIdAndCustomerId(customer.getTenantId(), customerId);
+        secretService.deleteSecretsByTenantIdAndCustomerId(customer.getTenantId(), customerId);
         apiUsageStateService.deleteApiUsageStateByEntityId(customerId);
         customerDao.removeById(tenantId, customerId.getId());
         publishEvictEvent(new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), null));
