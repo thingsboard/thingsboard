@@ -147,7 +147,6 @@ public class ContainerTestSuite {
 
             testContainer = new DockerComposeContainerImpl(targetDir, composeFiles)
                     .withPull(false)
-                    .withLocalCompose(true)
                     .withOptions("--compatibility")
                     .withTailChildContainers(!skipTailChildContainers)
                     .withEnv(installTb.getEnv())
