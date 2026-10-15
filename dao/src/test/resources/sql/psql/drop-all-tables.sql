@@ -54,6 +54,7 @@ DROP TABLE IF EXISTS rule_node_state;
 DROP TABLE IF EXISTS rule_node;
 DROP TABLE IF EXISTS rule_chain;
 DROP TABLE IF EXISTS tb_schema_settings;
+DROP TABLE IF EXISTS tb_cluster;
 DROP TABLE IF EXISTS oauth2_mobile;
 DROP TABLE IF EXISTS oauth2_domain;
 DROP TABLE IF EXISTS oauth2_registration;

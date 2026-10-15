@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -26,6 +12,7 @@ import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
+import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
@@ -109,6 +96,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   wizardSteps: WizardStep[] = [];
   wizardStarted = false;
   reviewMode = false;
+  /**
+   * Set once the server has an installed item for this device. From that moment every way out of
+   * the wizard — including the header X and the Cancel button on a still-pending later step —
+   * has to report 'installed', or the caller keeps showing pre-install counts and badges.
+   */
+  private installRegistered = false;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -269,10 +262,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       connectivityStep.completed = true;
       this.cdr.detectChanges();
       // Wait for new mat-step children to register before advancing.
-      setTimeout(() => {
-        this.stepper?.next();
-        this.onStepActivated();
-      }, 0);
+      setTimeout(() => this.stepper?.next(), 0);
       return;
     }
     this.startWizard();
@@ -323,12 +313,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!step) {
       return;
     }
-    if (step.type === 'form') {
-      if (step.formGroup?.invalid) {
-        step.formGroup.markAllAsTouched();
-        return;
-      }
-      Object.assign(this.formValues, step.formGroup.getRawValue());
+    if (step.type === 'form' && step.formGroup?.invalid) {
+      step.formGroup.markAllAsTouched();
+      return;
     }
     if (this.isLastWizardStep) {
       this.done();
@@ -337,7 +324,22 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     step.completed = true;
     this.cdr.detectChanges();
     this.stepper.next();
-    this.onStepActivated();
+  }
+
+  onStepSelectionChange(event: StepperSelectionEvent): void {
+    if (event.selectedIndex <= event.previouslySelectedIndex) {
+      return;
+    }
+    // Forward moves can come from the stepper header, which bypasses nextStep(),
+    // so commit every step being passed over here.
+    for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
+      const ws = this.wizardSteps[i];
+      if (ws.type === 'form') {
+        Object.assign(this.formValues, ws.formGroup.getRawValue());
+      }
+      ws.completed = true;
+    }
+    this.onStepActivated(this.wizardSteps[event.selectedIndex]);
   }
 
   get primaryEntityAction(): { url: string; label: string } | null {
@@ -371,7 +373,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   cancel(): void {
-    this.dialogRef.close(false);
+    this.dialogRef.close(this.installRegistered ? 'installed' : false);
   }
 
   retryEntitySteps(step: WizardStep): void {
@@ -712,13 +714,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return field.defaultValue ?? (field.type === FormFieldType.BOOLEAN ? false : '');
   }
 
-  private onStepActivated(): void {
-    const step = this.currentWizardStep;
+  private onStepActivated(step = this.currentWizardStep): void {
     if (!step) {
       return;
     }
     if (step.type === 'instruction') {
       step.markdown = this.zipFiles.get(step.rawSteps[0].file) || '';
+      // Nothing to validate here, so the linear stepper header may move past it right away.
+      step.completed = true;
     } else if (step.type === 'progress' && !step.progressDone) {
       if (this.reviewMode) {
         this.showCompletedEntitySteps(step);
@@ -823,6 +826,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           { ignoreLoading: true }
         )
       );
+      this.installRegistered = true;
     } catch (_e) {
       // Non-critical — entities are created, tracking registration failed
       console.error('Failed to register device install', _e);
@@ -833,7 +837,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       await this.delay(500);
       this.stepper.next();
       this.cdr.detectChanges();
-      this.onStepActivated();
     }
   }
 

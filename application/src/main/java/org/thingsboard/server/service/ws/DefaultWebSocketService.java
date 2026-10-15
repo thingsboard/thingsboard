@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.ws;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -895,7 +882,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return on(v -> {
+        return on(r -> {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
             for (AttributeScope scope : AttributeScope.values()) {
                 futures.add(attributesService.find(tenantId, entityId, scope, keys));
@@ -907,12 +894,11 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return on(v -> Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor()),
-                callback::onFailure);
+        return on(r -> Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor()), callback::onFailure);
     }
 
     private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return on(v -> {
+        return on(r -> {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
             for (AttributeScope scope : AttributeScope.values()) {
                 futures.add(attributesService.findAll(tenantId, entityId, scope));
@@ -924,8 +910,7 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private FutureCallback<ValidationResult> getAttributesFetchCallback(final TenantId tenantId, final EntityId entityId, final String scope, final FutureCallback<List<AttributeKvEntry>> callback) {
-        return on(v -> Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor()),
-                callback::onFailure);
+        return on(r -> Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor()), callback::onFailure);
     }
 
     private FutureCallback<ValidationResult> on(Consumer<Void> success, Consumer<Throwable> failure) {

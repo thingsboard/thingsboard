@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -106,19 +93,7 @@ public class SystemPatchApplier {
         try {
             String dbVersion = schemaSettingsService.getDbSchemaVersion();
             String packageVersion = schemaSettingsService.getPackageSchemaVersion();
-            ltsMigrationService.applyMigrations(dbVersion, packageVersion);
-
-            updateSqlViews();
-            log.info("Updated sql database views");
-
-            WidgetTypeStats widgetStats = updateWidgetTypes();
-            log.info("System widget types: {} created, {} updated", widgetStats.created(), widgetStats.updated());
-
-            int updatedBundles = updateWidgetBundles();
-            log.info("System widget bundles: {} updated", updatedBundles);
-
-            int createdImages = createMissingSystemImages();
-            log.info("Created {} new system images", createdImages);
+            ltsMigrationService.applyMigrations(dbVersion, packageVersion, this::syncSystemData);
 
             schemaSettingsService.updateSchemaVersion();
             log.info("System data patch update completed successfully");
@@ -126,6 +101,21 @@ public class SystemPatchApplier {
         } finally {
             releaseAdvisoryLock();
         }
+    }
+
+    // Views are rebuilt with SELECT * over tables the migrations may have altered, so this must run after them.
+    private void syncSystemData() {
+        updateSqlViews();
+        log.info("Updated sql database views");
+
+        WidgetTypeStats widgetStats = updateWidgetTypes();
+        log.info("System widget types: {} created, {} updated", widgetStats.created(), widgetStats.updated());
+
+        int updatedBundles = updateWidgetBundles();
+        log.info("System widget bundles: {} updated", updatedBundles);
+
+        int createdImages = createMissingSystemImages();
+        log.info("Created {} new system images", createdImages);
     }
 
     private boolean isVersionChanged() {

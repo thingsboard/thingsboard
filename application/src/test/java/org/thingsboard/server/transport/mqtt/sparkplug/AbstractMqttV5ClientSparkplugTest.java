@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.mqtt.sparkplug;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -286,6 +273,33 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
         return listKeys;
+    }
+
+    protected List<String> connectionWithNBirthMetricNameAndAlias(MetricDataType metricDataType, String metricKey, Object metricValue, Long alias) throws Exception {
+        List<String> listKeys = new ArrayList<>();
+        SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
+                .setTimestamp(calendar.getTimeInMillis());
+        long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
+        long valueBdSec = getBdSeqNum();
+        payloadBirthNode.addMetrics(createMetric(valueBdSec, ts, keysBdSeq, Int64, -1L));
+        listKeys.add(SparkplugMessageType.NBIRTH.name() + " " + keysBdSeq);
+        payloadBirthNode.addMetrics(createMetric(false, ts, keyNodeRebirth, MetricDataType.Boolean, -1L));
+        listKeys.add(keyNodeRebirth);
+
+        payloadBirthNode.addMetrics(createMetric(metricValue, ts, metricKey, metricDataType, alias));
+
+        listKeys.add(metricKey);
+
+        if (client.isConnected()) {
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+                    payloadBirthNode.build().toByteArray(), 0, false);
+        }
+        return listKeys;
+    }
+
+    protected void createdAddMetricValueWithAliasTsKv(SparkplugBProto.Payload.Builder dataPayload, Object value, MetricDataType metricDataType,
+                                                      long ts) throws ThingsboardException {
+        dataPayload.addMetrics(createMetric(value, ts, null, metricDataType, 4L));
     }
 
     protected void createdAddMetricValuePrimitiveTsKv(List<TsKvEntry> listTsKvEntry, List<String> listKeys,
