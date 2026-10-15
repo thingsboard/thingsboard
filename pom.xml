@@ -163,7 +163,7 @@
         <perfmark-api.version>0.27.0</perfmark-api.version>
         <!--         TEST SCOPE         -->
         <java-websocket.version>1.5.6</java-websocket.version>
-        <mock-server.version>8.0.0</mock-server.version>
+        <mock-server.version>5.15.0</mock-server.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <jeasy.version>5.0.0</jeasy.version>
         <!--      BLACKBOX TEST SCOPE     -->
