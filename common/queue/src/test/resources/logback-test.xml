@@ -13,6 +13,8 @@
          Kafka compression is highly recommended -->
     <logger name="org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate" level="TRACE"/>
 
+    <logger name="org.thingsboard.server.queue.discovery" level="DEBUG"/>
+
     <root level="INFO">
         <appender-ref ref="console"/>
     </root>
