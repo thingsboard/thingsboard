@@ -13,13 +13,12 @@ import java.util.List;
 @Slf4j
 public class AbstractRedisContainer {
 
-    @ClassRule(order = 0)
     public static GenericContainer<?> redis = new GenericContainer<>("bitnamilegacy/valkey:8.0")
             .withEnv("ALLOW_EMPTY_PASSWORD","yes")
             .withLogConsumer(s -> log.warn(((OutputFrame) s).getUtf8String().trim()))
             .withExposedPorts(6379);
 
-    @ClassRule(order = 1)
+    @ClassRule(order = 0)
     public static ExternalResource resource = new ExternalResource() {
         @Override
         protected void before() throws Throwable {

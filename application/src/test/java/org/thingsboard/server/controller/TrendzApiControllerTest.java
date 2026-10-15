@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.type.TypeReference;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;

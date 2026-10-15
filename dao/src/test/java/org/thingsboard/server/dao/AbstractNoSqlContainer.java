@@ -27,7 +27,6 @@ public abstract class AbstractNoSqlContainer {
             "cassandra/schema-ts-latest.cql"
     );
 
-    @ClassRule(order = 0)
     public static final CassandraContainer cassandra = (CassandraContainer) new CassandraContainer("cassandra:5.0") {
         @Override
         protected void containerIsStarted(InspectContainerResponse containerInfo) {
@@ -61,7 +60,7 @@ public abstract class AbstractNoSqlContainer {
             .withEnv("MAX_HEAP_SIZE", "512M")
             .withEnv("CASSANDRA_CLUSTER_NAME", "ThingsBoard Cluster");
 
-    @ClassRule(order = 1)
+    @ClassRule(order = 0)
     public static ExternalResource resource = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
