@@ -37,6 +37,16 @@ ospackage {
         into "bin"
     }
 
+    from("${buildDir}/control/launcher") {
+        rename { String fileName ->
+            "${pkgName}"
+        }
+        filePermissions {
+            unix('r-x------')  // 0500
+        }
+        into "bin"
+    }
+
     if("${pkgCopyInstallScripts}".equalsIgnoreCase("true")) {
         // Copy the install files
         from("${buildDir}/bin/install/install.sh") {

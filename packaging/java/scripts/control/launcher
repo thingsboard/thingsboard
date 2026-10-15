@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+CONF_FOLDER=${pkg.installFolder}/conf
+jarfile=${pkg.installFolder}/bin/${pkg.name}.jar
+
+[ -r "$CONF_FOLDER/${pkg.name}.conf" ] && source "$CONF_FOLDER/${pkg.name}.conf"
+
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    javaexe="$JAVA_HOME/bin/java"
+else
+    javaexe=java
+fi
+
+cd "$(dirname "$jarfile")" || exit 1
+exec "$javaexe" $JAVA_OPTS -jar "$jarfile" $RUN_ARGS "$@"
