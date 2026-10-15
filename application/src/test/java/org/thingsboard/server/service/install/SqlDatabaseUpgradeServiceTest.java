@@ -21,8 +21,8 @@ import java.sql.Statement;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -56,20 +56,21 @@ class SqlDatabaseUpgradeServiceTest {
     private SqlDatabaseUpgradeService service;
 
     @BeforeEach
-    @SuppressWarnings("unchecked")
     void setUp() throws IOException {
         writeSchemaUpdate("pe", PE_DELTA_SQL);
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
         when(schemaSettingsService.getDbSchemaVersion()).thenReturn(DB_VERSION);
         when(schemaSettingsService.getPackageSchemaVersion()).thenReturn(PACKAGE_VERSION);
-        // Run the callback the service passes, so the SQL it hands to the statement can be asserted on.
-        when(jdbcTemplate.execute(any(StatementCallback.class)))
-                .thenAnswer(invocation -> ((StatementCallback<Object>) invocation.getArgument(0)).doInStatement(statement));
         service = new SqlDatabaseUpgradeService(installScripts, jdbcTemplate, transactionManager, schemaSettingsService, migrationService);
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void ceToPeUpgradeAppliesTheDeltaAndThenTheRestOfTheChain() throws Exception {
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+        // Run the callback the service passes, so the SQL it hands to the statement can be asserted on.
+        when(jdbcTemplate.execute(any(StatementCallback.class)))
+                .thenAnswer(invocation -> ((StatementCallback<Object>) invocation.getArgument(0)).doInStatement(statement));
+
         service.upgradeDatabase(true);
 
         InOrder inOrder = inOrder(statement, migrationService);
@@ -81,7 +82,7 @@ class SqlDatabaseUpgradeServiceTest {
     void peUpgradeDoesNotApplyTheCeToPeDelta() throws Exception {
         service.upgradeDatabase(false);
 
-        verify(statement, never()).execute(PE_DELTA_SQL);
+        verifyNoInteractions(jdbcTemplate);
         verify(migrationService).runSchemaMigrations(DB_VERSION, PACKAGE_VERSION, false);
     }
 
