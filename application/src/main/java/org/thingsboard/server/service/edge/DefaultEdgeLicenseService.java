@@ -6,6 +6,7 @@ package org.thingsboard.server.service.edge;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -103,7 +104,6 @@ public class DefaultEdgeLicenseService implements EdgeLicenseService {
             httpClient = HttpClientBuilder.create().useSystemProperties().setConnectionManager(createConnectionManager(true)).build();
             HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
             factory.setHttpClient(httpClient);
-            factory.setConnectTimeout(CONNECT_TIMEOUT);
             return new RestTemplate(factory);
         } else if (proxyEnabled) {
             log.warn("Going to use Proxy Server: [{}:{}]", System.getProperty("tb.proxy.host"), System.getProperty("tb.proxy.port"));
@@ -112,13 +112,11 @@ public class DefaultEdgeLicenseService implements EdgeLicenseService {
                     .setProxy(new HttpHost("https", System.getProperty("tb.proxy.host"), Integer.parseInt(System.getProperty("tb.proxy.port")))).build();
             HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
             factory.setHttpClient(httpClient);
-            factory.setConnectTimeout(CONNECT_TIMEOUT);
             return new RestTemplate(factory);
         } else {
             httpClient = HttpClients.custom().setConnectionManager(createConnectionManager(false)).build();
             HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
             factory.setHttpClient(httpClient);
-            factory.setConnectTimeout(CONNECT_TIMEOUT);
             return new RestTemplate(factory);
         }
     }
@@ -126,8 +124,10 @@ public class DefaultEdgeLicenseService implements EdgeLicenseService {
     private HttpClientConnectionManager createConnectionManager(boolean systemProperties) {
         var socketFactory = systemProperties ? SSLConnectionSocketFactory.getSystemSocketFactory() : SSLConnectionSocketFactory.getSocketFactory();
         var socketConfig = SocketConfig.custom().setSoTimeout(Timeout.of(READ_TIMEOUT, TimeUnit.MILLISECONDS)).build();
+        var connectionConfig = ConnectionConfig.custom().setConnectTimeout(Timeout.of(CONNECT_TIMEOUT, TimeUnit.MILLISECONDS)).build();
         return PoolingHttpClientConnectionManagerBuilder.create()
                 .setDefaultSocketConfig(socketConfig)
+                .setDefaultConnectionConfig(connectionConfig)
                 .setSSLSocketFactory(socketFactory).build();
     }
 

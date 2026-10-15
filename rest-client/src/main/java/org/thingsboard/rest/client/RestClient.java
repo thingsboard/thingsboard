@@ -5144,7 +5144,7 @@ public class RestClient implements Closeable {
             params.put("force", force);
         }
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseURL + "/api/customMenu");
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseURL + "/api/customMenu");
 
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             builder.queryParam(entry.getKey(), entry.getValue());
