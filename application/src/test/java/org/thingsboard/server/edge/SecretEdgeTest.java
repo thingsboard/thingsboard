@@ -139,7 +139,7 @@ public class SecretEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
-    public void testSecret_customerSecretReachesOnlyEdgesOfThatCustomer() throws Exception {
+    public void testSecret_customerSecretDoesNotReachEdgesOfOtherCustomers() throws Exception {
         Customer otherCustomer = saveCustomer("Other Edge Customer", null);
 
         // a tenant-owned edge does not receive a customer secret
@@ -174,6 +174,45 @@ public class SecretEdgeTest extends AbstractEdgeTest {
         changeEdgeOwnerFromCustomerToTenant(edgeCustomer, 2);
         doDelete("/api/customer/" + edgeCustomer.getUuidId()).andExpect(status().isOk());
         doDelete("/api/customer/" + otherCustomer.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSecret_changeOwnerToSubCustomer_sendsSecretsOfCustomerHierarchy() throws Exception {
+        Customer parentCustomer = saveCustomer("Edge Parent Customer", null);
+        Customer subCustomer = saveCustomer("Edge Sub Customer", parentCustomer.getId());
+
+        // a tenant-owned edge does not receive them yet
+        edgeImitator.expectMessageAmount(1);
+        Secret parentSecret = secretService.saveSecret(tenantId, createCustomerScopedSecret(parentCustomer.getId()));
+        Secret subSecret = secretService.saveSecret(tenantId, createCustomerScopedSecret(subCustomer.getId()));
+        Assert.assertFalse(edgeImitator.waitForMessages(1));
+
+        // 2 customers + 2 roles + 4 entity groups + 1 edge configuration + 2 secrets
+        edgeImitator.expectMessageAmount(11);
+        doPost("/api/owner/CUSTOMER/" + subCustomer.getId().getId() + "/EDGE/" + edge.getId().getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Set<SecretId> createdSecretIds = edgeImitator.findAllMessagesByType(SecretUpdateMsg.class).stream()
+                .filter(msg -> UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msg.getMsgType()))
+                .map(msg -> JacksonUtil.fromString(msg.getEntity(), Secret.class, true).getId())
+                .collect(Collectors.toSet());
+        Assert.assertEquals(Set.of(parentSecret.getId(), subSecret.getId()), createdSecretIds);
+
+        // the parent customer's secret keeps reaching the sub-customer's edge
+        edgeImitator.expectMessageAmount(1);
+        parentSecret.setDescription(UPDATED_SECRET_DESCRIPTION);
+        parentSecret = secretService.saveSecret(tenantId, parentSecret);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        SecretUpdateMsg msg = (SecretUpdateMsg) edgeImitator.getLatestMessage();
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, msg.getMsgType());
+        Assert.assertEquals(parentSecret.getId(), JacksonUtil.fromString(msg.getEntity(), Secret.class, true).getId());
+
+        changeEdgeOwnerFromSubCustomerToTenant(parentCustomer, subCustomer, 4);
+
+        edgeImitator.expectMessageAmount(2);
+        secretService.deleteSecret(tenantId, parentSecret);
+        secretService.deleteSecret(tenantId, subSecret);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        doDelete("/api/customer/" + parentCustomer.getUuidId()).andExpect(status().isOk());
     }
 
     private Secret createSecret() {

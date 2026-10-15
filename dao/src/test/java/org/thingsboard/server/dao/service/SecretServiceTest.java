@@ -175,6 +175,25 @@ public class SecretServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testDeleteCustomerSecret_whenTenantSecretWithSameNameIsUsed_thenSuccess() {
+        String secretName = "IntegrationSecret";
+        Secret tenantSecret = secretService.saveSecret(tenantId, constructSecret(tenantId, secretName, "Password", SecretType.TEXT));
+        Secret customerSecret = secretService.saveSecret(tenantId,
+                constructSecret(tenantId, new CustomerId(UUID.randomUUID()), secretName, "CustomerPassword", SecretType.TEXT));
+
+        ObjectNode configuration = JacksonUtil.newObjectNode().putObject("metadata").put("password", toSecretPlaceholder(secretName, SecretType.TEXT));
+        createIntegration("My integration", configuration, createAndGetConvertedId());
+
+        assertThat(secretService.findEntitiesBySecret(tenantId, new SecretInfo(tenantSecret))).containsKey(EntityType.INTEGRATION);
+        assertThat(secretService.findEntitiesBySecret(tenantId, new SecretInfo(customerSecret))).isEmpty();
+
+        TbSecretDeleteResult result = secretService.deleteSecret(tenantId, customerSecret);
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.getReferences()).isNull();
+        assertThat(secretService.findSecretById(tenantId, customerSecret.getId())).isNull();
+    }
+
+    @Test
     public void testSaveSecretWithExceededTextSizeLimit_thenReceiveDataValidationException() {
         String value = "a".repeat(2049);
         Secret secret = constructSecret(tenantId, "Test Secret With Long Value", value, SecretType.TEXT);

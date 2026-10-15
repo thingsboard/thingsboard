@@ -27,7 +27,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SecretConfigurationServiceTest {
@@ -305,6 +308,36 @@ public class SecretConfigurationServiceTest {
         ObjectNode result = secretConfigurationService.replaceSecretUsages(tenantId, null, entity, ObjectNode.class);
 
         assertEquals(decryptedValue, result.get("token").asText());
+    }
+
+    @Test
+    public void testReplaceSecretUsages_CustomerIdResolvesCustomerSecret() {
+        String secretName = "oauthSecret";
+        CustomerId customerId = new CustomerId(UUID.randomUUID());
+        byte[] customerEncrypted = "customerEnc".getBytes();
+        byte[] tenantEncrypted = "tenantEnc".getBytes();
+
+        Secret customerSecret = new Secret();
+        customerSecret.setName(secretName);
+        customerSecret.setType(SecretType.TEXT);
+        customerSecret.setEncryptedValue(customerEncrypted);
+        Secret tenantSecret = new Secret();
+        tenantSecret.setName(secretName);
+        tenantSecret.setType(SecretType.TEXT);
+        tenantSecret.setEncryptedValue(tenantEncrypted);
+
+        when(secretService.findSecretByName(eq(tenantId), eq(customerId), eq(secretName))).thenReturn(customerSecret);
+        when(secretService.findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), eq(secretName))).thenReturn(tenantSecret);
+        when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(customerEncrypted))).thenReturn("customer-value");
+        when(encryptionService.decryptToString(eq(tenantId), eq(SecretType.TEXT), eq(tenantEncrypted))).thenReturn("tenant-value");
+
+        ObjectNode entity = JacksonUtil.newObjectNode().put("clientSecret", "${secret:oauthSecret;type:TEXT}");
+        entity.putObject("mapperConfig").put("password", "${secret:oauthSecret;type:TEXT}");
+        ObjectNode result = secretConfigurationService.replaceSecretUsages(tenantId, customerId, entity, ObjectNode.class);
+
+        assertEquals("customer-value", result.get("clientSecret").asText());
+        assertEquals("customer-value", result.get("mapperConfig").get("password").asText());
+        verify(secretService, never()).findSecretByName(eq(tenantId), eq(tenantScopeCustomerId), any());
     }
 
 }

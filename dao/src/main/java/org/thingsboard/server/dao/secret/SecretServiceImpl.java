@@ -186,6 +186,10 @@ public class SecretServiceImpl extends AbstractCachedEntityService<SecretCacheKe
 
     @Override
     public Map<EntityType, List<EntityInfo>> findEntitiesBySecret(TenantId tenantId, SecretInfo secretInfo) {
+        // the scanned entities are tenant-level and resolve only tenant secrets
+        if (EntityType.CUSTOMER.equals(secretInfo.getOwnerId().getEntityType())) {
+            return Map.of();
+        }
         Map<EntityType, List<EntityInfo>> affectedEntities = new HashMap<>();
         String placeholder = String.format("${secret:%s;type:%s}", secretInfo.getName(), secretInfo.getType());
         hasSecretsEntityDaos.forEach((entityType, hasSecretsEntityDao) -> {

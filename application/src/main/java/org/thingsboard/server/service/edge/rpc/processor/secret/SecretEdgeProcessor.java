@@ -7,12 +7,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.SecretId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -25,6 +27,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +46,7 @@ public class SecretEdgeProcessor extends BaseEdgeProcessor {
             case ADDED:
             case UPDATED:
                 Secret secret = edgeCtx.getSecretService().findSecretById(edgeEvent.getTenantId(), secretId);
-                if (secret != null) {
+                if (secret != null && isSupportedByEdge(secret, edgeVersion)) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     SecretUpdateMsg secretUpdateMsg = EdgeMsgConstructorUtils.constructSecretUpdatedMsg(msgType, secret);
 
@@ -77,17 +80,19 @@ public class SecretEdgeProcessor extends BaseEdgeProcessor {
                 if (secret == null) {
                     yield Futures.immediateFuture(null);
                 }
-                CustomerId customerId = secret.getCustomerId();
-                if (customerId == null || customerId.isNullUid()) {
+                if (!EntityType.CUSTOMER.equals(secret.getOwnerId().getEntityType())) {
                     yield processActionForAllEdges(tenantId, type, actionType, secretId, null, originatorEdgeId);
                 }
-                // a customer secret goes only to the edges that customer owns, the same set EdgeSyncCursor sends it to
+                CustomerId customerId = secret.getCustomerId();
+                // edges of the customer and its sub-customers, read from the DB: the in-memory edge hierarchy is per node and goes stale
                 List<ListenableFuture<Void>> futures = new ArrayList<>();
-                PageDataIterable<Edge> edges = new PageDataIterable<>(
-                        link -> edgeCtx.getEdgeService().findEdgesByTenantIdAndCustomerId(tenantId, customerId, link), 1024);
-                for (Edge edge : edges) {
-                    if (!edge.getId().equals(originatorEdgeId)) {
-                        futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, secretId, null));
+                for (EntityId ownerId : ownersCacheService.getChildOwners(tenantId, customerId)) {
+                    PageDataIterable<Edge> edges = new PageDataIterable<>(
+                            link -> edgeCtx.getEdgeService().findEdgesByTenantIdAndCustomerId(tenantId, new CustomerId(ownerId.getId()), link), 1024);
+                    for (Edge edge : edges) {
+                        if (!edge.getId().equals(originatorEdgeId)) {
+                            futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, secretId, null));
+                        }
                     }
                 }
                 yield Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
@@ -96,6 +101,12 @@ public class SecretEdgeProcessor extends BaseEdgeProcessor {
             case DELETED -> processActionForAllEdges(tenantId, type, actionType, secretId, null, originatorEdgeId);
             default -> Futures.immediateFuture(null);
         };
+    }
+
+    // older edges drop customerId and would store a customer secret as a tenant one
+    private boolean isSupportedByEdge(Secret secret, EdgeVersion edgeVersion) {
+        return !EntityType.CUSTOMER.equals(secret.getOwnerId().getEntityType())
+                || !EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_4_4_0_1);
     }
 
     @Override

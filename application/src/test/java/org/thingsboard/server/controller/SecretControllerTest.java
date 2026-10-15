@@ -65,6 +65,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -528,6 +529,29 @@ public class SecretControllerTest extends AbstractControllerTest {
         // delete it
         doDelete("/api/secret/" + savedSecret.getUuidId()).andExpect(status().isOk());
         doGet("/api/secret/{id}/info", savedSecret.getUuidId()).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testCustomerUserCanDeleteOwnSecret_whenTenantSecretWithSameNameIsUsed() throws Exception {
+        String secretName = "MqttNodeSecret";
+        SecretInfo tenantSecret = doPost("/api/secret", constructSecret(secretName, "Password"), SecretInfo.class);
+        RuleChainId ruleChainId = createRuleChain("Rule Chain test mqtt", TbMqttNode.class.getName(), secretName);
+
+        loginCustomerAdminUser();
+        SecretInfo customerSecret = doPost("/api/secret", constructSecret(secretName, "CustomerPassword"), SecretInfo.class);
+
+        clearInvocations(tbClusterService);
+        doPut("/api/secret/" + customerSecret.getUuidId() + "/value", "UpdatedPassword", SecretInfo.class);
+        testBroadcastEntityStateChangeEventNever(ruleChainId);
+
+        TbSecretDeleteResult result = readResponse(doDelete("/api/secret/" + customerSecret.getUuidId())
+                .andExpect(status().isOk()), TbSecretDeleteResult.class);
+        assertThat(result.getReferences()).isNull();
+
+        loginTenantAdmin();
+        doDelete("/api/secret/" + tenantSecret.getUuidId()).andExpect(status().isBadRequest());
+        doDelete("/api/ruleChain/" + ruleChainId.getId()).andExpect(status().isOk());
+        doDelete("/api/secret/" + tenantSecret.getUuidId()).andExpect(status().isOk());
     }
 
     private Secret constructSecret(String name, String value) {

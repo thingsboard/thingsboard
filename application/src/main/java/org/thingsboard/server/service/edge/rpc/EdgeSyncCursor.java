@@ -115,8 +115,12 @@ public class EdgeSyncCursor {
             fetchers.add(new SecretEdgeEventFetcher(ctx.getSecretService(), null));
             fetchers.add(new ReportTemplateEdgeEventFetcher(ctx.getReportTemplateService(), null));
             if (EntityType.CUSTOMER.equals(edge.getOwnerId().getEntityType())) {
-                fetchers.add(new SecretEdgeEventFetcher(ctx.getSecretService(), new CustomerId(edge.getOwnerId().getId())));
-                fetchers.add(new ReportTemplateEdgeEventFetcher(ctx.getReportTemplateService(), new CustomerId(edge.getOwnerId().getId())));
+                CustomerId ownerId = new CustomerId(edge.getOwnerId().getId());
+                // ancestors too: their OAuth2 clients are on the edge and resolve their own customer's secrets
+                for (Customer customer : ctx.getCustomersHierarchyEdgeService().getCustomersHierarchy(edge.getTenantId(), ownerId)) {
+                    fetchers.add(new SecretEdgeEventFetcher(ctx.getSecretService(), customer.getId()));
+                }
+                fetchers.add(new ReportTemplateEdgeEventFetcher(ctx.getReportTemplateService(), ownerId));
             }
         }
     }

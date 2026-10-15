@@ -44,12 +44,6 @@
       "contentHash": "sha256:6c92f974c7d8fc9670126f7aab0b9f0dde82fd6c9ca4661cfc1f7d8d59ecb41f"
     },
     {
-      "path": "application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/secret/SecretEdgeProcessor.java",
-      "header": "busl",
-      "reason": "PE-specific service adapter/message SecretEdgeProcessor.java. Reviewed methods bind the common framework to PE integration, scheduler, encryption/secret, group, or customer-parent behavior. This is a new typed PE extension, not a relocation of the candidate CE implementation. Reviewed candidate application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/queue/QueueEdgeProcessor.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 8e5a65b588937e5703ff87f301be023d27ce1808).",
-      "contentHash": "sha256:90dd38a851c6297758e6919857716c632926c53e5b322d88a4c77a11b904506c"
-    },
-    {
       "path": "application/src/main/java/org/thingsboard/server/service/integration/rpc/IntegrationSessionCaffeineCache.java",
       "header": "busl",
       "reason": "Typed cache adapter for a PE feature. Reviewed as a new PE cache registration using the shared cache framework: service/cache identity and entity/key types are PE-specific. Constructor and Spring annotation overlap with CE cache adapters is framework template use, analogous to the maintainer-resolved PE entity ID wrappers. Reviewed similarity candidate application/src/main/java/org/thingsboard/server/service/sync/vc/VersionControlTaskCaffeineCache.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob d234314aee9f02efb853f0a3372f9e0de1b7869c).",

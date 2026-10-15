@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.scheduler.SchedulerEventInfo;
+import org.thingsboard.server.common.data.secret.SecretInfo;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
@@ -197,15 +198,21 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
         // and the failed downlink is dropped (not retried). saveEdgeEvent is async, so chain the roles after the customer event to keep their order.
         ListenableFuture<Void> customerFuture = saveEdgeEvent(tenantId, edgeId, EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customer.getId(), null, null);
         return Futures.transformAsync(customerFuture, ignored -> {
-            List<ListenableFuture<Void>> roleFutures = new ArrayList<>();
+            List<ListenableFuture<Void>> futures = new ArrayList<>();
             PageDataIterable<Role> roles = new PageDataIterable<>(
                     link -> edgeCtx.getRoleService().findRolesByTenantIdAndCustomerId(tenantId, customer.getId(), link), 1024);
             for (Role role : roles) {
-                roleFutures.add(saveEdgeEvent(tenantId, edgeId,
+                futures.add(saveEdgeEvent(tenantId, edgeId,
                         EdgeEventType.ROLE, EdgeEventActionType.ADDED, role.getId(), null, null));
             }
+            PageDataIterable<SecretInfo> secrets = new PageDataIterable<>(
+                    link -> edgeCtx.getSecretService().findSecretInfosByTenantIdAndCustomerId(tenantId, customer.getId(), link), 1024);
+            for (SecretInfo secret : secrets) {
+                futures.add(saveEdgeEvent(tenantId, edgeId,
+                        EdgeEventType.SECRET, EdgeEventActionType.ADDED, secret.getId(), null, null));
+            }
             assignCustomerAdministratorsAndUsersGroupToEdge(tenantId, edgeId, customer.getId(), customer.getParentCustomerId());
-            return Futures.transform(Futures.allAsList(roleFutures), voids -> null, dbCallbackExecutorService);
+            return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
         }, dbCallbackExecutorService);
     }
 
