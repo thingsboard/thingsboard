@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.cassandra.core.CassandraTemplate;
 import org.springframework.data.cassandra.core.cql.ArgumentPreparedStatementBinder;
-import org.springframework.data.cassandra.core.cql.CachedPreparedStatementCreator;
 import org.springframework.data.cassandra.core.cql.CqlOperations;
 import org.springframework.data.cassandra.core.cql.ResultSetExtractor;
 import org.springframework.data.cassandra.core.cql.RowMapperResultSetExtractor;
+import org.springframework.data.cassandra.core.cql.SimplePreparedStatementCreator;
 import org.springframework.data.cassandra.core.cql.SingleColumnRowMapper;
 import org.springframework.stereotype.Service;
 
@@ -66,7 +66,7 @@ public class CassandraService {
                 }
                 boolean success = false;
                 try {
-                    T result = cqlOperations.query(new CachedPreparedStatementCreator(query), new ArgumentPreparedStatementBinder(args), resultSetExtractor);
+                    T result = cqlOperations.query(new SimplePreparedStatementCreator(query), new ArgumentPreparedStatementBinder(args), resultSetExtractor);
                     success = true;
                     return result;
                 } finally {

@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.JdbcType;
-import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonType;
+import org.hibernate.dialect.type.PostgreSQLJsonPGObjectJsonType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.agent.AgentInfo;
 import org.thingsboard.server.dao.model.ModelConstants;

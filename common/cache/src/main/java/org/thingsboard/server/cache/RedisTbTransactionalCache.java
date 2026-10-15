@@ -19,8 +19,12 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
+import redis.clients.jedis.Connection;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.RedisClusterClient;
+import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.util.JedisClusterCRC16;
 
 import java.io.Serializable;
@@ -229,12 +233,20 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         RedisConnection connection = connectionFactory.getClusterConnection();
 
         int slotNum = JedisClusterCRC16.getSlot(rawKey);
-        Jedis jedis = new Jedis((((JedisClusterConnection) connection).getNativeConnection().getConnectionFromSlot(slotNum)));
+        Jedis jedis = new Jedis(getConnectionFromSlot(((JedisClusterConnection) connection).getNativeConnection(), slotNum));
 
         JedisConnection jedisConnection = new JedisConnection(jedis, MOCK_POOL, jedis.getDB());
         jedisConnection.setConvertPipelineAndTxResults(connectionFactory.getConvertPipelineAndTxResults());
 
         return jedisConnection;
+    }
+
+    private static Connection getConnectionFromSlot(UnifiedJedis cluster, int slotNum) {
+        return switch (cluster) {
+            case JedisCluster jedisCluster -> jedisCluster.getConnectionFromSlot(slotNum);
+            case RedisClusterClient clusterClient -> clusterClient.getConnectionFromSlot(slotNum);
+            default -> throw new IllegalStateException("Unsupported Redis cluster client: " + cluster.getClass());
+        };
     }
 
     protected RedisConnection watch(byte[][] rawKeysList) {
