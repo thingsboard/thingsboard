@@ -84,7 +84,7 @@
         <commons-compress.version>1.28.0</commons-compress.version>
         <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version> <!-- matches spring-security-oauth2-jose; the DM entry makes mockserver-netty converge on it -->
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
-        <apache-pulsar.version>4.0.1</apache-pulsar.version>
+        <apache-pulsar.version>4.0.14</apache-pulsar.version>
         <joda-time.version>2.12.7</joda-time.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>1.5.6</json-schema-validator.version>
