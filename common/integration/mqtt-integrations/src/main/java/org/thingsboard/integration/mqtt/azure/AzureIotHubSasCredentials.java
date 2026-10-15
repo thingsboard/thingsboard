@@ -39,6 +39,7 @@ public class AzureIotHubSasCredentials implements MqttClientCredentials {
                 caCert = AzureIotHubUtil.getDefaultCaCert();
             }
             return Optional.of(SslContextBuilder.forClient()
+                    .endpointIdentificationAlgorithm(null)
                     .trustManager(createAndInitTrustManagerFactory())
                     .clientAuth(ClientAuth.REQUIRE)
                     .build());

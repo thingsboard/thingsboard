@@ -67,7 +67,7 @@ public class WebReportClient {
                     .runOn(eventLoopGroup)
                     .secure(t -> {
                         try {
-                            t.sslContext(SslContextBuilder.forClient().build());
+                            t.sslContext(SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build());
                         } catch (SSLException e) {
                             throw new RuntimeException(e);
                         }

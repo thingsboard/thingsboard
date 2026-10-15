@@ -31,6 +31,7 @@ public class AzureIotHubSasCredentials extends CertPemCredentials {
                 caCert = AzureIotHubUtil.getDefaultCaCert();
             }
             return SslContextBuilder.forClient()
+                    .endpointIdentificationAlgorithm(null)
                     .trustManager(createAndInitTrustManagerFactory())
                     .clientAuth(ClientAuth.REQUIRE)
                     .build();

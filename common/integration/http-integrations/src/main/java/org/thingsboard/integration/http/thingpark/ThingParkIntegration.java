@@ -71,7 +71,7 @@ public class ThingParkIntegration extends AbstractHttpIntegration<ThingParkInteg
 
             HttpClient httpClient = HttpClient.create()
                     .runOn(context.getEventLoopGroup());
-            SslContext sslContext = SslContextBuilder.forClient().build();
+            SslContext sslContext = SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build();
             httpClient.secure(t -> t.sslContext(sslContext));
 
             this.webClient = WebClient.builder()

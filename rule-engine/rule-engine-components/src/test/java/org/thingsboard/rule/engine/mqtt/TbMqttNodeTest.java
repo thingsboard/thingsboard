@@ -172,7 +172,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
                 .usingRecursiveComparison()
                 .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock",
                         "sslContext")
-                .isEqualTo(SslContextBuilder.forClient().build());
+                .isEqualTo(SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build());
     }
 
     @Test

@@ -23,6 +23,6 @@ public interface ClientCredentials {
 
     @JsonIgnore
     default SslContext initSslContext() throws SSLException{
-        return SslContextBuilder.forClient().build();
+        return SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build();
     }
 }

@@ -45,7 +45,7 @@ public class CertPemCredentials implements ClientCredentials {
     @Override
     public SslContext initSslContext() {
         try {
-            SslContextBuilder builder = SslContextBuilder.forClient();
+            SslContextBuilder builder = SslContextBuilder.forClient().endpointIdentificationAlgorithm(null);
             if (StringUtils.hasLength(caCert)) {
                 builder.trustManager(createAndInitTrustManagerFactory());
             }
