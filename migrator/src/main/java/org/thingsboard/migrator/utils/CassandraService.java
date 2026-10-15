@@ -56,7 +56,6 @@ public class CassandraService {
         return query(query, new RowMapperResultSetExtractor<>(SingleColumnRowMapper.newInstance(type)), args);
     }
 
-    @SuppressWarnings("deprecation")
     private <T> T query(String query, ResultSetExtractor<T> resultSetExtractor, Object... args) {
         int attempt = 0;
         while (true) {
