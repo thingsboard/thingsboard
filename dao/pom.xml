@@ -244,10 +244,6 @@
             <artifactId>rule-engine-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.hypersistence</groupId>
-            <artifactId>hypersistence-utils-hibernate-63</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.github.weisj</groupId>
             <artifactId>jsvg</artifactId>
         </dependency>

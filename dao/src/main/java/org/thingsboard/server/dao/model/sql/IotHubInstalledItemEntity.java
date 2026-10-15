@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.model.sql;
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.hibernate.proxy.HibernateProxy;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -17,6 +18,7 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.IotHubInstalledItemDescriptorConverter;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -54,7 +56,8 @@ public class IotHubInstalledItemEntity extends BaseSqlEntity<IotHubInstalledItem
     @Column(name = ModelConstants.IOT_HUB_INSTALLED_ITEM_VERSION_COLUMN, nullable = false)
     private String version;
 
-    @Type(JsonBinaryType.class)
+    @Convert(converter = IotHubInstalledItemDescriptorConverter.class)
+    @JdbcType(PostgreSQLJsonPGObjectJsonbType.class)
     @Column(name = ModelConstants.IOT_HUB_INSTALLED_ITEM_DESCRIPTOR_COLUMN, nullable = false, columnDefinition = "JSONB")
     private IotHubInstalledItemDescriptor descriptor;
 
