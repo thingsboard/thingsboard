@@ -31,8 +31,8 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.subscription.LicenseCapacity.CappedEntity;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
