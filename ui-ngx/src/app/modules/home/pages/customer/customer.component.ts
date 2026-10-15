@@ -103,6 +103,10 @@ export class CustomerComponent extends GroupContactBasedComponent<CustomerInfo> 
     }
   }
 
+  hideManageAgents() {
+    return this.isGroupMode();
+  }
+
   hideManageDashboards() {
     if (this.isGroupMode()) {
       return !this.groupEntitiesTableConfig.manageDashboardsEnabled(this.entity);

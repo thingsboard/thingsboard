@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, HostBinding } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -7,10 +8,7 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import {
-  htmlContainerDefaultSettings,
-  HtmlContainerWidgetSettings
-} from '@home/components/widget/lib/html/html-container-widget.models';
+import { htmlContainerDefaultSettings, HtmlContainerWidgetSettings } from '@shared/models/html-container.models';
 
 @Component({
   selector: 'tb-html-container-basic-config',
