@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class LtsVersionTest {
+class VersionTest {
 
     @ParameterizedTest
     @CsvSource({
@@ -24,7 +24,7 @@ class LtsVersionTest {
             "10.20.30.40, 10, 20, 30, 40"
     })
     void parsesValidVersions(String input, int major, int minor, int maintenance, int patch) {
-        LtsVersion v = LtsVersion.parse(input);
+        Version v = Version.parse(input);
         assertEquals(major, v.major());
         assertEquals(minor, v.minor());
         assertEquals(maintenance, v.maintenance());
@@ -34,32 +34,32 @@ class LtsVersionTest {
     @ParameterizedTest
     @ValueSource(strings = {"invalid", "a.b.c", "1.2.y.x", "1.x.3", ""})
     void throwsOnInvalidVersions(String input) {
-        assertThrows(IllegalArgumentException.class, () -> LtsVersion.parse(input));
+        assertThrows(IllegalArgumentException.class, () -> Version.parse(input));
     }
 
     @Test
     void throwsOnNull() {
-        assertThrows(IllegalArgumentException.class, () -> LtsVersion.parse(null));
+        assertThrows(IllegalArgumentException.class, () -> Version.parse(null));
     }
 
     @Test
     void comparesByEachComponent() {
-        assertTrue(LtsVersion.parse("4.2.2.3").compareTo(LtsVersion.parse("4.2.2.2")) > 0);
-        assertTrue(LtsVersion.parse("4.2.2.0").compareTo(LtsVersion.parse("4.2.1.9")) > 0);
-        assertTrue(LtsVersion.parse("4.3.0.0").compareTo(LtsVersion.parse("4.2.9.9")) > 0);
-        assertEquals(0, LtsVersion.parse("4.2.2.3").compareTo(LtsVersion.parse("4.2.2.3")));
+        assertTrue(Version.parse("4.2.2.3").compareTo(Version.parse("4.2.2.2")) > 0);
+        assertTrue(Version.parse("4.2.2.0").compareTo(Version.parse("4.2.1.9")) > 0);
+        assertTrue(Version.parse("4.3.0.0").compareTo(Version.parse("4.2.9.9")) > 0);
+        assertEquals(0, Version.parse("4.2.2.3").compareTo(Version.parse("4.2.2.3")));
     }
 
     @Test
     void sameFamilyComparesMajorAndMinorOnly() {
-        assertTrue(LtsVersion.parse("4.2.2.3").sameFamily(LtsVersion.parse("4.2.0.0")));
-        assertFalse(LtsVersion.parse("4.3.0.0").sameFamily(LtsVersion.parse("4.2.9.9")));
-        assertFalse(LtsVersion.parse("5.2.0.0").sameFamily(LtsVersion.parse("4.2.0.0")));
+        assertTrue(Version.parse("4.2.2.3").sameFamily(Version.parse("4.2.0.0")));
+        assertFalse(Version.parse("4.3.0.0").sameFamily(Version.parse("4.2.9.9")));
+        assertFalse(Version.parse("5.2.0.0").sameFamily(Version.parse("4.2.0.0")));
     }
 
     @Test
     void toStringIsFourComponentDotForm() {
-        assertEquals("4.2.2.3", LtsVersion.parse("4.2.2.3").toString());
-        assertEquals("4.2.0.0", LtsVersion.parse("4.2").toString());
+        assertEquals("4.2.2.3", Version.parse("4.2.2.3").toString());
+        assertEquals("4.2.0.0", Version.parse("4.2").toString());
     }
 }

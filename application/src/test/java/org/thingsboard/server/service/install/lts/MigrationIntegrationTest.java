@@ -48,7 +48,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @DaoSqlTest
-public class LtsMigrationIntegrationTest extends AbstractControllerTest {
+public class MigrationIntegrationTest extends AbstractControllerTest {
 
     private static final long V_4_2_2_2 = 4_002_002_002L;
     private static final long V_4_2_2_3 = 4_002_002_003L;
@@ -62,7 +62,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     private static final Set<String> SQL_LESS_ALLOWED = Set.of("4.3.1.5");
 
     @Autowired
-    private LtsMigrationService ltsMigrationService;
+    private MigrationService migrationService;
     @Autowired
     private WidgetsBundleService widgetsBundleService;
     @Autowired
@@ -72,7 +72,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     @Autowired
     private InstallScripts installScripts;
     @Autowired
-    private List<LtsMigration> migrations;
+    private List<Migration> migrations;
     @Autowired
     private V4_3_1_4Migration v4314Migration;
 
@@ -135,7 +135,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
         // applyMigrations returns the applied versions; recordVersions stamps them (see SystemPatchApplier for
         // where that call sits relative to its own sync work).
-        ltsMigrationService.recordVersions(ltsMigrationService.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {}));
+        migrationService.recordVersions(migrationService.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {}));
 
         // 1. The version's SQL ran: iot_hub_installed_item table now exists.
         assertTrue(tableExists("iot_hub_installed_item"));
@@ -152,9 +152,9 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void reRunFromCurrentVersionIsNoOp() {
-        ltsMigrationService.recordVersions(ltsMigrationService.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {}));
+        migrationService.recordVersions(migrationService.applyMigrations("4.2.2.2", "4.2.2.3", false, () -> {}));
         // Re-running from the now-current version selects an empty range — nothing changes, nothing throws.
-        ltsMigrationService.applyMigrations("4.2.2.3", "4.2.2.3", false, () -> {});
+        migrationService.applyMigrations("4.2.2.3", "4.2.2.3", false, () -> {});
 
         assertEquals(Long.valueOf(V_4_2_2_3),
                 jdbcTemplate.queryForObject("SELECT schema_version FROM tb_schema_settings", Long.class));
@@ -169,7 +169,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         jdbcTemplate.execute("DROP TABLE IF EXISTS iot_hub_installed_item");
 
         // Drive the offline major-upgrade path over the real supported range against the real DB.
-        ltsMigrationService.runSchemaMigrations("4.2.2.2", "4.2.2.3", false);
+        migrationService.runSchemaMigrations("4.2.2.2", "4.2.2.3", false);
         // (a) the schema effects landed: the table the 4.2.2.3 SQL creates now exists.
         assertTrue(tableExists("iot_hub_installed_item"));
         // (c) the offline schema phase records NO schema version -- the offline flow tracks the package version
@@ -177,7 +177,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         assertEquals(Long.valueOf(V_4_2_2_2),
                 jdbcTemplate.queryForObject("SELECT schema_version FROM tb_schema_settings", Long.class));
 
-        ltsMigrationService.runDataMigrations("4.2.2.2", "4.2.2.3", false);
+        migrationService.runDataMigrations("4.2.2.2", "4.2.2.3", false);
         // (b) the data apply() ran: the obsolete bundle was deleted and its type marked deprecated.
         assertNull(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, OBSOLETE_ALIAS));
         WidgetTypeDetails type = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
@@ -212,7 +212,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
         try {
             // Drive the runner over a range whose target (4.3.1.2) selects only the 4.3.1.2 migration.
-            ltsMigrationService.applyMigrations("4.3.1.1", "4.3.1.2", false, () -> {});
+            migrationService.applyMigrations("4.3.1.1", "4.3.1.2", false, () -> {});
 
             // The 4.3.1.2 schema SQL ran: every PE-specific column and the unique constraint exist again.
             assertTrue(columnExists("api_usage_state", "ai"));
@@ -256,7 +256,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
         try {
             // Drive the runner over a range whose target (4.3.1.4) selects only the 4.3.1.4 migration.
-            ltsMigrationService.recordVersions(ltsMigrationService.applyMigrations("4.3.1.3", "4.3.1.4", false, () -> {}));
+            migrationService.recordVersions(migrationService.applyMigrations("4.3.1.3", "4.3.1.4", false, () -> {}));
 
             // The schema_update.sql ran: the alarm_comment -> alarm cascade FK is gone and the column is back.
             assertFalse(constraintExists("fk_alarm_comment_alarm_id"));
@@ -327,7 +327,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         v4314Migration.batchSize = 3;
         try {
             // Drive the runner over a range whose target (4.3.1.4) selects only the 4.3.1.4 migration.
-            ltsMigrationService.applyMigrations("4.3.1.3", "4.3.1.4", false, () -> {});
+            migrationService.applyMigrations("4.3.1.3", "4.3.1.4", false, () -> {});
 
             // Every seeded row got ITS OWN alarm's originator, across all three windows and both boundaries.
             for (int i = 0; i < rowAlarms.size(); i++) {
@@ -369,7 +369,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
             jdbcTemplate.execute("DROP TABLE IF EXISTS tb_cluster");
             assertFalse(tableExists("tb_cluster"));
 
-            ltsMigrationService.applyMigrations("4.3.1.5", "4.3.1.6", false, () -> {});
+            migrationService.applyMigrations("4.3.1.5", "4.3.1.6", false, () -> {});
 
             assertTrue(tableExists("tb_cluster"));
             assertEquals(Long.valueOf(1L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM tb_cluster", Long.class));
@@ -384,10 +384,10 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         try {
             UUID existing = UUID.randomUUID();
             jdbcTemplate.execute("DROP TABLE IF EXISTS tb_cluster");
-            ltsMigrationService.applyMigrations("4.3.1.5", "4.3.1.6", false, () -> {});
+            migrationService.applyMigrations("4.3.1.5", "4.3.1.6", false, () -> {});
             jdbcTemplate.update("UPDATE tb_cluster SET cluster_id = ?::uuid", existing.toString());
 
-            ltsMigrationService.applyMigrations("4.3.1.5", "4.3.1.6", false, () -> {});
+            migrationService.applyMigrations("4.3.1.5", "4.3.1.6", false, () -> {});
 
             assertEquals(List.of(existing.toString()),
                     jdbcTemplate.queryForList("SELECT cluster_id FROM tb_cluster", String.class));
@@ -472,7 +472,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         // The walk discovers by the same DDL forms the comparison parses, so a script whose tb_cluster block
         // was reformatted past those regexes would leave the compared set without a word - the one blind spot
         // a self-selecting scan has. These two always carry the shape, so they are the floor under it:
-        // upgrade/pe makes the table on a CE-to-PE conversion, the current LTS baseline on a fresh upgrade.
+        // upgrade/pe makes the table on a CE-to-PE conversion, the current baseline on a fresh upgrade.
         List<Path> required = List.of(
                 upgradeDir().resolve(Paths.get("pe", SCHEMA_UPDATE_SQL)),
                 upgradeDir().resolve(Paths.get("lts", "4.4.0.0", SCHEMA_UPDATE_SQL)));
@@ -525,7 +525,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
 
     /**
      * Every shipped script that carries a copy of the {@code tb_cluster} shape, found by walking the upgrade
-     * tree rather than from a list: the next LTS directory to touch the table would otherwise be checked by
+     * tree rather than from a list: the next migration directory to touch the table would otherwise be checked by
      * nothing while the test above read as proof of coverage. Discovery is by the DDL forms the comparison
      * itself parses, not by a mention of the table name - a script that only names it in a comment or deletes
      * from it says nothing about shape and would fail here for nothing.
@@ -560,9 +560,9 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
         assertFalse(tableExists("iot_hub_installed_item"));
 
         // Offline schema phase over the whole supported cross-family range.
-        ltsMigrationService.runSchemaMigrations("4.3.0.0", "4.4.0.0", false);
+        migrationService.runSchemaMigrations("4.3.0.0", "4.4.0.0", false);
 
-        // 4.4.0.0 baseline DDL landed (this is what used to live in basic/schema_update.sql)...
+        // 4.4.0.0 baseline DDL landed...
         assertTrue(columnExists("rule_chain", "notes"));
         // ...and the in-range older-family 4.3.1.x beans ran too.
         assertTrue(columnExists("calculated_field", "additional_info"));
@@ -573,14 +573,14 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     public void migrationDirectoriesAndBeansStayInSyncBothWays() {
         Path ltsDir = Paths.get(installScripts.getDataDir(), "upgrade", "lts");
         Set<String> dirVersions = listDirVersions(ltsDir);
-        Set<String> beanVersions = migrations.stream().map(LtsMigration::getVersion).collect(Collectors.toSet());
+        Set<String> beanVersions = migrations.stream().map(Migration::getVersion).collect(Collectors.toSet());
 
         // Every on-disk migration directory must have a registered bean with the same version.
         // Otherwise select() (which iterates beans, not dirs) silently skips the SQL dir.
         Set<String> dirsWithoutBean = dirVersions.stream()
                 .filter(v -> !beanVersions.contains(v))
                 .collect(Collectors.toSet());
-        assertTrue("Migration directories without a registered LtsMigration bean: " + dirsWithoutBean,
+        assertTrue("Migration directories without a registered Migration bean: " + dirsWithoutBean,
                 dirsWithoutBean.isEmpty());
 
         // Every registered bean must have a matching directory, unless it is explicitly allowed to be SQL-less.
@@ -589,7 +589,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
                 .filter(v -> !dirVersions.contains(v))
                 .filter(v -> !SQL_LESS_ALLOWED.contains(v))
                 .collect(Collectors.toSet());
-        assertTrue("Registered LtsMigration beans without a matching directory (and not SQL-less allowed): " + beansWithoutDir,
+        assertTrue("Registered Migration beans without a matching directory (and not SQL-less allowed): " + beansWithoutDir,
                 beansWithoutDir.isEmpty());
     }
 
@@ -602,7 +602,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
                     .map(p -> p.getFileName().toString())
                     .collect(Collectors.toSet());
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to list LTS migration directories: " + ltsDir, e);
+            throw new UncheckedIOException("Failed to list migration directories: " + ltsDir, e);
         }
     }
 
@@ -686,7 +686,7 @@ public class LtsMigrationIntegrationTest extends AbstractControllerTest {
     }
 
     private static String readResource(String name) {
-        try (InputStream in = LtsMigrationIntegrationTest.class.getClassLoader().getResourceAsStream(name)) {
+        try (InputStream in = MigrationIntegrationTest.class.getClassLoader().getResourceAsStream(name)) {
             assertNotNull(name + " on the test classpath", in);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {

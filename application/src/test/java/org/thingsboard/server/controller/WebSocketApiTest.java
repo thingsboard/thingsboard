@@ -989,6 +989,18 @@ public class WebSocketApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testAttributesSubscription_customerUserNotAssignedDevice() throws Exception {
+        sendAttributes(device, TbAttributeSubscriptionScope.SERVER_SCOPE, List.of(
+                new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("attr", "secret"))
+        ));
+
+        loginCustomerUser();
+        JsonNode update = getWsClient().subscribeForAttributes(device.getId(), TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("attr"));
+        assertThat(update.get("errorCode").asInt()).isNotEqualTo(SubscriptionErrorCode.NO_ERROR.getCode());
+        assertThat(update.path("data").isEmpty()).isTrue();
+    }
+
+    @Test
     public void testEntityCountCmd_filterTypeSingularCompatibilityTest() throws Exception {
         ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.newObjectNode();
         oldFormatDeviceTypeFilterSingular.put("type", "deviceType");

@@ -14,9 +14,8 @@ ALTER TABLE rule_chain ADD COLUMN IF NOT EXISTS notes varchar(1000000);
 
 -- RULE CHAIN NOTES MIGRATION END
 
--- PE-only 4.4 baseline DDL below (carried over from basic/schema_update.sql; these columns/index have no
--- owning bean of their own). report.* live on the PE-only report table; job.customer_id is a PE column on the
--- shared job table.
+-- PE-only 4.4 baseline DDL below (these columns/index have no owning bean of their own). report.* live on
+-- the PE-only report table; job.customer_id is a PE column on the shared job table.
 
 -- REPORT PUBLIC LINK ADDITION START
 

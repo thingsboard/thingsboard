@@ -32,7 +32,9 @@ import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.alarm.AlarmCommentSubType;
+import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmRef;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
@@ -321,6 +323,37 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
             assertThat(alarmService.findAlarmById(tenantId, alarmId)).isNull();
             assertThat(alarmCommentService.findAlarmComments(tenantId, alarmId, new PageLink(100)).getData()).isEmpty();
         });
+    }
+
+    @Test
+    public void whenAlarmCommentIsDeleted_thenKeepOtherAlarmComments() throws Exception {
+        Device device = createDevice("test", "test");
+        Alarm alarm = doPost("/api/alarm", Alarm.builder()
+                .tenantId(tenantId)
+                .originator(device.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test alarm with deleted comment")
+                .build(), Alarm.class);
+        AlarmId alarmId = alarm.getId();
+        List<AlarmComment> comments = new ArrayList<>();
+        for (int i = 1; i <= 3; i++) {
+            comments.add(doPost("/api/alarm/" + alarmId + "/comment", AlarmComment.builder()
+                    .comment(JacksonUtil.newObjectNode().set("text", new TextNode("comment " + i)))
+                    .build(), AlarmComment.class));
+        }
+        assertThat(alarmCommentService.findAlarmComments(tenantId, alarmId, new PageLink(100)).getData()).hasSize(3);
+
+        doDelete("/api/alarm/" + alarmId + "/comment/" + comments.get(0).getId()).andExpect(status().isOk());
+
+        TimeUnit.SECONDS.sleep(2);
+        List<AlarmCommentInfo> remaining = alarmCommentService.findAlarmComments(tenantId, alarmId, new PageLink(100)).getData();
+        assertThat(remaining).hasSize(3);
+        assertThat(remaining).filteredOn(comment -> comment.getId().equals(comments.get(0).getId()))
+                .singleElement()
+                .satisfies(comment -> {
+                    assertThat(comment.getType()).isEqualTo(AlarmCommentType.SYSTEM);
+                    assertThat(comment.getComment().get("subtype").asText()).isEqualTo(AlarmCommentSubType.COMMENT_DELETED.name());
+                });
     }
 
     @Test
