@@ -12,7 +12,7 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestPropertySource(properties = {
-        "spring.jpa.properties.javax.persistence.query.timeout=500"
+        "spring.jpa.properties.jakarta.persistence.query.timeout=500"
 })
 public class JdbcTemplateTest extends AbstractJpaDaoTest {
 
