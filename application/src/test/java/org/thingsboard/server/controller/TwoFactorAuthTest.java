@@ -152,7 +152,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testWsAuthCmd_preVerificationTokenRejected() throws Exception {
         configureTotpTwoFa();
-        logInWithPreVerificationToken(username, password);
+        logInWithMfaToken(username, password, Authority.PRE_VERIFICATION_TOKEN);
 
         wsClient = buildAndConnectWebSocketClient();
 
@@ -162,7 +162,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testWsQueryToken_preVerificationTokenRejected() throws Exception {
         configureTotpTwoFa();
-        logInWithPreVerificationToken(username, password);
+        logInWithMfaToken(username, password, Authority.PRE_VERIFICATION_TOKEN);
 
         wsClient = buildAndConnectWebSocketClient("/api/ws?token=" + token);
 
@@ -172,7 +172,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testWs_accessTokenAcceptedAfterTwoFa() throws Exception {
         TotpTwoFaAccountConfig totpTwoFaAccountConfig = configureTotpTwoFa();
-        logInWithPreVerificationToken(username, password);
+        logInWithMfaToken(username, password, Authority.PRE_VERIFICATION_TOKEN);
         JsonNode tokenPair = readResponse(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + getCorrectTotp(totpTwoFaAccountConfig))
                 .andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenPair, username);
