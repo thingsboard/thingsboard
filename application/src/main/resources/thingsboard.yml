@@ -1205,17 +1205,12 @@ spring.mvc.cors:
       allow-credentials: "${TB_CORS_ALLOW_CREDENTIALS:true}"
 
 # General spring parameters
-# Miscellaneous Spring Boot settings including circular references, Freemarker, async request timeout, path matching strategy, and static resource chain.
+# Miscellaneous Spring Boot settings including circular references, Freemarker, async request timeout, and path matching strategy.
 spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
 spring.freemarker.checkTemplateLocation: "false" # spring freemarker configuration
 spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}" # The default timeout for asynchronous requests in milliseconds
 spring.mvc.pathmatch.matching-strategy: "ANT_PATH_MATCHER" # For endpoints matching in Swagger
 spring.http.converters.preferred-json-mapper: "jackson2" # JSON mapper for HTTP message conversion; ThingsBoard uses Jackson 2
-spring.resources.chain:
-  compressed: "true" # This property enables or disables support for serving pre-compressed resources (for example, a .gzip or .br file)
-  strategy:
-    content:
-      enabled: "true" # This property enables or disables the content Version Strategy. This strategy allows Spring to generate a unique version for static resources, which is based on the content of the resource
 
 spring.servlet.multipart.max-file-size: "${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:50MB}" # Total file size cannot exceed 50MB when configuring file uploads
 spring.servlet.multipart.max-request-size: "${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:50MB}" # Total request size for a multipart/form-data cannot exceed 50MB
