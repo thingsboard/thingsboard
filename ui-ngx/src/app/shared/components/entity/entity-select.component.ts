@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -63,6 +49,12 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  filterAllowedEntityTypes = true;
+
+  @Input()
+  defaultEntityType: AliasEntityType | EntityType;
+
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
@@ -70,8 +62,6 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   entityTypeNullUUID: Set<AliasEntityType | EntityType | string> = new Set([
     AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
   ]);
-
-  private readonly defaultEntityType: EntityType | AliasEntityType = null;
 
   private propagateChange = (v: any) => { };
 
@@ -83,15 +73,17 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
                                                                          this.useAliasEntityTypes);
+
+    let defaultEntityType: EntityType | AliasEntityType = null;
     if (entityTypes.length === 1) {
       this.displayEntityTypeSelect = false;
-      this.defaultEntityType = entityTypes[0];
+      defaultEntityType = entityTypes[0];
     } else {
       this.displayEntityTypeSelect = true;
     }
 
     this.entitySelectFormGroup = this.fb.group({
-      entityType: [this.defaultEntityType],
+      entityType: [defaultEntityType],
       entityId: [null]
     });
   }
@@ -122,6 +114,19 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
     const additionNullUIIDEntityTypes = Object.keys(this.additionEntityTypes) as string[];
     if (additionNullUIIDEntityTypes.length > 0) {
       additionNullUIIDEntityTypes.forEach((entityType) => this.entityTypeNullUUID.add(entityType));
+    }
+
+    if (this.filterAllowedEntityTypes === false) {
+      if (this.allowedEntityTypes?.length === 1) {
+        this.displayEntityTypeSelect = false;
+        this.entitySelectFormGroup.get('entityType').setValue(this.allowedEntityTypes[0]);
+      } else {
+        this.displayEntityTypeSelect = true;
+      }
+    }
+
+    if (this.defaultEntityType) {
+      this.entitySelectFormGroup.get('entityType').setValue(this.defaultEntityType);
     }
   }
 

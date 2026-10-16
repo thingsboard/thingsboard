@@ -1,7 +1,7 @@
 {
   "fqn": "rotational_speed_chart_card_with_background",
   "name": "Rotational speed chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/rotational_speed_chart_card_with_background.svg",
   "description": "Displays rotational speed data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

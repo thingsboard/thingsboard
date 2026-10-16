@@ -1,7 +1,7 @@
 {
   "fqn": "sulfur_dioxide_so2_chart_card",
   "name": "Sulfur dioxide (SO2) chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/SO2-value-and-chart-card.svg",
   "description": "Produced by volcanoes and industrial processes, particularly the burning of coal and oil. Results displayed by combining the latest and aggregated values and optional simplified chart. ",
   "descriptor": {

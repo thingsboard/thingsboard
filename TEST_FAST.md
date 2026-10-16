@@ -10,6 +10,7 @@ export SUREFIRE_JAVA_OPTS="-Xmx1200m -Xss256k -XX:+ExitOnOutOfMemoryError"
 mvn clean install -T6 -DskipTests -Dpkg.skip=true
 
 mvn test -pl='!application,!dao,!ui-ngx,!msa/js-executor,!msa/web-ui' -T4
+mvn test -pl='msa/js-executor'
 mvn test -pl dao -Dparallel=packages -DforkCount=4
 
 mvn test -pl application -Dtest='!**/nosql/**,org.thingsboard.server.controller.**'      -DforkCount=6 -Dparallel=classes  -Dsurefire.rerunFailingTestsCount=2 -Dsurefire.failOnFlakeCount=5
@@ -41,9 +42,11 @@ Use `-Dpkg.skip=true` to skip all packaging at once (equivalent to all four flag
 |----------------------------|-------------------------------------------|--------------------------------------------------------------|
 | `-Dpkg.skip=true`          | All of the below (bootjar + deb + rpm + zip) | Yes                                                       |
 | `-Dpkg.skip.bootjar=true`  | `spring-boot:repackage` (`*-boot.jar`)    | Yes — tests use the regular `.jar`, not the fat boot jar     |
-| `-Dpkg.skip.deb=true`      | Gradle `buildDeb` + Maven `attach-artifact` | Yes — MSA docker modules copy the DEB from `target/` directly |
+| `-Dpkg.skip.deb=true`      | Gradle `buildDeb`                         | Yes — MSA docker modules copy the DEB from `target/` directly |
 | `-Dpkg.skip.rpm=true`      | Gradle `buildRpm`                         | Yes — no test depends on the RPM                             |
 | `-Dpkg.skip.zip=true`      | `maven-assembly-plugin` Windows ZIP       | Yes — no test depends on the ZIP                             |
+
+`-Dskip.yarn=true` and `-Dskip.ui.build=true` imply `-Dpkg.skip=true`: packages built without the UI are incomplete.
 
 ## Testcontainers compatibility with the Docker API workaround
 

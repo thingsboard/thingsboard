@@ -1,7 +1,7 @@
 {
   "fqn": "power_consumption_chart_card_with_background",
   "name": "Power consumption chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/power_consumption_chart_card_with_background.svg",
   "description": "Displays power consumption data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

@@ -1,7 +1,7 @@
 {
   "fqn": "wind_speed_chart_card",
   "name": "Wind speed chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/wind_speed_chart_card_system_widget_image.png",
   "description": "Displays a wind speed data by combining the latest and aggregated values with an optional simplified chart.",
   "descriptor": {

@@ -1,7 +1,7 @@
 {
   "fqn": "rotational_speed_range_chart_with_background",
   "name": "Rotational speed range chart with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/rotational_speed_range_chart_with_background.svg",
   "description": "Displays changes to rotational speed data over time visualized with color ranges and background.",
   "descriptor": {

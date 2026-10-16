@@ -1,7 +1,7 @@
 {
   "fqn": "efficiency_chart_card",
   "name": "Efficiency chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/efficiency_chart_card.svg",
   "description": "Displays efficiency data by combining the latest and aggregated values with an optional simplified chart.",
   "descriptor": {

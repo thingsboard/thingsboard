@@ -1,0 +1,21 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-iot-hub-warning-content">
+  <div class="tb-iot-hub-warning-title-row">
+    <mat-icon class="tb-iot-hub-warning-icon">warning</mat-icon>
+    <h2 class="tb-iot-hub-warning-title">{{ 'iot-hub.unpublished-warning-title' | translate }}</h2>
+  </div>
+  <p class="tb-iot-hub-warning-text">{{ 'iot-hub.unpublished-warning-text' | translate }}</p>
+  <div class="tb-iot-hub-warning-item">
+    <span class="tb-iot-hub-warning-item-name">{{ data.item.name }}</span>
+    <span class="tb-iot-hub-warning-item-version">v {{ data.item.version }}</span>
+  </div>
+</div>
+<div class="tb-iot-hub-warning-actions">
+  <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+  <button mat-flat-button color="warn" (click)="confirm()">{{ 'iot-hub.unpublished-warning-confirm' | translate }}</button>
+</div>

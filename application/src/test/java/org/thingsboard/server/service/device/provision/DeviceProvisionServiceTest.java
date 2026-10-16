@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.device.provision;
 
 
@@ -21,8 +8,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -73,28 +62,43 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = DeviceProvisionServiceImpl.class)
+@ContextConfiguration(classes = DeviceProvisionServiceTest.TestConfig.class)
 public class DeviceProvisionServiceTest {
 
-    @MockBean
+    @Configuration
+    static class TestConfig {
+        @Bean
+        public DeviceProvisionServiceImpl deviceProvisionService(TbQueueProducerProvider producerProvider,
+                                                                 DeviceProfileService deviceProfileService,
+                                                                 DeviceService deviceService,
+                                                                 DeviceCredentialsService deviceCredentialsService,
+                                                                 AttributesService attributesService,
+                                                                 AuditLogService auditLogService,
+                                                                 PartitionService partitionService) {
+            return new DeviceProvisionServiceImpl(producerProvider, deviceProfileService, deviceService,
+                    deviceCredentialsService, attributesService, auditLogService, partitionService);
+        }
+    }
+
+    @MockitoBean
     protected TbQueueProducerProvider producerProvider;
-    @MockBean
+    @MockitoBean
     protected TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> ruleEngineMsgProducer;
-    @MockBean
+    @MockitoBean
     protected TbClusterService clusterService;
-    @MockBean
+    @MockitoBean
     protected DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     protected DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     protected DeviceCredentialsService deviceCredentialsService;
-    @MockBean
+    @MockitoBean
     protected AttributesService attributesService;
-    @MockBean
+    @MockitoBean
     protected AuditLogService auditLogService;
-    @MockBean
+    @MockitoBean
     protected PartitionService partitionService;
-    @SpyBean
+    @MockitoSpyBean
     DeviceProvisionServiceImpl service;
 
     private String[] chain;

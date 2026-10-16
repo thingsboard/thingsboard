@@ -1,7 +1,7 @@
 {
   "fqn": "simple_ozone_o3_chart_card",
   "name": "Simple ozone (O3) chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple-ozone-value-and-chart-card.svg",
   "description": "A beneficial layer in the upper atmosphere, but harmful when present near ground level. Results displays mainly from vehicle exhaust and industrial emissions by combining the latest and aggregated values and optional simplified chart. ",
   "descriptor": {

@@ -1,7 +1,7 @@
 {
   "fqn": "pm2_5_chart_card_with_background",
   "name": "PM2.5 chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/pm2_5_chart_card_with_background_system_widget_image.png",
   "description": "Displays a fine particulate matter (PM2.5) data by combining the latest and aggregated values with the background image and optional simplified chart.",
   "descriptor": {

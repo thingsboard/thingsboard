@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_rotational_speed_card_with_background",
   "name": "Horizontal rotational speed card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_rotational_speed_card_with_background.svg",
   "description": "Displays the latest rotational speed telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {

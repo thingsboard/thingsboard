@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.rule;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -182,7 +169,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Transactional
     @Override
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent) {
-        Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
+        Validator.validateId(ruleChainMetaData.getRuleChainId(), id -> "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
             return RuleChainUpdateResult.failed();
@@ -335,7 +322,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId) {
-        Validator.validateId(ruleChainId, "Incorrect rule chain id.");
+        Validator.validateId(ruleChainId, id -> "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
         if (ruleChain == null) {
             return null;
@@ -376,37 +363,37 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public RuleChain findRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
-        Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
+        Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for search request.");
         return ruleChainDao.findById(tenantId, ruleChainId.getId());
     }
 
     @Override
     public RuleNode findRuleNodeById(TenantId tenantId, RuleNodeId ruleNodeId) {
-        Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
+        Validator.validateId(ruleNodeId, id -> "Incorrect rule node id for search request.");
         return ruleNodeDao.findById(tenantId, ruleNodeId.getId());
     }
 
     @Override
     public ListenableFuture<RuleChain> findRuleChainByIdAsync(TenantId tenantId, RuleChainId ruleChainId) {
-        Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
+        Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for search request.");
         return ruleChainDao.findByIdAsync(tenantId, ruleChainId.getId());
     }
 
     @Override
     public ListenableFuture<RuleNode> findRuleNodeByIdAsync(TenantId tenantId, RuleNodeId ruleNodeId) {
-        Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
+        Validator.validateId(ruleNodeId, id -> "Incorrect rule node id for search request.");
         return ruleNodeDao.findByIdAsync(tenantId, ruleNodeId.getId());
     }
 
     @Override
     public RuleChain getRootTenantRuleChain(TenantId tenantId) {
-        Validator.validateId(tenantId, "Incorrect tenant id for search request.");
+        Validator.validateId(tenantId, id -> "Incorrect tenant id for search request.");
         return ruleChainDao.findRootRuleChainByTenantIdAndType(tenantId.getId(), RuleChainType.CORE);
     }
 
     @Override
     public List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId) {
-        Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
+        Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for search request.");
         List<EntityRelation> relations = getRuleChainToNodeRelations(tenantId, ruleChainId);
         List<RuleNode> ruleNodes = new ArrayList<>();
         for (EntityRelation relation : relations) {
@@ -422,7 +409,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public List<RuleNode> getReferencingRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId) {
-        Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
+        Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for search request.");
         List<EntityRelation> relations = getNodeToRuleChainRelations(tenantId, ruleChainId);
         List<RuleNode> ruleNodes = new ArrayList<>();
         for (EntityRelation relation : relations) {
@@ -436,7 +423,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId) {
-        Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
+        Validator.validateId(ruleNodeId, id -> "Incorrect rule node id for search request.");
         List<EntityRelation> relations = relationService.findByFrom(tenantId, ruleNodeId, RelationTypeGroup.RULE_NODE);
         List<EntityRelation> validRelations = new ArrayList<>();
         for (EntityRelation relation : relations) {
@@ -463,7 +450,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public PageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, PageLink pageLink) {
-        Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
+        Validator.validateId(tenantId, id -> "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink);
         return ruleChainDao.findRuleChainsByTenantIdAndType(tenantId.getId(), type, pageLink);
     }
@@ -476,7 +463,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     @Transactional
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
-        Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
+        Validator.validateId(ruleChainId, id -> "Incorrect rule chain id for delete request.");
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
         if (ruleChain == null) {
             return;
@@ -515,7 +502,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Transactional
     @Override
     public void deleteRuleChainsByTenantId(TenantId tenantId) {
-        Validator.validateId(tenantId, "Incorrect tenant id for delete rule chains request.");
+        Validator.validateId(tenantId, id -> "Incorrect tenant id for delete rule chains request.");
         tenantRuleChainsRemover.removeEntities(tenantId, tenantId);
     }
 
@@ -527,7 +514,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public RuleChainData exportTenantRuleChains(TenantId tenantId, PageLink pageLink) {
-        Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
+        Validator.validateId(tenantId, id -> "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink);
         PageData<RuleChain> ruleChainData = ruleChainDao.findRuleChainsByTenantId(tenantId.getId(), pageLink);
         List<RuleChain> ruleChains = ruleChainData.getData();

@@ -1,7 +1,7 @@
 {
   "fqn": "uv_index_card",
   "name": "UV Index card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/uv_index_card_system_widget_image.png",
   "description": "Displays the latest UV index telemetry in a scalable rectangle card.",
   "descriptor": {

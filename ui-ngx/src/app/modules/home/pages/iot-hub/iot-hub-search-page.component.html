@@ -1,0 +1,25 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-search-page flex h-full flex-col gap-10 rounded-lg bg-white lt-sm:gap-4 lt-lg:gap-6">
+  <!-- Back -->
+  <button mat-button color="primary" class="tb-search-back-btn" (click)="navigateBack()">
+    <mat-icon>chevron_left</mat-icon>
+    {{ 'iot-hub.back-to-iot-hub' | translate }}
+  </button>
+
+  <!-- Search component -->
+  <tb-iot-hub-search [(searchText)]="searchText">
+    <!-- Title -->
+    <h1 class="tb-search-title">
+      @if (searchText?.trim()) {
+        {{ 'iot-hub.search-results-for' | translate }}<span class="tb-search-title-query">'{{ searchText.trim() }}'</span>
+      } @else {
+        {{ 'iot-hub.search-results' | translate }}
+      }
+    </h1>
+  </tb-iot-hub-search>
+</div>

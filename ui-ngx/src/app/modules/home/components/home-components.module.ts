@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
@@ -112,6 +98,7 @@ import { StatesControllerModule } from '@home/components/dashboard-page/states/s
 import { DashboardLayoutComponent } from '@home/components/dashboard-page/layout/dashboard-layout.component';
 import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget.component';
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
+import { IotHubComponentsModule } from '@home/components/iot-hub/iot-hub-components.module';
 import { AddWidgetDialogComponent } from '@home/components/dashboard-page/add-widget-dialog.component';
 import { ManageDashboardLayoutsDialogComponent } from '@home/components/dashboard-page/layout/manage-dashboard-layouts-dialog.component';
 import {
@@ -124,7 +111,6 @@ import { EmbedDashboardDialogComponent } from '@home/components/widget/dialog/em
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { EdgeDownlinkTableComponent } from '@home/components/edge/edge-downlink-table.component';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
-import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-page/widget-types-panel.component';
 import { AlarmDurationPredicateValueComponent } from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import {
@@ -329,7 +315,6 @@ import { ResourcesLibraryComponent } from "@home/components/resources/resources-
       DashboardStateDialogComponent,
       DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent,
       TenantProfileQueuesComponent,
       QueueFormComponent,
       RepositorySettingsComponent,
@@ -367,6 +352,7 @@ import { ResourcesLibraryComponent } from "@home/components/resources/resources-
     CommonModule,
     SharedModule,
     SharedHomeComponentsModule,
+    IotHubComponentsModule,
     WidgetConfigComponentsModule,
     BasicWidgetConfigModule,
     Lwm2mProfileComponentsModule,
@@ -469,6 +455,7 @@ import { ResourcesLibraryComponent } from "@home/components/resources/resources-
     SelectDashboardBreakpointComponent,
     EditWidgetComponent,
     DashboardWidgetSelectComponent,
+    IotHubComponentsModule,
     AddWidgetDialogComponent,
     MoveWidgetsDialogComponent,
     ManageDashboardLayoutsDialogComponent,
@@ -478,7 +465,6 @@ import { ResourcesLibraryComponent } from "@home/components/resources/resources-
     DashboardStateDialogComponent,
     DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent,
     TenantProfileQueuesComponent,
     QueueFormComponent,
     RepositorySettingsComponent,

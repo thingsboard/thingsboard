@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_pm2_5_card_with_background",
   "name": "Indoor PM2.5 card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_pm2_5_card_with_background_system_widget_image.png",
   "description": "Displays the latest indoor fine particulate matter (PM2.5) telemetry in a scalable rectangle card with the background image.",
   "descriptor": {

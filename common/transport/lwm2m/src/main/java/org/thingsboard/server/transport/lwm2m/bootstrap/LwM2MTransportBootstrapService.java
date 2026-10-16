@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import jakarta.annotation.PostConstruct;
@@ -82,13 +69,32 @@ public class LwM2MTransportBootstrapService implements SmartInitializingSingleto
     @PostConstruct
     public void init() {
         log.info("Starting LwM2M transport bootstrap server...");
-        this.server = getLhBootstrapServer();
-        this.server.start();
-        log.info("Started LwM2M transport bootstrap server.");
+        LeshanBootstrapServer bootstrapServer = null;
+        try {
+            bootstrapServer = getLhBootstrapServer();
+            this.server = bootstrapServer;
+            bootstrapServer.start();
+            log.info("Started LwM2M transport bootstrap server.");
+        } catch (RuntimeException e) {
+            log.error("Failed to start LwM2M transport bootstrap server, releasing resources", e);
+            try {
+                if (bootstrapServer != null) {
+                    bootstrapServer.destroy();
+                }
+            } catch (Exception suppressed) {
+                e.addSuppressed(suppressed);
+            } finally {
+                this.server = null;
+            }
+            throw e;
+        }
     }
 
     @PreDestroy
     public void shutdown() {
+        if (server == null) {
+            return;
+        }
         try {
             log.info("Stopping LwM2M transport bootstrap server!");
             server.destroy();

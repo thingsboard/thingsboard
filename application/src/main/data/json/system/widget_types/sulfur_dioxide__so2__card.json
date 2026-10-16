@@ -1,7 +1,7 @@
 {
   "fqn": "sulfur_dioxide_so2_card",
   "name": "Sulfur dioxide (SO2) card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/SO2-value-card.svg",
   "description": "Produced by volcanoes and industrial processes, particularly the burning of coal and oil.",
   "descriptor": {

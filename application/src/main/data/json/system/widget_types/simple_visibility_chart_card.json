@@ -1,7 +1,7 @@
 {
   "fqn": "simple_visibility_chart_card",
   "name": "Simple visibility chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_visibility_chart_card_system_widget_image.png",
   "description": "Displays historical visibility values as a simplified chart. Optionally may display the corresponding latest visibility value.",
   "descriptor": {

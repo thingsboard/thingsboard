@@ -1,0 +1,33 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "../../../../../scss/constants";
+
+:host-context(.mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    position: relative;
+    padding: 0;
+    overflow-x: hidden;
+    height: 70vh;
+
+    tb-iot-hub-browse {
+      height: 100%;
+    }
+
+    @media #{$mat-gt-sm} {
+      width: 80vw;
+      max-height: 70vh;
+    }
+
+    @media #{$mat-gt-md} {
+      width: 1000px;
+    }
+
+    @media #{$mat-gt-xmd} {
+      width: 1200px;
+    }
+  }
+
+  .mat-mdc-dialog-actions {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+  }
+}

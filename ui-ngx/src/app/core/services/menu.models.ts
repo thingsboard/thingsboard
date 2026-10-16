@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { AuthState } from '@core/auth/auth.models';
 import { Authority } from '@shared/models/authority.enum';
 import { deepClone } from '@core/utils';
@@ -30,6 +16,7 @@ export interface MenuSection {
   pages?: Array<MenuSection>;
   opened?: boolean;
   rootOnly?: boolean;
+  isNew?: boolean;
   customTranslate?: boolean;
 }
 
@@ -106,7 +93,8 @@ export enum MenuId {
   version_control = 'version_control',
   api_usage = 'api_usage',
   trendz_settings = 'trendz_settings',
-  ai_models = 'ai_models'
+  ai_models = 'ai_models',
+  iot_hub = 'iot_hub'
 }
 
 declare type MenuFilter = (authState: AuthState) => boolean;
@@ -707,6 +695,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       path: '/settings/trendz',
       icon: 'trendz-settings'
     }
+  ],
+  [
+    MenuId.iot_hub,
+    {
+      id: MenuId.iot_hub,
+      name: 'iot-hub.iot-hub',
+      type: 'link',
+      path: '/iot-hub',
+      icon: 'hub',
+      isNew: true
+    }
   ]
 ]);
 
@@ -794,6 +793,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
       {id: MenuId.home},
       {id: MenuId.alarms},
       {id: MenuId.dashboards},
+      {id: MenuId.iot_hub},
       {
         id: MenuId.entities,
         pages: [

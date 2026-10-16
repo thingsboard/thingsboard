@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.collect.Iterables;
@@ -99,6 +86,7 @@ import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NODELET
 import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD;
 import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_OTHER_REASON;
 import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED;
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
 
 @Slf4j
 public class GitRepository {
@@ -448,7 +436,7 @@ public class GitRepository {
 
     private BranchInfo toBranchInfo(Ref ref) {
         String name = org.eclipse.jgit.lib.Repository.shortenRefName(ref.getName());
-        String branchName = StringUtils.removeStart(name, "origin/");
+        String branchName = removeStart(name, "origin/");
         boolean isDefault = this.headId != null && this.headId.equals(ref.getObjectId());
         return new BranchInfo(branchName, isDefault);
     }
@@ -465,7 +453,7 @@ public class GitRepository {
 
     private ObjectId resolve(String rev) throws IOException {
         if (settings.isLocalOnly()) {
-            rev = StringUtils.removeStart(rev, "origin/");
+            rev = removeStart(rev, "origin/");
         }
         ObjectId result = git.getRepository().resolve(rev);
         if (result == null) {

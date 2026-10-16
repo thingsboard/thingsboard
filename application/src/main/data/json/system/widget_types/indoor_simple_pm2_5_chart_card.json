@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_simple_pm2_5_chart_card",
   "name": "Indoor simple PM2.5 chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_simple_pm2_5_chart_card_system_widget_image.png",
   "description": "Displays historical indoor fine particulate matter (PM2.5) values as a simplified chart. Optionally may display the corresponding latest indoor PM2.5 value.",
   "descriptor": {

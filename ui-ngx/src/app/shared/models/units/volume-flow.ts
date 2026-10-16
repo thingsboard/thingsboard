@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { TbMeasure, TbMeasureUnits } from '@shared/models/unit.models';
 
 export type VolumeFlowUnits = VolumeFlowMetricUnits | VolumeFlowImperialUnits;
@@ -25,6 +11,7 @@ export type VolumeFlowMetricUnits =
   | 'L/min'
   | 'L/hr'
   | 'm³/s'
+  | 'm³/min'
   | 'm³/hr';
 
 export type VolumeFlowImperialUnits =
@@ -66,6 +53,11 @@ const METRIC: TbMeasureUnits<VolumeFlowMetricUnits> = {
       name: 'unit.cubic-meters-per-second',
       tags: ['airflow', 'ventilation', 'HVAC', 'gas flow rate'],
       to_anchor: 1000,
+    },
+    'm³/min': {
+      name: 'unit.cubic-meters-per-minute',
+      tags: ['airflow', 'ventilation', 'HVAC', 'gas flow rate'],
+      to_anchor: 1000 / 60,
     },
     'm³/hr': {
       name: 'unit.cubic-meters-per-hour',

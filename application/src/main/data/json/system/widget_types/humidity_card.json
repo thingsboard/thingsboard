@@ -1,7 +1,7 @@
 {
   "fqn": "humidity_card",
   "name": "Humidity card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/humidity_card_system_widget_image.png",
   "description": "Displays the latest humidity telemetry in a scalable rectangle card.",
   "descriptor": {

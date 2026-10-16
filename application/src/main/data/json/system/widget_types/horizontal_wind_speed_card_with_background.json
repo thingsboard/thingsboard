@@ -1,7 +1,7 @@
 {
   "fqn": "horizontal_wind_speed_card_with_background",
   "name": "Horizontal wind speed card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/horizontal_wind_speed_card_with_background_system_widget_image.png",
   "description": "Displays the latest wind speed telemetry in a scalable horizontal layout with the background image.",
   "descriptor": {

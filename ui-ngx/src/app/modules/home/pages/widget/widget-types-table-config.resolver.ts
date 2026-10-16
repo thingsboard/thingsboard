@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Injectable } from '@angular/core';
 
 import { Router } from '@angular/router';
@@ -47,6 +33,8 @@ import { WidgetTypeComponent } from '@home/pages/widget/widget-type.component';
 import { WidgetTypeTabsComponent } from '@home/pages/widget/widget-type-tabs.component';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
+import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 @Injectable()
 export class WidgetTypesTableConfigResolver  {
@@ -60,7 +48,8 @@ export class WidgetTypesTableConfigResolver  {
               private translate: TranslateService,
               private importExport: ImportExportService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private iotHubActions: IotHubActionsService) {
 
     this.config.entityType = EntityType.WIDGETS_BUNDLE;
     this.config.entityComponent = WidgetTypeComponent;
@@ -85,21 +74,6 @@ export class WidgetTypesTableConfigResolver  {
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
       new EntityTableColumn<WidgetTypeInfo>('deprecated', 'widget.deprecated', '60px',
         entity => checkBoxCell(entity.deprecated))
-    );
-
-    this.config.addActionDescriptors.push(
-      {
-        name: this.translate.instant('dashboard.create-new-widget'),
-        icon: 'insert_drive_file',
-        isEnabled: () => true,
-        onAction: ($event) => this.addWidgetType($event)
-      },
-      {
-        name: this.translate.instant('widget.import'),
-        icon: 'file_upload',
-        isEnabled: () => true,
-        onAction: ($event) => this.importWidgetType($event)
-      }
     );
 
     this.config.cellActionDescriptors.push(
@@ -151,6 +125,30 @@ export class WidgetTypesTableConfigResolver  {
   resolve(): EntityTableConfig<WidgetTypeInfo | WidgetTypeDetails> {
     this.config.tableTitle = this.translate.instant('widget.widgets');
     const authUser = getCurrentAuthUser(this.store);
+    this.config.addActionDescriptors = [
+      {
+        name: this.translate.instant('dashboard.create-new-widget'),
+        icon: 'insert_drive_file',
+        isEnabled: () => true,
+        onAction: ($event) => this.addWidgetType($event)
+      },
+      {
+        name: this.translate.instant('widget.import'),
+        icon: 'file_upload',
+        isEnabled: () => true,
+        onAction: ($event) => this.importWidgetType($event)
+      }
+    ];
+    if (authUser.authority === Authority.TENANT_ADMIN) {
+      this.config.addActionDescriptors.push(
+        {
+          name: this.translate.instant('iot-hub.add-from-iot-hub'),
+          icon: 'hub',
+          isEnabled: () => true,
+          onAction: (_$event) => this.addWidgetFromIotHub()
+        }
+      );
+    }
     this.config.deleteEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
     this.config.entitySelectionEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
     this.config.detailsReadonly = (widgetType) => !this.isWidgetTypeEditable(widgetType, authUser.authority);
@@ -181,6 +179,14 @@ export class WidgetTypesTableConfigResolver  {
         }
       }
     );
+  }
+
+  addWidgetFromIotHub() {
+    this.iotHubActions.addItem(ItemType.WIDGET).subscribe(result => {
+      if (result?.descriptor) {
+        this.config.updateData();
+      }
+    });
   }
 
   importWidgetType($event: Event) {

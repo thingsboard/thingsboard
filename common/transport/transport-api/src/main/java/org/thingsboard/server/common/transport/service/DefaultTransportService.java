@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.transport.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -153,6 +140,8 @@ public class DefaultTransportService extends TransportActivityManager implements
     private int notificationsPollDuration;
     @Value("${transport.stats.enabled:false}")
     private boolean statsEnabled;
+    @Value("${transport.callback_thread_pool_size:20}")
+    private int callbackThreadPoolSize;
 
     @Autowired
     @Lazy
@@ -198,7 +187,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         this.ruleEngineProducerStats = statsFactory.createMessagesStats(StatsType.RULE_ENGINE.getName() + ".producer");
         this.tbCoreProducerStats = statsFactory.createMessagesStats(StatsType.CORE.getName() + ".producer");
         this.transportApiStats = statsFactory.createMessagesStats(StatsType.TRANSPORT.getName() + ".producer");
-        this.transportCallbackExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
+        this.transportCallbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreadPoolSize, getClass());
         this.scheduler.scheduleAtFixedRate(this::invalidateRateLimits, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
         transportApiRequestTemplate = queueProvider.createTransportApiRequestTemplate();
         transportApiRequestTemplate.setMessagesStats(transportApiStats);

@@ -1,7 +1,7 @@
 {
   "fqn": "ozone_o3_card",
   "name": "Ozone (O3) card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/ozone-value-card.svg",
   "description": "A beneficial layer in the upper atmosphere, but harmful when present near ground level. Results mainly from vehicle exhaust and industrial emissions.",
   "descriptor": {

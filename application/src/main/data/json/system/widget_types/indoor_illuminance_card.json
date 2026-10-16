@@ -1,7 +1,7 @@
 {
   "fqn": "indoor_illuminance_card",
   "name": "Indoor illuminance card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/indoor_illuminance_card_system_widget_image.png",
   "description": "Displays the latest indoor illuminance telemetry in a scalable rectangle card.",
   "descriptor": {

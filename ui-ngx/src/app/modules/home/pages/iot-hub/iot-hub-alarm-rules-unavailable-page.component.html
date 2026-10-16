@@ -1,0 +1,41 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="tb-iot-hub-alarm-rules-unavailable">
+  <!-- Alarm-rules tinted glow blobs (same layout/colour rules as the
+       home page hero). -->
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-left" [style.color]="alarmRulesColor"></div>
+  <div class="tb-iot-hub-blob tb-iot-hub-blob-right" [style.color]="alarmRulesColor"></div>
+
+  <div class="tb-alarm-rules-banner-container">
+    <div class="tb-alarm-rules-banner">
+    <img class="tb-alarm-rules-banner-image"
+         src="assets/iot-hub/items-page-alarm-rules-hero.svg" alt="">
+
+    <h1 class="tb-alarm-rules-banner-title">
+      {{ 'iot-hub.alarm-rules-unavailable-title-prefix' | translate }}
+      <span class="tb-alarm-rules-banner-version">{{ 'iot-hub.alarm-rules-unavailable-tb-version' | translate }}</span>
+    </h1>
+
+    <p class="tb-alarm-rules-banner-desc">
+      {{ 'iot-hub.alarm-rules-unavailable-desc' | translate }}
+    </p>
+
+    <div class="tb-alarm-rules-banner-actions">
+      <button mat-raised-button color="primary" (click)="upgradeInstance()">
+        {{ 'iot-hub.alarm-rules-unavailable-upgrade' | translate }}
+      </button>
+      <button mat-stroked-button (click)="goBack()">
+        {{ 'iot-hub.back-to-iot-hub' | translate }}
+      </button>
+    </div>
+
+    <div class="tb-alarm-rules-banner-current">
+      {{ 'iot-hub.alarm-rules-unavailable-current' | translate:{ version: currentTbVersion } }}
+    </div>
+  </div>
+  </div>
+</div>

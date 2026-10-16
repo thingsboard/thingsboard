@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { InjectionToken } from '@angular/core';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -69,11 +55,14 @@ export const MediaBreakpoints = {
   'lt-sm': 'screen and (max-width: 599px)',
   'lt-md': 'screen and (max-width: 959px)',
   'lt-lg': 'screen and (max-width: 1279px)',
+  'lt-xmd': 'screen and (max-width: 1599px)',
   'lt-xl': 'screen and (max-width: 1919px)',
   'gt-xs': 'screen and (min-width: 600px)',
   'gt-sm': 'screen and (min-width: 960px)',
   'gt-md': 'screen and (min-width: 1280px)',
+  'gt-xmd': 'screen and (min-width: 1600px)',
   'gt-lg': 'screen and (min-width: 1920px)',
+  'gt-xxl': 'screen and (min-width: 2448px)',
   'gt-xl': 'screen and (min-width: 5001px)',
   'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
 };

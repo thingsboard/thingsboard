@@ -1,7 +1,7 @@
 {
   "fqn": "simple_co2_chart_card_with_background",
   "name": "Simple CO2 chart card with background",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_co2_chart_card_with_background_system_widget_image.png",
   "description": "Displays historical CO2 level values as a simplified chart with background. Optionally may display the corresponding latest CO2 level value.",
   "descriptor": {

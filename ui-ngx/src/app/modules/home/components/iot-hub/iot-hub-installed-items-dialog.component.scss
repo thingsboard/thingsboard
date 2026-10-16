@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "../../../../../scss/constants";
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.dlg-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.dlg-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: 0.1px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+:host-context(.mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 24px;
+    overflow: hidden;
+
+    tb-iot-hub-installed-items-table {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    @media #{$mat-gt-xs} {
+      height: 500px;
+    }
+
+    @media #{$mat-gt-sm} {
+      width: 700px;
+    }
+
+    @media #{$mat-gt-md} {
+      width: 800px;
+    }
+  }
+
+  .mat-mdc-dialog-actions {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 8px;
+  }
+}

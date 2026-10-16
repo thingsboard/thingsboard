@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -161,6 +148,25 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testEditOthersAlarmCommentIsProhibited() throws Exception {
+        loginCustomerUser();
+        AlarmComment alarmComment = createAlarmComment(alarm.getId());
+
+        JsonNode newComment = JacksonUtil.newObjectNode().set("text", new TextNode("Second customer rewrite"));
+        alarmComment.setComment(newComment);
+
+        loginSecondCustomerUser();
+        doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("User is not allowed to edit other user's comment")));
+
+        loginTenantAdmin();
+        doPost("/api/alarm/" + alarm.getId() + "/comment", alarmComment)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("User is not allowed to edit other user's comment")));
+    }
+
+    @Test
     public void testUpdateAlarmViaDifferentTenant() throws Exception {
         loginTenantAdmin();
         AlarmComment savedComment = createAlarmComment(alarm.getId());
@@ -209,10 +215,42 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
         AlarmComment expectedAlarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)
-                .comment(JacksonUtil.newObjectNode().put("text", String.format("User %s deleted his comment",
+                .comment(JacksonUtil.newObjectNode().put("text", String.format("Comment was deleted by user %s",
                         CUSTOMER_USER_EMAIL)))
                 .build();
+        // The audit log receives the persisted comment, and AlarmComment equality covers the
+        // inherited id and createdTime, which the builder cannot populate.
+        expectedAlarmComment.setId(alarmComment.getId());
+        expectedAlarmComment.setCreatedTime(alarmComment.getCreatedTime());
         testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
+    }
+
+    @Test
+    public void testDeleteOthersAlarmCommentIsAllowedForAuthorOrTenantAdmin() throws Exception {
+        loginCustomerUser();
+        AlarmComment alarmComment = createAlarmComment(alarm.getId());
+
+        loginSecondCustomerUser();
+        Mockito.reset(tbClusterService, auditLogService);
+
+        doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString("User is not allowed to delete other user's comment")));
+
+        loginTenantAdmin();
+        doDelete("/api/alarm/" + alarm.getId() + "/comment/" + alarmComment.getId())
+                .andExpect(status().isOk());
+        AlarmComment expectedAlarmComment = AlarmComment.builder()
+                .alarmId(alarm.getId())
+                .type(AlarmCommentType.SYSTEM)
+                .comment(JacksonUtil.newObjectNode().put("text", String.format("Comment was deleted by user %s",
+                        TENANT_ADMIN_EMAIL)))
+                .build();
+        // The audit log receives the persisted comment, and AlarmComment equality covers the
+        // inherited id and createdTime, which the builder cannot populate.
+        expectedAlarmComment.setId(alarmComment.getId());
+        expectedAlarmComment.setCreatedTime(alarmComment.getCreatedTime());
+        testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
     }
 
     @Test
@@ -234,15 +272,19 @@ public class AlarmCommentControllerTest extends AbstractControllerTest {
 
         assertThat(systemComment.getId()).isEqualTo(alarmComment.getId());
         assertThat(systemComment.getType()).isEqualTo(AlarmCommentType.SYSTEM);
-        assertThat(systemComment.getComment().get("text").asText()).isEqualTo(String.format("User %s deleted his comment",
+        assertThat(systemComment.getComment().get("text").asText()).isEqualTo(String.format("Comment was deleted by user %s",
                 TENANT_ADMIN_EMAIL));
 
         AlarmComment expectedAlarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)
-                .comment(JacksonUtil.newObjectNode().put("text", String.format("User %s deleted his comment",
+                .comment(JacksonUtil.newObjectNode().put("text", String.format("Comment was deleted by user %s",
                         TENANT_ADMIN_EMAIL)))
                 .build();
+        // The audit log receives the persisted comment, and AlarmComment equality covers the
+        // inherited id and createdTime, which the builder cannot populate.
+        expectedAlarmComment.setId(alarmComment.getId());
+        expectedAlarmComment.setCreatedTime(alarmComment.getCreatedTime());
         testLogEntityActionEntityEqClass(alarm, alarm.getId(), tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED_COMMENT, 1, expectedAlarmComment);
     }
 

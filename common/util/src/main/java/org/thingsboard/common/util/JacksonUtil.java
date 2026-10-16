@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.common.util;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -434,10 +421,8 @@ public class JacksonUtil {
 
     private static void toFlatMap(JsonNode node, String currentPath, Map<String, String> map) {
         if (node.isObject()) {
-            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
             currentPath = currentPath.isEmpty() ? "" : currentPath + ".";
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> entry = fields.next();
+            for (Map.Entry<String, JsonNode> entry : node.properties()) {
                 toFlatMap(entry.getValue(), currentPath + entry.getKey(), map);
             }
         } else if (node.isValueNode()) {
@@ -541,8 +526,7 @@ public class JacksonUtil {
                         }
                     } else if (node.isObject()) {
                         ObjectNode on = (ObjectNode) node;
-                        for (Iterator<Map.Entry<String, JsonNode>> it = on.fields(); it.hasNext(); ) {
-                            var kv = it.next();
+                        for (Map.Entry<String, JsonNode> kv : on.properties()) {
                             if (variableName != null) {
                                 tasks.add(task.next(kv.getValue(), variableName, kv.getKey()));
                             } else {

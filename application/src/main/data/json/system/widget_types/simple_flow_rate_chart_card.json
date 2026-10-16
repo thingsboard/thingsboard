@@ -1,7 +1,7 @@
 {
   "fqn": "simple_flow_rate_chart_card",
   "name": "Simple flow rate chart card",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/simple_flow_rate_chart_card_(1).svg",
   "description": "Displays historical flow rate values as a simplified chart. Optionally may display the corresponding latest flow rate value.",
   "descriptor": {

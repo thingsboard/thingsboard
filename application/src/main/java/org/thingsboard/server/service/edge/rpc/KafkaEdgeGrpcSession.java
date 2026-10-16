@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc;
 
 import com.google.common.util.concurrent.Futures;
@@ -70,9 +57,11 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
         log.trace("[{}][{}] starting processing edge events", tenantId, edge.getId());
-        if (!isConnected() || isSyncInProgress() || isHighPriorityProcessing) {
+        // Defensive backstop: the loop already gates polling on readiness; this only fires on the narrow race
+        // where readiness flips during poll(), and that already-polled batch is dropped here (can't rewind).
+        if (!isReadyToProcessGeneralEvents()) {
             log.debug("[{}][{}] edge not connected, edge sync is not completed or high priority processing in progress, " +
-                      "connected = {}, sync in progress = {}, high priority in progress = {}. Skipping iteration",
+                            "connected = {}, sync in progress = {}, high priority in progress = {}. Skipping iteration",
                     tenantId, edge.getId(), isConnected(), isSyncInProgress(), isHighPriorityProcessing);
             return;
         }
@@ -96,6 +85,10 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
         }
     }
 
+    private boolean isReadyToProcessGeneralEvents() {
+        return isConnected() && !isSyncInProgress() && !isHighPriorityProcessing;
+    }
+
     @Override
     public ListenableFuture<Boolean> migrateEdgeEvents() throws Exception {
         return super.processEdgeEvents();
@@ -103,7 +96,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     @Override
     public ListenableFuture<Boolean> processEdgeEvents() {
-        if (!isConnected() || isSyncInProgress() || isHighPriorityProcessing) {
+        if (!isReadyToProcessGeneralEvents()) {
             log.warn("[{}][{}] Session is not ready (connected={}, syncInProgress={}, highPriority={}), skip starting edge event consumer",
                     tenantId, edge != null ? edge.getId() : null, isConnected(), isSyncInProgress(), isHighPriorityProcessing);
             return Futures.immediateFuture(Boolean.FALSE);
@@ -126,6 +119,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
                         .consumerCreator(() -> tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edge.getId()))
                         .consumerExecutor(consumerExecutor)
                         .threadPrefix("edge-events-" + edge.getId())
+                        .readinessCheck(this::isReadyToProcessGeneralEvents)
                         .build();
                 consumer.subscribe();
                 consumer.launch();
@@ -140,12 +134,16 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     @Override
     public void processHighPriorityEvents() {
         isHighPriorityProcessing = true;
-        super.processHighPriorityEvents();
-        isHighPriorityProcessing = false;
+        try {
+            super.processHighPriorityEvents();
+        } finally {
+            isHighPriorityProcessing = false;
+        }
     }
 
     @Override
     public boolean destroy() {
+        stopCurrentSendDownlinkMsgsTask(true);
         try {
             if (consumer != null) {
                 log.info("[{}][{}] Stopping edge event consumer...", tenantId, edge != null ? edge.getId() : null);
@@ -170,9 +168,13 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     private void awaitConsumerTermination() {
         try {
-            consumerExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
+            if (!consumerExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                // without this the thread is leaked for the whole remaining delivery-retry window (or forever, if the future is never completed).
+                consumerExecutor.shutdownNow();
+            }
         } catch (InterruptedException ie) {
             log.warn("[{}][{}] Interrupted while awaiting consumer executor termination", tenantId, edge.getId());
+            Thread.currentThread().interrupt();
         }
     }
 

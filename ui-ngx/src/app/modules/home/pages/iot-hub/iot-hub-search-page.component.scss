@@ -1,0 +1,58 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+@import "../../../../../scss/constants";
+
+:host {
+  display: block;
+  padding: 16px;
+  height: 100%;
+}
+
+// Same frame as the type pages: one even padding on the card, and the search component pulled
+// out to the card's edges by the same amount, so the rail, heading and grid line up.
+.tb-search-page {
+  --tb-search-page-pad: 40px;
+  padding: var(--tb-search-page-pad) var(--tb-search-page-pad) calc(var(--tb-search-page-pad) + 8px);
+}
+
+// Back button
+.tb-search-back-btn {
+  align-self: flex-start;
+  margin-left: -8px;
+}
+
+// Title
+.tb-search-title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: 0.25px;
+  color: rgba(0, 0, 0, 0.87);
+  margin: 0;
+}
+
+.tb-search-title-query {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Full bleed; it pads its own rows back in through --tb-search-side-pad.
+tb-iot-hub-search {
+  flex: 1;
+  min-height: 0;
+  --tb-search-side-pad: var(--tb-search-page-pad);
+  margin-left: calc(-1 * var(--tb-search-page-pad));
+  margin-right: calc(-1 * var(--tb-search-page-pad));
+}
+
+@media #{$mat-lt-lg} {
+  .tb-search-page {
+    --tb-search-page-pad: 24px;
+  }
+}
+
+@media #{$mat-lt-sm} {
+  .tb-search-page {
+    --tb-search-page-pad: 16px;
+    gap: 16px;
+  }
+}

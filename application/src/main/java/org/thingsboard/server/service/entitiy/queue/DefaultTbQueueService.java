@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.entitiy.queue;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +14,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -45,6 +33,7 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private final QueueService queueService;
     private final TbClusterService tbClusterService;
     private final TbQueueAdmin tbQueueAdmin;
+    private final TopicService topicService;
 
     @Override
     public Queue saveQueue(Queue queue) {
@@ -173,9 +162,10 @@ public class DefaultTbQueueService extends AbstractTbEntityService implements Tb
     private void createTopicsIfNeeded(Queue queue, Queue oldQueue) {
         int newPartitions = queue.getPartitions();
         int oldPartitions = oldQueue != null ? oldQueue.getPartitions() : 0;
+        String topic = topicService.buildTopicName(queue.getTopic());
         for (int i = oldPartitions; i < newPartitions; i++) {
             tbQueueAdmin.createTopicIfNotExists(
-                    new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName(),
+                    new TopicPartitionInfo(topic, queue.getTenantId(), i, false).getFullTopicName(),
                     queue.getCustomProperties(),
                     true); // forcing topic creation because the topic may still be cached on some nodes
         }

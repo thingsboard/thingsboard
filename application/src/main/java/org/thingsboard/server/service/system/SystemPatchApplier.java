@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +22,8 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.LtsVersion;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.io.IOException;
@@ -74,6 +63,7 @@ public class SystemPatchApplier {
     private final WidgetTypeService widgetTypeService;
     private final WidgetsBundleService widgetsBundleService;
     private final ImageService imageService;
+    private final LtsMigrationService ltsMigrationService;
 
     @PostConstruct
     private void init() {
@@ -101,7 +91,9 @@ public class SystemPatchApplier {
         }
 
         try {
-            updateLtsSqlSchema();
+            String dbVersion = schemaSettingsService.getDbSchemaVersion();
+            String packageVersion = schemaSettingsService.getPackageSchemaVersion();
+            ltsMigrationService.applyMigrations(dbVersion, packageVersion);
 
             updateSqlViews();
             log.info("Updated sql database views");
@@ -129,45 +121,22 @@ public class SystemPatchApplier {
 
         log.trace("Package version: {}, DB schema version: {}", packageVersion, dbVersion);
 
-        VersionInfo packageVersionInfo = parseVersion(packageVersion);
-        VersionInfo dbVersionInfo = parseVersion(dbVersion);
-
-        if (packageVersionInfo == null || dbVersionInfo == null) {
+        LtsVersion packageVersionInfo;
+        LtsVersion dbVersionInfo;
+        try {
+            packageVersionInfo = LtsVersion.parse(packageVersion);
+            dbVersionInfo = LtsVersion.parse(dbVersion);
+        } catch (IllegalArgumentException e) {
             log.warn("Unable to parse versions. Package: {}, DB: {}", packageVersion, dbVersion);
             return false;
         }
 
-        if (!isVersionIncreased(packageVersionInfo, dbVersionInfo)) {
+        if (!packageVersionInfo.sameFamily(dbVersionInfo) || packageVersionInfo.compareTo(dbVersionInfo) <= 0) {
             return false;
         }
 
         log.info("Version increased from {} to {}. Starting system data update.", dbVersion, packageVersion);
         return true;
-    }
-
-    private boolean isVersionIncreased(VersionInfo packageVersion, VersionInfo dbVersion) {
-        if (packageVersion.major != dbVersion.major || packageVersion.minor != dbVersion.minor) {
-            return false;
-        }
-        if (packageVersion.maintenance != dbVersion.maintenance) {
-            return packageVersion.maintenance > dbVersion.maintenance;
-        }
-        return packageVersion.patch > dbVersion.patch;
-    }
-
-    private void updateLtsSqlSchema() {
-        Path sqlFile = Paths.get(installScripts.getDataDir(), "upgrade", "lts", "schema_update.sql");
-        if (!Files.exists(sqlFile)) {
-            log.trace("LTS schema update file does not exist: {}", sqlFile);
-            return;
-        }
-        try {
-            String sql = Files.readString(sqlFile);
-            jdbcTemplate.execute(sql);
-            log.info("Applied LTS SQL schema update from {}", sqlFile);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read LTS schema update file: " + sqlFile, e);
-        }
     }
 
     private void updateSqlViews() {
@@ -428,20 +397,6 @@ public class SystemPatchApplier {
         }
     }
 
-    private VersionInfo parseVersion(String version) {
-        try {
-            String[] parts = version.split("\\.");
-            int major = Integer.parseInt(parts[0]);
-            int minor = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
-            int maintenance = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
-            int patch = parts.length > 3 ? Integer.parseInt(parts[3]) : 0;
-            return new VersionInfo(major, minor, maintenance, patch);
-        } catch (Exception e) {
-            log.error("Failed to parse version: {}", version, e);
-            return null;
-        }
-    }
-
     private Stream<Path> listDir(Path dir) {
         try {
             return Files.list(dir);
@@ -451,8 +406,6 @@ public class SystemPatchApplier {
             throw new UncheckedIOException(e);
         }
     }
-
-    public record VersionInfo(int major, int minor, int maintenance, int patch) {}
 
     public record WidgetTypeStats(int created, int updated) {}
 
