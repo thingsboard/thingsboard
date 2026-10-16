@@ -17,7 +17,7 @@
     </mat-progress-bar>
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <div mat-dialog-content class="flex flex-col">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
             <mat-label>Clone device name</mat-label>
             <input matInput formControlName="cloneName" required>
             <mat-error *ngIf="cloneDeviceFormGroup.get('cloneName').hasError('required')">

@@ -16,26 +16,28 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content class="flex flex-col">
     <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label>Entity Name</mat-label>
         <input matInput formControlName="entityName" required>
         <mat-error *ngIf="addEntityFormGroup.get('entityName').hasError('required')">
           Entity name is required.
         </mat-error>
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label>Entity Label</mat-label>
         <input matInput formControlName="entityLabel" >
       </mat-form-field>
     </div>
     <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
       <tb-entity-type-select
+        [appearance]="'outline'"
         class="mat-block"
         formControlName="entityType"
         [showLabel]="true"
         [allowedEntityTypes]="allowedEntityTypes"
       ></tb-entity-type-select>
       <tb-entity-subtype-autocomplete
+        [appearance]="'outline'"
         *ngIf="addEntityFormGroup.get('entityType').value == 'ASSET'"
         class="mat-block flex-1"
         formControlName="type"
@@ -43,6 +45,7 @@
         [entityType]="'ASSET'"
       ></tb-entity-subtype-autocomplete>
       <tb-entity-subtype-autocomplete
+        [appearance]="'outline'"
         *ngIf="addEntityFormGroup.get('entityType').value != 'ASSET'"
         class="mat-block flex-1"
         formControlName="type"
@@ -52,27 +55,27 @@
     </div>
     <div formGroupName="attributes" class="flex flex-col">
       <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>Latitude</mat-label>
           <input type="number" step="any" matInput formControlName="latitude">
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>Longitude</mat-label>
           <input type="number" step="any" matInput formControlName="longitude">
         </mat-form-field>
       </div>
       <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>Address</mat-label>
           <input matInput formControlName="address">
         </mat-form-field>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>Owner</mat-label>
           <input matInput formControlName="owner">
         </mat-form-field>
       </div>
       <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label>Integer Value</mat-label>
           <input type="number" step="1" matInput formControlName="number">
           <mat-error *ngIf="addEntityFormGroup.get('attributes.number').hasError('pattern')">
@@ -94,7 +97,7 @@
           <div [formGroupName]="i" class="mat-elevation-z2 flex flex-1 flex-row" style="padding: 5px 0 5px 5px;">
             <div class="flex flex-1 flex-col">
               <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-                <mat-form-field class="mat-block" style="min-width: 100px;">
+                <mat-form-field class="mat-block" style="min-width: 100px;" appearance="outline">
                   <mat-label>Direction</mat-label>
                   <mat-select formControlName="direction" name="direction">
                     <mat-option *ngFor="let direction of entitySearchDirection | keyvalue" [value]="direction.value">
@@ -106,6 +109,7 @@
                   </mat-error>
                 </mat-form-field>
                 <tb-relation-type-autocomplete
+                  [appearance]="'outline'"
                   class="mat-block flex-1"
                   formControlName="relationType"
                   [required]="true">
@@ -113,6 +117,7 @@
               </div>
               <div class="flex flex-row xs:flex-col">
                 <tb-entity-select
+                  [appearance]="'outline'"
                   class="mat-block flex-1"
                   [required]="true"
                   formControlName="relatedEntity">
