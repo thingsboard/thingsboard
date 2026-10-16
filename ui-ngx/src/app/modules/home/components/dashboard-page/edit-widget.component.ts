@@ -7,7 +7,7 @@ import { AppState } from '@core/core.state';
 import { MatDialog } from '@angular/material/dialog';
 import { Dashboard, WidgetLayout } from '@shared/models/dashboard.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
-import { Widget, WidgetConfigMode } from '@shared/models/widget.models';
+import { Widget, widgetActionSources, WidgetConfigMode } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
@@ -53,6 +53,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
   @coerceBoolean()
   isDefaultBreakpoint= true;
 
+  @Input()
+  @coerceBoolean()
+  isHtmlPage = false;
+
   @Output()
   applyWidgetConfig = new EventEmitter<void>();
 
@@ -94,7 +98,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['widget', 'widgetLayout'].includes(propName)) {
+        if (['widget', 'widgetLayout', 'isHtmlPage'].includes(propName)) {
           reloadConfig = true;
         }
       }
@@ -135,7 +139,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       widgetInfo.typeLatestDataKeySettingsForm : (widgetInfo.latestDataKeySettingsForm || []);
     const typeParameters = widgetInfo.typeParameters;
     const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
-    const actionSources = widgetInfo.actionSources;
+    const actionSources = {...widgetInfo.actionSources};
+    if (this.isHtmlPage) {
+      delete actionSources[widgetActionSources.headerButton.value];
+    }
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
 
     this.widgetConfig = {
