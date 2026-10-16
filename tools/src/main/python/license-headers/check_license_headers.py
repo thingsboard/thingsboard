@@ -801,6 +801,7 @@ class Evidence:
     identical: dict | None = None
     copies: tuple = ()
     renamed_from: tuple = ()
+    renames: tuple = ()
     deleted: dict | None = None
     directory_in_ce: bool = True
 
@@ -832,12 +833,15 @@ def infer(evidence):
                   else "same path in CE, content identical to a clean merge of its CE versions")
         return verdict(evidence.current, "apache", reason) | versions | {"identicalTo": evidence.identical}
     if evidence.renamed_from:
-        renames = sorted(evidence.renamed_from, key=lambda version: -version["similarity"])
-        if renames[0]["similarity"] >= SIMILARITY:
-            return (verdict(evidence.current, "ce-modified", f"renamed from CE {renames[0]['path']}")
-                    | {"renamedFrom": renames})
-        return unresolved(f"renamed from CE {renames[0]['path']}, but less than {SIMILARITY}% similar to it "
-                          "without the header", None, renameCandidates=renames,
+        source = evidence.renamed_from[0]["path"]
+        weakest = min(evidence.renames, key=lambda rename: rename["similarity"])
+        renames = list(evidence.renames)
+        if weakest["similarity"] >= SIMILARITY:
+            return (verdict(evidence.current, "ce-modified", f"renamed from CE {source}")
+                    | {"renamedFrom": list(evidence.renamed_from), "renames": renames})
+        return unresolved(f"renamed from CE {source}, but the rename of {weakest['from']} in {weakest['commit'][:11]} "
+                          f"is less than {SIMILARITY}% similar without the header", None,
+                          renameCandidates=list(evidence.renamed_from), renames=renames,
                           copyCandidates=list(evidence.copies))
     if evidence.module_descriptor():
         return verdict(evidence.current, NON_CE, "build descriptor of a module that does not exist in CE")
@@ -898,8 +902,8 @@ def ce_renames(repo, head, bases, ce_paths):
         names[change.source] = name
         chains[name].append(change)
         if change.source in ce_paths and name not in renames:
-            renames[name] = list(chains[name])
-    return {name: chain[-1].source for name, chain in renames.items() if continuous(repo, head, chain, changes)}
+            renames[name] = tuple(chains[name])
+    return {name: chain for name, chain in renames.items() if continuous(repo, head, chain, changes)}
 
 
 def continuous(repo, head, chain, changes):
@@ -935,10 +939,11 @@ class Comparison:
     def classify(self, name, curation):
         key = ("head", name)
         versions = self.lineage.versions(name)
-        source = None if versions else self.lineage.renames.get(name)
-        renamed_from = tuple({"path": source, "ref": base, "blob": oid,
-                              "similarity": self.rename_similarities[(name, oid)]}
-                             for base, oid in self.lineage.versions(source)) if source else ()
+        chain = () if versions else self.lineage.renames.get(name, ())
+        renamed_from = tuple({"path": chain[-1].source, "ref": base, "blob": oid}
+                             for base, oid in self.lineage.versions(chain[-1].source)) if chain else ()
+        renames = tuple({"commit": hop.commit, "from": hop.source, "to": hop.path,
+                         "similarity": self.rename_similarities[hop]} for hop in reversed(chain))
         identical = next(({"path": name, "ref": base, "blob": oid} for base, oid in versions
                           if self.normalized[(name, oid)] == self.normalized[key]), self.merges.get(name))
         copies = sorted(self.copies.get(name, []), key=lambda copy: (-copy["similarity"], copy["path"]))
@@ -951,6 +956,7 @@ class Comparison:
             identical=identical,
             copies=tuple(copies),
             renamed_from=renamed_from,
+            renames=renames,
             deleted=self.lineage.deleted.get(name),
             directory_in_ce=str(PurePosixPath(name).parent) in self.ce_directories,
         ))
@@ -965,18 +971,22 @@ def compare(repo, plugin, lineage, contents):
         for name in names:
             if name in files:
                 sources.setdefault((name, files[name]), base)
-        for source in renames.values():
+        for source in (chain[-1].source for chain in renames.values()):
             if source in files:
                 sources.setdefault((source, files[source]), base)
         for key in comparable_ce_files(files, new_paths).items():
             sources.setdefault(key, base)
-    bytes_by_id = blobs(repo, [oid for _, oid in sources])
+    hops = {hop for chain in renames.values() for hop in chain}
+    hop_blobs = {("rename", path, oid) for hop in hops for path, oid in ((hop.source, hop.old), (hop.path, hop.new))}
+    bytes_by_id = blobs(repo, [oid for _, oid in sources] + [oid for _, _, oid in hop_blobs])
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
         mycila = Mycila(repo, Path(temporary), plugin)
         for name, content in contents.items():
             mycila.add(("head", name), name, content)
         for path, oid in sorted(sources):
             mycila.add((path, oid), path, bytes_by_id[oid])
+        for key in sorted(hop_blobs):
+            mycila.add(key, key[1], bytes_by_id[key[2]])
         console.begin("Recognizing headers")
         recognized = mycila.current_headers([("head", name) for name in names])
         console.end()
@@ -984,8 +994,8 @@ def compare(repo, plugin, lineage, contents):
         normalized = mycila.strip_headers()
         headers = mycila.header_states(recognized)
         copies = normalized_copies(mycila, sources, new_paths, mycila.nonempty())
-        rename_similarities = {(name, oid): normalized_similarity(mycila, (source, oid), ("head", name))
-                               for name, source in renames.items() for _, oid in lineage.versions(source)}
+        rename_similarities = {hop: normalized_similarity(mycila, ("rename", hop.source, hop.old),
+                                                          ("rename", hop.path, hop.new)) for hop in hops}
     merges = clean_merges(repo, plugin, lineage, names, normalized)
     console.end(f"done ({len(normalized)} file versions)")
     return Comparison(
@@ -1074,7 +1084,8 @@ def describe_mismatch(row):
 def describe_unresolved(row, ref_names):
     hint = f" (hint: {row['suggestedHeader']})" if row.get("suggestedHeader") else ""
     details = [f"has {header_name(row['currentHeader'])}, no expected header yet{hint}"]
-    evidence = [(f"renamed from CE file ({candidate['similarity']}%)", candidate)
+    renamed = min((rename["similarity"] for rename in row.get("renames", [])), default=None)
+    evidence = [(f"renamed from CE file ({renamed}% at the rename)", candidate)
                 for candidate in row.get("renameCandidates", [])]
     evidence += [(f"similar CE file ({candidate['similarity']}%)", candidate)
                  for candidate in row.get("copyCandidates", [])]

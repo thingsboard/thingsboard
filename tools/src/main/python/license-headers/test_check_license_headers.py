@@ -24,6 +24,10 @@ def temporary_directory(test):
     return Path(directory.name)
 
 
+def rename_sources(lineage):
+    return {name: chain[-1].source for name, chain in lineage.renames.items()}
+
+
 def this_repository():
     return Path(p.git(Path(__file__).parent, "rev-parse", "--show-toplevel").decode().strip())
 
@@ -100,15 +104,21 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(("unresolved", "CE history had this path"), (row["status"], row["reason"]))
         self.assertEqual(deleted, row["historicalCandidate"])
 
-    def test_rename_from_ce_needs_header_less_similarity(self):
-        rename = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40, "similarity": p.SIMILARITY}
-        row = self.new(current="ce-modified", renamed_from=(rename,))
+    def test_every_rename_from_ce_needs_header_less_similarity(self):
+        version = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40}
+        first = {"commit": "d" * 40, "from": "source.java", "to": "middle.java", "similarity": 100}
+        second = {"commit": "e" * 40, "from": "middle.java", "to": "a.java", "similarity": p.SIMILARITY}
+        row = self.new(current="ce-modified", renamed_from=(version,), renames=(first, second))
         self.assertEqual(("match", "ce-modified", "renamed from CE source.java"),
                          (row["status"], row["expectedHeader"], row["reason"]))
-        weak = rename | {"similarity": p.SIMILARITY - 1}
-        row = self.new(current="ce-modified", renamed_from=(weak,), copies=(self.COPY,))
+        self.assertEqual(([version], [first, second]), (row["renamedFrom"], row["renames"]))
+        weak = second | {"similarity": p.SIMILARITY - 1}
+        row = self.new(current="ce-modified", renamed_from=(version,), renames=(first, weak), copies=(self.COPY,))
         self.assertEqual(("unresolved", None, None), (row["status"], row["expectedHeader"], row["suggestedHeader"]))
-        self.assertEqual(([weak], [self.COPY]), (row["renameCandidates"], row["copyCandidates"]))
+        self.assertEqual(([version], [first, weak], [self.COPY]),
+                         (row["renameCandidates"], row["renames"], row["copyCandidates"]))
+        self.assertEqual("renamed from CE source.java, but the rename of middle.java in eeeeeeeeeee "
+                         f"is less than {p.SIMILARITY}% similar without the header", row["reason"])
 
     def test_descriptor_of_a_module_absent_in_ce_is_non_ce_despite_similar_ce_descriptors(self):
         copy = self.COPY | {"path": "transport/mqtt/pom.xml"}
@@ -530,9 +540,9 @@ class GitHistoryTests(unittest.TestCase):
         squash = git.commit("relicensing")
         head = git("rev-parse", "HEAD")
         self.assertEqual({"Final.java": "Base.java", "Squashed.java": "Other.java"},
-                         p.Lineage.load(git.root, head, [base]).renames)
+                         rename_sources(p.Lineage.load(git.root, head, [base])))
         with patch.object(p, "RELICENSING_COMMIT", squash):
-            self.assertEqual({"Final.java": "Base.java"}, p.Lineage.load(git.root, head, [base]).renames)
+            self.assertEqual({"Final.java": "Base.java"}, rename_sources(p.Lineage.load(git.root, head, [base])))
 
     def test_lineage_stops_a_rename_chain_at_a_deletion_or_addition(self):
         git = GitFixture(temporary_directory(self), "ce")
@@ -553,7 +563,7 @@ class GitHistoryTests(unittest.TestCase):
         git.commit("reuse the CE path")
         git("mv", "Reused.java", "Moved.java")
         git.commit("rename the reused path")
-        self.assertEqual({}, p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base]).renames)
+        self.assertEqual({}, rename_sources(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
 
     def test_lineage_keeps_a_rename_whose_path_changed_only_on_another_branch(self):
         git = GitFixture(temporary_directory(self), "ce")
@@ -570,7 +580,7 @@ class GitHistoryTests(unittest.TestCase):
         git("checkout", "downstream")
         git("merge", "--no-ff", "side", "-m", "integrate side")
         self.assertEqual({"Constants.java": "Theme.java"},
-                         p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base]).renames)
+                         rename_sources(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
 
     @requires_merge_file_object_id
     def test_merge_blobs_returns_only_clean_merges(self):
@@ -813,22 +823,57 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual({"Source.java"}, {version["path"] for version in row["renamedFrom"]})
 
     @requires_merge_file_object_id
-    def test_rename_of_rewritten_ce_file_needs_a_decision(self):
-        rewritten = "".join(f"TB implementation {index}\n" for index in range(20))
-        self.git.write("Source.java", fixture(p.NON_CE) + rewritten)
-        self.git.commit("rewrite CE file")
+    def test_growth_after_a_rename_from_ce_does_not_matter(self):
         self.git("mv", "Source.java", "Moved.java")
-        self.git.commit("rename rewritten file")
+        self.git.write("Moved.java", fixture("ce-modified") + self.body)
+        rename = self.git.commit("rename CE file")
+        growth = "".join(f"TB implementation {index}\n" for index in range(200))
+        self.git.write("Moved.java", fixture("ce-modified") + self.body + growth)
+        self.git.commit("grow the renamed file")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual(("match", "ce-modified"), (row["status"], row["expectedHeader"]))
+        self.assertEqual([{"commit": rename, "from": "Source.java", "to": "Moved.java", "similarity": 100}],
+                         row["renames"])
+
+    def rename_with_a_shared_large_header(self, *moves):
+        padding = "// " + "shared downstream notice " * 120 + "\n"
+        self.git.write("Source.java", padding + self.body)
+        self.git.commit("large header on the CE file")
+        for source, target in moves[:-1]:
+            self.git("mv", source, target)
+            self.git.commit("rename")
+        source, target = moves[-1]
+        rewritten = padding + "".join(f"TB implementation {index}\n" for index in range(20))
+        self.git("mv", source, target)
+        self.git.write(target, rewritten)
+        self.git.commit("rename and rewrite")
+        return rewritten
+
+    @requires_merge_file_object_id
+    def test_rename_from_ce_below_the_threshold_needs_a_decision(self):
+        rewritten = self.rename_with_a_shared_large_header(("Source.java", "Moved.java"))
         scope = [name if name != "Source.java" else "Moved.java" for name in self.scope]
         for args in ((), ("--fix",)):
             code, report, output = self.check(*args, scope=scope)
             row = self.rows(report)["Moved.java"]
-            self.assertEqual((1, "unresolved", p.NON_CE), (code, row["status"], row["currentHeader"]))
+            self.assertEqual((1, "unresolved"), (code, row["status"]))
             self.assertEqual({"Source.java"}, {candidate["path"] for candidate in row["renameCandidates"]})
-            self.assertLess(max(candidate["similarity"] for candidate in row["renameCandidates"]), p.SIMILARITY)
+            self.assertLess(row["renames"][0]["similarity"], p.SIMILARITY)
             self.assertEqual([], report["restamped"])
             self.assertIn("    renamed from CE file (", output)
-        self.assertEqual(fixture(p.NON_CE) + rewritten, (self.repo / "Moved.java").read_text())
+        self.assertEqual(rewritten, (self.repo / "Moved.java").read_text())
+
+    @requires_merge_file_object_id
+    def test_every_rename_of_a_chain_needs_the_threshold(self):
+        self.rename_with_a_shared_large_header(("Source.java", "Middle.java"), ("Middle.java", "Final.java"))
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Final.java" for name in self.scope])
+        row = self.rows(report)["Final.java"]
+        self.assertEqual("unresolved", row["status"])
+        self.assertEqual([("Source.java", "Middle.java"), ("Middle.java", "Final.java")],
+                         [(rename["from"], rename["to"]) for rename in row["renames"]])
+        self.assertEqual(100, row["renames"][0]["similarity"])
+        self.assertLess(row["renames"][1]["similarity"], p.SIMILARITY)
 
     @requires_merge_file_object_id
     def test_fix_removes_redundant_and_orphaned_curations(self):

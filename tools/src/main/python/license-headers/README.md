@@ -31,9 +31,10 @@ counts only while its path's history is continuous: a commit that descends from
 the rename and deletes or adds the renamed path breaks it, and so does a
 deletion of the CE path before the rename. A file created at a path that a CE
 file was once renamed to therefore does not inherit that CE file. Git scores a
-rename with the header included, so the rename counts only when the content
-without the header is at least 50% similar to the CE file; a weaker rename needs
-a decision.
+rename with the header included, so each rename in the chain counts only when
+the file without the header is at least 50% similar before and after that
+rename; a weaker rename needs a decision. Changes made before or after a rename
+do not affect its score.
 
 Any other file whose path does not exist in CE is `busl`, except when it needs a
 decision: its content is at least 50% similar to a CE file, or CE history once
