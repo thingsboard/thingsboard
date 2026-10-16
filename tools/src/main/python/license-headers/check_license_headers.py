@@ -887,21 +887,31 @@ def ce_renames(repo, head, bases, ce_paths):
     # deleted CE files with similar PE files: neither is a rename.
     raw = git(repo, "log", "--no-merges", "--topo-order", "--raw", "--no-abbrev", "-M", "-l0", "-z",
               "--diff-filter=RAD", "--format=%x1e%H", head, "--not", *bases, "--")
-    names = {}
+    names, renames, chains, changes = {}, {}, defaultdict(list), defaultdict(list)
     for change in parse_history(raw):
         if change.commit == RELICENSING_COMMIT:
             continue
         if change.status[0] != "R":
-            names[change.path] = None
+            changes[change.path].append(change)
             continue
         name = names.pop(change.path, change.path)
-        if name is not None:
-            names[change.source] = name
-    renames = {}
-    for source, name in names.items():
-        if name is not None and source in ce_paths:
-            renames.setdefault(name, source)
-    return renames
+        names[change.source] = name
+        chains[name].append(change)
+        if change.source in ce_paths and name not in renames:
+            renames[name] = list(chains[name])
+    return {name: chain[-1].source for name, chain in renames.items() if continuous(repo, head, chain, changes)}
+
+
+def continuous(repo, head, chain, changes):
+    later = head
+    for rename in chain:
+        if any(contains(repo, rename.commit, change.commit) and contains(repo, change.commit, later)
+               for change in changes[rename.path]):
+            return False
+        later = rename.commit
+    first = chain[-1]
+    return not any(change.status == "D" and contains(repo, change.commit, first.commit)
+                   for change in changes[first.source])
 
 
 def comparable_ce_files(comparison, names):

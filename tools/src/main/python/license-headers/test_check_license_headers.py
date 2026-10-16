@@ -555,6 +555,23 @@ class GitHistoryTests(unittest.TestCase):
         git.commit("rename the reused path")
         self.assertEqual({}, p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base]).renames)
 
+    def test_lineage_keeps_a_rename_whose_path_changed_only_on_another_branch(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("Theme.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "Theme.java", "Constants.java")
+        git.commit("rename")
+        git("checkout", "-b", "side", base)
+        git.write("Constants.java", "".join(f"unrelated line {index}\n" for index in range(20)))
+        git.commit("unrelated file")
+        git("rm", "-q", "Constants.java")
+        git.commit("revert")
+        git("checkout", "downstream")
+        git("merge", "--no-ff", "side", "-m", "integrate side")
+        self.assertEqual({"Constants.java": "Theme.java"},
+                         p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base]).renames)
+
     @requires_merge_file_object_id
     def test_merge_blobs_returns_only_clean_merges(self):
         git = GitFixture(temporary_directory(self), "main")
