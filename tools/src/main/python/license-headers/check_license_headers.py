@@ -915,7 +915,7 @@ def ce_renames(repo, head, bases, ce_paths):
     chains = {}
     for name in sorted(set(tree(repo, head)) & set(sources) - ce_paths):
         if reaches(name, sources, ce_paths):
-            chain = rename_chain(repo, head, bases, hops, name)
+            chain = rename_chain(repo, head, bases, hops, name, ce_paths)
             if chain.hops and (chain.origin == "ambiguous" or chain.source in ce_paths):
                 chains[name] = chain
     return chains
@@ -933,7 +933,7 @@ def reaches(name, sources, targets):
     return False
 
 
-def rename_chain(repo, head, bases, hops, name):
+def rename_chain(repo, head, bases, hops, name, ce_paths):
     chain, revision = [], head
     while True:
         added = creations(repo, revision, bases, name)
@@ -941,7 +941,8 @@ def rename_chain(repo, head, bases, hops, name):
             origin = "ce" if in_ce_history(repo, revision, bases, name) else "downstream"
             return RenameChain(tuple(reversed(chain)), origin)
         if not all(contains(repo, older, added[0]) for older in added[1:]):
-            renamed = [hops[(commit, name)] for commit in added if (commit, name) in hops]
+            renamed = sorted((hops[(commit, name)] for commit in added if (commit, name) in hops),
+                             key=lambda hop: hop.source not in ce_paths)
             return RenameChain(tuple(reversed(chain + renamed[:1])), "ambiguous")
         hop = hops.get((added[0], name))
         if hop is None:
