@@ -69,7 +69,7 @@ public class ThingParkIntegration extends AbstractHttpIntegration<ThingParkInteg
         if (downlinkConverter != null) {
             downlinkUrl = json.has("downlinkUrl") ? json.get("downlinkUrl").asText() : DEFAULT_DOWNLINK_URL;
 
-            SslContext sslContext = SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build();
+            SslContext sslContext = SslContextBuilder.forClient().build();
             HttpClient httpClient = HttpClient.create()
                     .runOn(context.getEventLoopGroup())
                     .secure(t -> t.sslContext(sslContext));
