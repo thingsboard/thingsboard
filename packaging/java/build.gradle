@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import org.apache.tools.ant.filters.ReplaceTokens
+import org.redline_rpm.header.Flags
 
 plugins {
     id "com.netflix.nebula.ospackage" version "12.1.1"
@@ -104,6 +105,7 @@ buildRpm {
 
     // RPM boolean expression syntax, since .or() chaining is for DEB only
     requires("(java-25 or java-25-headless or jre-25 or jre-25-headless)")
+    requires("shadow-utils", "", Flags.SCRIPT_PRE)
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -147,6 +149,7 @@ buildDeb {
     archiveFileName = "${pkgName}.deb"
 
     requires("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
+    preDepends("adduser")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
