@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesImmediateOutputStrategy;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
@@ -255,15 +257,23 @@ public class DefaultCalculatedFieldReprocessingService extends AbstractCalculate
 
     private Future<Void> saveResult(CFReprocessingCtx ctx, CalculatedFieldResult calculatedFieldResult, long ts, Strategy strategy) {
         SettableFuture<Void> future = SettableFuture.create();
+        long ttl = getOutputTtl(ctx.getCfCtx());
         if (calculatedFieldResult instanceof PropagationCalculatedFieldResult propagationResult) {
             TbCallback rootCallback = TbCallback.wrap(future);
             handlePropagationResults(propagationResult, rootCallback,
                     (entityId, res, cb) ->
-                            saveReprocessingTimeSeriesResult(ctx.getTenantId(), entityId, res.toJsonElement(), ts, strategy, cb));
+                            saveReprocessingTimeSeriesResult(ctx.getTenantId(), entityId, res.toJsonElement(), ttl, ts, strategy, cb));
         } else {
-            saveReprocessingTimeSeriesResult(ctx.getTenantId(), ctx.getEntityId(), calculatedFieldResult.toJsonElement(), ts, strategy, TbCallback.wrap(future));
+            saveReprocessingTimeSeriesResult(ctx.getTenantId(), ctx.getEntityId(), calculatedFieldResult.toJsonElement(), ttl, ts, strategy, TbCallback.wrap(future));
         }
         return future;
+    }
+
+    private long getOutputTtl(CalculatedFieldCtx cfCtx) {
+        if (cfCtx.getOutput() instanceof TimeSeriesOutput tsOutput && tsOutput.getStrategy() instanceof TimeSeriesImmediateOutputStrategy tsStrategy) {
+            return tsStrategy.getTtl();
+        }
+        return 0L;
     }
 
     private CFReprocessingCtx buildCtx(TenantId tenantId, EntityId entityId,
