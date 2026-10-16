@@ -260,7 +260,7 @@ public class ZkDiscoveryServiceTest {
 
     @Test
     public void getOtherServersIgnoresNodesWithCurrentServiceIdTest() {
-        dataList.add(new ChildData("/thingsboard/nodes/0000000011", statWithMtime(1), currentInfo.toByteArray()));
+        dataList.add(new ChildData("/thingsboard/nodes/0000000011", statWithCzxid(1), currentInfo.toByteArray()));
         dataList.add(childData);
 
         assertEquals(List.of(childInfo), zkDiscoveryService.getOtherServers());
@@ -269,8 +269,8 @@ public class ZkDiscoveryServiceTest {
     @Test
     public void getOtherServersKeepsLatestNodeForDuplicatedServiceIdTest() {
         TransportProtos.ServiceInfo latestInfo = childInfo.toBuilder().setReady(true).build();
-        dataList.add(new ChildData("/thingsboard/nodes/0000000020", statWithMtime(1), childInfo.toByteArray()));
-        dataList.add(new ChildData("/thingsboard/nodes/0000000021", statWithMtime(2), latestInfo.toByteArray()));
+        dataList.add(new ChildData("/thingsboard/nodes/0000000020", statWithCzxid(1), childInfo.toByteArray()));
+        dataList.add(new ChildData("/thingsboard/nodes/0000000021", statWithCzxid(2), latestInfo.toByteArray()));
 
         assertEquals(List.of(latestInfo), zkDiscoveryService.getOtherServers());
 
@@ -280,8 +280,21 @@ public class ZkDiscoveryServiceTest {
     }
 
     @Test
+    public void getOtherServersKeepsLatestCreatedNodeEvenIfItsMtimeIsOlderTest() {
+        TransportProtos.ServiceInfo latestInfo = childInfo.toBuilder().setReady(true).build();
+        Stat staleStat = statWithCzxid(1);
+        staleStat.setMtime(2000);
+        Stat latestStat = statWithCzxid(2);
+        latestStat.setMtime(1000);
+        dataList.add(new ChildData("/thingsboard/nodes/0000000020", staleStat, childInfo.toByteArray()));
+        dataList.add(new ChildData("/thingsboard/nodes/0000000021", latestStat, latestInfo.toByteArray()));
+
+        assertEquals(List.of(latestInfo), zkDiscoveryService.getOtherServers());
+    }
+
+    @Test
     public void nodeWithCurrentServiceIdDoesNotTriggerRecalculationTest() {
-        ChildData orphanData = new ChildData("/thingsboard/nodes/0000000011", statWithMtime(1), currentInfo.toByteArray());
+        ChildData orphanData = new ChildData("/thingsboard/nodes/0000000011", statWithCzxid(1), currentInfo.toByteArray());
 
         startNode(orphanData);
         stopNode(orphanData);
@@ -293,8 +306,8 @@ public class ZkDiscoveryServiceTest {
 
     @Test
     public void removalOfDuplicatedNodeDoesNotPublishShutdownEventTest() {
-        ChildData staleData = new ChildData("/thingsboard/nodes/0000000019", statWithMtime(1), childInfo.toByteArray());
-        ChildData liveData = new ChildData("/thingsboard/nodes/0000000020", statWithMtime(2), childInfo.toByteArray());
+        ChildData staleData = new ChildData("/thingsboard/nodes/0000000019", statWithCzxid(1), childInfo.toByteArray());
+        ChildData liveData = new ChildData("/thingsboard/nodes/0000000020", statWithCzxid(2), childInfo.toByteArray());
         startNode(staleData);
         startNode(liveData);
 
@@ -328,9 +341,9 @@ public class ZkDiscoveryServiceTest {
         return stat;
     }
 
-    private static Stat statWithMtime(long mtime) {
+    private static Stat statWithCzxid(long czxid) {
         Stat stat = new Stat();
-        stat.setMtime(mtime);
+        stat.setCzxid(czxid);
         return stat;
     }
 
