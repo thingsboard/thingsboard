@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller.plugin;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PongMessage;
@@ -34,6 +36,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -56,6 +59,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -76,6 +80,8 @@ import static org.thingsboard.server.service.ws.DefaultWebSocketService.NUMBER_O
 @Slf4j
 @RequiredArgsConstructor
 public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocketMsgEndpoint {
+
+    private static final Set<Authority> USER_AUTHORITIES = EnumSet.of(Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER);
 
     private final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
@@ -187,7 +193,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 if (StringUtils.isNotEmpty(authCmd.getApiKey())) {
                     securityCtx = apiKeyAuthenticationProvider.authenticate(authCmd.getApiKey());
                 } else {
-                    securityCtx = authenticationProvider.authenticate(authCmd.getToken());
+                    securityCtx = authenticate(authCmd.getToken());
                 }
             } catch (Exception e) {
                 close(sessionRef, CloseStatus.BAD_DATA.withReason(e.getMessage()));
@@ -326,7 +332,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         if (query != null) {
             String token = extractQueryParam(query, "token");
             if (StringUtils.isNotEmpty(token)) {
-                securityCtx = authenticationProvider.authenticate(token);
+                securityCtx = authenticate(token);
             }
         }
         return WebSocketSessionRef.builder()
@@ -345,6 +351,14 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             }
         }
         return null;
+    }
+
+    private SecurityUser authenticate(String token) {
+        SecurityUser securityUser = authenticationProvider.authenticate(token);
+        if (!USER_AUTHORITIES.contains(securityUser.getAuthority())) {
+            throw new BadCredentialsException("Token is invalid");
+        }
+        return securityUser;
     }
 
     private SessionMetaData getSessionMd(String internalSessionId) {

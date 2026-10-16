@@ -182,6 +182,38 @@ class ComposeAgentAppCreatorTest {
     }
 
     @Test
+    void ceStyleEdgeTag_resolvesTemplateRegisteredUnderPeStyleTag() {
+        AgentAppTemplate peStyleTemplate = template(AgentApplicationType.EDGE, "4.4.0EDGEPE");
+        when(templateService.findByAppTypeAndConfigTypeAndCurrentVersion(
+                AgentApplicationType.EDGE, AgentAppConfigType.DOCKER_COMPOSE, "4.4.0EDGE")).thenReturn(null);
+        when(templateService.findByAppTypeAndConfigTypeAndCurrentVersion(
+                AgentApplicationType.EDGE, AgentAppConfigType.DOCKER_COMPOSE, "4.4.0EDGEPE")).thenReturn(peStyleTemplate);
+        when(appProfileService.findProfileRelationInfosByAgentProfileIdAndAppTypeAndTemplateVersion(
+                TENANT_ID, AGENT_PROFILE_ID, AgentApplicationType.EDGE, "4.4.0EDGEPE")).thenReturn(List.of());
+
+        AgentApplication created = creator.createApp(TENANT_ID, AGENT_ID, PROJECT_NAME,
+                compose("{\"services\":{\"tb-edge\":{\"image\":\"thingsboard/tb-edge:4.4.0EDGE\"}}}"));
+
+        assertThat(created.getAppType()).isEqualTo(AgentApplicationType.EDGE);
+        assertThat(created.getTemplateVersion()).isEqualTo("4.4.0EDGEPE");
+
+        // below 4.4 a CE-style tag is Community Edge: no fallback to the PE-style template, the app stays GENERIC
+        AgentAppTemplate generic = template(AgentApplicationType.GENERIC, AgentApplicationType.GENERIC.getDefaultVersion());
+        when(templateService.findByAppTypeAndConfigTypeAndCurrentVersion(
+                AgentApplicationType.EDGE, AgentAppConfigType.DOCKER_COMPOSE, "4.2.0EDGE")).thenReturn(null);
+        when(templateService.findByAppTypeAndConfigTypeAndCurrentVersion(
+                AgentApplicationType.EDGE, AgentAppConfigType.DOCKER_COMPOSE, "4.2.0EDGEPE")).thenReturn(template(AgentApplicationType.EDGE, "4.2.0EDGEPE"));
+        when(templateService.findByAppTypeAndConfigTypeAndCurrentVersion(
+                AgentApplicationType.GENERIC, AgentAppConfigType.DOCKER_COMPOSE, AgentApplicationType.GENERIC.getDefaultVersion())).thenReturn(generic);
+
+        AgentApplication community = creator.createApp(TENANT_ID, AGENT_ID, PROJECT_NAME,
+                compose("{\"services\":{\"tb-edge\":{\"image\":\"thingsboard/tb-edge:4.2.0EDGE\"}}}"));
+
+        assertThat(community.getAppType()).isEqualTo(AgentApplicationType.GENERIC);
+        assertThat(community.getTemplateVersion()).isEqualTo(AgentApplicationType.GENERIC.getDefaultVersion());
+    }
+
+    @Test
     void noTemplateAtAll_returnsNull() {
         when(templateService.findByAppTypeAndConfigTypeAndCurrentVersion(any(), any(), any())).thenReturn(null);
 
