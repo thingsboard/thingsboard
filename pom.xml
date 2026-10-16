@@ -58,6 +58,8 @@
              module depends on the ZIP artifact, so this flag can be toggled freely without
              breaking downstream modules. -->
         <pkg.skip.zip>false</pkg.skip.zip>
+        <!-- Set to true in services that render text with AWT (SVG previews, reports): the JDK needs fontconfig and a font. -->
+        <pkg.requiresFonts>false</pkg.requiresFonts>
         <pkg.user>thingsboard</pkg.user>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
@@ -628,6 +630,7 @@
                                     <arg>-PpkgUser=${pkg.user}</arg>
                                     <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                                     <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
+                                    <arg>-PpkgRequiresFonts=${pkg.requiresFonts}</arg>
                                     <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
                                     <arg>-PskipDeb=${pkg.skip.deb}</arg>
                                     <arg>-PskipRpm=${pkg.skip.rpm}</arg>

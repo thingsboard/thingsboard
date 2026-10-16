@@ -27,6 +27,7 @@
         <pkg.name>tb-report</pkg.name>
         <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
         <pkg.copyInstallScripts>true</pkg.copyInstallScripts>
+        <pkg.requiresFonts>true</pkg.requiresFonts>
         <pkg.implementationTitle>ThingsBoard Report Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.server.report.ThingsboardReportApplication</pkg.mainClass>
     </properties>

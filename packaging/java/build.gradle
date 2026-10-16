@@ -106,6 +106,10 @@ buildRpm {
     // RPM boolean expression syntax, since .or() chaining is for DEB only
     requires("(java-25 or java-25-headless or jre-25 or jre-25-headless)")
     requires("shadow-utils", "", Flags.SCRIPT_PRE)
+    if ("${pkgRequiresFonts}".equalsIgnoreCase("true")) {
+        requires("fontconfig")
+        requires("dejavu-sans-fonts")
+    }
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -150,6 +154,12 @@ buildDeb {
 
     requires("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
     preDepends("adduser")
+    if ("${pkgRequiresFonts}".equalsIgnoreCase("true")) {
+        requires("fontconfig")
+        requires("fonts-dejavu-core")
+        // Debian and Ubuntu OpenJDK builds load the system HarfBuzz for text layout but only recommend it
+        requires("libharfbuzz0b")
+    }
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
