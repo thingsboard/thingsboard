@@ -38,8 +38,11 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.exception.AccessDeniedException;
+import org.thingsboard.server.exception.EntityNotFoundException;
 import org.thingsboard.server.exception.UnauthorizedException;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -275,6 +278,26 @@ public class DefaultWebSocketService implements WebSocketService {
         sendUpdate(sessionRef, update);
     }
 
+    // Logs the failure at a level that matches its cause and answers the subscription with the corresponding error.
+    private void handleSubscriptionFailure(WebSocketSessionRef sessionRef, int cmdId, String defaultErrorMsg, Throwable e) {
+        if (AccessValidator.isClientError(e)) {
+            log.debug(defaultErrorMsg, e);
+        } else {
+            log.error(defaultErrorMsg, e);
+        }
+        sendSubscriptionError(sessionRef, cmdId, defaultErrorMsg, e);
+    }
+
+    private void sendSubscriptionError(WebSocketSessionRef sessionRef, int cmdId, String defaultErrorMsg, Throwable e) {
+        if (e instanceof UnauthorizedException || e instanceof AccessDeniedException) {
+            sendError(sessionRef, cmdId, SubscriptionErrorCode.UNAUTHORIZED, SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+        } else if (e instanceof IncorrectParameterException || e instanceof EntityNotFoundException) {
+            sendError(sessionRef, cmdId, SubscriptionErrorCode.BAD_REQUEST, e.getMessage());
+        } else {
+            sendError(sessionRef, cmdId, SubscriptionErrorCode.INTERNAL_ERROR, defaultErrorMsg);
+        }
+    }
+
     private <T> void doSendUpdate(String sessionId, int cmdId, T update) {
         WsSessionMetaData md = wsSessionsMap.get(sessionId);
         if (md != null) {
@@ -479,16 +502,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
-                TelemetrySubscriptionUpdate update;
-                if (e instanceof UnauthorizedException) {
-                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
-                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
-                } else {
-                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
-                            FAILED_TO_FETCH_ATTRIBUTES);
-                }
-                sendUpdate(sessionRef, update);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_ATTRIBUTES, e);
             }
         };
 
@@ -529,15 +543,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                TelemetrySubscriptionUpdate update;
-                if (UnauthorizedException.class.isInstance(e)) {
-                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
-                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
-                } else {
-                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
-                            FAILED_TO_FETCH_DATA);
-                }
-                sendUpdate(sessionRef, update);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
             }
         };
         accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
@@ -591,8 +597,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                log.error(FAILED_TO_FETCH_ATTRIBUTES, e);
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_ATTRIBUTES);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_ATTRIBUTES, e);
             }
         };
 
@@ -671,15 +676,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
             @Override
             public void onFailure(Throwable e) {
-                TelemetrySubscriptionUpdate update;
-                if (UnauthorizedException.class.isInstance(e)) {
-                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
-                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
-                } else {
-                    update = new TelemetrySubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
-                            FAILED_TO_FETCH_DATA);
-                }
-                sendUpdate(sessionRef, update);
+                handleSubscriptionFailure(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
             }
         };
         accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_TELEMETRY, entityId,
@@ -733,10 +730,12 @@ public class DefaultWebSocketService implements WebSocketService {
             public void onFailure(Throwable e) {
                 if (e instanceof RateLimitExceededException || e.getCause() instanceof RateLimitExceededException) {
                     log.trace("[{}] Tenant rate limit detected for subscription: [{}]:{}", sessionRef.getSecurityCtx().getTenantId(), entityId, cmd);
+                } else if (AccessValidator.isClientError(e)) {
+                    log.debug(FAILED_TO_FETCH_DATA, e);
                 } else {
                     log.info(FAILED_TO_FETCH_DATA, e);
                 }
-                sendError(sessionRef, cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR, FAILED_TO_FETCH_DATA);
+                sendSubscriptionError(sessionRef, cmd.getCmdId(), FAILED_TO_FETCH_DATA, e);
             }
         };
     }
