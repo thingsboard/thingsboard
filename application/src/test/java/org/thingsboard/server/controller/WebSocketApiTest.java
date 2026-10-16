@@ -1160,7 +1160,7 @@ public class WebSocketApiTest extends AbstractControllerTest {
         assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendTelemetry callback");
     }
 
-    private void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
+    protected void sendAttributes(Device device, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         sendAttributes(device.getTenantId(), device.getId(), scope, attrData);
     }
 
