@@ -103,6 +103,11 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
+    // The RPM writer overwrites the file in place without truncating it, so a smaller rebuild keeps stale bytes
+    doFirst {
+        archiveFile.get().asFile.delete()
+    }
+
     // RPM boolean expression syntax, since .or() chaining is for DEB only
     requires("(java-25 or java-25-headless or jre-25 or jre-25-headless)")
     requires("shadow-utils", "", Flags.SCRIPT_PRE)
