@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import org.redline_rpm.header.Flags
+
 plugins {
     id "com.netflix.nebula.ospackage" version "12.1.1"
 }
@@ -72,6 +74,13 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
+    // The RPM writer overwrites the file in place without truncating it, so a smaller rebuild keeps stale bytes
+    doFirst {
+        archiveFile.get().asFile.delete()
+    }
+
+    requires("shadow-utils", "", Flags.SCRIPT_PRE)
+
     preInstall file("${buildDir}/control/rpm/preinst")
     postInstall file("${buildDir}/control/rpm/postinst")
     preUninstall file("${buildDir}/control/rpm/prerm")
@@ -101,6 +110,8 @@ buildDeb {
     arch = "amd64"
 
     archiveFileName = "${pkgName}.deb"
+
+    preDepends("adduser")
 
     configurationFile("${pkgInstallFolder}/conf/${pkgName}.conf")
     configurationFile("${pkgInstallFolder}/conf/custom-environment-variables.yml")
