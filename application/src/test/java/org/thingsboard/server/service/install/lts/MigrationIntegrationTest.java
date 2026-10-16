@@ -452,6 +452,25 @@ public class MigrationIntegrationTest extends AbstractControllerTest {
      * DDL does not. The single-row index is compared exactly: there is only ever one right form of it.
      */
     @Test
+    public void appliesSchemaForV4410CreatesCalculatedFieldTenantIdIndex() {
+        // The test-context schema already ships the index (schema-entities-idx.sql), so drop it first to prove the
+        // 4.4.1.0 schema_update.sql re-creates it. The finally block restores it for the shared DaoSqlTest schema.
+        try {
+            jdbcTemplate.execute("DROP INDEX IF EXISTS idx_calculated_field_tenant_id_id");
+            assertFalse(indexExists("idx_calculated_field_tenant_id_id"));
+
+            migrationService.applyMigrations("4.4.0.0", "4.4.1.0", false, () -> {});
+
+            assertTrue(indexExists("idx_calculated_field_tenant_id_id"));
+            assertEquals("CREATE INDEX idx_calculated_field_tenant_id_id ON public.calculated_field USING btree (tenant_id, id)",
+                    jdbcTemplate.queryForObject("SELECT indexdef FROM pg_indexes WHERE indexname = ?", String.class,
+                            "idx_calculated_field_tenant_id_id"));
+        } finally {
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_calculated_field_tenant_id_id ON calculated_field(tenant_id, id)");
+        }
+    }
+
+    @Test
     public void everyTbClusterDdlCopyIsConsistentWithSchemaEntities() {
         String schemaEntities = readResource("sql/schema-entities.sql");
 
@@ -704,6 +723,12 @@ public class MigrationIntegrationTest extends AbstractControllerTest {
         Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = ? AND column_name = ?)",
                 Boolean.class, table, column);
+        return Boolean.TRUE.equals(exists);
+    }
+
+    private boolean indexExists(String indexName) {
+        Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = ?)", Boolean.class, indexName);
         return Boolean.TRUE.equals(exists);
     }
 

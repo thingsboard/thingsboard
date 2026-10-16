@@ -103,6 +103,21 @@ development - which is why every generated report carries the non-production not
   -DblackBoxTests.azureServiceBusDownlinkTopicName=YOUR_TOPIC_NAME 
   -DblackBoxTests.azureServiceBusDownlinkSubName=YOUR_SUB_NAME
 
+  Note: for The Things Stack (TTN) integration add next VM options:
+
+  -DblackBoxTests.ttnRegion=YOUR_REGION
+  -DblackBoxTests.ttnUsername=YOUR_USERNAME
+  -DblackBoxTests.ttnPassword=YOUR_API_KEY
+  -DblackBoxTests.ttnAppId=YOUR_APPLICATION_ID
+  -DblackBoxTests.ttnDeviceId=YOUR_DEVICE_ID
+
+  Note: for Google Pub/Sub integration add next VM options:
+
+  -DblackBoxTests.pubSubProjectId=YOUR_PROJECT_ID
+  -DblackBoxTests.pubSubSubscriptionId=YOUR_SUBSCRIPTION_ID
+  -DblackBoxTests.pubSubTopicId=YOUR_TOPIC_ID
+  -DblackBoxTests.pubSubServiceAccountKey=YOUR_SERVICE_ACCOUNT_KEY (raw JSON, path to the key file, or base64-encoded JSON)
+
 - To run the black box tests with using local env run tests in the [msa/black-box-tests](../black-box-tests) directory with runLocal property:
 
         mvn clean install -DblackBoxTests.skip=false -DrunLocal=true
