@@ -189,6 +189,22 @@ export interface ColorRangeSettings extends AdvancedColorMode {
   rangeAdvanced?: AdvancedColorRange[];
 }
 
+export const normalizeColorRangeSettings = (rangeList: ColorRangeSettings | ColorRange[]): ColorRangeSettings => {
+  if (!isDefinedAndNotNull(rangeList)) {
+    return rangeList as ColorRangeSettings;
+  }
+  if (Array.isArray(rangeList)) {
+    return {advancedMode: false, range: rangeList};
+  }
+  const result: ColorRangeSettings = {...rangeList, advancedMode: rangeList.advancedMode ?? false};
+  let range: any = result.range;
+  while (isDefinedAndNotNull(range) && !Array.isArray(range)) {
+    range = range.range;
+  }
+  result.range = range;
+  return result;
+};
+
 export interface ColorGradientSettings extends AdvancedColorMode {
   gradient?: string[];
   gradientAdvanced?: AdvancedGradient[];
@@ -561,15 +577,9 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
   }
 
   private computeFromRange(value: any): string {
-    let rangeList: any = this.settings.rangeList as Array<ColorRange>;
-    let advancedMode = false;
-
-    if (isDefinedAndNotNull(this.settings.rangeList?.advancedMode)) {
-      advancedMode = this.settings.rangeList.advancedMode;
-      rangeList = advancedMode ?
-        this.settings.rangeList.rangeAdvanced as Array<AdvancedColorRange> :
-        this.settings.rangeList.range as Array<ColorRange>;
-    }
+    const settings = normalizeColorRangeSettings(this.settings.rangeList);
+    const advancedMode = settings?.advancedMode ?? false;
+    const rangeList: any = advancedMode ? settings?.rangeAdvanced : settings?.range;
 
     if (rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
