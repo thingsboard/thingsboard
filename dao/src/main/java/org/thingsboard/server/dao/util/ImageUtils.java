@@ -70,7 +70,7 @@ public class ImageUtils {
         if (mediaTypeToFileExtension(mediaType).equals("svg")) {
             try {
                 return processSvgImage(data, mediaType, thumbnailMaxDimension);
-            } catch (Exception e) {
+            } catch (Exception | LinkageError e) {
                 if (log.isDebugEnabled()) { // printing stacktrace
                     log.warn("Couldn't process SVG image, leaving preview as original image", e);
                 } else {

@@ -190,6 +190,17 @@ class ThingsboardInstallServiceTest {
     }
 
     @Test
+    void anErrorDuringAFreshInstallIsReportedAsAnInstallFailure() throws Exception {
+        ReflectionTestUtils.setField(installService, "isUpgrade", false);
+        ExceptionInInitializerError error = new ExceptionInInitializerError("Fontconfig head is null");
+        doThrow(error).when(systemDataLoaderService).loadSystemWidgets();
+
+        assertThatThrownBy(() -> installService.performInstall())
+                .isInstanceOf(ThingsboardInstallException.class)
+                .hasCause(error);
+    }
+
+    @Test
     void postgresToCitusUpgradeFailsWhenCitusSchemaServiceMissing() {
         ReflectionTestUtils.setField(installService, "isUpgrade", true);
         ReflectionTestUtils.setField(installService, "upgradeFromVersion", "postgres-to-citus");
