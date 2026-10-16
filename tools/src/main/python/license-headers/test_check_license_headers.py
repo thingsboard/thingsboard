@@ -624,6 +624,18 @@ class GitHistoryTests(unittest.TestCase):
                 lineage = p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])
                 self.assertEqual({"B.java": ("A.java", "ce")}, rename_origins(lineage))
 
+    def test_lineage_ignores_log_settings_of_the_user(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("A.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        git.commit("rename")
+        git("config", "log.follow", "true")
+        git("config", "log.showSignature", "true")
+        self.assertEqual({"B.java": ("A.java", "ce")},
+                         rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
     def test_lineage_follows_the_side_of_a_merge_that_kept_the_file(self):
         git = GitFixture(temporary_directory(self), "ce")
         body = "".join(f"CE line {index}\n" for index in range(20))

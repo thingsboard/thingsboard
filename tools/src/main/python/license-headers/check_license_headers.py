@@ -259,8 +259,8 @@ class Change:
 
 
 def history(repo, revision, *options):
-    raw = git(repo, "log", "--first-parent", "--diff-merges=first-parent", "--root", "--raw", "--no-abbrev",
-              "--no-renames", "-z", "--format=%x1e%H", *options, revision, "--")
+    raw = git(repo, "log", "--no-show-signature", "--first-parent", "--diff-merges=first-parent", "--root", "--raw",
+              "--no-abbrev", "--no-renames", "-z", "--format=%x1e%H", *options, revision, "--")
     return list(parse_history(raw))
 
 
@@ -906,8 +906,8 @@ class RenameChain:
 
 def ce_renames(repo, head, bases, ce_paths):
     # The relicensing squash pairs deleted CE files with similar PE files; that is not a rename.
-    raw = git(repo, "log", "-M", "-l0", "--raw", "--no-abbrev", "-z", "--diff-filter=R", "--format=%x1e%H",
-              head, "--not", *bases, "--")
+    raw = git(repo, "log", "--no-show-signature", "-M", "-l0", "--raw", "--no-abbrev", "-z", "--diff-filter=R",
+              "--format=%x1e%H", head, "--not", *bases, "--")
     hops = {(change.commit, change.path): change for change in parse_history(raw) if change.commit != RELICENSING_COMMIT}
     sources = defaultdict(set)
     for hop in hops.values():
@@ -958,8 +958,8 @@ def in_ce_history(repo, revision, bases, path):
 
 
 def creations(repo, revision, bases, path):
-    return git(repo, "--literal-pathspecs", "log", "--topo-order", "--no-renames", "--diff-filter=A", "--format=%H",
-               revision, "--not", *bases, "--", path).decode().split()
+    return git(repo, "--literal-pathspecs", "log", "--no-show-signature", "--no-follow", "--topo-order", "--no-renames",
+               "--diff-filter=A", "--format=%H", revision, "--not", *bases, "--", path).decode().split()
 
 
 def comparable_ce_files(comparison, names):
