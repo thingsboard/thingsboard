@@ -802,6 +802,7 @@ class Evidence:
     copies: tuple = ()
     renamed_from: tuple = ()
     renames: tuple = ()
+    rename_origin: str = "ce"
     deleted: dict | None = None
     directory_in_ce: bool = True
 
@@ -832,16 +833,23 @@ def infer(evidence):
         reason = ("same path in CE, content identical" if "blob" in evidence.identical
                   else "same path in CE, content identical to a clean merge of its CE versions")
         return verdict(evidence.current, "apache", reason) | versions | {"identicalTo": evidence.identical}
-    if evidence.renamed_from:
-        source = evidence.renamed_from[0]["path"]
+    if evidence.renames:
+        first = evidence.renames[0]
+        source = first["from"]
         weakest = min(evidence.renames, key=lambda rename: rename["similarity"])
         renames = list(evidence.renames)
-        if weakest["similarity"] >= SIMILARITY:
+        if evidence.rename_origin == "ambiguous":
+            reason = f"renamed from {source}, but parallel branches added a file of its rename chain"
+        elif evidence.rename_origin == "downstream":
+            reason = (f"renamed from {source} in {first['commit'][:11]}, but that file was added outside CE "
+                      f"and is less than {SIMILARITY}% similar to the CE {source}")
+        elif weakest["similarity"] < SIMILARITY:
+            reason = (f"renamed from CE {source}, but the rename of {weakest['from']} in {weakest['commit'][:11]} "
+                      f"is less than {SIMILARITY}% similar without the header")
+        else:
             return (verdict(evidence.current, "ce-modified", f"renamed from CE {source}")
                     | {"renamedFrom": list(evidence.renamed_from), "renames": renames})
-        return unresolved(f"renamed from CE {source}, but the rename of {weakest['from']} in {weakest['commit'][:11]} "
-                          f"is less than {SIMILARITY}% similar without the header", None,
-                          renameCandidates=list(evidence.renamed_from), renames=renames,
+        return unresolved(reason, None, renameCandidates=list(evidence.renamed_from), renames=renames,
                           copyCandidates=list(evidence.copies))
     if evidence.module_descriptor():
         return verdict(evidence.current, NON_CE, "build descriptor of a module that does not exist in CE")
@@ -886,36 +894,64 @@ class Lineage:
         return [(base, files[name]) for base, files in self.trees.items() if name in files]
 
 
+@dataclass(frozen=True)
+class RenameChain:
+    hops: tuple
+    origin: str
+
+    @property
+    def source(self):
+        return self.hops[0].source
+
+
 def ce_renames(repo, head, bases, ce_paths):
-    # A merge diff pairs a deletion and an addition from different sides, and the relicensing squash pairs
-    # deleted CE files with similar PE files: neither is a rename.
-    raw = git(repo, "log", "--no-merges", "--topo-order", "--raw", "--no-abbrev", "-M", "-l0", "-z",
-              "--diff-filter=RAD", "--format=%x1e%H", head, "--not", *bases, "--")
-    names, renames, chains, changes = {}, {}, defaultdict(list), defaultdict(list)
-    for change in parse_history(raw):
-        if change.commit == RELICENSING_COMMIT:
-            continue
-        if change.status[0] != "R":
-            changes[change.path].append(change)
-            continue
-        name = names.pop(change.path, change.path)
-        names[change.source] = name
-        chains[name].append(change)
-        if change.source in ce_paths and name not in renames:
-            renames[name] = tuple(chains[name])
-    return {name: chain for name, chain in renames.items() if continuous(repo, head, chain, changes)}
+    # The relicensing squash pairs deleted CE files with similar PE files; that is not a rename.
+    raw = git(repo, "log", "-M", "-l0", "--raw", "--no-abbrev", "-z", "--diff-filter=R", "--format=%x1e%H",
+              head, "--not", *bases, "--")
+    hops = {(change.commit, change.path): change for change in parse_history(raw) if change.commit != RELICENSING_COMMIT}
+    sources = defaultdict(set)
+    for hop in hops.values():
+        sources[hop.path].add(hop.source)
+    chains = {}
+    for name in sorted(set(tree(repo, head)) & set(sources) - ce_paths):
+        if reaches(name, sources, ce_paths):
+            chain = rename_chain(repo, head, bases, hops, name)
+            if chain.hops and (chain.origin == "ambiguous" or chain.source in ce_paths):
+                chains[name] = chain
+    return chains
 
 
-def continuous(repo, head, chain, changes):
-    later = head
-    for rename in chain:
-        if any(contains(repo, rename.commit, change.commit) and contains(repo, change.commit, later)
-               for change in changes[rename.path]):
-            return False
-        later = rename.commit
-    first = chain[-1]
-    return not any(change.status == "D" and contains(repo, change.commit, first.commit)
-                   for change in changes[first.source])
+def reaches(name, sources, targets):
+    seen, pending = set(), [name]
+    while pending:
+        path = pending.pop()
+        if path in targets:
+            return True
+        if path not in seen:
+            seen.add(path)
+            pending.extend(sources.get(path, ()))
+    return False
+
+
+def rename_chain(repo, head, bases, hops, name):
+    chain, revision = [], head
+    while True:
+        added = creations(repo, revision, bases, name)
+        if not added:
+            return RenameChain(tuple(reversed(chain)), "ce")
+        if not all(contains(repo, older, added[0]) for older in added[1:]):
+            renamed = [hops[(commit, name)] for commit in added if (commit, name) in hops]
+            return RenameChain(tuple(reversed(chain + renamed[:1])), "ambiguous")
+        hop = hops.get((added[0], name))
+        if hop is None:
+            return RenameChain(tuple(reversed(chain)), "downstream")
+        chain.append(hop)
+        name, revision = hop.source, hop.commit + "^"
+
+
+def creations(repo, revision, bases, path):
+    return git(repo, "--literal-pathspecs", "log", "--topo-order", "--no-renames", "--diff-filter=A", "--format=%H",
+               revision, "--not", *bases, "--", path).decode().split()
 
 
 def comparable_ce_files(comparison, names):
@@ -934,16 +970,20 @@ class Comparison:
     copies: dict
     merges: dict
     rename_similarities: dict
+    source_similarities: dict
     ce_directories: frozenset
 
     def classify(self, name, curation):
         key = ("head", name)
         versions = self.lineage.versions(name)
-        chain = () if versions else self.lineage.renames.get(name, ())
-        renamed_from = tuple({"path": chain[-1].source, "ref": base, "blob": oid}
-                             for base, oid in self.lineage.versions(chain[-1].source)) if chain else ()
+        chain = None if versions else self.lineage.renames.get(name)
+        renamed_from = tuple({"path": chain.source, "ref": base, "blob": oid}
+                             for base, oid in self.lineage.versions(chain.source)) if chain else ()
         renames = tuple({"commit": hop.commit, "from": hop.source, "to": hop.path,
-                         "similarity": self.rename_similarities[hop]} for hop in reversed(chain))
+                         "similarity": self.rename_similarities[hop]} for hop in chain.hops) if chain else ()
+        origin = chain.origin if chain else "ce"
+        if origin == "downstream" and self.source_similarities[name] >= SIMILARITY:
+            origin = "ce"
         identical = next(({"path": name, "ref": base, "blob": oid} for base, oid in versions
                           if self.normalized[(name, oid)] == self.normalized[key]), self.merges.get(name))
         copies = sorted(self.copies.get(name, []), key=lambda copy: (-copy["similarity"], copy["path"]))
@@ -957,6 +997,7 @@ class Comparison:
             copies=tuple(copies),
             renamed_from=renamed_from,
             renames=renames,
+            rename_origin=origin,
             deleted=self.lineage.deleted.get(name),
             directory_in_ce=str(PurePosixPath(name).parent) in self.ce_directories,
         ))
@@ -971,12 +1012,12 @@ def compare(repo, plugin, lineage, contents):
         for name in names:
             if name in files:
                 sources.setdefault((name, files[name]), base)
-        for source in (chain[-1].source for chain in renames.values()):
+        for source in (chain.source for chain in renames.values()):
             if source in files:
                 sources.setdefault((source, files[source]), base)
         for key in comparable_ce_files(files, new_paths).items():
             sources.setdefault(key, base)
-    hops = {hop for chain in renames.values() for hop in chain}
+    hops = {hop for chain in renames.values() for hop in chain.hops}
     hop_blobs = {("rename", path, oid) for hop in hops for path, oid in ((hop.source, hop.old), (hop.path, hop.new))}
     bytes_by_id = blobs(repo, [oid for _, oid in sources] + [oid for _, _, oid in hop_blobs])
     with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
@@ -996,6 +1037,10 @@ def compare(repo, plugin, lineage, contents):
         copies = normalized_copies(mycila, sources, new_paths, mycila.nonempty())
         rename_similarities = {hop: normalized_similarity(mycila, ("rename", hop.source, hop.old),
                                                           ("rename", hop.path, hop.new)) for hop in hops}
+        source_similarities = {name: max((normalized_similarity(mycila, ("rename", chain.source, chain.hops[0].old),
+                                                                (chain.source, oid))
+                                          for _, oid in lineage.versions(chain.source)), default=0)
+                               for name, chain in renames.items() if chain.origin == "downstream"}
     merges = clean_merges(repo, plugin, lineage, names, normalized)
     console.end(f"done ({len(normalized)} file versions)")
     return Comparison(
@@ -1006,6 +1051,7 @@ def compare(repo, plugin, lineage, contents):
         copies=copies,
         merges=merges,
         rename_similarities=rename_similarities,
+        source_similarities=source_similarities,
         ce_directories=frozenset(str(parent) for files in lineage.trees.values()
                                  for path in files for parent in PurePosixPath(path).parents),
     )

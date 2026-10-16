@@ -24,17 +24,21 @@ A file whose path exists in CE is `apache` when its content without the
 header equals a CE version of it, or a clean merge of its CE versions, and
 `ce-modified` otherwise.
 
-A file whose path does not exist in CE but that a commit after the CE commits
-renamed from a CE path is `ce-modified`. Renames come from Git's rename
-detection in non-merge commits other than the relicensing commit. A rename
-counts only while its path's history is continuous: a commit that descends from
-the rename and deletes or adds the renamed path breaks it, and so does a
-deletion of the CE path before the rename. A file created at a path that a CE
-file was once renamed to therefore does not inherit that CE file. Git scores a
-rename with the header included, so each rename in the chain counts only when
-the file without the header is at least 50% similar before and after that
-rename; a weaker rename needs a decision. Changes made before or after a rename
-do not affect its score.
+A file whose path does not exist in CE but that commits after the CE commits
+renamed from a CE file is `ce-modified`. The check follows the Git history of
+the file's path back to the commit that added the current file; through a
+merge, it follows the side whose version the merge kept. When that commit is a
+rename, which Git's rename detection finds in commits other than merges and the
+relicensing commit, the check follows the source path the same way from the
+parent of the rename. The chain ends at a source that a CE commit added. A
+source that a later commit added instead, such as a CE file deleted and
+restored, counts as CE only when, without the header, it is at least 50%
+similar to the CE version of its path; otherwise the file needs a decision, and
+so does a file whose chain runs through a path that parallel branches added
+separately. Git scores a rename with the header included, so each rename in the
+chain counts only when the file without the header is at least 50% similar
+before and after that rename; a weaker rename needs a decision. Changes made
+before or after a rename do not affect its score.
 
 Any other file whose path does not exist in CE is `busl`, except when it needs a
 decision: its content is at least 50% similar to a CE file, or CE history once
