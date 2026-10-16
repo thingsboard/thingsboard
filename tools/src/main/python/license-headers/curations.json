@@ -137,7 +137,7 @@
       "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationIntegrationTest.java",
       "header": "ce-modified",
       "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java at 5954190c32f (blob cf60ec2e4b5fce7a55862805e9bd959c125ce17e); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:cbe953023311f4f98e57ac04bdae7f851ef28cdc4938c31526af68ec30d2b4c2"
+      "contentHash": "sha256:24cb205ad1c7a7577284aa2fca5b245d60e0c554accfe9f26021a6d60e0807ce"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationServiceTest.java",

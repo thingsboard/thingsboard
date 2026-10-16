@@ -119,8 +119,11 @@ public class ZkDiscoveryService implements DiscoveryService {
                     }
                 })
                 .filter(r -> !r.info().getServiceId().equals(currentServiceId))
+                // Orders ZK registrations by creation, so that a re-registration wins over a stale node of the same service.
+                // Uses the creation zxid: ZooKeeper's transaction id, which grows across leader changes and is the same
+                // on every client. ctime/mtime are not used, as they come from the leader's wall clock and may go backwards.
                 .collect(Collectors.toMap(r -> r.info().getServiceId(), Function.identity(),
-                        (a, b) -> b.data().getStat().getMtime() > a.data().getStat().getMtime() ? b : a,
+                        (a, b) -> b.data().getStat().getCzxid() > a.data().getStat().getCzxid() ? b : a,
                         LinkedHashMap::new))
                 .values().stream()
                 .map(Registration::info)
