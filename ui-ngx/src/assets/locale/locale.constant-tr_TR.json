@@ -2821,7 +2821,7 @@
     "timeseries-placeholder": "Zaman serisi",
     "target-entity": "Hedef varlık",
     "attributes-propagation": "Özellik yayılımı",
-    "attributes-propagation-hint": "Varlık görünümü, bu varlık görünümünü her kaydettiğinizde veya güncellediğinizde, hedef varlıktan belirtilen özellikleri otomatik olarak kopyalar. Performans nedenleriyle, hedef varlık özellikleri her değiştiğinde görünümde otomatik olarak güncellenmez. Otomatik yayılımı etkinleştirmek için kural zincirinizde 'copy to view' kural düğümünü yapılandırıp, 'Post attributes' ve 'Attributes Updated' mesajlarını bu düğüme yönlendirin.",
+    "attributes-propagation-hint": "Varlık görünümü, bu varlık görünümünü her kaydettiğinizde veya güncellediğinizde, hedef varlıktan belirtilen özellikleri otomatik olarak kopyalar. Performans nedenleriyle, hedef varlık özellikleri her değiştiğinde görünümde otomatik olarak güncellenmez. Otomatik yayılımı etkinleştirmek için kural zincirinizde 'copy to view' kural düğümünü yapılandırıp, 'Post Attributes' ve 'Attributes Updated' mesajlarını bu düğüme yönlendirin.",
     "timeseries-data": "Zaman serisi verisi",
     "timeseries-data-hint": "Varlık görünümünde erişilebilir olacak hedef varlığın zaman serisi veri anahtarlarını yapılandırın. Bu zaman serisi verisi yalnızca okunabilir durumdadır.",
     "search": "Varlık görünümlerinde ara",
