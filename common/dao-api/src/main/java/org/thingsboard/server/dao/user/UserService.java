@@ -52,6 +52,8 @@ public interface UserService extends EntityDaoService {
 
     UserCredentials checkUserActivationToken(TenantId tenantId, UserCredentials userCredentials);
 
+    UserCredentials checkUserPasswordResetToken(TenantId tenantId, UserCredentials userCredentials);
+
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
     void deleteUser(TenantId tenantId, User user);
