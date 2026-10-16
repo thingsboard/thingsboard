@@ -1058,12 +1058,6 @@
       "contentHash": "sha256:d052fff33aea9d375bbfa2c1655bc016a7d4232cc1aed77be9534dc23f6068e9"
     },
     {
-      "path": "monitoring/src/main/java/org/thingsboard/monitoring/service/integration/impl/HttpIntegrationHealthChecker.java",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE monitoring/src/main/java/org/thingsboard/monitoring/service/transport/impl/HttpTransportHealthChecker.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:31b8dec9f857048474b4bfde033c218418ccad72cde01fa71e96d9e19a49c66d"
-    },
-    {
       "path": "monitoring/src/main/java/org/thingsboard/monitoring/service/integration/impl/MqttIntegrationHealthChecker.java",
       "header": "busl",
       "reason": "New PE file implementing a PE feature. It was written by adapting CE monitoring/src/main/java/org/thingsboard/monitoring/service/transport/impl/MqttTransportHealthChecker.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
