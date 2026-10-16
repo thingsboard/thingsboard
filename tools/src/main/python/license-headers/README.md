@@ -24,7 +24,11 @@ A file whose path exists in CE is `apache` when its content without the
 header equals a CE version of it, or a clean merge of its CE versions, and
 `ce-modified` otherwise.
 
-A file whose path does not exist in CE is `busl`, except when it needs a
+A file whose path does not exist in CE but that a commit after the CE commits
+renamed from a CE path is `ce-modified`. Renames come from Git's rename
+detection in non-merge commits other than the relicensing commit.
+
+Any other file whose path does not exist in CE is `busl`, except when it needs a
 decision: its content is at least 50% similar to a CE file, or CE history once
 had this path. A `pom.xml` added under a directory that has no files in CE is
 `busl` even when it resembles a CE `pom.xml`: module identity, dependencies and

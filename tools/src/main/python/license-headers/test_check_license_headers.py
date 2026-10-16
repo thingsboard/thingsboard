@@ -491,6 +491,34 @@ class GitHistoryTests(unittest.TestCase):
         self.assertEqual([(removal, git("rev-parse", f"{removal}:Kept.java"))], lineage.versions("Kept.java"))
         self.assertEqual([], lineage.versions("Gone.java"))
 
+    def test_lineage_follows_renames_of_ce_paths_after_the_ce_base(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        body = "".join(f"CE line {index}\n" for index in range(20))
+        git.write("Base.java", body)
+        git.write("Other.java", "other " + body)
+        git.write("Merged.java", "merged " + body)
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "Base.java", "Middle.java")
+        git.commit("rename")
+        git("mv", "Middle.java", "Final.java")
+        git.write("Final.java", body + "downstream change\n")
+        git.commit("rename and change")
+        git("checkout", "-b", "side")
+        git("rm", "-q", "Merged.java")
+        git.commit("side deletion")
+        git.write("Added.java", "merged " + body)
+        git.commit("unrelated addition")
+        git("checkout", "downstream")
+        git("merge", "--no-ff", "side", "-m", "integrate side")
+        git("mv", "Other.java", "Squashed.java")
+        squash = git.commit("relicensing")
+        head = git("rev-parse", "HEAD")
+        self.assertEqual({"Final.java": "Base.java", "Squashed.java": "Other.java"},
+                         p.Lineage.load(git.root, head, [base]).renames)
+        with patch.object(p, "RELICENSING_COMMIT", squash):
+            self.assertEqual({"Final.java": "Base.java"}, p.Lineage.load(git.root, head, [base]).renames)
+
     def test_merge_blobs_returns_only_clean_merges(self):
         git = GitFixture(temporary_directory(self), "main")
         git.write("File.java", "one\ntwo\nthree\nfour\nfive\n")
@@ -703,6 +731,16 @@ class CheckCommandTests(unittest.TestCase):
                           "blob": self.git("rev-parse", f"{self.addition}:Deleted.java")},
                          rows["Deleted.java"]["historicalCandidate"])
         self.assertIn("Needs a decision (2)\n", output)
+
+    def test_renamed_ce_file_is_ce_modified(self):
+        self.git("mv", "Source.java", "Moved.java")
+        self.git.write("Moved.java", fixture("ce-modified") + self.body + "TB change\n")
+        self.git.commit("rename CE file")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual(("match", "ce-modified", "renamed from CE Source.java"),
+                         (row["status"], row["expectedHeader"], row["reason"]))
+        self.assertEqual({"Source.java"}, {version["path"] for version in row["renamedFrom"]})
 
     def test_fix_removes_redundant_and_orphaned_curations(self):
         self.git.write("Copy.java", fixture(p.NON_CE) + self.body)

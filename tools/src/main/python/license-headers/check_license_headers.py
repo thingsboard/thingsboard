@@ -236,6 +236,7 @@ class Change:
     old: str
     new: str
     status: str
+    source: str
 
 
 def history(repo, revision, *options):
@@ -264,7 +265,7 @@ def parse_history(raw):
             if commit is None:
                 raise Failure("Unexpected Git raw-history record")
             fields, status, paths = raw_change(token, tokens)
-            yield Change(commit, paths[0], fields[2].decode(), fields[3].decode(), status)
+            yield Change(commit, paths[-1], fields[2].decode(), fields[3].decode(), status, paths[0])
         elif token:
             raise Failure(f"Unexpected Git history token: {token[:80]!r}")
 
@@ -761,6 +762,7 @@ class Evidence:
     ce_versions: tuple = ()
     identical: dict | None = None
     copies: tuple = ()
+    renamed_from: tuple = ()
     deleted: dict | None = None
     directory_in_ce: bool = True
 
@@ -791,6 +793,9 @@ def infer(evidence):
         reason = ("same path in CE, content identical" if "blob" in evidence.identical
                   else "same path in CE, content identical to a clean merge of its CE versions")
         return verdict(evidence.current, "apache", reason) | versions | {"identicalTo": evidence.identical}
+    if evidence.renamed_from:
+        return (verdict(evidence.current, "ce-modified", f"renamed from CE {evidence.renamed_from[0]['path']}")
+                | {"renamedFrom": list(evidence.renamed_from)})
     if evidence.module_descriptor():
         return verdict(evidence.current, NON_CE, "build descriptor of a module that does not exist in CE")
     if evidence.copies:
@@ -816,6 +821,7 @@ class Lineage:
     bases: tuple
     trees: dict
     deleted: dict
+    renames: dict
 
     @classmethod
     def load(cls, repo, head, bases):
@@ -825,10 +831,28 @@ class Lineage:
         for base in bases:
             for change in history(repo, base, "--diff-filter=D"):
                 deleted.setdefault(change.path, {"path": change.path, "ref": change.commit + "^1", "blob": change.old})
-        return cls(head=head, bases=tuple(bases), trees={base: tree(repo, base) for base in bases}, deleted=deleted)
+        trees = {base: tree(repo, base) for base in bases}
+        return cls(head=head, bases=tuple(bases), trees=trees, deleted=deleted,
+                   renames=ce_renames(repo, head, bases, set().union(*trees.values())))
 
     def versions(self, name):
         return [(base, files[name]) for base, files in self.trees.items() if name in files]
+
+
+def ce_renames(repo, head, bases, ce_paths):
+    # A merge diff pairs a deletion and an addition from different sides, and the relicensing squash pairs
+    # deleted CE files with similar PE files: neither is a rename.
+    raw = git(repo, "log", "--no-merges", "--topo-order", "--raw", "--no-abbrev", "-M", "-l0", "-z",
+              "--diff-filter=R", "--format=%x1e%H", head, "--not", *bases, "--")
+    names, renames = {}, {}
+    for change in parse_history(raw):
+        if change.commit == RELICENSING_COMMIT:
+            continue
+        name = names.pop(change.path, change.path)
+        names[change.source] = name
+        if change.source in ce_paths:
+            renames.setdefault(name, change.source)
+    return renames
 
 
 def comparable_ce_files(comparison, names):
@@ -851,6 +875,9 @@ class Comparison:
     def classify(self, name, curation):
         key = ("head", name)
         versions = self.lineage.versions(name)
+        source = self.lineage.renames.get(name)
+        renamed_from = tuple({"path": source, "ref": base, "blob": oid}
+                             for base, oid in self.lineage.versions(source)) if source else ()
         identical = next(({"path": name, "ref": base, "blob": oid} for base, oid in versions
                           if self.normalized[(name, oid)] == self.normalized[key]), self.merges.get(name))
         copies = sorted(self.copies.get(name, []), key=lambda copy: (-copy["similarity"], copy["path"]))
@@ -862,6 +889,7 @@ class Comparison:
             ce_versions=tuple({"path": name, "ref": base, "blob": oid} for base, oid in versions),
             identical=identical,
             copies=tuple(copies),
+            renamed_from=renamed_from,
             deleted=self.lineage.deleted.get(name),
             directory_in_ce=str(PurePosixPath(name).parent) in self.ce_directories,
         ))
@@ -869,7 +897,7 @@ class Comparison:
 
 def compare(repo, plugin, lineage, contents):
     names = list(contents)
-    new_paths = {name for name in names if not lineage.versions(name)}
+    new_paths = {name for name in names if not lineage.versions(name) and name not in lineage.renames}
     sources = {}
     for base, files in lineage.trees.items():
         for name in names:
