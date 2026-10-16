@@ -4,6 +4,9 @@
 
 :host {
   width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 
   .mat-toolbar {
     background: none;
@@ -14,6 +17,8 @@
     flex-direction: column;
     gap: 16px;
     padding-top: 4px;
+    overflow: auto;
+    flex: 1;
   }
 
   .tb-select-interval {
