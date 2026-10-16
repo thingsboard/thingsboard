@@ -28,9 +28,8 @@ def this_repository():
     return Path(p.git(Path(__file__).parent, "rev-parse", "--show-toplevel").decode().strip())
 
 
-requires_merge_file_object_id = unittest.skipUnless(
-    b"object-id" in subprocess.run(["git", "merge-file", "-h"], capture_output=True).stdout,
-    p.MERGE_FILE_REQUIREMENT)
+MERGE_FILE_OBJECT_ID = b"object-id" in subprocess.run(["git", "merge-file", "-h"], capture_output=True).stdout
+requires_merge_file_object_id = unittest.skipUnless(MERGE_FILE_OBJECT_ID, p.MERGE_FILE_REQUIREMENT)
 
 
 def fixture_plugin(version="0"):
@@ -578,6 +577,9 @@ class GitHistoryTests(unittest.TestCase):
               self.assertRaisesRegex(p.Failure, "needs Git 2.43 or later, found git version 2.39.5")):
             p.merge_blobs(Path("."), "a", "b", "c")
 
+    def test_merge_file_probe_detects_object_id_support(self):
+        self.assertEqual(MERGE_FILE_OBJECT_ID, p.merge_file_object_id_supported())
+
     def test_ignore_filter_keeps_tracked_and_unignored_files(self):
         repo = temporary_directory(self)
         p.git(repo, "init")
@@ -652,6 +654,9 @@ class CheckCommandTests(unittest.TestCase):
     LINES = "".join(f"line {index}\n" for index in range(10))
 
     def setUp(self):
+        probe = patch.object(p, "merge_file_object_id_supported", return_value=True)
+        probe.start()
+        self.addCleanup(probe.stop)
         self.repo = temporary_directory(self)
         self.git = git = GitFixture(self.repo, "master")
         self.body = "CE source implementation\n" * 20
@@ -841,6 +846,14 @@ class CheckCommandTests(unittest.TestCase):
         self.assertIn("Removed curations (2)\n", output)
         code, report, _ = self.check("--fix", scope=scope)
         self.assertEqual((0, []), (code, report["removedCurations"]))
+
+    def test_git_without_merge_file_object_id_fails_at_startup(self):
+        with patch.object(p, "merge_file_object_id_supported", return_value=False):
+            code, report, output = self.check("--ce-ref", "lts-4.3", "--ce-remote", str(self.repo))
+        self.assertEqual((2, None), (code, report))
+        self.assertNotIn("Fetching", output)
+        self.assertIn(f"Error: git merge-file does not support --object-id. {p.MERGE_FILE_REQUIREMENT}, found git version",
+                      output)
 
     def test_missing_relicensing_commit_fails_before_the_scan(self):
         self.relicensing = "0" * 40

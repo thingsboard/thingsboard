@@ -45,7 +45,9 @@ packaging define the new artifact.
 ./check-license-headers.sh
 ```
 
-The check needs the full Git history of the clone.
+The check needs Git 2.43 or later, for `git merge-file --object-id`, and the
+full Git history of the clone. It stops at startup on an older Git, such as the
+Git that ships with macOS.
 
 ## Fix automatically
 

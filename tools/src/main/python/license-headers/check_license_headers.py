@@ -200,9 +200,21 @@ def merged_ce_bases(repo, head, baseline):
 def merge_blobs(repo, ours, base, theirs):
     result = run(["git", "merge-file", "-p", "--object-id", ours, base, theirs], repo, ok=(*range(0, 128), 129))
     if result.returncode == 129:
-        raise Failure(f"git merge-file does not support --object-id. {MERGE_FILE_REQUIREMENT}, "
-                      f"found {git(repo, 'version').decode().strip()}.")
+        raise unsupported_merge_file(repo)
     return result.stdout if result.returncode == 0 else None
+
+
+def merge_file_object_id_supported():
+    with tempfile.TemporaryDirectory(prefix="license-provenance-") as temporary:
+        git(temporary, "init", "--quiet")
+        blob = run(["git", "hash-object", "-w", "--stdin"], temporary, data=b"probe\n").stdout.decode().strip()
+        result = run(["git", "merge-file", "-p", "--object-id", blob, blob, blob], temporary, ok=(0, 129))
+    return result.returncode == 0
+
+
+def unsupported_merge_file(directory):
+    return Failure(f"git merge-file does not support --object-id. {MERGE_FILE_REQUIREMENT}, "
+                   f"found {git(directory, 'version').decode().strip()}.")
 
 
 def tree(repo, revision):
@@ -1224,6 +1236,8 @@ def prune_curations(path, rows, orphaned):
 
 def check(args):
     repo = repository_root()
+    if not merge_file_object_id_supported():
+        raise unsupported_merge_file(repo)
     head = resolve(repo, "HEAD")
     if args.ce_ref:
         console.begin(f"Fetching {args.ce_ref} from {args.ce_remote}")
