@@ -32,10 +32,6 @@
             <directory>${project.build.directory}/web</directory>
             <outputDirectory>web</outputDirectory>
         </fileSet>
-        <fileSet>
-            <directory>${pkg.win.dist}/chromium</directory>
-            <outputDirectory>chromium</outputDirectory>
-        </fileSet>
     </fileSets>
 
     <files>

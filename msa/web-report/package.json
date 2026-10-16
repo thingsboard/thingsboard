@@ -16,7 +16,6 @@
     "config": "~4.1.1",
     "express": "~5.1.0",
     "js-yaml": "^4.1.1",
-    "playwright-chromium": "~1.64.0",
     "playwright-core": "~1.64.0",
     "winston": "~3.17.0",
     "winston-daily-rotate-file": "~5.0.0"

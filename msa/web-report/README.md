@@ -1,66 +1,88 @@
 # thingsboard-web-report
 Report service for generating ThingsBoard reports
 
-## Rocky Linux 9, AlmaLinux 9, Fedora 40
+The service renders reports with **Google Chrome installed on the system**; it does not ship its own browser.
+By default it uses Chrome at its standard location:
+
+| OS | Default executable |
+|---|---|
+| Linux | `/usr/bin/google-chrome-stable` |
+| Windows | `%ProgramFiles%\Google\Chrome\Application\chrome.exe` |
+| macOS (development only) | `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` |
+
+To use another Chrome or Chromium executable, set `CHROME_EXECUTABLE` (see [Using another browser](#using-another-browser)).
+The service logs the browser path and version at startup, and fails to start if the browser is missing.
+
+## Linux
+
+The deb and rpm packages depend on `google-chrome-stable`. Install Chrome first: its package also adds Google's repository,
+so Chrome is updated together with the rest of the system.
+
+- Debian / Ubuntu:
 
 ```
-sudo yum install pango.x86_64 libXcomposite.x86_64 libXcursor.x86_64 libXdamage.x86_64 libXext.x86_64 libXi.x86_64 libXtst.x86_64 cups-libs.x86_64 libXScrnSaver.x86_64 libXrandr.x86_64 GConf2.x86_64 alsa-lib.x86_64 atk.x86_64 gtk3.x86_64 ipa-gothic-fonts xorg-x11-fonts-100dpi xorg-x11-fonts-75dpi xorg-x11-utils xorg-x11-fonts-cyrillic xorg-x11-fonts-Type1 xorg-x11-fonts-misc unzip nss -y
-```
-- Enable EPEL:
-
-```
-sudo yum install wget -y
-```
-```
-wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-sudo rpm -ivh epel-release-latest-7.noarch.rpm
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install ./google-chrome-stable_current_amd64.deb
+sudo apt install ./tb-web-report.deb
 ```
 
-- Get Roboto fonts:
+- Rocky Linux / AlmaLinux / RHEL:
 
 ```
-sudo yum install google-roboto-fonts -y
+sudo dnf install https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+sudo dnf install google-roboto-fonts google-noto-sans-cjk-ttc-fonts google-noto-emoji-color-fonts liberation-fonts
+sudo dnf install ./tb-web-report.rpm
 ```
 
-- Get Noto fonts (Japanese, Chinese, etc.):
+Install the service with `apt` / `dnf` as shown, not with `dpkg -i` / `rpm -i`, so that dependencies are checked.
+Without Chrome the installation stops with an unmet `google-chrome-stable` dependency.
 
-```
-sudo yum install google-noto-sans-cjk-ttc-fonts google-noto-serif-cjk-ttc-fonts -y
-```
+### Fonts
 
-- Install Web Report service:
+For correct Roboto, CJK and emoji output the following fonts are recommended. The deb package lists them as `Recommends`,
+so `apt` installs them by default (unless `--no-install-recommends` is used); on RHEL-like systems install them as shown above.
 
-```
-sudo rpm -Uvh [--force] tb-web-report.rpm
-```
-```
-sudo systemctl daemon-reload
-```
+| Debian / Ubuntu | Rocky / Alma |
+|---|---|
+| `fonts-roboto` | `google-roboto-fonts` |
+| `fonts-noto-cjk` | `google-noto-sans-cjk-ttc-fonts` |
+| `fonts-noto-color-emoji` | `google-noto-emoji-color-fonts` |
+| `fonts-liberation` | `liberation-fonts` |
 
-## Ubuntu 24.04
+## Windows
 
-```
-sudo apt install -yq gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
-     libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 \
-     libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 \
-     libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 \
-     ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils unzip wget
-```
+Install Google Chrome **for all users** (under `Program Files`): the service runs as LocalSystem and does not see per-user installs.
+`install.bat` prints a warning if Chrome is not found at the default location.
 
-- Get Roboto fonts:
+## Docker
 
-```
-sudo apt install fonts-roboto
-```
+The image contains Debian's `chromium` (available for both `amd64` and `arm64`) and sets `CHROME_EXECUTABLE=/usr/bin/chromium`.
+Nothing needs to be installed.
 
-- Get Noto fonts (Japanese, Chinese, etc.):
+## Using another browser
 
-```
-sudo apt install fonts-noto-cjk-extra
-```
+`CHROME_EXECUTABLE` overrides the default path. It must point to an existing executable; otherwise the service fails to start.
 
-- Install Web Report service:
+- **Linux:** uncomment and set `CHROME_EXECUTABLE` in `/etc/tb-web-report/conf/tb-web-report.conf`, then restart the service.
+- **Windows:** uncomment the `CHROME_EXECUTABLE` line in `tb-web-report.xml` next to `install.bat`, set the path, then restart the service.
 
-```
-sudo dpkg -i tb-web-report.deb
-```
+Only Google Chrome is supported. Other Chromium builds usually work, but are not tested. Ubuntu's snap `chromium` cannot be
+started by a system service. Microsoft Edge is not supported.
+
+## Chrome updates
+
+Chrome is updated by the operating system, independently of the service. A running service keeps using the browser it
+started and picks up the new version on its next restart (on Ubuntu, `needrestart` restarts it automatically after the
+update). Rendering is not pixel-identical across Chrome and font versions. If reports break after a Chrome update, upgrade
+the service, or keep the previous Chrome version (`sudo apt-mark hold google-chrome-stable`, or `dnf versionlock` on
+RHEL-like systems) until you can.
+
+The deb and rpm packages depend on `google-chrome-stable`, so removing Chrome with `apt`/`dnf` also removes `tb-web-report`.
+
+## Upgrading from versions with bundled Chromium
+
+Previous versions shipped Chromium in `/usr/share/tb-web-report/chromium` and pointed `CHROME_EXECUTABLE` to it.
+
+- Install Google Chrome before upgrading; the upgrade stops otherwise and the previous version keeps running.
+- If you kept a modified `tb-web-report.conf` during the upgrade, it still contains the old Chromium path. The service ignores
+  this path with a warning and uses Google Chrome; remove the line to silence the warning.
