@@ -525,6 +525,27 @@ class GitHistoryTests(unittest.TestCase):
         with patch.object(p, "RELICENSING_COMMIT", squash):
             self.assertEqual({"Final.java": "Base.java"}, p.Lineage.load(git.root, head, [base]).renames)
 
+    def test_lineage_stops_a_rename_chain_at_a_deletion_or_addition(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        body = "".join(f"CE line {index}\n" for index in range(20))
+        git.write("A.java", body)
+        git.write("Reused.java", "reused " + body)
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        git.commit("rename")
+        git("rm", "-q", "B.java")
+        git.commit("delete")
+        git.write("B.java", "".join(f"unrelated line {index}\n" for index in range(20)))
+        git.commit("unrelated file at the renamed path")
+        git("rm", "-q", "Reused.java")
+        git.commit("delete a CE path")
+        git.write("Reused.java", "".join(f"downstream line {index}\n" for index in range(20)))
+        git.commit("reuse the CE path")
+        git("mv", "Reused.java", "Moved.java")
+        git.commit("rename the reused path")
+        self.assertEqual({}, p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base]).renames)
+
     @requires_merge_file_object_id
     def test_merge_blobs_returns_only_clean_merges(self):
         git = GitFixture(temporary_directory(self), "main")

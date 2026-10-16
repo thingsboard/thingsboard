@@ -26,7 +26,9 @@ header equals a CE version of it, or a clean merge of its CE versions, and
 
 A file whose path does not exist in CE but that a commit after the CE commits
 renamed from a CE path is `ce-modified`. Renames come from Git's rename
-detection in non-merge commits other than the relicensing commit.
+detection in non-merge commits other than the relicensing commit. A chain of
+renames stops where its path was added or deleted, so a file created at a path
+that a CE file was once renamed to does not inherit that CE file.
 
 Any other file whose path does not exist in CE is `busl`, except when it needs a
 decision: its content is at least 50% similar to a CE file, or CE history once

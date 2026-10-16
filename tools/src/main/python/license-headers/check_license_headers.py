@@ -849,15 +849,21 @@ def ce_renames(repo, head, bases, ce_paths):
     # A merge diff pairs a deletion and an addition from different sides, and the relicensing squash pairs
     # deleted CE files with similar PE files: neither is a rename.
     raw = git(repo, "log", "--no-merges", "--topo-order", "--raw", "--no-abbrev", "-M", "-l0", "-z",
-              "--diff-filter=R", "--format=%x1e%H", head, "--not", *bases, "--")
-    names, renames = {}, {}
+              "--diff-filter=RAD", "--format=%x1e%H", head, "--not", *bases, "--")
+    names = {}
     for change in parse_history(raw):
         if change.commit == RELICENSING_COMMIT:
             continue
+        if change.status[0] != "R":
+            names[change.path] = None
+            continue
         name = names.pop(change.path, change.path)
-        names[change.source] = name
-        if change.source in ce_paths:
-            renames.setdefault(name, change.source)
+        if name is not None:
+            names[change.source] = name
+    renames = {}
+    for source, name in names.items():
+        if name is not None and source in ce_paths:
+            renames.setdefault(name, source)
     return renames
 
 
