@@ -11,7 +11,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ColorRange, ColorSettings, ColorType, ComponentStyle } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, ComponentStyle, normalizeColorRangeSettings } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
@@ -130,9 +130,8 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
   writeValue(value: ColorSettings): void {
     if (value) {
       this.modelValue = value;
-      if (isDefinedAndNotNull(this.modelValue.rangeList) && !isDefinedAndNotNull(this.modelValue.rangeList?.advancedMode)) {
-        const range = deepClone(this.modelValue.rangeList) as ColorRange[];
-        this.modelValue.rangeList = deepClone({advancedMode: false, range});
+      if (isDefinedAndNotNull(this.modelValue.rangeList)) {
+        this.modelValue.rangeList = deepClone(normalizeColorRangeSettings(this.modelValue.rangeList));
       }
       this.updateColorStyle();
     }
