@@ -33,8 +33,9 @@ relicensing commit, the check follows the source path the same way from the
 parent of the rename. The chain ends at a source that no commit after the CE
 commits added and whose path exists in the CE commits merged into the parent of
 the rename. Any other source, such as a CE file deleted and restored or a file
-that a merge added, counts as CE only when, without the header, it is at least 50%
-similar to the CE version of its path; otherwise the file needs a decision, and
+a merge added at a path the CE commits merged before the rename did not have,
+counts as CE only when, without the header, it is at least 50% similar to the CE
+version of its path; otherwise the file needs a decision, and
 so does a file whose chain runs through a path that parallel branches added
 separately. Git scores a rename with the header included, so each rename in the
 chain counts only when the file without the header is at least 50% similar
