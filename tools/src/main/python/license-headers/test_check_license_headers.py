@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 import textwrap
 import unittest
@@ -25,6 +26,11 @@ def temporary_directory(test):
 
 def this_repository():
     return Path(p.git(Path(__file__).parent, "rev-parse", "--show-toplevel").decode().strip())
+
+
+requires_merge_file_object_id = unittest.skipUnless(
+    b"object-id" in subprocess.run(["git", "merge-file", "-h"], capture_output=True).stdout,
+    p.MERGE_FILE_REQUIREMENT)
 
 
 def fixture_plugin(version="0"):
@@ -519,6 +525,7 @@ class GitHistoryTests(unittest.TestCase):
         with patch.object(p, "RELICENSING_COMMIT", squash):
             self.assertEqual({"Final.java": "Base.java"}, p.Lineage.load(git.root, head, [base]).renames)
 
+    @requires_merge_file_object_id
     def test_merge_blobs_returns_only_clean_merges(self):
         git = GitFixture(temporary_directory(self), "main")
         git.write("File.java", "one\ntwo\nthree\nfour\nfive\n")
@@ -533,6 +540,12 @@ class GitHistoryTests(unittest.TestCase):
         ours, theirs = blob("ONE\ntwo\nthree\nfour\nfive\n"), blob("one\ntwo\nthree\nfour\nFIVE\n")
         self.assertEqual(b"ONE\ntwo\nthree\nfour\nFIVE\n", p.merge_blobs(git.root, ours, base, theirs))
         self.assertIsNone(p.merge_blobs(git.root, ours, base, blob("uno\ntwo\nthree\nfour\nfive\n")))
+
+    def test_merge_blobs_fails_without_object_id_support(self):
+        usage = subprocess.CompletedProcess([], 129, b"", b"error: unknown option `object-id'")
+        with (patch.object(p, "run", side_effect=[usage, subprocess.CompletedProcess([], 0, b"git version 2.39.5\n", b"")]),
+              self.assertRaisesRegex(p.Failure, "needs Git 2.43 or later, found git version 2.39.5")):
+            p.merge_blobs(Path("."), "a", "b", "c")
 
     def test_ignore_filter_keeps_tracked_and_unignored_files(self):
         repo = temporary_directory(self)
@@ -679,6 +692,7 @@ class CheckCommandTests(unittest.TestCase):
     def rows(self, report):
         return {row["path"]: row for row in report["files"]}
 
+    @requires_merge_file_object_id
     def test_relicensed_branch_passes(self):
         code, report, _ = self.check()
         self.assertEqual(0, code)
@@ -693,6 +707,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual({"path": "Fixed.java", "ref": self.fix, "blob": self.git("rev-parse", f"{self.fix}:Fixed.java")},
                          rows["Fixed.java"]["identicalTo"])
 
+    @requires_merge_file_object_id
     def test_fix_restamps_decided_headers_only(self):
         self.git.write("Base.java", FOREIGN_LINE.decode() + "base implementation\n")
         self.git.write("New.java", fixture("apache") + "TB feature\n")
@@ -719,6 +734,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual([], report["restamped"])
         self.assertEqual({"match": 5, "mismatch": 1}, report["summary"])
 
+    @requires_merge_file_object_id
     def test_ce_evidence_for_new_paths_needs_a_decision(self):
         self.git.write("Copy.java", fixture(p.NON_CE) + self.body)
         self.git.write("Deleted.java", fixture(p.NON_CE) + "removed CE source\n")
@@ -732,6 +748,7 @@ class CheckCommandTests(unittest.TestCase):
                          rows["Deleted.java"]["historicalCandidate"])
         self.assertIn("Needs a decision (2)\n", output)
 
+    @requires_merge_file_object_id
     def test_renamed_ce_file_is_ce_modified(self):
         self.git("mv", "Source.java", "Moved.java")
         self.git.write("Moved.java", fixture("ce-modified") + self.body + "TB change\n")
@@ -742,6 +759,7 @@ class CheckCommandTests(unittest.TestCase):
                          (row["status"], row["expectedHeader"], row["reason"]))
         self.assertEqual({"Source.java"}, {version["path"] for version in row["renamedFrom"]})
 
+    @requires_merge_file_object_id
     def test_fix_removes_redundant_and_orphaned_curations(self):
         self.git.write("Copy.java", fixture(p.NON_CE) + self.body)
 

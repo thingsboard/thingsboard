@@ -95,6 +95,9 @@ STRICT_BLOCK = Style("strict_block", tuple(sorted(suffix[1:] for suffix in BLOCK
 ))
 
 
+MERGE_FILE_REQUIREMENT = "The license header check needs Git 2.43 or later"
+
+
 class Failure(Exception):
     pass
 
@@ -194,7 +197,10 @@ def merged_ce_bases(repo, head, baseline):
 
 
 def merge_blobs(repo, ours, base, theirs):
-    result = run(["git", "merge-file", "-p", "--object-id", ours, base, theirs], repo, ok=range(0, 256))
+    result = run(["git", "merge-file", "-p", "--object-id", ours, base, theirs], repo, ok=(*range(0, 128), 129))
+    if result.returncode == 129:
+        raise Failure(f"git merge-file does not support --object-id. {MERGE_FILE_REQUIREMENT}, "
+                      f"found {git(repo, 'version').decode().strip()}.")
     return result.stdout if result.returncode == 0 else None
 
 
