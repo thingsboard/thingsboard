@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.mqtt;
 
 import io.netty.bootstrap.ServerBootstrap;

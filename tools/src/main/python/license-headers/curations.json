@@ -11,7 +11,7 @@
       "path": "application/src/main/java/org/thingsboard/server/service/edge/DefaultEdgeLicenseService.java",
       "header": "ce-modified",
       "reason": "Retained CE file subsequently deleted on the selected lts-4.2 mainline. PE retains the CE implementation with HTTP client migration, timeout and request-handling changes. Reviewed against last CE path version 3af76140cd7dd2968cdba2875a92eccbbcfc05fe^1 (blob 034ac5148483fda6234c6fae2a46cf601396606a); absence from the selected CE tree does not change origin.",
-      "contentHash": "sha256:1d9614ac78d02d46eebefd0a2679b429a220c9bd122cbdfb96df1e24c19270f0"
+      "contentHash": "sha256:a193eb9c523a588682c0d7842abc147ce07ac184426833d878fcb1bf946a51dc"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/edge/EdgeLicenseService.java",
@@ -509,7 +509,7 @@
       "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/credentials/CertPemClientCredentials.java",
       "header": "busl",
       "reason": "Retained PE MQTT integration client-certificate credentials from the original integration credential family. Similar CE rule-engine credential implementations do not establish CE origin for that earlier PE family; PE supplies its client-certificate configuration. Reviewed CE candidate rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/credentials/CertPemCredentials.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 46d844d2c4aff3d5af24802dfee974f0af416113).",
-      "contentHash": "sha256:d4ae03b84f499bede7580d21ed131995793ee01d9a5bbd602f48a1a47325e896"
+      "contentHash": "sha256:abe439078bde5c247ab2d091d2aba5828360276d09dc604d7952ada12dab5e25"
     },
     {
       "path": "common/queue/src/main/java/org/thingsboard/server/queue/settings/TbQueueIntegrationApiSettings.java",
@@ -1061,7 +1061,7 @@
       "path": "monitoring/src/main/java/org/thingsboard/monitoring/service/integration/impl/HttpIntegrationHealthChecker.java",
       "header": "busl",
       "reason": "New PE file implementing a PE feature. It was written by adapting CE monitoring/src/main/java/org/thingsboard/monitoring/service/transport/impl/HttpTransportHealthChecker.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:7a4b0c71c3185997d717d3ff197f7734826141bb89347b054dd5277a5979e8da"
+      "contentHash": "sha256:31b8dec9f857048474b4bfde033c218418ccad72cde01fa71e96d9e19a49c66d"
     },
     {
       "path": "monitoring/src/main/java/org/thingsboard/monitoring/service/integration/impl/MqttIntegrationHealthChecker.java",
@@ -1181,7 +1181,7 @@
       "path": "report/src/main/resources/tb-report.yml",
       "header": "busl",
       "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate edqs/src/main/resources/edqs.yml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob cad0fcaccc785af0853c77f05d385adb4c102f67).",
-      "contentHash": "sha256:64e2775735521015bd88c79f68db101ff69f536c681db8239764c434205a0583"
+      "contentHash": "sha256:af66b4f07cc43e0af1fc0f2f39f9c2b1220c22ed6ecefab56bd3260cceab6b50"
     },
     {
       "path": "rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/metadata/TbGetCustomerAttributeNodeConfiguration.java",
