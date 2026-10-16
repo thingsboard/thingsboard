@@ -64,6 +64,7 @@ BLOCK_CLOSERS = {b"*/", b"-->"} | set(LINE_COMMENT_TOKENS)
 RESTAMP_LISTING = 40
 REPEATED_HEADERS = 3
 HEADER_WINDOW = 4096
+SIMILARITY = 50
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 
 
@@ -722,22 +723,41 @@ def normalized_copies(mycila, source_refs, names, nonempty):
     destinations = {("head", name) for name in names} & nonempty
     if not sources or not destinations:
         return {}
-    git(mycila.root, "init", "--quiet")
-    git(mycila.root, "config", "core.autocrlf", "false")
-    git(mycila.root, "config", "core.attributesFile", "/dev/null")
+    index_repository(mycila)
     before = stage(mycila, sources)
     after = stage(mycila, destinations)
     raw = git(mycila.root, "diff-tree", "--no-commit-id", "-r", "--raw", "--no-abbrev", "-z",
-              "-C50%", "--find-copies-harder", "-l0", before, after)
+              f"-C{SIMILARITY}%", "--find-copies-harder", "-l0", before, after)
     keys = {path: key for key, path in mycila.paths.items()}
     copies = defaultdict(list)
-    for source, destination, similarity in parse_copies(raw):
+    for source, destination, similarity in parse_pairs(raw, "C"):
         source_key, destination_key = keys[source], keys[destination]
         if source_key not in sources or destination_key not in destinations:
             raise Failure("Normalized copy escaped the selected CE and HEAD inputs")
         copies[destination_key[1]].append({"path": source_key[0], "blob": source_key[1],
                                            "ref": source_refs[source_key], "similarity": similarity})
     return dict(copies)
+
+
+def normalized_similarity(mycila, source, destination):
+    before, after = mycila.contents[source], mycila.contents[destination]
+    if comparison_hash(before) == comparison_hash(after):
+        return 100
+    if not before.strip() or not after.strip():
+        return 0
+    index_repository(mycila)
+    trees = []
+    for key in (source, destination):
+        git(mycila.root, "read-tree", "--empty")
+        trees.append(stage(mycila, [key]))
+    raw = git(mycila.root, "diff-tree", "--no-commit-id", "-r", "--raw", "--no-abbrev", "-z", "-M1%", "-l0", *trees)
+    return max((similarity for _, _, similarity in parse_pairs(raw, "R")), default=0)
+
+
+def index_repository(mycila):
+    git(mycila.root, "init", "--quiet")
+    git(mycila.root, "config", "core.autocrlf", "false")
+    git(mycila.root, "config", "core.attributesFile", "/dev/null")
 
 
 def stage(mycila, keys):
@@ -749,13 +769,13 @@ def stage(mycila, keys):
     return git(mycila.root, "write-tree").decode().strip()
 
 
-def parse_copies(raw):
+def parse_pairs(raw, kind):
     tokens = iter(raw.split(b"\0"))
     for token in tokens:
         token = token.lstrip(b"\n")
         if token:
             _, status, paths = raw_change(token, tokens)
-            if status[0] == "C":
+            if status[0] == kind:
                 yield paths[0], paths[1], int(status[1:])
 
 
@@ -800,8 +820,13 @@ def infer(evidence):
                   else "same path in CE, content identical to a clean merge of its CE versions")
         return verdict(evidence.current, "apache", reason) | versions | {"identicalTo": evidence.identical}
     if evidence.renamed_from:
-        return (verdict(evidence.current, "ce-modified", f"renamed from CE {evidence.renamed_from[0]['path']}")
-                | {"renamedFrom": list(evidence.renamed_from)})
+        renames = sorted(evidence.renamed_from, key=lambda version: -version["similarity"])
+        if renames[0]["similarity"] >= SIMILARITY:
+            return (verdict(evidence.current, "ce-modified", f"renamed from CE {renames[0]['path']}")
+                    | {"renamedFrom": renames})
+        return unresolved(f"renamed from CE {renames[0]['path']}, but less than {SIMILARITY}% similar to it "
+                          "without the header", None, renameCandidates=renames,
+                          copyCandidates=list(evidence.copies))
     if evidence.module_descriptor():
         return verdict(evidence.current, NON_CE, "build descriptor of a module that does not exist in CE")
     if evidence.copies:
@@ -882,13 +907,15 @@ class Comparison:
     normalized: dict
     copies: dict
     merges: dict
+    rename_similarities: dict
     ce_directories: frozenset
 
     def classify(self, name, curation):
         key = ("head", name)
         versions = self.lineage.versions(name)
-        source = self.lineage.renames.get(name)
-        renamed_from = tuple({"path": source, "ref": base, "blob": oid}
+        source = None if versions else self.lineage.renames.get(name)
+        renamed_from = tuple({"path": source, "ref": base, "blob": oid,
+                              "similarity": self.rename_similarities[(name, oid)]}
                              for base, oid in self.lineage.versions(source)) if source else ()
         identical = next(({"path": name, "ref": base, "blob": oid} for base, oid in versions
                           if self.normalized[(name, oid)] == self.normalized[key]), self.merges.get(name))
@@ -909,12 +936,16 @@ class Comparison:
 
 def compare(repo, plugin, lineage, contents):
     names = list(contents)
-    new_paths = {name for name in names if not lineage.versions(name) and name not in lineage.renames}
+    new_paths = {name for name in names if not lineage.versions(name)}
+    renames = {name: lineage.renames[name] for name in new_paths if name in lineage.renames}
     sources = {}
     for base, files in lineage.trees.items():
         for name in names:
             if name in files:
                 sources.setdefault((name, files[name]), base)
+        for source in renames.values():
+            if source in files:
+                sources.setdefault((source, files[source]), base)
         for key in comparable_ce_files(files, new_paths).items():
             sources.setdefault(key, base)
     bytes_by_id = blobs(repo, [oid for _, oid in sources])
@@ -931,6 +962,8 @@ def compare(repo, plugin, lineage, contents):
         normalized = mycila.strip_headers()
         headers = mycila.header_states(recognized)
         copies = normalized_copies(mycila, sources, new_paths, mycila.nonempty())
+        rename_similarities = {(name, oid): normalized_similarity(mycila, (source, oid), ("head", name))
+                               for name, source in renames.items() for _, oid in lineage.versions(source)}
     merges = clean_merges(repo, plugin, lineage, names, normalized)
     console.end(f"done ({len(normalized)} file versions)")
     return Comparison(
@@ -940,6 +973,7 @@ def compare(repo, plugin, lineage, contents):
         normalized=normalized,
         copies=copies,
         merges=merges,
+        rename_similarities=rename_similarities,
         ce_directories=frozenset(str(parent) for files in lineage.trees.values()
                                  for path in files for parent in PurePosixPath(path).parents),
     )
@@ -1018,8 +1052,10 @@ def describe_mismatch(row):
 def describe_unresolved(row, ref_names):
     hint = f" (hint: {row['suggestedHeader']})" if row.get("suggestedHeader") else ""
     details = [f"has {header_name(row['currentHeader'])}, no expected header yet{hint}"]
-    evidence = [(f"similar CE file ({candidate['similarity']}%)", candidate)
-                for candidate in row.get("copyCandidates", [])]
+    evidence = [(f"renamed from CE file ({candidate['similarity']}%)", candidate)
+                for candidate in row.get("renameCandidates", [])]
+    evidence += [(f"similar CE file ({candidate['similarity']}%)", candidate)
+                 for candidate in row.get("copyCandidates", [])]
     if "historicalCandidate" in row:
         evidence.append(("CE history", row["historicalCandidate"]))
     if not evidence:

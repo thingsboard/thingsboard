@@ -101,6 +101,16 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(("unresolved", "CE history had this path"), (row["status"], row["reason"]))
         self.assertEqual(deleted, row["historicalCandidate"])
 
+    def test_rename_from_ce_needs_header_less_similarity(self):
+        rename = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40, "similarity": p.SIMILARITY}
+        row = self.new(current="ce-modified", renamed_from=(rename,))
+        self.assertEqual(("match", "ce-modified", "renamed from CE source.java"),
+                         (row["status"], row["expectedHeader"], row["reason"]))
+        weak = rename | {"similarity": p.SIMILARITY - 1}
+        row = self.new(current="ce-modified", renamed_from=(weak,), copies=(self.COPY,))
+        self.assertEqual(("unresolved", None, None), (row["status"], row["expectedHeader"], row["suggestedHeader"]))
+        self.assertEqual(([weak], [self.COPY]), (row["renameCandidates"], row["copyCandidates"]))
+
     def test_descriptor_of_a_module_absent_in_ce_is_non_ce_despite_similar_ce_descriptors(self):
         copy = self.COPY | {"path": "transport/mqtt/pom.xml"}
         descriptor = dict(path="integration/mqtt/pom.xml", copies=(copy,), directory_in_ce=False)
@@ -779,6 +789,24 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual(("match", "ce-modified", "renamed from CE Source.java"),
                          (row["status"], row["expectedHeader"], row["reason"]))
         self.assertEqual({"Source.java"}, {version["path"] for version in row["renamedFrom"]})
+
+    @requires_merge_file_object_id
+    def test_rename_of_rewritten_ce_file_needs_a_decision(self):
+        rewritten = "".join(f"TB implementation {index}\n" for index in range(20))
+        self.git.write("Source.java", fixture(p.NON_CE) + rewritten)
+        self.git.commit("rewrite CE file")
+        self.git("mv", "Source.java", "Moved.java")
+        self.git.commit("rename rewritten file")
+        scope = [name if name != "Source.java" else "Moved.java" for name in self.scope]
+        for args in ((), ("--fix",)):
+            code, report, output = self.check(*args, scope=scope)
+            row = self.rows(report)["Moved.java"]
+            self.assertEqual((1, "unresolved", p.NON_CE), (code, row["status"], row["currentHeader"]))
+            self.assertEqual({"Source.java"}, {candidate["path"] for candidate in row["renameCandidates"]})
+            self.assertLess(max(candidate["similarity"] for candidate in row["renameCandidates"]), p.SIMILARITY)
+            self.assertEqual([], report["restamped"])
+            self.assertIn("    renamed from CE file (", output)
+        self.assertEqual(fixture(p.NON_CE) + rewritten, (self.repo / "Moved.java").read_text())
 
     @requires_merge_file_object_id
     def test_fix_removes_redundant_and_orphaned_curations(self):
