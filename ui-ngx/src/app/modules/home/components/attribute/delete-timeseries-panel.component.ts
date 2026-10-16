@@ -62,6 +62,7 @@ export class DeleteTimeseriesPanelComponent implements OnInit, OnDestroy {
         this.deleteTimeseriesFormGroup.get('startDateTime').disable({onlySelf: true, emitEvent: false});
         this.deleteTimeseriesFormGroup.get('endDateTime').disable({onlySelf: true, emitEvent: false});
       }
+      setTimeout(() => this.overlayRef.updatePosition());
     })
     this.deleteTimeseriesFormGroup.get('startDateTime').valueChanges.pipe(
       takeUntil(this.destroy$)
