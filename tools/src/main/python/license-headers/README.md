@@ -30,9 +30,10 @@ the file's path back to the commit that added the current file; through a
 merge, it follows the side whose version the merge kept. When that commit is a
 rename, which Git's rename detection finds in commits other than merges and the
 relicensing commit, the check follows the source path the same way from the
-parent of the rename. The chain ends at a source that a CE commit added. A
-source that a later commit added instead, such as a CE file deleted and
-restored, counts as CE only when, without the header, it is at least 50%
+parent of the rename. The chain ends at a source that no commit after the CE
+commits added and whose path exists in the CE commits merged into the parent of
+the rename. Any other source, such as a CE file deleted and restored or a file
+that a merge added, counts as CE only when, without the header, it is at least 50%
 similar to the CE version of its path; otherwise the file needs a decision, and
 so does a file whose chain runs through a path that parallel branches added
 separately. Git scores a rename with the header included, so each rename in the

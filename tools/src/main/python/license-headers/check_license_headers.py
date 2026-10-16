@@ -938,7 +938,8 @@ def rename_chain(repo, head, bases, hops, name):
     while True:
         added = creations(repo, revision, bases, name)
         if not added:
-            return RenameChain(tuple(reversed(chain)), "ce")
+            origin = "ce" if in_ce_history(repo, revision, bases, name) else "downstream"
+            return RenameChain(tuple(reversed(chain)), origin)
         if not all(contains(repo, older, added[0]) for older in added[1:]):
             renamed = [hops[(commit, name)] for commit in added if (commit, name) in hops]
             return RenameChain(tuple(reversed(chain + renamed[:1])), "ambiguous")
@@ -947,6 +948,13 @@ def rename_chain(repo, head, bases, hops, name):
             return RenameChain(tuple(reversed(chain)), "downstream")
         chain.append(hop)
         name, revision = hop.source, hop.commit + "^"
+
+
+def in_ce_history(repo, revision, bases, path):
+    ancestors = {ancestor for base in bases for ancestor in
+                 run(["git", "merge-base", "--all", revision, base], repo, ok=(0, 1)).stdout.decode().split()}
+    return any(run(["git", "cat-file", "-e", f"{ancestor}:{path}"], repo, ok=(0, 1, 128)).returncode == 0
+               for ancestor in ancestors)
 
 
 def creations(repo, revision, bases, path):

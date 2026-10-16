@@ -1025,6 +1025,28 @@ class CheckCommandTests(unittest.TestCase):
         self.assertIn("but that file was added outside CE", rows["PeUtil.java"]["reason"])
 
     @requires_merge_file_object_id
+    def test_rename_source_added_by_a_merge_needs_ce_content(self):
+        git = self.git
+        git("checkout", "-b", "side")
+        git.write("Side.java", fixture(p.NON_CE) + "side\n")
+        git.commit("side")
+        git("checkout", "master")
+        git("merge", "--no-ff", "--no-commit", "side")
+        git.write("Util.java", fixture(p.NON_CE) + "".join(f"TB utility {index}\n" for index in range(20)))
+        git.commit("merge side, adding a downstream file")
+        git("mv", "Util.java", "PeUtil.java")
+        git.commit("rename the downstream file")
+        git("checkout", "lts-4.3")
+        git.write("Util.java", fixture("apache") + "".join(f"CE helper {index}\n" for index in range(20)))
+        git.commit("CE file at the old downstream path")
+        git("checkout", "master")
+        git("merge", "--no-ff", "lts-4.3", "-m", "integrate CE")
+        _, report, _ = self.check(scope=self.scope + ["PeUtil.java", "Side.java", "Util.java"])
+        row = self.rows(report)["PeUtil.java"]
+        self.assertEqual("unresolved", row["status"])
+        self.assertIn("but that file was added outside CE", row["reason"])
+
+    @requires_merge_file_object_id
     def test_restored_ce_file_renamed_downstream_is_ce_modified(self):
         self.git("rm", "-q", "Source.java")
         deletion = self.git.commit("delete a CE file")
