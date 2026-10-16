@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -14,10 +16,14 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
@@ -37,7 +43,8 @@ import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES
 @DaoSqlTest
 @TestPropertySource(properties = {
         "sql.attributes.value_no_xss_validation=true",
-        "sql.ts.value_no_xss_validation=true"
+        "sql.ts.value_no_xss_validation=true",
+        "audit-log.logging-level.mask.device=RW"
 })
 public class TelemetryControllerTest extends AbstractControllerTest {
 
@@ -295,6 +302,29 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         ObjectNode tsDataAfterDeletion = readResponse(doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", params), ObjectNode.class);
         Assert.assertTrue(tsDataAfterDeletion.get("key1,key2").get(0).get("value").isNull());
         Assert.assertTrue(tsDataAfterDeletion.get("key3").get(0).get("value").isNull());
+    }
+
+    @Test
+    public void testGetAttributesWithoutScopeBySysAdmin() throws Exception {
+        loginSysAdmin();
+        doGetAsync("/api/plugins/telemetry/TENANT/" + tenantId + "/values/attributes").andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetAttributesWithoutScopeWhenReadAuditEnabled() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes").andExpect(status().isOk());
+
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            PageData<AuditLog> auditLogs = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + device.getId().getId() + "?",
+                    new TypeReference<>() {
+                    }, new TimePageLink(10));
+            assertThat(auditLogs.getData()).anySatisfy(auditLog -> {
+                assertThat(auditLog.getActionType()).isEqualTo(ActionType.ATTRIBUTES_READ);
+                assertThat(auditLog.getActionData().path("scope").isNull()).isTrue();
+            });
+        });
     }
 
     @Test
