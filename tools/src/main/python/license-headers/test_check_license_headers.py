@@ -11,6 +11,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import textwrap
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -361,6 +362,11 @@ class InputTests(unittest.TestCase):
                          p.split_removed(b"<!--\n  SPDX\n-->\n<!--\n  Old\n-->\nbody\n", b"<!--\n  Old\n-->\nbody\n")[1])
         self.assertEqual(b"/**\n * SPDX\n */\n", p.split_removed(b"/**\n * SPDX\n */\n/**\n * Old\n */\n", b"/**\n * Old\n */\n")[1])
 
+    def test_an_empty_side_is_not_similar(self):
+        tool = SimpleNamespace(contents={"empty": b"\n", "full": b"content\n"})
+        self.assertEqual(0, p.normalized_similarity(tool, "empty", "full"))
+        self.assertEqual(0, p.normalized_similarity(tool, "full", "empty"))
+
     def test_hash_contracts(self):
         self.assertEqual(p.comparison_hash(b"a\r\nb\r\n"), p.comparison_hash(b"a\nb\n"))
         self.assertNotEqual(p.raw_hash(b"a\r\n"), p.raw_hash(b"a\n"))
@@ -582,6 +588,21 @@ class GitHistoryTests(unittest.TestCase):
         git.commit("rename the reused path")
         self.assertEqual({"Moved.java": ("Reused.java", "downstream")},
                          rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
+    def test_lineage_keeps_a_chain_whose_path_is_reused_after_the_rename(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("A.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        first = git.commit("rename")
+        git("mv", "B.java", "C.java")
+        second = git.commit("rename again")
+        git.write("B.java", "".join(f"unrelated line {index}\n" for index in range(20)))
+        git.commit("new file at the intermediate path")
+        lineage = p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])
+        self.assertEqual({"C.java": ("A.java", "ce")}, rename_origins(lineage))
+        self.assertEqual([first, second], [hop.commit for hop in lineage.renames["C.java"].hops])
 
     def test_lineage_links_renames_by_ancestry(self):
         for merged_into_mainline in (True, False):
