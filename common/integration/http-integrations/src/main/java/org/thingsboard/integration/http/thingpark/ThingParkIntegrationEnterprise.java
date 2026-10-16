@@ -22,6 +22,7 @@ import org.thingsboard.integration.api.data.IntegrationMetaData;
 import org.thingsboard.integration.api.data.UplinkData;
 import org.thingsboard.integration.api.data.UplinkMetaData;
 import org.thingsboard.integration.http.AbstractHttpIntegration;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.io.IOException;
@@ -53,7 +54,8 @@ public class ThingParkIntegrationEnterprise extends AbstractHttpIntegration<Thin
     private static final String THIRD_PARAM_NAME_TOKEN = "&client_secret=";
     private static final String DEV_EUI = "DevEUI";
     private static final String PAYLOAD = "payloadHex";
-    private static final String F_PORT = "targetPorts";
+    private static final String F_PORT = "FPort";
+    private static final String TARGET_PORTS = "targetPorts";
     private static final String SECURITY_PARAMS = "securityParams";
     private static final String CREATION_TIME = "creationTime";
     private static final String AS_KEY = "asKey";
@@ -184,7 +186,7 @@ public class ThingParkIntegrationEnterprise extends AbstractHttpIntegration<Thin
                     String payloadHex = dataJson.get("payload").asText();
                     String urlPrefix = dataJson.has(URL_PREFIX) ? dataJson.get(URL_PREFIX).asText() : DEFAULT_URL_PREFIX;
                     String urlSuffix = dataJson.has(URL_SUFFIX) ? dataJson.get(URL_SUFFIX).asText() : DEFAULT_URL_SUFFIX;
-                    sendMessage(ref, urlPrefix, urlSuffix, payloadHex, downlink, msg);
+                    sendMessage(ref, urlPrefix, urlSuffix, payloadHex, metadata.get(F_PORT), downlink, msg);
                 }
             }
         } catch (Exception e) {
@@ -254,13 +256,19 @@ public class ThingParkIntegrationEnterprise extends AbstractHttpIntegration<Thin
         return ref;
     }
 
-    private void sendMessage(String ref, String urlPrefix, String urlSuffix, String payloadHex, DownlinkData downlink, TbMsg msg) {
+    private void sendMessage(String ref, String urlPrefix, String urlSuffix, String payloadHex, String fPort, DownlinkData downlink, TbMsg msg) {
         String url = this.downlinkUrl + urlPrefix + ref + urlSuffix;
-        this.targetPorts = (this.targetPorts >= 15) ? 1 : this.targetPorts + 1;
+        int port;
+        if (StringUtils.isNotBlank(fPort)) {
+            port = Integer.parseInt(fPort.trim());
+        } else {
+            this.targetPorts = (this.targetPorts >= 15) ? 1 : this.targetPorts + 1;
+            port = this.targetPorts;
+        }
         String creationTime = ISO8601.get().format(new Date());
         String body = "{" +
                 "\"" + PAYLOAD + "\": \"" + payloadHex + "\", " +
-                "\"" + F_PORT + "\": \"" + Integer.toString(this.targetPorts) + "\", " +
+                "\"" + TARGET_PORTS + "\": \"" + port + "\", " +
                 "\"" + SECURITY_PARAMS + "\": {" +
                 "\"" + AS_ID + "\":  \"" + this.securityAsId + "\", " +
                 "\"" + CREATION_TIME + "\": \"" + creationTime + "\", " +
