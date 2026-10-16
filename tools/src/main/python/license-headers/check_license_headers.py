@@ -845,7 +845,7 @@ def infer(evidence):
                       f"and is less than {SIMILARITY}% similar to the CE {source}")
         elif weakest["similarity"] < SIMILARITY:
             reason = (f"renamed from CE {source}, but the rename of {weakest['from']} in {weakest['commit'][:11]} "
-                      f"is less than {SIMILARITY}% similar without the header")
+                      f"is {weakest['similarity']}% similar without the header, less than {SIMILARITY}%")
         else:
             return (verdict(evidence.current, "ce-modified", f"renamed from CE {source}")
                     | {"renamedFrom": list(evidence.renamed_from), "renames": renames})
@@ -1130,15 +1130,15 @@ def describe_mismatch(row):
 def describe_unresolved(row, ref_names):
     hint = f" (hint: {row['suggestedHeader']})" if row.get("suggestedHeader") else ""
     details = [f"has {header_name(row['currentHeader'])}, no expected header yet{hint}"]
-    renamed = min((rename["similarity"] for rename in row.get("renames", [])), default=None)
-    evidence = [(f"renamed from CE file ({renamed}% at the rename)", candidate)
-                for candidate in row.get("renameCandidates", [])]
+    if "renames" in row:
+        details.append(row["reason"])
+    evidence = [("rename source in CE", candidate) for candidate in row.get("renameCandidates", [])]
     evidence += [(f"similar CE file ({candidate['similarity']}%)", candidate)
                  for candidate in row.get("copyCandidates", [])]
     if "historicalCandidate" in row:
         evidence.append(("CE history", row["historicalCandidate"]))
     if not evidence:
-        return details + [row["reason"]]
+        return details if "renames" in row else details + [row["reason"]]
     label, candidate = evidence[0]
     details.append(f"{label}: {candidate['path']} at {ref_name(candidate['ref'], ref_names)}")
     others = len(evidence) - 1

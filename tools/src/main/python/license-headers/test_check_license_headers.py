@@ -121,8 +121,8 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(("unresolved", None, None), (row["status"], row["expectedHeader"], row["suggestedHeader"]))
         self.assertEqual(([version], [first, weak], [self.COPY]),
                          (row["renameCandidates"], row["renames"], row["copyCandidates"]))
-        self.assertEqual("renamed from CE source.java, but the rename of middle.java in eeeeeeeeeee "
-                         f"is less than {p.SIMILARITY}% similar without the header", row["reason"])
+        self.assertEqual(f"renamed from CE source.java, but the rename of middle.java in eeeeeeeeeee "
+                         f"is {p.SIMILARITY - 1}% similar without the header, less than {p.SIMILARITY}%", row["reason"])
 
     def test_rename_from_a_file_added_outside_ce_needs_a_decision(self):
         version = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40}
@@ -959,7 +959,10 @@ class CheckCommandTests(unittest.TestCase):
             self.assertEqual({"Source.java"}, {candidate["path"] for candidate in row["renameCandidates"]})
             self.assertLess(row["renames"][0]["similarity"], p.SIMILARITY)
             self.assertEqual([], report["restamped"])
-            self.assertIn("    renamed from CE file (", output)
+            weakest = row["renames"][0]
+            self.assertIn(f"    renamed from CE Source.java, but the rename of Source.java in {weakest['commit'][:11]} "
+                          f"is {weakest['similarity']}% similar without the header, less than {p.SIMILARITY}%\n"
+                          "    rename source in CE: Source.java at ", output)
         self.assertEqual(rewritten, (self.repo / "Moved.java").read_text())
 
     @requires_merge_file_object_id
