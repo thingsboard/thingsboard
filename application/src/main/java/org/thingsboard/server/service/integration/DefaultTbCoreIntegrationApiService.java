@@ -14,6 +14,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -74,6 +76,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -100,6 +103,7 @@ public class DefaultTbCoreIntegrationApiService implements TbCoreIntegrationApiS
     private final AssetProfileService assetProfileService;
     private final DeviceService deviceService;
     private final AssetService assetService;
+    private final TbApiUsageStateClient apiUsageStateClient;
 
     @Value("${queue.integration_api.max_pending_requests:10000}")
     private int maxPendingRequests;
@@ -284,10 +288,36 @@ public class DefaultTbCoreIntegrationApiService implements TbCoreIntegrationApiS
     }
 
     private ListenableFuture<IntegrationApiResponseMsg> handleListRequest(IntegrationInfoListRequestProto request) {
-        IntegrationType integrationType = IntegrationType.valueOf(request.getType());
-        // Reads plain integration rows instead of the integration info view — this response only carries the
-        // IntegrationInfoProto scalars, so the view's extra attribute_kv join to compute status would be wasted work.
-        List<Integration> data = integrationService.findAllCoreIntegrations(integrationType, false, request.getEnabled());
+        List<Integration> data;
+        boolean hasTenant = request.hasTenantIdMSB() && request.hasTenantIdLSB();
+        if (hasTenant) {
+            TenantId tenantId = TenantId.fromUUID(new UUID(request.getTenantIdMSB(), request.getTenantIdLSB()));
+            if (!isIntegrationEnabled(tenantId)) {
+                log.info("[{}] Skipping integration list - feature disabled due to API limits.", tenantId);
+                data = List.of();
+            } else {
+                Set<IntegrationType> types = request.getTypesList().isEmpty() ? null :
+                        request.getTypesList().stream().map(IntegrationType::valueOf).collect(Collectors.toSet());
+                data = integrationService.findAllTenantCoreIntegrations(tenantId, types, request.getRemote(), request.getEnabled());
+            }
+        } else {
+            IntegrationType integrationType = IntegrationType.valueOf(request.getType());
+            // Reads plain integration rows instead of the integration info view — this response only carries the
+            // IntegrationInfoProto scalars, so the view's extra attribute_kv join to compute status would be wasted work.
+            List<Integration> all = integrationService.findAllCoreIntegrations(integrationType, false, request.getEnabled());
+            data = new ArrayList<>(all.size());
+            int skipped = 0;
+            for (Integration integration : all) {
+                if (isIntegrationEnabled(integration.getTenantId())) {
+                    data.add(integration);
+                } else {
+                    skipped++;
+                }
+            }
+            if (skipped > 0) {
+                log.debug("Skipped {} of {} integrations of type [{}] - integration feature disabled due to API limits.", skipped, all.size(), integrationType);
+            }
+        }
 
         List<IntegrationInfoProto> integrationInfoList = data.stream()
                 .map(ProtoUtils::toIntegrationInfoProto)
@@ -296,6 +326,11 @@ public class DefaultTbCoreIntegrationApiService implements TbCoreIntegrationApiS
         return Futures.immediateFuture(IntegrationApiResponseMsg.newBuilder().setIntegrationListResponse(
                 IntegrationInfoListResponseProto.newBuilder().addAllIntegrationInfoList(integrationInfoList).build()
         ).build());
+    }
+
+    private boolean isIntegrationEnabled(TenantId tenantId) {
+        ApiUsageState state = apiUsageStateClient.getApiUsageState(tenantId);
+        return state == null || state.isIntegrationEnabled();
     }
 
     private ListenableFuture<IntegrationApiResponseMsg> handleTenantProfileRequest(TenantProfileRequestProto request) {

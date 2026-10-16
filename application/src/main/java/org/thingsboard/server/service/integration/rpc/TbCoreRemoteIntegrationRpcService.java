@@ -16,19 +16,24 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.integration.api.data.IntegrationDownlinkMsg;
+import org.thingsboard.integration.api.exception.IntegrationFeatureDisabledException;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.transport.config.ssl.PemSslCredentials;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.gen.integration.IntegrationTransportGrpc;
 import org.thingsboard.server.gen.integration.RequestMsg;
@@ -138,6 +143,23 @@ public class TbCoreRemoteIntegrationRpcService extends IntegrationTransportGrpc.
         }
     }
 
+    @EventListener
+    public void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
+        if (EntityType.API_USAGE_STATE.equals(msg.getEntityId().getEntityType())) {
+            TenantId tenantId = msg.getTenantId();
+            ApiUsageState apiUsageState = ctx.getApiUsageStateClient().getApiUsageState(tenantId);
+            if (apiUsageState == null || apiUsageState.isIntegrationEnabled()) {
+                return;
+            }
+            log.info("[{}] Integration feature disabled due to API limits. Disconnecting all remote integration sessions.", tenantId);
+            for (IntegrationGrpcSession session : sessions.values()) {
+                if (session.isConnected() && tenantId.equals(session.getConfiguration().getTenantId())) {
+                    session.closeWithError(IntegrationFeatureDisabledException.DEFAULT_MESSAGE);
+                }
+            }
+        }
+    }
+
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> responseObserver) {
         return new IntegrationGrpcSession(ctx, responseObserver, this::onIntegrationConnect, this::onIntegrationDisconnect).getInputStream();
@@ -219,4 +241,5 @@ public class TbCoreRemoteIntegrationRpcService extends IntegrationTransportGrpc.
 
         sessionsCache.removeIntegrationSession(integrationId);
     }
+
 }

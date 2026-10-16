@@ -178,7 +178,7 @@ public class RemoteIntegrationManagerService {
     }
 
     @PreDestroy
-    public void destroy() throws InterruptedException {
+    public void destroy() {
         log.info("[{}] Starting destroying process", serviceId);
         initialized = false;
         if (uplinkDataConverter != null) {
@@ -336,7 +336,7 @@ public class RemoteIntegrationManagerService {
         return converter;
     }
 
-    private Integration createIntegrationConfiguration(IntegrationConfigurationProto integrationConfigurationProto) throws IOException {
+    private Integration createIntegrationConfiguration(IntegrationConfigurationProto integrationConfigurationProto) {
         Integration integration = new Integration();
 
         IntegrationId integrationId = new IntegrationId(new UUID(integrationConfigurationProto.getIntegrationIdMSB(), integrationConfigurationProto.getIntegrationIdLSB()));
@@ -376,7 +376,7 @@ public class RemoteIntegrationManagerService {
     private void scheduleReconnect(Exception e) {
         initialized = false;
         if (scheduledFuture == null) {
-            scheduledFuture = reconnectScheduler.scheduleAtFixedRate(() -> {
+            scheduledFuture = reconnectScheduler.scheduleWithFixedDelay(() -> {
                 log.info("Trying to reconnect due to the error: {}!", e.getMessage());
                 try {
                     rpcClient.disconnect();

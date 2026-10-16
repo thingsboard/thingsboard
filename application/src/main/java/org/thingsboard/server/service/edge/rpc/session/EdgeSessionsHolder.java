@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.session;
 
 import lombok.Data;
@@ -7,11 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.session.manager.EdgeGrpcSessionManager;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,6 +61,10 @@ public class EdgeSessionsHolder {
         return sessionsById.remove(sessionId);
     }
 
+    public List<EdgeGrpcSessionManager> getByTenantId(TenantId tenantId) {
+        return sessions.values().stream().filter(s -> tenantId.equals(s.getState().getTenantId())).toList();
+    }
+
     public void remove(EdgeGrpcSessionManager session) {
         if (session == null) {
             log.warn("Can't remove session from holder because it's null");
@@ -67,4 +74,5 @@ public class EdgeSessionsHolder {
         removeByEdgeId(sessionState.getEdgeId());
         removeBySessionId(sessionState.getSessionId());
     }
+
 }

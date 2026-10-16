@@ -96,8 +96,8 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
         CustomerId stateCustomerId = state.getEdge().getCustomerId();
         state.setEdge(edge);
         if (stateCustomerId != null && !stateCustomerId.equals(edge.getCustomerId())) {
-            // do not send edge configuration message on customer update
-            // message send by separate flow from assign_to or unassing_from customer
+            // do not send an edge configuration message on a customer update
+            // message send by separate flow from assign_to or unassign_from customer
             return;
         }
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
@@ -134,4 +134,5 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
             }
         }
     }
+
 }

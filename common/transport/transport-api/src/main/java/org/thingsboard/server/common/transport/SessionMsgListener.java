@@ -32,9 +32,9 @@ public interface SessionMsgListener {
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
 
-    default void onUplinkNotification(UplinkNotificationMsg notificationMsg){};
+    default void onUplinkNotification(UplinkNotificationMsg notificationMsg) {}
 
-    default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
+    default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials) {}
 
     default void onDeviceProfileUpdate(SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {}
 
@@ -46,4 +46,5 @@ public interface SessionMsgListener {
     default void onResourceUpdate(ResourceUpdateMsg resourceUpdateMsgOpt) {}
 
     default void onResourceDelete(ResourceDeleteMsg resourceUpdateMsgOpt) {}
+
 }

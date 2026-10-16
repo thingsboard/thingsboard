@@ -829,7 +829,9 @@ public class ModelConstants {
     public static final String API_USAGE_STATE_EMAIL_EXEC_COLUMN = "email_exec";
     public static final String API_USAGE_STATE_SMS_EXEC_COLUMN = "sms_exec";
     public static final String API_USAGE_STATE_ALARM_EXEC_COLUMN = "alarm_exec";
+    public static final String API_USAGE_STATE_EDGE_COLUMN = "edge";
     public static final String API_USAGE_STATE_REPORT_EXEC_COLUMN = "report_exec";
+    public static final String API_USAGE_STATE_INTEGRATION_COLUMN = "integration";
     public static final String API_USAGE_STATE_AI_COLUMN = "ai";
 
     /**

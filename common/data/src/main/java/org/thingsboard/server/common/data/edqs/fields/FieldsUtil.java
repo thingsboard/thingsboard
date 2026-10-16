@@ -38,59 +38,34 @@ import java.util.UUID;
 public class FieldsUtil {
 
     public static EntityFields toFields(Object entity) {
-        if (entity instanceof Customer customer) {
-            return toFields(customer);
-        } else if (entity instanceof Tenant tenant) {
-            return toFields(tenant);
-        } else if (entity instanceof TenantProfile tenantProfile) {
-            return toFields(tenantProfile);
-        } else if (entity instanceof Device device) {
-            return toFields(device);
-        } else if (entity instanceof Asset asset) {
-            return toFields(asset);
-        } else if (entity instanceof Edge edge) {
-            return toFields(edge);
-        } else if (entity instanceof EntityView entityView) {
-            return toFields(entityView);
-        } else if (entity instanceof User user) {
-            return toFields(user);
-        } else if (entity instanceof Dashboard dashboard) {
-            return toFields(dashboard);
-        } else if (entity instanceof RuleChain ruleChain) {
-            return toFields(ruleChain);
-        } else if (entity instanceof RuleNode ruleNode) {
-            return toFields(ruleNode);
-        } else if (entity instanceof WidgetType widgetType) {
-            return toFields(widgetType);
-        } else if (entity instanceof WidgetsBundle widgetsBundle) {
-            return toFields(widgetsBundle);
-        } else if (entity instanceof Converter converter) {
-            return toFields(converter);
-        } else if (entity instanceof Integration integration) {
-            return toFields(integration);
-        } else if (entity instanceof SchedulerEvent schedulerEvent) {
-            return toFields(schedulerEvent);
-        } else if (entity instanceof Role role) {
-            return toFields(role);
-        } else if (entity instanceof EntityGroup entityGroup) {
-            return toFields(entityGroup);
-        } else if (entity instanceof DeviceProfile deviceProfile) {
-            return toFields(deviceProfile);
-        } else if (entity instanceof AssetProfile assetProfile) {
-            return toFields(assetProfile);
-        } else if (entity instanceof QueueStats queueStats) {
-            return toFields(queueStats);
-        } else if (entity instanceof ApiUsageState apiUsageState) {
-            return toFields(apiUsageState);
-        } else if (entity instanceof BlobEntity blobEntity) {
-            return toFields(blobEntity);
-        } else if (entity instanceof ReportTemplate reportTemplate) {
-            return toFields(reportTemplate);
-        } else if (entity instanceof Report report) {
-            return toFields(report);
-        } else {
-            throw new IllegalArgumentException("Unsupported entity type: " + entity.getClass().getName());
-        }
+        return switch (entity) {
+            case Customer customer -> toFields(customer);
+            case Tenant tenant -> toFields(tenant);
+            case TenantProfile tenantProfile -> toFields(tenantProfile);
+            case Device device -> toFields(device);
+            case Asset asset -> toFields(asset);
+            case Edge edge -> toFields(edge);
+            case EntityView entityView -> toFields(entityView);
+            case User user -> toFields(user);
+            case Dashboard dashboard -> toFields(dashboard);
+            case RuleChain ruleChain -> toFields(ruleChain);
+            case RuleNode ruleNode -> toFields(ruleNode);
+            case WidgetType widgetType -> toFields(widgetType);
+            case WidgetsBundle widgetsBundle -> toFields(widgetsBundle);
+            case Converter converter -> toFields(converter);
+            case Integration integration -> toFields(integration);
+            case SchedulerEvent schedulerEvent -> toFields(schedulerEvent);
+            case Role role -> toFields(role);
+            case EntityGroup entityGroup -> toFields(entityGroup);
+            case DeviceProfile deviceProfile -> toFields(deviceProfile);
+            case AssetProfile assetProfile -> toFields(assetProfile);
+            case QueueStats queueStats -> toFields(queueStats);
+            case ApiUsageState apiUsageState -> toFields(apiUsageState);
+            case BlobEntity blobEntity -> toFields(blobEntity);
+            case ReportTemplate reportTemplate -> toFields(reportTemplate);
+            case Report report -> toFields(report);
+            default -> throw new IllegalArgumentException("Unsupported entity type: " + entity.getClass().getName());
+        };
     }
 
     private static CustomerFields toFields(Customer entity) {
@@ -360,7 +335,9 @@ public class FieldsUtil {
                 .emailExecState(entity.getEmailExecState())
                 .smsExecState(entity.getSmsExecState())
                 .alarmExecState(entity.getAlarmExecState())
+                .edgeState(entity.getEdgeState())
                 .reportExecState(entity.getReportExecState())
+                .integrationState(entity.getIntegrationState())
                 .aiState(entity.getAiState())
                 .version(entity.getVersion())
                 .build();

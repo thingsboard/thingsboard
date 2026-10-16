@@ -3,6 +3,8 @@
 package org.thingsboard.integration.rpc;
 
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
@@ -11,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.integration.api.exception.IntegrationFeatureDisabledException;
 import org.thingsboard.integration.exception.IntegrationConnectionException;
 import org.thingsboard.integration.storage.EventStorage;
 import org.thingsboard.server.common.data.ResourceUtils;
@@ -108,7 +111,11 @@ public class IntegrationGrpcClient implements IntegrationRpcClient {
                         } catch (InterruptedException e) {
                             log.error("[{}] Got interruption during disconnect!", integrationKey, e);
                         }
-                        onError.accept(new IntegrationConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
+                        if (ConnectResponseCode.FEATURE_DISABLED.equals(connectResponseMsg.getResponseCode())) {
+                            onError.accept(new IntegrationFeatureDisabledException(connectResponseMsg.getErrorMsg()));
+                        } else {
+                            onError.accept(new IntegrationConnectionException("Failed to establish the connection! Response code: " + connectResponseMsg.getResponseCode().name()));
+                        }
                     }
                 } else if (responseMsg.hasUplinkResponseMsg()) {
                     UplinkResponseMsg msg = responseMsg.getUplinkResponseMsg();
@@ -133,7 +140,12 @@ public class IntegrationGrpcClient implements IntegrationRpcClient {
             @Override
             public void onError(Throwable t) {
                 log.debug("[{}] The rpc session received an error!", integrationKey, t);
-                onError.accept(new RuntimeException(t));
+                if (t instanceof StatusRuntimeException sre && sre.getStatus().getCode() == Status.Code.RESOURCE_EXHAUSTED) {
+                    String description = sre.getStatus().getDescription();
+                    onError.accept(new IntegrationFeatureDisabledException(description != null ? description : IntegrationFeatureDisabledException.DEFAULT_MESSAGE));
+                } else {
+                    onError.accept(new RuntimeException(t));
+                }
             }
 
             @Override
@@ -145,32 +157,33 @@ public class IntegrationGrpcClient implements IntegrationRpcClient {
 
     @Override
     public void disconnect() throws InterruptedException {
+        if (channel == null || channel.isTerminated()) {
+            return;
+        }
         try {
             inputStream.onCompleted();
         } catch (Exception e) {
             log.error("Exception during onCompleted", e);
         }
-        if (channel != null) {
-            channel.shutdown();
-            int attempt = 0;
-            do {
+        channel.shutdown();
+        int attempt = 0;
+        do {
+            try {
+                channel.awaitTermination(timeoutSecs, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                log.error("Channel await termination was interrupted", e);
+            }
+            if (attempt > 5) {
+                log.warn("We had reached maximum of termination attempts. Force closing channel");
                 try {
-                    channel.awaitTermination(timeoutSecs, TimeUnit.SECONDS);
+                    channel.shutdownNow();
                 } catch (Exception e) {
-                    log.error("Channel await termination was interrupted", e);
+                    log.error("Exception during shutdownNow", e);
                 }
-                if (attempt > 5) {
-                    log.warn("We had reached maximum of termination attempts. Force closing channel");
-                    try {
-                        channel.shutdownNow();
-                    } catch (Exception e) {
-                        log.error("Exception during shutdownNow", e);
-                    }
-                    break;
-                }
-                attempt++;
-            } while (!channel.isTerminated());
-        }
+                break;
+            }
+            attempt++;
+        } while (!channel.isTerminated());
     }
 
     @Override
@@ -193,4 +206,5 @@ public class IntegrationGrpcClient implements IntegrationRpcClient {
             eventStorage.sleep();
         }
     }
+
 }

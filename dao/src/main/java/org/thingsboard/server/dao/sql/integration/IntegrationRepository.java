@@ -50,6 +50,15 @@ public interface IntegrationRepository extends JpaRepository<IntegrationEntity, 
             "FROM IntegrationEntity i WHERE i.type = :type AND i.isRemote = :isRemote AND i.enabled = :enabled AND i.edgeTemplate = false")
     List<Integration> findCoreIntegrations(@Param("type") IntegrationType type, @Param("isRemote") boolean remote, @Param("enabled") boolean enabled);
 
+    // Same positional projection as findCoreIntegrations above: keep the selected columns in that constructor's order.
+    @Query("SELECT new org.thingsboard.server.common.data.integration.Integration(i.id, i.tenantId, i.name, i.type, i.enabled, i.isRemote, i.allowCreateDevicesOrAssets) " +
+            "FROM IntegrationEntity i WHERE i.tenantId = :tenantId AND (:types IS NULL OR i.type IN :types) " +
+            "AND i.isRemote = :isRemote AND i.enabled = :enabled AND i.edgeTemplate = false")
+    List<Integration> findTenantCoreIntegrations(@Param("tenantId") UUID tenantId,
+                                                 @Param("types") List<IntegrationType> types,
+                                                 @Param("isRemote") boolean remote,
+                                                 @Param("enabled") boolean enabled);
+
     @Query("SELECT ie FROM IntegrationEntity ie, RelationEntity re WHERE ie.tenantId = :tenantId " +
             "AND ie.id = re.toId AND re.toType = 'INTEGRATION' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +

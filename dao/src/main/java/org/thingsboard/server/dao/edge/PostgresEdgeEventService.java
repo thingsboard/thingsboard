@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.edge;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -57,6 +58,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
             public void onSuccess(Void result) {
                 statsCounterService.ifPresent(statsCounterService ->
                         statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
+                reportEdgeEventUsage(edgeEvent);
                 eventPublisher.publishEvent(SaveEntityEvent.builder()
                         .tenantId(edgeEvent.getTenantId())
                         .entityId(edgeEvent.getEdgeId())

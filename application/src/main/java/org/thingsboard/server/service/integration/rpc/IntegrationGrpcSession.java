@@ -8,13 +8,16 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.Nullable;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.data.IntegrationDownlinkMsg;
+import org.thingsboard.integration.api.exception.IntegrationFeatureDisabledException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -89,9 +92,9 @@ public final class IntegrationGrpcSession implements Closeable {
     private volatile boolean connected;
     private String serviceId;
 
-    IntegrationGrpcSession(IntegrationContextComponent ctx, StreamObserver<ResponseMsg> outputStream
-            , BiConsumer<IntegrationId, IntegrationGrpcSession> sessionOpenListener
-            , Consumer<IntegrationId> sessionCloseListener) {
+    IntegrationGrpcSession(IntegrationContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
+                           BiConsumer<IntegrationId, IntegrationGrpcSession> sessionOpenListener,
+                           Consumer<IntegrationId> sessionCloseListener) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = new SyncedStreamObserver<>(outputStream);
@@ -160,6 +163,14 @@ public final class IntegrationGrpcSession implements Closeable {
             configuration = optional.get();
             try {
                 if (configuration.isRemote() && configuration.getSecret().equals(request.getIntegrationSecret())) {
+                    ApiUsageState apiUsageState = ctx.getApiUsageStateClient().getApiUsageState(configuration.getTenantId());
+                    if (apiUsageState != null && !apiUsageState.isIntegrationEnabled()) {
+                        log.info("[{}] Integration feature disabled due to API limits. Rejecting connection.", request.getIntegrationRoutingKey());
+                        return ConnectResponseMsg.newBuilder()
+                                .setResponseCode(ConnectResponseCode.FEATURE_DISABLED)
+                                .setErrorMsg(IntegrationFeatureDisabledException.DEFAULT_MESSAGE)
+                                .setConfiguration(IntegrationConfigurationProto.getDefaultInstance()).build();
+                    }
                     Converter defaultConverter = ctx.getConverterService().findConverterById(configuration.getTenantId(),
                             configuration.getDefaultConverterId());
                     ConverterConfigurationProto defaultConverterProto = constructConverterConfigProto(defaultConverter);
@@ -425,6 +436,25 @@ public final class IntegrationGrpcSession implements Closeable {
             builder.setIntegrationType(converter.getIntegrationType().toString());
         }
         return builder.build();
+    }
+
+    public void closeWithError(String message) {
+        log.debug("[{}][{}] Closing session with error: {}", sessionId, configuration.getId(), message);
+        connected = false;
+        try {
+            outputStream.onError(Status.RESOURCE_EXHAUSTED
+                    .withDescription(message)
+                    .asRuntimeException());
+        } catch (Exception e) {
+            log.debug("[{}] Failed to close output stream: {}", sessionId, e.getMessage());
+        }
+        // gRPC does not invoke the request observer when the server itself ends the call,
+        // so trigger the disconnect listener explicitly to keep cleanup in one place.
+        if (configuration != null) {
+            try {
+                sessionCloseListener.accept(configuration.getId());
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override

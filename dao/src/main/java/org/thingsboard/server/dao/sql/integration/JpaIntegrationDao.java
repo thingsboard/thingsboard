@@ -121,6 +121,11 @@ public class JpaIntegrationDao extends JpaAbstractDao<IntegrationEntity, Integra
     }
 
     @Override
+    public List<Integration> findAllTenantCoreIntegrations(UUID tenantId, List<IntegrationType> types, boolean remote, boolean enabled) {
+        return integrationRepository.findTenantCoreIntegrations(tenantId, types, remote, enabled);
+    }
+
+    @Override
     protected Class<IntegrationEntity> getEntityClass() {
         return IntegrationEntity.class;
     }

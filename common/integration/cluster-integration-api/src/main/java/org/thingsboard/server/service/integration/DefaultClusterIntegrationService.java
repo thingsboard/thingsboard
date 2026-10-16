@@ -12,6 +12,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -334,11 +335,15 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
 
     private void handleNotification(UUID id, TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg> msg, TbCallback callback) {
         ToIntegrationExecutorNotificationMsg nf = msg.getValue();
-        handleComponentLifecycleMsg(id, ProtoUtils.fromProto(nf.getComponentLifecycle()));
+        if (nf.hasComponentLifecycle()) {
+            handleComponentLifecycleMsg(id, ProtoUtils.fromProto(nf.getComponentLifecycle()));
+        } else if (nf.hasApiUsageState()) {
+            handleApiUsageStateMsg(ProtoUtils.fromProto(nf.getApiUsageState()));
+        }
         callback.onSuccess();
     }
 
-    protected void handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg) {
+    private void handleComponentLifecycleMsg(UUID id, TbActorMsg actorMsg) {
         if (actorMsg instanceof ComponentLifecycleMsg componentLifecycleMsg) {
             log.info("[{}][{}][{}] Received Lifecycle event: {}", componentLifecycleMsg.getTenantId(),
                     componentLifecycleMsg.getEntityId().getEntityType(),
@@ -346,6 +351,11 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
             integrationManagerService.handleComponentLifecycleMsg(componentLifecycleMsg);
         }
         log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
+    }
+
+    private void handleApiUsageStateMsg(ApiUsageState apiUsageState) {
+        log.info("[{}] Received API usage state update", apiUsageState.getTenantId());
+        integrationManagerService.onApiUsageStateUpdate(apiUsageState);
     }
 
     private void refreshIntegrationsByType(IntegrationType type) {

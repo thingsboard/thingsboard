@@ -13,4 +13,5 @@ public interface RemoteIntegrationRpcService {
     void updateConverter(Converter converter);
 
     boolean handleRemoteDownlink(IntegrationDownlinkMsg msg);
+
 }

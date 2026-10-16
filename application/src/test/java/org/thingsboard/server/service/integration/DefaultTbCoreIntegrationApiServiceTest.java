@@ -41,7 +41,7 @@ class DefaultTbCoreIntegrationApiServiceTest {
         service = new DefaultTbCoreIntegrationApiService(
                 null, null, null, null, null,
                 null, null, platformIntegrationService, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
 
         integrationInfo = new IntegrationInfo(new IntegrationId(UUID.randomUUID()));
         integrationInfo.setTenantId(TenantId.fromUUID(UUID.randomUUID()));

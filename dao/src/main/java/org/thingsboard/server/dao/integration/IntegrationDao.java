@@ -41,4 +41,6 @@ public interface IntegrationDao extends Dao<Integration>, TenantEntityDao<Integr
 
     List<Integration> findAllCoreIntegrations(IntegrationType integrationType, boolean remote, boolean enabled);
 
+    List<Integration> findAllTenantCoreIntegrations(UUID tenantId, List<IntegrationType> types, boolean remote, boolean enabled);
+
 }

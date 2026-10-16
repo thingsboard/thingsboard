@@ -172,7 +172,9 @@ class DefaultTransportTenantProfileCacheTest {
         state.setEmailExecState(ApiUsageStateValue.ENABLED);
         state.setSmsExecState(ApiUsageStateValue.ENABLED);
         state.setAlarmExecState(ApiUsageStateValue.ENABLED);
+        state.setEdgeState(ApiUsageStateValue.ENABLED);
         state.setReportExecState(ApiUsageStateValue.ENABLED);
+        state.setIntegrationState(ApiUsageStateValue.ENABLED);
         state.setAiState(ApiUsageStateValue.ENABLED);
         state.setVersion(1L);
         return state;

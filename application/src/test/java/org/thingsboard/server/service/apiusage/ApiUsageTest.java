@@ -59,11 +59,9 @@ import static org.thingsboard.server.service.report.ReportJobProcessor.REPORT_CR
 })
 public class ApiUsageTest extends AbstractControllerTest {
 
-    private Tenant savedTenant;
-    private User tenantAdmin;
-
     private static final int MAX_DP_ENABLE_VALUE = 12;
     private static final int MAX_SMS_ENABLE_VALUE = 10;
+    private static final int MAX_EDGE_ENABLE_VALUE = 10;
     private static final double WARN_THRESHOLD_VALUE = 0.5;
     private static final int MAX_ALLOWED_REPORT = 5;
 
@@ -83,16 +81,16 @@ public class ApiUsageTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         tenant.setTenantProfileId(savedTenantProfile.getId());
-        savedTenant = saveTenant(tenant);
+        Tenant savedTenant = saveTenant(tenant);
         tenantId = savedTenant.getId();
         assertNotNull(savedTenant);
 
-        tenantAdmin = new User();
+        User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(savedTenant.getId());
         tenantAdmin.setEmail("tenant2@thingsboard.org");
 
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+        createUserAndLogin(tenantAdmin, "testPassword1");
     }
 
     @Test
@@ -142,6 +140,25 @@ public class ApiUsageTest extends AbstractControllerTest {
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() ->
                 assertEquals(ApiUsageStateValue.DISABLED, getUsageState().getSmsExecState()));
+    }
+
+    @Test
+    public void testEdgeApiUsage() {
+        long edgeWarnThreshold = (long) (MAX_EDGE_ENABLE_VALUE * WARN_THRESHOLD_VALUE);
+
+        for (int i = 0; i < edgeWarnThreshold; i++) {
+            apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.EDGE_EVENT_COUNT);
+        }
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(ApiUsageStateValue.WARNING, getUsageState().getEdgeState()));
+
+        long edgeDisableCount = MAX_EDGE_ENABLE_VALUE - edgeWarnThreshold;
+
+        for (int i = 0; i < edgeDisableCount; i++) {
+            apiUsageReportClient.report(tenantId, null, ApiUsageRecordKey.EDGE_EVENT_COUNT);
+        }
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(ApiUsageStateValue.DISABLED, getUsageState().getEdgeState()));
     }
 
     @Test
@@ -215,6 +232,7 @@ public class ApiUsageTest extends AbstractControllerTest {
                 .maxDPStorageDays(MAX_DP_ENABLE_VALUE)
                 .maxSms(MAX_SMS_ENABLE_VALUE)
                 .smsEnabled(true)
+                .maxEdgeEvents(MAX_EDGE_ENABLE_VALUE)
                 .warnThreshold(WARN_THRESHOLD_VALUE)
                 .maxGeneratedReports(MAX_ALLOWED_REPORT)
                 .build();

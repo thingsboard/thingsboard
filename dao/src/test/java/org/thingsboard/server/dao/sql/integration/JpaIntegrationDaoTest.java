@@ -138,6 +138,44 @@ public class JpaIntegrationDaoTest extends AbstractJpaDaoTest {
         }
     }
 
+    @Test
+    public void testFindTenantCoreIntegrationsFiltersByTenantAndTypes() {
+        UUID tenantId = Uuids.timeBased();
+        UUID otherTenantId = Uuids.timeBased();
+        UUID converterId = Uuids.timeBased();
+        saveConverter(converterId, tenantId, "TEST_CONVERTER_TENANT_CORE", ConverterType.UPLINK);
+        UUID mqttId = Uuids.timeBased();
+        UUID httpId = Uuids.timeBased();
+        UUID otherTenantMqttId = Uuids.timeBased();
+        savedIntegrations.add(saveEnabledLocalIntegration(mqttId, tenantId, converterId, "TENANT_MQTT", IntegrationType.MQTT));
+        savedIntegrations.add(saveEnabledLocalIntegration(httpId, tenantId, converterId, "TENANT_HTTP", IntegrationType.HTTP));
+        savedIntegrations.add(saveEnabledLocalIntegration(otherTenantMqttId, otherTenantId, converterId, "OTHER_TENANT_MQTT", IntegrationType.MQTT));
+
+        // a null type list means every type
+        assertEquals(List.of(httpId, mqttId).stream().sorted().toList(),
+                idsOf(integrationDao.findAllTenantCoreIntegrations(tenantId, null, false, true)));
+        assertEquals(List.of(mqttId),
+                idsOf(integrationDao.findAllTenantCoreIntegrations(tenantId, List.of(IntegrationType.MQTT), false, true)));
+        assertTrue(integrationDao.findAllTenantCoreIntegrations(tenantId, null, true, true).isEmpty());
+    }
+
+    private Integration saveEnabledLocalIntegration(UUID id, UUID tenantId, UUID converterId, String name, IntegrationType type) {
+        Integration integration = new Integration();
+        integration.setId(new IntegrationId(id));
+        integration.setTenantId(new TenantId(tenantId));
+        integration.setDefaultConverterId(new ConverterId(converterId));
+        integration.setName(name);
+        integration.setRoutingKey(StringUtils.randomAlphanumeric(15));
+        integration.setType(type);
+        integration.setEnabled(true);
+        integration.setRemote(false);
+        return integrationDao.save(new TenantId(tenantId), integration);
+    }
+
+    private List<UUID> idsOf(List<Integration> integrations) {
+        return integrations.stream().map(integration -> integration.getId().getId()).sorted().toList();
+    }
+
     private Integration findProjectedById(List<Integration> integrations, UUID integrationId) {
         return integrations.stream()
                 .filter(integration -> integration.getId().getId().equals(integrationId))

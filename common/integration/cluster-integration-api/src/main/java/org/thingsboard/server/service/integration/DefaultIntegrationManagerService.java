@@ -23,8 +23,10 @@ import org.thingsboard.integration.api.converter.TBDownlinkDataConverter;
 import org.thingsboard.integration.api.converter.TBUplinkDataConverter;
 import org.thingsboard.integration.api.data.DefaultIntegrationDownlinkMsg;
 import org.thingsboard.integration.api.data.IntegrationDownlinkMsg;
+import org.thingsboard.integration.api.exception.IntegrationFeatureDisabledException;
 import org.thingsboard.integration.api.util.IntegrationUtil;
 import org.thingsboard.server.coapserver.CoapServerService;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.converter.Converter;
@@ -46,6 +48,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
@@ -85,6 +88,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent.DELETED;
@@ -99,8 +103,13 @@ import static org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent.
 @RequiredArgsConstructor
 public class DefaultIntegrationManagerService implements IntegrationManagerService {
 
+    private static final long RESTART_INITIAL_BACKOFF_MS = 5_000L;
+    private static final long RESTART_MAX_BACKOFF_MS = 60_000L;
+
     private final ConcurrentMap<IntegrationId, IntegrationState> integrations = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IntegrationState> integrationsByRoutingKeyMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, ApiUsageState> apiUsageStates = new ConcurrentHashMap<>();
+    private final Optional<TbApiUsageStateClient> apiUsageStateClient;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final PartitionService partitionService;
     private final TopicService topicService;
@@ -218,8 +227,96 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             integrations.values().stream().filter(state -> state.getTenantId().equals(tenantId)).forEach(state -> {
                 scheduleIntegrationEvent(state.getTenantId(), state.getId(), DELETED);
             });
+            apiUsageStates.remove(tenantId);
         }
         tenantProfileCache.ifPresent(cache -> cache.evict(tenantId));
+    }
+
+    @Override
+    public void onApiUsageStateUpdate(ApiUsageState apiUsageState) {
+        if (supportedIntegrationTypes.isEmpty()) {
+            return;
+        }
+        TenantId tenantId = apiUsageState.getTenantId();
+        AtomicReference<Transition> transition = new AtomicReference<>(Transition.NONE);
+        apiUsageStates.compute(tenantId, (k, existing) -> {
+            if (isStale(existing, apiUsageState)) {
+                return existing;
+            }
+            boolean wasDisabled = existing != null && !existing.isIntegrationEnabled();
+            boolean isDisabled = !apiUsageState.isIntegrationEnabled();
+            if (wasDisabled != isDisabled) {
+                transition.set(isDisabled ? Transition.STOP : Transition.RESTART);
+            }
+            return apiUsageState;
+        });
+        switch (transition.get()) {
+            case STOP -> stopTenantIntegrations(tenantId);
+            case RESTART -> lifecycleExecutorService.submit(() -> restartTenantIntegrations(tenantId));
+            case NONE -> {}
+        }
+    }
+
+    private static boolean isStale(ApiUsageState existing, ApiUsageState incoming) {
+        if (existing == null || existing.getVersion() == null || incoming.getVersion() == null) {
+            return false;
+        }
+        return incoming.getVersion() < existing.getVersion();
+    }
+
+    private enum Transition {NONE, STOP, RESTART}
+
+    private void stopTenantIntegrations(TenantId tenantId) {
+        List<IntegrationId> tenantIntegrations = integrations.values().stream()
+                .filter(state -> state.getTenantId().equals(tenantId))
+                .map(IntegrationState::getId)
+                .toList();
+        log.info("[{}] Integration feature disabled due to API limits. Stopping {} local integrations.", tenantId, tenantIntegrations.size());
+        tenantIntegrations.forEach(id -> {
+            eventStorageService.persistLifecycleEvent(tenantId, id, FAILED, new IntegrationFeatureDisabledException());
+            scheduleIntegrationEvent(tenantId, id, STOPPED);
+        });
+    }
+
+    private void restartTenantIntegrations(TenantId tenantId) {
+        restartTenantIntegrations(tenantId, RESTART_INITIAL_BACKOFF_MS);
+    }
+
+    private void restartTenantIntegrations(TenantId tenantId, long backoffMs) {
+        if (!isIntegrationEnabled(tenantId)) {
+            return;
+        }
+        try {
+            List<Integration> integrationList = configurationService.getTenantActiveIntegrationList(tenantId, supportedIntegrationTypes, false);
+            log.info("[{}] Integration feature enabled. Restarting {} local integrations.", tenantId, integrationList.size());
+            for (Integration integration : integrationList) {
+                IntegrationState existing = integrations.get(integration.getId());
+                if (existing != null && existing.getIntegration() != null) {
+                    log.debug("[{}] Integration {} already running, skipping re-init", integration.getId(), integration.getName());
+                    continue;
+                }
+                if (isMine(integration)) {
+                    scheduleIntegrationEvent(integration.getTenantId(), integration.getId(), ComponentLifecycleEvent.CREATED);
+                }
+            }
+        } catch (Exception e) {
+            if (lifecycleExecutorService.isShutdown()) {
+                log.debug("[{}] Skipping retry, executor is shut down", tenantId);
+                return;
+            }
+            long nextBackoffMs = Math.min(backoffMs * 2, RESTART_MAX_BACKOFF_MS);
+            log.warn("[{}] Failed to fetch integrations. Retrying in {} ms.", tenantId, backoffMs, e);
+            lifecycleExecutorService.schedule(() -> restartTenantIntegrations(tenantId, nextBackoffMs), backoffMs, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private boolean isIntegrationEnabled(TenantId tenantId) {
+        if (apiUsageStateClient.isPresent()) {
+            ApiUsageState state = apiUsageStateClient.get().getApiUsageState(tenantId);
+            return state == null || state.isIntegrationEnabled();
+        }
+        ApiUsageState state = apiUsageStates.get(tenantId);
+        return state == null || state.isIntegrationEnabled();
     }
 
     @Override
@@ -614,6 +711,10 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             if (!configuration.isEnabled()) {
                 throw new ThingsboardException("The integration is disabled!", ThingsboardErrorCode.INVALID_ARGUMENTS);
             }
+            if (!isIntegrationEnabled(configuration.getTenantId())) {
+                eventStorageService.persistLifecycleEvent(configuration.getTenantId(), configuration.getId(), FAILED, new IntegrationFeatureDisabledException());
+                return;
+            }
             IntegrationContext context = integrationContextProvider.buildIntegrationContext(configuration);
             ThingsboardPlatformIntegration<?> integration = createPlatformIntegration(configuration);
             integration.validateConfiguration(configuration, allowLocalNetworkHosts);
@@ -637,7 +738,12 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
         } else {
             IntegrationContext context = integrationContextProvider.buildIntegrationContext(configuration);
             try {
-                if (configuration.isEnabled()) {
+                if (!isIntegrationEnabled(configuration.getTenantId())) {
+                    eventStorageService.persistLifecycleEvent(configuration.getTenantId(), configuration.getId(), FAILED, new IntegrationFeatureDisabledException());
+                    persistCurrentStatistics(state);
+                    processStop(state, ComponentLifecycleEvent.STOPPED);
+                    return;
+                } else if (configuration.isEnabled()) {
                     state.getIntegration().update(new TbIntegrationInitParams(context, configuration, getUplinkDataConverter(configuration), getDownlinkDataConverter(configuration)));
                     eventStorageService.persistLifecycleEvent(configuration.getTenantId(), configuration.getId(), ComponentLifecycleEvent.UPDATED, null);
                     state.setCurrentState(ComponentLifecycleEvent.STARTED);
@@ -745,7 +851,7 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
 
     private void scheduleIntegrationEvent(TenantId tenantId, IntegrationId id, ComponentLifecycleEvent event) {
         IntegrationState state = switch (event) {
-            case CREATED, UPDATED -> integrations.computeIfAbsent(id, tmp -> new IntegrationState(tenantId, id));
+            case CREATED, UPDATED -> integrations.computeIfAbsent(id, _ -> new IntegrationState(tenantId, id));
             default -> integrations.get(id);
         };
         if (state != null) {
