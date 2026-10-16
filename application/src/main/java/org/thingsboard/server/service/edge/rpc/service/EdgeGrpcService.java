@@ -198,16 +198,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = state.getEdge();
         TenantId tenantId = state.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, state.getSessionId(), edgeId);
-        if (sessions.hasByEdgeId(edgeId)) {
-            EdgeGrpcSessionManager existingSession = sessions.getByEdgeId(edgeId);
-            if (existingSession != null) {
-                UUID sessionId = existingSession.getState().getSessionId();
-                log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, state.getSessionId(), sessionId, edgeId);
-                existingSession.destroyAndMarkAsZombieIfFailed();
-                sessions.removeBySessionId(sessionId);
-            }
+        EdgeGrpcSessionManager existingSession = sessions.put(edgeSession);
+        if (existingSession != null && existingSession != edgeSession) {
+            UUID sessionId = existingSession.getState().getSessionId();
+            log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, state.getSessionId(), sessionId, edgeId);
+            // The replacement must be current before the old session is closed;
+            // otherwise its disconnect callback can publish a false offline event.
+            sessions.removeBySessionId(sessionId);
+            existingSession.destroyAndMarkAsZombieIfFailed();
         }
-        sessions.put(edgeSession);
         save(tenantId, edgeId, ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
@@ -226,12 +225,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
         EdgeGrpcSessionManager current = sessions.getByEdgeId(edgeId);
-        if (current != null && current.getState().getSessionId().equals(sessionId)) {
-            EdgeGrpcSessionManager toRemove = sessions.removeByEdgeId(edgeId);
-            if (toRemove != null) {
-                toRemove.onEdgeDisconnect();
-                toRemove.destroyAndMarkAsZombieIfFailed();
-            }
+        if (current != null && current.getState().getSessionId().equals(sessionId)
+                && sessions.removeByEdgeId(edgeId, current)) {
+            current.onEdgeDisconnect();
+            current.destroyAndMarkAsZombieIfFailed();
             sessions.removeBySessionId(sessionId);
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
