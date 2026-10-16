@@ -57,12 +57,10 @@ ospackage {
         into "web"
     }
 
-    // Copy chromium files
-    from("${buildDir}/package/linux/chromium") {
-        into "chromium"
-    }
-
 }
+
+// tb-web-report renders reports with the Google Chrome installed on the system
+def isWebReport = pkgName == 'tb-web-report'
 
 // Configure our RPM build task
 buildRpm {
@@ -71,6 +69,13 @@ buildRpm {
 
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
+
+    if (isWebReport) {
+        requires("google-chrome-stable")
+        // Versions with bundled Chromium did not own its directories, so an upgrade leaves them behind empty.
+        // %posttrans runs after the old package's files are removed.
+        postTrans("if [ -d '${pkgInstallFolder}/chromium' ]; then find '${pkgInstallFolder}/chromium' -depth -type d -empty -delete; fi")
+    }
 
     preInstall file("${buildDir}/control/rpm/preinst")
     postInstall file("${buildDir}/control/rpm/postinst")
@@ -106,6 +111,16 @@ buildDeb {
     configurationFile("${pkgInstallFolder}/conf/custom-environment-variables.yml")
     configurationFile("${pkgInstallFolder}/conf/default.yml")
     configurationFile("${pkgInstallFolder}/conf/logger.js")
+
+    if (isWebReport) {
+        // Pre-Depends, not Depends: dpkg -i unpacks a package before checking its Depends, so an upgrade without Chrome
+        // would remove the bundled Chromium and leave the service without a browser. Pre-Depends stops it before unpacking.
+        preDepends("google-chrome-stable")
+        recommends("fonts-noto-cjk")
+        recommends("fonts-noto-color-emoji")
+        recommends("fonts-roboto")
+        recommends("fonts-liberation")
+    }
 
     preInstall file("${buildDir}/control/deb/preinst")
     postInstall file("${buildDir}/control/deb/postinst")

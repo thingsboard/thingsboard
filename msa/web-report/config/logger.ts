@@ -34,6 +34,19 @@ const tbFormat = printf(info => {
     return logMessage;
 });
 
+// Writes buffered messages to the log file and closes it. process.exit() drops them otherwise, so a startup error
+// logged right before exiting would never reach the file.
+export function flushLogs(timeoutMs = 5000): Promise<void> {
+    const closing = loggerTransports
+        .filter((transport): transport is DailyRotateFile => transport instanceof DailyRotateFile)
+        .map(transport => new Promise<void>(resolve => {
+            transport.once('finish', () => resolve());
+            transport.close?.();
+        }));
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, timeoutMs));
+    return Promise.race([Promise.all(closing).then(() => undefined), timeout]);
+}
+
 export function _logger(moduleLabel: string) {
     return createLogger({
         level: config.get('logger.level'),

@@ -63,6 +63,8 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
+        <!-- Extra lines for the Windows service.xml of JS packages -->
+        <pkg.win.serviceEnvExtra></pkg.win.serviceEnvExtra>
         <thingsboard.ai.version>2.1.6</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
         <spring-boot.version>3.5.15</spring-boot.version>

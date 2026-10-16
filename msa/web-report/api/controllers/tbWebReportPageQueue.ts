@@ -13,7 +13,8 @@ export class TbWebReportPageQueue {
 
     constructor(private browser: Browser,
                 private maxPageCount: number,
-                private useNewPage: boolean) {
+                private useNewPage: boolean,
+                private exit: () => Promise<void>) {
     }
 
     async init(): Promise<void> {
@@ -78,6 +79,11 @@ export class TbWebReportPageQueue {
         try {
             return await page.generateDashboardReport(request);
         } finally {
+            if (!this.browser.isConnected()) {
+                logger.error('The Browser is not connected. Exiting! Page %s, dashboardId %s', page, request.dashboardId);
+                await this.exit();
+            }
+
             if (this.useNewPage || page.hasAnyFailureOccurred) {
                 try {
                     await page.destroy();
@@ -87,11 +93,6 @@ export class TbWebReportPageQueue {
                 await this.createdPages(page.id);
             } else {
                 this.pages.push(page);
-            }
-
-            if (!this.browser.isConnected()) {
-                logger.error('The Browser is not connected. Exiting! Page %s, dashboardId %s', page, request.dashboardId);
-                process.exit(-1);
             }
         }
     }

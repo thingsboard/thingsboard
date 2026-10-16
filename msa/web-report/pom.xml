@@ -30,6 +30,9 @@
         <pkg.package.phase>package</pkg.package.phase>
         <pkg.linux.dist>${project.build.directory}/package/linux</pkg.linux.dist>
         <pkg.win.dist>${project.build.directory}/package/windows</pkg.win.dist>
+        <pkg.win.serviceEnvExtra><![CDATA[<!-- Reports are rendered with Google Chrome (C:\Program Files\Google\Chrome\Application\chrome.exe).
+         Uncomment to use another Chrome or Chromium executable, then restart the service: -->
+    <!-- <env name="CHROME_EXECUTABLE" value="C:\path\to\chrome.exe" /> -->]]></pkg.win.serviceEnvExtra>
         <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 
