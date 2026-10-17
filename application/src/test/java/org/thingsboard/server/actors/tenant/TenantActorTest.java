@@ -38,6 +38,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -144,14 +145,18 @@ public class TenantActorTest {
     }
 
     @Test
-    public void apiUsageStateChangeDoesNotTouchRuleChainsWhenTenantNotManagedByCurrentService() throws Exception {
+    public void apiUsageStateChangeDoesNotInitRuleChainsWhenTenantNotManagedByCurrentService() throws Exception {
         when(partitionService.isManagedByCurrentService(tenantId)).thenReturn(false);
-        when(ruleChainService.findTenantRuleChainsByType(eq(tenantId), eq(RuleChainType.CORE), any())).thenReturn(PageData.emptyPageData());
+        RuleChain ruleChain = new RuleChain(ruleChainId);
+        ruleChain.setType(RuleChainType.CORE);
+        when(ruleChainService.findTenantRuleChainsByType(eq(tenantId), eq(RuleChainType.CORE), any()))
+                .thenReturn(new PageData<>(List.of(ruleChain), 1, 1, false));
+        TbActorCtx ctx = mock(TbActorCtx.class);
 
-        tenantActor.init(mock(TbActorCtx.class));
+        tenantActor.init(ctx);
         processReExecStateChanges(ApiUsageStateValue.ENABLED, ApiUsageStateValue.DISABLED, ApiUsageStateValue.ENABLED);
 
-        verify(ruleChainService, never()).findTenantRuleChainsByType(any(), any(), any());
+        verify(ctx, never()).getOrCreateChildActor(eq(new TbEntityActorId(ruleChainId)), any(), any(), any());
     }
 
     @Test

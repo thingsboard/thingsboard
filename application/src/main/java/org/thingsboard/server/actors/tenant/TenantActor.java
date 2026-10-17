@@ -321,15 +321,12 @@ public class TenantActor extends RuleChainManagerActor {
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
             if (isRuleEngine) {
                 if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
-                    if (ruleChainsInitialized) {
-                        log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
-                        destroyRuleChains();
-                    }
-                } else if (!old.isReExecEnabled() && apiUsageState.isReExecEnabled()) {
-                    if (!ruleChainsInitialized && systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
-                        log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
-                        initRuleChains();
-                    }
+                    log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
+                    destroyRuleChains();
+                } else if (!old.isReExecEnabled() && apiUsageState.isReExecEnabled()
+                        && systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                    log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
+                    initRuleChains();
                 }
             }
         }
