@@ -319,6 +319,8 @@ public class TenantActor extends RuleChainManagerActor {
         if (entityType.equals(EntityType.API_USAGE_STATE)) {
             ApiUsageState old = getApiUsageState();
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
+            // Rule chains are initialized only on the rule engine service that manages the tenant, with the same checks
+            // (isRuleEngine, isManagedByCurrentService, isReExecEnabled) as in init() and onPartitionChangeMsg()
             if (isRuleEngine) {
                 if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
                     log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
