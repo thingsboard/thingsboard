@@ -219,6 +219,10 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private void replaceSecretUsages(RuleNode ruleNode) {
+        if (ruleNode == null) {
+            // The node can be deleted while the actor is being created or updated, so there is nothing to replace.
+            return;
+        }
         if (componentService.getRuleNodeInfo(ruleNode.getType()).map(info -> info.getAnnotation().hasSecrets()).orElse(false)) {
             systemContext.getSecretConfigurationService().replaceSecretUsages(tenantId, ruleNode.getConfiguration());
         }
