@@ -13,6 +13,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +23,10 @@ public interface RelationRepository
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeGroup(UUID fromId,
                                                                         String fromType,
                                                                         String relationTypeGroup);
+
+    List<RelationEntity> findAllByFromIdInAndFromTypeAndRelationTypeGroup(Collection<UUID> fromIds,
+                                                                          String fromType,
+                                                                          String relationTypeGroup);
 
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeGroupIn(UUID fromId,
                                                                           String fromType,

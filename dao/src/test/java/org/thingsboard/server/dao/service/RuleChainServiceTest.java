@@ -16,6 +16,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -37,7 +38,9 @@ import org.thingsboard.server.exception.DataValidationException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -510,6 +513,41 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         RuleChain savedEdgeRuleChain = ruleChainService.saveRuleChain(edgeRuleChain);
         ruleChainService.setAutoAssignToEdgeRuleChain(tenantId, savedEdgeRuleChain.getId());
         return savedEdgeRuleChain.getId();
+    }
+
+    @Test
+    public void testGetRuleNodesRelationsMatchesSingleNodeLookups() throws Exception {
+        RuleChainMetaData ruleChainMetaData = createRuleChainMetadata();
+        List<RuleNodeId> ruleNodeIds = ruleChainMetaData.getNodes().stream().map(RuleNode::getId).toList();
+
+        Map<RuleNodeId, List<EntityRelation>> batched = ruleChainService.getRuleNodesRelations(tenantId, ruleNodeIds);
+
+        assertThat(batched.keySet()).containsExactlyInAnyOrderElementsOf(ruleNodeIds);
+        for (RuleNodeId ruleNodeId : ruleNodeIds) {
+            assertThat(new HashSet<>(batched.get(ruleNodeId)))
+                    .as("relations of rule node %s", ruleNodeId)
+                    .isEqualTo(new HashSet<>(ruleChainService.getRuleNodeRelations(tenantId, ruleNodeId)));
+        }
+        // node 3 has no outgoing connections, but is still present in the result
+        assertThat(batched.get(ruleChainMetaData.getNodes().get(2).getId())).isEmpty();
+
+        ruleChainService.deleteRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
+    }
+
+    @Test
+    public void testGetRuleNodesRelationsDropsAndDeletesRelationsToMissingRuleNodes() throws Exception {
+        RuleChainMetaData ruleChainMetaData = createRuleChainMetadata();
+        RuleNodeId fromId = ruleChainMetaData.getNodes().get(2).getId();
+        RuleNodeId missingTarget = new RuleNodeId(UUID.randomUUID());
+        relationService.saveRelation(tenantId, new EntityRelation(fromId, missingTarget, "success", RelationTypeGroup.RULE_NODE));
+        assertThat(relationService.findByFrom(tenantId, fromId, RelationTypeGroup.RULE_NODE)).hasSize(1);
+
+        Map<RuleNodeId, List<EntityRelation>> batched = ruleChainService.getRuleNodesRelations(tenantId, List.of(fromId));
+
+        assertThat(batched.get(fromId)).isEmpty();
+        assertThat(relationService.findByFrom(tenantId, fromId, RelationTypeGroup.RULE_NODE)).isEmpty();
+
+        ruleChainService.deleteRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
     }
 
     private RuleChainMetaData createRuleChainMetadata() throws Exception {

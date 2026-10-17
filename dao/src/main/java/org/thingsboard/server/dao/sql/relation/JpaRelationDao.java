@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -30,6 +31,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -85,6 +87,18 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                 relationRepository.findAllByFromIdAndFromTypeAndRelationTypeGroup(
                         from.getId(),
                         from.getEntityType().name(),
+                        typeGroup.name()));
+    }
+
+    @Override
+    public List<EntityRelation> findAllByFromIds(TenantId tenantId, Collection<UUID> fromIds, EntityType fromType, RelationTypeGroup typeGroup) {
+        if (fromIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return DaoUtil.convertDataList(
+                relationRepository.findAllByFromIdInAndFromTypeAndRelationTypeGroup(
+                        fromIds,
+                        fromType.name(),
                         typeGroup.name()));
     }
 
