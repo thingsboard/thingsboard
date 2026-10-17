@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.device.data.MqttDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -863,6 +864,49 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
         // clean up tmp edge
         doDelete("/api/edge/" + tmpEdge.getId().getId().toString()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testOneWayRpcCallOverDeviceSessionOnCloud() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        sendOneWayRpcAndVerifyDeliveryOverMqttSession(device);
+
+        Assert.assertTrue(edgeImitator.findAllMessagesByType(DeviceRpcCallMsg.class).isEmpty());
+    }
+
+    @Test
+    public void testOneWayRpcCallOverDeviceSessionOnCloudWhenEdgeDisconnected() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        edgeImitator.disconnect();
+        verifyEdgeDisconnected();
+
+        sendOneWayRpcAndVerifyDeliveryOverMqttSession(device);
+    }
+
+    private void sendOneWayRpcAndVerifyDeliveryOverMqttSession(Device device) throws Exception {
+        DeviceCredentials deviceCredentials = doGet("/api/device/" + device.getUuidId() + "/credentials", DeviceCredentials.class);
+
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(deviceCredentials.getCredentialsId());
+        MqttTestCallback onRpcCallback = new MqttTestCallback();
+        client.setCallback(onRpcCallback);
+
+        client.subscribeAndWait(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, MqttQoS.AT_MOST_ONCE);
+        awaitForDeviceActorToReceiveSubscription(device.getId(), FeatureType.RPC, 1);
+
+        ObjectNode rpc = createDefaultRpc();
+        rpc.put("persistent", false);
+        String result = doPostAsync("/api/rpc/oneway/" + device.getUuidId(), JacksonUtil.toString(rpc), String.class, status().isOk());
+        Assert.assertTrue(StringUtils.isEmpty(result));
+
+        Assert.assertTrue(onRpcCallback.getSubscribeLatch().await(TIMEOUT, TimeUnit.SECONDS));
+        JsonNode request = JacksonUtil.fromBytes(onRpcCallback.getPayloadBytes());
+        Assert.assertEquals(rpc.get("method"), request.get("method"));
+        Assert.assertEquals(rpc.get("params"), request.get("params"));
+        verify(tbClusterService, never()).onEdgeHighPriorityMsg(any());
+
+        client.disconnect();
     }
 
     private Device buildDeviceForUplinkMsg(String name, String type) {
