@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.sparkplug.attributes;
 
 import org.eclipse.paho.mqttv5.common.MqttException;
@@ -44,6 +45,7 @@ public class MqttV5ClientSparkplugBAttributesTest extends AbstractMqttV5ClientSp
     public void testClientWithCorrectAccessTokenPublishNCMD_FloatType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {
         processClientWithCorrectAccessTokenPublishNCMD_FloatType_IfMetricFailedTypeCheck_SendValueOk();
     }
+
     @Test
     public void testClientWithCorrectAccessTokenPublishMetricDataTypeFromJson_SendValueOk() throws Exception {
         processClientWithCorrectAccessTokenPublishMetricDataTypeFromJson_SendValueOk();
@@ -52,6 +54,11 @@ public class MqttV5ClientSparkplugBAttributesTest extends AbstractMqttV5ClientSp
     @Test
     public void testClientWithCorrectAccessTokenPublishNCMD_DoubleType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {
         processClientWithCorrectAccessTokenPublishNCMD_DoubleType_IfMetricFailedTypeCheck_SendValueOk();
+    }
+
+    @Test
+    public void testClientWithCorrectAccessTokenPublishNCMD_DoubleType_SendAndReceiveDoubleValueOk() throws Exception {
+        processClientWithCorrectAccessTokenPublishNCMD_DoubleType_SendAndReceiveDoubleValueOk();
     }
 
     @Test

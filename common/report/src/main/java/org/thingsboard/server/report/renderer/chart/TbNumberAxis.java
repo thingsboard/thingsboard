@@ -140,6 +140,10 @@ public class TbNumberAxis extends NumberAxis {
     protected List<Tick> refreshTicksVertical(Graphics2D g2,
                                               Rectangle2D dataArea, RectangleEdge edge) {
 
+        if (this.parentAxis != null && this.parentAxis.getTicks() == null) {
+            // hidden parent axis is skipped by layout, so its ticks are not calculated yet
+            this.parentAxis.refreshTicksVertical(g2, dataArea, edge);
+        }
         List<Tick> result = new ArrayList<>();
         Font tickLabelFont = getTickLabelFont();
         g2.setFont(tickLabelFont);

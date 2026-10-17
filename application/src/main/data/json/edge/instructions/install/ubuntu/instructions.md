@@ -74,14 +74,14 @@ echo "CREATE DATABASE tb_edge;" | psql -U postgres -d postgres -h 127.0.0.1 -W
 Download the installation package:
 
 ```bash
-wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}pe.deb
+wget https://dist.thingsboard.io/tb-edge-${TB_EDGE_TAG}${TB_EDGE_PKG_SUFFIX}.deb
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo dpkg -i tb-edge-${TB_EDGE_TAG}pe.deb
+sudo dpkg -i tb-edge-${TB_EDGE_TAG}${TB_EDGE_PKG_SUFFIX}.deb
 {:copy-code}
 ```
 
