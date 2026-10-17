@@ -49,7 +49,9 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -306,6 +308,18 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> attributesToSave) {
+                try {
+                    saveAttributesAndPushToRuleEngine(attributesToSave);
+                } catch (DataValidationException | IncorrectParameterException e) {
+                    // a failed response makes the edge resend the batch forever, so invalid attributes are acked and dropped
+                    log.warn("[{}] Skipping invalid attributes update [{}]: {}", tenantId, msg, e.getMessage());
+                    futureToSet.set(null);
+                } catch (Exception e) {
+                    onFailure(e);
+                }
+            }
+
+            private void saveAttributesAndPushToRuleEngine(List<AttributeKvEntry> attributesToSave) {
                 JsonObject jsonToSave = filterAttributesFromJson(json, attributesToSave);
                 tsSubService.saveAttributes(AttributesSaveRequest.builder()
                         .tenantId(tenantId)

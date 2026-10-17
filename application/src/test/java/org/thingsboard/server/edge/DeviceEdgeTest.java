@@ -545,6 +545,43 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testSendInvalidAttributeToCloudDoesNotBlockNextUplink() throws Exception {
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(buildAttributesUpdatedUplinkMsg(device, "<script>alert(1)</script>", UUID.randomUUID().toString()));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        // the edge resends a failed timeseries batch forever, so an invalid one must be acked
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        String validKey = "valid_attr";
+        String validValue = UUID.randomUUID().toString();
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(buildAttributesUpdatedUplinkMsg(device, validKey, validValue));
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.getLatestResponseMsg().getSuccess());
+
+        String attributeValuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/" + DataConstants.SERVER_SCOPE;
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getAttributeByKey(validKey, doGetAsyncTyped(attributeValuesUrl, new TypeReference<>() {}))
+                        .map(attribute -> validValue.equals(attribute.get("value")))
+                        .orElse(false));
+    }
+
+    private UplinkMsg buildAttributesUpdatedUplinkMsg(Device device, String key, String value) {
+        JsonObject attributesData = new JsonObject();
+        attributesData.addProperty(key, value);
+        EntityDataProto.Builder entityDataBuilder = EntityDataProto.newBuilder();
+        entityDataBuilder.setEntityType(device.getId().getEntityType().name());
+        entityDataBuilder.setEntityIdMSB(device.getUuidId().getMostSignificantBits());
+        entityDataBuilder.setEntityIdLSB(device.getUuidId().getLeastSignificantBits());
+        entityDataBuilder.setAttributesUpdatedMsg(JsonConverter.convertToAttributesProto(attributesData));
+        entityDataBuilder.setPostAttributeScope(DataConstants.SERVER_SCOPE);
+        return UplinkMsg.newBuilder().addEntityData(entityDataBuilder.build()).build();
+    }
+
+    @Test
     public void testSendDeviceToCloudWithNameThatAlreadyExistsOnCloud() throws Exception {
         String deviceOnCloudName = StringUtils.randomAlphanumeric(15);
         Device deviceOnCloud = saveDevice(deviceOnCloudName, DEFAULT_DEVICE_TYPE);
