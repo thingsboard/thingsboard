@@ -96,8 +96,8 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
             return Collections.emptyList();
         }
         return DaoUtil.convertDataList(
-                relationRepository.findAllByFromIdInAndFromTypeAndRelationTypeGroup(
-                        fromIds,
+                relationRepository.findAllByFromIdsAndFromTypeAndRelationTypeGroup(
+                        fromIds.toArray(UUID[]::new),
                         fromType.name(),
                         typeGroup.name()));
     }

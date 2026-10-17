@@ -4,6 +4,7 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -15,6 +16,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,9 +40,11 @@ import org.thingsboard.server.exception.DataValidationException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -548,6 +552,87 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         assertThat(relationService.findByFrom(tenantId, fromId, RelationTypeGroup.RULE_NODE)).isEmpty();
 
         ruleChainService.deleteRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
+    }
+
+    @Test
+    public void testBatchedLoadingOfRuleChainLargerThanOneBatchWithHugeConfigurations() throws Exception {
+        // More nodes than one 1024-id batch, and a few large configurations of about 1 MB each
+        int nodeCount = 1100;
+        Set<Integer> hugeConfigIndexes = Set.of(0, 1023, 1024);
+        String hugeValue = StringUtils.randomAlphanumeric(1024 * 1024);
+
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("Large RuleChain");
+        ruleChain.setTenantId(tenantId);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+
+        RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
+        ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
+        List<RuleNode> ruleNodes = new ArrayList<>(nodeCount);
+        for (int i = 0; i < nodeCount; i++) {
+            RuleNode ruleNode = new RuleNode();
+            ruleNode.setName("node" + i);
+            ruleNode.setType("type");
+            ObjectNode configuration = JacksonUtil.newObjectNode().put("index", i);
+            if (hugeConfigIndexes.contains(i)) {
+                configuration.put("script", hugeValue);
+                configuration.putArray("keys").add("temperature").add("humidity");
+            }
+            ruleNode.setConfiguration(configuration);
+            ruleNodes.add(ruleNode);
+        }
+        ruleChainMetaData.setFirstNodeIndex(0);
+        ruleChainMetaData.setNodes(ruleNodes);
+        // a binary tree: acyclic and shallow, with connections that span both id batches
+        for (int i = 0; i < nodeCount; i++) {
+            if (2 * i + 1 < nodeCount) {
+                ruleChainMetaData.addConnectionInfo(i, 2 * i + 1, "Success");
+            }
+            if (2 * i + 2 < nodeCount) {
+                ruleChainMetaData.addConnectionInfo(i, 2 * i + 2, "Failure");
+            }
+        }
+        Assert.assertTrue(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity()).isSuccess());
+
+        List<RuleNode> loadedNodes = ruleChainService.getRuleChainNodes(tenantId, savedRuleChain.getId());
+
+        assertThat(loadedNodes).hasSize(nodeCount);
+        assertThat(loadedNodes).extracting(RuleNode::getId).doesNotHaveDuplicates();
+        Map<String, RuleNode> nodesByName = new HashMap<>();
+        loadedNodes.forEach(node -> nodesByName.put(node.getName(), node));
+        for (int i = 0; i < nodeCount; i++) {
+            RuleNode node = nodesByName.get("node" + i);
+            assertThat(node).as("node%s", i).isNotNull();
+            assertThat(node.getRuleChainId()).isEqualTo(savedRuleChain.getId());
+            assertThat(node.getConfiguration().get("index").asInt()).isEqualTo(i);
+            if (hugeConfigIndexes.contains(i)) {
+                assertThat(node.getConfiguration().get("script").asText()).isEqualTo(hugeValue);
+                assertThat(node.getConfiguration().get("keys")).hasSize(2);
+            } else {
+                assertThat(node.getConfiguration().has("script")).isFalse();
+            }
+        }
+
+        List<RuleNodeId> ruleNodeIds = loadedNodes.stream().map(RuleNode::getId).toList();
+        Map<RuleNodeId, List<EntityRelation>> relations = ruleChainService.getRuleNodesRelations(tenantId, ruleNodeIds);
+
+        assertThat(relations.keySet()).containsExactlyInAnyOrderElementsOf(ruleNodeIds);
+        for (int i = 0; i < nodeCount; i++) {
+            RuleNodeId from = nodesByName.get("node" + i).getId();
+            Map<String, EntityId> expected = new HashMap<>();
+            if (2 * i + 1 < nodeCount) {
+                expected.put("Success", nodesByName.get("node" + (2 * i + 1)).getId());
+            }
+            if (2 * i + 2 < nodeCount) {
+                expected.put("Failure", nodesByName.get("node" + (2 * i + 2)).getId());
+            }
+            Map<String, EntityId> actual = new HashMap<>();
+            relations.get(from).forEach(relation -> actual.put(relation.getType(), relation.getTo()));
+            assertThat(actual).as("relations of node%s", i).isEqualTo(expected);
+            assertThat(relations.get(from)).hasSize(expected.size());
+        }
+
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
     }
 
     private RuleChainMetaData createRuleChainMetadata() throws Exception {
