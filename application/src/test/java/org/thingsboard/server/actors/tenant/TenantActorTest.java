@@ -27,6 +27,7 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
+import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -97,6 +98,43 @@ public class TenantActorTest {
         tenantActor.doProcess(componentLifecycleMsg);
         verify(ctx, never()).getOrCreateChildActor(any(), any(), any(), any());
         verify(deviceActorRef, never()).tellWithHighPriority(any());
+    }
+
+    @Test
+    public void deviceRecreatedWithSameIdAfterDeleteReceivesMessagesTest() throws Exception {
+        TbActorCtx ctx = mock(TbActorCtx.class);
+        tenantActor.init(ctx);
+        TbActorRef deviceActorRef = mock(TbActorRef.class);
+        when(systemContext.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(new TopicPartitionInfo("Main", tenantId, 0, true));
+        when(ctx.getOrCreateChildActor(any(), any(), any(), any())).thenReturn(deviceActorRef);
+
+        tenantActor.doProcess(new ComponentLifecycleMsg(tenantId, deviceId, ComponentLifecycleEvent.DELETED));
+        // the same UUID comes back, e.g. a Version Control restore recreating a deleted device
+        tenantActor.doProcess(new ComponentLifecycleMsg(tenantId, deviceId, ComponentLifecycleEvent.CREATED));
+        reset(ctx, deviceActorRef);
+        when(ctx.getOrCreateChildActor(any(), any(), any(), any())).thenReturn(deviceActorRef);
+
+        DeviceEdgeUpdateMsg deviceMsg = new DeviceEdgeUpdateMsg(tenantId, deviceId, null);
+        tenantActor.doProcess(deviceMsg);
+        verify(ctx).getOrCreateChildActor(eq(new TbEntityActorId(deviceId)), any(), any(), any());
+        verify(deviceActorRef).tellWithHighPriority(eq(deviceMsg));
+    }
+
+    @Test
+    public void messageForDeletedDeviceIsDroppedTest() throws Exception {
+        TbActorCtx ctx = mock(TbActorCtx.class);
+        tenantActor.init(ctx);
+        TbActorRef deviceActorRef = mock(TbActorRef.class);
+        when(systemContext.resolve(ServiceType.TB_CORE, tenantId, deviceId)).thenReturn(new TopicPartitionInfo("Main", tenantId, 0, true));
+        when(ctx.getOrCreateChildActor(any(), any(), any(), any())).thenReturn(deviceActorRef);
+
+        tenantActor.doProcess(new ComponentLifecycleMsg(tenantId, deviceId, ComponentLifecycleEvent.DELETED));
+        reset(ctx, deviceActorRef);
+
+        tenantActor.doProcess(new DeviceEdgeUpdateMsg(tenantId, deviceId, null));
+        verify(ctx, never()).getOrCreateChildActor(any(), any(), any(), any());
+        verify(deviceActorRef, never()).tellWithHighPriority(any());
+        verify(deviceActorRef, never()).tell(any());
     }
 
     @Test
