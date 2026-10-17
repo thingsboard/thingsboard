@@ -1,0 +1,19 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="edgeGroupConfigForm" class="tb-form-panel no-border no-padding">
+  <tb-edge-source [form]="edgeGroupConfigForm"></tb-edge-source>
+
+  <tb-entity-group-patterns required formControlName="entityGroups"></tb-entity-group-patterns>
+
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-row no-border no-padding">
+      <mat-slide-toggle class="mat-slide" formControlName="createGroupIfNotExists">
+        {{ 'rule-node-config.create-group-if-not-exists' | translate }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+</section>

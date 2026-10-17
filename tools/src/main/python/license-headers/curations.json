@@ -1274,6 +1274,12 @@
       "contentHash": "sha256:7e5a32c33b1e1e45e9fec84e17be78be867f0e03db1d6cf004b84a1aac3fb51a"
     },
     {
+      "path": "ui-ngx/src/app/modules/home/components/rule-node/common/entity-group-patterns.component.scss",
+      "header": "busl",
+      "reason": "Host styles of the PE-only entity group patterns component used by the assign/unassign entity group to edge rule nodes. It was written by adapting CE ui-ngx/src/app/modules/home/components/rule-node/common/kv-map-config.component.scss, which stays at its own path, so this is not a CE file with PE modifications. Maintainer rule (2026-09-09): a file that does not exist in CE and implements a PE feature is busl, however closely it resembles a CE file. Reviewed similarity candidate ui-ngx/src/app/modules/home/components/rule-node/common/kv-map-config.component.scss at 5954190c32f (blob 3ec02e401eea5d687af383e2d9107f5c7bdd8593).",
+      "contentHash": "sha256:50d4b4a53d1b737ba1969a908949e22c2097f5883df11ecae71be9460c82cc59"
+    },
+    {
       "path": "ui-ngx/src/app/modules/home/components/rule-node/transformation/duplicate-to-related-config.component.ts",
       "header": "busl",
       "reason": "PE typed UI adapter duplicate-to-related-config.component.ts. Reviewed implementation only registers the PE component, supplies typed framework inputs or constructs its PE configuration form; matching generic Angular/ThingsBoard component hooks are template use. Reviewed CE candidate ui-ngx/src/app/modules/home/components/rule-node/action/rpc-request-config.component.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 546f344863860f44a1387c1bc6c90db3645deb91).",
