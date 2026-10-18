@@ -296,6 +296,8 @@ public class DefaultTbClusterServiceTest {
         assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isNotNull();
         assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toCoreNotificationMsg);
         assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_CORE);
     }
 
     @Test
@@ -345,6 +347,8 @@ public class DefaultTbClusterServiceTest {
         clusterService.pushNotificationToCore(CORE, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
 
         verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_CORE);
     }
 
     @Test
@@ -409,6 +413,8 @@ public class DefaultTbClusterServiceTest {
         clusterService.pushNotificationToRuleEngine(RULE_ENGINE, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
 
         verify(tbRuleEngineQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_RULE_ENGINE);
     }
 
     @Test
@@ -452,6 +458,8 @@ public class DefaultTbClusterServiceTest {
         clusterService.pushNotificationToTransport(TRANSPORT, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
 
         verify(tbTransportQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_TRANSPORT);
     }
 
     @Test
