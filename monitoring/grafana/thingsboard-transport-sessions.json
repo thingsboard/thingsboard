@@ -448,7 +448,7 @@
     },
     {
       "type": "row",
-      "title": "Sessions",
+      "title": "Secure and unsecure usage",
       "collapsed": false,
       "id": 7,
       "panels": [],
@@ -460,9 +460,9 @@
       }
     },
     {
-      "type": "timeseries",
-      "title": "Transport open connections",
-      "description": "Active sessions by protocol. Falls back to the legacy TRANSPORT_openConnections gauge for transports that predate the protocol label.",
+      "type": "barchart",
+      "title": "Secure and unsecure requests by transport",
+      "description": "Share of requests per transport for the selected time range. Secure requests are split by where TLS is terminated: on ThingsBoard or on a reverse proxy.",
       "id": 8,
       "datasource": {
         "type": "prometheus",
@@ -476,28 +476,25 @@
       },
       "fieldConfig": {
         "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "min": 0,
+          "max": 1.12,
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "short",
-          "min": 0,
           "custom": {
-            "drawStyle": "line",
-            "lineWidth": 1,
-            "fillOpacity": 0,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            }
+            "fillOpacity": 85,
+            "lineWidth": 0,
+            "gradientMode": "none",
+            "axisPlacement": "hidden"
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "MQTTS"
+              "options": "Secure (TLS on ThingsBoard)"
             },
             "properties": [
               {
@@ -512,7 +509,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "COAPS"
+              "options": "Secure (TLS on proxy)"
             },
             "properties": [
               {
@@ -527,22 +524,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "LWM2M_DTLS"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#9FB8A0"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "MQTT"
+              "options": "Unsecure"
             },
             "properties": [
               {
@@ -557,49 +539,40 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "COAP"
+              "options": "transport"
             },
             "properties": [
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#B98679"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "LWM2M"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#D9C08E"
-                }
+                "id": "custom.axisPlacement",
+                "value": "auto"
               }
             ]
           }
         ]
       },
       "options": {
+        "orientation": "horizontal",
+        "stacking": "none",
+        "showValue": "always",
+        "xField": "transport",
+        "barWidth": 0.85,
+        "text": {
+          "valueSize": 14
+        },
+        "groupWidth": 0.8,
+        "fullHighlight": false,
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0,
+        "barRadius": 0,
         "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "right",
+          "displayMode": "list",
+          "placement": "bottom",
           "showLegend": true,
-          "sortBy": "Last",
-          "sortDesc": true
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
       "targets": [
@@ -609,11 +582,63 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "sum by (protocol) (thingsboard_transport_connections_active{instance=~\"$instance\"})\nor\nlabel_replace(sum(TRANSPORT_openConnections{instance=~\"$instance\"}), \"protocol\", \"all (legacy)\", \"\", \"\")",
-          "legendFormat": "{{protocol}}",
+          "expr": "(sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\", tls_termination=\"transport\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")) / sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\"))) or (0 * sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")))",
+          "legendFormat": "",
           "refId": "A",
-          "range": true,
-          "instant": false
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\", tls_termination=\"proxy\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")) / sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\"))) or (0 * sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")))",
+          "legendFormat": "",
+          "refId": "B",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds}"
+          },
+          "editorMode": "code",
+          "expr": "(sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\", tls_termination=\"none\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")) / sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\"))) or (0 * sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")))",
+          "legendFormat": "",
+          "refId": "C",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "transport": 0,
+              "Secure (TLS on ThingsBoard)": 1,
+              "Secure (TLS on proxy)": 2,
+              "Unsecure": 3
+            },
+            "renameByName": {
+              "Value #A": "Secure (TLS on ThingsBoard)",
+              "Value #B": "Secure (TLS on proxy)",
+              "Value #C": "Unsecure"
+            }
+          }
         }
       ]
     },
@@ -1153,7 +1178,7 @@
     },
     {
       "type": "row",
-      "title": "Requests (HTTP, CoAP)",
+      "title": "Trends by protocol",
       "collapsed": false,
       "id": 13,
       "panels": [],
@@ -1308,9 +1333,9 @@
       ]
     },
     {
-      "type": "barchart",
-      "title": "Secure and unsecure requests by transport",
-      "description": "Share of requests per transport for the selected time range. Secure requests are split by where TLS is terminated: on ThingsBoard or on a reverse proxy.",
+      "type": "timeseries",
+      "title": "Transport open connections",
+      "description": "Active sessions by protocol. Falls back to the legacy TRANSPORT_openConnections gauge for transports that predate the protocol label.",
       "id": 15,
       "datasource": {
         "type": "prometheus",
@@ -1324,25 +1349,28 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
-          "decimals": 1,
-          "min": 0,
-          "max": 1.12,
           "color": {
             "mode": "palette-classic"
           },
+          "unit": "short",
+          "min": 0,
           "custom": {
-            "fillOpacity": 85,
-            "lineWidth": 0,
-            "gradientMode": "none",
-            "axisPlacement": "hidden"
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
           }
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Secure (TLS on ThingsBoard)"
+              "options": "MQTTS"
             },
             "properties": [
               {
@@ -1357,7 +1385,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Secure (TLS on proxy)"
+              "options": "COAPS"
             },
             "properties": [
               {
@@ -1372,7 +1400,22 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Unsecure"
+              "options": "LWM2M_DTLS"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#9FB8A0"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "MQTT"
             },
             "properties": [
               {
@@ -1387,40 +1430,49 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "transport"
+              "options": "COAP"
             },
             "properties": [
               {
-                "id": "custom.axisPlacement",
-                "value": "auto"
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B98679"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LWM2M"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D9C08E"
+                }
               }
             ]
           }
         ]
       },
       "options": {
-        "orientation": "horizontal",
-        "stacking": "none",
-        "showValue": "always",
-        "xField": "transport",
-        "barWidth": 0.85,
-        "text": {
-          "valueSize": 14
-        },
-        "groupWidth": 0.8,
-        "fullHighlight": false,
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0,
-        "barRadius": 0,
         "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
+          "calcs": [
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "right",
           "showLegend": true,
-          "calcs": []
+          "sortBy": "Last",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1430,63 +1482,11 @@
             "uid": "${ds}"
           },
           "editorMode": "code",
-          "expr": "(sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\", tls_termination=\"transport\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")) / sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\"))) or (0 * sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")))",
-          "legendFormat": "",
+          "expr": "sum by (protocol) (thingsboard_transport_connections_active{instance=~\"$instance\"})\nor\nlabel_replace(sum(TRANSPORT_openConnections{instance=~\"$instance\"}), \"protocol\", \"all (legacy)\", \"\", \"\")",
+          "legendFormat": "{{protocol}}",
           "refId": "A",
-          "range": false,
-          "instant": true,
-          "format": "table"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${ds}"
-          },
-          "editorMode": "code",
-          "expr": "(sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\", tls_termination=\"proxy\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")) / sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\"))) or (0 * sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")))",
-          "legendFormat": "",
-          "refId": "B",
-          "range": false,
-          "instant": true,
-          "format": "table"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${ds}"
-          },
-          "editorMode": "code",
-          "expr": "(sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\", tls_termination=\"none\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")) / sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\"))) or (0 * sum by (transport) (label_replace(increase(thingsboard_transport_requests_total{instance=~\"$instance\"}[$__range]), \"transport\", \"$1\", \"protocol\", \"(HTTP|COAP).*\")))",
-          "legendFormat": "",
-          "refId": "C",
-          "range": false,
-          "instant": true,
-          "format": "table"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true
-            },
-            "indexByName": {
-              "transport": 0,
-              "Secure (TLS on ThingsBoard)": 1,
-              "Secure (TLS on proxy)": 2,
-              "Unsecure": 3
-            },
-            "renameByName": {
-              "Value #A": "Secure (TLS on ThingsBoard)",
-              "Value #B": "Secure (TLS on proxy)",
-              "Value #C": "Unsecure"
-            }
-          }
+          "range": true,
+          "instant": false
         }
       ]
     }
