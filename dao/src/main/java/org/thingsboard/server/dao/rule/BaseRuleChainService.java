@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -514,27 +513,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId) {
         Validator.validateId(ruleNodeId, id -> "Incorrect rule node id for search request.");
         List<EntityRelation> relations = relationService.findByFrom(tenantId, ruleNodeId, RelationTypeGroup.RULE_NODE);
-        List<EntityRelation> validRelations = new ArrayList<>();
-        for (EntityRelation relation : relations) {
-            boolean valid = true;
-            EntityType toType = relation.getTo().getEntityType();
-            if (toType == EntityType.RULE_NODE || toType == EntityType.RULE_CHAIN) {
-                BaseData<?> entity;
-                if (relation.getTo().getEntityType() == EntityType.RULE_NODE) {
-                    entity = ruleNodeDao.findById(tenantId, relation.getTo().getId());
-                } else {
-                    entity = ruleChainDao.findById(tenantId, relation.getTo().getId());
-                }
-                if (entity == null) {
-                    relationService.deleteRelation(tenantId, relation);
-                    valid = false;
-                }
-            }
-            if (valid) {
-                validRelations.add(relation);
-            }
-        }
-        return validRelations;
+        return removeDanglingRelations(tenantId, relations);
     }
 
     @Override
@@ -550,6 +529,17 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         for (List<RuleNodeId> batch : Lists.partition(ruleNodeIds, RULE_NODES_BATCH_SIZE)) {
             relations.addAll(relationDao.findAllByFromIds(tenantId, toUUIDs(batch), EntityType.RULE_NODE, RelationTypeGroup.RULE_NODE));
         }
+        for (EntityRelation relation : removeDanglingRelations(tenantId, relations)) {
+            result.computeIfAbsent(new RuleNodeId(relation.getFrom().getId()), id -> new ArrayList<>()).add(relation);
+        }
+        return result;
+    }
+
+    /**
+     * Returns the relations whose rule node or rule chain target exists, preserving order,
+     * and deletes the relations to missing targets.
+     */
+    private List<EntityRelation> removeDanglingRelations(TenantId tenantId, List<EntityRelation> relations) {
         Set<UUID> ruleNodeTargets = new HashSet<>();
         Set<UUID> ruleChainTargets = new HashSet<>();
         for (EntityRelation relation : relations) {
@@ -567,6 +557,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 existingRuleChains.add(ruleChainId);
             }
         }
+        List<EntityRelation> validRelations = new ArrayList<>(relations.size());
         for (EntityRelation relation : relations) {
             UUID targetId = relation.getTo().getId();
             boolean valid = switch (relation.getTo().getEntityType()) {
@@ -575,12 +566,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 default -> true;
             };
             if (valid) {
-                result.computeIfAbsent(new RuleNodeId(relation.getFrom().getId()), id -> new ArrayList<>()).add(relation);
+                validRelations.add(relation);
             } else {
                 relationService.deleteRelation(tenantId, relation);
             }
         }
-        return result;
+        return validRelations;
     }
 
     private Map<UUID, RuleNode> findRuleNodesByIds(Collection<UUID> ruleNodeIds) {

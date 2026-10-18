@@ -556,6 +556,20 @@ public class RuleChainServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testGetRuleNodeRelationsDropsAndDeletesRelationsToMissingRuleChains() throws Exception {
+        RuleChainMetaData ruleChainMetaData = createRuleChainMetadata();
+        RuleNodeId fromId = ruleChainMetaData.getNodes().get(2).getId();
+        RuleChainId missingTarget = new RuleChainId(UUID.randomUUID());
+        relationService.saveRelation(tenantId, new EntityRelation(fromId, missingTarget, "success", RelationTypeGroup.RULE_NODE));
+        assertThat(relationService.findByFrom(tenantId, fromId, RelationTypeGroup.RULE_NODE)).hasSize(1);
+
+        assertThat(ruleChainService.getRuleNodeRelations(tenantId, fromId)).isEmpty();
+        assertThat(relationService.findByFrom(tenantId, fromId, RelationTypeGroup.RULE_NODE)).isEmpty();
+
+        ruleChainService.deleteRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
+    }
+
+    @Test
     public void testGetRuleNodesRelationsOfRuleChainWithoutNodes() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
