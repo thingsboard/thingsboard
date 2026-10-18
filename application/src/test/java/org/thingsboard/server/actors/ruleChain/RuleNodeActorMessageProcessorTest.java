@@ -75,6 +75,25 @@ public class RuleNodeActorMessageProcessorTest {
     }
 
     @Test
+    public void actorUsesPreloadedRuleNodeOnlyForFirstInitAttempt() {
+        RuleNode preloaded = ruleNode();
+        RuleNode fixed = ruleNode();
+        fixed.setName("Save timeseries (fixed)");
+        when(ruleChainService.findRuleNodeById(tenantId, ruleNodeId)).thenReturn(fixed);
+        RuleNodeActor actor = (RuleNodeActor) new RuleNodeActor.ActorCreator(systemContext, tenantId,
+                preloaded.getRuleChainId(), "chain", ruleNodeId, preloaded).createActor();
+
+        RuleNodeActorMessageProcessor first = actor.createProcessor(mock(TbActorCtx.class));
+        verify(ruleChainService, never()).findRuleNodeById(any(), any());
+        assertThat(first.getComponentName()).isEqualTo(preloaded.getName());
+
+        // an init retry, or a re-init after a failed start, must pick up the current rule node
+        RuleNodeActorMessageProcessor retry = actor.createProcessor(mock(TbActorCtx.class));
+        verify(ruleChainService).findRuleNodeById(tenantId, ruleNodeId);
+        assertThat(retry.getComponentName()).isEqualTo(fixed.getName());
+    }
+
+    @Test
     @SuppressWarnings("deprecation")
     public void copyOfKeepsAllFieldsAndDetachesConfiguration() {
         RuleNode original = ruleNode();

@@ -25,7 +25,7 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
     // Rule node already loaded by the parent rule chain actor; null means the processor reads it from the database
-    private final RuleNode preloadedRuleNode;
+    private RuleNode preloadedRuleNode;
 
     private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId,
                           RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId, RuleNode preloadedRuleNode) {
@@ -38,7 +38,11 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
 
     @Override
     protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
-        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx, preloadedRuleNode);
+        RuleNode ruleNode = preloadedRuleNode;
+        // Use the preloaded node for the first init only: init retries and re-inits after a failed start
+        // must read the current rule node, which the user may have fixed in the meantime
+        preloadedRuleNode = null;
+        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx, ruleNode);
     }
 
     @Override
