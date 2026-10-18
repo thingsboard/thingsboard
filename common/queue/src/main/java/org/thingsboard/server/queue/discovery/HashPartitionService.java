@@ -106,7 +106,6 @@ public class HashPartitionService implements PartitionService {
 
     private List<ServiceInfo> currentOtherServices;
     private final Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
-    private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
     private volatile Set<TenantProfileId> profilesWithDedicatedServices = Collections.emptySet();
 
     private HashFunction hashFunction;
@@ -460,7 +459,6 @@ public class HashPartitionService implements PartitionService {
                 }
             }
         });
-        this.responsibleServices = responsibleServices;
         this.profilesWithDedicatedServices = profilesWithDedicatedServices;
 
         final ConcurrentMap<QueueKey, List<Integer>> oldPartitions = myPartitions;
