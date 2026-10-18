@@ -79,6 +79,8 @@ public class DefaultTbClusterServiceTest {
 
     public static final String TRANSPORT = "transport";
 
+    public static final String UNKNOWN_SERVICE_ID = "not-a-cluster-member";
+
     @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;
     @MockitoBean
@@ -301,9 +303,9 @@ public class DefaultTbClusterServiceTest {
         when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
         TbQueueCallback callback = mock(TbQueueCallback.class);
 
-        clusterService.pushNotificationToCore("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+        clusterService.pushNotificationToCore(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
 
-        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), eq("rpc-1778979165457-749"));
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), eq(UNKNOWN_SERVICE_ID));
         verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
         verify(callback, times(1)).onSuccess(isNull());
         verify(callback, never()).onFailure(any(Throwable.class));
@@ -355,7 +357,7 @@ public class DefaultTbClusterServiceTest {
         doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
 
-        clusterService.pushNotificationToCore("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+        clusterService.pushNotificationToCore(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
 
         verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
     }
@@ -365,9 +367,9 @@ public class DefaultTbClusterServiceTest {
         when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet(RULE_ENGINE));
         TbQueueCallback callback = mock(TbQueueCallback.class);
 
-        clusterService.pushNotificationToRuleEngine("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+        clusterService.pushNotificationToRuleEngine(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
 
-        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_RULE_ENGINE), eq("rpc-1778979165457-749"));
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_RULE_ENGINE), eq(UNKNOWN_SERVICE_ID));
         verify(producerProvider, never()).getRuleEngineNotificationsMsgProducer();
         verify(callback, times(1)).onSuccess(isNull());
         verify(callback, never()).onFailure(any(Throwable.class));
@@ -419,7 +421,7 @@ public class DefaultTbClusterServiceTest {
         doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbRuleEngineQueueProducer);
 
-        clusterService.pushNotificationToRuleEngine("rpc-1778979165457-749", new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+        clusterService.pushNotificationToRuleEngine(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
 
         verify(tbRuleEngineQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
     }
@@ -429,9 +431,9 @@ public class DefaultTbClusterServiceTest {
         when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(TRANSPORT));
         TbQueueCallback callback = mock(TbQueueCallback.class);
 
-        clusterService.pushNotificationToTransport("unknown-transport", TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+        clusterService.pushNotificationToTransport(UNKNOWN_SERVICE_ID, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
 
-        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), eq("unknown-transport"));
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), eq(UNKNOWN_SERVICE_ID));
         verify(producerProvider, never()).getTransportNotificationsMsgProducer();
         verify(callback, times(1)).onSuccess(isNull());
         verify(callback, never()).onFailure(any(Throwable.class));
@@ -483,7 +485,7 @@ public class DefaultTbClusterServiceTest {
         doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.pushNotificationToTransport("unknown-transport", TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+        clusterService.pushNotificationToTransport(UNKNOWN_SERVICE_ID, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
 
         verify(tbTransportQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
     }
