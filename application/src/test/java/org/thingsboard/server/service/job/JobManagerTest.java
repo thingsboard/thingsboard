@@ -148,10 +148,16 @@ public class JobManagerTest extends AbstractControllerTest {
         int tasksCount = 200;
         JobId jobId = submitJob(DummyJobConfiguration.builder()
                 .successfulTasksCount(tasksCount)
-                .taskProcessingTimeMs(50)
+                .taskProcessingTimeMs(1000)
                 .build()).getId();
 
-        Thread.sleep(500);
+        // with entity partitioning tasks are processed in parallel across partitions,
+        // so waiting for a fixed time is not enough - cancelling once processing has started
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.RUNNING);
+            assertThat(job.getResult().getSuccessfulCount()).isPositive();
+        });
         cancelJob(jobId);
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
