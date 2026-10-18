@@ -12,13 +12,18 @@ import org.thingsboard.server.common.data.agent.AgentAppEvent;
 import org.thingsboard.server.common.data.agent.AgentAppEventInfo;
 import org.thingsboard.server.common.data.agent.AgentInfo;
 import org.thingsboard.server.common.data.agent.AgentInstructions;
+import org.thingsboard.server.common.data.id.AgentId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -104,10 +109,12 @@ public class AgentControllerTest extends AbstractControllerTest {
 
         List<AgentInfo> infos = doGetTyped("/api/agentInfos?agentIds="
                 + first.getId().getId() + "," + second.getId().getId() + "," + UUID.randomUUID(), new TypeReference<>() {});
+        // The endpoint does not guarantee result order (SQL "id IN (...)" without ORDER BY), so match by id
         Assert.assertEquals(2, infos.size());
-        Assert.assertEquals(first.getId(), infos.get(0).getId());
-        Assert.assertEquals(first.getName(), infos.get(0).getName());
-        Assert.assertEquals(second.getId(), infos.get(1).getId());
+        Map<AgentId, AgentInfo> infosById = infos.stream().collect(Collectors.toMap(AgentInfo::getId, Function.identity()));
+        Assert.assertEquals(Set.of(first.getId(), second.getId()), infosById.keySet());
+        Assert.assertEquals(first.getName(), infosById.get(first.getId()).getName());
+        Assert.assertEquals(second.getName(), infosById.get(second.getId()).getName());
     }
 
     @Test
