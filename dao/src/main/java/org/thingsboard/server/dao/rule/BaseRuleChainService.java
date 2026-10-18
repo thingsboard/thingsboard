@@ -539,8 +539,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public Map<RuleNodeId, List<EntityRelation>> getRuleNodesRelations(TenantId tenantId, List<RuleNodeId> ruleNodeIds) {
-        validateIds(ruleNodeIds, ids -> "Incorrect rule node ids for search request " + ids);
         Map<RuleNodeId, List<EntityRelation>> result = new LinkedHashMap<>();
+        // A rule chain without nodes is valid: just created, or all of its nodes removed
+        if (ruleNodeIds != null && ruleNodeIds.isEmpty()) {
+            return result;
+        }
+        validateIds(ruleNodeIds, ids -> "Incorrect rule node ids for search request " + ids);
         ruleNodeIds.forEach(ruleNodeId -> result.put(ruleNodeId, new ArrayList<>()));
         List<EntityRelation> relations = new ArrayList<>();
         for (List<RuleNodeId> batch : Lists.partition(ruleNodeIds, RULE_NODES_BATCH_SIZE)) {

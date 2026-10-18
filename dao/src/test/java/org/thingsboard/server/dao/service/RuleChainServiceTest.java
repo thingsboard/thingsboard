@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.relation.RelationWriteLock;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -552,6 +553,23 @@ public class RuleChainServiceTest extends AbstractServiceTest {
         assertThat(relationService.findByFrom(tenantId, fromId, RelationTypeGroup.RULE_NODE)).isEmpty();
 
         ruleChainService.deleteRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
+    }
+
+    @Test
+    public void testGetRuleNodesRelationsOfRuleChainWithoutNodes() {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Rule chain without nodes");
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+        List<RuleNodeId> ruleNodeIds = ruleChainService.getRuleChainNodes(tenantId, savedRuleChain.getId())
+                .stream().map(RuleNode::getId).toList();
+        assertThat(ruleNodeIds).isEmpty();
+
+        assertThat(ruleChainService.getRuleNodesRelations(tenantId, ruleNodeIds)).isEmpty();
+        assertThatThrownBy(() -> ruleChainService.getRuleNodesRelations(tenantId, null))
+                .isInstanceOf(IncorrectParameterException.class);
+
+        ruleChainService.deleteRuleChainById(tenantId, savedRuleChain.getId());
     }
 
     @Test
