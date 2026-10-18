@@ -31,6 +31,8 @@ public class LwM2mTransportContext extends TransportContext {
 
     /**
      * Active sessions are the registered clients, secure ones are registered over DTLS (PSK, RPK or X.509 identity).
+     * Counted from the local client context, which is complete because the LwM2M transport runs as a single node.
+     * With several nodes sharing the client store, each node would also count the clients fetched from the store on startup.
      */
     public void updateActiveSessions(int lwm2m, int lwm2mDtls) {
         connectionsActiveCounterLWM2M.set(lwm2m);
