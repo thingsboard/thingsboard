@@ -208,15 +208,13 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onPartitionChangeMsg(PartitionChangeMsg msg) {
-        Set<TenantId> affectedTenants = msg.getAffectedTenants();
-        log.info("Partition change for {}: notifying {} affected tenant(s)", msg.getServiceType(), affectedTenants == null ? "ALL" : affectedTenants.size());
-        if (affectedTenants == null) {
+        if (msg.isForAllTenants()) {
             ctx.broadcastToChildren(msg, true);
         } else {
             ctx.broadcastToChildren(msg, new TbEntityTypeActorIdPredicate(EntityType.TENANT) {
                 @Override
                 protected boolean testEntityId(EntityId entityId) {
-                    return super.testEntityId(entityId) && affectedTenants.contains(entityId);
+                    return super.testEntityId(entityId) && msg.isAffected((TenantId) entityId);
                 }
             }, true);
         }

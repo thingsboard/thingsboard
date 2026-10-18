@@ -1,24 +1,16 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.actors.service;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
@@ -27,38 +19,61 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
-public class DefaultActorServiceTest {
+class DefaultActorServiceTest {
 
-    @Test
-    public void resolveAffectedTenants_onlyTenantSpecificQueueKeysChanged_returnsThoseTenants() {
-        TenantId tenant1 = new TenantId(UUID.randomUUID());
-        TenantId tenant2 = new TenantId(UUID.randomUUID());
-        QueueKey mainQueueTenant1 = new QueueKey(ServiceType.TB_RULE_ENGINE, "Main", tenant1);
-        QueueKey highPriorityQueueTenant1 = new QueueKey(ServiceType.TB_RULE_ENGINE, "HighPriority", tenant1);
-        QueueKey mainQueueTenant2 = new QueueKey(ServiceType.TB_RULE_ENGINE, "Main", tenant2);
+    private final TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
+    private final TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
 
-        Map<QueueKey, Set<TopicPartitionInfo>> newPartitions = Map.of(
-                mainQueueTenant1, Collections.emptySet(),
-                highPriorityQueueTenant1, Collections.emptySet(),
-                mainQueueTenant2, Collections.emptySet());
-        PartitionChangeEvent event = new PartitionChangeEvent(this, ServiceType.TB_RULE_ENGINE, newPartitions, Map.of());
+    private DefaultActorService actorService;
+    private TbActorRef appActor;
 
-        Set<TenantId> affected = DefaultActorService.resolveAffectedTenants(event);
-
-        assertEquals(Set.of(tenant1, tenant2), affected);
+    @BeforeEach
+    void setUp() {
+        actorService = new DefaultActorService();
+        appActor = mock(TbActorRef.class);
+        ReflectionTestUtils.setField(actorService, "appActor", appActor);
     }
 
     @Test
-    public void resolveAffectedTenants_sysTenantQueueKeyChanged_returnsNull() {
-        QueueKey sharedMainQueue = new QueueKey(ServiceType.TB_RULE_ENGINE, "Main", TenantId.SYS_TENANT_ID);
-        Map<QueueKey, Set<TopicPartitionInfo>> newPartitions = Map.of(sharedMainQueue, Collections.emptySet());
-        PartitionChangeEvent event = new PartitionChangeEvent(this, ServiceType.TB_RULE_ENGINE, newPartitions, Map.of());
+    void isolatedTenantQueueChanged_sendsMsgForAffectedTenantsOnly() {
+        actorService.onTbApplicationEvent(event(ServiceType.TB_RULE_ENGINE, tenant1));
 
-        Set<TenantId> affected = DefaultActorService.resolveAffectedTenants(event);
-
-        assertNull(affected);
+        PartitionChangeMsg msg = captureMsg();
+        assertThat(msg.getServiceType()).isEqualTo(ServiceType.TB_RULE_ENGINE);
+        assertThat(msg.isForAllTenants()).isFalse();
+        assertThat(msg.isAffected(tenant1)).isTrue();
+        assertThat(msg.isAffected(tenant2)).isFalse();
     }
+
+    @Test
+    void sharedQueueChanged_sendsMsgForAllTenants() {
+        actorService.onTbApplicationEvent(event(ServiceType.TB_RULE_ENGINE, TenantId.SYS_TENANT_ID));
+
+        assertThat(captureMsg().isForAllTenants()).isTrue();
+    }
+
+    @Test
+    void corePartitionsChanged_sendsMsgForAllTenants() {
+        actorService.onTbApplicationEvent(event(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID));
+
+        PartitionChangeMsg msg = captureMsg();
+        assertThat(msg.getServiceType()).isEqualTo(ServiceType.TB_CORE);
+        assertThat(msg.isForAllTenants()).isTrue();
+    }
+
+    private PartitionChangeEvent event(ServiceType serviceType, TenantId tenantId) {
+        QueueKey queueKey = new QueueKey(serviceType, DataConstants.MAIN_QUEUE_NAME, tenantId);
+        return new PartitionChangeEvent(this, serviceType, Map.of(queueKey, Collections.emptySet()), Collections.emptyMap());
+    }
+
+    private PartitionChangeMsg captureMsg() {
+        ArgumentCaptor<PartitionChangeMsg> captor = ArgumentCaptor.forClass(PartitionChangeMsg.class);
+        verify(appActor).tellWithHighPriority(captor.capture());
+        return captor.getValue();
+    }
+
 }

@@ -108,6 +108,8 @@ public class HashPartitionService implements PartitionService {
     private List<ServiceInfo> currentOtherServices;
     private final Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
     private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
+    // managed status of isolated tenants, as of the last published rule engine partition change event
+    private Map<TenantId, Boolean> isolatedTenantsManagedStatus = Collections.emptyMap();
 
     private HashFunction hashFunction;
 
@@ -538,12 +540,41 @@ public class HashPartitionService implements PartitionService {
                         .map(tpi -> tpi.getPartition().orElse(-1).toString()).sorted()
                         .collect(Collectors.joining(", ")) + "]")
                 .collect(Collectors.joining(System.lineSeparator())));
-        PartitionChangeEvent event = new PartitionChangeEvent(this, serviceType, newPartitions, oldPartitions);
+        Set<TenantId> managedStatusChangedTenants = ServiceType.TB_RULE_ENGINE.equals(serviceType) ?
+                updateIsolatedTenantsManagedStatus() : Collections.emptySet();
+        PartitionChangeEvent event = new PartitionChangeEvent(this, serviceType, newPartitions, oldPartitions, managedStatusChangedTenants);
         try {
             applicationEventPublisher.publishEvent(event);
         } catch (Exception e) {
             log.error("Failed to publish partition change event {}", event, e);
         }
+    }
+
+    // An isolated tenant's managed status depends on responsibleServices, which can change
+    // while the tenant's own queue keys stay out of the partition change event.
+    // Returns the isolated tenants whose managed status changed since the previous call.
+    private synchronized Set<TenantId> updateIsolatedTenantsManagedStatus() {
+        Map<TenantId, Boolean> managedStatus = new HashMap<>();
+        partitionSizesMap.keySet().stream()
+                .filter(queueKey -> queueKey.getType() == ServiceType.TB_RULE_ENGINE && !queueKey.getTenantId().isSysTenantId())
+                .map(QueueKey::getTenantId)
+                .distinct()
+                .forEach(tenantId -> {
+                    try {
+                        managedStatus.put(tenantId, isManagedByCurrentService(tenantId));
+                    } catch (Exception e) {
+                        log.debug("[{}] Failed to check if tenant is managed by current service", tenantId, e);
+                    }
+                });
+        Set<TenantId> changed = managedStatus.entrySet().stream()
+                .filter(entry -> {
+                    Boolean previous = isolatedTenantsManagedStatus.get(entry.getKey());
+                    return previous != null && !previous.equals(entry.getValue());
+                })
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        isolatedTenantsManagedStatus = managedStatus;
+        return changed;
     }
 
     private Set<TopicPartitionInfo> toTpiList(QueueKey queueKey, List<Integer> partitions) {
