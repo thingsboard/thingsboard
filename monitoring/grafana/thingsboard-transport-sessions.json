@@ -89,7 +89,7 @@
         "x": 0,
         "y": 1,
         "w": 5,
-        "h": 5
+        "h": 6
       },
       "fieldConfig": {
         "defaults": {
@@ -150,7 +150,7 @@
         "x": 5,
         "y": 1,
         "w": 5,
-        "h": 5
+        "h": 6
       },
       "fieldConfig": {
         "defaults": {
@@ -181,7 +181,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "textMode": "auto",
         "reduceOptions": {
@@ -220,7 +220,7 @@
         "x": 10,
         "y": 1,
         "w": 5,
-        "h": 5
+        "h": 6
       },
       "fieldConfig": {
         "defaults": {
@@ -281,7 +281,7 @@
         "x": 15,
         "y": 1,
         "w": 4,
-        "h": 5
+        "h": 6
       },
       "fieldConfig": {
         "defaults": {
@@ -312,7 +312,7 @@
       },
       "options": {
         "colorMode": "value",
-        "graphMode": "area",
+        "graphMode": "none",
         "justifyMode": "auto",
         "textMode": "auto",
         "reduceOptions": {
@@ -351,7 +351,7 @@
         "x": 19,
         "y": 1,
         "w": 5,
-        "h": 5
+        "h": 6
       },
       "fieldConfig": {
         "defaults": {
@@ -413,7 +413,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 7
       }
     },
     {
@@ -427,9 +427,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 7,
+        "y": 8,
         "w": 12,
-        "h": 9
+        "h": 11
       },
       "fieldConfig": {
         "defaults": {
@@ -455,11 +455,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "last",
-            "max"
+            "last"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
           "sortBy": "Last",
           "sortDesc": true
@@ -495,9 +494,9 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 7,
+        "y": 8,
         "w": 12,
-        "h": 9
+        "h": 11
       },
       "fieldConfig": {
         "defaults": {
@@ -576,9 +575,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 19,
         "w": 12,
-        "h": 8
+        "h": 12
       },
       "fieldConfig": {
         "defaults": {
@@ -599,7 +598,38 @@
             }
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "secure (TLS/DTLS)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "plain"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -656,9 +686,9 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 16,
+        "y": 19,
         "w": 12,
-        "h": 8
+        "h": 12
       },
       "fieldConfig": {
         "defaults": {
@@ -684,11 +714,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "last",
-            "max"
+            "last"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
           "sortBy": "Last",
           "sortDesc": true
@@ -723,7 +752,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 31
       }
     },
     {
@@ -737,9 +766,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 25,
+        "y": 32,
         "w": 12,
-        "h": 9
+        "h": 12
       },
       "fieldConfig": {
         "defaults": {
@@ -765,11 +794,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "mean",
-            "max"
+            "mean"
           ],
           "displayMode": "table",
-          "placement": "bottom",
+          "placement": "right",
           "showLegend": true,
           "sortBy": "Last",
           "sortDesc": true
@@ -805,9 +833,9 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 25,
+        "y": 32,
         "w": 6,
-        "h": 9
+        "h": 12
       },
       "fieldConfig": {
         "defaults": {
@@ -874,9 +902,9 @@
       },
       "gridPos": {
         "x": 18,
-        "y": 25,
+        "y": 32,
         "w": 6,
-        "h": 9
+        "h": 12
       },
       "fieldConfig": {
         "defaults": {
@@ -885,7 +913,53 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "none"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "transport"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "proxy"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "pieType": "donut",
