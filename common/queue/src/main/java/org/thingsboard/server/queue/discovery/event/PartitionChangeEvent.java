@@ -12,8 +12,6 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.io.Serial;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,25 +28,14 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     private final Map<QueueKey, Set<TopicPartitionInfo>> newPartitions;
     @Getter
     private final Map<QueueKey, Set<TopicPartitionInfo>> oldPartitions;
-    @Getter
-    @ToString.Exclude
-    private final Set<TenantId> managedStatusChangedTenants;
 
     public PartitionChangeEvent(Object source, ServiceType serviceType,
                                 Map<QueueKey, Set<TopicPartitionInfo>> newPartitions,
                                 Map<QueueKey, Set<TopicPartitionInfo>> oldPartitions) {
-        this(source, serviceType, newPartitions, oldPartitions, Collections.emptySet());
-    }
-
-    public PartitionChangeEvent(Object source, ServiceType serviceType,
-                                Map<QueueKey, Set<TopicPartitionInfo>> newPartitions,
-                                Map<QueueKey, Set<TopicPartitionInfo>> oldPartitions,
-                                Set<TenantId> managedStatusChangedTenants) {
         super(source);
         this.serviceType = serviceType;
         this.newPartitions = newPartitions;
         this.oldPartitions = oldPartitions;
-        this.managedStatusChangedTenants = managedStatusChangedTenants;
     }
 
     /**
@@ -62,9 +49,7 @@ public class PartitionChangeEvent extends TbApplicationEvent {
                 newPartitions.keySet().stream().anyMatch(queueKey -> queueKey.getTenantId().isSysTenantId())) {
             return null;
         }
-        Set<TenantId> affectedTenants = new HashSet<>(managedStatusChangedTenants);
-        newPartitions.keySet().forEach(queueKey -> affectedTenants.add(queueKey.getTenantId()));
-        return affectedTenants;
+        return newPartitions.keySet().stream().map(QueueKey::getTenantId).collect(Collectors.toSet());
     }
 
     public Set<TopicPartitionInfo> getCorePartitions() {

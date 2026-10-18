@@ -23,28 +23,20 @@ class PartitionChangeEventTest {
 
     private final TenantId tenant1 = TenantId.fromUUID(UUID.randomUUID());
     private final TenantId tenant2 = TenantId.fromUUID(UUID.randomUUID());
-    private final TenantId tenant3 = TenantId.fromUUID(UUID.randomUUID());
 
     @Test
     void isolatedTenantQueuesChanged_returnsTheirTenants() {
         PartitionChangeEvent event = ruleEngineEvent(Set.of(
                 queueKey(DataConstants.MAIN_QUEUE_NAME, tenant1),
                 queueKey(DataConstants.HP_QUEUE_NAME, tenant1),
-                queueKey(DataConstants.MAIN_QUEUE_NAME, tenant2)), Collections.emptySet());
+                queueKey(DataConstants.MAIN_QUEUE_NAME, tenant2)));
 
         assertThat(event.getAffectedTenants()).containsExactlyInAnyOrder(tenant1, tenant2);
     }
 
     @Test
-    void managedStatusChangedTenantsAreIncluded() {
-        PartitionChangeEvent event = ruleEngineEvent(Set.of(queueKey(DataConstants.MAIN_QUEUE_NAME, tenant1)), Set.of(tenant3));
-
-        assertThat(event.getAffectedTenants()).containsExactlyInAnyOrder(tenant1, tenant3);
-    }
-
-    @Test
     void sharedQueueChanged_returnsNull() {
-        PartitionChangeEvent event = ruleEngineEvent(Set.of(queueKey(DataConstants.MAIN_QUEUE_NAME, TenantId.SYS_TENANT_ID)), Collections.emptySet());
+        PartitionChangeEvent event = ruleEngineEvent(Set.of(queueKey(DataConstants.MAIN_QUEUE_NAME, TenantId.SYS_TENANT_ID)));
 
         assertThat(event.getAffectedTenants()).isNull();
     }
@@ -53,14 +45,14 @@ class PartitionChangeEventTest {
     void sharedAndIsolatedQueuesChanged_returnsNull() {
         PartitionChangeEvent event = ruleEngineEvent(Set.of(
                 queueKey(DataConstants.MAIN_QUEUE_NAME, TenantId.SYS_TENANT_ID),
-                queueKey(DataConstants.MAIN_QUEUE_NAME, tenant1)), Set.of(tenant3));
+                queueKey(DataConstants.MAIN_QUEUE_NAME, tenant1)));
 
         assertThat(event.getAffectedTenants()).isNull();
     }
 
     @Test
     void noQueuesChanged_returnsNull() {
-        PartitionChangeEvent event = ruleEngineEvent(Collections.emptySet(), Set.of(tenant3));
+        PartitionChangeEvent event = ruleEngineEvent(Collections.emptySet());
 
         assertThat(event.getAffectedTenants()).isNull();
     }
@@ -70,15 +62,15 @@ class PartitionChangeEventTest {
     void otherServiceType_returnsNull(ServiceType serviceType) {
         QueueKey queueKey = new QueueKey(serviceType, DataConstants.MAIN_QUEUE_NAME, tenant1);
         PartitionChangeEvent event = new PartitionChangeEvent(this, serviceType,
-                Map.of(queueKey, Collections.emptySet()), Collections.emptyMap(), Set.of(tenant3));
+                Map.of(queueKey, Collections.emptySet()), Collections.emptyMap());
 
         assertThat(event.getAffectedTenants()).isNull();
     }
 
-    private PartitionChangeEvent ruleEngineEvent(Set<QueueKey> changedQueueKeys, Set<TenantId> managedStatusChangedTenants) {
+    private PartitionChangeEvent ruleEngineEvent(Set<QueueKey> changedQueueKeys) {
         Map<QueueKey, Set<TopicPartitionInfo>> newPartitions = changedQueueKeys.stream()
                 .collect(Collectors.toMap(queueKey -> queueKey, queueKey -> Collections.emptySet()));
-        return new PartitionChangeEvent(this, ServiceType.TB_RULE_ENGINE, newPartitions, Collections.emptyMap(), managedStatusChangedTenants);
+        return new PartitionChangeEvent(this, ServiceType.TB_RULE_ENGINE, newPartitions, Collections.emptyMap());
     }
 
     private QueueKey queueKey(String queueName, TenantId tenantId) {
