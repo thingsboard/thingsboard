@@ -4,6 +4,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.java_websocket.framing.CloseFrame;
 import org.jboss.aerogear.security.otp.Totp;
 import org.junit.After;
 import org.junit.Before;
@@ -165,9 +166,14 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         configureTotpTwoFa();
         logInWithPreVerificationToken(username, password);
 
-        wsClient = buildAndConnectWebSocketClient("/api/ws?token=" + token);
+        // The server accepts the handshake and closes the session right away from afterConnectionEstablished().
+        // connectBlocking() returns false when that close frame is processed before it checks the open state,
+        // so its result is not asserted here; the server-side close code proves the token was rejected.
+        wsClient = buildWebSocketClient("/api/ws?token=" + token);
+        wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).until(wsClient::isClosed);
+        assertThat(wsClient.getCloseCode()).isEqualTo(CloseFrame.UNEXPECTED_CONDITION);
     }
 
     @Test
