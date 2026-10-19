@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification.provider;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -45,6 +33,7 @@ import org.thingsboard.server.common.data.notification.targets.slack.SlackFile;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.secret.SecretConfigurationService;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +44,7 @@ import java.util.stream.Collectors;
 public class DefaultSlackService implements SlackService {
 
     private final NotificationSettingsService notificationSettingsService;
+    private final SecretConfigurationService secretConfigurationService;
 
     private final Slack slack = Slack.getInstance();
     private final Cache<String, List<SlackConversation>> cache = Caffeine.newBuilder()
@@ -153,7 +143,7 @@ public class DefaultSlackService implements SlackService {
         SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)
                 settings.getDeliveryMethodsConfigs().get(NotificationDeliveryMethod.SLACK);
         if (slackConfig != null) {
-            return slackConfig.getBotToken();
+            return secretConfigurationService.replaceSecretUsage(tenantId, slackConfig.getBotToken());
         } else {
             return null;
         }
@@ -182,7 +172,6 @@ public class DefaultSlackService implements SlackService {
         checkResponse(response);
         return response;
     }
-
 
     private void checkResponse(SlackApiTextResponse response) {
         if (response.isOk()) {

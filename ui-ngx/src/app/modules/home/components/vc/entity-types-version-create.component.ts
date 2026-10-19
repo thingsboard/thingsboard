@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -32,6 +19,7 @@ import {
   entityTypesWithoutRelatedData,
   EntityTypeVersionCreateConfig,
   exportableEntityTypes,
+  overrideEntityTypeTranslations,
   SyncStrategy,
   syncStrategyTranslationMap,
   typesWithCalculatedFields
@@ -42,6 +30,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { entityGroupTypes } from '@shared/models/entity-group.models';
+import { ResourceService } from '@core/http/resource.service';
+import { ResourceInfo } from '@shared/models/resource.models';
+import { PageLink } from '@shared/models/page/page-link';
+import { emptyPageData } from '@shared/models/page/page-data';
+import { Direction } from '@shared/models/page/sort-order';
+import { BaseData } from '@shared/models/base-data';
+import { EntityId } from '@shared/models/id/entity-id';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
     selector: 'tb-entity-types-version-create',
@@ -81,14 +79,19 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   loading = true;
 
+  overrideEntityTypeTranslationsMap = overrideEntityTypeTranslations;
+
   readonly typesWithCalculatedFields = typesWithCalculatedFields;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private resourceService: ResourceService) {
     super(store);
   }
+
+  public fetchTenantResourcesFunction = this.fetchTenantResources.bind(this);
 
   ngOnInit(): void {
     this.entityTypesVersionCreateFormGroup = this.fb.group({
@@ -155,6 +158,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
           saveAttributes: [config.saveAttributes, []],
           saveCredentials: [config.saveCredentials, []],
           saveCalculatedFields: [config.saveCalculatedFields, []],
+          saveGroupEntities: [config.saveGroupEntities, []],
+          savePermissions: [config.savePermissions, []],
           allEntities: [config.allEntities, []],
           entityIds: [config.entityIds, [Validators.required]]
         })
@@ -165,6 +170,11 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateEntityTypeValidators(entityTypeControl);
+    });
+    entityTypeControl.get('entityType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      entityTypeControl.get('config').get('entityIds').patchValue([], {emitEvent: false});
     });
     return entityTypeControl;
   }
@@ -204,6 +214,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       saveRelations: true,
       saveCredentials: true,
       saveCalculatedFields: true,
+      saveGroupEntities: true,
+      savePermissions: true,
       allEntities: true,
       entityIds: []
     };
@@ -232,8 +244,10 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       count = 0;
     }
     if (entityType) {
-      return this.translate.instant((config?.allEntities ? entityTypeTranslations.get(entityType).typePlural
-        : entityTypeTranslations.get(entityType).list), { count });
+      const translation = entityTypeTranslations.get(entityType);
+      return this.translate.instant((config?.allEntities ?
+        (entityType === EntityType.USER ? 'entity-group.user-groups' : translation.typePlural)
+        : (entityGroupTypes.includes(entityType) ? translation.groupList : translation.list)), {count});
     } else {
       return 'Undefined';
     }
@@ -247,6 +261,10 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     const usedEntityTypes = value.map(val => val.entityType).filter(val => val);
     res = res.filter(entityType => !usedEntityTypes.includes(entityType) || entityType === currentEntityType);
     return res;
+  }
+
+  isGroupEntityType(entityType: EntityType): boolean {
+    return entityGroupTypes.includes(entityType);
   }
 
   private updateModel() {
@@ -264,5 +282,13 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     }
     this.modelValue = modelValue;
     this.propagateChange(this.modelValue);
+  }
+
+  private fetchTenantResources(searchText?: string): Observable<Array<BaseData<EntityId>>> {
+    const pageLink = new PageLink(50, 0, searchText, {property: 'title', direction: Direction.ASC});
+    return this.resourceService.getTenantResources(pageLink, {ignoreLoading: true}).pipe(
+      catchError(() => of(emptyPageData<ResourceInfo>())),
+      map(pageData => pageData.data)
+    );
   }
 }

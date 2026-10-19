@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 
 import { Router } from '@angular/router';
@@ -47,6 +34,8 @@ import { WidgetTypeComponent } from '@home/pages/widget/widget-type.component';
 import { WidgetTypeTabsComponent } from '@home/pages/widget/widget-type-tabs.component';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
@@ -59,6 +48,7 @@ export class WidgetTypesTableConfigResolver  {
   constructor(private store: Store<AppState>,
               private dialog: MatDialog,
               private widgetsService: WidgetService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private importExport: ImportExportService,
               private datePipe: DatePipe,
@@ -153,7 +143,7 @@ export class WidgetTypesTableConfigResolver  {
         onAction: ($event) => this.importWidgetType($event)
       }
     ];
-    if (authUser.authority === Authority.TENANT_ADMIN) {
+    if (authUser.authority === Authority.TENANT_ADMIN && this.userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL))  {
       this.config.addActionDescriptors.push(
         {
           name: this.translate.instant('iot-hub.add-from-iot-hub'),
@@ -163,8 +153,12 @@ export class WidgetTypesTableConfigResolver  {
         }
       );
     }
-    this.config.deleteEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
-    this.config.entitySelectionEnabled = (widgetType) => this.isWidgetTypeEditable(widgetType, authUser.authority);
+    this.config.deleteEnabled = (widgetType) =>
+      this.isWidgetTypeEditable(widgetType, authUser.authority) &&
+      this.userPermissionsService.hasGenericPermission(Resource.WIDGET_TYPE, Operation.DELETE);
+    this.config.entitySelectionEnabled = (widgetType) =>
+      this.isWidgetTypeEditable(widgetType, authUser.authority) &&
+      this.userPermissionsService.hasGenericPermission(Resource.WIDGET_TYPE, Operation.DELETE);
     this.config.detailsReadonly = (widgetType) => !this.isWidgetTypeEditable(widgetType, authUser.authority);
     this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetTypes(pageLink);
     return this.config;

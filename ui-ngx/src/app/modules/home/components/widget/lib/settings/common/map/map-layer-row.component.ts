@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
   Component,
@@ -39,6 +25,8 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  cartoLayerTranslationMap,
+  cartoLayerTypes,
   defaultLayerTitle,
   defaultMapLayerSettings,
   googleMapLayerTranslationMap,
@@ -51,6 +39,8 @@ import {
   mapProviderTranslationMap,
   openFreeMapStyleTranslationMap,
   openFreeMapStyleTypes,
+  mapProviderHasApiKey,
+  mapProviderRequiresApiKey,
   openStreetLayerTypes,
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
@@ -90,6 +80,10 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
   openStreetLayerTypes = openStreetLayerTypes;
 
   openStreetMapLayerTranslationMap = openStreetMapLayerTranslationMap;
+
+  cartoLayerTypes = cartoLayerTypes;
+
+  cartoLayerTranslationMap = cartoLayerTranslationMap;
 
   googleMapLayerTypes = googleMapLayerTypes;
 
@@ -233,7 +227,8 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
       this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }
-    if ([MapProvider.google, MapProvider.here].includes(provider)) {
+    if (mapProviderHasApiKey(provider)) {
+      this.layerFormGroup.get('apiKey').setValidators(mapProviderRequiresApiKey(provider) ? [Validators.required] : []);
       this.layerFormGroup.get('apiKey').enable({emitEvent: false});
     } else {
       this.layerFormGroup.get('apiKey').disable({emitEvent: false});

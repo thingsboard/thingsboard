@@ -1,28 +1,22 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { filter, map, take } from 'rxjs/operators';
-import { buildUserHome, buildUserMenu, HomeSection, MenuId, MenuSection } from '@core/services/menu.models';
+import {
+  buildUserHome,
+  buildUserMenu,
+  HomeSection,
+  MenuSection, sectionPath
+} from '@core/services/menu.models';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
+import { CustomMenuService } from '@core/http/custom-menu.service';
+import { ActivationEnd, NavigationEnd, Params, Router } from '@angular/router';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { AuthState } from '@core/auth/auth.models';
-import { ActivationEnd, NavigationEnd, Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -38,8 +32,13 @@ export class MenuService {
     map((items) => this.allMenuLinks(items))
   );
 
+  private currentCustomSection: MenuSection = null;
+  private currentCustomChildSection: MenuSection = null;
+
   constructor(private store: Store<AppState>,
-              private router: Router) {
+              private router: Router,
+              private customMenuService: CustomMenuService,
+              private userPermissionsService: UserPermissionsService) {
     this.store.pipe(select(selectIsAuthenticated)).subscribe(
       (authenticated: boolean) => {
         if (authenticated) {
@@ -47,6 +46,9 @@ export class MenuService {
         }
       }
     );
+    this.customMenuService.customMenuConfigChanged$.subscribe(() => {
+      this.buildMenu();
+    });
     this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(
       () => {
         this.updateOpenedMenuSections();
@@ -57,11 +59,12 @@ export class MenuService {
     });
   }
 
-  private buildMenu() {
+  public buildMenu() {
     this.store.pipe(select(selectAuth), take(1)).subscribe(
       (authState: AuthState) => {
         if (authState.authUser) {
-          this.currentMenuSections = buildUserMenu(authState);
+          const customMenu = this.customMenuService.getCustomMenu();
+          this.currentMenuSections = buildUserMenu(authState, this.userPermissionsService, customMenu);
           this._availableMenuSections = this.allMenuSections(this.currentMenuSections);
           this.updateActiveMenuSections();
           this.updateOpenedMenuSections();
@@ -78,7 +81,7 @@ export class MenuService {
     const openedMenuSections = getCurrentOpenedMenuSections(this.store);
     if (this.currentMenuSections?.length) {
       this.currentMenuSections.filter(section => section.type === 'toggle' &&
-        (openedMenuSections.includes(section.path) || section.active)).forEach(
+        (openedMenuSections.includes(sectionPath(section)) || section.active)).forEach(
         section => section.opened = true
       );
     }
@@ -116,7 +119,16 @@ export class MenuService {
     return this.homeSections$;
   }
 
+  public getCurrentCustomSection(): MenuSection {
+    return this.currentCustomSection;
+  }
+
+  public getCurrentCustomChildSection(): MenuSection {
+    return this.currentCustomChildSection;
+  }
+
   private updateActiveMenuSections() {
+    this.updateCurrentCustomSection();
     const url = this.router.url;
     const activeMenuSection = this._availableMenuSections.find(section => section.path === url);
     this._availableMenuSections.forEach((section: MenuSection) => {
@@ -125,7 +137,9 @@ export class MenuService {
   }
 
   private isSectionActive(section: MenuSection, activeMenuSection: MenuSection): boolean {
-    if (activeMenuSection === section) {
+    if (section.isCustom && (this.currentCustomSection === section || this.currentCustomChildSection === section)) {
+      return true;
+    } else if (activeMenuSection === section) {
       return true;
     } else if (section.pages?.length) {
       for (const page of section.pages) {
@@ -137,6 +151,90 @@ export class MenuService {
     return false;
   }
 
+  private updateCurrentCustomSection() {
+    const queryParams = this.extractQueryParams();
+    this.currentCustomSection = this.detectCurrentCustomSection(queryParams);
+    this.currentCustomChildSection = this.detectCurrentCustomChildSection(queryParams);
+  }
+
+  private detectCurrentCustomSection(queryParams: Params): MenuSection {
+    if (queryParams && queryParams.stateId) {
+      const stateId: string = queryParams.stateId;
+      const found =
+        this.currentMenuSections.find((section) => section.isCustom && section.stateId === stateId);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  private detectCurrentCustomChildSection(queryParams: Params): MenuSection {
+    if (queryParams && queryParams.childStateId) {
+      const stateId = queryParams.childStateId;
+      for (const section of this.currentMenuSections) {
+        if (section.isCustom && section.pages && section.pages.length) {
+          const found =
+            section.pages.find((childSection) => childSection.stateId === stateId);
+          if (found) {
+            return found;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private extractQueryParams(): Params {
+    const state = this.router.routerState;
+    const snapshot =  state.snapshot;
+    let lastChild = snapshot.root;
+    while (lastChild.children.length) {
+      lastChild = lastChild.children[0];
+    }
+    return lastChild.queryParams;
+  }
+
+  public getRedirectPath(parentPath: string, redirectPath: string): Observable<string> {
+    parentPath = '/' + parentPath.replace(/\./g, '/');
+    if (!redirectPath.startsWith('/')) {
+      redirectPath = `${parentPath}/${redirectPath}`;
+    }
+    return this.menuSections$.pipe(
+      map((sections) => {
+        const parentSection = this.findSectionByPath(sections, parentPath);
+        if (parentSection) {
+          if (parentSection.pages) {
+            const childPages = parentSection.pages;
+            if (childPages && childPages.length) {
+              const redirectPage = childPages.filter((page) => page.path === redirectPath);
+              if (!redirectPage || !redirectPage.length) {
+                return childPages[0].path;
+              }
+            }
+            return redirectPath;
+          }
+        }
+        return redirectPath;
+      })
+    );
+  }
+
+  private findSectionByPath(sections: MenuSection[], sectionPath: string): MenuSection {
+    for (const section of sections) {
+      if (sectionPath === section.path) {
+        return section;
+      }
+      if (section.pages?.length) {
+        const found = this.findSectionByPath(section.pages, sectionPath);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }
+
   public availableMenuLinks(): Observable<Array<MenuSection>> {
     return this.availableMenuLinks$;
   }
@@ -145,7 +243,7 @@ export class MenuService {
     return this.availableMenuSections$;
   }
 
-  public menuLinkById(id: MenuId | string): Observable<MenuSection | undefined> {
+  public menuLinkById(id: string): Observable<MenuSection | undefined> {
     return this.availableMenuLinks$.pipe(
       map((links) => links.find(link => link.id === id))
     );
@@ -160,5 +258,4 @@ export class MenuService {
       }))
     );
   }
-
 }

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
@@ -45,7 +32,7 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
   notShowAgain = false;
   showDontShowAgain: boolean;
 
-  gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_app.git';
+  gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_pe_app.git';
   flutterRunCommand = `flutter run --dart-define-from-file ${this.fileName}.json`;
 
   constructor(protected store: Store<AppState>,
@@ -76,6 +63,8 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
       thingsboardApiEndpoint: window.location.origin,
       appLinksUrlHost: window.location.host,
       appLinksUrlScheme: window.location.protocol.slice(0, -1),
+      registrationRedirectUrlScheme: this.data.bundle.selfRegistrationParams?.redirect?.scheme ?? '',
+      registrationRedirectUrlHost: this.data.bundle.selfRegistrationParams?.redirect?.host ?? '',
     };
     if (!!this.data.androidApp) {
       settings.androidApplicationId = this.data.androidApp.pkgName;

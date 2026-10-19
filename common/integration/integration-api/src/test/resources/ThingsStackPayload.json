@@ -1,0 +1,54 @@
+{
+  "end_device_ids": {
+    "device_id": "03022",
+    "application_ids": {
+      "application_id": "test-decentlab"
+    },
+    "dev_eui": "70B3D57BA0000BCE",
+    "join_eui": "70B3D57ED00006B2",
+    "dev_addr": 27000020
+  },
+  "correlation_ids": [
+    "as:up:01E0CY8V864TP36Q130RSQQJBY"
+  ],
+  "received_at": "2020-02-06T09:46:05.447941836Z",
+  "uplink_message": {
+    "session_key_id": "AXAWYbtxgUllLtJWdZrW0Q==",
+    "f_port": 1,
+    "f_cnt": 101,
+    "frm_payload": "AgI7AAMANwJxDGA=",
+    "rx_metadata": [
+      {
+        "gateway_ids": {
+          "gateway_id": "eui-6A7E111A10000000",
+          "eui": "6A7E111A10000000"
+        },
+        "rssi": -22,
+        "channel_rssi": -22,
+        "snr": 11
+      },
+      {
+        "gateway_ids": {
+          "gateway_id": "packetbroker"
+        },
+        "rssi": -24,
+        "channel_rssi": -24,
+        "snr": 12
+      }
+    ],
+    "settings": {
+      "data_rate": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreading_factor": 11
+        }
+      },
+      "data_rate_index": 1,
+      "coding_rate": "4/5",
+      "frequency": 867700000,
+      "timestamp": 436812492,
+      "time": "2020-02-06T09:46:05Z"
+    },
+    "received_at": "2020-02-06T09:46:05.234172599Z"
+  }
+}

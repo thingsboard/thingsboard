@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.app;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +12,7 @@ import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -31,6 +20,7 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -40,6 +30,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -88,6 +79,8 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
+                onPartitionChangeMsg((PartitionChangeMsg) msg);
+                break;
             case CF_PARTITIONS_CHANGE_MSG:
             case CF_STATE_PARTITION_RESTORE_MSG:
                 ctx.broadcastToChildren(msg, true);
@@ -213,6 +206,19 @@ public class AppActor extends ContextAwareActor {
         }, () -> {
             msg.getCallback().onSuccess();
         });
+    }
+
+    private void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        if (msg.isForAllTenants()) {
+            ctx.broadcastToChildren(msg, true);
+        } else {
+            ctx.broadcastToChildren(msg, new TbEntityTypeActorIdPredicate(EntityType.TENANT) {
+                @Override
+                protected boolean testEntityId(EntityId entityId) {
+                    return super.testEntityId(entityId) && msg.isAffected((TenantId) entityId);
+                }
+            }, true);
+        }
     }
 
     private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {

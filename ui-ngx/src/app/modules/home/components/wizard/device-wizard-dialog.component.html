@@ -1,21 +1,11 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2 translate>device.add-device-text</h2>
   <span class="flex-1"></span>
   <div [tb-help]="'devices'"></div>
@@ -40,7 +30,7 @@
       <mat-icon>check</mat-icon>
     </ng-template>
     <mat-step [stepControl]="deviceWizardFormGroup">
-      <form [formGroup]="deviceWizardFormGroup" style="padding-bottom: 16px;">
+      <form [formGroup]="deviceWizardFormGroup">
         <ng-template matStepLabel>{{ 'device.wizard.device-details' | translate }}</ng-template>
         <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-1">
           <mat-form-field class="mat-block" appearance="outline">
@@ -62,7 +52,8 @@
           </mat-form-field>
           <tb-device-profile-autocomplete
             required
-            addNewProfile
+            [addNewProfile]="isTenantAdmin"
+            [editProfileEnabled]="isTenantAdmin"
             selectDefaultProfile
             appearance="outline"
             formControlName="deviceProfileId"
@@ -78,13 +69,16 @@
               </mat-slide-toggle>
             }
           </div>
-          <tb-entity-autocomplete
-            useFullEntityId
-            formControlName="customerId"
-            labelText="device.assign-to-customer"
-            appearance="outline"
-            [entityType]="entityType.CUSTOMER">
-          </tb-entity-autocomplete>
+          <div class="tb-form-panel stroked no-padding-bottom">
+            <div class="tb-form-panel-title" translate>entity-group.owner-and-groups</div>
+            <tb-owner-and-groups
+              appearance="outline"
+            [entityType]="entityType.DEVICE"
+              [defaultOwnerId]="initialOwnerId"
+              [skipDefaultPermissionCheck]="true"
+              formControlName="ownerAndGroups">
+            </tb-owner-and-groups>
+          </div>
           <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>device.description</mat-label>
             <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
@@ -94,7 +88,7 @@
     </mat-step>
     <mat-step [stepControl]="credentialsFormGroup" [optional]="credentialsOptionalStep">
       <ng-template matStepLabel>{{ 'device.credentials' | translate }}</ng-template>
-      <form [formGroup]="credentialsFormGroup" style="padding-bottom: 16px;">
+      <form [formGroup]="credentialsFormGroup">
         <tb-device-credentials
           [deviceTransportType]="deviceTransportType"
           initAccessToken

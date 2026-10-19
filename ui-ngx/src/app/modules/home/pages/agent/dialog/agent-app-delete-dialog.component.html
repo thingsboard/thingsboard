@@ -1,0 +1,80 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="tb-app-delete-dialog-header">
+  <mat-icon class="warn-icon">warning</mat-icon>
+  <h2 translate>agent.app-delete-title-header</h2>
+  <div tb-help="agentAppDelete"></div>
+  <button mat-icon-button (click)="cancel()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content class="tb-app-delete-dialog-body">
+
+  <p class="warning-text">
+    {{ 'agent.app-delete-warning' | translate: { name: application?.name } }}
+  </p>
+
+  <div class="app-summary">
+    <div class="summary-row">
+      <span class="label" translate>agent.app-name</span>
+      <span class="value">{{ application?.name }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label" translate>agent.app-type</span>
+      <span class="value">
+        <span class="tb-type-badge"
+          [class.edge]="application?.appType === 'EDGE'"
+          [class.gateway]="application?.appType === 'GATEWAY'"
+          [class.generic]="application?.appType === 'GENERIC'">
+          {{ application?.appType }}
+        </span>
+      </span>
+    </div>
+    @if (agentName) {
+      <div class="summary-row">
+        <span class="label" translate>agent.agent-details</span>
+        <span class="value">{{ agentName }}</span>
+      </div>
+    }
+  </div>
+
+  <div class="volume-option">
+    @if (composeDownStep) {
+      <div class="config-section-header">
+        <span>{{ composeDownStep.title }}</span>
+        <span class="step-type-label">{{ composeDownStep.type }}</span>
+      </div>
+    }
+    <mat-checkbox [(ngModel)]="removeVolumes" color="warn">
+      <span class="option-label" translate>agent.app-delete-remove-volumes</span>
+    </mat-checkbox>
+    <div class="option-hint" translate>agent.app-delete-remove-volumes-hint</div>
+    @if (volumeKeys.length) {
+      <div class="volumes-list">
+        @for (key of volumeKeys; track key) {
+          <span class="volume-chip">{{ key }}</span>
+        }
+      </div>
+    }
+    @if (!volumeKeys.length) {
+      <div class="volumes-list empty" translate>
+        agent.app-delete-no-volumes
+      </div>
+    }
+  </div>
+</div>
+
+<div mat-dialog-actions align="end" class="tb-app-delete-dialog-footer">
+  <button mat-button (click)="cancel()" [disabled]="submitting">
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-raised-button color="warn" (click)="confirm()" [disabled]="submitting">
+    <mat-icon>delete</mat-icon>
+    <span translate>agent.app-delete-cta</span>
+  </button>
+</div>

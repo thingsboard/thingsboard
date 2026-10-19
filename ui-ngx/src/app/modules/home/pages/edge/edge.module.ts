@@ -1,43 +1,40 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { HomeDialogsModule } from '@home/dialogs/home-dialogs.module';
-import { HomeComponentsModule } from '@home/components/home-components.module';
-import { EdgeRoutingModule } from '@home/pages/edge/edge-routing.module';
-import { EdgeComponent } from '@modules/home/pages/edge/edge.component';
 import { EdgeTableHeaderComponent } from '@home/pages/edge/edge-table-header.component';
-import { EdgeTabsComponent } from '@home/pages/edge/edge-tabs.component';
+import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
+import { HomeComponentsModule } from '@modules/home/components/home-components.module';
+import { AgentSharedComponentsModule } from '@home/components/agent/agent-shared-components.module';
+import { EdgeRoutingModule } from '@home/pages/edge/edge-routing.module';
+import { EdgeComponent } from './edge.component';
+import { EDGE_GROUP_CONFIG_FACTORY } from '@home/models/group/group-entities-table-config.models';
+import { EdgeGroupConfigFactory } from '@home/pages/edge/edge-group-config.factory';
 import { EdgeInstructionsDialogComponent } from './edge-instructions-dialog.component';
+import { RequestEdgeComponent } from '@home/pages/edge/request-edge.component';
 
 @NgModule({
   declarations: [
+    RequestEdgeComponent,
     EdgeComponent,
     EdgeTableHeaderComponent,
-    EdgeTabsComponent,
-    EdgeInstructionsDialogComponent
+    EdgeInstructionsDialogComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
-    HomeDialogsModule,
     HomeComponentsModule,
+    AgentSharedComponentsModule,
+    HomeDialogsModule,
     EdgeRoutingModule
+  ],
+  providers: [
+    {
+      provide: EDGE_GROUP_CONFIG_FACTORY,
+      useClass: EdgeGroupConfigFactory
+    }
   ]
 })
 

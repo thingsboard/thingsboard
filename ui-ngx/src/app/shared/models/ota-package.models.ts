@@ -1,24 +1,11 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
-import { HasTenantId } from '@shared/models/entity.models';
+import { EntityGroupId } from '@shared/models/id/entity-group-id';
 
 export enum ChecksumAlgorithm {
   MD5 = 'MD5',
@@ -86,7 +73,7 @@ export interface OtaPagesIds {
   softwareId?: OtaPackageId;
 }
 
-export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, HasTenantId, ExportableEntity<OtaPackageId> {
+export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, ExportableEntity<OtaPackageId> {
   tenantId?: TenantId;
   type: OtaUpdateType;
   deviceProfileId?: DeviceProfileId;
@@ -107,4 +94,12 @@ export interface OtaPackageInfo extends Omit<BaseData<OtaPackageId>, 'label'>, H
 export interface OtaPackage extends OtaPackageInfo {
   file?: File;
   data: string;
+}
+
+export interface DeviceGroupOtaPackage {
+  otaPackageId: OtaPackageId;
+  otaPackageType: OtaUpdateType;
+  otaPackageUpdateTime?: number;
+  groupId: EntityGroupId;
+  id?: string;
 }

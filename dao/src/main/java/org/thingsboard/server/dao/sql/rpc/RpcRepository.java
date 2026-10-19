@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.rpc;
 
 import org.springframework.data.domain.Page;
@@ -29,11 +17,18 @@ import java.util.UUID;
 
 public interface RpcRepository extends JpaRepository<RpcEntity, UUID> {
 
+    String IN_FLIGHT_RELOAD_PREDICATE = "status IN ('QUEUED','SENT','TIMEOUT') OR (status = 'DELIVERED' AND oneway = false)";
+
     Page<RpcEntity> findAllByTenantIdAndDeviceId(UUID tenantId, UUID deviceId, Pageable pageable);
 
     Page<RpcEntity> findAllByTenantIdAndDeviceIdAndStatus(UUID tenantId, UUID deviceId, RpcStatus status, Pageable pageable);
 
     Page<RpcEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
+
+    @Query(value = "SELECT * FROM rpc WHERE tenant_id = :tenantId AND device_id = :deviceId AND (" + IN_FLIGHT_RELOAD_PREDICATE + ")",
+           countQuery = "SELECT count(*) FROM rpc WHERE tenant_id = :tenantId AND device_id = :deviceId AND (" + IN_FLIGHT_RELOAD_PREDICATE + ")",
+           nativeQuery = true)
+    Page<RpcEntity> findInFlightForReload(@Param("tenantId") UUID tenantId, @Param("deviceId") UUID deviceId, Pageable pageable);
 
     @Transactional
     @Modifying

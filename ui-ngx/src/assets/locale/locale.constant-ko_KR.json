@@ -557,6 +557,44 @@
         "trendz-api-key": "Trendz API 키",
         "trendz-enable": "Trendz 사용"
     },
+    "ai-assistant": {
+        "configure-with-ai": "AI로 구성",
+        "follow-up-prompt-placeholder": "답장...",
+        "sub-title": "장치, 대시보드, 계산 필드, 알람 규칙, 알림을 설정하고 관리하는 것을 도와드릴 수 있습니다. 필요한 것을 설명해 주시면 나머지는 제가 처리하겠습니다.",
+        "new-chat": "새 채팅",
+        "no-chats": "아직 채팅이 없습니다",
+        "today": "오늘",
+        "yesterday": "어제",
+        "last-7-days": "지난 7일",
+        "older": "이전",
+        "delete-chat-title": "'{{name}}'을(를) 삭제하시겠습니까?",
+        "delete-chat-text": "모든 채팅 메시지가 손실됩니다",
+        "delete-chat-confirm": "예, 삭제",
+        "action-approval-required": "작업 승인이 필요합니다",
+        "approve": "승인",
+        "deny": "거부",
+        "processing": "처리 중...",
+        "approved": "완료",
+        "denied": "거부됨",
+        "error": "실패",
+        "thinking": "생각 중...",
+        "rename-chat-title": "이 채팅 이름 바꾸기",
+        "main-title": "안녕하세요! AI 어시스턴트입니다"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "알람 규칙 제안",
+        "ai-assistant-example-suggest-rules-message": "내 장치를 검토하고 설정할 만한 알람 규칙을 제안해 주세요.",
+        "ai-assistant-example-inactivity-label": "장치 비활성 알람",
+        "ai-assistant-example-inactivity-message": "장치가 10분 넘게 텔레메트리 전송을 중단하면 경고를 트리거하는 알람 규칙을 만들어 주세요.",
+        "ai-assistant-initial-prompt-placeholder": "설정하려는 내용을 설명해 주세요..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "계산 필드 제안",
+        "ai-assistant-example-suggest-fields-message": "내 장치를 검토하고 설정할 만한 계산 필드를 제안해 주세요.",
+        "ai-assistant-example-aggregate-label": "텔레메트리 집계",
+        "ai-assistant-example-aggregate-message": "내 장치 중 하나를 선택하고 해당 장치의 텔레메트리 키 몇 개를 집계하는 계산 필드를 설정해 주세요. 무엇을 만들 것인지 설명하고 먼저 제게 확인을 요청해 주세요.",
+        "ai-assistant-initial-prompt-placeholder": "설정하려는 내용을 설명해 주세요..."
+    },
     "alarm": {
         "alarm": "알람",
         "alarm-list": "알람 목록",
@@ -1813,6 +1851,11 @@
         "to": "까지"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "설정하려는 내용을 설명해 주세요...",
+        "ai-assistant-example-monitor-device-label": "장치 모니터링",
+        "ai-assistant-example-monitor-device-message": "장치는 ... 입니다. 이 대시보드를 이 장치의 단일 상태 보기로 설정하여 상단에 최신 텔레메트리를 값 카드로, 그 아래에 해당 텔레메트리의 시계열 차트를, 하단에 활성 알람 테이블을 표시해 주세요.",
+        "ai-assistant-example-monitor-fleet-label": "장치 플릿 모니터링",
+        "ai-assistant-example-monitor-fleet-message": "장치 유형은 ... 입니다. 이 대시보드를 해당 유형에 대해 두 개의 상태로 설정해 주세요. 개요 상태에는 해당 유형의 모든 장치를 엔터티 테이블에 나열하고 그 아래에 해당 장치들의 활성 알람 테이블을 표시합니다. 장치를 선택하면 세부 정보 상태가 열려 상단에 해당 장치의 최신 텔레메트리를 값 카드로, 그 아래에 해당 텔레메트리의 시계열 차트를, 하단에 활성 알람 테이블을 표시합니다.",
         "dashboard": "대시보드",
         "dashboards": "대시보드",
         "management": "대시보드 관리",
@@ -2110,6 +2153,9 @@
         "toggle-edit-mode": "편집 모드 전환"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "설정하려는 내용을 설명해 주세요...",
+        "ai-assistant-example-connect-label": "내 장치 연결",
+        "ai-assistant-example-connect-message": "내 장치 중 하나를 플랫폼에 연결해 실제 텔레메트리를 전송하기 시작하도록 도와주세요.",
         "device": "장치",
         "device-required": "장치를 입력하세요.",
         "devices": "장치",
@@ -4133,7 +4179,6 @@
             "third-phase-voltage": "3상 전압",
             "phase-voltage-hint": "현재 위상의 전압 값을 나타내는 실수 값",
             "voltage-hint": "현재 전압을 나타내는 실수 값",
-            "current-voltage-color": "현재 전압 색상",
             "phase-indicator-color": "위상 표시기 색상",
             "measured": "측정됨",
             "measured-hint": "킬로와트시 단위의 에너지 사용량을 나타내는 실수 값",
@@ -10028,8 +10073,6 @@
         },
         "functions": {
             "title": "함수",
-            "pe-feature-tooltip": "ThingsBoard\nProfessional Edition에서만",
-            "switch-to-pe": "PE로 전환",
             "alarms": "알람",
             "dashboards": "대시보드",
             "entities-and-relations": "엔티티 및 관계",

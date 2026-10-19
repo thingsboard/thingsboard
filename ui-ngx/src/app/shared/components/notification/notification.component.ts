@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnInit, Output, SecurityContext } from '@angular/core';
 import {
   ActionButtonLinkType,
@@ -162,8 +149,11 @@ export class NotificationComponent implements OnInit {
       return {color: alarmSeverityColors.get(this.notification.info.alarmSeverity)};
     } else if (this.notification.type === NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT) {
       return {color: '#D12730'};
-    } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST) {
-      return {color: '#305680'};
+    } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST ||
+               this.notification.type === NotificationType.ADDON_ACCESS_REQUEST ||
+               this.notification.type === NotificationType.ADDON_ACCESS_ERROR ||
+               this.notification.type === NotificationType.PLAN_UPGRADE_REQUEST) {
+      return {color: 'var(--tb-primary-500)'};
     }
     return null;
   }

@@ -1,26 +1,13 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
 import {
   adjustTimeAxisExtentToData,
   calculateThresholdsOffset,
   createTimeSeriesVisualMapOption,
   createTimeSeriesXAxis,
-  createTimeSeriesYAxis,
+  createTimeSeriesYAxis, dataKeySeriesType,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
   LineSeriesStepType,
@@ -415,7 +402,9 @@ export class TbTimeSeriesChart {
     this.yMinSubject.complete();
     this.yMaxSubject.complete();
     this.darkModeObserver?.disconnect();
-    this.ctx.dashboard.gridster.el.removeEventListener('scroll', this.onParentScroll);
+    if (this.ctx.dashboard?.gridster) {
+      this.ctx.dashboard.gridster.el.removeEventListener('scroll', this.onParentScroll);
+    }
   }
 
   public resize(): void {
@@ -474,15 +463,15 @@ export class TbTimeSeriesChart {
         for (const dataKey of dataKeys) {
           const keySettings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
-          if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
+          if ((dataKeySeriesType(keySettings) === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
               keySettings.lineSettings.pointLabelPosition === ChartLabelPosition.top) ||
-            (keySettings.type === TimeSeriesChartSeriesType.bar &&
+            (dataKeySeriesType(keySettings) === TimeSeriesChartSeriesType.bar &&
               keySettings.barSettings.showLabel &&
               [ChartLabelPosition.top, ChartLabelPosition.bottom]
               .includes(keySettings.barSettings.labelPosition as ChartLabelPosition))) {
             this.topPointLabels = true;
           }
-          if (this.stateValueConverter && keySettings.type === TimeSeriesChartSeriesType.line) {
+          if (this.stateValueConverter && dataKeySeriesType(keySettings) === TimeSeriesChartSeriesType.line) {
             keySettings.lineSettings.pointLabelFormatter = this.stateValueConverter.labelFormatter;
           }
           dataKey.settings = keySettings;
@@ -816,7 +805,9 @@ export class TbTimeSeriesChart {
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
       renderer: 'svg'
     });
-    this.ctx.dashboard.gridster.el.addEventListener('scroll', this.onParentScroll);
+    if (this.ctx.dashboard?.gridster) {
+      this.ctx.dashboard.gridster.el.addEventListener('scroll', this.onParentScroll);
+    }
     this.timeSeriesChartOptions = {
       darkMode: this.darkMode,
       backgroundColor: 'transparent',
@@ -1086,22 +1077,36 @@ export class TbTimeSeriesChart {
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
     if (!this.stateData) {
       const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
-        d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+        d.data.length && dataKeySeriesType(d.dataKey.settings) === TimeSeriesChartSeriesType.bar);
       return !axisBarDataItems.length;
     } else {
       return false;
     }
   }
 
+  private maxTickLabelHalfHeight(): number {
+    const axes = this.yAxisList.filter(a => a.settings.show && a.settings.showTickLabels);
+    if (!axes.length) {
+      return 0;
+    }
+
+    const defaultSize = defaultTimeSeriesChartYAxisSettings.tickLabelFont.size;
+    const maxFontSize = Math.max(...axes.map(a => a.settings.tickLabelFont?.size || defaultSize));
+    return Math.ceil(maxFontSize / 2);
+  }
+
   private minTopOffset(): number {
-    const showTickLabels =
-      !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    return (this.topPointLabels) ? 25 :
-      (showTickLabels ? 10 : 5);
+    if (this.topPointLabels) {
+      return 25;
+    }
+    const half = this.maxTickLabelHalfHeight();
+    return half ? Math.max(10, half) : 5;
   }
 
   private minBottomOffset(): number {
-    return this.settings.dataZoom ? 45 : 5;
+    const half = this.maxTickLabelHalfHeight();
+    const minOffset = half ? Math.max(5, half) : 5;
+    return this.settings.dataZoom ? Math.max(45, minOffset) : minOffset;
   }
 
   private _onParentScroll() {
@@ -1126,10 +1131,11 @@ export class TbTimeSeriesChart {
           if (this.animationEnabled()) {
             barItems =
               this.dataItems.filter(d => d.enabled && d.data.length &&
-                d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+                dataKeySeriesType(d.dataKey.settings) === TimeSeriesChartSeriesType.bar);
             this.updateBarsAnimation(barItems, false);
           }
           this.timeSeriesChart.resize();
+          this.updateAxes();
           if (this.animationEnabled()) {
             this.updateBarsAnimation(barItems, true);
           }
@@ -1139,7 +1145,7 @@ export class TbTimeSeriesChart {
   }
 
   private animationEnabled(): boolean {
-    return this.settings.animation.animation;
+    return this.ctx.reportService?.reportView ? false : this.settings.animation.animation;
   }
 
   private updateBarsAnimation(barItems: TimeSeriesChartDataItem[], animation: boolean) {

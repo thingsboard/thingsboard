@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.exporting;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -28,15 +17,18 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ExportableCustomerEntityDao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.AccessControlService;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @TbCoreComponent
@@ -47,6 +39,7 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     private final Map<EntityType, Dao<?>> daos = new HashMap<>();
 
     private final EntityServiceRegistry entityServiceRegistry;
+    private final OwnersCacheService ownersCacheService;
     private final AccessControlService accessControlService;
 
     @Override
@@ -144,8 +137,24 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         return dao.getExternalIdByInternal(internalId);
     }
 
+    @Override
+    public <E extends ExportableEntity<I>, I extends EntityId> PageData<I> findEntityIdsByTenantIdAndCustomerId(TenantId tenantId, EntityId ownerId, EntityType entityType, PageLink pageLink) {
+        Dao<E> dao = getDao(entityType);
+        if (dao instanceof ExportableCustomerEntityDao) {
+            ExportableCustomerEntityDao<E, I> exportableEntityDao = (ExportableCustomerEntityDao<E, I>) dao;
+            return exportableEntityDao.findIdsByTenantIdAndCustomerId(tenantId.getId(), ownerId != null ? ownerId.getId() : null, pageLink);
+        }
+        return new PageData<>();
+    }
+
     private boolean belongsToTenant(HasId<? extends EntityId> entity, TenantId tenantId) {
-        return tenantId.equals(((HasTenantId) entity).getTenantId());
+        Set<EntityId> owners;
+        if (entity instanceof HasOwnerId) {
+            owners = ownersCacheService.getOwners(tenantId, entity.getId(), (HasOwnerId) entity);
+        } else {
+            owners = Set.of(((HasTenantId) entity).getTenantId());
+        }
+        return owners.contains(tenantId);
     }
 
 

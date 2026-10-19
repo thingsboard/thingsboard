@@ -1,21 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -25,10 +14,12 @@ import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
+import org.thingsboard.server.service.sync.vc.GitRepository.RepoFile;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface GitRepositoryService {
 
@@ -38,7 +29,7 @@ public interface GitRepositoryService {
 
     PageData<EntityVersion> listVersions(TenantId tenantId, String branch, String path, PageLink pageLink) throws Exception;
 
-    List<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String path) throws Exception;
+    Stream<VersionedEntityInfo> listEntitiesAtVersion(TenantId tenantId, String versionId, String folder, EntityType entityType, boolean groups, boolean recursive) throws Exception;
 
     void testRepository(TenantId tenantId, RepositorySettings settings) throws Exception;
 
@@ -50,7 +41,7 @@ public interface GitRepositoryService {
 
     void add(PendingCommit commit, String relativePath, String entityDataJson) throws IOException;
 
-    void deleteFolderContent(PendingCommit commit, String relativePath) throws IOException;
+    void deleteFolderContent(PendingCommit commit, String folder, boolean recursively) throws IOException;
 
     VersionCreationResult push(PendingCommit commit);
 
@@ -60,12 +51,14 @@ public interface GitRepositoryService {
 
     List<BranchInfo> listBranches(TenantId tenantId);
 
-    String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException;
+    String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId);
 
     List<Diff> getVersionsDiffList(TenantId tenantId, String path, String versionId1, String versionId2) throws IOException;
 
     String getContentsDiff(TenantId tenantId, String content1, String content2) throws IOException;
 
     void fetch(TenantId tenantId) throws GitAPIException;
+
+    List<RepoFile> listFiles(TenantId tenantId, String versionId, String path, int depth);
 
 }

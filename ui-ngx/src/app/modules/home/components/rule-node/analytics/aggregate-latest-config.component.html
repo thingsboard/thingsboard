@@ -1,0 +1,119 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="aggregateLatestConfigForm" class="flex flex-col">
+  <tb-output-message-type-autocomplete required formControlName="outMsgType" appearance="outline"></tb-output-message-type-autocomplete>
+  <div class="gt-sm:flex-row gt-sm:gap-2 flex flex-col">
+    <mat-form-field class="mat-block flex-1" appearance="outline">
+      <mat-label translate>rule-node-config.execution-period-value</mat-label>
+      <input type="number" step="1" min="1" max="2147483647" matInput formControlName="periodValue" required>
+      @if (aggregateLatestConfigForm.get('periodValue').hasError('required')) {
+        <mat-error>
+          {{ 'rule-node-config.execution-period-value-required' | translate }}
+        </mat-error>
+      }
+      @if (aggregateLatestConfigForm.get('periodValue').hasError('min')) {
+        <mat-error>
+          {{ 'rule-node-config.time-value-range' | translate }}
+        </mat-error>
+      }
+      @if (aggregateLatestConfigForm.get('periodValue').hasError('max')) {
+        <mat-error>
+          {{ 'rule-node-config.time-value-range' | translate }}
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field class="mat-block flex-1" appearance="outline">
+      <mat-label translate>rule-node-config.execution-period-time-unit</mat-label>
+      <mat-select formControlName="periodTimeUnit" required>
+        @for (timeUnit of aggPeriodTimeUnits; track timeUnit) {
+          <mat-option [value]="timeUnit">
+            {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div formGroupName="parentEntitiesQuery">
+    <mat-expansion-panel [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.parent-entity</mat-panel-title>
+      </mat-expansion-panel-header>
+      <mat-radio-group formControlName="type" class="flex flex-row gap-2"
+        style="padding-top: 16px; padding-bottom: 16px;">
+        <mat-radio-button [value]="'single'" color="primary">
+          <span translate>rule-node-config.single-entity</span>
+        </mat-radio-button>
+        <mat-radio-button [value]="'group'" color="primary">
+          <span translate>rule-node-config.group-of-entities</span>
+        </mat-radio-button>
+        <mat-radio-button [value]="'relationsQuery'" color="primary">
+          <span translate>rule-node-config.relations-query</span>
+        </mat-radio-button>
+      </mat-radio-group>
+      @if (aggregateLatestConfigForm.get('parentEntitiesQuery.type').value === 'relationsQuery') {
+        <section
+          class="flex flex-col">
+          <label translate class="tb-title tb-required">rule-node-config.root-entity</label>
+          <tb-entity-select
+            required
+            appearance="outline"
+            formControlName="rootEntityId">
+          </tb-entity-select>
+          <mat-checkbox formControlName="includeRootEntity" style="padding-bottom: 16px;">
+            {{ 'rule-node-config.include-root-entity-to-parent-entities' | translate }}
+          </mat-checkbox>
+          <label translate class="tb-title tb-required">rule-node-config.relations-query</label>
+          <tb-relations-query-config
+            style="padding-bottom: 15px;"
+            formControlName="relationsQuery">
+          </tb-relations-query-config>
+        </section>
+      }
+      @if (aggregateLatestConfigForm.get('parentEntitiesQuery.type').value === 'single') {
+        <tb-entity-select
+          required
+          appearance="outline"
+          formControlName="entityId">
+        </tb-entity-select>
+      }
+      @if (aggregateLatestConfigForm.get('parentEntitiesQuery.type').value === 'group') {
+        <tb-entity-group-select
+          required
+          appearance="outline"
+          formControlName="entityGroupId"
+          placeholderText="entity-group.select-entity-group"
+          notFoundText="entity-group.no-entity-groups-matching"
+          requiredText="entity-group.target-entity-group-required">
+        </tb-entity-group-select>
+      }
+    </mat-expansion-panel>
+    @if (aggregateLatestConfigForm.get('parentEntitiesQuery.type').value === 'relationsQuery' ||
+      aggregateLatestConfigForm.get('parentEntitiesQuery.type').value === 'single') {
+      <mat-expansion-panel
+        [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title translate>rule-node-config.child-entities</mat-panel-title>
+        </mat-expansion-panel-header>
+        <label translate class="tb-title tb-required">rule-node-config.relations-query</label>
+        <tb-relations-query-config
+          style="padding-bottom: 15px;"
+          formControlName="childRelationsQuery">
+        </tb-relations-query-config>
+      </mat-expansion-panel>
+    }
+  </div>
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title translate>rule-node-config.agg-latest-mappings</mat-panel-title>
+    </mat-expansion-panel-header>
+    <tb-agg-latest-mapping-table
+      required
+      formControlName="aggMappings"
+      style="padding-bottom: 15px;">
+    </tb-agg-latest-mapping-table>
+  </mat-expansion-panel>
+</section>

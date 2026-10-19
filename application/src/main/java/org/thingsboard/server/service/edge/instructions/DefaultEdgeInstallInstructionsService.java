@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.instructions;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.TbVersionUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
+import org.thingsboard.server.dao.edge.EdgeEditionStyle;
 import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
@@ -65,7 +55,10 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
             dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
-        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", platformEdgeVersion + "EDGE");
+        String edgeVersion = TbVersionUtils.extractStartingDigits(platformEdgeVersion);
+        EdgeEditionStyle edition = EdgeEditionStyle.getEdgeEditionStyle(edgeVersion);
+        dockerInstallInstructions = edition.replacePlaceholders(dockerInstallInstructions);
+        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion + edition.getVersionSuffix());
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
         return new EdgeInstructions(dockerInstallInstructions);
     }
@@ -74,8 +67,9 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
         String ubuntuInstallInstructions = readFile(resolveFile(os, "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", platformEdgeVersion);
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(platformEdgeVersion));
+        String edgeVersion = TbVersionUtils.extractStartingDigits(platformEdgeVersion);
+        ubuntuInstallInstructions = EdgeEditionStyle.getEdgeEditionStyle(edgeVersion).replacePlaceholders(ubuntuInstallInstructions);
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
         return new EdgeInstructions(ubuntuInstallInstructions);
     }
 

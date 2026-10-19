@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.rule;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,6 +23,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -62,6 +51,10 @@ public interface RuleChainService extends EntityDaoService {
 
     ListenableFuture<RuleChain> findRuleChainByIdAsync(TenantId tenantId, RuleChainId ruleChainId);
 
+    ListenableFuture<List<RuleChain>> findRuleChainsByIdsAsync(TenantId tenantId, List<RuleChainId> ruleChainIds);
+
+    List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds);
+
     ListenableFuture<RuleNode> findRuleNodeByIdAsync(TenantId tenantId, RuleNodeId ruleNodeId);
 
     RuleChain getRootTenantRuleChain(TenantId tenantId);
@@ -71,6 +64,14 @@ public interface RuleChainService extends EntityDaoService {
     List<RuleNode> getReferencingRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId);
 
     List<EntityRelation> getRuleNodeRelations(TenantId tenantId, RuleNodeId ruleNodeId);
+
+    /**
+     * Batched equivalent of {@link #getRuleNodeRelations(TenantId, RuleNodeId)} for all nodes of a rule chain: loads the
+     * outgoing relations of every given rule node and validates their rule node / rule chain targets with a bounded
+     * number of queries instead of a few queries per node. Relations pointing to a missing rule node or rule chain are
+     * removed, as in the single-node variant. Every requested rule node id is present in the result.
+     */
+    Map<RuleNodeId, List<EntityRelation>> getRuleNodesRelations(TenantId tenantId, List<RuleNodeId> ruleNodeIds);
 
     PageData<RuleChain> findTenantRuleChainsByType(TenantId tenantId, RuleChainType type, PageLink pageLink);
 
@@ -116,7 +117,5 @@ public interface RuleChainService extends EntityDaoService {
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
-
-    List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds);
 
 }

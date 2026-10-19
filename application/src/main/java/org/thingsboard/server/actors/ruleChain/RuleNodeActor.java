@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +13,7 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -36,18 +25,25 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
     private final String ruleChainName;
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
+    // Rule node already loaded by the parent rule chain actor; null means the processor reads it from the database
+    private RuleNode preloadedRuleNode;
 
     private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId,
-                          RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
+                          RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId, RuleNode preloadedRuleNode) {
         super(systemContext, tenantId, ruleNodeId);
         this.ruleChainName = ruleChainName;
         this.ruleChainId = ruleChainId;
         this.ruleNodeId = ruleNodeId;
+        this.preloadedRuleNode = preloadedRuleNode;
     }
 
     @Override
     protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
-        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx);
+        RuleNode ruleNode = preloadedRuleNode;
+        // Use the preloaded node for the first init only: init retries and re-inits after a failed start
+        // must read the current rule node, which the user may have fixed in the meantime
+        preloadedRuleNode = null;
+        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx, ruleNode);
     }
 
     @Override
@@ -112,13 +108,19 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
         private final RuleChainId ruleChainId;
         private final String ruleChainName;
         private final RuleNodeId ruleNodeId;
+        private final RuleNode ruleNode;
 
         public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
+            this(context, tenantId, ruleChainId, ruleChainName, ruleNodeId, null);
+        }
+
+        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId, RuleNode ruleNode) {
             super(context);
             this.tenantId = tenantId;
             this.ruleChainId = ruleChainId;
             this.ruleChainName = ruleChainName;
             this.ruleNodeId = ruleNodeId;
+            this.ruleNode = ruleNode;
         }
 
         @Override
@@ -128,7 +130,7 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
 
         @Override
         public TbActor createActor() {
-            return new RuleNodeActor(context, tenantId, ruleChainId, ruleChainName, ruleNodeId);
+            return new RuleNodeActor(context, tenantId, ruleChainId, ruleChainName, ruleNodeId, ruleNode);
         }
     }
 

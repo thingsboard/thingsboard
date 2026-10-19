@@ -1,0 +1,69 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="modelFormGroup" class="mat-block" [appearance]="appearance">
+  <mat-label class="tb-required" translate>integration.model</mat-label>
+  <input matInput type="text"
+    #input
+    formControlName="model"
+    required
+    placeholder="{{ 'integration.select-model' | translate }}"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    [matAutocomplete]="modelsAutocomplete">
+  @if (modelFormGroup.get('model').value) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete tb-converter-library-autocomplete"
+    [displayWith]="displayModelFn"
+    #modelsAutocomplete="matAutocomplete">
+    <div class="flex flex-row flex-wrap">
+      @for (model of (filteredModels$ | async); track model.name) {
+        <mat-option [value]="model" class="flex-full">
+          <div class="library-model flex items-center justify-between gap-2">
+            <div class="flex flex-1 items-center gap-4">
+              <img [src]="model.photo" loading="lazy" class="size-10" alt="Model photo"/>
+              <div class="flex-1">
+                <div class="device-label" [innerHTML]="displayModelFn(model) | highlight:searchText:true:'ig'"></div>
+                <div class="device-description" [innerHTML]="model.info.description | highlight:searchText:true:'ig'"></div>
+              </div>
+            </div>
+            <mat-icon class="link-arrow" (click)="onLinkClick($event, model.info.url)">arrow_outward</mat-icon>
+          </div>
+        </mat-option>
+        } @empty {
+        @if ((filteredModels$ | async)?.length === 0) {
+          <mat-option [value]="''" class="tb-not-found flex-full">
+            <div class="px-4 py-2" (click)="$event.stopPropagation()">
+              {{ "integration.model-not-found" | translate }}
+            </div>
+          </mat-option>
+        } @else {
+          <mat-option [value]="''" class="tb-not-found flex-full">
+            <div class="px-4 py-2" (click)="$event.stopPropagation()">
+              {{ "common.loading-please-wait" | translate }}
+            </div>
+          </mat-option>
+        }
+      }
+    </div>
+  </mat-autocomplete>
+  @if (modelFormGroup.get('model').hasError('required')) {
+    <mat-error>
+      {{ 'integration.model-required' | translate }}
+    </mat-error>
+  }
+  @if (modelFormGroup.get('model').hasError('notValid')) {
+    <mat-error>
+      {{ 'integration.model-not-valid' | translate }}
+    </mat-error>
+  }
+</mat-form-field>

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -165,15 +153,18 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private TbActorRef createRuleNodeActor(TbActorCtx ctx, RuleNode ruleNode) {
         return ctx.getOrCreateChildActor(new TbEntityActorId(ruleNode.getId()),
                 () -> DefaultActorService.RULE_DISPATCHER_NAME,
-                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId()),
+                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId(), ruleNode),
                 () -> true);
     }
 
     private void initRoutes(RuleChain ruleChain, List<RuleNode> ruleNodeList) {
         nodeRoutes.clear();
+        // Loading the relations of all nodes of the chain in batches instead of one lookup per node;
+        Map<RuleNodeId, List<EntityRelation>> relationsByNode = service.getRuleNodesRelations(TenantId.SYS_TENANT_ID,
+                ruleNodeList.stream().map(RuleNode::getId).toList());
         // Populating the routes map;
         for (RuleNode ruleNode : ruleNodeList) {
-            List<EntityRelation> relations = service.getRuleNodeRelations(TenantId.SYS_TENANT_ID, ruleNode.getId());
+            List<EntityRelation> relations = relationsByNode.getOrDefault(ruleNode.getId(), Collections.emptyList());
             log.trace("[{}][{}][{}] Processing rule node relations [{}]", tenantId, entityId, ruleNode.getId(), relations.size());
             if (relations.isEmpty()) {
                 nodeRoutes.put(ruleNode.getId(), Collections.emptyList());

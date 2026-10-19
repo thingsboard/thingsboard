@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewChecked,
   AfterViewInit,
@@ -91,7 +78,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { ItemBufferService, RuleNodeConnection } from '@core/services/item-buffer.service';
 import { Hotkey } from 'angular2-hotkeys';
-import { DebugEventType, DebugRuleNodeEventBody } from '@shared/models/event.models';
+import { DebugEventType, DebugRuleNodeEventBody, EventType } from '@shared/models/event.models';
 import { MatMiniFabButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
@@ -100,10 +87,12 @@ import { MatDrawer } from '@angular/material/sidenav';
 import { HttpStatusCode } from '@angular/common/http';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 import { EntityDebugSettings } from '@shared/models/entity.models';
+import Timeout = NodeJS.Timeout;
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
-import Timeout = NodeJS.Timeout;
 
 @Component({
     selector: 'tb-rulechain-page',
@@ -134,6 +123,10 @@ export class RuleChainPageComponent extends PageComponent
   @ViewChild('ruleChainMenuTrigger', {static: true}) ruleChainMenuTrigger: MatMenuTrigger;
 
   @ViewChild('drawer') drawer: MatDrawer;
+
+  readonly = !this.userPermissionsService.hasGenericPermission(Resource.RULE_CHAIN, Operation.WRITE);
+
+  eventTypes = EventType;
 
   debugEventTypes = DebugEventType;
 
@@ -290,6 +283,7 @@ export class RuleChainPageComponent extends PageComponent
               private ruleChainService: RuleChainService,
               private translate: TranslateService,
               private itembuffer: ItemBufferService,
+              private userPermissionsService: UserPermissionsService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
@@ -310,13 +304,15 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   ngOnInit() {
-    this.ruleNodeTypeSearch.valueChanges.pipe(
-      debounceTime(150),
-      startWith(''),
-      distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
-      skip(1),
-      takeUntil(this.destroy$)
-    ).subscribe(() => this.updateRuleChainLibrary());
+    if (!this.readonly) {
+      this.ruleNodeTypeSearch.valueChanges.pipe(
+        debounceTime(150),
+        startWith(''),
+        distinctUntilChanged((a: string, b: string) => a.trim() === b.trim()),
+        skip(1),
+        takeUntil(this.destroy$)
+      ).subscribe(() => this.updateRuleChainLibrary());
+    }
   }
 
   ngAfterViewChecked(){
@@ -324,6 +320,15 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   ngAfterViewInit() {
+    if (this.readonly) {
+      this.ruleChainCanvas.modelService.isEditable = () => false;
+      this.ruleChainCanvas.modelService.edges.handleEdgeMouseClick = (edge) => {
+        this.openLinkDetails(edge);
+      };
+      const canvas = $(this.ruleChainCanvas.modelService.canvasHtmlElement);
+      const connectorElements  = $('.fc-connector', canvas);
+      connectorElements.attr('draggable', 'false');
+    }
     this.ruleChainCanvas.adjustCanvasSize(true);
   }
 
@@ -337,7 +342,7 @@ export class RuleChainPageComponent extends PageComponent
     if (this.ruleChainType === RuleChainType.CORE) {
       this.router.navigateByUrl(`ruleChains/${ruleChainId}`);
     } else {
-      this.router.navigateByUrl(`edgeManagement/ruleChains/${ruleChainId}`);
+      this.router.navigateByUrl(`edgeManagement/templates/ruleChains/${ruleChainId}`);
     }
   }
 
@@ -551,7 +556,7 @@ export class RuleChainPageComponent extends PageComponent
       }
       model.nodes.push(node);
     });
-    if (this.expansionPanels) {
+    if (this.expansionPanels && !this.readonly) {
       for (let i = 0; i < ruleNodeTypesLibrary.length; i++) {
         const panel = this.expansionPanels.find((_item, index) => index === i);
         if (panel) {
@@ -642,6 +647,7 @@ export class RuleChainPageComponent extends PageComponent
         );
       }
       nodes.push(node);
+      node.readonly = this.readonly;
       this.ruleChainModel.nodes.push(node);
     });
     if (this.ruleChainMetaData.firstNodeIndex > -1) {
@@ -697,7 +703,7 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   openRuleChainContextMenu($event: TbContextMenuEvent) {
-    if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey) {
+    if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey && !this.readonly) {
       const x = $event.clientX;
       const y = $event.clientY;
       const item = this.ruleChainCanvas.modelService.getItemInfoAtPoint(x, y);
@@ -1152,8 +1158,10 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   onModelChanged() {
-    this.isDirtyValue = true;
-    this.validate();
+    if (!this.readonly) {
+      this.isDirtyValue = true;
+      this.validate();
+    }
   }
 
   helpLinkIdForRuleNodeType(): string {
@@ -1730,7 +1738,7 @@ export class RuleChainPageComponent extends PageComponent
             if (this.ruleChainType !== RuleChainType.EDGE) {
               this.router.navigateByUrl(`ruleChains/${this.ruleChain.id.id}`);
             } else {
-              this.router.navigateByUrl(`edgeManagement/ruleChains/${this.ruleChain.id.id}`);
+              this.router.navigateByUrl(`edgeManagement/templates/ruleChains/${this.ruleChain.id.id}`);
             }
           } else {
             this.createRuleChainModel();

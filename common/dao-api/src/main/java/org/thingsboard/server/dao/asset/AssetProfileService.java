@@ -1,20 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.asset;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
@@ -25,6 +15,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface AssetProfileService extends EntityDaoService {
 
@@ -48,6 +39,10 @@ public interface AssetProfileService extends EntityDaoService {
 
     PageData<AssetProfileInfo> findAssetProfileInfos(TenantId tenantId, PageLink pageLink);
 
+    ListenableFuture<List<AssetProfileInfo>> findAssetProfilesByIdsAsync(TenantId tenantId, List<AssetProfileId> assetProfileIds);
+
+    List<AssetProfileInfo> findAssetProfilesByIds(TenantId tenantId, List<AssetProfileId> assetProfileIds);
+
     AssetProfile findOrCreateAssetProfile(TenantId tenantId, String profileName);
 
     AssetProfile createDefaultAssetProfile(TenantId tenantId);
@@ -62,6 +57,6 @@ public interface AssetProfileService extends EntityDaoService {
 
     List<EntityInfo> findAssetProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
 
-    List<AssetProfileInfo> findAssetProfilesByIds(TenantId tenantId, List<AssetProfileId> assetProfileIds);
+    List<AssetProfileCacheInfo> findAssetProfileCacheInfos(UUID id, int batchSize);
 
 }

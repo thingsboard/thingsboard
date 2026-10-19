@@ -1,24 +1,17 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.msg.queue;
 
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
+import lombok.ToString;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
+
+import java.util.Set;
 
 /**
  * @author Andrew Shvayka
@@ -26,8 +19,35 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 @Data
 public final class PartitionChangeMsg implements TbActorMsg {
 
-    @Getter
     private final ServiceType serviceType;
+
+    @Getter(AccessLevel.NONE)
+    @ToString.Exclude
+    private final Set<TenantId> affectedTenants;
+
+    private PartitionChangeMsg(ServiceType serviceType, Set<TenantId> affectedTenants) {
+        this.serviceType = serviceType;
+        this.affectedTenants = affectedTenants;
+    }
+
+    public static PartitionChangeMsg forAllTenants(ServiceType serviceType) {
+        return new PartitionChangeMsg(serviceType, null);
+    }
+
+    public static PartitionChangeMsg forTenants(ServiceType serviceType, Set<TenantId> affectedTenants) {
+        return new PartitionChangeMsg(serviceType, Set.copyOf(affectedTenants));
+    }
+
+    /**
+     * @return {@code true} if every tenant actor must receive this message
+     */
+    public boolean isForAllTenants() {
+        return affectedTenants == null;
+    }
+
+    public boolean isAffected(TenantId tenantId) {
+        return affectedTenants == null || affectedTenants.contains(tenantId);
+    }
 
     @Override
     public MsgType getMsgType() {

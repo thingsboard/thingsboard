@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.device.profile;
 
 /**
@@ -37,6 +25,7 @@ public class MqttTopics {
     private static final String TELEMETRY_SHORT = "/t";
     private static final String ATTRIBUTES_SHORT = "/a";
     private static final String RPC_SHORT = "/r";
+    private static final String CLAIM_SHORT = "/c";
     private static final String REQUEST_SHORT = "/req";
     private static final String RESPONSE_SHORT = "/res";
     private static final String JSON_SHORT = "j";
@@ -113,6 +102,9 @@ public class MqttTopics {
     public static final String DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX = BASE_DEVICE_API_TOPIC_V2 + ATTRIBUTES_REQUEST_SHORT;
     public static final String DEVICE_ATTRIBUTES_REQUEST_SHORT_JSON_TOPIC_PREFIX = DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX + JSON_SHORT + "/";
     public static final String DEVICE_ATTRIBUTES_REQUEST_SHORT_PROTO_TOPIC_PREFIX = DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX + PROTO_SHORT + "/";
+    public static final String DEVICE_CLAIM_SHORT_TOPIC = BASE_DEVICE_API_TOPIC_V2 + CLAIM_SHORT;
+    public static final String DEVICE_CLAIM_SHORT_JSON_TOPIC = BASE_DEVICE_API_TOPIC_V2 + CLAIM_SHORT + "/" + JSON_SHORT;
+    public static final String DEVICE_CLAIM_SHORT_PROTO_TOPIC = BASE_DEVICE_API_TOPIC_V2 + CLAIM_SHORT + "/" + PROTO_SHORT;
 
     private MqttTopics() {
     }
