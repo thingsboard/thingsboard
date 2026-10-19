@@ -370,6 +370,49 @@ public class HashPartitionServiceTest {
     }
 
     @Test
+    public void testIsManagedByCurrentService_isolatedProfileWithoutDedicatedServers() {
+        ServiceInfo commonRuleEngine = ServiceInfo.newBuilder()
+                .setServiceId("tb-rule-engine-1")
+                .addAllServiceTypes(List.of(ServiceType.TB_RULE_ENGINE.name()))
+                .build();
+        TenantProfileId profileWithoutDedicatedServers = new TenantProfileId(UUID.randomUUID());
+        TenantProfileId profileWithDedicatedServer = new TenantProfileId(UUID.randomUUID());
+        ServiceInfo dedicatedRuleEngine = ServiceInfo.newBuilder()
+                .setServiceId("tb-rule-engine-isolated-1")
+                .addAllServiceTypes(List.of(ServiceType.TB_RULE_ENGINE.name()))
+                .addAssignedTenantProfiles(profileWithDedicatedServer.toString())
+                .build();
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        TenantId otherTenantId = TenantId.fromUUID(UUID.randomUUID());
+        mockRoutingInfo(tenantId, profileWithoutDedicatedServers, true);
+        mockRoutingInfo(otherTenantId, profileWithDedicatedServer, true);
+        mockQueues(List.of(createQueue(TenantId.SYS_TENANT_ID, 10), createQueue(tenantId, 3), createQueue(otherTenantId, 3)));
+        when(serviceInfoProvider.isService(eq(ServiceType.TB_RULE_ENGINE))).thenReturn(true);
+
+        when(serviceInfoProvider.getAssignedTenantProfiles()).thenReturn(Collections.emptySet());
+        HashPartitionService commonPartitionService = createPartitionService();
+        commonPartitionService.recalculatePartitions(commonRuleEngine, Collections.emptyList());
+        assertThat(commonPartitionService.isManagedByCurrentService(tenantId)).isTrue();
+        assertThat(commonPartitionService.isManagedByCurrentService(otherTenantId)).isTrue();
+
+        // a dedicated server for another profile joins
+        commonPartitionService.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
+        assertThat(commonPartitionService.resolve(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId, tenantId).isMyPartition()).isTrue();
+        assertThat(commonPartitionService.isManagedByCurrentService(tenantId)).isTrue();
+        assertThat(commonPartitionService.isManagedByCurrentService(otherTenantId)).isFalse();
+        // stays the same on the next recalculation
+        commonPartitionService.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
+        assertThat(commonPartitionService.isManagedByCurrentService(tenantId)).isTrue();
+
+        when(serviceInfoProvider.getAssignedTenantProfiles()).thenReturn(Set.of(profileWithDedicatedServer.getId()));
+        HashPartitionService dedicatedPartitionService = createPartitionService();
+        dedicatedPartitionService.recalculatePartitions(dedicatedRuleEngine, List.of(commonRuleEngine));
+        assertThat(dedicatedPartitionService.isManagedByCurrentService(tenantId)).isFalse();
+        assertThat(dedicatedPartitionService.isManagedByCurrentService(otherTenantId)).isTrue();
+    }
+
+    @Test
     public void testPartitionChangeEvent_affectedTenantsIncludeIsolatedTenantWhenItsDedicatedServerChanges() {
         ServiceInfo commonRuleEngine = ServiceInfo.newBuilder()
                 .setServiceId("tb-rule-engine-1")
