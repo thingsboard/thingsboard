@@ -159,7 +159,7 @@ public class TbDeviceStateNodeTest {
         given(ctxMock.isLocalEntity(eq(nonLocalDeviceId2))).willReturn(false);
 
         // WHEN
-        node.onPartitionChangeMsg(ctxMock, new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE));
+        node.onPartitionChangeMsg(ctxMock, PartitionChangeMsg.forAllTenants(ServiceType.TB_RULE_ENGINE));
 
         // THEN
         assertThat(rateLimits)

@@ -370,6 +370,44 @@ public class HashPartitionServiceTest {
     }
 
     @Test
+    public void testPartitionChangeEvent_affectedTenantsIncludeIsolatedTenantWhenItsDedicatedServerChanges() {
+        ServiceInfo commonRuleEngine = ServiceInfo.newBuilder()
+                .setServiceId("tb-rule-engine-1")
+                .addAllServiceTypes(List.of(ServiceType.TB_RULE_ENGINE.name()))
+                .build();
+        TenantProfileId tenantProfileId = new TenantProfileId(UUID.randomUUID());
+        ServiceInfo dedicatedRuleEngine = ServiceInfo.newBuilder()
+                .setServiceId("tb-rule-engine-isolated-1")
+                .addAllServiceTypes(List.of(ServiceType.TB_RULE_ENGINE.name()))
+                .addAssignedTenantProfiles(tenantProfileId.toString())
+                .build();
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        mockRoutingInfo(tenantId, tenantProfileId, true);
+        mockQueues(List.of(createQueue(TenantId.SYS_TENANT_ID, 10), createQueue(tenantId, 3)));
+        when(serviceInfoProvider.isService(eq(ServiceType.TB_RULE_ENGINE))).thenReturn(true);
+        when(serviceInfoProvider.getAssignedTenantProfiles()).thenReturn(Collections.emptySet());
+
+        HashPartitionService partitionService = createPartitionService();
+        partitionService.recalculatePartitions(commonRuleEngine, Collections.emptyList());
+        assertThat(partitionService.isManagedByCurrentService(tenantId)).isTrue();
+
+        // a dedicated server for the tenant's own profile joins: the tenant is no longer managed here
+        Mockito.reset(applicationEventPublisher);
+        partitionService.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
+        assertThat(partitionService.isManagedByCurrentService(tenantId)).isFalse();
+        verifyPartitionChangeEvent(event -> event.getServiceType() == ServiceType.TB_RULE_ENGINE &&
+                Set.of(tenantId).equals(event.getAffectedTenants()));
+
+        // the dedicated server leaves: the tenant is managed here again
+        Mockito.reset(applicationEventPublisher);
+        partitionService.recalculatePartitions(commonRuleEngine, Collections.emptyList());
+        assertThat(partitionService.isManagedByCurrentService(tenantId)).isTrue();
+        verifyPartitionChangeEvent(event -> event.getServiceType() == ServiceType.TB_RULE_ENGINE &&
+                Set.of(tenantId).equals(event.getAffectedTenants()));
+    }
+
+    @Test
     public void testPartitionsDistribution_sameTenantDifferentQueues() {
         List<ServiceInfo> ruleEngines = new ArrayList<>();
         int serviceId = 0;
