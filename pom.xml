@@ -108,7 +108,7 @@
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
-        <springdoc-swagger.version>3.1.1TB</springdoc-swagger.version> <!-- FIXME: release 3.1.1TB to the ThingsBoard repository before merge -->
+        <springdoc-swagger.version>3.1.1TB</springdoc-swagger.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
         <jts.version>1.19.0</jts.version>
