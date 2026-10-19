@@ -731,6 +731,16 @@ class GitHistoryTests(unittest.TestCase):
         self.assertEqual(b"ONE\ntwo\nthree\nfour\nFIVE\n", p.merge_blobs(git.root, ours, base, theirs))
         self.assertIsNone(p.merge_blobs(git.root, ours, base, blob("uno\ntwo\nthree\nfour\nfive\n")))
 
+    @requires_merge_file_object_id
+    def test_merge_blobs_does_not_merge_binary_blobs(self):
+        git = GitFixture(temporary_directory(self), "main")
+        git.write("File.java", "one\0two\n")
+        git.commit("base")
+        base = git("rev-parse", "HEAD:File.java")
+        git.write("File.java", "ONE\0two\n")
+        git.commit("change")
+        self.assertIsNone(p.merge_blobs(git.root, git("rev-parse", "HEAD:File.java"), base, base))
+
     def test_merge_blobs_fails_without_object_id_support(self):
         usage = subprocess.CompletedProcess([], 129, b"", b"error: unknown option `object-id'")
         with (patch.object(p, "run", side_effect=[usage, subprocess.CompletedProcess([], 0, b"git version 2.39.5\n", b"")]),
