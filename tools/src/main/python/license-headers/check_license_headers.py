@@ -804,6 +804,7 @@ class Evidence:
     renamed_from: tuple = ()
     renames: tuple = ()
     rename_origin: str = "ce"
+    unsupported_path: str | None = None
     deleted: dict | None = None
     directory_in_ce: bool = True
 
@@ -837,14 +838,16 @@ def infer(evidence):
     if evidence.renames:
         first = evidence.renames[0]
         source = first["from"]
-        weakest = min(evidence.renames, key=lambda rename: rename["similarity"])
         renames = list(evidence.renames)
-        if evidence.rename_origin == "ambiguous":
+        if evidence.rename_origin == "unsupported":
+            reason = (f"renamed from {source}, but its rename chain passes through {evidence.unsupported_path}, "
+                      "a file type outside the check")
+        elif evidence.rename_origin == "ambiguous":
             reason = f"renamed from {source}, but parallel branches added a file of its rename chain"
         elif evidence.rename_origin == "downstream":
             reason = (f"renamed from {source} in {first['commit'][:11]}, but that file was added outside CE "
                       f"and is less than {SIMILARITY}% similar to the CE {source}")
-        elif weakest["similarity"] < SIMILARITY:
+        elif (weakest := min(evidence.renames, key=lambda rename: rename["similarity"]))["similarity"] < SIMILARITY:
             reason = (f"renamed from CE {source}, but the rename of {weakest['from']} in {weakest['commit'][:11]} "
                       f"is {weakest['similarity']}% similar without the header, less than {SIMILARITY}%")
         else:
@@ -964,11 +967,15 @@ def creations(repo, revision, bases, path):
                "--diff-filter=A", "--format=%H", revision, "--not", *bases, "--", path).decode().split()
 
 
-def comparable_ce_files(comparison, names):
+def same_type(names):
     suffixes = {PurePosixPath(name).suffix for name in names} - {""}
     extensionless = {PurePosixPath(name).name for name in names if not PurePosixPath(name).suffix}
-    return {path: oid for path, oid in comparison.items()
-            if PurePosixPath(path).suffix in suffixes or PurePosixPath(path).name in extensionless}
+    return lambda path: PurePosixPath(path).suffix in suffixes or PurePosixPath(path).name in extensionless
+
+
+def comparable_ce_files(comparison, names):
+    comparable = same_type(names)
+    return {path: oid for path, oid in comparison.items() if comparable(path)}
 
 
 @dataclass(frozen=True)
@@ -981,6 +988,7 @@ class Comparison:
     merges: dict
     rename_similarities: dict
     source_similarities: dict
+    unsupported_renames: dict
     ce_directories: frozenset
 
     def classify(self, name, curation):
@@ -990,9 +998,11 @@ class Comparison:
         renamed_from = tuple({"path": chain.source, "ref": base, "blob": oid}
                              for base, oid in self.lineage.versions(chain.source)) if chain else ()
         renames = tuple({"commit": hop.commit, "from": hop.source, "to": hop.path,
-                         "similarity": self.rename_similarities[hop]} for hop in chain.hops) if chain else ()
+                         "similarity": self.rename_similarities.get(hop)} for hop in chain.hops) if chain else ()
         origin = chain.origin if chain else "ce"
-        if origin == "downstream" and self.source_similarities[name] >= SIMILARITY:
+        if name in self.unsupported_renames:
+            origin = "unsupported"
+        elif origin == "downstream" and self.source_similarities[name] >= SIMILARITY:
             origin = "ce"
         identical = next(({"path": name, "ref": base, "blob": oid} for base, oid in versions
                           if self.normalized[(name, oid)] == self.normalized[key]), self.merges.get(name))
@@ -1008,6 +1018,7 @@ class Comparison:
             renamed_from=renamed_from,
             renames=renames,
             rename_origin=origin,
+            unsupported_path=self.unsupported_renames.get(name),
             deleted=self.lineage.deleted.get(name),
             directory_in_ce=str(PurePosixPath(name).parent) in self.ce_directories,
         ))
@@ -1016,7 +1027,15 @@ class Comparison:
 def compare(repo, plugin, lineage, contents):
     names = list(contents)
     new_paths = {name for name in names if not lineage.versions(name)}
-    renames = {name: lineage.renames[name] for name in new_paths if name in lineage.renames}
+    in_scope = same_type(names)
+    renames, unsupported_renames = {}, {}
+    for name in new_paths & set(lineage.renames):
+        chain = lineage.renames[name]
+        unsupported = next((hop.source for hop in chain.hops if not in_scope(hop.source)), None)
+        if unsupported is None:
+            renames[name] = chain
+        else:
+            unsupported_renames[name] = unsupported
     sources = {}
     for base, files in lineage.trees.items():
         for name in names:
@@ -1062,6 +1081,7 @@ def compare(repo, plugin, lineage, contents):
         merges=merges,
         rename_similarities=rename_similarities,
         source_similarities=source_similarities,
+        unsupported_renames=unsupported_renames,
         ce_directories=frozenset(str(parent) for files in lineage.trees.values()
                                  for path in files for parent in PurePosixPath(path).parents),
     )

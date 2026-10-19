@@ -871,6 +871,7 @@ class CheckCommandTests(unittest.TestCase):
             return {key: recognized((tool.root / tool.paths[key]).read_bytes()) for key in keys}
 
         def strip_headers(tool):
+            self.stripped = set(tool.paths.values())
             tool.removed = {key: split(body)[0] for key, body in tool.contents.items()}
             tool.stacked = set()
             for key, body in list(tool.contents.items()):
@@ -1020,6 +1021,20 @@ class CheckCommandTests(unittest.TestCase):
                          [(rename["from"], rename["to"]) for rename in row["renames"]])
         self.assertEqual(100, row["renames"][0]["similarity"])
         self.assertLess(row["renames"][1]["similarity"], p.SIMILARITY)
+
+    @requires_merge_file_object_id
+    def test_rename_through_a_file_type_outside_the_scope_needs_a_decision(self):
+        self.git("mv", "Source.java", "Notes.txt")
+        self.git.commit("rename to an unsupported type")
+        self.git("mv", "Notes.txt", "Moved.java")
+        self.git.commit("rename back")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual("unresolved", row["status"])
+        self.assertIn("Notes.txt", row["reason"])
+        self.assertEqual([("Source.java", "Notes.txt"), ("Notes.txt", "Moved.java")],
+                         [(rename["from"], rename["to"]) for rename in row["renames"]])
+        self.assertFalse([path for path in self.stripped if path.endswith(".txt")])
 
     @requires_merge_file_object_id
     def test_rename_source_added_outside_ce_needs_ce_content(self):
