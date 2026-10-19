@@ -11,7 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbActorStopReason;
+import org.thingsboard.server.common.msg.plugin.RuleNodeUpdatedMsg;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -237,6 +241,58 @@ public class ActorSystemTest {
         Assertions.assertFalse(testCtx1.getLatch().await(2, TimeUnit.SECONDS));
         Assertions.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
         Assertions.assertTrue(testCtx1.getLatch().await(3, TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void testInitFailedActorIsReinitializedOnRuleNodeUpdate() throws InterruptedException {
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
+        ActorTestCtx testCtx = getActorTestCtx(1);
+        RuleNodeId ruleNodeId = new RuleNodeId(UUID.randomUUID());
+        AtomicInteger createdActors = new AtomicInteger();
+        AtomicInteger initAttempts = new AtomicInteger();
+        CountDownLatch destroyed = new CountDownLatch(1);
+
+        // fails its first init without retries, as a rule node whose start or update failed; succeeds afterwards
+        TbActorRef actorRef = actorSystem.createRootActor(ROOT_DISPATCHER, new TbActorCreator() {
+            @Override
+            public TbActorId createActorId() {
+                return new TbEntityActorId(ruleNodeId);
+            }
+
+            @Override
+            public TbActor createActor() {
+                createdActors.incrementAndGet();
+                return new TestRootActor(createActorId(), testCtx) {
+                    @Override
+                    public void init(TbActorCtx ctx) throws TbActorException {
+                        if (initAttempts.incrementAndGet() == 1) {
+                            throw new TbActorException("Test init failure", new RuntimeException());
+                        }
+                        super.init(ctx);
+                    }
+
+                    @Override
+                    public InitFailureStrategy onInitFailure(int attempt, Throwable t) {
+                        return InitFailureStrategy.stop();
+                    }
+
+                    @Override
+                    public void destroy(TbActorStopReason stopReason, Throwable cause) {
+                        destroyed.countDown();
+                    }
+                };
+            }
+        });
+        Assertions.assertTrue(destroyed.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+
+        actorRef.tellWithHighPriority(new RuleNodeUpdatedMsg(TenantId.SYS_TENANT_ID, ruleNodeId));
+        Awaitility.await().atMost(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS).until(() -> initAttempts.get() == 2);
+        actorRef.tell(new IntTbActorMsg(42));
+
+        Assertions.assertTrue(testCtx.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        // the same actor instance is initialized again, so state it kept from its creation is reused by the re-init
+        assertThat(createdActors.get()).isEqualTo(1);
     }
 
 

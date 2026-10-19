@@ -23,6 +23,15 @@ public interface RelationRepository
                                                                         String fromType,
                                                                         String relationTypeGroup);
 
+    // One array parameter instead of an IN list: a constant statement shape for any batch size, served by
+    // idx_relation_from_id. relation is a Citus reference table, so this stays a single-placement read.
+    @Query(value = "SELECT from_id, from_type, relation_type_group, relation_type, to_id, to_type, additional_info, version" +
+            " FROM relation WHERE from_id = ANY(:fromIds) AND from_type = :fromType AND relation_type_group = :relationTypeGroup",
+            nativeQuery = true)
+    List<RelationEntity> findAllByFromIdsAndFromTypeAndRelationTypeGroup(@Param("fromIds") UUID[] fromIds,
+                                                                         @Param("fromType") String fromType,
+                                                                         @Param("relationTypeGroup") String relationTypeGroup);
+
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeGroupIn(UUID fromId,
                                                                           String fromType,
                                                                           List<String> relationTypeGroups);
