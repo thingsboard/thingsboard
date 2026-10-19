@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -74,7 +60,10 @@ export const svgIcons: {[key: string]: string} = {
     '14.7267L9.61134 13.5985L8.48664 14.7213L7.64059 13.8767L8.76673 12.7525L7.64928 11.6331L8.77533 10.5051L7.64059 9.37227L8.48664 ' +
     '8.52767L9.61993 9.65905L10.7461 8.53103L9.61465 7.40158L10.4607 6.55697L11.5907 7.68499L12.7169 6.55688L13.843 7.68494L14.9729 ' +
     '6.55688ZM12.7169 8.24609L13.5629 9.0907L10.1787 12.4691L9.33268 11.6245L12.7169 8.24609ZM13.4262 10.0805L14.2723 10.9251L11.4521 ' +
-    '13.7404L10.6061 12.8958L13.4262 10.0805ZM14.6909 13.0321L13.8449 12.1875L11.8708 14.1583L12.7168 15.0029L14.6909 13.0321Z"/></svg>'
+    '13.7404L10.6061 12.8958L13.4262 10.0805ZM14.6909 13.0321L13.8449 12.1875L11.8708 14.1583L12.7168 15.0029L14.6909 13.0321Z"/></svg>',
+  'ce-grant-waiting': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"></rect><path d="M3 9.4h18"></path>' +
+    '<path d="M6.2 7h.01"></path><path d="M8.9 7h.01"></path></svg>'
 };
 
 export const svgIconsUrl: { [key: string]: string } = {

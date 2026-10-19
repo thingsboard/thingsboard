@@ -1,18 +1,19 @@
 --
--- Copyright © 2016-2026 The Thingsboard Authors
+-- SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+-- SPDX-License-Identifier: Apache-2.0
 --
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
---
+
+-- Also created by upgrade/lts/4.3.1.6/schema_update.sql; keep the two in sync.
+CREATE TABLE IF NOT EXISTS tb_cluster (
+    cluster_id uuid NOT NULL,
+    license_claim_token varchar,
+    license_secret varchar,
+    CONSTRAINT tb_cluster_pkey PRIMARY KEY (cluster_id)
+);
+
+-- Backstop against two concurrent install jobs both minting an id: a unique index on a constant
+-- expression allows at most one row in the table, no matter how many rows race to insert.
+CREATE UNIQUE INDEX IF NOT EXISTS tb_cluster_single_row ON tb_cluster ((true));
 
 CREATE TABLE IF NOT EXISTS tb_schema_settings
 (
