@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,8 +75,11 @@ public class ThingsboardSecurityConfiguration {
     public static final String WS_ENTRY_POINT = "/api/ws/**";
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     public static final String DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT = "/api/device-connectivity/*/certificate/download";
+    public static final String COMMUNITY_GRANT_OFFLINE_RUN_ENTRY_POINT = "/api/communityGrant/offline/run";
+    public static final String COMMUNITY_GRANT_OFFLINE_RUN_PAYLOAD_LIMIT = COMMUNITY_GRANT_OFFLINE_RUN_ENTRY_POINT + "=35651584";
 
-    @Value("${server.http.max_payload_size:/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}")
+    // First match wins, so the community grant entry must stay ahead of /api/**.
+    @Value("${server.http.max_payload_size:/api/communityGrant/offline/run=35651584;/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}")
     private String maxPayloadSizeConfig;
 
     @Autowired
@@ -146,9 +136,13 @@ public class ThingsboardSecurityConfiguration {
     @Autowired
     private HttpSecurityHeadersCustomizer httpSecurityHeadersCustomizer;
 
+    // An override replaces the whole list, so the offline upload's entry is re-added unless it names that path.
     @Bean
     protected PayloadSizeFilter payloadSizeFilter() {
-        return new PayloadSizeFilter(maxPayloadSizeConfig);
+        String config = maxPayloadSizeConfig.contains(COMMUNITY_GRANT_OFFLINE_RUN_ENTRY_POINT + "=")
+                ? maxPayloadSizeConfig
+                : COMMUNITY_GRANT_OFFLINE_RUN_PAYLOAD_LIMIT + ";" + maxPayloadSizeConfig;
+        return new PayloadSizeFilter(config);
     }
 
     @Bean

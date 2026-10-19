@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -64,6 +52,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -98,6 +88,13 @@ public class SystemPatchApplierTest {
 
     @TempDir
     Path tempDir;
+
+    private void runPostSchemaCallback() {
+        doAnswer(invocation -> {
+            invocation.getArgument(2, Runnable.class).run();
+            return null;
+        }).when(ltsMigrationService).applyMigrations(anyString(), anyString(), any());
+    }
 
     @Test
     void whenLockIsNotAcquired_thenAcquiredIsSuccess() {
@@ -462,20 +459,41 @@ public class SystemPatchApplierTest {
     // --- applyPatchIfNeeded flow tests ---
 
     @Test
-    void whenVersionIncreased_thenAppliesMigrationsBeforeViewsAndWidgets() {
+    void whenVersionIncreased_thenSystemDataIsSyncedOnlyByTheMigrationCallback() {
         when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
         when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
-
         when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types"));
         when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
         when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        verify(ltsMigrationService).applyMigrations("4.3.0.0", "4.3.1.0");
-        verify(schemaSettingsService).updateSchemaVersion();
+        ArgumentCaptor<Runnable> postSchemaPhase = ArgumentCaptor.forClass(Runnable.class);
+        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), postSchemaPhase.capture());
+        verify(jdbcTemplate, never()).execute(anyString());
+
+        postSchemaPhase.getValue().run();
+
+        verify(jdbcTemplate).execute(contains("CREATE OR REPLACE VIEW"));
+    }
+
+    @Test
+    void whenMigrationCallbackNotInvoked_thenNothingIsSyncedOutsideIt() {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        // Lenient: only reached if system data were synced outside the callback.
+        lenient().when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types_missing"));
+        lenient().when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
+        lenient().when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data_missing").toString());
+
+        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
+
+        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), any());
+        verify(jdbcTemplate, never()).execute(anyString());
     }
 
     @Test
@@ -510,6 +528,8 @@ public class SystemPatchApplierTest {
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
 
+        runPostSchemaCallback();
+
         Path widgetTypesDir = tempDir.resolve("widget_types");
         Files.createDirectories(widgetTypesDir);
         when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
@@ -519,7 +539,7 @@ public class SystemPatchApplierTest {
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
         verify(schemaSettingsService).updateSchemaVersion();
-        verify(ltsMigrationService).applyMigrations("4.3.1.0", "4.3.2.0");
+        verify(ltsMigrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), any());
     }
 
     @Test
@@ -732,6 +752,7 @@ public class SystemPatchApplierTest {
         when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        runPostSchemaCallback();
 
         Path dataDir = tempDir.resolve("data");
         Path imagesDir = dataDir.resolve(InstallScripts.RESOURCES_DIR).resolve("images");

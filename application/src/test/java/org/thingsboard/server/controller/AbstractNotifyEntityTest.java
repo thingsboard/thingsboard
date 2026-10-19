@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
@@ -377,8 +364,13 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private void testSendNotificationMsgToEdgeServiceTimeEntityEqAny(TenantId tenantId, ActionType actionType, int cntTime) {
+        // Count only entities that can be synced to edge. Background services may save non-edge entities for the
+        // tenant at any moment (e.g. QUEUE_STATS created by the periodic rule engine stats report), and their
+        // ADDED notifications have no edge event type, so they are dropped by TbClusterService anyway.
+        ArgumentMatcher<EntityId> matcherEdgeEntityId = argument -> argument != null
+                && EdgeUtils.getEdgeEventTypeByEntityType(argument.getEntityType()) != null;
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
-                Mockito.any(), Mockito.any(EntityId.class), Mockito.any(), Mockito.isNull(),
+                Mockito.any(), Mockito.argThat(matcherEdgeEntityId), Mockito.any(), Mockito.isNull(),
                 Mockito.eq(EdgeUtils.getEdgeEventActionTypeByActionType(actionType)), Mockito.any());
     }
 

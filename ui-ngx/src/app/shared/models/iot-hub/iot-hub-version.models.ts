@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { ItemType } from './iot-hub-item.models';
 import { PageLink } from '@shared/models/page/page-link';
 
@@ -109,6 +95,14 @@ export interface MpItemVersionView {
   creatorVerified: boolean;
   installCount: number;
   totalInstallCount: number;
+  /**
+   * Server-owned, read-only marker for content that already ships inside ThingsBoard
+   * (a bundled widget, a SCADA symbol) instead of being installed by the IoT Hub.
+   * Optional on purpose: older Hub deployments simply omit the field, so it must never
+   * be read directly — use `isBuiltInItem()` from `@home/components/iot-hub/iot-hub-utils`.
+   * Never send it back to the server.
+   */
+  builtIn?: boolean;
   resources: MpItemVersionResource[];
   relatedItems?: string[];
   checksum?: string;
@@ -124,7 +118,10 @@ export interface ListingItemVersionNotFound {
 }
 
 export interface MpItemVersionQueryOptions {
+  /** Single item type, for a surface pinned to one (the type pages, the add-item dialog). */
   type?: string;
+  /** Several item types at once, sent as a repeated `type` parameter. */
+  types?: string[];
   peOnly?: boolean;
   creatorId?: string;
   categories?: string[];
@@ -137,53 +134,66 @@ export interface MpItemVersionQueryOptions {
   connectivity?: string[];
   vendors?: string[];
   scadaFirst?: boolean;
+  // Serialized only when true: the API matches the value, so `false` would mean "unverified only"
+  creatorVerified?: boolean;
 }
 
+/** Every filter, as `&name=value` pairs. */
+function filtersToQuery(o: MpItemVersionQueryOptions): string {
+  let query = '';
+  if (o.type) {
+    query += `&type=${encodeURIComponent(o.type)}`;
+  }
+  if (o.types?.length) {
+    query += o.types.map(t => `&type=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.peOnly != null) {
+    query += `&peOnly=${o.peOnly}`;
+  }
+  if (o.creatorId) {
+    query += `&creatorId=${encodeURIComponent(o.creatorId)}`;
+  }
+  if (o.categories?.length) {
+    query += o.categories.map(c => `&categories=${encodeURIComponent(c)}`).join('');
+  }
+  if (o.useCases?.length) {
+    query += o.useCases.map(u => `&useCases=${encodeURIComponent(u)}`).join('');
+  }
+  if (o.cfTypes?.length) {
+    query += o.cfTypes.map(t => `&cfTypes=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.widgetTypes?.length) {
+    query += o.widgetTypes.map(t => `&widgetTypes=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.ruleChainTypes?.length) {
+    query += o.ruleChainTypes.map(t => `&ruleChainTypes=${encodeURIComponent(t)}`).join('');
+  }
+  if (o.tbVersion != null) {
+    query += `&tbVersion=${o.tbVersion}`;
+  }
+  if (o.hardwareTypes?.length) {
+    query += o.hardwareTypes.map(ht => `&hardwareTypes=${encodeURIComponent(ht)}`).join('');
+  }
+  if (o.connectivity?.length) {
+    query += o.connectivity.map(c => `&connectivity=${encodeURIComponent(c)}`).join('');
+  }
+  if (o.vendors?.length) {
+    query += o.vendors.map(v => `&vendors=${encodeURIComponent(v)}`).join('');
+  }
+  if (o.scadaFirst != null) {
+    query += `&scadaFirst=${o.scadaFirst}`;
+  }
+  if (o.creatorVerified) {
+    query += `&creatorVerified=true`;
+  }
+  return query;
+}
+
+/** A paged read: the filters, and the page to cut out of them. */
 export class MpItemVersionQuery {
   constructor(public pageLink: PageLink, public options: MpItemVersionQueryOptions = {}) {}
 
   public toQuery(): string {
-    let query = this.pageLink.toQuery();
-    const o = this.options;
-    if (o.type) {
-      query += `&type=${o.type}`;
-    }
-    if (o.peOnly != null) {
-      query += `&peOnly=${o.peOnly}`;
-    }
-    if (o.creatorId) {
-      query += `&creatorId=${o.creatorId}`;
-    }
-    if (o.categories?.length) {
-      query += o.categories.map(c => `&categories=${encodeURIComponent(c)}`).join('');
-    }
-    if (o.useCases?.length) {
-      query += o.useCases.map(u => `&useCases=${encodeURIComponent(u)}`).join('');
-    }
-    if (o.cfTypes?.length) {
-      query += o.cfTypes.map(t => `&cfTypes=${encodeURIComponent(t)}`).join('');
-    }
-    if (o.widgetTypes?.length) {
-      query += o.widgetTypes.map(t => `&widgetTypes=${encodeURIComponent(t)}`).join('');
-    }
-    if (o.ruleChainTypes?.length) {
-      query += o.ruleChainTypes.map(t => `&ruleChainTypes=${encodeURIComponent(t)}`).join('');
-    }
-    if (o.tbVersion != null) {
-      query += `&tbVersion=${o.tbVersion}`;
-    }
-    if (o.hardwareTypes?.length) {
-      query += o.hardwareTypes.map(ht => `&hardwareTypes=${encodeURIComponent(ht)}`).join('');
-    }
-    if (o.connectivity?.length) {
-      query += o.connectivity.map(c => `&connectivity=${encodeURIComponent(c)}`).join('');
-    }
-    if (o.vendors?.length) {
-      query += o.vendors.map(v => `&vendors=${encodeURIComponent(v)}`).join('');
-    }
-    if (o.scadaFirst != null) {
-      query += `&scadaFirst=${o.scadaFirst}`;
-    }
-    return query;
+    return this.pageLink.toQuery() + filtersToQuery(this.options);
   }
 }
