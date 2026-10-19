@@ -114,7 +114,7 @@ public class TenantActorTest {
         when(ruleChainService.findTenantRuleChainsByType(eq(tenantId), eq(RuleChainType.CORE), any())).thenReturn(PageData.emptyPageData());
 
         tenantActor.init(mock(TbActorCtx.class));
-        tenantActor.doProcess(new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE));
+        tenantActor.doProcess(PartitionChangeMsg.forAllTenants(ServiceType.TB_RULE_ENGINE));
 
         verify(ruleChainService, never()).findTenantRuleChainsByType(any(), any(), any());
     }
@@ -128,7 +128,7 @@ public class TenantActorTest {
         verify(ruleChainService, never()).findTenantRuleChainsByType(any(), any(), any());
 
         when(partitionService.isManagedByCurrentService(tenantId)).thenReturn(true);
-        tenantActor.doProcess(new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE));
+        tenantActor.doProcess(PartitionChangeMsg.forAllTenants(ServiceType.TB_RULE_ENGINE));
 
         verify(ruleChainService).findTenantRuleChainsByType(eq(tenantId), eq(RuleChainType.CORE), any());
     }
