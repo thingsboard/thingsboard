@@ -122,7 +122,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         log.trace("[{}] processDeviceRpcCallFromEdge [{}]", tenantId, deviceRpcCallMsg);
         if (deviceRpcCallMsg.hasRpcStatus()) {
             // RPC v2 (persistent) status update from the edge - update the cloud Rpc entity (same id == request UUID).
-            return processDeviceRpcStatusFromEdge(tenantId, deviceRpcCallMsg);
+            return processDeviceRpcStatusFromEdge(tenantId, edge, deviceRpcCallMsg);
         } else if (deviceRpcCallMsg.hasResponseMsg()) {
             return processDeviceRpcResponseFromEdge(tenantId, deviceRpcCallMsg);
         } else if (deviceRpcCallMsg.hasRequestMsg()) {
@@ -131,29 +131,41 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         return Futures.immediateFuture(null);
     }
 
-    private ListenableFuture<Void> processDeviceRpcStatusFromEdge(TenantId tenantId, DeviceRpcCallMsg deviceRpcCallMsg) {
+    private ListenableFuture<Void> processDeviceRpcStatusFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg) {
         RpcId rpcId = new RpcId(new UUID(deviceRpcCallMsg.getRequestUuidMSB(), deviceRpcCallMsg.getRequestUuidLSB()));
+        Rpc existingRpc = edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId);
+        if (existingRpc == null) {
+            // RPC is unknown to the cloud (edge-originated or already deleted) - nothing to sync
+            log.debug("[{}][{}] Ignoring RPC status [{}] from edge - RPC not found", tenantId, rpcId, deviceRpcCallMsg.getRpcStatus());
+            return Futures.immediateFuture(null);
+        }
         if (RpcStatus.DELETED.name().equals(deviceRpcCallMsg.getRpcStatus())) {
             // RPC v2 (persistent) delete/abort propagation Edge -> Cloud: remove the cloud copy.
-            if (edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId) != null) {
-                edgeCtx.getTbRpcService().deleteRpc(tenantId, rpcId);
+            // Mark the edge-sync context so TbRpcService.deleteRpc does not echo the delete back to edges.
+            try {
+                edgeSynchronizationManager.getEdgeId().set(edge.getId());
+                edgeCtx.getTbRpcService().deleteRpc(tenantId, existingRpc);
+            } finally {
+                edgeSynchronizationManager.getEdgeId().remove();
             }
             return Futures.immediateFuture(null);
         }
         RpcStatus rpcStatus = RpcStatus.valueOf(deviceRpcCallMsg.getRpcStatus());
-        Rpc existingRpc = edgeCtx.getTbRpcService().findRpcById(tenantId, rpcId);
-        if (existingRpc == null) {
-            return Futures.immediateFuture(null);
-        }
-        if (!existingRpc.getStatus().isIntermediate() && rpcStatus.isIntermediate()) {
-            // guard against out-of-order status uplinks regressing a terminal RPC (e.g. stale DELIVERED after SUCCESSFUL)
-            log.debug("[{}][{}] Ignoring stale RPC status [{}] - RPC is already terminal [{}]",
+        if (!existingRpc.getStatus().isIntermediate() && existingRpc.getStatus() != RpcStatus.TIMEOUT && rpcStatus.isIntermediate()) {
+            // guard against a final RPC regressing to an intermediate status (e.g. stale DELIVERED after SUCCESSFUL).
+            // TIMEOUT is not final - the device actor retries the delivery (TIMEOUT -> SENT/DELIVERED/QUEUED).
+            log.debug("[{}][{}] Ignoring stale RPC status [{}] - RPC is already final [{}]",
                     tenantId, rpcId, rpcStatus, existingRpc.getStatus());
             return Futures.immediateFuture(null);
         }
         JsonNode response = null;
         if (deviceRpcCallMsg.hasResponseMsg() && !StringUtils.isEmpty(deviceRpcCallMsg.getResponseMsg().getResponse())) {
-            response = JacksonUtil.toJsonNode(deviceRpcCallMsg.getResponseMsg().getResponse());
+            String payload = deviceRpcCallMsg.getResponseMsg().getResponse();
+            try {
+                response = JacksonUtil.toJsonNode(payload);
+            } catch (IllegalArgumentException e) {
+                response = JacksonUtil.newObjectNode().put("error", payload);
+            }
         }
         edgeCtx.getTbRpcService().save(tenantId, rpcId, rpcStatus, response);
         return Futures.immediateFuture(null);
