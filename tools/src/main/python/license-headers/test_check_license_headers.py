@@ -22,7 +22,7 @@ import check_license_headers as p
 def temporary_directory(test):
     directory = tempfile.TemporaryDirectory()
     test.addCleanup(directory.cleanup)
-    return Path(directory.name)
+    return Path(directory.name).resolve()
 
 
 def rename_sources(lineage):
