@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
+  deepClone,
   isDefinedAndNotNull,
   isNotEmptyStr,
   isNumber,
@@ -147,14 +148,20 @@ export interface ColorRangeSettings extends AdvancedColorMode {
   rangeAdvanced?: AdvancedColorRange[];
 }
 
+/**
+ * Converts any stored rangeList shape to ColorRangeSettings. Always returns a new deep copy (null/undefined pass through),
+ * so callers may mutate the result freely.
+ */
 export const normalizeColorRangeSettings = (rangeList: ColorRangeSettings | ColorRange[]): ColorRangeSettings => {
   if (!isDefinedAndNotNull(rangeList)) {
     return rangeList as ColorRangeSettings;
   }
   if (Array.isArray(rangeList)) {
-    return {advancedMode: false, range: rangeList};
+    return {advancedMode: false, range: deepClone(rangeList)};
   }
-  const result: ColorRangeSettings = {...rangeList, advancedMode: rangeList.advancedMode ?? false};
+  const result: ColorRangeSettings = deepClone(rangeList);
+  result.advancedMode = result.advancedMode ?? false;
+  // Unwraps the legacy corrupted shape {range: {advancedMode, range: [...]}} (possibly nested several levels deep)
   let range: any = result.range;
   while (isDefinedAndNotNull(range) && !Array.isArray(range)) {
     range = range.range;
@@ -489,9 +496,9 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
 
 class RangeColorProcessor extends AdvancedModeColorProcessor {
 
-  constructor(protected settings: ColorSettings,
-              protected ctx: WidgetContext) {
-    super(settings, ctx);
+  constructor(settings: ColorSettings,
+              ctx: WidgetContext) {
+    super({...settings, rangeList: normalizeColorRangeSettings(settings.rangeList)}, ctx);
   }
 
   update(value: any): void {
@@ -535,9 +542,8 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
   }
 
   private computeFromRange(value: any): string {
-    const settings = normalizeColorRangeSettings(this.settings.rangeList);
-    const advancedMode = settings?.advancedMode ?? false;
-    const rangeList: any = advancedMode ? settings?.rangeAdvanced : settings?.range;
+    const advancedMode = this.settings.rangeList?.advancedMode ?? false;
+    const rangeList: any = advancedMode ? this.settings.rangeList?.rangeAdvanced : this.settings.rangeList?.range;
 
     if (rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);

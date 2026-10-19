@@ -18,7 +18,7 @@ import {
   ColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/color-settings-panel.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
@@ -129,10 +129,9 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
 
   writeValue(value: ColorSettings): void {
     if (value) {
-      this.modelValue = value;
-      if (isDefinedAndNotNull(this.modelValue.rangeList)) {
-        this.modelValue.rangeList = deepClone(normalizeColorRangeSettings(this.modelValue.rangeList));
-      }
+      this.modelValue = isDefinedAndNotNull(value.rangeList)
+        ? {...value, rangeList: normalizeColorRangeSettings(value.rangeList)}
+        : value;
       this.updateColorStyle();
     }
   }

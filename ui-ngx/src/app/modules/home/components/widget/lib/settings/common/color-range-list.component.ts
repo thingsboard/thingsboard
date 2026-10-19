@@ -22,7 +22,7 @@ import {
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -124,9 +124,9 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       let rangeList: ColorRangeSettings = {};
       if (this.simpleRange) {
         rangeList.advancedMode = false;
-        rangeList.range = Array.isArray(value) ? value : normalizeColorRangeSettings(value).range;
+        rangeList.range = normalizeColorRangeSettings(value).range;
       } else {
-        rangeList = deepClone(normalizeColorRangeSettings(value));
+        rangeList = normalizeColorRangeSettings(value);
       }
       this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode || false, {emitEvent: false});
       if (isDefinedAndNotNull(rangeList?.range)) {

@@ -27,7 +27,7 @@ import {
   DigitalGaugeSettings,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { ColorSettings, ColorType } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, normalizeColorRangeSettings } from '@shared/models/widget-settings.models';
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
@@ -161,8 +161,8 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
 
     if (barColor.type === ColorType.range) {
       this.widgetConfig.config.settings.useFixedLevelColor = true;
-      this.widgetConfig.config.settings.fixedLevelColors =
-        barColor.rangeList.advancedMode ? barColor.rangeList.rangeAdvanced : barColor.rangeList.range;
+      const rangeList = normalizeColorRangeSettings(barColor.rangeList);
+      this.widgetConfig.config.settings.fixedLevelColors = rangeList?.advancedMode ? rangeList.rangeAdvanced : rangeList?.range;
     } else {
       this.widgetConfig.config.settings.useFixedLevelColor = false;
     }
