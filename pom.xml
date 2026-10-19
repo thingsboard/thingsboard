@@ -99,6 +99,7 @@
         <zookeeper.version>3.9.6</zookeeper.version> <!-- to fix CVE-2026-24281, CVE-2026-24308, CVE-2026-59969 and CVE-2026-84439. TODO: remove override when fixed in curator-client -->
         <protobuf.version>3.25.5</protobuf.version> <!-- Boot 4.1 manages protobuf 4.x; this pin keeps 3.x until the protobuf 4 upgrade -->
         <grpc.version>1.76.0</grpc.version>
+        <groovy.version>4.0.32</groovy.version> <!-- rest-assured 5.5 requires Groovy 4 (Boot 4.1 manages Groovy 5) -->
         <tbel.version>1.2.10</tbel.version>
         <lombok.version>1.18.46</lombok.version> <!-- must be in sync with spring-boot-dependencies; needed for maven-compiler-plugin annotationProcessorPaths -->
         <paho.client.version>1.2.5</paho.client.version>
@@ -1362,6 +1363,13 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-bom</artifactId>
                 <version>${grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy-bom</artifactId>
+                <version>${groovy.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
