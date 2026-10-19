@@ -282,10 +282,13 @@ public class JobManagerTest extends AbstractControllerTest {
         int tasksCount = 200;
         JobId jobId = submitJob(DummyJobConfiguration.builder()
                 .successfulTasksCount(tasksCount)
-                .taskProcessingTimeMs(50)
+                .taskProcessingTimeMs(TimeUnit.SECONDS.toMillis(30)) // keeps tasks in flight when the job is cancelled, whatever the partitioning strategy
+                .taskProcessingTimeoutMs(TimeUnit.SECONDS.toMillis(60))
                 .build()).getId();
 
-        Thread.sleep(500);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(findJobById(jobId).getStatus()).isEqualTo(JobStatus.RUNNING);
+        });
         cancelJob(jobId);
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);

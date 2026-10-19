@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -152,15 +153,18 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private TbActorRef createRuleNodeActor(TbActorCtx ctx, RuleNode ruleNode) {
         return ctx.getOrCreateChildActor(new TbEntityActorId(ruleNode.getId()),
                 () -> DefaultActorService.RULE_DISPATCHER_NAME,
-                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId()),
+                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId(), ruleNode),
                 () -> true);
     }
 
     private void initRoutes(RuleChain ruleChain, List<RuleNode> ruleNodeList) {
         nodeRoutes.clear();
+        // Loading the relations of all nodes of the chain in batches instead of one lookup per node;
+        Map<RuleNodeId, List<EntityRelation>> relationsByNode = service.getRuleNodesRelations(TenantId.SYS_TENANT_ID,
+                ruleNodeList.stream().map(RuleNode::getId).toList());
         // Populating the routes map;
         for (RuleNode ruleNode : ruleNodeList) {
-            List<EntityRelation> relations = service.getRuleNodeRelations(TenantId.SYS_TENANT_ID, ruleNode.getId());
+            List<EntityRelation> relations = relationsByNode.getOrDefault(ruleNode.getId(), Collections.emptyList());
             log.trace("[{}][{}][{}] Processing rule node relations [{}]", tenantId, entityId, ruleNode.getId(), relations.size());
             if (relations.isEmpty()) {
                 nodeRoutes.put(ruleNode.getId(), Collections.emptyList());
