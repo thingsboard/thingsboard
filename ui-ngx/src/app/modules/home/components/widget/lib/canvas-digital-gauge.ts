@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as CanvasGauges from 'canvas-gauges';
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
 import tinycolor from 'tinycolor2';
