@@ -11,13 +11,13 @@
       "path": "application/src/main/java/org/thingsboard/server/service/edge/DefaultEdgeLicenseService.java",
       "header": "ce-modified",
       "reason": "Retained CE file subsequently deleted on the selected lts-4.2 mainline. PE retains the CE implementation with HTTP client migration, timeout and request-handling changes. Reviewed against last CE path version 3af76140cd7dd2968cdba2875a92eccbbcfc05fe^1 (blob 034ac5148483fda6234c6fae2a46cf601396606a); absence from the selected CE tree does not change origin.",
-      "contentHash": "sha256:a193eb9c523a588682c0d7842abc147ce07ac184426833d878fcb1bf946a51dc"
+      "contentHash": "sha256:e0bb8888308be0e7cd40e4b5fcc938df2069eb044232c1bbe83c2fc2b294f494"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/edge/EdgeLicenseService.java",
-      "header": "apache",
-      "reason": "Retained CE file subsequently deleted on the selected lts-4.2 mainline. The retained interface has the exact normalized body of the last CE version. Reviewed against last CE path version 3af76140cd7dd2968cdba2875a92eccbbcfc05fe^1 (blob aa4d281aba2e442b05b09bfb73b9f3221de25764); absence from the selected CE tree does not change origin.",
-      "contentHash": "sha256:a5d72a772b07a9ca6688c6f2531878ed06659473d43c76b3dc7bc0ab34826ab7"
+      "header": "ce-modified",
+      "reason": "Retained CE file subsequently deleted on the selected lts-4.2 mainline. PE retains the CE interface and adds the V2 checkInstance/activateInstance methods. Reviewed against last CE path version 3af76140cd7dd2968cdba2875a92eccbbcfc05fe^1 (blob aa4d281aba2e442b05b09bfb73b9f3221de25764); absence from the selected CE tree does not change origin.",
+      "contentHash": "sha256:2e51d1ca879d2c61c348b78db1f814f0b35c6d0802e5cec4927a9411daa987a7"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/edge/rpc/fetch/IntegrationsEdgeEventFetcher.java",
@@ -48,6 +48,24 @@
       "header": "busl",
       "reason": "PE-specific service adapter/message SecretEdgeProcessor.java. Reviewed methods bind the common framework to PE integration, scheduler, encryption/secret, group, or customer-parent behavior. This is a new typed PE extension, not a relocation of the candidate CE implementation. Reviewed candidate application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/queue/QueueEdgeProcessor.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 8e5a65b588937e5703ff87f301be023d27ce1808).",
       "contentHash": "sha256:6f960791993777f636b230e3829422af292370a5b5a113b082dc2d05ee151491"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Migration.java",
+      "header": "ce-modified",
+      "reason": "CE interface application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigration.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigration.java at 5954190c32f (blob f0cadee1f657ab6d1a0f670f1166ef3140ec4438); a renamed CE file stays CE-derived.",
+      "contentHash": "sha256:c12598c1c6ccd66fe6cfd7833fe1624d379c937151df7d13bf162212cb7344aa"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/MigrationService.java",
+      "header": "ce-modified",
+      "reason": "CE service application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java at 5954190c32f (blob 2f063c3a1a469cb578503bdf548f5e1a4cfb4035); a renamed CE file stays CE-derived.",
+      "contentHash": "sha256:f72de342ef3308706b866bb311ede8c07c4027a2b413154a4002807561887ed3"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Version.java",
+      "header": "ce-modified",
+      "reason": "CE class application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java at 5954190c32f (blob fa59efcc5a2d50079e495e42c141139fc57f178b); a renamed CE file stays CE-derived.",
+      "contentHash": "sha256:d7698c48f928583c2ade63ed5f16620677bb6d0a59376d9dbe1fb1ee1457a095"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/integration/rpc/IntegrationSessionCaffeineCache.java",
@@ -116,10 +134,28 @@
       "contentHash": "sha256:fd319f8910fa50f4db8dd30fe3f90e60e34910e1ddc0bb9db390db64f56b27db"
     },
     {
+      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationIntegrationTest.java",
+      "header": "ce-modified",
+      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java at 5954190c32f (blob cf60ec2e4b5fce7a55862805e9bd959c125ce17e); a renamed CE file stays CE-derived.",
+      "contentHash": "sha256:24cb205ad1c7a7577284aa2fca5b245d60e0c554accfe9f26021a6d60e0807ce"
+    },
+    {
+      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationServiceTest.java",
+      "header": "ce-modified",
+      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationServiceTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationServiceTest.java at 5954190c32f (blob 18ee8b6506742c7bf3e39a8fe0e5d9e9370e5614); a renamed CE file stays CE-derived.",
+      "contentHash": "sha256:1ba9703bfe4a8fdb30ef11d151c9de62b4f89279ad030738021986db9fd64d8d"
+    },
+    {
+      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/VersionTest.java",
+      "header": "ce-modified",
+      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsVersionTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsVersionTest.java at 5954190c32f (blob f3d280a915e59fb37e93c45e6404b09728a772a8); a renamed CE file stays CE-derived.",
+      "contentHash": "sha256:6a1b1d2f264dbae3ad420d9eef4466449a50f9f721c7256441a4aab0e4a87037"
+    },
+    {
       "path": "application/src/test/java/org/thingsboard/server/service/install/update/DefaultDataUpdateServiceTest.java",
       "header": "busl",
       "reason": "CE deleted its DefaultDataUpdateServiceTest (version 3.3.0 device profile conversion tests) in ba440ba7c1f. PE recreated a test at the same path in cdae38adc6b with entirely new content covering the CE-to-PE upgrade chain; nothing of the CE file (last CE version 40527f3da02^1, blob abfab844917) remains beyond the class name.",
-      "contentHash": "sha256:c0ebbc47ce2ff97d2e00182781ed38ca137ad54393e706c064c0ca6919b27eb8"
+      "contentHash": "sha256:29cb5b743744501fc34c8251e6cde379817ae7e7acb43f6e2a53df5f2dcbc96a"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/integration/rpc/IntegrationRpcSslTest.java",
@@ -797,7 +833,7 @@
       "path": "integration/coap/src/main/java/org/thingsboard/integration/ThingsboardCoapIntegrationApplication.java",
       "header": "busl",
       "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate transport/http/src/main/java/org/thingsboard/server/http/ThingsboardHttpTransportApplication.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 98be09069a487befab217c9b7c036fc6132fc97b).",
-      "contentHash": "sha256:691ed1e7c96845e81ccfdcf522c836794f4045180c74d50be1613122517397c4"
+      "contentHash": "sha256:d603f73f715f82368dcfd54325b95c653684077d49afeafb69b9117b7196dfbc"
     },
     {
       "path": "integration/coap/src/main/resources/logback.xml",

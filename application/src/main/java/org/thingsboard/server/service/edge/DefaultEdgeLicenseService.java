@@ -67,7 +67,7 @@ public class DefaultEdgeLicenseService implements EdgeLicenseService {
                 new HttpEntity<>(request, headers), JsonNode.class);
         log.trace("checkInstance response: {}", response);
         // removing headers from response of the license server, because it might be a conflict with the proxy from we are accepting incoming connections
-        return new ResponseEntity<JsonNode>(response.getBody(), response.getStatusCode());
+        return new ResponseEntity<>(response.getBody(), response.getStatusCode());
     }
 
     @Override
@@ -81,7 +81,38 @@ public class DefaultEdgeLicenseService implements EdgeLicenseService {
                 null, JsonNode.class, params);
         log.trace("activateInstance response: {}", response);
         // removing headers from response of the license server, because it might be a conflict with the proxy from we are accepting incoming connections
-        return new ResponseEntity<JsonNode>(response.getBody(), response.getStatusCode());
+        return new ResponseEntity<>(response.getBody(), response.getStatusCode());
+    }
+
+    @Override
+    public ResponseEntity<JsonNode> checkInstanceV2(JsonNode request) {
+        log.trace("checkInstance V2 [{}]", request);
+        var headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<JsonNode> response = this.restTemplate.postForEntity(
+                EDGE_LICENSE_SERVER_ENDPOINT + "/api/v2/license/checkInstance",
+                new HttpEntity<>(request, headers), JsonNode.class);
+        log.trace("checkInstance V2 response: {}", response);
+        // removing headers from response of the license server, because it might be a conflict with the proxy from we are accepting incoming connections
+        return new ResponseEntity<>(response.getBody(), response.getStatusCode());
+    }
+
+    @Override
+    public ResponseEntity<JsonNode> activateInstanceV2(String edgeLicenseSecret, String releaseDate, String clusterId, String protocolVersion) {
+        log.trace("activateInstance V2 [{}][{}][{}]", releaseDate, clusterId, protocolVersion);
+        Map<String, String> params = new HashMap<>();
+        params.put("licenseSecret", edgeLicenseSecret);
+        params.put("releaseDate", releaseDate);
+        params.put("clusterId", clusterId);
+        String url = EDGE_LICENSE_SERVER_ENDPOINT + "/api/v2/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}&clusterId={clusterId}";
+        if (protocolVersion != null) {
+            params.put("protocolVersion", protocolVersion);
+            url += "&protocolVersion={protocolVersion}";
+        }
+        ResponseEntity<JsonNode> response = this.restTemplate.postForEntity(url, null, JsonNode.class, params);
+        log.trace("activateInstance V2 response: {}", response);
+        // removing headers from response of the license server, because it might be a conflict with the proxy from we are accepting incoming connections
+        return new ResponseEntity<>(response.getBody(), response.getStatusCode());
     }
 
     private RestTemplate initRestTemplate() {

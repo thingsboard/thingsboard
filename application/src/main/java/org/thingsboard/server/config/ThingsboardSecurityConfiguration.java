@@ -134,7 +134,7 @@ public class ThingsboardSecurityConfiguration {
     /** Session bootstrap, exempt for GET only: {@code POST} on the same path creates a custom menu. */
     public static final String CUSTOM_MENU_ENTRY_POINT = "/api/customMenu";
     public static final String ALLOWED_PERMISSIONS_ENTRY_POINT = "/api/permissions/allowedPermissions";
-    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[]{"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**", "/api/license/**", "/api/images/public/**", "/api/v2/report/public/**", "/.well-known/**"};
+    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[]{"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**", "/api/license/**", "/api/v2/license/**", "/api/images/public/**", "/api/v2/report/public/**", "/.well-known/**"};
     /**
      * API entry points that stay reachable while the setup is incomplete, or while a provisioned instance is
      * locked again at runtime. Only {@link #SETUP_PROTECTED_ENTRY_POINTS} is locked, so the Angular

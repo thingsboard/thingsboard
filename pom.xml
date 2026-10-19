@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>4.4.0.1-SNAPSHOT</version>
+    <version>4.4.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ThingsBoard</name>
@@ -65,7 +65,7 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.controlScriptsFolder>control</pkg.controlScriptsFolder>
-        <thingsboard.ai.version>2.1.6</thingsboard.ai.version>
+        <thingsboard.ai.version>2.1.9-SNAPSHOT</thingsboard.ai.version>
         <thingsboard.client.version>4.4.0</thingsboard.client.version>
         <spring-boot.version>4.1.1</spring-boot.version>
         <netty.version>4.2.19.Final</netty.version> <!-- to fix CVE-2026-44891, CVE-2026-55831, CVE-2026-55833, CVE-2026-55851, CVE-2026-56745, CVE-2026-56817, CVE-2026-56819, CVE-2026-56820, CVE-2026-56821, CVE-2026-56822, CVE-2026-59901, CVE-2026-59902, CVE-2026-59903, CVE-2026-59920, CVE-2026-62243, CVE-2026-73507, CVE-2026-75595, CVE-2026-93488, CVE-2026-93491, CVE-2026-93560, CVE-2026-100655, CVE-2026-100656, CVE-2026-100657 (Boot manages 4.2.17.Final). TODO: remove when fixed in spring-boot-dependencies -->
