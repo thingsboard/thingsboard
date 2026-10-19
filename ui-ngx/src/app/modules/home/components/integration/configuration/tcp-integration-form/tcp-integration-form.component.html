@@ -1,0 +1,271 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="tcpConfigForm" class="flex flex-col">
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.port</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="port">
+      @if (tcpConfigForm.get('port').hasError('required')) {
+        <mat-error translate>
+          integration.port-required
+        </mat-error>
+      }
+      @if (tcpConfigForm.get('port').hasError('min') || tcpConfigForm.get('port').hasError('max')) {
+        <mat-error translate>
+          integration.port-range
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.so-backlog-option</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="soBacklogOption">
+      @if (tcpConfigForm.get('soBacklogOption').hasError('required')) {
+        <mat-error translate>
+          integration.so-backlog-option-required
+        </mat-error>
+      }
+      @if (tcpConfigForm.get('soBacklogOption').hasError('min') ||
+                                  tcpConfigForm.get('soBacklogOption').hasError('max')) {
+        <mat-error translate>
+          integration.so-backlog-option-range
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.so-rcv-buf</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="soRcvBuf">
+      @if (tcpConfigForm.get('soRcvBuf').hasError('required')) {
+        <mat-error translate>
+          integration.so-rcv-buf-required
+        </mat-error>
+      }
+      @if (tcpConfigForm.get('soRcvBuf').hasError('min') || tcpConfigForm.get('soRcvBuf').hasError('max')) {
+        <mat-error translate>
+          integration.so-rcv-buf-range
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.so-snd-buf</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="soSndBuf">
+      @if (tcpConfigForm.get('soSndBuf').hasError('required')) {
+        <mat-error translate>
+          integration.so-snd-buf-required
+        </mat-error>
+      }
+      @if (tcpConfigForm.get('soSndBuf').hasError('min') ||
+                                  tcpConfigForm.get('soSndBuf').hasError('max')) {
+        <mat-error translate>
+          integration.so-snd-buf-range
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+  @if (isSetDownlink) {
+    <div class="flex flex-row xs:flex-col gt-xs:gap-2" style="margin-bottom: 8px">
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.cache-size</mat-label>
+        <input matInput type="number" min="0" pattern="[0-9]+" formControlName="cacheSize">
+        @if (tcpConfigForm.get('cacheSize').hasError('min')) {
+          <mat-error translate>
+            integration.min-cache-size
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.cache-time-to-live</mat-label>
+        <input matInput type="number" min="0" max="525600" pattern="[0-9]+" formControlName="timeToLiveInMinutes">
+        @if (tcpConfigForm.get('timeToLiveInMinutes').hasError('min')) {
+          <mat-error translate>
+            integration.min-cache-time-to-live
+          </mat-error>
+        }
+        @if (tcpConfigForm.get('timeToLiveInMinutes').hasError('max')) {
+          <mat-error translate>
+            integration.max-cache-time-to-live
+          </mat-error>
+        }
+      </mat-form-field>
+    </div>
+  }
+
+  <mat-slide-toggle class="toggle block" [aria-label]="'integration.so-keepalive-option' | translate" formControlName="soKeepaliveOption">
+    {{ 'integration.so-keepalive-option' | translate }}
+  </mat-slide-toggle>
+  <mat-slide-toggle class="toggle block_last" [aria-label]="'integration.tcp-no-delay' | translate" formControlName="tcpNoDelay">
+    {{ 'integration.tcp-no-delay' | translate }}
+  </mat-slide-toggle>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <fieldset class="fields-group" formGroupName="handlerConfiguration">
+    <legend class="group-title" translate>integration.handler-configuration</legend>
+    <mat-form-field appearance="outline" class="mat-block">
+      <mat-select required formControlName="handlerType">
+        @for (handlerConfigurationType of HandlerConfigurationType | keyvalue; track handlerConfigurationType.key) {
+          <mat-option [value]="handlerConfigurationType.value">
+            {{ HandlerConfigurationTypeTranslation.get(handlerConfigurationType.value) | translate}}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (tcpConfigForm.get('handlerConfiguration.handlerType').value === HandlerConfigurationType.BINARY) {
+      <section>
+        <div class="flex flex-row flex-wrap xs:flex-col gt-xs:gap-2">
+          <mat-form-field appearance="outline" class="mat-block flex-1" subscriptSizing="dynamic">
+            <mat-label translate>integration.max-frame-length</mat-label>
+            <input matInput required type="number" step="1" min="1" max="65535" formControlName="maxFrameLength">
+            <mat-hint></mat-hint>
+            @if (tcpConfigForm.get('handlerConfiguration').get('maxFrameLength').hasError('required')) {
+              <mat-error translate>
+                integration.max-frame-length-required
+              </mat-error>
+            }
+            @if (tcpConfigForm.get('handlerConfiguration').get('maxFrameLength').hasError('min') ||
+                                          tcpConfigForm.get('handlerConfiguration').get('maxFrameLength').hasError('max')) {
+              <mat-error translate>
+                integration.max-frame-length-range
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="mat-block flex-1" subscriptSizing="dynamic">
+            <mat-label translate>integration.length-field-offset</mat-label>
+            <input matInput required type="number" step="1" min="0" max="8" formControlName="lengthFieldOffset">
+            <mat-hint></mat-hint>
+            @if (tcpConfigForm.get('handlerConfiguration').get('lengthFieldOffset').hasError('required')) {
+              <mat-error translate>
+                integration.length-field-offset-required
+              </mat-error>
+            }
+            @if (tcpConfigForm.get('handlerConfiguration').get('lengthFieldOffset').hasError('min') ||
+                                          tcpConfigForm.get('handlerConfiguration').get('lengthFieldOffset').hasError('max')) {
+              <mat-error translate>
+                integration.length-field-offset-range
+              </mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="mat-block flex-1" subscriptSizing="dynamic">
+            <mat-label translate>integration.length-field-length</mat-label>
+            <input matInput required type="number" step="1" min="0" max="8" formControlName="lengthFieldLength">
+            <mat-hint></mat-hint>
+            @if (tcpConfigForm.get('handlerConfiguration').get('lengthFieldLength').hasError('required')) {
+              <mat-error translate>
+                integration.length-field-length-required
+              </mat-error>
+            }
+            @if (tcpConfigForm.get('handlerConfiguration').get('lengthFieldLength').hasError('min') ||
+                              tcpConfigForm.get('handlerConfiguration').get('lengthFieldLength').hasError('max')) {
+              <mat-error translate>
+                integration.length-field-length-range
+              </mat-error>
+            }
+          </mat-form-field>
+        </div>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.length-adjustment</mat-label>
+          <input matInput required type="number" step="1" min="0" max="8" formControlName="lengthAdjustment">
+          @if (tcpConfigForm.get('handlerConfiguration').get('lengthAdjustment').hasError('required')) {
+            <mat-error translate>
+              integration.length-adjustment-required
+            </mat-error>
+          }
+          @if (tcpConfigForm.get('handlerConfiguration').get('lengthAdjustment').hasError('min') ||
+                            tcpConfigForm.get('handlerConfiguration').get('lengthAdjustment').hasError('max')) {
+            <mat-error translate>
+              integration.length-adjustment-range
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.initial-bytes-to-strip</mat-label>
+          <input matInput required type="number" step="1" min="0" max="8" formControlName="initialBytesToStrip">
+          @if (tcpConfigForm.get('handlerConfiguration').get('initialBytesToStrip').hasError('required')) {
+            <mat-error translate>
+              integration.initial-bytes-to-strip-required
+            </mat-error>
+          }
+          @if (tcpConfigForm.get('handlerConfiguration').get('initialBytesToStrip').hasError('min') ||
+                                      tcpConfigForm.get('handlerConfiguration').get('initialBytesToStrip').hasError('max')) {
+            <mat-error translate>
+              integration.initial-bytes-to-strip-range
+            </mat-error>
+          }
+        </mat-form-field>
+        <p class="mat-subhead" translate>integration.byte-order</p>
+        <mat-radio-group formControlName="byteOrder" class="flex flex-1 flex-col gap-2">
+          <mat-radio-button [value]="TcpBinaryByteOrder.LITTLE_ENDIAN">
+            {{ 'integration.tcp.byte-order-little-endian' | translate }}
+          </mat-radio-button>
+          <mat-radio-button [value]="TcpBinaryByteOrder.BIG_ENDIAN">
+            {{ 'integration.tcp.byte-order-big-endian' | translate }}
+          </mat-radio-button>
+        </mat-radio-group>
+        <mat-slide-toggle class="toggle" [aria-label]="'integration.fail-fast' | translate" formControlName="failFast">
+          {{ 'integration.fail-fast' | translate }}
+        </mat-slide-toggle>
+      </section>
+    }
+    @if (tcpConfigForm.get('handlerConfiguration.handlerType').value === HandlerConfigurationType.TEXT) {
+      <section>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.max-frame-length</mat-label>
+          <input matInput type="number" step="1" min="1" max="65535" required formControlName="maxFrameLength">
+          @if (tcpConfigForm.get('handlerConfiguration').get('maxFrameLength').hasError('required')) {
+            <mat-error translate>
+              integration.max-frame-length-required
+            </mat-error>
+          }
+          @if (tcpConfigForm.get('handlerConfiguration').get('maxFrameLength').hasError('min') ||
+                                    tcpConfigForm.get('handlerConfiguration').get('maxFrameLength').hasError('max')) {
+            <mat-error translate>integration.max-frame-length-range</mat-error>
+          }
+        </mat-form-field>
+        <mat-slide-toggle class="toggle block_last" [aria-label]="'integration.strip-delimiter' | translate" formControlName="stripDelimiter">
+          {{ 'integration.strip-delimiter' | translate }}
+        </mat-slide-toggle>
+        <div class="same-width-component-row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'integration.message-separator-type' | translate }}</mat-label>
+            <mat-select formControlName="messageSeparator">
+              @for (separatorType of tcpTextMessageSeparatorList; track separatorType) {
+                <mat-option [value]="separatorType">
+                  {{ TcpTextMessageSeparatorTranslation.get(separatorType) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (tcpConfigForm.get('handlerConfiguration.messageSeparator').value === TcpTextMessageSeparator.CUSTOM_SEPARATOR) {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'integration.separator' | translate }}</mat-label>
+              <input matInput formControlName="customSeparatorRawValue">
+              @if (tcpConfigForm.get('handlerConfiguration.customSeparatorRawValue').hasError('required')) {
+                <mat-error>
+                  {{ 'integration.separator-required' | translate }}
+                </mat-error>
+              }
+            </mat-form-field>
+          }
+        </div>
+      </section>
+    }
+  </fieldset>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

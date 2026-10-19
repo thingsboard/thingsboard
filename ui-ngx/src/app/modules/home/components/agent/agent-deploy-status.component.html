@@ -1,0 +1,91 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="tb-deploy-status">
+
+  <div class="tb-deploy-card" [class.tb-deploy-card-offline]="!online">
+    <div class="tb-deploy-card-icon">
+      <mat-icon>{{ online ? 'check_circle' : 'cancel' }}</mat-icon>
+    </div>
+    <div class="tb-deploy-card-body">
+      <h3>{{ (online ? 'agent.deploy-status-online-title' : 'agent.deploy-status-offline-title') | translate }}</h3>
+      <p class="tb-deploy-card-desc">
+        <span class="tb-deploy-agent-name">{{ agent?.name }}</span>
+        @if (online && managingDuration) {
+          {{ 'agent.deploy-status-managing-for' | translate: { duration: managingDuration } }}
+        }
+        @if (online && !managingDuration) {
+          {{ 'agent.deploy-status-managing' | translate }}
+        }
+        @if (!online) {
+          {{ 'agent.deploy-status-offline-desc' | translate }}
+        }
+      </p>
+    </div>
+    <div class="tb-deploy-card-meta">
+      <span class="tb-deploy-pill" [class.healthy]="online" [class.unhealthy]="!online">
+        <span class="tb-deploy-pill-dot"></span>
+        {{ (online ? 'agent.deploy-status-healthy' : 'agent.deploy-status-unhealthy') | translate }}
+      </span>
+    </div>
+  </div>
+
+  @if (!online || showInstallCommand) {
+    <div class="tb-deploy-install-block">
+      @if (online) {
+        <div class="tb-deploy-install-header">
+          <button mat-button type="button" class="tb-deploy-install-hide"
+            (click)="showInstallCommand = false">
+            <mat-icon>close</mat-icon>
+            <span translate>agent.deploy-status-hide-install</span>
+          </button>
+        </div>
+      }
+      <tb-agent-install-instructions [agent]="agent" [edge]="application?.appType === 'EDGE'"></tb-agent-install-instructions>
+    </div>
+  }
+
+  <div class="tb-deploy-where">
+    @if (online && !showInstallCommand) {
+      <div class="tb-deploy-where-header">
+        <button type="button" class="tb-deploy-reinstall-link" (click)="showInstallCommand = true">
+          <span translate>agent.deploy-status-need-reinstall</span>
+          <span class="tb-deploy-reinstall-cta" translate>agent.deploy-status-show-install</span>
+        </button>
+      </div>
+    }
+
+    <div class="tb-deploy-where-cards">
+      <button type="button" class="tb-deploy-where-card" (click)="goToAgent.emit()">
+        <span class="tb-deploy-where-card-icon"><mat-icon>memory</mat-icon></span>
+        <span class="tb-deploy-where-card-title">
+          <span translate>agent.deploy-status-card-agent-title</span>
+          <mat-icon class="tb-deploy-where-card-arrow">arrow_forward</mat-icon>
+        </span>
+        <span class="tb-deploy-where-card-desc" translate>agent.deploy-status-card-agent-desc</span>
+      </button>
+
+      <button type="button" class="tb-deploy-where-card" (click)="goToAgentApplication.emit()">
+        <span class="tb-deploy-where-card-icon"><mat-icon>apps</mat-icon></span>
+        <span class="tb-deploy-where-card-title">
+          <span translate>agent.deploy-status-card-app-title</span>
+          <mat-icon class="tb-deploy-where-card-arrow">arrow_forward</mat-icon>
+        </span>
+        <span class="tb-deploy-where-card-desc" translate>agent.deploy-status-card-app-desc</span>
+      </button>
+
+      <button type="button" class="tb-deploy-where-card" (click)="goToAgentEvents.emit()">
+        <span class="tb-deploy-where-card-icon"><mat-icon>bolt</mat-icon></span>
+        <span class="tb-deploy-where-card-title">
+          <span translate>agent.deploy-status-card-events-title</span>
+          <mat-icon class="tb-deploy-where-card-arrow">arrow_forward</mat-icon>
+        </span>
+        <span class="tb-deploy-where-card-desc" translate>agent.deploy-status-card-events-desc</span>
+      </button>
+    </div>
+  </div>
+
+</section>

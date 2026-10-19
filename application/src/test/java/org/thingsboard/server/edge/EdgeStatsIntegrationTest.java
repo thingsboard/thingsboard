@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,13 +9,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
@@ -54,8 +42,8 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
 
     private static final String STATISTICS_DEVICE_PROFILE = "STATISTICS";
 
-    private static final long EXPECTED_MSGS_ADDED = 6L;
-    private static final long EXPECTED_MSGS_PUSHED = 6L;
+    private static final long EXPECTED_MSGS_ADDED = 7L;
+    private static final long EXPECTED_MSGS_PUSHED = 7L;
     private static final long EXPECTED_MSGS_PERMANENTLY_FAILED = 0L;
     private static final long EXPECTED_MSGS_TMP_FAILED = 0L;
 
@@ -102,35 +90,27 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
                 Arrays.stream(EdgeStatsKey.values()).map(EdgeStatsKey::getKey).toList()).get();
     }
 
-    private void simulateEdgeEventsAddedDownlinkPushed() throws InterruptedException, ExecutionException {
+    private void simulateEdgeEventsAddedDownlinkPushed() throws Exception {
         statsCounterService.clear(edge.getId());
 
-        // Save device and assign to edge
-        // 2 DOWNLINK_MSGS_ADDED, EdgeEvents: [{DEVICE_PROFILE: ADDED}, {DEVICE: ASSIGNED_TO_EDGE}]
-        // 2 DOWNLINK_MSGS_PUSHED, Downlinks: [{deviceProfileUpdateMsg}, {deviceUpdateMsg, deviceProfileUpdateMsg, deviceCredentialsUpdateMsg}]
-        edgeImitator.expectMessageAmount(4);
-        Device savedDevice = saveDevice("StatisticDevice", STATISTICS_DEVICE_PROFILE);
-        doPost("/api/edge/" + edge.getUuidId() + "/device/" + savedDevice.getUuidId(), Device.class);
+        log.error("Simulating edge events added downlink pushed");
+
+        // Save device entity group and assign to edge
+        // Save device and add to entity group
+        // 3 DOWNLINK_MSGS_ADDED, EdgeEvents: [{ENTITY_GROUP: ASSIGNED_TO_EDGE}, {DEVICE_PROFILE: ADDED}, {DEVICE: ADDED_TO_ENTITY_GROUP}]
+        // 3 DOWNLINK_MSGS_PUSHED, Downlinks: [{entityGroupUpdateMsg}, {deviceProfileUpdateMsg}, {deviceUpdateMsg, deviceProfileUpdateMsg, deviceCredentialsUpdateMsg}]
+        EntityGroup deviceEntityGroup = createEntityGroupAndAssignToEdge(EntityType.DEVICE, "DeviceGroup", tenantId);
+        edgeImitator.expectMessageAmount(2);
+        Device savedDevice = saveDevice("Edge Device", STATISTICS_DEVICE_PROFILE, deviceEntityGroup.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        // Save asset and assign to edge
-        // 1 DOWNLINK_MSGS_ADDED, EdgeEvents: [{ASSET: ASSIGNED_TO_EDGE}]
-        // 1 DOWNLINK_MSGS_PUSHED, Downlinks: [{assetUpdateMsg, assetProfileUpdateMsg}]
-        edgeImitator.expectMessageAmount(2);
-        Asset savedAsset = saveAsset("Edge Asset");
-        doPost("/api/edge/" + edge.getUuidId()
-                + "/asset/" + savedAsset.getUuidId(), Asset.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-
-        // Create customer and assign edge to the customer
-        // 2 DOWNLINK_MSGS_ADDED, EdgeEvents: [{CUSTOMER: ADDED}, {EDGE: ASSIGNED_TO_CUSTOMER}]
-        // 2 DOWNLINK_MSGS_PUSHED, Downlinks: [{customerUpdateMsg}, {edgeConfiguration}]
-        edgeImitator.expectMessageAmount(2);
-        Customer customer = new Customer();
-        customer.setTitle("Edge Customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-        doPost("/api/customer/" + savedCustomer.getUuidId()
-                + "/edge/" + edge.getUuidId(), Edge.class);
+        // Save asset entity group and assign to edge
+        // Save asset and add to entity group
+        // 3 DOWNLINK_MSGS_ADDED, EdgeEvents: [{ENTITY_GROUP: ASSIGNED_TO_EDGE}, {ASSET_PROFILE: ADDED}, {ASSET: ADDED_TO_ENTITY_GROUP}]
+        // 3 DOWNLINK_MSGS_PUSHED, Downlinks: [{entityGroupUpdateMsg}, {assetProfileUpdateMsg}, {assetUpdateMsg, assetProfileUpdateMsg}]
+        EntityGroup assetEntityGroup = createEntityGroupAndAssignToEdge(EntityType.ASSET, "AssetGroup", tenantId);
+        edgeImitator.expectMessageAmount(3);
+        Asset savedAsset = saveAsset("Edge Asset", "Building", assetEntityGroup.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         // Send device telemetry downlink for the device

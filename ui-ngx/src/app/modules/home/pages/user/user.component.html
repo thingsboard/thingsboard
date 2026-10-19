@@ -1,72 +1,76 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-details-buttons xs:flex xs:flex-col">
   <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit || isDetailsPage">
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'disableAccount')"
-          [class.!hidden]="isEdit || !isUserActivated() || !isUserCredentialsEnabled()">
-    {{'user.disable-account' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'enableAccount')"
-          [class.!hidden]="isEdit || !isUserActivated() || isUserCredentialsEnabled()">
-    {{'user.enable-account' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'displayActivationLink')"
-          [class.!hidden]="isEdit || isUserActivated()">
-    {{'user.display-activation-link' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'resendActivation')"
-          [class.!hidden]="isEdit || isUserActivated()">
-    {{'user.resend-activation' | translate }}
-  </button>
-  @if (loginAsUserEnabled$ | async) {
+  @if (entityGroup | hasGroupEntityOrGenericPermission: resource.USER: operation.WRITE) {
     <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'loginAsUser')"
-            [class.!hidden]="isEdit">
-      {{ (entity?.authority === authority.TENANT_ADMIN ? 'user.login-as-tenant-admin' : 'user.login-as-customer-user') | translate }}
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'disableAccount')"
+      [class.!hidden]="isEdit || isCurrentUser() || !isUserActivated() || !isUserCredentialsEnabled()">
+      {{'user.disable-account' | translate }}
+    </button>
+  }
+  @if (entityGroup | hasGroupEntityOrGenericPermission: resource.USER: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'enableAccount')"
+      [class.!hidden]="isEdit || isCurrentUser() || !isUserActivated() || isUserCredentialsEnabled()">
+      {{'user.enable-account' | translate }}
     </button>
   }
   <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit">
-    {{'user.delete' | translate }}
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'displayActivationLink')"
+    [class.!hidden]="isEdit || isUserActivated()">
+    {{'user.display-activation-link' | translate }}
   </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'resendActivation')"
+    [class.!hidden]="isEdit || isUserActivated()">
+    {{'user.resend-activation' | translate }}
+  </button>
+  @if ((loginAsUserEnabled$ | async) && resource.USER | hasGenericPermission: operation.IMPERSONATE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)  || isCurrentUser()"
+      (click)="onEntityAction($event, 'loginAsUser')"
+      [class.!hidden]="isEdit">
+      {{ (entity?.authority === authority.TENANT_ADMIN ? 'user.login-as-tenant-admin' : 'user.login-as-customer-user') | translate }}
+    </button>
+  }
+  @if ((isSysAdmin$ | async) === false && canManageOwnerAndGroups()) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'manageOwnerAndGroups')"
+      [class.!hidden]="isEdit">
+      {{'entity-group.manage-owner-and-groups' | translate }}
+    </button>
+  }
+  @if (entityGroup | hasGroupEntityOrGenericPermission: resource.USER: operation.DELETE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'delete')"
+      [class.!hidden]="hideDelete() || isEdit">
+      {{'user.delete' | translate }}
+    </button>
+  }
   <div class="flex flex-row xs:flex-col">
     <button mat-stroked-button
-            ngxClipboard
-            (cbOnSuccess)="onUserIdCopied($event)"
-            [cbContent]="entity?.id?.id"
-            [disabled]="(isLoading$ | async)"
-            [class.!hidden]="isEdit">
+      ngxClipboard
+      (cbOnSuccess)="onUserIdCopied($event)"
+      [cbContent]="entity?.id?.id"
+      [disabled]="(isLoading$ | async)"
+      [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>user.copyId</span>
     </button>
@@ -74,7 +78,7 @@
 </div>
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset [disabled]="(isLoading$ | async)">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>user.email</mat-label>
         <input matInput type="email" formControlName="email">
@@ -98,16 +102,16 @@
         <input matInput formControlName="lastName">
       </mat-form-field>
       <tb-phone-input [required]="false"
-                      label="{{ 'contact.phone' | translate }}"
-                      [enableFlagsSelect]="true"
-                      appearance="outline"
-                      formControlName="phone">
+        label="{{ 'contact.phone' | translate }}"
+        [enableFlagsSelect]="true"
+        appearance="outline"
+        formControlName="phone">
       </tb-phone-input>
       <div formGroupName="additionalInfo" class="flex flex-col">
         <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
           <mat-label translate>language.language</mat-label>
           <mat-select formControlName="lang"
-                      [placeholder]="'language.auto' | translate">
+            [placeholder]="'language.auto' | translate">
             <mat-option [value]="null">{{ 'language.auto' | translate }}</mat-option>
             @for(lang of languageList; track lang) {
               <mat-option [value]="lang">{{ 'language.locales.' + lang | translate }}</mat-option>
@@ -117,7 +121,7 @@
         <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
           <mat-label translate>unit.unit-system</mat-label>
           <mat-select formControlName="unitSystem"
-                      [placeholder]="'unit.unit-system-type.AUTO' | translate">
+            [placeholder]="'unit.unit-system-type.AUTO' | translate">
             <mat-option [value]="null">{{ 'unit.unit-system-type.AUTO' | translate }}</mat-option>
             @for(unit of UnitSystems; track unit) {
               <mat-option [value]="unit">{{ 'unit.unit-system-type.' + unit | translate }}</mat-option>
@@ -132,30 +136,28 @@
                 label="{{ 'user.default-dashboard' | translate }}"
                 formControlName="defaultDashboardId"
                 appearance="outline"
-                [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
-                [tenantId]="entity?.tenantId?.id"
-                [customerId]="entity?.customerId?.id"
+                [userId]="entity?.id.id"
                 [selectFirstDashboard]="false"
               ></tb-dashboard-autocomplete>
               <mat-checkbox class="flex-1" formControlName="defaultDashboardFullscreen">
                 {{ 'user.always-fullscreen' | translate }}
               </mat-checkbox>
             </section>
-            <section class="flex flex-1 flex-col items-baseline gt-sm:flex-row">
-              <tb-dashboard-autocomplete
-                class="flex-1"
-                label="{{ 'dashboard.home-dashboard' | translate }}"
-                formControlName="homeDashboardId"
-                appearance="outline"
-                [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
-                [tenantId]="entity?.tenantId?.id"
-                [customerId]="entity?.customerId?.id"
-                [selectFirstDashboard]="false"
-              ></tb-dashboard-autocomplete>
-              <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
-                {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
-              </mat-checkbox>
-            </section>
+            @if ((isSysAdmin$ | async) || (whiteLabelingAllowed$ | async) && (resource.WHITE_LABELING | hasGenericPermission: operation.WRITE)) {
+              <section class="flex flex-1 flex-col items-baseline gt-sm:flex-row">
+                <tb-dashboard-autocomplete
+                  class="flex-1"
+                  label="{{ 'dashboard.home-dashboard' | translate }}"
+                  formControlName="homeDashboardId"
+                  appearance="outline"
+                  [userId]="entity?.id.id"
+                  [selectFirstDashboard]="false"
+                ></tb-dashboard-autocomplete>
+                <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
+                  {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+                </mat-checkbox>
+              </section>
+            }
           </section>
         }
         <mat-form-field class="mat-block" appearance="outline">
@@ -163,6 +165,19 @@
           <textarea matInput formControlName="description" cdkTextareaAutosize cdkAutosizeMinRows="1" rows="1"></textarea>
         </mat-form-field>
       </div>
+      @if (entity?.id &&
+        (isSysAdmin$ | async) === false && (whiteLabelingAllowed$ | async) && (resource.WHITE_LABELING | hasGenericPermission: operation.WRITE)) {
+        <tb-custom-menu-autocomplete
+          class="flex-1"
+          formControlName="customMenuId"
+          appearance="outline"
+          [scope]="isUserTenantAdmin() ? CMScope.TENANT : CMScope.CUSTOMER"
+          [assigneeType]="CMAssigneeType.USERS">
+        </tb-custom-menu-autocomplete>
+      }
     </fieldset>
   </form>
+  @if ((isSysAdmin$ | async) === false && !isEdit) {
+    <tb-group-entity-info [groupEntity]="entity" appearance="outline"></tb-group-entity-info>
+  }
 </div>

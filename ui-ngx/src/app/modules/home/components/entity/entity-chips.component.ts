@@ -1,23 +1,11 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, GroupEntityInfo } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { baseDetailsPageByEntityType, EntityType } from '@app/shared/public-api';
+import { baseDetailsPageByEntityType, EntityType, groupUrlPrefixByEntityType } from '@app/shared/public-api';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { isEqual, isNotEmptyStr, isObject } from '@core/utils';
 
 @Component({
@@ -29,7 +17,7 @@ import { isEqual, isNotEmptyStr, isObject } from '@core/utils';
 export class EntityChipsComponent implements OnChanges {
 
   @Input()
-  entity: BaseData<EntityId>;
+  entity: BaseData<EntityId> | GroupEntityInfo<EntityId>;
 
   @Input()
   key: string;
@@ -40,6 +28,9 @@ export class EntityChipsComponent implements OnChanges {
   entityDetailsPrefixUrl: string;
 
   subEntities: Array<BaseData<EntityId>> = [];
+
+  constructor(private userPermissionsService: UserPermissionsService) {
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     for (const propName of Object.keys(changes)) {
@@ -53,11 +44,17 @@ export class EntityChipsComponent implements OnChanges {
   private update(): void {
     if (this.entity && this.entity.id && this.key) {
       let entitiesList = this.entity?.[this.key];
+      const entityType = this.entity.id.entityType as EntityType;
       if (isObject(entitiesList) && !Array.isArray(entitiesList)) {
         entitiesList = [entitiesList];
       }
       if (isNotEmptyStr(this.detailsPagePrefixUrl)) {
         this.entityDetailsPrefixUrl = this.detailsPagePrefixUrl;
+      } else if (this.key === 'groups' && groupUrlPrefixByEntityType.has(entityType)) {
+        this.entityDetailsPrefixUrl = groupUrlPrefixByEntityType.get(entityType);
+        if (this.entity.ownerId && !this.userPermissionsService.isDirectOwner(this.entity.ownerId)) {
+          this.entityDetailsPrefixUrl = `/customers/all/${this.entity.ownerId.id}${this.entityDetailsPrefixUrl}`;
+        }
       } else if (Array.isArray(entitiesList)) {
         if (entitiesList.length) {
           this.entityDetailsPrefixUrl = baseDetailsPageByEntityType.get(entitiesList[0].id.entityType as EntityType);

@@ -1,0 +1,8 @@
+{
+  "SIGFOX" : ["sigfoxId", "deviceTypeId", "autoCalibration", "zeroPointAdjusted", "transmitPower", "powerControl", "fwVersion"],
+  "AZURE_IOT_HUB" : ["manufacturer", "receivedAlarms", "status", "batteryLevel", "batteryStatus", "version"],
+  "AZURE_EVENT_HUB" : ["manufacturer", "receivedAlarms", "status", "batteryLevel", "batteryStatus", "version"],
+  "AZURE_SERVICE_BUS" : ["manufacturer", "receivedAlarms", "status", "batteryLevel", "batteryStatus", "version"],
+  "AWS_IOT" : ["deviceId", "status", "power_status", "battery_level"],
+  "KPN": ["battery", "DVNUUID", "DEVEUI"]
+}

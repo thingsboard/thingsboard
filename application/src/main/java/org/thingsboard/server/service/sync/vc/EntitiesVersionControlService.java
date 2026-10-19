@@ -1,24 +1,13 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -33,17 +22,18 @@ import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface EntitiesVersionControlService {
 
-    ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) throws Exception;
+    ListenableFuture<UUID> saveEntitiesVersion(SecurityUser user, VersionCreateRequest request) throws Exception;
 
-    VersionCreationResult getVersionCreateStatus(User user, UUID requestId) throws ThingsboardException;
+    VersionCreationResult getVersionCreateStatus(SecurityUser user, UUID requestId) throws ThingsboardException;
 
-    ListenableFuture<PageData<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, PageLink pageLink) throws Exception;
+    ListenableFuture<PageData<EntityVersion>> listEntityVersions(TenantId tenantId, String branch, EntityId externalId, EntityId internalId, PageLink pageLink) throws Exception;
 
     ListenableFuture<PageData<EntityVersion>> listEntityTypeVersions(TenantId tenantId, String branch, EntityType entityType, PageLink pageLink) throws Exception;
 
@@ -53,11 +43,11 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<List<VersionedEntityInfo>> listAllEntitiesAtVersion(TenantId tenantId, String versionId) throws Exception;
 
-    UUID loadEntitiesVersion(User user, VersionLoadRequest request) throws Exception;
+    UUID loadEntitiesVersion(SecurityUser user, VersionLoadRequest request) throws Exception;
 
-    VersionLoadResult getVersionLoadStatus(User user, UUID requestId) throws ThingsboardException;
+    VersionLoadResult getVersionLoadStatus(SecurityUser user, UUID requestId) throws ThingsboardException;
 
-    ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, EntityId entityId, String versionId) throws Exception;
+    ListenableFuture<EntityDataDiff> compareEntityDataToVersion(SecurityUser user, EntityId entityId, String versionId) throws Exception;
 
     ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) throws Exception;
 
@@ -73,6 +63,8 @@ public interface EntitiesVersionControlService {
 
     ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds);
 
-    ListenableFuture<EntityDataInfo> getEntityDataInfo(User user, EntityId entityId, String versionId);
+    ListenableFuture<UUID> autoCommit(User user, EntityType entityType, EntityGroupId groupId) throws Exception;
+
+    ListenableFuture<EntityDataInfo> getEntityDataInfo(User user, EntityId externalId, EntityId internalId, String versionId);
 
 }

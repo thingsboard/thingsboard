@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ControlValueAccessor,
   FormControl,
@@ -36,6 +23,7 @@ import {
   widgetActionTypeTranslationMap,
   widgetType
 } from '@shared/models/widget.models';
+import { defaultSaveBrowserLocationDescriptor } from '@shared/models/location.models';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { map, mergeMap, share, startWith, takeUntil, tap } from 'rxjs/operators';
@@ -97,6 +85,12 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   callbacks: WidgetActionCallbacks;
 
   @Input()
+  customFunctionArgs: string[] = ['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel'];
+
+  @Input()
+  customFunctionHelpId = 'widget/action/custom_action_fn';
+
+  @Input()
   @coerceBoolean()
   withName = false;
 
@@ -104,9 +98,10 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   actionNames: string[];
 
   additionalWidgetActionTypes = input<WidgetActionType[]>(null);
+  widgetActionTypes = input(widgetActionTypes);
 
   actionTypes = computed(() => {
-    const predefinedActionTypes = widgetActionTypes;
+    const predefinedActionTypes = this.widgetActionTypes();
     if (this.additionalWidgetActionTypes()?.length) {
       return predefinedActionTypes.concat(this.additionalWidgetActionTypes());
     }
@@ -313,6 +308,13 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
           this.actionTypeFormGroup.addControl(
             'mobileAction',
             this.fb.control(action ? action.mobileAction : null, [Validators.required])
+          );
+          break;
+        case WidgetActionType.saveBrowserLocation:
+          this.actionTypeFormGroup.addControl(
+            'saveBrowserLocation',
+            this.fb.control(action?.saveBrowserLocation ?? defaultSaveBrowserLocationDescriptor(),
+              [Validators.required])
           );
           break;
         case WidgetActionType.openURL:

@@ -1,0 +1,24 @@
+{
+  "name": "Excavator",
+  "description": "Heavy excavator used for digging and loading clay within the mine site.",
+  "type": "DEFAULT",
+  "transportType": "DEFAULT",
+  "provisionType": "DISABLED",
+  "defaultRuleChainId": null,
+  "defaultQueueName": null,
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "type": "DEFAULT"
+    },
+    "provisionConfiguration": {
+      "type": "DISABLED",
+      "provisionDeviceSecret": null
+    }
+  },
+  "provisionDeviceKey": null,
+  "default": false,
+  "jsonId": "ff395d16-0c28-4985-802d-bad40f4bf4d0"
+}

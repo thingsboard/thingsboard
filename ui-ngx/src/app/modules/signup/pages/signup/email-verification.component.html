@@ -1,0 +1,33 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-email-verification-content mat-app-background tb-dark flex w-full flex-row items-center justify-center" [class.dark-foreground]="wl.loginDarkForeground$ | async"
+  [style.background-color]="wl.loginPageBackgroundColor$ | async">
+  <mat-card appearance="raised" class="flex-initial">
+    <mat-card-header class="px-6 pt-6">
+      <mat-card-title class="text-xl font-normal" translate>signup.email-verification</mat-card-title>
+    </mat-card-header>
+    @if (isLoading$ | async) {
+      <mat-progress-bar color="warn" mode="indeterminate">
+      </mat-progress-bar>
+    } @else {
+      <span style="height: 4px;"></span>
+    }
+    <div class="h-3 px-4"><div tb-toast></div></div>
+    <mat-card-content class="!p-6 !pt-0">
+      <form (ngSubmit)="resendEmail()">
+        <div class="flex flex-col gap-6">
+          <div class="tb-email-verification" [innerHTML]="'signup.email-verification-message' | translate"></div>
+          <div class="flex justify-center">
+            <button [disabled]="isLoading$ | async" mat-flat-button color="accent" type="submit">
+              {{ 'signup.resend' | translate }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

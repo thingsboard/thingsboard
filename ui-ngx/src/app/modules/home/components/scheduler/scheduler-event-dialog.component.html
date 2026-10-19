@@ -1,0 +1,87 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="schedulerEventFormGroup" (ngSubmit)="save()">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2 translate>{{ isAdd ? 'scheduler.create' : (readonly ? 'scheduler.view' : 'scheduler.edit')}}</h2>
+    <span class="flex-1"></span>
+    <div [tb-help]="'scheduler'"></div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>scheduler.name</mat-label>
+        <input matInput formControlName="name" required>
+        @if (schedulerEventFormGroup.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'scheduler.name-required' | translate }}
+          </mat-error>
+        }
+        @if (schedulerEventFormGroup.get('name').hasError('maxlength')) {
+          <mat-error>
+            {{ 'scheduler.name-max-length' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-tab-group dynamicHeight>
+        <mat-tab label="{{ 'scheduler.configuration' | translate }}">
+          <div class="tb-scheduler-configuration flex flex-col">
+            <tb-scheduler-event-type-autocomplete
+              formControlName="type"
+              appearance="outline"
+              required
+              [schedulerEventConfigTypes]="schedulerEventConfigTypes"
+            ></tb-scheduler-event-type-autocomplete>
+            <mat-slide-toggle [class.!hidden]="!schedulerEventFormGroup.get('type').value"
+                              class="mat-slide" formControlName="enabled" style="margin-bottom: 22px;">
+              {{ 'scheduler.enabled' | translate }}
+            </mat-slide-toggle>
+            <tb-scheduler-event-config
+              [class.!hidden]="!schedulerEventFormGroup.get('type').value"
+              formControlName="configuration"
+              [schedulerEventConfigTypes]="schedulerEventConfigTypes"
+              [schedulerEventType]="schedulerEventFormGroup.get('type').value">
+            </tb-scheduler-event-config>
+            <div [class.!hidden]="schedulerEventFormGroup.get('type').value" style="height: 300px;"></div>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'scheduler.schedule' | translate }}">
+          <div class="tb-scheduler-configuration flex flex-col">
+            <tb-scheduler-event-schedule
+              formControlName="schedule">
+            </tb-scheduler-event-schedule>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ (readonly  ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    @if (!readonly) {
+      <button mat-button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="(isLoading$ | async) || schedulerEventFormGroup.invalid || !schedulerEventFormGroup.dirty">
+        {{ (isAdd  ? 'action.create' : 'action.save') | translate }}
+      </button>
+    }
+  </div>
+</form>

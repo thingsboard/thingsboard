@@ -1,0 +1,2 @@
+org.springframework.test.context.ContextCustomizerFactory=\
+org.thingsboard.server.dao.sql.citus.CitusAllTestsContextCustomizerFactory

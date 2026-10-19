@@ -1,23 +1,13 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="targetNotificationForm" class="tb-dialog-container">
-  <mat-toolbar class="tb-dialog-header">
-    <h2>{{ (isAdd ? 'notification.add-notification-recipients-group' : 'notification.edit-notification-recipients-group') | translate }}</h2>
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ dialogTitle | translate }}</h2>
     <span class="flex-1"></span>
     <div tb-help="recipientNotifications"></div>
     <button mat-icon-button
@@ -99,6 +89,27 @@
                   }
                 </section>
               }
+            }
+            @case (notificationTargetConfigType.USER_GROUP_LIST) {
+              <tb-entity-group-list
+                formControlName="groupsIds"
+                appearance="outline"
+                syncIdsWithDB
+                [groupType]="entityType.USER"
+              >
+              </tb-entity-group-list>
+            }
+            @case (notificationTargetConfigType.USER_ROLE) {
+              <tb-entity-list
+                required
+                syncIdsWithDB
+                appearance="outline"
+                formControlName="rolesIds"
+                [entityType]="entityType.ROLE"
+                labelText="{{ 'role.role-list' | translate }}"
+                placeholderText="{{ 'role.role' | translate }}"
+                requiredText="{{ 'role.role-list-required' | translate }}">
+              </tb-entity-list>
             }
             @case (notificationTargetConfigType.USER_LIST) {
               <tb-entity-list
@@ -183,9 +194,12 @@
     <button mat-button
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-    <button mat-raised-button
-            [disabled]="(isLoading$ | async) || targetNotificationForm.invalid || !targetNotificationForm.dirty"
-            color="primary"
-            (click)="save()">{{ (isAdd ? 'action.add' : 'action.save') | translate }}</button>
+    @if (!data?.readonly) {
+      <button mat-raised-button
+              [disabled]="(isLoading$ | async) || targetNotificationForm.invalid || !targetNotificationForm.dirty"
+              color="primary"
+              (click)="save()">{{ (isAdd ? 'action.add' : 'action.save') | translate }}
+      </button>
+    }
   </div>
 </form>

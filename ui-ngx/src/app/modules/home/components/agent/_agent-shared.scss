@@ -1,0 +1,157 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+$agent-mono-font: "Roboto Mono", "Menlo", "Courier New", monospace;
+
+$agent-text-primary: rgba(0, 0, 0, 0.87);
+$agent-text-secondary: rgba(0, 0, 0, 0.54);
+$agent-text-hint: rgba(0, 0, 0, 0.38);
+$agent-divider: rgba(0, 0, 0, 0.12);
+$agent-divider-light: rgba(0, 0, 0, 0.08);
+
+$agent-ink-76: rgba(0, 0, 0, 0.76);
+$agent-ink-60: rgba(0, 0, 0, 0.6);
+$agent-ink-42: rgba(0, 0, 0, 0.42);
+$agent-ink-24: rgba(0, 0, 0, 0.24);
+
+$agent-color-success: #2e7d32;
+$agent-color-success-dark: #1b5e20;
+$agent-color-error: var(--mat-theme-error, #d32f2f);
+$agent-color-error-dark: #b71c1c;
+$agent-color-error-accent: #dd2c00;
+$agent-color-warning: #ef6c00;
+$agent-color-warning-light: #f57c00;
+$agent-color-warning-strong: #f57f17;
+$agent-color-info: #1565c0;
+$agent-color-info-dark: #0d47a1;
+$agent-color-neutral: #616161;
+
+$agent-surface-muted: #fafafa;
+$agent-surface-soft: #f5f5f5;
+$agent-surface-neutral: #eeeeee;
+$agent-success-surface: #e8f5e9;
+$agent-error-surface: #fdecea;
+$agent-error-surface-light: #ffebee;
+$agent-info-surface: #e3f2fd;
+$agent-warning-surface: #fff8e1;
+$agent-warning-text: #6d4c00;
+$agent-warning-border: #ffe082;
+$agent-warning-icon: #c79100;
+$agent-code-bg: #1e1e1e;
+$agent-code-fg: #d4d4d4;
+$agent-editor-fg: #1f2328;
+
+$agent-type-edge-bg: #e8eaf6;
+$agent-type-edge-fg: #283593;
+$agent-type-gateway-bg: #e0f2f1;
+$agent-type-gateway-fg: #00695c;
+$agent-type-generic-bg: #f3e5f5;
+$agent-type-generic-fg: #6a1b9a;
+
+@mixin agent-type-palette {
+  &.edge { background: $agent-type-edge-bg; color: $agent-type-edge-fg; }
+  &.gateway { background: $agent-type-gateway-bg; color: $agent-type-gateway-fg; }
+  &.generic { background: $agent-type-generic-bg; color: $agent-type-generic-fg; }
+}
+
+@mixin agent-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: $agent-surface-neutral;
+  color: $agent-color-neutral;
+  @include agent-type-palette;
+}
+
+@mixin agent-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@mixin agent-info-box-tone {
+  background: $agent-info-surface;
+  color: $agent-color-info;
+}
+
+@mixin agent-command-block {
+  position: relative;
+  background: $agent-code-bg;
+  color: $agent-code-fg;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 8px 0 16px;
+  font-family: $agent-mono-font;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+  pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+  }
+}
+
+@mixin agent-summary-card($background: #fff, $border: $agent-divider) {
+  background: $background;
+  border: 1px solid $border;
+  border-radius: 4px;
+  padding: 12px 16px;
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    .label { color: $agent-text-secondary; }
+    .value { color: $agent-text-primary; font-weight: 500; }
+  }
+}
+
+@mixin agent-virtual-profile-badge {
+  .tb-virtual-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: color-mix(in srgb, var(--tb-primary-500) 12%, transparent);
+    color: var(--tb-primary-700);
+  }
+  .tb-profile-template-version {
+    margin-left: 8px;
+    font-size: 12px;
+    color: $agent-text-secondary;
+  }
+}
+
+@mixin agent-button-reset {
+  all: unset;
+  box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  &:focus-visible {
+    outline: 2px solid var(--tb-primary-500);
+    outline-offset: 2px;
+  }
+}

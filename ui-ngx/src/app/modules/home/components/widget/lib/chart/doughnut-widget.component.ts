@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, Input, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Input, OnInit, Optional, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   doughnutDefaultSettings,
   doughnutPieChartSettings,
@@ -29,6 +16,8 @@ import {
   LatestChartComponent,
   LatestChartComponentCallbacks
 } from '@home/components/widget/lib/chart/latest-chart.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
     selector: 'tb-doughnut-widget',
@@ -37,7 +26,7 @@ import {
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class DoughnutWidgetComponent implements OnInit {
+export class DoughnutWidgetComponent implements OnInit, ChartWidgetComponent {
 
   @ViewChild('latestChart')
   latestChart: LatestChartComponent;
@@ -46,19 +35,23 @@ export class DoughnutWidgetComponent implements OnInit {
   ctx: WidgetContext;
 
   @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
   widgetTitlePanel: TemplateRef<any>;
 
   settings: DoughnutWidgetSettings;
 
   callbacks: LatestChartComponentCallbacks;
 
-  constructor(private widgetComponent: WidgetComponent,
+  constructor(@Optional() private widgetComponent: WidgetComponent,
               private translate: TranslateService) {
   }
 
   ngOnInit(): void {
-    const params = this.widgetComponent.typeParameters as any;
-    const horizontal  = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
+    const params = this.widgetComponent?.typeParameters as any;
+    const horizontal  = isDefinedAndNotNull(params?.horizontal) ? params?.horizontal : false;
     this.ctx.$scope.doughnutWidget = this;
     this.settings = {...doughnutDefaultSettings(horizontal), ...this.ctx.settings};
     this.callbacks = {

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,15 +8,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -101,7 +88,6 @@ import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_TOPIC;
         "js.evaluator=mock",
         "queue.rule-engine.topic-deletion-delay=10"
 })
-@Slf4j
 @DaoSqlTest
 public class TenantControllerTest extends AbstractControllerTest {
 
@@ -362,9 +348,7 @@ public class TenantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantsByTitle() throws Exception {
-        log.debug("login sys admin");
         loginSysAdmin();
-        log.debug("test started");
         String title1 = "Tenant title 1";
         List<ListenableFuture<Tenant>> createFutures = new ArrayList<>(134);
         for (int i = 0; i < 134; i++) {
@@ -377,7 +361,6 @@ public class TenantControllerTest extends AbstractControllerTest {
         }
 
         List<Tenant> tenantsTitle1 = Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("saved '{}', qty {}", title1, tenantsTitle1.size());
 
         String title2 = "Tenant title 2";
         createFutures = new ArrayList<>(127);
@@ -391,7 +374,6 @@ public class TenantControllerTest extends AbstractControllerTest {
         }
 
         List<Tenant> tenantsTitle2 = Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("saved '{}', qty {}", title2, tenantsTitle2.size());
 
         List<Tenant> loadedTenantsTitle1 = new ArrayList<>(134);
         PageLink pageLink = new PageLink(15, 0, title1);
@@ -404,10 +386,7 @@ public class TenantControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        log.debug("found by name '{}', step 15 {}", title1, loadedTenantsTitle1.size());
-
         assertThat(tenantsTitle1).as(title1).containsExactlyInAnyOrderElementsOf(loadedTenantsTitle1);
-        log.debug("asserted");
 
         List<Tenant> loadedTenantsTitle2 = new ArrayList<>(127);
         pageLink = new PageLink(4, 0, title2);
@@ -419,29 +398,21 @@ public class TenantControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        log.debug("found by name '{}', step 4 {}", title1, loadedTenantsTitle2.size());
         assertThat(tenantsTitle2).as(title2).containsExactlyInAnyOrderElementsOf(loadedTenantsTitle2);
-        log.debug("asserted");
-
 
         deleteEntitiesAsync("/api/tenant/", loadedTenantsTitle1, executor).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("deleted '{}', size {}", title1, loadedTenantsTitle1.size());
 
         pageLink = new PageLink(4, 0, title1);
         pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
-        log.debug("tried to search another '{}', step 4", title1);
-
         deleteEntitiesAsync("/api/tenant/", loadedTenantsTitle2, executor).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("deleted '{}', size {}", title2, loadedTenantsTitle2.size());
 
         pageLink = new PageLink(4, 0, title2);
         pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-        log.debug("tried to search another '{}', step 4", title2);
     }
 
     @Test

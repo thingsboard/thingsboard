@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, HostBinding } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -22,6 +9,7 @@ import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
 import { finalize } from 'rxjs/operators';
 import { PageComponent } from '@shared/components/page.component';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 @Component({
     selector: 'tb-create-password',
@@ -38,8 +26,11 @@ export class CreatePasswordComponent extends PageComponent {
 
   private activateToken: string;
 
+  @HostBinding('class') class = 'tb-custom-css';
+
   constructor(private route: ActivatedRoute,
               private authService: AuthService,
+              public wl: WhiteLabelingService,
               private fb: FormBuilder) {
     super();
     this.activateToken = this.route.snapshot.queryParams['activateToken'] || '';

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.google.common.base.Splitter;
@@ -119,6 +107,10 @@ public class StringUtils {
         return input.substring(0, startIndexInclusive) + obfuscatedPart + input.substring(endIndexExclusive);
     }
 
+    public static String emptyIfNull(String src) {
+        return src != null ? src : "";
+    }
+
     public static Iterable<String> split(String value, int maxPartSize) {
         return Splitter.fixedLength(maxPartSize).split(value);
     }
@@ -197,6 +189,10 @@ public class StringUtils {
         return org.apache.commons.lang3.StringUtils.substringAfterLast(str, sep);
     }
 
+    public static String removeEnd(String str, String suffix) {
+        return Strings.CS.removeEnd(str, suffix);
+    }
+
     public static boolean containedByAny(String searchString, String... strings) {
         if (searchString == null) return false;
         for (String string : strings) {
@@ -259,6 +255,10 @@ public class StringUtils {
         }
         int truncatedSymbols = string.length() - maxLength;
         return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
+    }
+
+    public static String toLowerCase(String string) {
+        return isNotEmpty(string) ? string.toLowerCase() : string;
     }
 
     public static List<String> splitByCommaWithoutQuotes(String value) {

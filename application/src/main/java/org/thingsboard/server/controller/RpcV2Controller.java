@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -43,6 +31,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -51,7 +40,6 @@ import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.UUID;
 
@@ -163,7 +151,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @PathVariable(RPC_ID) String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);
         RpcId rpcId = new RpcId(UUID.fromString(strRpc));
-        return checkRpcId(rpcId, Operation.READ);
+        return checkRpcId(rpcId);
     }
 
     @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
@@ -222,7 +210,7 @@ public class RpcV2Controller extends AbstractRpcController {
     }
 
     @ApiOperation(value = "Delete persistent RPC", notes = "Deletes the persistent RPC request." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.DELETE)
     @ResponseBody
     public void deleteRpc(
@@ -230,7 +218,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @PathVariable(RPC_ID) String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);
         RpcId rpcId = new RpcId(UUID.fromString(strRpc));
-        Rpc rpc = checkRpcId(rpcId, Operation.DELETE);
+        Rpc rpc = checkRpcId(rpcId);
 
         if (rpc != null) {
             if (rpc.getStatus().isPushDeleteNotificationToCore()) {

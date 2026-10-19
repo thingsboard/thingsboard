@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
@@ -135,9 +121,6 @@ export const hereMapProviderTranslationMap = new Map<HereMapProvider, string>(
 export interface HereMapProviderSettings {
   mapProviderHere: HereMapProvider;
   credentials: {
-    useV3: boolean;
-    app_id: string;
-    app_code: string;
     apiKey: string;
   };
 }
@@ -145,9 +128,6 @@ export interface HereMapProviderSettings {
 export const defaultHereMapProviderSettings: HereMapProviderSettings = {
   mapProviderHere: HereMapProvider.hereNormalDay,
   credentials: {
-    useV3: true,
-    app_id: 'AhM6TzD9ThyK78CT3ptx',
-    app_code: 'p6NPiITB3Vv0GMUFnkLOOg',
     apiKey: 'kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE'
   }
 };

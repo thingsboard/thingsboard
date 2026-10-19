@@ -1,19 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../scss/constants";
 
 :host-context(.tb-default .tb-dialog .mat-mdc-dialog-component-host),
@@ -107,17 +94,16 @@
   }
 
   // Connection-card-vertical from the design: primary-tinted surface
-  // (4 % alpha), 6px radius, 1px subtle border that becomes primary on
-  // hover/select.
+  // (4 % alpha via .tb-primary-fill), 6px radius, 1px subtle border that
+  // becomes primary on hover/select.
   .tb-connectivity-card {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
     padding: 16px;
     height: 116px;
-    background: rgba($tb-primary-color, 0.04);
+    background: transparent;
     border: 1px solid transparent;
     border-radius: 6px;
     cursor: pointer;
@@ -126,16 +112,16 @@
 
     &:hover,
     &.selected {
-      border-color: $tb-primary-color;
+      border-color: var(--tb-primary-500);
     }
 
     &.selected {
-      box-shadow: 0 0 0 1px $tb-primary-color inset;
+      box-shadow: 0 0 0 1px var(--tb-primary-500) inset;
 
       // Selected state inverts the icon: primary-coloured container
       // with the masked glyph painted in white.
       .tb-connectivity-card-icon {
-        background: $tb-primary-color;
+        background: var(--tb-primary-500);
       }
 
       .tb-connectivity-card-icon-mask {
@@ -147,6 +133,8 @@
   // 48×48 white icon container with subtle drop shadow + 4px radius,
   // hosting a 40×40 mask-image rendered in the primary color.
   .tb-connectivity-card-icon {
+    position: relative;
+    z-index: 1;
     width: 48px;
     height: 48px;
     border-radius: 4px;
@@ -163,7 +151,7 @@
     display: block;
     width: 40px;
     height: 40px;
-    background-color: $tb-primary-color;
+    background-color: var(--tb-primary-500);
     -webkit-mask-image: var(--tb-icon-url);
     mask-image: var(--tb-icon-url);
     -webkit-mask-repeat: no-repeat;
@@ -182,22 +170,6 @@
     color: rgba(0, 0, 0, 0.87);
   }
 
-  // PE-Only pill — primary 1px border + primary text on white background.
-  .tb-connectivity-card-badge {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    height: 24px;
-    padding: 0 8px;
-    border: 1px solid $tb-primary-color;
-    border-radius: 4px;
-    background: white;
-    color: $tb-primary-color;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 22px;
-    letter-spacing: 0.4px;
-  }
 }
 
 // Form view
@@ -386,4 +358,26 @@ mat-dialog-actions {
   border-top-style: solid;
   border-top-color: var(--mat-divider-color, var(--mat-app-outline));
   border-top-width: var(--mat-divider-width);
+}
+
+.tb-install-error-block {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(246, 103, 22, 0.06);
+  border-radius: 4px;
+}
+
+.tb-install-error-icon {
+  color: #f66716;
+  flex-shrink: 0;
+}
+
+.tb-install-error-text {
+  flex: 1;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.8);
+  word-break: break-word;
 }

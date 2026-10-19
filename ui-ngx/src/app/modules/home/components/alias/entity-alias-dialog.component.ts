@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -43,6 +30,9 @@ export interface EntityAliasDialogData {
   allowedEntityTypes: Array<EntityType | AliasEntityType>;
   entityAliases: EntityAliases | Array<EntityAlias>;
   alias?: EntityAlias;
+  disableResolveMultiple?: boolean;
+  reportMode?: boolean;
+  subReport?: boolean;
 }
 
 @Component({
@@ -56,10 +46,14 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
   implements OnInit, ErrorStateMatcher {
 
   isAdd: boolean;
+  disableResolveMultiple: boolean;
   allowedEntityTypes: Array<EntityType | AliasEntityType>;
   entityAliases: Array<EntityAlias>;
 
   alias: EntityAlias;
+
+  reportMode: boolean;
+  subReport: boolean;
 
   entityAliasFormGroup: UntypedFormGroup;
 
@@ -76,7 +70,10 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
               private entityService: EntityService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
+    this.disableResolveMultiple = data.disableResolveMultiple;
     this.allowedEntityTypes = data.allowedEntityTypes;
+    this.reportMode = data.reportMode;
+    this.subReport = data.subReport;
     if (Array.isArray(data.entityAliases)) {
       this.entityAliases = data.entityAliases;
     } else {
@@ -89,19 +86,22 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
       this.alias = {
         id: null,
         alias: '',
-        filter: {
-          resolveMultiple: false
-        }
+        filter: {}
       };
+      if (!this.disableResolveMultiple) {
+        this.alias.filter.resolveMultiple = false;
+      }
     } else {
       this.alias = data.alias;
     }
 
     this.entityAliasFormGroup = this.fb.group({
       alias: [this.alias.alias, [this.validateDuplicateAliasName(), Validators.required]],
-      resolveMultiple: [this.alias.filter.resolveMultiple],
       filter: [this.alias.filter, Validators.required]
     });
+    if (!this.disableResolveMultiple) {
+      this.entityAliasFormGroup.addControl('resolveMultiple', this.fb.control(this.alias.filter.resolveMultiple));
+    }
   }
 
   validateDuplicateAliasName(): ValidatorFn {
@@ -142,7 +142,9 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
     this.submitted = true;
     this.alias.alias = this.entityAliasFormGroup.get('alias').value.trim();
     this.alias.filter = this.entityAliasFormGroup.get('filter').value;
-    this.alias.filter.resolveMultiple = this.entityAliasFormGroup.get('resolveMultiple').value;
+    if (!this.disableResolveMultiple) {
+      this.alias.filter.resolveMultiple = this.entityAliasFormGroup.get('resolveMultiple').value;
+    }
     if (!isEmpty(this.alias.filter?.filters)) {
       this.alias.filter.filters = this.alias.filter.filters.filter((value, index, self) =>
         self.findIndex(v => v.relationType === value.relationType && isEqual(v.entityTypes, value.entityTypes)) === index &&

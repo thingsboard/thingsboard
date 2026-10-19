@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -32,6 +19,8 @@ import {
 } from '@home/components/widget/lib/home-page/edit-links-dialog.component';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { deepClone } from '@core/utils';
 
 const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
   [
@@ -40,22 +29,22 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started/'
+          link: '${baseUrl}getting-started/'
         },
         {
           icon: 'title',
           name: 'Tenant profiles',
-          link: 'https://thingsboard.io/docs/user-guide/tenant-profiles/'
+          link: '${baseUrl}user-guide/tenant-profiles/'
         },
         {
           icon: 'insert_chart',
           name: 'API',
-          link: 'https://thingsboard.io/docs/apis-and-sdks/'
+          link: '${baseUrl}apis-and-sdks/'
         },
         {
           icon: 'now_widgets',
           name: 'Widgets Library',
-          link: 'https://thingsboard.io/docs/reference/widgets/widget-library/'
+          link: '${baseUrl}reference/widgets/widget-library/'
         }
       ]
     }],
@@ -64,22 +53,22 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started/'
+          link: '${baseUrl}getting-started/'
         },
         {
           icon: 'settings_ethernet',
           name: 'Rule engine',
-          link: 'https://thingsboard.io/docs/user-guide/rule-engine/'
+          link: '${baseUrl}user-guide/rule-engine/'
         },
         {
           icon: 'insert_chart',
           name: 'API',
-          link: 'https://thingsboard.io/docs/apis-and-sdks/'
+          link: '${baseUrl}apis-and-sdks/'
         },
         {
           icon: 'devices',
           name: 'Device profiles',
-          link: 'https://thingsboard.io/docs/user-guide/device-profiles/'
+          link: '${baseUrl}user-guide/device-profiles/'
         }
       ]
     }],
@@ -88,7 +77,7 @@ const defaultDocLinksMap = new Map<Authority, DocumentationLinks>(
         {
           icon: 'rocket',
           name: 'Getting started',
-          link: 'https://thingsboard.io/docs/getting-started/'
+          link: '${baseUrl}getting-started/'
         }
       ]
     }]
@@ -118,17 +107,21 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
   documentationLinks: DocumentationLinks;
   authUser = getCurrentAuthUser(this.store);
 
+  docsLink: string;
+
   private observeBreakpointSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private userSettingsService: UserSettingsService,
               private dialog: MatDialog,
+              private wl: WhiteLabelingService,
               private breakpointObserver: BreakpointObserver) {
     super(store);
   }
 
   ngOnInit() {
+    this.docsLink = this.wl.getDocsUrl();
     this.settings = this.ctx.settings;
     this.columns = this.settings.columns || 3;
     const isMdLg = this.breakpointObserver.isMatched(MediaBreakpoints['md-lg']);
@@ -161,7 +154,7 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
     this.userSettingsService.getDocumentationLinks().pipe(
       map((documentationLinks) => {
         if (!documentationLinks || !documentationLinks.links) {
-          return defaultDocLinksMap.get(this.authUser.authority);
+          return this.updateBaseUrls(defaultDocLinksMap.get(this.authUser.authority));
         } else {
           return documentationLinks;
         }
@@ -172,6 +165,14 @@ export class DocLinksWidgetComponent extends PageComponent implements OnInit, On
         this.cd.markForCheck();
       }
     );
+  }
+
+  private updateBaseUrls(documentationLinks: DocumentationLinks): DocumentationLinks {
+    const result = deepClone(documentationLinks);
+    for (const link of result.links) {
+      link.link = link.link.replace('${baseUrl}', this.docsLink);
+    }
+    return result;
   }
 
   edit() {

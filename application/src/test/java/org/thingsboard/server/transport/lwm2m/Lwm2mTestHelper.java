@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m;
 
 public class Lwm2mTestHelper {
@@ -43,7 +30,8 @@ public class Lwm2mTestHelper {
     public static final int RESOURCE_ID_14 = 14;
     public static final int RESOURCE_ID_15 = 15;
     public static final int RESOURCE_ID_120 = 120;  // INTEGER_VALUE
-    public static final int RESOURCE_ID_125 = 125;  // UNSIGNED_INTEGER_VALUE
+    public static final int RESOURCE_ID_125 = 125;  // UNSIGNED_INTEGER_VALUE single-ресурс
+    public static final int RESOURCE_ID_1125 = 1125;  // UNSIGNED_INTEGER_VALUE multi-instance
     public static final int RESOURCE_ID_5700 = 5700;
     public static final int RESOURCE_INSTANCE_ID_0 = 0;
     public static final int RESOURCE_INSTANCE_ID_2 = 2;

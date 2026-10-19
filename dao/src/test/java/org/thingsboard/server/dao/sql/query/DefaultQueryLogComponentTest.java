@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.query;
 
 import org.junit.Before;
@@ -29,7 +17,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.permission.QueryContext;
 
 import java.util.List;
@@ -58,7 +45,7 @@ public class DefaultQueryLogComponentTest {
     @Before
     public void setUp() {
         tenantId = TenantId.fromUUID(UUID.fromString("97275c1c-9cf2-4d25-a68d-933031158f84"));
-        ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
+        ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM, null, null), false);
     }
 
     @Test

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.pat;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +10,16 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.ApiKeyEntity;
 import org.thingsboard.server.dao.pat.ApiKeyDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import org.springframework.data.domain.PageRequest;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.List;
 import java.util.Set;
@@ -49,13 +39,8 @@ public class JpaApiKeyDao extends JpaAbstractDao<ApiKeyEntity, ApiKey> implement
     }
 
     @Override
-    public PageData<ApiKey> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(apiKeyRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
-    }
-
-    @Override
-    public List<ApiKey> findByTenantIdAndUserId(TenantId tenantId, UserId userId) {
-        return DaoUtil.convertDataList(apiKeyRepository.findByTenantIdAndUserId(tenantId.getId(), userId.getId()));
+    public ApiKey findInternalByDescription(TenantId tenantId, String description) {
+        return DaoUtil.getData(apiKeyRepository.findFirstByTenantIdAndDescriptionAndInternal(tenantId.getId(), description, true));
     }
 
     @Override
@@ -71,6 +56,16 @@ public class JpaApiKeyDao extends JpaAbstractDao<ApiKeyEntity, ApiKey> implement
     @Override
     public int deleteAllByExpirationTimeBefore(long ts) {
         return apiKeyRepository.deleteAllByExpirationTimeBefore(ts);
+    }
+
+    @Override
+    public List<ApiKey> findByTenantIdAndUserId(TenantId tenantId, UserId userId) {
+        return DaoUtil.convertDataList(apiKeyRepository.findByTenantIdAndUserId(tenantId.getId(), userId.getId()));
+    }
+
+    @Override
+    public PageData<ApiKey> findByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(apiKeyRepository.findByTenantId(tenantId.getId(), PageRequest.of(pageLink.getPage(), pageLink.getPageSize())));
     }
 
     @Override

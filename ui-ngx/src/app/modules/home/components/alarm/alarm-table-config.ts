@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
@@ -22,6 +9,7 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
@@ -49,10 +37,13 @@ import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
 } from '@home/components/alarm/alarm-details-dialog.component';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { forAllTimeInterval } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, isNotEmptyStr, isUndefinedOrNull } from '@core/utils';
 import { Authority } from '@shared/models/authority.enum';
 import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -62,7 +53,6 @@ import {
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { getEntityDetailsPageURL, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
@@ -76,6 +66,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   constructor(private alarmService: AlarmService,
               private entityService: EntityService,
               private dialogService: DialogService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
@@ -87,6 +78,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
               private overlay: Overlay,
               private cd: ChangeDetectorRef,
               private utilsService: UtilsService,
+              private writeEnabled,
+              private removeEnabled,
               pageMode = false) {
     super();
     this.loadDataOnInit = pageMode;
@@ -112,6 +105,27 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.entitiesFetchFunction = pageLink => this.fetchAlarms(pageLink);
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
+
+    if (this.pageMode && this.authUser.authority === Authority.TENANT_ADMIN &&
+      this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)) {
+      this.aiAssistantConfig = {
+        view: {
+          listView: AiAssistantViewType.ALARM_LIST
+        },
+        initialPromptPlaceholder: this.translate.instant('alarm-rule.ai-assistant-initial-prompt-placeholder'),
+        promptExamples: [
+          {
+            label: this.translate.instant('alarm-rule.ai-assistant-example-suggest-rules-label'),
+            message: this.translate.instant('alarm-rule.ai-assistant-example-suggest-rules-message')
+          },
+          {
+            label: this.translate.instant('alarm-rule.ai-assistant-example-inactivity-label'),
+            message: this.translate.instant('alarm-rule.ai-assistant-example-inactivity-message')
+          }
+        ],
+        showButton: false,
+      };
+    }
 
     this.columns.push(
       new DateEntityTableColumn<AlarmInfo>('createdTime', 'alarm.created-time', this.datePipe, '150px'));
@@ -153,23 +167,31 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       }
     );
 
+    if (isUndefinedOrNull(this.writeEnabled)) {
+      this.writeEnabled = this.userPermissionsService.hasGenericPermission(Resource.ALARM, Operation.WRITE);
+    }
+
+    if (isUndefinedOrNull(this.removeEnabled)) {
+      this.removeEnabled = this.userPermissionsService.hasGenericPermission(Resource.ALARM, Operation.DELETE);
+    }
+
     this.groupActionDescriptors.push(
       {
         name: this.translate.instant('alarm.acknowledge'),
         icon: 'done',
-        isEnabled: true,
+        isEnabled: this.writeEnabled,
         onAction: ($event, entities) => this.ackAlarms($event, entities)
       },
       {
         name: this.translate.instant('alarm.clear'),
         icon: 'clear',
-        isEnabled: true,
+        isEnabled: this.writeEnabled,
         onAction: ($event, entities) => this.clearAlarms($event, entities)
       },
       {
         name: this.translate.instant('alarm.delete'),
         icon: 'delete',
-        isEnabled: true,
+        isEnabled: this.removeEnabled,
         onAction: ($event, entities) => this.deleteAlarms($event, entities)
       }
     );
@@ -187,7 +209,6 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   showAlarmDetails(entity: AlarmInfo) {
-    const isPermissionWrite = this.authUser.authority !== Authority.CUSTOMER_USER || entity.customerId?.id === this.authUser.customerId;
     this.dialog.open<AlarmDetailsDialogComponent, AlarmDetailsDialogData, boolean>
     (AlarmDetailsDialogComponent,
       {
@@ -196,8 +217,8 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         data: {
           alarmId: entity.id.id,
           alarm: entity,
-          allowAcknowledgment: isPermissionWrite,
-          allowClear: isPermissionWrite,
+          allowAcknowledgment: this.writeEnabled,
+          allowClear: this.writeEnabled,
           displayDetails: true,
           allowAssign: true
         }

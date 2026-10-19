@@ -1,27 +1,15 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 /* You can add global styles to this file, and also import other style files */
-
 @import 'typeface-roboto/index.css';
+@import 'typeface-roboto-mono/index.css';
 @import 'font-awesome/css/font-awesome.min.css';
-@import 'theme.scss';
 @import './scss/constants';
 @import './scss/animations';
 @import './scss/mixins';
 @import './scss/fonts';
+@import './scss/flags';
 
 body, html {
   height: 100%;
@@ -68,10 +56,16 @@ html,
 input,
 select,
 textarea,
-td,
-th {
+td {
   font-family: Roboto, "Helvetica Neue", sans-serif;
   font-size: 16px;
+}
+
+th {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  &:not([mat-header-cell]) {
+    font-size: 16px;
+  }
 }
 
 body {
@@ -336,6 +330,14 @@ pre.tb-highlight {
   color: rgb(221, 44, 0);
 }
 
+.mat-mdc-tooltip.tb-warning-tooltip {
+  .mdc-tooltip__surface {
+    background-color: #fff4e0;
+    box-shadow: -2px 2px 4px 0px rgba(0,0,0,0.2);
+    color: #c76a00;
+  }
+}
+
 .mat-mdc-tooltip.tb-error-tooltip {
   .mdc-tooltip__surface {
     background-color: #fff2f3;
@@ -360,6 +362,22 @@ pre.tb-highlight {
       .tb-not-found-content {
         padding: 8px 16px 7px;
         border-bottom: 1px solid #eee;
+      }
+    }
+  }
+  .mat-mdc-option.tb-profile-option {
+    .mdc-list-item__primary-text {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      > span:first-child {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .tb-virtual-profile-badge,
+      .tb-profile-template-version {
+        flex: 0 0 auto;
       }
     }
   }
@@ -650,7 +668,7 @@ pre.tb-highlight {
         content: "";
         position: absolute;
         inset: 0;
-        background: #7986cb;
+        background: var(--tb-login-primary-300, --tb-primary-300);
         opacity: 0.5;
         pointer-events: none;
         border-radius: 4px;
@@ -680,13 +698,13 @@ pre.tb-highlight {
   // Material table
 
   .mat-toolbar.mat-primary {
-    button.mat-mdc-icon-button {
+  /*  button.mat-mdc-icon-button {
       .mat-icon {
         color: white;
       }
-    }
+    } */
     .mat-mdc-select-value, .mat-mdc-select-arrow, .mat-mdc-select-arrow:after {
-      color: white;
+      color: inherit;
     }
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined {
@@ -938,7 +956,7 @@ pre.tb-highlight {
 
   .mat-icon {
     svg, img {
-      vertical-align: inherit;
+      display: block;
     }
     &.tb-mat-12 {
       @include tb-mat-icon-size(12);
@@ -1078,14 +1096,10 @@ pre.tb-highlight {
     }
   }
 
-  .tb-dialog-header {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  }
-
   .tb-dialog {
     .mat-mdc-dialog-container {
       padding: 0;
-      > *:first-child, form {
+      > *:first-child, form, .tb-dialog-content  {
         max-width: 100%;
         min-width: 100%;
         display: flex;
@@ -1103,6 +1117,20 @@ pre.tb-highlight {
         display: block;
       }
     }
+    &.tb-wide-dialog {
+      --mat-dialog-container-max-width: 95vw;
+      --mat-dialog-container-small-max-width: 95vw;
+    }
+  }
+
+  // The agent wizards are opened under the 'tb-agent-wizard-dialog' panelClass and size
+  // themselves, so the surface must not impose its own min-width floor on small displays.
+  .tb-agent-wizard-dialog {
+    .mat-mdc-dialog-surface,
+    .mdc-dialog__surface {
+      min-width: 0 !important;
+      max-width: 95vw !important;
+    }
   }
 
   .tb-fullscreen-dialog-gt-xs {
@@ -1113,7 +1141,7 @@ pre.tb-highlight {
       position: absolute !important;
       inset: 0;
       .mat-mdc-dialog-container {
-        > *:first-child, form {
+        > *:first-child, form, .tb-dialog-content  {
           min-width: 100% !important;
         }
         .mat-mdc-dialog-content {
@@ -1142,6 +1170,24 @@ pre.tb-highlight {
     }
   }
 
+  .tb-fullscreen-dialog-lt-lg {
+    @media #{$mat-lt-lg} {
+      min-height: 100%;
+      min-width: 100%;
+      max-width: none !important;
+      position: absolute !important;
+      inset: 0;
+      .mat-mdc-dialog-container {
+        > *:first-child, form, .tb-dialog-content  {
+          min-width: 100% !important;
+        }
+        .mat-mdc-dialog-content {
+          max-height: 100%;
+        }
+      }
+    }
+  }
+
   .tb-fullscreen-dialog {
     @media #{$mat-lt-sm} {
       min-height: 100%;
@@ -1150,7 +1196,7 @@ pre.tb-highlight {
       position: absolute !important;
       inset: 0;
       .mat-mdc-dialog-container {
-        > *:first-child, form {
+        > *:first-child, form, .tb-dialog-content  {
           min-width: 100% !important;
           height: 100%;
         }
@@ -1205,10 +1251,6 @@ pre.tb-highlight {
     .mat-mdc-tab-header {
       border-bottom: 1px solid #0000001f;
     }
-  }
-
-  .tb-primary-background {
-    background-color: $primary;
   }
 
   .tb-color-preview {

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -73,7 +61,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
     ListeningExecutorService executor;
 
     @Before
-    public void before() {
+    public void beforeRun() {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
     }
 
@@ -325,6 +313,17 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindOrCreatePublicCustomer_Concurrency() throws Exception {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("My customer");
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Assert.assertNotNull(savedCustomer);
+        Assert.assertNotNull(savedCustomer.getId());
+        Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
+        Assert.assertEquals(customer.getTenantId(), savedCustomer.getTenantId());
+        Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
+
         CountDownLatch allThreadsReadyLatch = new CountDownLatch(2);
         final Customer[] customers = new Customer[2];
 
@@ -337,7 +336,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
                     allThreadsReadyLatch.countDown();
                     try {
                         allThreadsReadyLatch.await();
-                        customers[threadIndex] = customerService.findOrCreatePublicCustomer(tenantId);
+                        customers[threadIndex] = customerService.findOrCreatePublicCustomer(tenantId, savedCustomer.getId());
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }

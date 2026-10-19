@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="instancesFormGroup">
@@ -28,33 +18,19 @@
             <div class="flex max-w-30% flex-full items-center justify-start">
               <span class="tb-panel-title">{{ 'device-profile.lwm2m.instance' | translate }}</span>&nbsp;#{{ instances.get('id').value }}
             </div>
-            <div class="flex max-w-10% flex-full items-center justify-center">
-              <mat-checkbox color="warn"
-                            [disabled]="disabled"
-                            [checked]="getChecked(instances, 'attribute')"
-                            (click)="$event.stopPropagation()"
-                            (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'attribute')"
-                            [indeterminate]="getIndeterminate(instances, 'attribute')">
-              </mat-checkbox>
-            </div>
-            <div class="flex max-w-10% flex-full items-center justify-center">
-              <mat-checkbox color="primary"
-                            [disabled]="disabled"
-                            [checked]="getChecked(instances, 'telemetry')"
-                            (click)="$event.stopPropagation()"
-                            (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'telemetry')"
-                            [indeterminate]="getIndeterminate(instances, 'telemetry')">
-              </mat-checkbox>
-            </div>
-            <div class="flex max-w-10% flex-full items-center justify-center">
-              <mat-checkbox color="primary"
-                            [disabled]="disableObserve(instances)"
-                            [checked]="getChecked(instances, 'observe')"
-                            (click)="$event.stopPropagation()"
-                            (change)="changeInstanceResourcesCheckBox($event.checked, instances, 'observe')"
-                            [indeterminate]="getIndeterminate(instances, 'observe')">
-              </mat-checkbox>
-            </div>
+            @if (isGtSm) {
+              @for (toggle of resourceToggles; track toggle.type) {
+                <div class="flex max-w-10% flex-full items-center justify-center">
+                  <mat-checkbox [color]="toggle.color"
+                                [disabled]="isToggleDisabled(instances, toggle.type)"
+                                [checked]="getChecked(instances, toggle.type)"
+                                (click)="$event.stopPropagation()"
+                                (change)="changeInstanceResourcesCheckBox($event.checked, instances, toggle.type)"
+                                [indeterminate]="getIndeterminate(instances, toggle.type)">
+                  </mat-checkbox>
+                </div>
+              }
+            }
             <span class="flex-1"></span>
             <tb-profile-lwm2m-attributes
               formControlName="attributes"
@@ -64,6 +40,21 @@
           </mat-panel-title>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
+          @if (!isGtSm) {
+            <div class="instance-mobile-toggles flex flex-col gap-2">
+              @for (toggle of resourceToggles; track toggle.type) {
+                <div class="tb-form-row space-between">
+                  <div>{{ toggle.labelKey | translate }}</div>
+                  <mat-checkbox [color]="toggle.color"
+                                [disabled]="isToggleDisabled(instances, toggle.type)"
+                                [checked]="getChecked(instances, toggle.type)"
+                                (change)="changeInstanceResourcesCheckBox($event.checked, instances, toggle.type)"
+                                [indeterminate]="getIndeterminate(instances, toggle.type)">
+                  </mat-checkbox>
+                </div>
+              }
+            </div>
+          }
           <tb-profile-lwm2m-observe-attr-telemetry-resource
             formControlName="resources">
           </tb-profile-lwm2m-observe-attr-telemetry-resource>

@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-iot-hub-home">
@@ -65,13 +54,13 @@
                [matAutocomplete]="searchAuto"
                (input)="onSearchInput()"
                (focus)="onSearchFocus()"
-               (keyup.enter)="onSearch()">
+               (keydown.enter)="onSearchEnter($event)">
         @if (searchText) {
           <button matSuffix mat-icon-button (click)="clearSearch()">
             <mat-icon>close</mat-icon>
           </button>
         }
-        <button matSuffix mat-icon-button (click)="$event.stopPropagation(); onSearch()">
+        <button matSuffix mat-icon-button (click)="$event.stopPropagation(); seeAllResults()">
           <mat-icon>search</mat-icon>
         </button>
       </mat-form-field>
@@ -82,6 +71,13 @@
         @if (searchLoading) {
           <mat-option [disabled]="true" class="tb-search-popup-loading">
             <mat-spinner diameter="24"></mat-spinner>
+          </mat-option>
+        } @else if (searchFailed) {
+          <mat-option [disabled]="true" class="tb-search-popup-no-results">
+            <div class="tb-search-popup-no-results-content">
+              <mat-icon>cloud_off</mat-icon>
+              <span>{{ 'iot-hub.network-server-unavailable' | translate }}</span>
+            </div>
           </mat-option>
         } @else if (searchResults.length === 0 && searchLoaded) {
           <mat-option [disabled]="true" class="tb-search-popup-no-results">
@@ -95,39 +91,55 @@
             </div>
           </mat-option>
         } @else {
-          @for (group of searchResultGroups; track group.type) {
-            <mat-optgroup [label]="getSearchGroupLabel(group.type)">
-              @for (item of group.items; track item.id) {
-                <mat-option [value]="searchText" (click)="openItemDetail(item)">
-                  @if (isCompactType(item.type)) {
-                    <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
-                      <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
-                    </div>
-                  } @else {
-                    <div class="tb-search-popup-thumbnail">
-                      @if (getItemImage(item); as imgUrl) {
-                        <img [src]="imgUrl" alt="">
-                      } @else {
-                        <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
-                      }
-                    </div>
-                  }
-                  <div class="tb-search-popup-text">
-                    <span class="tb-search-popup-name">{{ item.name }}</span>
-                    <span class="tb-search-popup-author">
-                      <mat-icon>person</mat-icon>
-                      {{ item.creatorDisplayName }}
-                    </span>
+          @for (item of searchResults; track item.id) {
+            <mat-option class="tb-search-popup-item" [value]="searchText"
+                        (onSelectionChange)="onRowSelected($event, item)">
+              <!-- One 99x56 frame for every row, so names line up. -->
+              <div class="tb-search-popup-thumbnail">
+                @if (isCompactType(item.type)) {
+                  <div class="tb-search-popup-icon-square" [style.background]="item.color || '#048ad3'">
+                    <tb-icon class="tb-search-popup-icon-inner">{{ getCompactIcon(item) }}</tb-icon>
                   </div>
-                </mat-option>
-              }
-            </mat-optgroup>
+                } @else if (getItemImage(item); as imgUrl) {
+                  <img [src]="imgUrl" alt="">
+                } @else {
+                  <tb-icon class="tb-search-popup-thumb-placeholder">{{ getItemTypeIcon(item.type) }}</tb-icon>
+                }
+              </div>
+              <div class="tb-search-popup-text">
+                <span class="tb-search-popup-name">{{ item.name }}</span>
+                <span class="tb-search-popup-meta">
+                  <span class="tb-search-popup-type" [style.--tb-search-popup-type-color]="getItemTypeColor(item.type)">
+                    <tb-icon>{{ getItemTypeIcon(item.type) }}</tb-icon>
+                    {{ getItemTypeLabel(item.type) }}
+                  </span>
+                  @if (item.creatorDisplayName) {
+                    <span class="tb-search-popup-author">
+                      @if (item.creatorVerified) {
+                        <mat-icon class="tb-search-popup-verified">verified</mat-icon>
+                      } @else {
+                        <mat-icon>person</mat-icon>
+                      }
+                      <span class="tb-search-popup-author-name">{{ item.creatorDisplayName }}</span>
+                    </span>
+                  }
+                </span>
+              </div>
+            </mat-option>
           }
         }
-        <div class="tb-search-popup-footer" role="button" tabindex="0"
-             (click)="seeAllResults()" (keyup.enter)="seeAllResults()">
-          {{ 'iot-hub.see-all-results' | translate }}
-        </div>
+        <mat-option class="tb-search-popup-footer" [value]="searchText"
+                    (onSelectionChange)="onFooterSelected($event)">
+          @if (searchText?.trim(); as query) {
+            @if (searchTotal > searchResults.length) {
+              {{ 'iot-hub.see-all-results-for' | translate:{ count: searchTotal, search: query } }}
+            } @else {
+              {{ 'iot-hub.see-results-for' | translate:{ search: query } }}
+            }
+          } @else {
+            {{ 'iot-hub.see-all-results' | translate }}
+          }
+        </mat-option>
       </mat-autocomplete>
     </div>
   </div>
