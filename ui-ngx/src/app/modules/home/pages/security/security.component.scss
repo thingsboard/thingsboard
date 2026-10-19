@@ -1,22 +1,19 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-@import "../../../../../scss/constants";
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import "constants";
 
 :host {
   .profile-container {
-    padding: 8px;
+    margin: 8px;
+    @media #{$mat-gt-sm} {
+      width: 700px;
+      margin: 8px auto;
+    }
   }
+
   .mat-mdc-card.profile-card {
     padding: 24px;
-    @media #{$mat-gt-sm} {
-      width: 80%;
-    }
-    @media #{$mat-gt-md} {
-      width: 55%;
-    }
-    @media #{$mat-gt-xl} {
-      width: 45%;
-    }
 
     .card-title {
       font: 500 18px / 24px Roboto, "Helvetica Neue", sans-serif;

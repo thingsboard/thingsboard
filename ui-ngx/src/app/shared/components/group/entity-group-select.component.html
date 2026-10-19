@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-group-select flex flex-row gap-2" [formGroup]="entityGroupSelectFormGroup"
+  [class.!hidden]="!ownerId && originator === 'ownerGroup'">
+  @if (displayGroupTypeSelect) {
+    <tb-entity-type-select
+      style="min-width: 100px"
+      class="flex-1"
+      [showLabel]="true"
+      [required]="required"
+      [allowedEntityTypes]="entityGroupTypes"
+      [appearance]="appearance"
+      formControlName="groupType">
+    </tb-entity-type-select>
+  }
+  <tb-entity-group-autocomplete
+    class="flex-1"
+    [class.!hidden]="!entityGroupSelectFormGroup.get('groupType').value &&
+                     !entityGroupSelectFormGroup.get('groupId').value && displayGroupTypeSelect"
+    [required]="required"
+    [groupType]="getCurrentGroupType()"
+    [ownerId]="ownerId"
+    [appearance]="appearance"
+    (entityGroupLoaded)="entityGroupLoaded($event)"
+    [excludeGroupIds]="excludeGroupIds"
+    [excludeGroupAll]="excludeGroupAll"
+    placeholderText="{{placeholderText}}"
+    notFoundText="{{notFoundText}}"
+    requiredText="{{requiredText}}"
+    formControlName="groupId">
+  </tb-entity-group-autocomplete>
+</div>

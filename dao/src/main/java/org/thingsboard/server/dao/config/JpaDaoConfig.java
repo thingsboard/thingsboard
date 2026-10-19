@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.config;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.repository.config.BootstrapMode;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +23,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.dao.sql.citus.CitusConnectionInitSqlPostProcessor;
 import org.thingsboard.server.dao.sql.audit.AuditLogRepository;
 import org.thingsboard.server.dao.sql.event.EventRepository;
 import org.thingsboard.server.dao.util.TbAutoConfiguration;
@@ -48,7 +51,17 @@ public class JpaDaoConfig {
     @ConfigurationProperties(prefix = "spring.datasource.hikari")
     @Bean
     public DataSource dataSource(@Qualifier("dataSourceProperties") DataSourceProperties dataSourceProperties) {
+        // The Citus connection-init-sql is applied by citusConnectionInitSqlPostProcessor, not here: Spring binds
+        // the spring.datasource.hikari.* properties only AFTER this factory method returns, so any connectionInitSql
+        // set here would be overwritten by an operator-configured spring.datasource.hikari.connection-init-sql.
         return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    }
+
+    // Static so that registering the post-processor does not force early instantiation of this configuration class.
+    // See CitusConnectionInitSqlPostProcessor for why the Citus session GUCs must be applied via a post-processor.
+    @Bean
+    public static CitusConnectionInitSqlPostProcessor citusConnectionInitSqlPostProcessor(Environment environment) {
+        return new CitusConnectionInitSqlPostProcessor(environment, "dataSource");
     }
 
     @Primary

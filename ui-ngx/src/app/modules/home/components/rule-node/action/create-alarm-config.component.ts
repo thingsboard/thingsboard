@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, ViewChild } from '@angular/core';
 import { AppState, getCurrentAuthState, NodeScriptTestService } from '@core/public-api';
 import { Store } from '@ngrx/store';
@@ -28,7 +29,7 @@ export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
   @ViewChild('jsFuncComponent', {static: false}) jsFuncComponent: JsFuncComponent;
   @ViewChild('tbelFuncComponent', {static: false}) tbelFuncComponent: JsFuncComponent;
 
-  alarmSeverities = Object.keys(AlarmSeverity);
+  alarmSeverities = Object.values(AlarmSeverity);
   alarmSeverityTranslationMap = alarmSeverityTranslations;
   createAlarmConfigForm: UntypedFormGroup;
 
@@ -67,6 +68,7 @@ export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
       propagate: [configuration ? configuration.propagate : false, []],
       relationTypes: [configuration ? configuration.relationTypes : null, []],
       propagateToOwner: [configuration ? configuration.propagateToOwner : false, []],
+      propagateToOwnerHierarchy: [configuration ? configuration.propagateToOwnerHierarchy : false, []],
       propagateToTenant: [configuration ? configuration.propagateToTenant : false, []],
       dynamicSeverity: false
     });

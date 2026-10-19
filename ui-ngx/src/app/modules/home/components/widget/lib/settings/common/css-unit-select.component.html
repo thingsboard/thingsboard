@@ -1,13 +1,17 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
 <mat-form-field appearance="outline" subscriptSizing="dynamic" [style.width]="width">
   <mat-select [formControl]="cssUnitFormControl" placeholder="{{ 'widget-config.set' | translate }}">
-    <mat-option *ngIf="allowEmpty" [value]="null">
-    </mat-option>
-    <mat-option *ngFor="let cssUnit of cssUnitsList" [value]="cssUnit">{{ cssUnit }}</mat-option>
+    @if (allowEmpty) {
+      <mat-option [value]="null">
+      </mat-option>
+    }
+    @for (cssUnit of cssUnitsList; track cssUnit) {
+      <mat-option [value]="cssUnit">{{ cssUnit }}</mat-option>
+    }
   </mat-select>
 </mat-form-field>

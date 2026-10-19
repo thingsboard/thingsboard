@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ItemType } from './iot-hub-item.models';
 import { PageLink } from '@shared/models/page/page-link';
 
@@ -122,7 +123,7 @@ export interface MpItemVersionQueryOptions {
   type?: string;
   /** Several item types at once, sent as a repeated `type` parameter. */
   types?: string[];
-  peOnly?: boolean;
+  ceOnly?: boolean;
   creatorId?: string;
   categories?: string[];
   useCases?: string[];
@@ -147,8 +148,8 @@ function filtersToQuery(o: MpItemVersionQueryOptions): string {
   if (o.types?.length) {
     query += o.types.map(t => `&type=${encodeURIComponent(t)}`).join('');
   }
-  if (o.peOnly != null) {
-    query += `&peOnly=${o.peOnly}`;
+  if (o.ceOnly != null) {
+    query += `&ceOnly=${o.ceOnly}`;
   }
   if (o.creatorId) {
     query += `&creatorId=${encodeURIComponent(o.creatorId)}`;

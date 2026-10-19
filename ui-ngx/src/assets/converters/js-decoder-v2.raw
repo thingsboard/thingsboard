@@ -1,0 +1,56 @@
+// Decode an uplink message from a buffer
+// payload - array of bytes
+// metadata - key/value object
+
+// If you want to override configuration from converter you can set value instead of null to variables below.
+var entityType = null; // Entity type allows you to choose type of created entity. Can be DEVICE or ASSET.
+var name = null; // Device or asset name.
+var profile = null; // Device or asset profile name.
+var group = null; // If group is not null - created entity will be added to the entity group with such name.
+var customer = null; // If customer is not null - created entity will be assigned to customer with such name.
+
+// If you want to parse incoming data somehow, you can add your code to decodePayload function.
+// input: bytes
+// Note ts represents a timestamp in milliseconds since the Unix epoch (January 1, 1970)
+// expected output:
+//  {
+//    "attributes": {"attributeKey": "attributeValue"},
+//    "telemetry": [{"ts": 1730898982391, "values": {"telemetryKey":"telemetryValue"}, {"ts": 1730518182391, "values": {"telemetryKey":"telemetryValue"}}]
+//  }
+
+function decodePayload(input) {
+    var output = {
+        attributes: {},
+        telemetry: []
+    };
+
+    var decoded = {}; // Key/value telemetry object.
+
+    var timestamp = new Date();
+
+    output.telemetry = [{
+        ts: timestamp,
+        values: decoded
+    }];
+
+    // --- Decoding code --- //
+    return output;
+}
+
+// --- attributes and telemetry objects ---
+var telemetry = [];
+var attributes = {};
+// --- attributes and telemetry objects ---
+
+var result = {
+    type: entityType,
+    name: name,
+    profile: profile,
+    customer: customer,
+    group: group,
+
+    attributes: attributes,
+    telemetry: telemetry
+};
+
+return result;

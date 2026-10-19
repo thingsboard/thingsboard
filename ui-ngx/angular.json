@@ -101,9 +101,26 @@
                 "glob": "marker-shadow.png",
                 "input": "node_modules/leaflet/dist/images/",
                 "output": "/"
+              },
+              {
+                "glob": "*.svg",
+                "input": "./node_modules/flag-icons/flags/4x3/",
+                "output": "/assets/flags/"
               }
             ],
             "styles": [
+              {
+                "input": "src/theme/app-theme.scss",
+                "bundleName": "app-theme"
+              },
+              {
+                "input": "src/theme/login-theme.scss",
+                "bundleName": "login-theme"
+              },
+              {
+                "input": "src/app/modules/home/pages/reporting/template/components/report-component-style.scss",
+                "bundleName": "report-component"
+              },
               "src/styles.scss",
               "src/form.scss",
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
@@ -124,7 +141,8 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "src/scss"
+                "src/scss",
+                "node_modules"
               ],
               "sass": {
                 "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]

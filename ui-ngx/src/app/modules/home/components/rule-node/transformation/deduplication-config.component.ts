@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { isDefinedAndNotNull } from '@core/public-api';
@@ -17,7 +17,7 @@ export class DeduplicationConfigComponent extends RuleNodeConfigurationComponent
 
   deduplicationConfigForm: FormGroup;
   deduplicationStrategie = FetchMode;
-  deduplicationStrategies = Object.keys(this.deduplicationStrategie);
+  deduplicationStrategies = Object.values(this.deduplicationStrategie);
   deduplicationStrategiesTranslations = deduplicationStrategiesTranslations;
 
   constructor(private fb: FormBuilder) {

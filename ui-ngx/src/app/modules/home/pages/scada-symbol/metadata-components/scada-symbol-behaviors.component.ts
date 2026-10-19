@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   Component,
@@ -170,10 +170,6 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
 
   behaviorsFormArray(): UntypedFormArray {
     return this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
-  }
-
-  trackByBehavior(index: number, behaviorControl: AbstractControl): any {
-    return behaviorControl;
   }
 
   removeBehavior(index: number, emitEvent = true) {

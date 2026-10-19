@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -17,6 +17,8 @@ import {
   MapProvider,
   mapProviders,
   mapProviderTranslationMap,
+  openFreeMapStyleTranslationMap,
+  openFreeMapStyleTypes,
   mapProviderHasApiKey,
   mapProviderRequiresApiKey,
   openStreetLayerTypes,
@@ -41,6 +43,10 @@ export class MapLayerSettingsPanelComponent implements OnInit {
   mapProviders = mapProviders;
 
   mapProviderTranslationMap = mapProviderTranslationMap;
+
+  openFreeMapStyleTypes = openFreeMapStyleTypes;
+
+  openFreeMapStyleTranslationMap = openFreeMapStyleTranslationMap;
 
   openStreetLayerTypes = openStreetLayerTypes;
 
@@ -89,6 +95,7 @@ export class MapLayerSettingsPanelComponent implements OnInit {
         provider: [null, [Validators.required]],
         layerType: [null, [Validators.required]],
         tileUrl: [null, [Validators.required]],
+        vectorTiles: [false, []],
         customAttribution: [null, []],
         apiKey: [null, [Validators.required]],
         referenceLayer: [null, []]
@@ -101,6 +108,11 @@ export class MapLayerSettingsPanelComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((newProvider: MapProvider) => {
       this.onProviderChanged(newProvider);
+    });
+    this.layerFormGroup.get('vectorTiles').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateValidators();
     });
     this.updateValidators();
   }
@@ -139,10 +151,12 @@ export class MapLayerSettingsPanelComponent implements OnInit {
     const provider: MapProvider = this.layerFormGroup.get('provider').value;
     if (provider === MapProvider.custom) {
       this.layerFormGroup.get('tileUrl').enable({emitEvent: false});
+      this.layerFormGroup.get('vectorTiles').enable({emitEvent: false});
       this.layerFormGroup.get('customAttribution').enable({emitEvent: false});
       this.layerFormGroup.get('layerType').disable({emitEvent: false});
     } else {
       this.layerFormGroup.get('tileUrl').disable({emitEvent: false});
+      this.layerFormGroup.get('vectorTiles').disable({emitEvent: false});
       this.layerFormGroup.get('customAttribution').disable({emitEvent: false});
       this.layerFormGroup.get('layerType').enable({emitEvent: false});
     }

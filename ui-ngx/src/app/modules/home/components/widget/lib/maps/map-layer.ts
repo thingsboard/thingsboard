@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   CartoMapLayerSettings,
@@ -8,6 +8,7 @@ import {
   defaultGoogleMapLayerSettings,
   defaultHereMapLayerSettings,
   defaultLayerTitle,
+  defaultOpenFreeMapLayerSettings,
   defaultOpenStreetMapLayerSettings,
   defaultTencentMapLayerSettings,
   GoogleMapLayerSettings,
@@ -15,6 +16,8 @@ import {
   hereV3Provider,
   MapLayerSettings,
   MapProvider,
+  OpenFreeMapLayerSettings,
+  OpenFreeMapStyleType,
   normalizeMapLayerSettings,
   OpenStreetMapLayerSettings,
   ReferenceLayerType,
@@ -52,6 +55,8 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
 
     inputSettings = normalizeMapLayerSettings(inputSettings as MapLayerSettings);
     switch (inputSettings.provider) {
+      case MapProvider.openfreemap:
+        return new TbOpenFreeMapLayer(ctx, inputSettings);
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
       case MapProvider.carto:
@@ -219,6 +224,32 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
 
 }
 
+const openFreeMapStyleUrl = (style: OpenFreeMapStyleType): string =>
+  `https://tiles.openfreemap.org/styles/${style}`;
+
+class TbOpenFreeMapLayer extends TbMapLayer<OpenFreeMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): OpenFreeMapLayerSettings {
+    return defaultOpenFreeMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const styleUrl = openFreeMapStyleUrl(this.settings.layerType);
+    const layer = L.TB.MapLibreGL.mapLibreGLLayer({
+      style: styleUrl,
+      attributionControl: {
+        customAttribution: 'OpenFreeMap, &copy; OpenMapTiles, Data from OpenStreetMap'
+      }
+    });
+    return of(layer);
+  }
+}
+
 class TbCartoMapLayer extends TbMapLayer<CartoMapLayerSettings> {
 
   constructor(protected ctx: WidgetContext,
@@ -336,6 +367,17 @@ class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
   }
 
   protected createLayer(): Observable<L.Layer> {
+    if (this.settings.vectorTiles) {
+      const options: any = {
+        style: this.settings.tileUrl
+      };
+      if (this.settings.customAttribution) {
+        options.attributionControl = {
+          customAttribution: this.settings.customAttribution
+        };
+      }
+      return of(L.TB.MapLibreGL.mapLibreGLLayer(options));
+    }
     const layer = L.tileLayer(this.settings.tileUrl, this.settings.customAttribution ? {
       attribution: this.settings.customAttribution
     } : undefined);

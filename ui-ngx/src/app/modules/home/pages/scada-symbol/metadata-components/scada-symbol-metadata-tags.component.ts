@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   Component,
@@ -159,10 +159,6 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   tagsFormArray(): UntypedFormArray {
     return this.tagsFormGroup.get('tags') as UntypedFormArray;
-  }
-
-  trackByTag(_index: number, tagControl: AbstractControl): any {
-    return tagControl;
   }
 
   editTagStateRenderFunction(tag: string): void {

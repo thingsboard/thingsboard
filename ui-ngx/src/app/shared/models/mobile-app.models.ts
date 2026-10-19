@@ -1,15 +1,18 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { HasTenantId } from '@shared/models/entity.models';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { MobileAppId } from '@shared/models/id/mobile-app-id';
 import { OAuth2ClientInfo, PlatformType } from '@shared/models/oauth2.models';
 import { MobileAppBundleId } from '@shared/models/id/mobile-app-bundle-id';
+import { HasTenantId } from '@shared/models/entity.models';
 import { deepClone, isNotEmptyStr } from '@core/utils';
+import { MobileSelfRegistrationParams } from '@shared/models/self-register.models';
 
 export const WEB_URL_REGEX = /^(https?:\/\/)?(localhost|([\p{L}\p{M}\w-]+\.)+[\p{L}\p{M}\w-]+)(:\d+)?(\/[\w\-._~:/?#[\]@!$&'()*+,;=%\p{L}\p{N}]*)?$/u;
 
 export interface QrCodeSettings extends HasTenantId {
+  useSystemSettings: boolean;
   useDefaultApp: boolean;
   mobileAppBundleId: MobileAppBundleId
   androidEnabled: boolean;
@@ -89,7 +92,8 @@ enum MobileMenuPath {
   DASHBOARD = 'DASHBOARD',
   AUDIT_LOGS = 'AUDIT_LOGS',
   CUSTOMERS = 'CUSTOMERS',
-  NOTIFICATIONS = 'NOTIFICATIONS'
+  NOTIFICATIONS = 'NOTIFICATIONS',
+  LIVE_LOCATION_TRACKING = 'LIVE_LOCATION_TRACKING'
 }
 
 export enum MobilePageType {
@@ -134,6 +138,7 @@ export interface MobileAppBundle extends Omit<BaseData<MobileAppBundleId>, 'labe
   androidAppId?: MobileAppId;
   iosAppId?: MobileAppId;
   layoutConfig?: MobileLayoutConfig;
+  selfRegistrationParams?: MobileSelfRegistrationParams;
   oauth2Enabled: boolean;
 }
 
@@ -161,12 +166,14 @@ const defaultMobileMenu = [
   MobileMenuPath.AUDIT_LOGS,
   MobileMenuPath.NOTIFICATIONS,
   MobileMenuPath.DEVICE_LIST,
-  MobileMenuPath.DASHBOARDS
+  MobileMenuPath.DASHBOARDS,
+  MobileMenuPath.LIVE_LOCATION_TRACKING
 ];
 
 export const hideDefaultMenuItems = [
   MobileMenuPath.DEVICE_LIST,
-  MobileMenuPath.DASHBOARDS
+  MobileMenuPath.DASHBOARDS,
+  MobileMenuPath.LIVE_LOCATION_TRACKING
 ];
 
 export const getDefaultMobileMenuItem = (): DefaultMobilePage[] => {
@@ -180,6 +187,21 @@ export const getDefaultMobileMenuItem = (): DefaultMobilePage[] => {
 export const isDefaultMobileMenuItem = (item: MobilePage): item is DefaultMobilePage => {
   const path = (item as DefaultMobilePage).id;
   return isNotEmptyStr(path) && defaultMobilePageMap.has(path);
+};
+
+// Pages missing from a saved layout were never delivered to the mobile app for this bundle,
+// so they are merged in as hidden to match what the app actually shows.
+export const mergeMissingDefaultMobilePages = (pages: MobilePage[]): MobilePage[] => {
+  const mergedPages = [...pages];
+  getDefaultMobileMenuItem().forEach((defaultPage, defaultIndex) => {
+    if (!mergedPages.some(page => isDefaultMobileMenuItem(page) && page.id === defaultPage.id)) {
+      const nextDefaultPageIndex = mergedPages.findIndex(page =>
+        isDefaultMobileMenuItem(page) && defaultMobileMenu.indexOf(page.id) > defaultIndex
+      );
+      mergedPages.splice(nextDefaultPageIndex === -1 ? mergedPages.length : nextDefaultPageIndex, 0, {...defaultPage, visible: false});
+    }
+  });
+  return mergedPages;
 };
 
 
@@ -286,6 +308,14 @@ export const defaultMobilePageMap = new Map<MobileMenuPath, Omit<DefaultMobilePa
       id: MobileMenuPath.NOTIFICATIONS,
       icon: 'notifications_active',
       label: 'Notification'
+    }
+  ],
+  [
+    MobileMenuPath.LIVE_LOCATION_TRACKING,
+    {
+      id: MobileMenuPath.LIVE_LOCATION_TRACKING,
+      icon: 'my_location',
+      label: 'Live location tracking'
     }
   ]
 ])

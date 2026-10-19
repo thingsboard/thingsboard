@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.query;
 
@@ -38,6 +38,10 @@ public class AlarmCountQuery extends EntityCountQuery {
 
     public AlarmCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters) {
         super(entityFilter, keyFilters);
+    }
+
+    public AlarmCountQuery(EntityFilter entityFilter, List<KeyFilter> keyFilters, ComplexOperation keyFiltersOperation) {
+        super(entityFilter, keyFilters, keyFiltersOperation);
     }
 
 }

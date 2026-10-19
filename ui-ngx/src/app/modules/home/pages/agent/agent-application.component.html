@@ -1,0 +1,222 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit || isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onUpdate($event)"
+    [class.!hidden]="isEdit">
+    <mat-icon>sync_alt</mat-icon>
+    <span translate>agent.app-update</span>
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onRestart($event)"
+    [class.!hidden]="isEdit">
+    <mat-icon>restart_alt</mat-icon>
+    <span translate>agent.app-restart</span>
+  </button>
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async) || !canUpgrade()"
+    (click)="onUpgrade($event)"
+    [class.!hidden]="isEdit">
+    <mat-icon>arrow_upward</mat-icon>
+    <span translate>agent.app-upgrade</span>
+  </button>
+  <button mat-stroked-button color="warn"
+    [disabled]="(isLoading$ | async)"
+    (click)="onDelete($event)"
+    [class.!hidden]="isEdit">
+    <mat-icon>delete</mat-icon>
+    <span translate>agent.app-delete</span>
+  </button>
+  <button mat-stroked-button
+    ngxClipboard
+    (cbOnSuccess)="onAppIdCopied()"
+    [cbContent]="entity?.id?.id"
+    [disabled]="(isLoading$ | async)"
+    [class.!hidden]="isEdit">
+    <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+    <span translate>agent.app-copy-id</span>
+  </button>
+</div>
+<div class="mat-padding flex flex-col">
+  <form [formGroup]="entityForm">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.app-name</mat-label>
+        <input matInput formControlName="name" required>
+        @if (entityForm.get('name').hasError('required')) {
+          <mat-error>
+            {{ 'agent.app-name-required' | translate }}
+          </mat-error>
+        }
+      </mat-form-field>
+    </fieldset>
+
+    <mat-form-field class="mat-block tb-profile-field" appearance="outline">
+      <mat-label translate>agent.app-profile</mat-label>
+      <input matInput type="text"
+        [formControl]="profileSearchCtrl"
+        [matAutocomplete]="appProfileAutocomplete"
+        (blur)="syncProfileDisplay()"
+        [class.!hidden]="!isEdit && selectedProfileId">
+      @if (!isEdit && selectedProfileId) {
+        <a
+          class="tb-profile-link"
+          aria-label="Open profile"
+          [routerLink]="'/edgeManagement/profiles/application/' + selectedProfileId">
+          {{ selectedProfileName }}
+        </a>
+      }
+      @if (selectedProfileId && isEdit) {
+        <button
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="$event.stopPropagation(); clearProfileField()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      }
+      <mat-autocomplete class="tb-autocomplete"
+        #appProfileAutocomplete="matAutocomplete"
+        [displayWith]="displayProfileFn">
+        @if (filteredProfiles | async; as profiles) {
+          @for (p of profiles; track p.id.id) {
+            <mat-option [value]="p">
+              <span>{{ p.name }}</span>
+              @if (p.templateCurrentVersion) {
+                <span
+                style="color: rgba(0,0,0,0.45); font-size: 12px; margin-left: 8px;">{{ p.templateCurrentVersion }}</span>
+              }
+            </mat-option>
+          }
+          @if (!profiles.length) {
+            <mat-option [value]="null" disabled class="tb-not-found">
+              <div class="tb-not-found-content">
+                <span translate>agent.app-install-no-profiles</span>
+              </div>
+            </mat-option>
+          }
+        }
+      </mat-autocomplete>
+      @if (profileTemplateDrifted) {
+        <mat-hint class="tb-app-upgrade-hint">
+          <mat-icon>info</mat-icon>
+          {{ 'agent.app-profile-drifted-hint' | translate: { version: entity?.profileTemplateVersion } }}
+        </mat-hint>
+      }
+      @if (!profileTemplateDrifted && entity?.profileConfigOutdated) {
+        <mat-hint class="tb-app-upgrade-hint">
+          <mat-icon>info</mat-icon>
+          {{ 'agent.app-profile-outdated-hint' | translate }}
+        </mat-hint>
+      }
+    </mat-form-field>
+
+    @if (canHaveRelatedEntity()) {
+      <div class="flex flex-row gap-4">
+        <mat-form-field class="flex-1" appearance="outline">
+          <mat-label translate>agent.app-type</mat-label>
+          <mat-select [value]="entity?.appType" [disabled]="true">
+            @for (type of agentApplicationTypes; track type) {
+              <mat-option [value]="type">
+                {{ agentApplicationTypeTranslationMap.get(type) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="flex-1">
+          @if (isEdit) {
+            <tb-agent-related-entity-autocomplete
+              [appType]="entity?.appType"
+              [required]="true"
+              formControlName="relatedEntityId">
+            </tb-agent-related-entity-autocomplete>
+          }
+          @if (!isEdit && relatedEntity) {
+            <mat-form-field class="mat-block tb-related-entity-field" appearance="outline">
+              <mat-label>{{ relatedEntity.typeLabel }}</mat-label>
+              <input matInput [value]="relatedEntity.name" disabled class="!hidden">
+              <a class="tb-related-entity-link"
+                aria-label="Open related entity"
+                [routerLink]="relatedEntity.url">
+                {{ relatedEntity.name }}
+              </a>
+            </mat-form-field>
+          }
+          @if (!isEdit && !relatedEntity) {
+            <mat-form-field class="mat-block" appearance="outline">
+              <mat-label translate>agent.app-related-entity</mat-label>
+              <input matInput value="—" disabled>
+            </mat-form-field>
+          }
+        </div>
+      </div>
+    } @else {
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.app-type</mat-label>
+        <mat-select [value]="entity?.appType" [disabled]="true">
+          @for (type of agentApplicationTypes; track type) {
+            <mat-option [value]="type">
+              {{ agentApplicationTypeTranslationMap.get(type) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>agent.app-template</mat-label>
+      <input matInput [value]="templateVersion" disabled>
+      @if (canUpgrade()) {
+        <mat-hint class="tb-app-upgrade-hint">
+          <mat-icon>info</mat-icon>
+          {{ 'agent.app-upgrade-available' | translate:{ version: entity.nextVersion } }}
+        </mat-hint>
+      }
+    </mat-form-field>
+
+    @if (entity?.projectName) {
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.app-project-name</mat-label>
+        <input matInput [value]="entity.projectName" disabled>
+      </mat-form-field>
+    }
+
+    @if (entity?.origin) {
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>agent.app-origin</mat-label>
+        <input matInput [value]="agentApplicationOriginTranslationMap.get(entity.origin) | translate" disabled>
+      </mat-form-field>
+    }
+
+    @if (isEdit && isProfileManaged) {
+      <div class="tb-app-compose-hint">
+        <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+        <span translate>agent.app-arguments-profile-managed-hint</span>
+      </div>
+    }
+    <tb-agent-app-arguments class="tb-app-arguments-section"
+      formControlName="arguments"
+      [disabled]="!isEdit || isProfileManaged">
+    </tb-agent-app-arguments>
+
+    @if (isEdit && relatedEntity) {
+      <div class="tb-app-compose-hint">
+        <mat-icon class="tb-app-compose-hint-icon">info_outline</mat-icon>
+        <span translate>agent.app-compose-creds-overridden-hint</span>
+      </div>
+    }
+    <label class="tb-mat-label" translate>agent.app-compose</label>
+    <div class="tb-app-compose-editor tb-app-compose-editor-ace" #composeAceEditor></div>
+  </form>
+</div>

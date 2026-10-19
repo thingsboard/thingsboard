@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -255,6 +256,15 @@ import {
   QuickLinksWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/home-page/quick-links-widget-settings.component';
 import {
+  BlobEntitiesWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/files/blob-entities-widget-settings.component';
+import {
+  CustomSchedulerEventTypeComponent
+} from '@home/components/widget/lib/settings/scheduler/custom-scheduler-event-type.component';
+import {
+  SchedulerEventsWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/scheduler/scheduler-events-widget-settings.component';
+import {
   ValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/value-card-widget-settings.component';
 import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
@@ -505,6 +515,9 @@ import {
     ScadaSymbolWidgetSettingsComponent,
     MapWidgetSettingsComponent,
     HtmlContainerWidgetSettingsComponent,
+    BlobEntitiesWidgetSettingsComponent,
+    CustomSchedulerEventTypeComponent,
+    SchedulerEventsWidgetSettingsComponent,
     ApiUsageWidgetSettingsComponent,
     ApiUsageDataKeyRowComponent
   ],
@@ -647,6 +660,9 @@ import {
     ScadaSymbolWidgetSettingsComponent,
     MapWidgetSettingsComponent,
     HtmlContainerWidgetSettingsComponent,
+    BlobEntitiesWidgetSettingsComponent,
+    CustomSchedulerEventTypeComponent,
+    SchedulerEventsWidgetSettingsComponent,
     ApiUsageWidgetSettingsComponent
   ]
 })

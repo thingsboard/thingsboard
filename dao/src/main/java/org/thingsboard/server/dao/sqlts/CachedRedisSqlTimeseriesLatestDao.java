@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 import org.thingsboard.server.dao.timeseries.TimeseriesLatestDao;
 import org.thingsboard.server.dao.timeseries.TsLatestCacheKey;
 import org.thingsboard.server.dao.util.SqlTsLatestAnyDaoCachedRedis;
@@ -41,6 +43,7 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     final SqlTimeseriesLatestDao sqlDao;
     final StatsFactory statsFactory;
     final VersionedTbCache<TsLatestCacheKey, TsKvEntry> cache;
+    final CitusSettings citusSettings;
     DefaultCounter hitCounter;
     DefaultCounter missCounter;
 
@@ -83,7 +86,19 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
                         TsLatestCacheKey key = new TsLatestCacheKey(entityId, query.getKey());
                         Long version = x.getVersion();
                         TsKvEntry newTsKvEntry = x.getData();
-                        if (newTsKvEntry != null) {
+                        if (citusSettings.isEnabled()) {
+                            // Citus uses a per-row version: a rewritten latest is a fresh INSERT whose version resets
+                            // to 1, so a version-guarded put would be rejected by the cache that still holds the higher
+                            // version of the just-deleted row. Evict instead and let the next read repopulate from DB
+                            // (mirrors CachedAttributesService).
+                            // Even with shared Redis a race remains: a reader that fetched the row just before this
+                            // DELETE committed can run its read-through cache.put AFTER this evict, leaving the cache
+                            // serving the deleted value. Because versioned puts are strict-greater, a re-created row
+                            // (per-row version restarting at 1) cannot displace that stale entry until the cache TTL
+                            // expires. This is the documented "self-heals at cache TTL" acceptance for the
+                            // delete+re-create race.
+                            cache.evict(key);
+                        } else if (newTsKvEntry != null) {
                             cache.put(key, new BasicTsKvEntry(newTsKvEntry.getTs(), ((BasicTsKvEntry) newTsKvEntry).getKv(), version));
                         } else {
                             cache.evict(key, version);

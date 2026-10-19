@@ -1,0 +1,233 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+:host {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 440px;
+  max-width: 100%;
+  background: #fff;
+  border-left: 1px solid $agent-divider-light;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+}
+
+.tb-side-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tb-side-panel-header {
+  padding: 12px 8px 12px 20px;
+  border-bottom: 1px solid $agent-divider-light;
+
+  .tb-side-panel-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: $agent-text-secondary;
+    font-size: 12px;
+
+    .tb-side-panel-profile {
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.78);
+    }
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .tb-side-panel-spacer {
+    flex: 1;
+  }
+
+  .tb-side-panel-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-top: 4px;
+    color: $agent-text-primary;
+  }
+}
+
+.tb-side-panel-summary {
+  padding: 16px 20px 18px;
+  border-bottom: 1px solid $agent-divider-light;
+
+  .tb-side-panel-summary-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 8px;
+  }
+
+  .tb-side-panel-pct {
+    font-family: $agent-mono-font;
+  }
+
+  .tb-side-panel-bar {
+    display: flex;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.06);
+
+    .tb-side-panel-bar-done    { background: $agent-color-success; transition: width .25s; }
+    .tb-side-panel-bar-error   { background: $agent-color-error; transition: width .25s; }
+    .tb-side-panel-bar-running { background: $agent-color-info; transition: width .25s; }
+  }
+
+  .tb-side-panel-stats {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    font-size: 12.5px;
+
+    .tb-side-panel-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(0, 0, 0, 0.78);
+    }
+
+    .tb-side-panel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .tb-dot-done    { background: $agent-color-success; }
+    .tb-dot-error   { background: $agent-color-error; }
+    .tb-dot-running { background: $agent-color-info; }
+    .tb-dot-pending { background: rgba(0, 0, 0, 0.4); }
+  }
+}
+
+.tb-side-panel-filters {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid $agent-divider-light;
+
+  .tb-side-panel-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    border: 1px solid $agent-divider;
+    cursor: pointer;
+
+    &.tb-side-panel-chip-active {
+      background: color-mix(in srgb, var(--tb-primary-500) 10%, transparent);
+      color: var(--tb-primary-500);
+      border-color: transparent;
+    }
+  }
+}
+
+.tb-side-panel-events {
+  flex: 1;
+  overflow: auto;
+}
+
+.tb-side-panel-paginator {
+  border-top: 1px solid $agent-divider-light;
+  background: #fff;
+
+  ::ng-deep .mat-mdc-paginator-container {
+    padding: 0 8px;
+    min-height: 48px;
+  }
+}
+
+.tb-side-panel-loading,
+.tb-side-panel-empty {
+  padding: 24px;
+  text-align: center;
+  color: $agent-text-secondary;
+}
+
+.tb-side-panel-loading {
+  display: flex;
+  justify-content: center;
+}
+
+.tb-side-panel-event {
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+  &.tb-side-panel-event-clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+  }
+
+  .tb-side-panel-event-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .tb-side-panel-event-app {
+    color: rgba(0, 0, 0, 0.78);
+    font-weight: 500;
+  }
+
+  .tb-side-panel-event-sep {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $agent-text-hint;
+  }
+
+  .tb-side-panel-event-name {
+    color: var(--tb-primary-500);
+    font-weight: 500;
+  }
+
+  .tb-side-panel-event-status {
+    font-weight: 500;
+    font-size: 12.5px;
+  }
+
+  .tb-side-panel-event-time {
+    font-family: $agent-mono-font;
+    color: $agent-text-secondary;
+    font-size: 12px;
+    min-width: 56px;
+    text-align: right;
+  }
+
+  .tb-side-panel-spacer { flex: 1; }
+
+  .tb-side-panel-event-error {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: $agent-error-surface;
+    color: $agent-color-error;
+    font-family: $agent-mono-font;
+    font-size: 12px;
+    border-radius: 2px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+}

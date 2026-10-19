@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -8,9 +8,11 @@
   <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.openstreet-provider</mat-label>
     <mat-select required formControlName="mapProvider">
-      <mat-option *ngFor="let provider of mapProviders" [value]="provider">
-        {{openStreetMapProviderTranslations.get(provider) | translate}}
-      </mat-option>
+      @for (provider of mapProviders; track provider) {
+        <mat-option [value]="provider">
+          {{openStreetMapProviderTranslations.get(provider) | translate}}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <mat-expansion-panel class="tb-settings" [expanded]="providerSettingsFormGroup.get('useCustomProvider').value">

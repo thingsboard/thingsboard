@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
@@ -116,14 +116,6 @@ export class DeviceProfileAlarmsComponent implements ControlValueAccessor, OnIni
       } else {
         this.deviceProfileAlarmsFormGroup.enable({emitEvent: false});
       }
-    }
-  }
-
-  public trackByAlarm(index: number, alarmControl: AbstractControl): string {
-    if (alarmControl) {
-      return alarmControl.value.id;
-    } else {
-      return null;
     }
   }
 

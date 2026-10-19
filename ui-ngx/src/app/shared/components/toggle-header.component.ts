@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   AfterContentChecked,
@@ -290,10 +290,6 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
       this._showPaginationControlsChanged = false;
       this.cd.markForCheck();
     }
-  }
-
-  trackByHeaderOption(index: number, option: ToggleHeaderOption){
-    return option.value;
   }
 
   handlePaginatorClick(direction: ScrollDirection, $event: Event) {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.transport;
 
 
@@ -24,12 +25,14 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -76,10 +79,13 @@ public class DefaultTransportApiServiceTest {
                                                                      ResourceService resourceService,
                                                                      OtaPackageService otaPackageService,
                                                                      OtaPackageDataCache otaPackageDataCache,
-                                                                     QueueService queueService) {
+                                                                     QueueService queueService,
+                                                                     EntityGroupService entityGroupService,
+                                                                     CustomerService customerService) {
             return new DefaultTransportApiService(deviceProfileCache, tenantProfileCache, apiUsageStateService,
                     deviceService, deviceProfileService, relationService, deviceCredentialsService, tbClusterService,
-                    deviceProvisionService, resourceService, otaPackageService, otaPackageDataCache, queueService);
+                    deviceProvisionService, resourceService, otaPackageService, otaPackageDataCache, queueService,
+                    entityGroupService, customerService);
         }
     }
 
@@ -111,6 +117,10 @@ public class DefaultTransportApiServiceTest {
     protected OtaPackageDataCache otaPackageDataCache;
     @MockitoBean
     protected QueueService queueService;
+    @MockitoBean
+    protected EntityGroupService groupService;
+    @MockitoBean
+    protected CustomerService customerService;
     @MockitoSpyBean
     DefaultTransportApiService service;
 

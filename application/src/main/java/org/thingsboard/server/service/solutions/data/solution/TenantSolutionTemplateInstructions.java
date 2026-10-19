@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data.solution;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 
 @Schema
 @Data
@@ -15,6 +17,8 @@ import org.thingsboard.server.common.data.id.DashboardId;
 @NoArgsConstructor
 public class TenantSolutionTemplateInstructions {
 
+    @Schema(description = "Id of the group that contains main dashboard of the solution")
+    private EntityGroupId dashboardGroupId;
     @Schema(description = "Id of the main dashboard of the solution")
     private DashboardId dashboardId;
     @Schema(description = "Id of the public customer if solution has public entities")
@@ -25,6 +29,7 @@ public class TenantSolutionTemplateInstructions {
     private String details;
 
     public TenantSolutionTemplateInstructions(TenantSolutionTemplateInstructions instructions) {
+        this.dashboardGroupId = instructions.getDashboardGroupId();
         this.dashboardId = instructions.getDashboardId();
         this.publicId = instructions.getPublicId();
         this.mainDashboardPublic = instructions.isMainDashboardPublic();

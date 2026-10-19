@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit,
@@ -255,10 +255,6 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     } else {
       return value;
     }
-  }
-
-  public trackBySection(index: number): number {
-    return index;
   }
 
   public cardClick($event: Event) {

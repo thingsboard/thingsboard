@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Directive, inject, OnDestroy } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -7,6 +8,7 @@ import { Observable, Subscription } from 'rxjs';
 import { selectIsLoading } from '@core/interceptors/load.selectors';
 import { delay, share } from 'rxjs/operators';
 import { AbstractControl } from '@angular/forms';
+import { Operation, Resource } from '@shared/models/security.models';
 
 @Directive()
 export abstract class PageComponent implements OnDestroy {
@@ -18,6 +20,9 @@ export abstract class PageComponent implements OnDestroy {
   disabledOnLoadFormControls: Array<AbstractControl> = [];
 
   showMainLoadingBar = true;
+
+  resource = Resource;
+  operation = Operation;
 
   protected constructor(...args: unknown[]) {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());

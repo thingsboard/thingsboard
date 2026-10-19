@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.edge.rpc;
 
 import io.grpc.HttpConnectProxiedSocketAddress;
@@ -217,7 +218,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 } catch (InterruptedException e) {
                     log.error("[{}] Got interruption during disconnect!", edgeKey, e);
                 }
-                onError.accept(new RuntimeException(t));
+                onError.accept(new EdgeConnectionException("Stream was terminated due to error", t));
             }
 
             @Override

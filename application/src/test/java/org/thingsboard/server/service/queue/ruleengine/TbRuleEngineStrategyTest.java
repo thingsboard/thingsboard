@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.queue.ruleengine;
 
@@ -32,6 +32,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask.ConsumerKey;
 import org.thingsboard.server.queue.discovery.QueueKey;
+import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 
@@ -183,6 +184,7 @@ public class TbRuleEngineStrategyTest {
         var consumerManager = TbRuleEngineQueueConsumerManager.create()
                 .ctx(ruleEngineConsumerContext)
                 .queueKey(queueKey)
+                .packProcessingContextFactory(new TbMsgPackProcessingContextFactory.DefaultTbMsgPackProcessingContextFactory())
                 .build();
 
         consumerManager.init(queue);

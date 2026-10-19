@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="mat-content mat-padding flex flex-col">
@@ -9,9 +10,11 @@
     <mat-label>{{'dashboard.select-dashboard' | translate}}</mat-label>
     <mat-select matInput [(ngModel)]="dashboardId"
                 (ngModelChange)="dashboardSelected(dashboardId)">
-      <mat-option *ngFor="let dashboard of dashboards$ | async" [value]="dashboard.id.id">
-        {{dashboard.title}}
-      </mat-option>
+      @for (dashboard of dashboards$ | async; track dashboard) {
+        <mat-option [value]="dashboard.id.id">
+          {{ dashboard.title | customTranslate }}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
 </div>

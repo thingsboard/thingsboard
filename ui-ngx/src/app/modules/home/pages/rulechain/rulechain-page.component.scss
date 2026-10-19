@@ -1,6 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import './rule-node-colors';
+@import "../../../../../scss/constants";
 
 .tb-rulechain {
   width: 100%;
@@ -41,13 +43,26 @@
     z-index: 2;
   }
 
+  button.mdc-fab.add-note-button {
+    position: absolute;
+    top: 10px;
+    right: 110px;
+    opacity: .85;
+    margin: 0 6px;
+    z-index: 2;
+  }
+
+  &:not(:has(button.mdc-fab.version-control-button)) button.mdc-fab.add-note-button {
+    right: 60px;
+  }
+
   .tb-library-node-btn {
     width: 20px;
     height: 90px;
     position: absolute;
     top: 50%;
     z-index: 1000;
-    opacity: 0.5;
+    opacity: 0.8;
     border-radius: 0 15px 15px 0 !important;
     transform: translateY(-50%);
     &-icon {
@@ -64,7 +79,7 @@
       content: "";
       pointer-events: none;
       border-radius: 0 0 0 15px;
-      box-shadow: -10px 0px 0 0px #305680;
+      box-shadow: -10px 0px 0 0px var(--mat-fab-small-container-color);
       border: none;
     }
     &:after {
@@ -76,7 +91,7 @@
       content: "";
       pointer-events: none;
       border-top-left-radius: 15px;
-      box-shadow: -10px 0px 0px 0px #305680;
+      box-shadow: -10px 0px 0px 0px var(--mat-fab-small-container-color);
       border: none;
     }
   }
@@ -175,6 +190,20 @@
           margin: -3px;
           border: solid 3px #f00;
         }
+        &.fc-edit {
+          margin: -2px;
+          border: solid 2px rgba(0, 0, 0, 0.35);
+        }
+      }
+    }
+
+    .fc-note {
+      border-radius: 8px;
+      &.fc-selected:not(.fc-edit) {
+        box-shadow: 0 0 0 3px #f00;
+      }
+      &.fc-selected.fc-edit {
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
       }
     }
 

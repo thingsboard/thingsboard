@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
 import {
@@ -133,10 +133,6 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
       return quickTimeIntervalPeriod(interval as QuickTimeInterval);
     }
     return interval as number;
-  }
-
-  trackByElement(i: number, item: any) {
-    return item;
   }
 
   update() {

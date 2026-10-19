@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
@@ -23,6 +23,7 @@ import {
   timeUnitTranslationMap
 } from '@shared/models/time/time.models';
 import { isDefinedAndNotNull, isNumber } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 interface FormGroupModel {
   time: number;
@@ -90,6 +91,9 @@ export class TimeUnitSelectComponent implements OnInit, OnDestroy, ControlValueA
 
   @Input()
   minText: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private propagateChange = (v: any) => {
   }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.rule.engine.rest;
 
@@ -38,7 +38,7 @@ public class TbSendRestApiCallReplyNodeTest {
 
     private TbSendRestApiCallReplyNode node;
     private TbSendRestApiCallReplyNodeConfiguration config;
-    
+
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -127,4 +127,5 @@ public class TbSendRestApiCallReplyNodeTest {
                         TbMsg.EMPTY_STRING, "Request body is empty!")
         );
     }
+
 }

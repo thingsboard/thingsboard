@@ -1,14 +1,15 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  UntypedFormArray,
   UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR
+  NG_VALUE_ACCESSOR,
+  FormControl,
+  FormArray
 } from '@angular/forms';
 import { of, Subject } from 'rxjs';
 import { ServerSecurityConfig } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
@@ -90,8 +91,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     this.destroy$.complete();
   }
 
-  get serverConfigsFromArray(): UntypedFormArray {
-    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as UntypedFormArray;
+  get serverConfigsFromArray(): FormArray<FormControl> {
+    return this.bootstrapConfigServersFormGroup.get('serverConfigs') as FormArray<FormControl>;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -120,10 +121,6 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
         this.bootstrapConfigServersFormGroup.enable({emitEvent: false});
       }
     }
-  }
-
-  trackByParams(index: number): number {
-    return index;
   }
 
   removeServerConfig($event: Event, index: number) {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap.attributes.request;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,5 +34,15 @@ public class CoapAttributesRequestJsonIntegrationTest extends CoapAttributesRequ
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         processJsonTestRequestAttributesValuesFromTheServer();
+    }
+
+    @Test
+    public void testRequestAllSharedAttributes() throws Exception {
+        processJsonTestRequestAttributesWithQuery("?allSharedKeys=true", "{\"shared\":" + SHARED_ATTRIBUTES_PAYLOAD + "}");
+    }
+
+    @Test
+    public void testRequestAllClientAttributes() throws Exception {
+        processJsonTestRequestAttributesWithQuery("?allClientKeys=true", "{\"client\":" + CLIENT_ATTRIBUTES_PAYLOAD + "}");
     }
 }

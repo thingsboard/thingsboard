@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.oauth2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,8 +13,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasOwnerId;
+import org.thingsboard.server.common.data.TenantEntity;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -24,10 +29,12 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString(exclude = {"clientSecret"})
-public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> implements HasName, HasTenantId {
+public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> implements HasName, TenantEntity, HasOwnerId {
 
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
+    @Schema(description = "JSON object with Customer Id")
+    private CustomerId customerId;
     @Schema(description = "Oauth2 client title")
     @NotBlank
     @NoXss
@@ -81,7 +88,7 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
     @Length(fieldName = "platforms")
     private List<PlatformType> platforms;
     @Schema(description = "Additional info of OAuth2 client. " +
-                          "Must include: 'providerName' (string, name of the OAuth2 provider).",
+            "Must include: 'providerName' (string, name of the OAuth2 provider).",
             requiredMode = Schema.RequiredMode.REQUIRED,
             example = "{\"providerName\":\"Google\"}")
     private JsonNode additionalInfo;
@@ -97,6 +104,7 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
     public OAuth2Client(OAuth2Client oAuth2Client) {
         super(oAuth2Client);
         this.tenantId = oAuth2Client.tenantId;
+        this.customerId = oAuth2Client.customerId;
         this.title = oAuth2Client.title;
         this.mapperConfig = oAuth2Client.mapperConfig;
         this.clientId = oAuth2Client.clientId;
@@ -119,4 +127,22 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
         return title;
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.OAUTH2_CLIENT;
+    }
+
+    @Override
+    public EntityId getOwnerId() {
+        return customerId != null && !customerId.isNullUid() ? customerId : tenantId;
+    }
+
+    @Override
+    public void setOwnerId(EntityId entityId) {
+        if (EntityType.CUSTOMER.equals(entityId.getEntityType())) {
+            this.customerId = new CustomerId(entityId.getId());
+        } else {
+            this.customerId = new CustomerId(CustomerId.NULL_UUID);
+        }
+    }
 }

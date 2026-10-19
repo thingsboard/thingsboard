@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   ChangeDetectorRef,
@@ -40,6 +40,8 @@ export class MarkdownEditorComponent implements OnInit, ControlValueAccessor, On
   @Input() readonly: boolean;
 
   @Input() helpId: string;
+
+  @Input() helpPopupStyle: { [klass: string]: any } = {};
 
   @Input()
   @coerceBoolean()

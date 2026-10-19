@@ -1,22 +1,25 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.common.util.DirectListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.TbMsgSource;
@@ -37,7 +40,6 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -51,6 +53,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,16 +61,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TbGetCustomerAttributeNodeTest {
+public class TbGetCustomerAttributeNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
@@ -84,14 +90,14 @@ public class TbGetCustomerAttributeNodeTest {
     private EntityService entityServiceMock;
 
     private TbGetCustomerAttributeNode node;
-    private TbGetEntityDataNodeConfiguration config;
+    private TbGetCustomerAttributeNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
     private TbMsg msg;
 
     @BeforeEach
     public void setup() {
-        node = new TbGetCustomerAttributeNode();
-        config = new TbGetEntityDataNodeConfiguration().defaultConfiguration();
+        node = spy(new TbGetCustomerAttributeNode());
+        config = new TbGetCustomerAttributeNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         lenient().when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -217,8 +223,12 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void givenDidNotFindEntity_whenOnMsg_thenShouldTellFailure() {
+    public void givenDidNotFindEntity_whenOnMsg_thenShouldTellFailure() throws TbNodeException {
         // GIVEN
+        config.setPreserveOriginatorIfCustomer(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
         var userId = new UserId(UUID.randomUUID());
 
         msg = TbMsg.newMsg()
@@ -251,12 +261,12 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void givenFetchAttributesToData_whenOnMsg_thenShouldFetchAttributesToData() {
+    public void givenFetchAttributesToData_whenOnMsg_thenShouldFetchAttributesToData() throws TbNodeException {
         // GIVEN
         var device = new Device(new DeviceId(UUID.randomUUID()));
         device.setCustomerId(CUSTOMER_ID);
 
-        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.ATTRIBUTES, device.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.ATTRIBUTES, device.getId(), true);
 
         List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
@@ -294,12 +304,12 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void givenFetchAttributesToMetaData_whenOnMsg_thenShouldFetchAttributesToMetaData() {
+    public void givenFetchAttributesToMetaData_whenOnMsg_thenShouldFetchAttributesToMetaData() throws TbNodeException {
         // GIVEN
         var user = new User(new UserId(UUID.randomUUID()));
         user.setCustomerId(CUSTOMER_ID);
 
-        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, user.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.ATTRIBUTES, user.getId(), true);
 
         List<AttributeKvEntry> attributesList = List.of(
                 new BaseAttributeKvEntry(new StringDataEntry("sourceKey1", "sourceValue1"), 1L),
@@ -337,11 +347,11 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void givenFetchTelemetryToData_whenOnMsg_thenShouldFetchTelemetryToData() {
+    public void givenFetchTelemetryToData_whenOnMsg_thenShouldFetchTelemetryToData() throws TbNodeException {
         // GIVEN
         var customer = new Customer(new CustomerId(UUID.randomUUID()));
 
-        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, customer.getId());
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, customer.getId(), true);
 
         List<TsKvEntry> timeseriesList = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
@@ -377,12 +387,12 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void givenFetchTelemetryToMetaData_whenOnMsg_thenShouldFetchTelemetryToMetaData() {
+    public void givenFetchTelemetryToMetaData_whenOnMsg_thenShouldFetchTelemetryToMetaData() throws TbNodeException {
         // GIVEN
         var asset = new Asset(new AssetId(UUID.randomUUID()));
         asset.setCustomerId(CUSTOMER_ID);
 
-        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.LATEST_TELEMETRY, asset.getId());
+        prepareMsgAndConfig(TbMsgSource.METADATA, DataToFetch.LATEST_TELEMETRY, asset.getId(), true);
 
         List<TsKvEntry> timeseriesList = List.of(
                 new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
@@ -420,26 +430,88 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
-        var defaultConfig = new TbGetEntityDataNodeConfiguration().defaultConfiguration();
-        var node = new TbGetCustomerAttributeNode();
-        String oldConfig = "{\"attrMapping\":{\"alarmThreshold\":\"threshold\"},\"telemetry\":false}";
-        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
-        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
-        Assertions.assertTrue(upgrade.getFirst());
-        Assertions.assertEquals(defaultConfig, JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()));
+    void givenPreserveOriginatorIfCustomerIsFalse_whenOnMsg_thenShouldFetchParentsAttributesToData() throws TbNodeException {
+        // GIVEN
+        UUID parentCustomerId = Uuids.timeBased();
+        UUID customerId = Uuids.timeBased();
+        var customer = new Customer(new CustomerId(customerId));
+        customer.setParentCustomerId(new CustomerId(parentCustomerId));
+
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, customer.getId(), false);
+
+        List<TsKvEntry> timeseriesList = List.of(
+                new BasicTsKvEntry(1L, new StringDataEntry("sourceKey1", "sourceValue1")),
+                new BasicTsKvEntry(1L, new StringDataEntry("sourceKey2", "sourceValue2")),
+                new BasicTsKvEntry(1L, new StringDataEntry("sourceKey3", "sourceValue3"))
+        );
+        var expectedPatternProcessedKeysList = List.of("sourceKey1", "sourceKey2", "sourceKey3");
+
+        when(entityServiceMock.fetchEntityCustomerIdAsync(TENANT_ID, customer.getId())).thenReturn(
+                FluentFuture.from(immediateFuture(Optional.of(customer.getParentCustomerId())))
+        );
+
+        when(timeseriesServiceMock.findLatest(any(), any(), anyList()))
+                .thenReturn(immediateFuture(timeseriesList));
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var actualMessageCaptor = ArgumentCaptor.forClass(TbMsg.class);
+
+        verify(ctxMock, times(1)).tellSuccess(actualMessageCaptor.capture());
+        verify(timeseriesServiceMock).findLatest(eq(TENANT_ID), eq(customer.getParentCustomerId()), argThat(new ListMatcher<>(expectedPatternProcessedKeysList)));
+        verify(ctxMock, never()).tellFailure(any(), any());
+
+        var expectedMsgData = "{\"temp\":42," +
+                "\"humidity\":77," +
+                "\"messageBodyPattern1\":\"targetKey2\"," +
+                "\"messageBodyPattern2\":\"sourceKey3\"," +
+                "\"targetKey1\":\"sourceValue1\"," +
+                "\"targetKey2\":\"sourceValue2\"," +
+                "\"targetKey3\":\"sourceValue3\"}";
+
+        assertThat(actualMessageCaptor.getValue().getData()).isEqualTo(expectedMsgData);
+        assertThat(actualMessageCaptor.getValue().getMetaData()).isEqualTo(msg.getMetaData());
     }
 
-    private void prepareMsgAndConfig(TbMsgSource fetchTo, DataToFetch dataToFetch, EntityId originator) {
+    @Test
+    void givenPreserveOriginatorIfCustomerIsFalse_whenOnMsg_thenShouldThrowException() throws TbNodeException {
+        // GIVEN
+        UUID customerId = Uuids.timeBased();
+        var customer = new Customer(new CustomerId(customerId));
+
+        prepareMsgAndConfig(TbMsgSource.DATA, DataToFetch.LATEST_TELEMETRY, customer.getId(), false);
+
+        when(entityServiceMock.fetchEntityCustomerIdAsync(TENANT_ID, customer.getId())).thenReturn(
+                FluentFuture.from(immediateFuture(Optional.of(new CustomerId(EntityId.NULL_UUID))))
+        );
+
+        // WHEN
+        ArgumentCaptor<Exception> exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+
+        node.onMsg(ctxMock, msg);
+
+        //THEN
+        verify(ctxMock).tellFailure(eq(msg), exceptionCaptor.capture());
+
+        Exception capturedException = exceptionCaptor.getValue();
+
+        assertInstanceOf(IllegalStateException.class, capturedException);
+        assertEquals("Originator is not assigned to any customer", exceptionCaptor.getValue().getMessage());
+    }
+
+    private void prepareMsgAndConfig(TbMsgSource fetchTo, DataToFetch dataToFetch, EntityId originator, boolean preserveOriginatorIfCustomer) throws TbNodeException {
         config.setDataMapping(Map.of(
                 "sourceKey1", "targetKey1",
                 "${metaDataPattern1}", "$[messageBodyPattern1]",
                 "$[messageBodyPattern2]", "${metaDataPattern2}"));
         config.setDataToFetch(dataToFetch);
         config.setFetchTo(fetchTo);
+        config.setPreserveOriginatorIfCustomer(preserveOriginatorIfCustomer);
 
-        node.config = config;
-        node.fetchTo = fetchTo;
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
 
         var msgMetaData = new TbMsgMetaData();
         msgMetaData.putValue("metaDataPattern1", "sourceKey2");
@@ -471,6 +543,31 @@ public class TbGetCustomerAttributeNodeTest {
             return actualList.containsAll(expectedList);
         }
 
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                //config for version 0
+                Arguments.of(0,
+                        "{\"attrMapping\":{\"alarmThreshold\":\"threshold\"},\"telemetry\":false}",
+                        true,
+                        "{\"dataToFetch\": \"ATTRIBUTES\", \"dataMapping\": {\"alarmThreshold\":\"threshold\"}, \"fetchTo\": \"METADATA\", \"preserveOriginatorIfCustomer\": true}"),
+                //config for version 1
+                Arguments.of(1,
+                        "{\"dataToFetch\": \"ATTRIBUTES\", \"dataMapping\": {\"alarmThreshold\":\"threshold\"}, \"fetchTo\": \"METADATA\"}",
+                        true,
+                        "{\"dataToFetch\": \"ATTRIBUTES\", \"dataMapping\": {\"alarmThreshold\":\"threshold\"}, \"fetchTo\": \"METADATA\", \"preserveOriginatorIfCustomer\": true}"),
+                //config for version 1 with upgrade from version 1
+                Arguments.of(1,
+                        "{\"dataToFetch\": \"ATTRIBUTES\", \"dataMapping\": { \"temp\": \"temp\"}, \"fetchTo\": \"METADATA\", \"preserveOriginatorIfCustomer\": true}",
+                        false,
+                        "{\"dataToFetch\": \"ATTRIBUTES\", \"dataMapping\": { \"temp\": \"temp\"}, \"fetchTo\": \"METADATA\", \"preserveOriginatorIfCustomer\": true}")
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }

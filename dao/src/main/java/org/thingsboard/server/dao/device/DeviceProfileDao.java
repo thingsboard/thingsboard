@@ -1,8 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.DeviceCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileCacheInfo;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -28,6 +32,10 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
 
+    ListenableFuture<List<DeviceProfileInfo>> findDeviceProfilesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceProfileIds);
+
+    List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds);
+
     DeviceProfile findDefaultDeviceProfile(TenantId tenantId);
 
     DeviceProfileInfo findDefaultDeviceProfileInfo(TenantId tenantId);
@@ -40,6 +48,6 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly);
 
-    List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds);
+    List<DeviceProfileCacheInfo> findDeviceProfileCacheInfos(UUID id, int batchSize);
 
 }

@@ -1,0 +1,38 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div style="width: 750px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2 translate>report-template.settings</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="tb-form-panel no-border no-padding">
+    <tb-report-template-settings
+      [formControl]="settingsFormControl"
+      [subReport]="subReport"
+      [format]="format">
+    </tb-report-template-settings>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async) || settingsFormControl.invalid || !settingsFormControl.dirty"
+            (click)="save()">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</div>

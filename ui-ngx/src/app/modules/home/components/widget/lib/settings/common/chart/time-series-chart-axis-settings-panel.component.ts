@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -43,6 +44,10 @@ export class TimeSeriesChartAxisSettingsPanelComponent implements OnInit {
   @Input()
   @coerceBoolean()
   advanced = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Input()
   popover: TbPopoverComponent<TimeSeriesChartAxisSettingsPanelComponent>;

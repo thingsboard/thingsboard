@@ -1,0 +1,59 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectAgentFormGroup" class="mat-block" appearance="outline" subscriptSizing="dynamic">
+  <mat-label translate>agent.deploy-agent</mat-label>
+  <input matInput type="text"
+         #agentInput
+         formControlName="agent"
+         (focusin)="onFocus()"
+         [matAutocomplete]="agentAutocomplete">
+  @if (selectAgentFormGroup.get('agent').value) {
+    <button type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (!selectAgentFormGroup.get('agent').value) {
+    <button mat-button color="primary" matSuffix
+            type="button"
+            (click)="createAgent($event)">
+      <span style="white-space: nowrap">{{ 'agent.deploy-create-new' | translate }}</span>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete tb-agent-autocomplete-panel"
+                    #agentAutocomplete="matAutocomplete"
+                    [displayWith]="displayAgentFn">
+    @for (agent of filteredAgents | async; track agent.id.id) {
+      <mat-option [value]="agent">
+        <span class="tb-agent-option">
+          <span [innerHTML]="agent.name | highlight:searchText"></span>
+          <span class="tb-agent-option-status" [class.online]="agent.active"
+                [matTooltip]="(agent.active ? 'agent.online-hint' : 'agent.offline-hint') | translate"
+                matTooltipPosition="above">
+            <span class="dot"></span>
+            {{ (agent.active ? 'agent.online' : 'agent.offline') | translate }}
+          </span>
+        </span>
+      </mat-option>
+    }
+    @if (!(filteredAgents | async)?.length) {
+      <mat-option [value]="null" class="tb-not-found" disabled>
+        <div class="tb-not-found-content">
+          @if (!textIsNotEmpty(searchText)) {
+            <span translate>agent.deploy-no-agents</span>
+          } @else {
+            <span>
+              {{ translate.get('agent.deploy-no-agents-matching',
+              {entity: truncate.transform(searchText, true, 6, '...')}) | async }}
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>

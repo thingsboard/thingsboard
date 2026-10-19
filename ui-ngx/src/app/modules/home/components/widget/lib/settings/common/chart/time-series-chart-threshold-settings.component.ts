@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
@@ -46,6 +47,14 @@ export class TimeSeriesChartThresholdSettingsComponent implements OnInit, Contro
   @Input()
   @coerceBoolean()
   boxButton = false;
+
+  @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Input()
   icon = 'settings';
@@ -105,7 +114,9 @@ export class TimeSeriesChartThresholdSettingsComponent implements OnInit, Contro
           panelTitle: this.title,
           widgetConfig: this.widgetConfig,
           hideYAxis: this.hideYAxis,
-          yAxisIds: this.yAxisIds
+          yAxisIds: this.yAxisIds,
+          supportsUnitConversion: this.supportsUnitConversion,
+          reportMode: this.reportMode
         },
         isModal: true
       });

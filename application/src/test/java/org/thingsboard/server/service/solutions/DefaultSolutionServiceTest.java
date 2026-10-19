@@ -1,11 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -14,10 +16,14 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.asset.AssetProfileService;
@@ -27,7 +33,10 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.service.solutions.data.SolutionValidationResult;
 
 import java.io.IOException;
@@ -40,6 +49,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -66,13 +79,19 @@ class DefaultSolutionServiceTest {
     @Mock
     private DashboardService dashboardService;
     @Mock
+    private EntityGroupService entityGroupService;
+    @Mock
+    private RoleService roleService;
+    @Mock
     private RuleChainService ruleChainService;
+    @Mock
+    private EdgeService edgeService;
     @Mock
     private DeviceProfileService deviceProfileService;
     @Mock
     private AssetProfileService assetProfileService;
     @Mock
-    private EdgeService edgeService;
+    private SubscriptionService subscriptionService;
 
     @InjectMocks
     private DefaultSolutionService service;
@@ -82,13 +101,17 @@ class DefaultSolutionServiceTest {
 
     @Test
     void testValidateSolutionNamesEveryConflictingEntity() throws IOException {
+        writeEntitiesFile("roles.json", "[{\"name\": \"Existing role\"}]");
         writeEntitiesFile("customers.json", "[{\"name\": \"Existing customer\"}, {\"name\": \"Customer $random\"}]");
         writeEntitiesFile("devices.json", "[{\"name\": \"Existing device\"}, {\"name\": \"New device\"}]");
         writeEntitiesFile("assets.json", "[{\"name\": \"Existing asset\"}, {\"name\": \"New asset\"}]");
 
+        Role role = new Role();
+        role.setName("Existing role");
         Customer customer = new Customer();
         customer.setTitle("Existing customer");
 
+        when(roleService.findRoleByTenantIdAndName(tenantId, "Existing role")).thenReturn(Optional.of(role));
         when(customerService.findCustomerByTenantIdAndTitle(tenantId, "Existing customer")).thenReturn(Optional.of(customer));
         Asset asset = new Asset();
         asset.setName("Existing asset");
@@ -104,6 +127,7 @@ class DefaultSolutionServiceTest {
         assertThat(result.getConflictReport().lines().toList())
                 .containsSubsequence(
                         CONFLICTS_INTRO,
+                        "- **Role**: 'Existing role'",
                         "- **Customer**: 'Existing customer'",
                         "- **Asset**: 'Existing asset'",
                         "- **Device**: 'Existing device'");
@@ -270,8 +294,64 @@ class DefaultSolutionServiceTest {
     @Test
     void testValidateSolutionWithoutEntityFiles() {
         assertThat(service.validateSolution(tenantId, tempDir).isPassed()).isTrue();
-        verifyNoInteractions(customerService, deviceService, assetService, dashboardService, ruleChainService,
-                deviceProfileService, assetProfileService, edgeService);
+        verifyNoInteractions(customerService, deviceService, assetService, dashboardService, entityGroupService,
+                roleService, ruleChainService, deviceProfileService, assetProfileService, edgeService);
+    }
+
+    @Test
+    void testValidateSolutionNamesConflictingTenantGroupAndSkipsCustomerGroups() throws IOException {
+        writeEntitiesFile("customers.json", "[{\"name\": \"Customer A\"}]");
+        writeEntitiesFile("dashboards.json", "[" +
+                "{\"name\": \"Tenant dashboard\", \"file\": \"a.json\", \"group\": \"Tenant dashboards\"}," +
+                "{\"name\": \"Customer dashboard\", \"file\": \"b.json\", \"customer\": \"Customer A\", \"group\": \"Customer A dashboards\"}," +
+                "{\"name\": \"Dashboard without a group\", \"file\": \"c.json\"}]");
+
+        DashboardInfo dashboard = new DashboardInfo();
+        dashboard.setTitle("Tenant dashboard");
+
+        when(customerService.findCustomerByTenantIdAndTitle(tenantId, "Customer A")).thenReturn(Optional.empty());
+        when(dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, "Tenant dashboard")).thenReturn(dashboard);
+        when(entityGroupService.findEntityGroupByTypeAndName(tenantId, tenantId, EntityType.DASHBOARD, "Tenant dashboards", false))
+                .thenReturn(Optional.of(entityGroup("Tenant dashboards", EntityType.DASHBOARD)));
+
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
+
+        assertThat(result.isPassed()).isFalse();
+        assertThat(result.getConflictReport().lines().toList())
+                .containsSubsequence(CONFLICTS_INTRO,
+                        "- **Dashboard**: 'Tenant dashboard'",
+                        // the groups of every type are collected in one pass, so their section comes last
+                        "- **Entity Group**: 'Tenant dashboards' (Type: Dashboard, Owner: Tenant)");
+        // groups of the customers created by the template are always new, as well as the customers themselves
+        verify(entityGroupService, never()).findEntityGroupByTypeAndName(any(), any(), any(), eq("Customer A dashboards"), anyBoolean());
+    }
+
+    /**
+     * The group type is read from the definition, so every type of entity whose install creates a group has to end up
+     * looked up under its own group type - a pairing done by hand would compile just as well.
+     */
+    @ParameterizedTest
+    @CsvSource({"dashboards.json, DASHBOARD", "assets.json, ASSET", "devices.json, DEVICE", "edges.json, EDGE"})
+    void testValidateSolutionNamesAConflictingGroupOfEveryTypeItCreates(String fileName, EntityType groupType)
+            throws IOException {
+        writeEntitiesFile(fileName, "[{\"name\": \"Entity\", \"group\": \"Tenant group\"}]");
+
+        when(entityGroupService.findEntityGroupByTypeAndName(tenantId, tenantId, groupType, "Tenant group", false))
+                .thenReturn(Optional.of(entityGroup("Tenant group", groupType)));
+
+        SolutionValidationResult result = service.validateSolution(tenantId, tempDir);
+
+        assertThat(result.isPassed()).isFalse();
+        assertThat(result.getConflictReport().lines().toList())
+                .contains("- **Entity Group**: 'Tenant group' (Type: " + groupType.getNormalName() + ", Owner: Tenant)");
+    }
+
+    private EntityGroup entityGroup(String name, EntityType type) {
+        EntityGroup entityGroup = new EntityGroup(new EntityGroupId(UUID.randomUUID()));
+        entityGroup.setName(name);
+        entityGroup.setType(type);
+        entityGroup.setOwnerId(tenantId);
+        return entityGroup;
     }
 
     private static Device existingDevice(String name) {

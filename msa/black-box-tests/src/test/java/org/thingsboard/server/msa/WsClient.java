@@ -1,22 +1,21 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import javax.net.ssl.SSLParameters;
-import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WsClient extends WebSocketClient {
-    private static final ObjectMapper mapper = new ObjectMapper();
     private WsTelemetryResponse message;
 
     private volatile boolean firstReplyReceived;
@@ -42,12 +41,12 @@ public class WsClient extends WebSocketClient {
             firstReply.countDown();
         } else {
             try {
-                WsTelemetryResponse response = mapper.readValue(message, WsTelemetryResponse.class);
+                WsTelemetryResponse response = JacksonUtil.fromString(message, WsTelemetryResponse.class);
                 if (!response.getData().isEmpty()) {
                     this.message = response;
                     latch.countDown();
                 }
-            } catch (IOException e) {
+            } catch (IllegalArgumentException e) {
                 log.error("ws message can't be read", e);
             }
         }
@@ -90,6 +89,10 @@ public class WsClient extends WebSocketClient {
             log.error("Timeout, ws message wasn't received");
             throw new RuntimeException(e);
         }
+    }
+
+    public WsTelemetryResponse getMessage() {
+        return this.message;
     }
 
     @Override

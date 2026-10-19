@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -25,6 +25,7 @@ export interface NotificationRequestErrorDialogData {
 export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogComponent, void> {
 
   errorStats: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
+  errorStatEntries: Array<{ key: NotificationDeliveryMethod; value: { [k: string]: string } }>;
 
   NotificationDeliveryMethodInfoMap = NotificationDeliveryMethodInfoMap;
 
@@ -35,6 +36,7 @@ export class SentErrorDialogComponent extends DialogComponent<SentErrorDialogCom
     super(store, router, dialogRef);
 
     this.errorStats = data.notificationRequest.stats.errors;
+    this.errorStatEntries = (Object.entries(this.errorStats) as Array<[NotificationDeliveryMethod, { [k: string]: string }]>).map(([key, value]) => ({ key, value }));
   }
 
   cancel(): void {

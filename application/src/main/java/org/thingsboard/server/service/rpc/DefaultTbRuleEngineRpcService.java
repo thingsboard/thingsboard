@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.rpc;
 
 import jakarta.annotation.PostConstruct;
@@ -116,6 +117,11 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     }
 
     @Override
+    public Rpc findRpcById(TenantId tenantId, RpcId id) {
+        return rpcService.findById(tenantId, id);
+    }
+
+    @Override
     public void sendRestApiCallReply(String serviceId, UUID requestId, TbMsg tbMsg) {
         TransportProtos.RestApiCallResponseMsgProto msg = TransportProtos.RestApiCallResponseMsgProto.newBuilder()
                 .setRequestIdMSB(requestId.getMostSignificantBits())
@@ -123,11 +129,6 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                 .setResponseProto(TbMsg.toProto(tbMsg))
                 .build();
         clusterService.pushNotificationToCore(serviceId, msg, null);
-    }
-
-    @Override
-    public Rpc findRpcById(TenantId tenantId, RpcId id) {
-        return rpcService.findById(tenantId, id);
     }
 
     @Override

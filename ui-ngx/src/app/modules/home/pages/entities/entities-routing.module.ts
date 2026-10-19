@@ -1,15 +1,15 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { RouterModule, Routes } from '@angular/router';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Route, RouterModule } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { NgModule } from '@angular/core';
-import { deviceRoutes } from '@home/pages/device/device-routing.module';
-import { assetRoutes } from '@home/pages/asset/asset-routing.module';
-import { entityViewRoutes } from '@home/pages/entity-view/entity-view-routing.module';
+import { devicesRoute } from '@home/pages/device/device-routing.module';
+import { assetsRoute } from '@home/pages/asset/asset-routing.module';
+import { entityViewsRoute } from '@home/pages/entity-view/entity-view-routing.module';
 import { gatewaysRoutes } from '@home/pages/gateways/gateways-routing.module';
 
-const routes: Routes = [
-  {
+export const entitiesRoute = (root = false): Route => ({
     path: 'entities',
     data: {
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
@@ -23,19 +23,18 @@ const routes: Routes = [
         children: [],
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          redirectTo: '/entities/devices'
+          redirectTo: 'devices'
         }
       },
-      ...deviceRoutes,
-      ...assetRoutes,
-      ...entityViewRoutes,
+      devicesRoute(root),
+      assetsRoute(root),
+      entityViewsRoute(root),
       ...gatewaysRoutes
     ]
-  }
-];
+  });
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild([entitiesRoute(true)])],
   exports: [RouterModule]
 })
 export class EntitiesRoutingModule { }

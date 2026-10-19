@@ -1,9 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.alarm;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class AlarmStatusFilter {
 
@@ -94,6 +97,26 @@ public class AlarmStatusFilter {
 
         boolean ackFilter = statuses.contains(AlarmSearchStatus.ACK);
         boolean unackFilter = statuses.contains(AlarmSearchStatus.UNACK);
+        Optional<Boolean> ack = Optional.empty();
+        if (ackFilter && !unackFilter || !ackFilter && unackFilter) {
+            ack = Optional.of(ackFilter);
+        }
+        return new AlarmStatusFilter(clear, ack);
+    }
+
+    public static AlarmStatusFilter from(List<AlarmStatus> filter) {
+        if (filter == null || filter.isEmpty()) {
+            return AlarmStatusFilter.EMPTY;
+        }
+        boolean clearFilter = filter.stream().anyMatch(AlarmStatus::isCleared);
+        boolean activeFilter = filter.stream().anyMatch(Predicate.not(AlarmStatus::isCleared));
+        Optional<Boolean> clear = Optional.empty();
+        if (clearFilter && !activeFilter || !clearFilter && activeFilter) {
+            clear = Optional.of(clearFilter);
+        }
+
+        boolean ackFilter = filter.stream().anyMatch(AlarmStatus::isAck);
+        boolean unackFilter = filter.stream().anyMatch(Predicate.not(AlarmStatus::isAck));
         Optional<Boolean> ack = Optional.empty();
         if (ackFilter && !unackFilter || !ackFilter && unackFilter) {
             ack = Optional.of(ackFilter);

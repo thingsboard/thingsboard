@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +56,7 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
     public void generateClusterIdIfNotExist() {
         var clusterId = UUID.randomUUID();
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
-             PreparedStatement statement = conn.prepareStatement(
-                     "INSERT INTO tb_cluster (cluster_id) SELECT ?::uuid WHERE NOT EXISTS (SELECT 1 FROM tb_cluster) ON CONFLICT DO NOTHING")) {
+             PreparedStatement statement = conn.prepareStatement(TbClusterSchema.INSERT_CLUSTER_ID_QUERY)) {
             statement.setString(1, clusterId.toString());
             int insertedRows = statement.executeUpdate();
             UUID storedClusterId = insertedRows > 0 ? clusterId : readClusterId(conn);
@@ -71,7 +71,7 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
 
     private UUID readClusterId(Connection conn) throws SQLException {
         try (Statement statement = conn.createStatement();
-             ResultSet rs = statement.executeQuery("SELECT cluster_id FROM tb_cluster")) {
+             ResultSet rs = statement.executeQuery(TbClusterSchema.SELECT_CLUSTER_ID_QUERY)) {
             return rs.next() ? rs.getObject(1, UUID.class) : null;
         }
     }

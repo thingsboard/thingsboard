@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+package org.thingsboard.server.dao.agent;
+
+import org.thingsboard.server.common.data.agent.AgentAppEventActionType;
+import org.thingsboard.server.common.data.agent.AgentApplication;
+import org.thingsboard.server.common.data.agent.step.AgentAppStep;
+
+import java.util.List;
+
+public interface AgentAppEventStepsResolver {
+
+    List<AgentAppStep> resolveAgentSteps(AgentAppEventActionType actionType);
+
+    List<AgentAppStep> resolveSteps(AgentApplication app, AgentAppEventActionType actionType);
+}

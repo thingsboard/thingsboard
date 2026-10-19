@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 @import "../../../../../../scss/constants";
 
@@ -99,6 +99,7 @@
           max-height: 100%;
           width: 100%;;
           overflow-y: auto;
+          padding-top: 4px;
           scrollbar-gutter: stable;
           @media #{$mat-gt-sm} {
             min-width: 500px;

@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -13,10 +13,12 @@
       <tb-rate-limits-text [rateLimitsArray]="rateLimitsArray" [disabled]="disabled"></tb-rate-limits-text>
     </div>
   </fieldset>
-  <button mat-icon-button color="primary" type="button" *ngIf="!disabled"
-          class="tb-rate-limits-button"
-          (click)="onClick($event)"
-          [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
-    <mat-icon>add_circle_outline</mat-icon>
-  </button>
+  @if (!disabled) {
+    <button mat-icon-button color="primary" type="button"
+            class="tb-rate-limits-button"
+            (click)="onClick($event)"
+            [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
+      <mat-icon>add_circle_outline</mat-icon>
+    </button>
+  }
 </div>

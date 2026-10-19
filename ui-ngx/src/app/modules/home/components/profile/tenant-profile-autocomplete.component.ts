@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -21,6 +21,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
 import { emptyPageData } from '@shared/models/page/page-data';
 import { getEntityDetailsPageURL } from '@core/utils';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-tenant-profile-autocomplete',
@@ -56,6 +57,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   showDetailsPageLink = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Output()
   tenantProfileUpdated = new EventEmitter<TenantProfileId>();

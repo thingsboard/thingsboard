@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.mqtt;
 
 import com.google.common.collect.HashMultimap;
@@ -61,7 +62,7 @@ final class MqttClientImpl implements MqttClient {
     @Getter(AccessLevel.PACKAGE)
     private final ConcurrentMap<Integer, MqttPendingUnsubscription> pendingServerUnsubscribes = new ConcurrentHashMap<>();
     @Getter(AccessLevel.PACKAGE)
-    private final ConcurrentMap<Integer, MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new ConcurrentHashMap<>();
+    private final Set<Integer> qos2PendingMsgIds = ConcurrentHashMap.newKeySet();
     @Getter(AccessLevel.PACKAGE)
     private final ConcurrentMap<Integer, MqttPendingPublish> pendingPublishes = new ConcurrentHashMap<>();
     @Getter(AccessLevel.PACKAGE)
@@ -161,7 +162,14 @@ final class MqttClientImpl implements MqttClient {
 
         future.addListener((ChannelFutureListener) f -> {
             if (f.isSuccess()) {
+                // Assign first, then re-check: disconnect() is a no-op while the channel is null, so a connect
+                // completing after it would otherwise leave a live session that nobody holds a reference to.
                 MqttClientImpl.this.channel = f.channel();
+                if (disconnected) {
+                    log.debug("[{}][{}] Connected after disconnect(); closing channel {}", host, port, f.channel().id());
+                    f.channel().close();
+                    return;
+                }
                 log.debug("[{}][{}] Connected successfully {}!", host, port, this.channel.id());
                 MqttClientImpl.this.channel.closeFuture().addListener((ChannelFutureListener) channelFuture -> {
                     if (isConnected()) {
@@ -178,7 +186,7 @@ final class MqttClientImpl implements MqttClient {
                     subscriptions.clear();
                     pendingServerUnsubscribes.forEach((id, mqttPendingServerUnsubscribes) -> mqttPendingServerUnsubscribes.onChannelClosed());
                     pendingServerUnsubscribes.clear();
-                    qos2PendingIncomingPublishes.clear();
+                    qos2PendingMsgIds.clear();
                     pendingPublishes.forEach((id, mqttPendingPublish) -> mqttPendingPublish.onChannelClosed());
                     pendingPublishes.clear();
                     pendingSubscribeTopics.clear();
@@ -450,17 +458,17 @@ final class MqttClientImpl implements MqttClient {
         }
 
         disconnected = true;
-        log.trace("[{}] Disconnecting from server", channel != null ? channel.id() : "UNKNOWN");
-        if (this.channel != null) {
+        // Pin the channel: a reconnect may replace the field, and the fallback below would then close the new one.
+        final Channel ch = this.channel;
+        log.trace("[{}] Disconnecting from server", ch != null ? ch.id() : "UNKNOWN");
+        if (ch != null) {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
 
-            sendAndFlushPacket(message).addListener((ChannelFutureListener) future -> {
-                future.channel().close();
-            });
+            sendAndFlushPacket(ch, message).addListener((ChannelFutureListener) future -> future.channel().close());
             eventLoop.schedule(() -> {
-                if (channel.isOpen()) {
-                    log.trace("[{}] Channel still open after {} second; forcing close now", channel.id(), DISCONNECT_FALLBACK_DELAY_SECS);
-                    this.channel.close();
+                if (ch.isOpen()) {
+                    log.trace("[{}] Channel still open after {} second; forcing close now", ch.id(), DISCONNECT_FALLBACK_DELAY_SECS);
+                    ch.close();
                 }
             }, DISCONNECT_FALLBACK_DELAY_SECS, TimeUnit.SECONDS);
         }
@@ -476,14 +484,22 @@ final class MqttClientImpl implements MqttClient {
     }
 
     ChannelFuture sendAndFlushPacket(Object message) {
-        if (this.channel == null) {
+        return sendAndFlushPacket(this.channel, message);
+    }
+
+    /**
+     * Sends on the channel the caller pinned, instead of re-reading the volatile field at each step.
+     * Returns null when there is no channel yet; callers use that to defer delivery until the connection opens.
+     */
+    private ChannelFuture sendAndFlushPacket(Channel ch, Object message) {
+        if (ch == null) {
             return null;
         }
-        if (this.channel.isActive()) {
-            log.trace("[{}] Sending message {}", channel != null ? channel.id() : "UNKNOWN", message);
-            return this.channel.writeAndFlush(message);
+        if (ch.isActive()) {
+            log.trace("[{}] Sending message {}", ch.id(), message);
+            return ch.writeAndFlush(message);
         }
-        return this.channel.newFailedFuture(new ChannelClosedException("Channel is closed!"));
+        return ch.newFailedFuture(new ChannelClosedException("Channel is closed!"));
     }
 
     private MqttMessageIdVariableHeader getNewMessageId() {
@@ -606,7 +622,7 @@ final class MqttClientImpl implements MqttClient {
         }
 
         @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
+        protected void initChannel(SocketChannel ch) {
             if (sslContext != null) {
                 ch.pipeline().addLast(sslContext.newHandler(ch.alloc(), host, port));
             }

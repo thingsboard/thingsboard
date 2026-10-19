@@ -1,6 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
 import { MenuService } from '@core/services/menu.service';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
@@ -9,11 +14,11 @@ import { ActivatedRoute } from '@angular/router';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 
 @Component({
-    selector: 'tb-home-links',
-    templateUrl: './home-links.component.html',
-    styleUrls: ['./home-links.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: false
+  selector: 'tb-home-links',
+  templateUrl: './home-links.component.html',
+  styleUrls: ['./home-links.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: false
 })
 export class HomeLinksComponent implements OnInit {
 
@@ -23,6 +28,8 @@ export class HomeLinksComponent implements OnInit {
 
   homeDashboard: HomeDashboard = this.route.snapshot.data.homeDashboard;
 
+  hideMainToolbar = true;
+
   constructor(private menuService: MenuService,
               public breakpointObserver: BreakpointObserver,
               private cd: ChangeDetectorRef,
@@ -30,6 +37,7 @@ export class HomeLinksComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.hideMainToolbar = (!!this.homeDashboard && !this.homeDashboard.isSystemDashboard);
     if (!this.homeDashboard) {
       this.updateColumnCount();
       this.breakpointObserver

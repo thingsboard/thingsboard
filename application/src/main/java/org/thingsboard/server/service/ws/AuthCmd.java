@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.ws;
 
@@ -10,11 +10,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthCmd implements WsCmd {
+
     private int cmdId;
     private String token;
+    private String apiKey;
 
     @Override
     public WsCmdType getType() {
         return WsCmdType.AUTH;
     }
+
 }

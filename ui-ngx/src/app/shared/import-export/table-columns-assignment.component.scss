@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 :host {
   overflow-x: auto;
@@ -18,5 +18,11 @@
   .mat-column-key {
     flex: 0 0 120px;
     min-width: 120px;
+  }
+  mat-row {
+    mat-cell {
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
   }
 }

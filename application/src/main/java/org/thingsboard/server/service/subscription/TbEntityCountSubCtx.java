@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,13 +24,13 @@ public class TbEntityCountSubCtx extends TbAbstractEntityQuerySubCtx<EntityCount
 
     @Override
     public void fetchData() {
-        result = (int) entityService.countEntitiesByQuery(getTenantId(), getCustomerId(), query);
+        result = (int) entityService.countEntitiesByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query);
         sendWsMsg(new EntityCountUpdate(cmdId, result));
     }
 
     @Override
     protected void update() {
-        int newCount = (int) entityService.countEntitiesByQuery(getTenantId(), getCustomerId(), query);
+        int newCount = (int) entityService.countEntitiesByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query);
         if (newCount != result) {
             result = newCount;
             sendWsMsg(new EntityCountUpdate(cmdId, result));

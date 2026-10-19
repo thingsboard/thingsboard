@@ -1,13 +1,15 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="notificationSettingsFormGroup" class="flex flex-col">
   <div class="flex flex-row" style="height: 48px;">
     <div class="flex max-w-50% flex-full items-center justify-start">
       <mat-checkbox color="primary"
+                    [disabled]="disabled"
                     (click)="$event.stopPropagation()"
                     (change)="changeInstanceTypeCheckBox($event.checked)"
                     [checked]="getChecked()"
@@ -18,13 +20,16 @@
         </span>
       </mat-checkbox>
     </div>
-    <div class="flex flex-1 flex-row" *ngFor="let deliveryMethod of deliveryMethods">
-      <div class="flex flex-1 items-center justify-start">
-        <mat-checkbox color="primary"
+    @for (deliveryMethod of deliveryMethods; track deliveryMethod) {
+      <div class="flex flex-1 flex-row">
+        <div class="flex flex-1 items-center justify-start">
+          <mat-checkbox color="primary"
+                        [disabled]="disabled"
                       [checked]="getChecked(deliveryMethod)"
-                      (click)="toggleDeliviryMethod(deliveryMethod)"
-        ></mat-checkbox>
+                        (click)="toggleDeliviryMethod(deliveryMethod)"
+          ></mat-checkbox>
+        </div>
       </div>
-    </div>
+    }
   </div>
 </form>

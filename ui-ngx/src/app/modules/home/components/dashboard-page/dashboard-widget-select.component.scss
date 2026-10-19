@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 @import "../iot-hub/iot-hub-common";
 
@@ -22,15 +23,12 @@ tb-dashboard-widget-select {
     width: 100%;
     height: auto;
     gap: 16px;
-    color: #fff;
     padding: 12px 12px 12px 24px;
 
     button.mat-mdc-icon-button.mat-mdc-button-base {
       --mdc-icon-button-state-layer-size: 40px;
       --mat-icon-button-state-layer-size: 40px;
-      --mdc-icon-button-icon-color: #fff;
       padding: 8px;
-      color: #fff;
     }
   }
 
@@ -43,7 +41,6 @@ tb-dashboard-widget-select {
       font-size: 24px;
       line-height: 32px;
       font-weight: 400;
-      color: #fff;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -58,7 +55,7 @@ tb-dashboard-widget-select {
         border-radius: 8px;
         overflow: hidden;
         padding: 0;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
         .mat-button-toggle.mat-button-toggle-appearance-standard {
           .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
             border-radius: 0;
@@ -77,11 +74,6 @@ tb-dashboard-widget-select {
             }
           }
         }
-        &.tb-fill.tb-invert {
-          .mat-button-toggle.mat-button-toggle-appearance-standard {
-            color: #FFF;
-          }
-        }
       }
     }
   }
@@ -93,14 +85,14 @@ tb-dashboard-widget-select {
     .tb-widget-select-search {
       height: 40px;
       padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #f8f8f8;
+      border: 1px solid #dddddd;
       border-radius: 8px;
-      caret-color: $tb-primary-color;
-      color: rgba(255, 255, 255, 0.84);
+      caret-color: var(--tb-primary-500);
+      color: #878787;
 
       mat-icon {
-        color: rgba(255, 255, 255, 0.8);
+        color:  #878787;
       }
 
       input {
@@ -111,24 +103,23 @@ tb-dashboard-widget-select {
         font-size: 16px;
         line-height: 24px;
         background: transparent;
-        color: #fff;
         border: none;
         outline: none;
 
         &::placeholder {
-          color: rgba(255, 255, 255, 0.8);
+          color:  #878787;
           opacity: 1;
         }
       }
 
       button.mat-mdc-icon-button mat-icon {
-        color: rgba(255, 255, 255, 0.8);
+        color: #878787;
       }
 
       &.focus {
         background: #fff;
-        border-color: rgba(255, 255, 255, 0.15);
-        caret-color: $tb-primary-color;
+        border-color: rgba(0, 0, 0, 0.15);
+        caret-color: var(--tb-primary-500);
 
         mat-icon {
           color: rgba(0, 0, 0, 0.54);
@@ -152,14 +143,9 @@ tb-dashboard-widget-select {
     }
 
     .tb-widget-select-sort {
-      color: #fff;
       font-weight: 500;
       font-size: 14px;
       letter-spacing: 0.25px;
-
-      mat-icon {
-        color: #fff;
-      }
     }
   }
 
@@ -216,20 +202,20 @@ tb-dashboard-widget-select {
       gap: 16px;
       align-items: center;
       padding: 16px 20px;
-      border: 1px solid $tb-primary-color;
+      border: 1px solid var(--tb-primary-500);
       border-radius: 4px;
       background: #fff;
       cursor: pointer;
       transition: background-color 0.2s;
 
       &:hover {
-        background: rgba($tb-primary-color, 0.06);
+        background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
       }
 
       .tb-widget-select-browse-tip-icon,
       .tb-widget-select-browse-tip-arrow {
         flex-shrink: 0;
-        color: $tb-primary-color;
+        color: var(--tb-primary-500);
       }
 
       .tb-widget-select-browse-tip-text {
@@ -245,7 +231,7 @@ tb-dashboard-widget-select {
         .tb-widget-select-browse-tip-link {
           font-weight: 500;
           letter-spacing: 0.25px;
-          color: $tb-primary-color;
+          color: var(--tb-primary-500);
         }
       }
     }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
@@ -125,13 +125,6 @@ export class TenantProfileQueuesComponent implements ControlValueAccessor, Valid
         this.tenantProfileQueuesFormGroup.enable({emitEvent: false});
       }
     }
-  }
-
-  public trackByQueue(index: number, queueControl: AbstractControl) {
-    if (queueControl) {
-      return queueControl.value.id;
-    }
-    return null;
   }
 
   public removeQueue(index: number) {

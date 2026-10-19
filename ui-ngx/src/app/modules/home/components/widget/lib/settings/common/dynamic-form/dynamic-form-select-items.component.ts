@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   Component, DestroyRef,
@@ -158,10 +158,6 @@ export class DynamicFormSelectItemsComponent implements ControlValueAccessor, On
 
   selectItemsFormArray(): UntypedFormArray {
     return this.selectItemsFormGroup.get('selectItems') as UntypedFormArray;
-  }
-
-  trackBySelectItem(_index: number, selectItemControl: AbstractControl): any {
-    return selectItemControl;
   }
 
   removeSelectItem(index: number, emitEvent = true) {

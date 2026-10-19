@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -8,9 +8,11 @@
   <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.map-layer</mat-label>
     <mat-select required formControlName="mapProviderHere">
-      <mat-option *ngFor="let provider of hereMapProviders" [value]="provider">
-        {{hereMapProviderTranslations.get(provider) | translate}}
-      </mat-option>
+      @for (provider of hereMapProviders; track provider) {
+        <mat-option [value]="provider">
+          {{hereMapProviderTranslations.get(provider) | translate}}
+        </mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <section class="tb-widget-settings" formGroupName="credentials">

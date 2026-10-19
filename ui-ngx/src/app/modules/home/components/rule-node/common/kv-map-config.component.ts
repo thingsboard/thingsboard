@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Injector, Input, OnInit } from '@angular/core';
 import {
@@ -65,6 +65,8 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
   @Input() valRequiredText: string;
 
   @Input() hintText: string;
+
+  @Input() emptyText: string;
 
   @Input() popupHelpLink: string;
 
@@ -157,7 +159,7 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
   };
 
   writeValue(keyValMap: { [key: string]: string }): void {
-    const keyValuesData = Object.keys(keyValMap).map(key => ({key, value: keyValMap[key]}));
+    const keyValuesData = Object.keys(keyValMap ?? {}).map(key => ({key, value: keyValMap[key]}));
     if (this.keyValsFormArray().length === keyValuesData.length) {
       this.keyValsFormArray().patchValue(keyValuesData, {emitEvent: false});
     } else {

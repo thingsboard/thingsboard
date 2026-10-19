@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -8,6 +9,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { validateEmail } from '@app/core/utils';
 
 @Component({
@@ -24,11 +26,14 @@ export class ResetPasswordRequestComponent extends PageComponent {
     email: ['', [Validators.required, validateEmail]],
   }, {updateOn: 'submit'});
 
+  @HostBinding('class') class = 'tb-custom-css';
+
   constructor(protected store: Store<AppState>,
               private authService: AuthService,
               private translate: TranslateService,
+              public wl: WhiteLabelingService,
               public fb: UntypedFormBuilder) {
-    super(store);
+      super(store);
   }
 
   disableInputs() {

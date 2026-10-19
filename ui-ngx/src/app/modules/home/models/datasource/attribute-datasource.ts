@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
@@ -101,9 +101,11 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   }
 
   isAllSelected(): Observable<boolean> {
-    const numSelected = this.selection.selected.length;
     return this.attributesSubject.pipe(
-      map((attributes) => numSelected === attributes.length)
+      map((attributes) => {
+        const numSelected = this.selection.selected.length;
+        return attributes.length > 0 && numSelected === attributes.length
+      })
     );
   }
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.repo;
 
 import org.junit.After;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -48,7 +50,7 @@ public class ApiUsageStateFilterTest extends AbstractEDQTest {
         ApiUsageState apiUsageState = buildApiUsageState(customerId);
         addOrUpdate(EntityType.API_USAGE_STATE, apiUsageState);
 
-        var result = repository.findEntityDataByQuery(tenantId, null, getEntityDataQuery(new CustomerId(customerId)), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityDataQuery(new CustomerId(customerId)), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var customer = result.getData().get(0);
@@ -68,6 +70,7 @@ public class ApiUsageStateFilterTest extends AbstractEDQTest {
         apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setAlarmExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setReportExecState(ApiUsageStateValue.ENABLED);
         return apiUsageState;
     }
 

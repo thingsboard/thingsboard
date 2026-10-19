@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -8,9 +8,11 @@
   <div class="tb-value-chart-card-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #valueChartCardContent class="tb-value-chart-card-content" [class]="layout" [class.auto-scale]="autoScale && showValue">
-    <div *ngIf="showValue" class="tb-value-chart-card-value-container">
-      <div class="tb-value-chart-card-value" #valueChartCardValue [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
-    </div>
+    @if (showValue) {
+      <div class="tb-value-chart-card-value-container">
+        <div class="tb-value-chart-card-value" #valueChartCardValue [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
+      </div>
+    }
     <div class="tb-value-chart-card-chart" #chartElement></div>
   </div>
 </div>

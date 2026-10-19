@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.discovery;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -37,10 +38,25 @@ public class TopicService {
     @Value("${queue.calculated-fields.notifications-topic:calculated_field.notifications}")
     private String tbCalculatedFieldNotificationsTopic;
 
+    @Value("${queue.integration.notifications-topic:tb_integration_executor.notifications}")
+    private String tbIntegrationExecutorNotificationsTopic;
+
+    @Value("${queue.report.notifications_topic:tb_report.notifications}")
+    private String tbReportNotificationsTopic;
+
+    @Value("${queue.agent.notifications-topic:tb_agent.notifications}")
+    private String tbAgentNotificationsTopic;
+
+    @Value("${queue.agent.bulk-ops-topic:tb_agent_bulk_ops}")
+    private String tbAgentBulkOpsTopic;
+
     private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbCalculatedFieldNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbIntegrationExecutorNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbReportNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbAgentNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentReferenceHashMap<EdgeId, TopicPartitionInfo> tbEdgeEventsNotificationTopics = new ConcurrentReferenceHashMap<>();
 
     /**
@@ -57,6 +73,10 @@ public class TopicService {
             case TB_RULE_ENGINE -> tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
                     id -> buildNotificationsTopicPartitionInfo(tbRuleEngineNotificationsTopic, serviceId));
             case TB_TRANSPORT -> buildNotificationsTopicPartitionInfo(tbTransportNotificationsTopic, serviceId);
+            case TB_INTEGRATION_EXECUTOR -> tbIntegrationExecutorNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildNotificationsTopicPartitionInfo(tbIntegrationExecutorNotificationsTopic, serviceId));
+            case TB_REPORT -> tbReportNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildNotificationsTopicPartitionInfo(tbReportNotificationsTopic, serviceId));
             default -> throw new IllegalStateException("Unexpected service type: " + serviceType);
         };
     }
@@ -75,6 +95,20 @@ public class TopicService {
 
     private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
         return buildTopicPartitionInfo(buildNotificationTopicName(tbEdgeNotificationsTopic, serviceId), null, null, false);
+    }
+
+    public TopicPartitionInfo getAgentNotificationsTopic(String serviceId) {
+        return tbAgentNotificationTopics.computeIfAbsent(serviceId, id -> buildNotificationsTopicPartitionInfo(tbAgentNotificationsTopic, serviceId));
+    }
+
+    /**
+     * Returns a shared work queue topic for agent bulk operations.
+     * Currently, uses a flat Kafka topic with consumer group assignment (no hash-based TB-partitioning).
+     * If per-tenant/per-profile local state is needed in the future, consider migrating to
+     * HashPartitionService-based routing — the proto already carries tenantId and the target profile ids.
+     */
+    public TopicPartitionInfo getAgentBulkOpsTopic() {
+        return buildTopicPartitionInfo(tbAgentBulkOpsTopic, null, null, true);
     }
 
     public TopicPartitionInfo getCalculatedFieldNotificationsTopic(String serviceId) {
@@ -103,9 +137,9 @@ public class TopicService {
     public String buildConsumerGroupId(String servicePrefix, TenantId tenantId, String queueName, Integer partitionId) {
         return this.buildTopicName(
                 servicePrefix + queueName
-                        + (tenantId.isSysTenantId() ? "" : ("-isolated-" + tenantId))
-                        + "-consumer"
-                        + suffix(partitionId));
+                + (tenantId.isSysTenantId() ? "" : ("-isolated-" + tenantId))
+                + "-consumer"
+                + suffix(partitionId));
     }
 
     String suffix(Integer partitionId) {

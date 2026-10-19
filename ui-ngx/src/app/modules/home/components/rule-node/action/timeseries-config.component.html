@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -17,7 +17,7 @@
       </tb-toggle-select>
     </div>
     @if(!timeseriesConfigForm.get('processingSettings.isAdvanced').value) {
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label translate>rule-node-config.save-time-series.strategy</mat-label>
         <mat-select formControlName="type">
           @for (strategy of processingStrategies; track strategy) {
@@ -28,6 +28,7 @@
 
       @if(timeseriesConfigForm.get('processingSettings.type').value === ProcessingType.DEDUPLICATE) {
         <tb-time-unit-input
+          appearance="outline"
           required
           labelText="{{ 'rule-node-config.save-time-series.deduplication-interval' | translate }}"
           requiredText="{{ 'rule-node-config.save-time-series.deduplication-interval-required' | translate }}"
@@ -59,6 +60,7 @@
           </mat-slide-toggle>
         </div>
         <tb-time-unit-input
+          appearance="outline"
           required
           subscriptSizing="dynamic"
           labelText="{{ 'rule-node-config.default-ttl' | translate }}"

@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { columnExportOptions } from '@home/components/widget/lib/table-widget.models';
 
 @Component({
     selector: 'tb-timeseries-table-latest-key-settings',
@@ -31,9 +33,11 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
+      useCellContentFunctionOnExport: true,
       cellContentFunction: '',
       defaultColumnVisibility: 'visible',
       columnSelectionToDisplay: 'enabled',
+      columnExportOption: columnExportOptions.onlyVisible,
       disableSorting: false
     };
   }
@@ -45,9 +49,11 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
+      useCellContentFunctionOnExport: [settings.useCellContentFunctionOnExport, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
       defaultColumnVisibility: [settings.defaultColumnVisibility, []],
       columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
+      columnExportOption: [settings.columnExportOption, []],
       disableSorting: [settings.disableSorting, []]
     });
   }
@@ -71,14 +77,17 @@ export class TimeseriesTableLatestKeySettingsComponent extends WidgetSettingsCom
       }
       if (useCellContentFunction) {
         this.timeseriesTableLatestKeySettingsForm.get('cellContentFunction').enable();
+        this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunctionOnExport').enable();
       } else {
         this.timeseriesTableLatestKeySettingsForm.get('cellContentFunction').disable();
+        this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunctionOnExport').disable();
       }
     } else {
       this.timeseriesTableLatestKeySettingsForm.get('order').disable();
       this.timeseriesTableLatestKeySettingsForm.get('useCellStyleFunction').disable({emitEvent: false});
       this.timeseriesTableLatestKeySettingsForm.get('cellStyleFunction').disable();
       this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunction').disable({emitEvent: false});
+      this.timeseriesTableLatestKeySettingsForm.get('useCellContentFunctionOnExport').disable();
       this.timeseriesTableLatestKeySettingsForm.get('cellContentFunction').disable();
     }
     this.timeseriesTableLatestKeySettingsForm.get('order').updateValueAndValidity({emitEvent});

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
@@ -105,8 +105,8 @@ export class GpioControlWidgetSettingsComponent extends WidgetSettingsComponent 
     return this.gpioControlWidgetSettingsForm.get('gpioList') as UntypedFormArray;
   }
 
-  public trackByGpioItem(index: number, gpioItemControl: AbstractControl): any {
-    return gpioItemControl;
+  get typedSelectOptions() {
+    return this.gpioListFormArray().controls as (AbstractControl & { new?: boolean })[];
   }
 
   public removeGpioItem(index: number) {

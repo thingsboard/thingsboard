@@ -18,9 +18,6 @@
     <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
     <logger name="org.thingsboard.server.service.script" level="INFO"/>
 
-    <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
-    <logger name="org.thingsboard.server.service.edge.rpc.PostgresEdgeGrpcSession" level="OFF"/>
-
     <!--    LwM2m lifecycle debug for the test scope -->
     <logger name="org.thingsboard.server.transport.lwm2m.server.downlink.DefaultLwM2mDownlinkMsgHandler" level="TRACE"/>
     <logger name="org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler" level="TRACE"/>

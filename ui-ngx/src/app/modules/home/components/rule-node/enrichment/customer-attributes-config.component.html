@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="customerAttributesConfigForm" class="tb-form-panel stroked">
@@ -9,9 +10,11 @@
   <div class="flex flex-1 items-center justify-center">
     <div class="fetch-to-data-toggle">
       <tb-toggle-select class="fetch-to-data-toggle" formControlName="dataToFetch" appearance="fill">
-        <tb-toggle-option *ngFor="let data of fetchToData" [value]="data.value">
-          {{ data.name }}
-        </tb-toggle-option>
+        @for (data of fetchToData; track data) {
+          <tb-toggle-option [value]="data.value">
+            {{ data.name }}
+          </tb-toggle-option>
+        }
       </tb-toggle-select>
     </div>
   </div>
@@ -32,4 +35,11 @@
     ('rule-node-config.add-mapped-latest-telemetry-to' | translate) : ('rule-node-config.add-mapped-attribute-to' | translate)"
     formControlName="fetchTo">
   </tb-msg-metadata-chip>
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.fetch-originators-attributes-customer-hint' | translate :
+  {mappingOfCustomers: dataToFetchTranslations.get(customerAttributesConfigForm.get('dataToFetch').value) | translate | lowercase } }}"
+       class="tb-form-row same-padding">
+    <mat-slide-toggle class="mat-slide margin" formControlName="preserveOriginatorIfCustomer">
+      {{ 'rule-node-config.fetch-originators-attributes-customer' | translate }}
+    </mat-slide-toggle>
+  </div>
 </section>

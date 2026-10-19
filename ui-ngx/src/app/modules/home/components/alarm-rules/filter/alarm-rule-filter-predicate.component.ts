@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { booleanAttribute, Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -21,7 +22,10 @@ import {
   AlarmRuleStringOperation,
   alarmRuleStringOperationTranslationMap,
   checkPredicates,
-  ComplexAlarmRuleFilterPredicate
+  ComplexAlarmRuleFilterPredicate,
+  NoDataAlarmRuleFilterPredicate,
+  toAlarmRuleFilterPredicate,
+  ValueAlarmRuleFilterPredicateType
 } from "@shared/models/alarm-rule.models";
 import { MatDialog } from "@angular/material/dialog";
 import {
@@ -70,7 +74,7 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     duration: []
   });
 
-  type: AlarmRuleFilterPredicateType;
+  type: ValueAlarmRuleFilterPredicateType;
 
   filterPredicateType = AlarmRuleFilterPredicateType;
 
@@ -158,7 +162,6 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
   }
 
   writeValue(predicate: AlarmRuleFilterPredicate): void {
-    this.type = predicate.type;
     if ((predicate as ComplexAlarmRuleFilterPredicate)?.predicates) {
       this.predicateValid = this.isPredicateArgumentsValid((predicate as ComplexAlarmRuleFilterPredicate)?.predicates);
     }
@@ -166,16 +169,18 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
       this.type = AlarmRuleFilterPredicateType[this.valueType];
       this.filterPredicateFormGroup.patchValue({operation: 'NO_DATA', duration: predicate}, {emitEvent: false});
     } else {
+      this.type = predicate.type;
       this.filterPredicateFormGroup.patchValue(predicate, {emitEvent: false});
     }
   }
 
   private updateModel() {
-    const predicate = this.filterPredicateFormGroup.value;
-    if (predicate.operation === 'NO_DATA') {
-      this.propagateChange(predicate.duration);
+    const formValue = this.filterPredicateFormGroup.value;
+    if (formValue.operation === AlarmRuleStringOperation.NO_DATA) {
+      const noDataPredicate = formValue.duration as NoDataAlarmRuleFilterPredicate;
+      this.propagateChange(noDataPredicate);
     } else {
-      this.propagateChange({type: this.type, ...predicate});
+      this.propagateChange(toAlarmRuleFilterPredicate(this.type, formValue));
     }
   }
 

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,17 +10,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.ConverterId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,9 +40,11 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
+import org.thingsboard.server.common.data.subscription.SubscriptionException;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.service.solutions.SolutionService;
 import org.thingsboard.server.service.solutions.data.solution.SolutionInstallResponse;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -41,15 +52,20 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.dao.converter.ConverterService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.group.EntityGroupService;
+import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.asset.profile.TbAssetProfileService;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.entitiy.converter.TbConverterService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
@@ -57,6 +73,7 @@ import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
 import org.thingsboard.server.service.install.ProjectInfo;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -103,6 +120,12 @@ public class DefaultIotHubService implements IotHubService {
     private final DeviceService deviceService;
     private final TbDeviceService tbDeviceService;
     private final SolutionService solutionService;
+    private final EntityGroupService entityGroupService;
+    private final AccessControlService accessControlService;
+    private final CustomerService customerService;
+    private final IntegrationService integrationService;
+    private final ConverterService converterService;
+    private final TbConverterService tbConverterService;
     private final ProjectInfo projectInfo;
 
     // Field names of the marketplace version JSON payload. Both the install path and the
@@ -131,6 +154,8 @@ public class DefaultIotHubService implements IotHubService {
             log.error("[{}] Failed to install IoT Hub item version: {}", tenantId, versionId, e);
             if (e instanceof EntitiesLimitExceededException el) {
                 throw el;
+            } else if (e instanceof SubscriptionException se) {
+                throw se;
             }
             return InstallItemVersionResult.error(e.getMessage());
         }
@@ -213,6 +238,15 @@ public class DefaultIotHubService implements IotHubService {
         WidgetInstalledItemDescriptor descriptor = new WidgetInstalledItemDescriptor();
         descriptor.setWidgetTypeId(saved.getId());
         return descriptor;
+    }
+
+    private EntityGroupInfo checkEntityGroup(SecurityUser user, EntityGroupId entityGroupId) throws ThingsboardException {
+        EntityGroupInfo entityGroup = entityGroupService.findEntityGroupInfoById(user.getTenantId(), entityGroupId);
+        if (entityGroup == null) {
+            throw new IllegalArgumentException("Entity group with id [" + entityGroupId + "] is not found");
+        }
+        accessControlService.checkEntityGroupInfoPermission(user, Operation.READ, entityGroup);
+        return entityGroup;
     }
 
     private CalculatedFieldInstalledItemDescriptor installCalculatedField(SecurityUser user, TenantId tenantId, byte[] fileData, JsonNode data) throws Exception {
@@ -356,6 +390,7 @@ public class DefaultIotHubService implements IotHubService {
         descriptor.setCreatedEntityIds(response.getCreatedEntityIds());
         descriptor.setTenantTelemetryKeys(response.getTenantTelemetryKeys());
         descriptor.setTenantAttributeKeys(response.getTenantAttributeKeys());
+        descriptor.setDashboardGroupId(response.getDashboardGroupId());
         descriptor.setDashboardId(response.getDashboardId());
         descriptor.setPublicId(response.getPublicId());
         descriptor.setMainDashboardPublic(response.isMainDashboardPublic());
@@ -435,6 +470,7 @@ public class DefaultIotHubService implements IotHubService {
                     stDescriptor.setCreatedEntityIds(response.getCreatedEntityIds());
                     stDescriptor.setTenantTelemetryKeys(response.getTenantTelemetryKeys());
                     stDescriptor.setTenantAttributeKeys(response.getTenantAttributeKeys());
+                    stDescriptor.setDashboardGroupId(response.getDashboardGroupId());
                     stDescriptor.setDashboardId(response.getDashboardId());
                     stDescriptor.setPublicId(response.getPublicId());
                     stDescriptor.setMainDashboardPublic(response.isMainDashboardPublic());
@@ -683,7 +719,7 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
-    private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
+    private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) throws ThingsboardException {
         switch (entityId.getEntityType()) {
             case DEVICE -> {
                 var device = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
@@ -700,6 +736,17 @@ public class DefaultIotHubService implements IotHubService {
             case RULE_CHAIN -> {
                 var ruleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(entityId.getId()));
                 if (ruleChain != null) tbRuleChainService.delete(ruleChain, user);
+            }
+            case INTEGRATION -> {
+                IntegrationId integrationId = new IntegrationId(entityId.getId());
+                var integration = integrationService.findIntegrationById(tenantId, integrationId);
+                if (integration != null) {
+                    integrationService.deleteIntegration(tenantId, integrationId);
+                }
+            }
+            case CONVERTER -> {
+                var converter = converterService.findConverterById(tenantId, new ConverterId(entityId.getId()));
+                if (converter != null) tbConverterService.delete(converter, user);
             }
             default -> log.warn("[{}] Unsupported entity type for device package delete: {}", tenantId, entityId.getEntityType());
         }
@@ -940,10 +987,15 @@ public class DefaultIotHubService implements IotHubService {
                     } catch (Exception e) {
                         log.error("[{}] Cascade install failed at entry {} ({}): {}", tenantId,
                                 entry.getName(), entry.getVersionId(), e.getMessage(), e);
+                        boolean rolledBack = rollbackInstalledItems(user, rollbackIds);
+                        if (e instanceof EntitiesLimitExceededException el) {
+                            throw el;
+                        } else if (e instanceof SubscriptionException se) {
+                            throw se;
+                        }
                         String failureMessage = ExceptionUtil.getMessage(e);
                         resultEntry.setErrorMessage(failureMessage);
                         resultEntries.add(resultEntry);
-                        boolean rolledBack = rollbackInstalledItems(user, rollbackIds);
                         result.setSuccess(false);
                         result.setRolledBack(rolledBack);
                         result.setErrorMessage(failureMessage);

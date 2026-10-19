@@ -1,16 +1,20 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.model.sql.WidgetTypeInfoEntity;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEntity, UUID>  {
@@ -212,4 +216,13 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             "FROM WidgetTypeEntity w WHERE ilike(cast(w.descriptor as string), CONCAT('%', :link, '%')) = true")
     List<EntityInfo> findWidgetTypeInfosByResourceLink(@Param("link") String link,
                                                        Pageable pageable);
+
+    @Query("""
+            UPDATE WidgetTypeDetailsEntity wt
+            SET wt.deprecated = TRUE
+            WHERE wt.fqn in (:fqns)
+            """)
+    @Modifying
+    void labelWidgetTypesAsDeprecatedByFqns(@Param("fqns") Collection<String> fqns);
+
 }

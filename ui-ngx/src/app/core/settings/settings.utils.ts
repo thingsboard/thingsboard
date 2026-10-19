@@ -1,11 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { environment as env } from '@env/environment';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateStore } from '@ngx-translate/core';
+import { mergeMap } from 'rxjs/operators';
 import _moment from 'moment';
 import { Observable } from 'rxjs';
 
-export function updateUserLang(translate: TranslateService, document: Document, userLang: string, translations = env.supportedLangs): Observable<any> {
+export function updateUserLang(translate: TranslateService, translateStore: TranslateStore, document: Document, userLang: string,
+                               translations = env.supportedLangs, reload = false): Observable<any> {
   let targetLang = userLang;
   if (!translations) {
     translations = env.supportedLangs;
@@ -25,7 +28,36 @@ export function updateUserLang(translate: TranslateService, document: Document, 
   }
   document.documentElement.lang = detectedSupportedLang.replace('_', '-');
   _moment.locale([detectedSupportedLang]);
-  return translate.use(detectedSupportedLang);
+  if (reload) {
+    translateStore.addLanguages(translations);
+    if (translateStore.hasTranslationFor(detectedSupportedLang)) {
+      return translate.currentLoader.getTranslation(detectedSupportedLang).pipe(
+        mergeMap((value) => {
+          translate.setTranslation(detectedSupportedLang, value, true);
+          if (translate.getCurrentLang() !== detectedSupportedLang) {
+            const currentLanguage = translate.getCurrentLang();
+            translate.currentLoader.getTranslation(currentLanguage).subscribe(currentLangValue => {
+              translate.setTranslation(currentLanguage, currentLangValue, true);
+            });
+          }
+          return translate.use(detectedSupportedLang);
+        })
+      );
+    } else {
+      return translate.use(detectedSupportedLang);
+    }
+  } else {
+    if (detectedSupportedLang === env.defaultLang && translateStore.hasTranslationFor(detectedSupportedLang)) {
+      return translate.currentLoader.getTranslation(detectedSupportedLang).pipe(
+        mergeMap((value) => {
+          translate.setTranslation(detectedSupportedLang, value, true);
+          return translate.use(detectedSupportedLang);
+        })
+      );
+    } else {
+      return translate.use(detectedSupportedLang);
+    }
+  }
 }
 
 function detectSupportedLang(targetLang: string, translations: string[]): string {
@@ -35,7 +67,7 @@ function detectSupportedLang(targetLang: string, translations: string[]): string
       return langTag;
     } else {
       const parts = langTag.split('_');
-      let lang;
+      let lang: string;
       if (parts.length === 2) {
         lang = parts[0];
       } else {

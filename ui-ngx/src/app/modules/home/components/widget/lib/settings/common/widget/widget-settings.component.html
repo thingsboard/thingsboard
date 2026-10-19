@@ -1,14 +1,19 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="widgetSettingsFormGroup" class="h-full">
   <ng-container #definedSettingsContent></ng-container>
-  <div class="tb-settings-directive-error" *ngIf="definedDirectiveError">{{definedDirectiveError}}</div>
-  <tb-dynamic-form *ngIf="useDynamicForm()"
-    [properties]="settingsForm"
+  @if (definedDirectiveError) {
+    <div class="tb-settings-directive-error">{{definedDirectiveError}}</div>
+  }
+  @if (useDynamicForm()) {
+    <tb-dynamic-form
+      [properties]="settingsForm"
+      [trimDefaults]="settingsFormTrimDefaults"
     formControlName="settings">
-  </tb-dynamic-form>
+  </tb-dynamic-form>}
 </div>

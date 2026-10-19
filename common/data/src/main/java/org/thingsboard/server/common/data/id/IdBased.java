@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -8,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import java.util.UUID;
 
 public abstract class IdBased<I extends UUIDBased> implements HasId<I> {
-	
+
 	protected I id;
 	
 	public IdBased() {
@@ -25,6 +26,7 @@ public abstract class IdBased<I extends UUIDBased> implements HasId<I> {
 		this.id = id;
 	}
 
+	@Override
 	public I getId() {
 		return id;
 	}

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.client;
 
@@ -147,7 +147,13 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
         if (!arguments.isEmpty())
             withArguments = " with arguments " + arguments;
         log.info("Execute on Device resource /{}/{}/{} {}", getModel().id, getId(), resourceId, withArguments);
-        return ExecuteResponse.success();
+        switch (resourceId) {
+            case 4:
+            case 5:
+                return ExecuteResponse.success();
+            default:
+                return super.execute(identity, resourceId, arguments);
+        }
     }
 
     @Override

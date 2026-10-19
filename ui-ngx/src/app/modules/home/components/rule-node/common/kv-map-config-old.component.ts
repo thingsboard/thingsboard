@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Injector, Input, OnInit } from '@angular/core';
 import {
@@ -54,6 +54,10 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
 
   @Input() hintText: string;
 
+  @Input() description: string;
+
+  @Input() emptyText: string;
+
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -69,11 +73,11 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
 
   ngControl: NgControl;
 
-  private propagateChange = null;
+  public propagateChange = null;
 
   constructor(public translate: TranslateService,
               private injector: Injector,
-              private fb: FormBuilder,
+              protected fb: FormBuilder,
               private destroyRef: DestroyRef) {
     super();
   }
@@ -165,7 +169,7 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
     return null;
   }
 
-  private updateModel() {
+  protected updateModel() {
     const kvList: { key: string; value: string }[] = this.kvListFormGroup.get('keyVals').value;
     if (this.required && !kvList.length || !this.kvListFormGroup.valid) {
       this.propagateChange(null);

@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { cssUnit } from '@shared/models/widget-settings.models';
 import tinycolor from 'tinycolor2';
+import { plainColorFromVariable } from '@core/utils';
 
-const defaultMainColor = '#3F52DD';
+const defaultMainColor = 'var(--tb-primary-500)';
 const defaultBackgroundColor = '#FFFFFF';
 
 const hoveredFilledDarkenAmount = 6;
@@ -118,6 +120,8 @@ abstract class ButtonStateCssGenerator {
 
   constructor() {}
 
+  protected abstract get state(): WidgetButtonState;
+
   public generateStateCss(appearance: WidgetButtonAppearance): string {
     let mainColor = this.getMainColor(appearance);
     let backgroundColor = this.getBackgroundColor(appearance);
@@ -143,8 +147,6 @@ abstract class ButtonStateCssGenerator {
     }
     return css;
   }
-
-  protected abstract get state(): WidgetButtonState;
 
   protected getMainColor(appearance: WidgetButtonAppearance): string {
     return appearance.mainColor || defaultMainColor;
@@ -186,7 +188,7 @@ class PressedButtonStateCssGenerator extends ButtonStateCssGenerator {
 
   protected generateAdditionalStateCss(mainColor: string): string {
     const mainColorPressedFilled = darkenColor(mainColor, pressedFilledDarkenAmount);
-    const mainColorInstance = tinycolor(mainColor);
+    const mainColorInstance = tinycolor(plainColorFromVariable(mainColor));
     const mainColorPressedRipple = mainColorInstance.setAlpha(mainColorInstance.getAlpha() * 0.1).toRgbString();
     const mainColorPressedRippleFilled = darkenColor(mainColor, pressedRippleFilledDarkenAmount);
     return `--tb-widget-button-main-color-pressed-filled: ${mainColorPressedFilled};\n`+
@@ -246,7 +248,7 @@ export const generateWidgetButtonAppearanceCss = (appearance: WidgetButtonAppear
 };
 
 const darkenColor = (inputColor: string, amount: number): string => {
-  const input = tinycolor(inputColor);
+  const input = tinycolor(plainColorFromVariable(inputColor));
   const brightness = input.getBrightness() / 255;
   let ratio: number;
   if (brightness >= 0.4 && brightness <= 0.5) {

@@ -1,11 +1,15 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="flex size-full flex-col items-center justify-center">
   <canvas class="flex-1" #canvas [class.!hidden]="!qrCodeText || invalidQrCodeText"></canvas>
-  <div *ngIf="!qrCodeText && !invalidQrCodeText" style="text-align: center" translate>entity.no-data</div>
-  <div *ngIf="invalidQrCodeText" style="text-align: center" translate>widgets.invalid-qr-code-text</div>
+  @if (!qrCodeText && !invalidQrCodeText) {
+    <div style="text-align: center" translate>entity.no-data</div>
+  }
+  @if (invalidQrCodeText) {
+    <div style="text-align: center" translate>widgets.invalid-qr-code-text</div>
+  }
 </div>

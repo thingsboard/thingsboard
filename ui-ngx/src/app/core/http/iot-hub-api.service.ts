@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Store } from '@ngrx/store';
@@ -80,21 +81,21 @@ export class IotHubApiService {
     );
   }
 
-  /** What this platform can install: no PE-only items, nothing built for a newer ThingsBoard. */
-  private platformScope(): { peOnly: boolean; tbVersion: number } {
-    return { peOnly: false, tbVersion: tbVersionToInt(env.tbVersion) };
+  /** What this platform can install: items of every edition, nothing built for a newer ThingsBoard. */
+  private platformScope(): { ceOnly: boolean; tbVersion: number } {
+    return { ceOnly: false, tbVersion: tbVersionToInt(env.tbVersion) };
   }
 
   /** Fills in the platform scope wherever the caller did not set it. */
   private applyPlatformFilters(options: MpItemVersionQueryOptions): void {
     const scope = this.platformScope();
     options.tbVersion ??= scope.tbVersion;
-    options.peOnly ??= scope.peOnly;
+    options.ceOnly ??= scope.ceOnly;
   }
 
   private platformScopeParams(): string[] {
     const scope = this.platformScope();
-    return [`peOnly=${scope.peOnly}`, `tbVersion=${scope.tbVersion}`];
+    return [`ceOnly=${scope.ceOnly}`, `tbVersion=${scope.tbVersion}`];
   }
 
   public getFilterInfo(itemType: ItemType, config?: IotHubRequestConfig): Observable<ItemTypeFilterInfo> {
@@ -146,7 +147,7 @@ export class IotHubApiService {
    */
   public getListingItemVersion(slug: string, config?: IotHubRequestConfig): Observable<MpItemVersionView> {
     const queryParams = [
-      'ce=true',
+      'ce=false',
       `tbVersion=${this.platformScope().tbVersion}`
     ];
     return this.http.get<MpItemVersionView>(

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.FilterPredicateType;
+import org.thingsboard.server.common.data.query.ComplexOperation;
 
 import java.util.List;
 

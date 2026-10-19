@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataKey,
   Datasource,
@@ -917,6 +918,7 @@ export const defaultMapActionButtonSettings: MapActionButtonSettings = {
 }
 
 export enum MapProvider {
+  openfreemap = 'openfreemap',
   openstreet = 'openstreet',
   carto = 'carto',
   google = 'google',
@@ -929,6 +931,7 @@ export const mapProviders = Object.keys(MapProvider) as MapProvider[];
 
 export const mapProviderTranslationMap = new Map<MapProvider, string>(
   [
+    [MapProvider.openfreemap, 'widgets.maps.layer.provider.openfreemap.title'],
     [MapProvider.openstreet, 'widgets.maps.layer.provider.openstreet.title'],
     [MapProvider.carto, 'widgets.maps.layer.provider.carto.title'],
     [MapProvider.google, 'widgets.maps.layer.provider.google.title'],
@@ -965,6 +968,9 @@ export const mapLayerValid = (layer: MapLayerSettings): boolean => {
     return false;
   }
   switch (layer.provider) {
+    case MapProvider.openfreemap:
+      const openFreeMapLayer = layer as OpenFreeMapLayerSettings;
+      return !!openFreeMapLayer.layerType;
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return !!openStreetLayer.layerType;
@@ -1001,6 +1007,9 @@ export const defaultLayerTitle = (layer: MapLayerSettings): string => {
     return null;
   }
   switch (layer.provider) {
+    case MapProvider.openfreemap:
+      const ofmLayer = layer as OpenFreeMapLayerSettings;
+      return openFreeMapStyleTranslationMap.get(ofmLayer.layerType);
     case MapProvider.openstreet:
       const openStreetLayer = layer as OpenStreetMapLayerSettings;
       return openStreetMapLayerTranslationMap.get(openStreetLayer.layerType);
@@ -1049,6 +1058,32 @@ export interface OpenStreetMapLayerSettings extends MapLayerSettings {
 export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
   provider: MapProvider.openstreet,
   layerType: OpenStreetLayerType.openStreetMapnik
+}
+
+export enum OpenFreeMapStyleType {
+  bright = 'bright',
+  positron = 'positron',
+  liberty = 'liberty'
+}
+
+export const openFreeMapStyleTypes = Object.values(OpenFreeMapStyleType) as OpenFreeMapStyleType[];
+
+export const openFreeMapStyleTranslationMap = new Map<OpenFreeMapStyleType, string>(
+  [
+    [OpenFreeMapStyleType.liberty, 'widgets.maps.layer.provider.openfreemap.liberty'],
+    [OpenFreeMapStyleType.bright, 'widgets.maps.layer.provider.openfreemap.bright'],
+    [OpenFreeMapStyleType.positron, 'widgets.maps.layer.provider.openfreemap.positron']
+  ]
+);
+
+export interface OpenFreeMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.openfreemap;
+  layerType: OpenFreeMapStyleType;
+}
+
+export const defaultOpenFreeMapLayerSettings: OpenFreeMapLayerSettings = {
+  provider: MapProvider.openfreemap,
+  layerType: OpenFreeMapStyleType.bright
 }
 
 export enum CartoLayerType {
@@ -1176,6 +1211,7 @@ export const defaultTencentMapLayerSettings: TencentMapLayerSettings = {
 export interface CustomMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.custom;
   tileUrl: string;
+  vectorTiles?: boolean;
   customAttribution?: string;
 }
 
@@ -1203,6 +1239,8 @@ export const normalizeMapLayerSettings = (layer: MapLayerSettings): MapLayerSett
 
 export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings => {
   switch (provider) {
+    case MapProvider.openfreemap:
+      return defaultOpenFreeMapLayerSettings;
     case MapProvider.openstreet:
       return defaultOpenStreetMapLayerSettings;
     case MapProvider.carto:
@@ -1221,9 +1259,9 @@ export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings
 export const defaultMapLayers: MapLayerSettings[] = [
   {
     label: '{i18n:widgets.maps.layer.roadmap}',
-    provider: MapProvider.openstreet,
-    layerType: OpenStreetLayerType.openStreetMapnik,
-  } as OpenStreetMapLayerSettings,
+    provider: MapProvider.openfreemap,
+    layerType: OpenFreeMapStyleType.bright,
+  } as OpenFreeMapLayerSettings,
   {
     label: '{i18n:widgets.maps.layer.satellite}',
     provider: MapProvider.openstreet,
@@ -1497,7 +1535,7 @@ const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Obse
   image.src = imageUrl;
 });
 
-const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
+export const loadImageSize = (imageUrl: string): Observable<[number, number]> =>
   imageLoader(imageUrl).pipe(map(image => [image.width, image.height]));
 
 export interface ImageWithAspect {

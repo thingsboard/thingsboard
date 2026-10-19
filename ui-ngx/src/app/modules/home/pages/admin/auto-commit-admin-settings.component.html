@@ -1,12 +1,13 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<tb-repository-settings #repositorySettingsComponent
-                        *ngIf="!(hasRepository$ | async); else autoCommitSettings">
-</tb-repository-settings>
-<ng-template #autoCommitSettings>
+@if (!(hasRepository$ | async)) {
+  <tb-repository-settings #repositorySettingsComponent
+                          >
+  </tb-repository-settings>
+} @else {
   <tb-auto-commit-settings #autoCommitSettingsComponent></tb-auto-commit-settings>
-</ng-template>
+}

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,6 +15,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.query.AliasEntityId;
@@ -301,16 +303,18 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Device device = createDevice();
         tsService.save(tenantId, device.getId(), new BasicTsKvEntry(1000L, new LongDataEntry("t", 1L))).get();
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         String url = "/api/plugins/telemetry/DEVICE/{entityId}/values/timeseries?keys=t&startTs=0&endTs={endTs}";
         doGetAsync(url, device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
         doGetAsync(url + "&agg=SUM&interval=86400000", device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
         doGetAsync(url, UUID.randomUUID(), System.currentTimeMillis()).andExpect(status().isNotFound());
+        List<BaseReadTsKvQuery> queries = List.of(new BaseReadTsKvQuery("t", 0, System.currentTimeMillis(), 10, "DESC"));
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/timeseries", queries, String.class, status().isForbidden());
 
         loginTenantAdmin();
-        assignDeviceToCustomer(device.getId(), customerId);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/DEVICE/" + device.getId().getId()).andExpect(status().isOk());
 
-        loginCustomerUser();
+        loginCustomerAdminUser();
         ObjectNode result = doGetAsync(url, ObjectNode.class, device.getUuidId(), System.currentTimeMillis());
         Assert.assertEquals(1L, result.get("t").get(0).get("value").asLong());
     }

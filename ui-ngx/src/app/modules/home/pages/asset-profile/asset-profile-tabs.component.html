@@ -1,23 +1,40 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (entity && !isEdit) {
-  @if (authUser.authority === authorities.TENANT_ADMIN) {
+  @if (authUser.authority === authorities.TENANT_ADMIN  && (resource.ASSET_PROFILE | hasGenericPermission: operation.READ_CALCULATED_FIELD)) {
     <mat-tab label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
-      <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"/>
+      <tb-calculated-fields-table
+        [active]="calculatedFieldsTab.isActive"
+        [entityId]="entity.id"
+        [entityName]="entity.name"
+        [ownerId]="entity.tenantId"
+        [readonly]="!(resource.ASSET_PROFILE | hasGenericPermission: operation.WRITE_CALCULATED_FIELD)"
+        [hideClearEventAction]="!(resource.ASSET_PROFILE | hasGenericPermission: operation.WRITE)"
+      />
+    </mat-tab>
+    <mat-tab #alarmRules="matTab" label="{{'alarm-rule.alarm-rules' | translate }}">
+      <tb-alarm-rules-table
+        [active]="alarmRules.isActive"
+        [entityId]="entity.id"
+        [entityName]="entity.name"
+        [ownerId]="entity.tenantId"
+        [readonly]="!(resource.ASSET_PROFILE | hasGenericPermission: operation.WRITE_CALCULATED_FIELD)"
+        [hideClearEventAction]="!(resource.ASSET_PROFILE | hasGenericPermission: operation.WRITE)">
+      </tb-alarm-rules-table>
     </mat-tab>
   }
-  <mat-tab #alarmRules="matTab" label="{{'alarm-rule.alarm-rules' | translate }}">
-    <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
-  </mat-tab>
-  <mat-tab #auditLogsTab="matTab"
-           label="{{ 'audit-log.audit-logs' | translate }}">
-    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
-  </mat-tab>
-  @if (authUser.authority === authorities.TENANT_ADMIN) {
+  @if ((resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
+    <mat-tab #auditLogsTab="matTab"
+             label="{{ 'audit-log.audit-logs' | translate }}">
+      <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+    </mat-tab>
+  }
+  @if (([resource.VERSION_CONTROL, resource.ASSET_PROFILE] | hasGenericPermission: operation.READ)) {
     <mat-tab label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
       <tb-version-control detailsMode="true"
                           singleEntityMode="true"

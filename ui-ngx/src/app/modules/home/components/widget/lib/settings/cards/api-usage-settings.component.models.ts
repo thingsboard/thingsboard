@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { DataKey, Widget, widgetType } from '@shared/models/widget.models';
@@ -74,6 +75,7 @@ export const apiUsageDefaultSettings: ApiUsageWidgetSettings = {
     generateDataKey('{i18n:api-usage.tbel-function-executions}', 'tbelExecutionApiState', 'tbelExecutionLimit', 'tbelExecutionCount'),
     generateDataKey('{i18n:api-usage.data-points-storage-days}', 'dbApiState', 'storageDataPointsLimit', 'storageDataPointsCount'),
     generateDataKey('{i18n:api-usage.alarms-created}', 'alarmApiState', 'createdAlarmsLimit', 'createdAlarmsCount'),
+    generateDataKey('{i18n:api-usage.reports-created}', 'reportApiState', 'generatedReportsLimit', 'generatedReportsCount'),
     generateDataKey('{i18n:api-usage.emails}', 'emailApiState', 'emailLimit', 'emailCount'),
     generateDataKey('{i18n:api-usage.sms}', 'smsApiState', 'smsLimit', 'smsCount'),
   ],

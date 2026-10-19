@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.query;
 
@@ -26,8 +26,13 @@ public class AlarmDataQuery extends AbstractDataQuery<AlarmDataPageLink> {
         this.alarmFields = alarmFields;
     }
 
+    public AlarmDataQuery(EntityFilter entityFilter, AlarmDataPageLink pageLink, List<EntityKey> entityFields, List<EntityKey> latestValues, List<KeyFilter> keyFilters, List<EntityKey> alarmFields, ComplexOperation keyFiltersOperation) {
+        super(entityFilter, pageLink, entityFields, latestValues, keyFilters, keyFiltersOperation);
+        this.alarmFields = alarmFields;
+    }
+
     @JsonIgnore
     public AlarmDataQuery next() {
-        return new AlarmDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters, alarmFields);
+        return new AlarmDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters, alarmFields, getKeyFiltersOperation());
     }
 }

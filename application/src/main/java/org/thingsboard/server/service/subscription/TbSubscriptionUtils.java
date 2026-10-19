@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
@@ -19,6 +21,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAttributeUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbEntitySubEventProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbLogStreamUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -37,7 +40,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.util.KvProtoUtil.fromTsValueProtoList;
 import static org.thingsboard.server.common.util.KvProtoUtil.toTsKvProtoBuilder;
-import static org.thingsboard.server.common.util.KvProtoUtil.toTsValueProto;
 
 public class TbSubscriptionUtils {
 
@@ -56,6 +58,7 @@ public class TbSubscriptionUtils {
         if (info != null) {
             builder.setNotifications(info.notifications)
                     .setAlarms(info.alarms)
+                    .setLogs(info.logs)
                     .setTsAllKeys(info.tsAllKeys)
                     .setAttrAllKeys(info.attrAllKeys);
             if (info.tsKeys != null) {
@@ -86,7 +89,6 @@ public class TbSubscriptionUtils {
                 .build();
     }
 
-
     public static TbEntitySubEvent fromProto(TbEntitySubEventProto proto) {
         ComponentLifecycleEvent event = ComponentLifecycleEvent.valueOf(proto.getType());
         var builder = TbEntitySubEvent.builder()
@@ -95,7 +97,7 @@ public class TbSubscriptionUtils {
                 .entityId(EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())))
                 .type(event);
         if (!ComponentLifecycleEvent.DELETED.equals(event)) {
-            builder.info(new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(),
+            builder.info(new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(), proto.getLogs(),
                     proto.getTsAllKeys(), proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
                     proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysList()) : null,
                     proto.getSeqNumber()));
@@ -166,6 +168,30 @@ public class TbSubscriptionUtils {
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setTsUpdate(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+    }
+
+    public static ToCoreMsg toLogStreamUpdateProto(TenantId tenantId, EntityId entityId, long latestSeq) {
+        SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
+        msgBuilder.setLogUpdate(logStreamUpdateBuilder(tenantId, entityId, latestSeq));
+        return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
+    }
+
+    public static ToCoreNotificationMsg toLogStreamUpdateProtoNf(TenantId tenantId, EntityId entityId, long latestSeq) {
+        return ToCoreNotificationMsg.newBuilder()
+                .setToLocalSubscriptionServiceMsg(TransportProtos.LocalSubscriptionServiceMsgProto.newBuilder()
+                        .setLogUpdate(logStreamUpdateBuilder(tenantId, entityId, latestSeq))
+                        .build())
+                .build();
+    }
+
+    private static TbLogStreamUpdateProto.Builder logStreamUpdateBuilder(TenantId tenantId, EntityId entityId, long latestSeq) {
+        return TbLogStreamUpdateProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setEntityType(entityId.getEntityType().name())
+                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
+                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
+                .setLatestSeq(latestSeq);
     }
 
     public static ToCoreMsg toTimeseriesDeleteProto(TenantId tenantId, EntityId entityId, List<String> keys) {
@@ -294,7 +320,7 @@ public class TbSubscriptionUtils {
         Map<String, List<TransportProtos.TsValueProto>> data = new TreeMap<>();
 
         for (TsKvEntry tsEntry : updates) {
-            data.computeIfAbsent(tsEntry.getKey(), k -> new ArrayList<>()).add(toTsValueProto(tsEntry.getTs(), tsEntry));
+            data.computeIfAbsent(tsEntry.getKey(), k -> new ArrayList<>()).add(KvProtoUtil.toTsValueProto(tsEntry.getTs(), tsEntry));
         }
 
         data.forEach((key, value) -> {

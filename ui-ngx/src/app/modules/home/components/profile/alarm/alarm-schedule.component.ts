@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
@@ -49,7 +49,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   alarmScheduleForm: UntypedFormGroup;
 
-  alarmScheduleTypes = Object.keys(AlarmScheduleType);
+  alarmScheduleTypes = Object.values(AlarmScheduleType);
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
   dayOfWeekTranslationsArray = dayOfWeekTranslations;

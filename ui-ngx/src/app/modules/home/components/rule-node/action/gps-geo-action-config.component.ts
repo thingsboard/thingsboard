@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -24,16 +24,16 @@ export class GpsGeoActionConfigComponent extends RuleNodeConfigurationComponent 
   geoActionConfigForm: UntypedFormGroup;
 
   perimeterType = PerimeterType;
-  perimeterTypes = Object.keys(PerimeterType);
+  perimeterTypes = Object.values(PerimeterType);
   perimeterTypeTranslationMap = perimeterTypeTranslations;
 
-  rangeUnits = Object.keys(RangeUnit);
+  rangeUnits = Object.values(RangeUnit);
   rangeUnitTranslationMap = rangeUnitTranslations;
 
   presenceMonitoringStrategies = PresenceMonitoringStrategiesData;
   presenceMonitoringStrategyKeys = Array.from(this.presenceMonitoringStrategies.keys());
 
-  timeUnits = Object.keys(TimeUnit);
+  timeUnits = Object.values(TimeUnit);
   timeUnitsTranslationMap = timeUnitTranslations;
 
   public defaultPaddingEnable = true;

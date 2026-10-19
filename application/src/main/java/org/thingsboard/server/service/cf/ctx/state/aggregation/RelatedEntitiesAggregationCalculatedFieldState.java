@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf.ctx.state.aggregation;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +21,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInp
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -265,7 +267,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     @Override
     public JsonNode getArgumentsJson() {
         Map<EntityId, Map<String, ArgumentEntry>> inputs = prepareInputs();
-        Map<EntityId, EntityInfo> entityIdEntityInfos = entityService.fetchEntityInfos(ctx.getTenantId(), null, inputs.keySet());
+        Map<EntityId, EntityInfo> entityIdEntityInfos = entityService.fetchEntityInfos(ctx.getTenantId(), null, inputs.keySet(), MergedUserPermissions.ALL);
         List<EntityArgument> entitiesArguments = new ArrayList<>();
         inputs.forEach((entityId, entityArguments) -> {
             EntityInfo entityInfo = entityIdEntityInfos.get(entityId);

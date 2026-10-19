@@ -1,0 +1,132 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@use '../../components/agent/agent-shared' as *;
+
+:host {
+  .tb-agent-profile-strategy-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 4px 0 12px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 13px;
+    line-height: 1.5;
+
+    .hint-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: $agent-text-hint;
+    }
+
+    div, p, span {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    .hint-title {
+      font-weight: 500;
+      color: $agent-text-primary;
+      margin-bottom: 2px;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    .hint-body {
+      font-size: inherit;
+      line-height: inherit;
+    }
+  }
+
+  .tb-section-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.76);
+    margin: 16px 0 8px;
+  }
+
+  .tb-hint-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    color: rgba(0, 0, 0, 0.72);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0 0 8px;
+
+    mat-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: $agent-text-secondary;
+    }
+
+    div, p, span {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    ol {
+      margin: 6px 0 0;
+      padding-left: 20px;
+      font-size: inherit;
+      line-height: 1.6;
+    }
+
+    li {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+    &.info {
+      background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
+      color: rgba(0, 0, 0, 0.72);
+
+      mat-icon {
+        color: var(--tb-primary-500);
+      }
+    }
+  }
+
+  .tb-command-block {
+    @include agent-command-block;
+    padding: 12px 16px;
+    margin: 0 0 12px;
+    font-size: 12px;
+    line-height: 1.55;
+
+    .tb-copy-command-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      min-width: 0;
+      padding: 0 10px;
+      line-height: 26px;
+      height: 26px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.85);
+
+      mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        margin-right: 4px;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+    }
+  
+  }
+}

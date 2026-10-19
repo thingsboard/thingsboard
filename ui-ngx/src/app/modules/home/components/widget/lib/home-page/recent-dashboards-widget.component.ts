@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -41,6 +42,8 @@ import { formattedDataFormDatasourceData } from '@core/utils';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 
 @Component({
     selector: 'tb-recent-dashboards-widget',
@@ -70,30 +73,35 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   lastVisitedDashboardsPageLink: PageLink;
 
   starredDashboardValue = null;
+
+  dashboardsLink = '/dashboards/all';
   hasDashboardsAccess = true;
   hasDevice = true;
 
   dirty = false;
-  public customerId: string;
   private isFullscreenMode = getCurrentAuthState(this.store).forceFullscreen;
   private subscription: IWidgetSubscription;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private utils: UtilsService,
+              private userPermissionsService: UserPermissionsService,
               private userSettingService: UserSettingsService) {
     super(store);
   }
 
   ngOnInit() {
-    if (this.authUser.authority === Authority.CUSTOMER_USER) {
-      this.customerId = this.authUser.customerId;
+    if (!this.userPermissionsService.hasReadGenericPermission(Resource.DASHBOARD)) {
+      if (this.userPermissionsService.hasSharedReadGroupsPermission(EntityType.DASHBOARD)) {
+        this.dashboardsLink = '/dashboards/shared';
+      } else {
+        this.hasDashboardsAccess = false;
+      }
     }
-    this.hasDashboardsAccess = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER].includes(this.authUser.authority);
     if (this.hasDashboardsAccess) {
       this.reload();
-
-      if (window.location.pathname.startsWith('/home') && this.authUser.authority === Authority.TENANT_ADMIN) {
+      if (window.location.pathname.startsWith('/home') && this.authUser.authority === Authority.TENANT_ADMIN
+        && this.userPermissionsService.hasGenericPermission(Resource.DASHBOARD, Operation.CREATE)) {
         const ds: Datasource = {
           type: DatasourceType.entityCount,
           name: '',
@@ -150,7 +158,7 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   }
 
   public createDashboardUrl(id: string): string {
-    const baseUrl = this.isFullscreenMode ? '/dashboard/' : '/dashboards/';
+    const baseUrl = this.isFullscreenMode ? '/dashboard/' : '/dashboards/all/';
     return baseUrl + id;
   }
 

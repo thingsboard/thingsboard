@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.discovery;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -394,11 +395,15 @@ public class ZkDiscoveryService implements DiscoveryService {
     /**
      * A single entry point to recalculate partitions
      * Synchronized to ensure that other servers info is up to date
-     * */
+     */
     synchronized void recalculatePartitions() {
-        delayedTasks.values().forEach(future -> future.cancel(false));
-        delayedTasks.clear();
-        partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
+        try {
+            delayedTasks.values().forEach(future -> future.cancel(false));
+            delayedTasks.clear();
+            partitionService.recalculatePartitions(serviceInfoProvider.getServiceInfo(), getOtherServers());
+        } catch (Exception e) {
+            log.warn("Failed to recalculate partitions", e);
+        }
     }
 
 }

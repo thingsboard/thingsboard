@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { isDefined, isFunction, isNotEmptyStr } from '@core/utils';
 import { FormattedData } from '@shared/models/widget.models';
@@ -279,7 +279,9 @@ private static mapTooltipParams(params: CallbackDataParams[] | CallbackDataParam
       TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
     } else if (Array.isArray(params)) {
       for (seriesParams of params) {
-        TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
+        if (seriesParams.value) {
+          TimeSeriesChartTooltip.appendTooltipItem(result, seriesParams, series);
+        }
       }
     }
     return result;

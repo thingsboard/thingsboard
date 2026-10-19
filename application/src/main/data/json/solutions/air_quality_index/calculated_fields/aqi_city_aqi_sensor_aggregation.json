@@ -1,0 +1,78 @@
+{
+  "reprocessingOrder": 1,
+  "type": "RELATED_ENTITIES_AGGREGATION",
+  "name": "AQI Sensor Aggregation",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "6fa4e7a9-5645-45ca-b91c-ce5ae27ed4ee"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "RELATED_ENTITIES_AGGREGATION",
+    "relation": {
+      "direction": "FROM",
+      "relationType": "Contains"
+    },
+    "arguments": {
+      "aqi": {
+        "refEntityKey": {
+          "key": "aqi",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      },
+      "humidity": {
+        "refEntityKey": {
+          "key": "humidity",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      },
+      "temperature": {
+        "refEntityKey": {
+          "key": "temperature",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": "0"
+      }
+    },
+    "deduplicationIntervalInSec": 10,
+    "metrics": {
+      "aqi": {
+        "function": "AVG",
+        "input": {
+          "type": "key",
+          "key": "aqi"
+        }
+      },
+      "humidity": {
+        "function": "AVG",
+        "input": {
+          "type": "key",
+          "key": "humidity"
+        }
+      },
+      "temperature": {
+        "function": "MAX",
+        "input": {
+          "type": "key",
+          "key": "temperature"
+        }
+      }
+    },
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    },
+    "useLatestTs": true,
+    "scheduledUpdateInterval": 10,
+    "scheduledUpdateEnabled": true
+  }
+}

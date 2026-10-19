@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Inject, InjectionToken } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -25,7 +25,7 @@ export class PersistentFilterPanelComponent {
   public rpcSearchStatusTranslationMap = rpcStatusTranslation;
   public rpcSearchPlaceholder: string;
 
-  public persistentSearchStatuses = Object.keys(RpcStatus);
+  public persistentSearchStatuses = Object.values(RpcStatus);
 
   constructor(@Inject(PERSISTENT_FILTER_PANEL_DATA)
               public data: PersistentFilterPanelData,

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -9,7 +10,7 @@ import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDire
 import { DeviceService } from '@core/http/device.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { AssetService } from '@core/http/asset.service';
 import { EntityViewService } from '@core/http/entity-view.service';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -66,13 +67,13 @@ export class AssignToCustomerDialogComponent extends
         this.assignToCustomerTitle = 'asset.assign-asset-to-customer';
         this.assignToCustomerText = 'asset.assign-to-customer-text';
         break;
-      case EntityType.EDGE:
-        this.assignToCustomerTitle = 'edge.assign-edge-to-customer';
-        this.assignToCustomerText = 'edge.assign-to-customer-text';
-        break;
       case EntityType.ENTITY_VIEW:
         this.assignToCustomerTitle = 'entity-view.assign-entity-view-to-customer';
         this.assignToCustomerText = 'entity-view.assign-to-customer-text';
+        break;
+      case EntityType.EDGE:
+        this.assignToCustomerTitle = 'edge.assign-edge-to-customer';
+        this.assignToCustomerText = 'edge.assign-to-customer-text';
         break;
     }
   }
@@ -104,16 +105,18 @@ export class AssignToCustomerDialogComponent extends
   }
 
   private getAssignToCustomerTask(customerId: string, entityId: string): Observable<any> {
-    switch (this.data.entityType) {
+    /*switch (this.data.entityType) {
       case EntityType.DEVICE:
         return this.deviceService.assignDeviceToCustomer(customerId, entityId);
       case EntityType.ASSET:
         return this.assetService.assignAssetToCustomer(customerId, entityId);
-      case EntityType.EDGE:
-        return this.edgeService.assignEdgeToCustomer(customerId, entityId);
       case EntityType.ENTITY_VIEW:
         return this.entityViewService.assignEntityViewToCustomer(customerId, entityId);
-    }
+      case EntityType.EDGE:
+        return this.edgeService.assignEdgeToCustomer(customerId, entityId);
+        break;
+    }*/
+    return of(null);
   }
 
 }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.util;
 
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -115,6 +116,12 @@ public class KvProtoUtil {
 
     public static TransportProtos.TsKvProto.Builder toTsKvProtoBuilder(long ts, KvEntry kvEntry) {
         return TransportProtos.TsKvProto.newBuilder().setTs(ts).setKv(KvProtoUtil.toKeyValueTypeProto(kvEntry));
+    }
+
+    public static List<TsKvEntry> fromTsValueProtoList(List<TransportProtos.TsKvProto> dataList) {
+        List<TsKvEntry> result = new ArrayList<>(dataList.size());
+        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), fromTsKvProto(proto.getKv()))));
+        return result;
     }
 
     public static List<TsKvEntry> fromTsValueProtoList(String key, List<TransportProtos.TsValueProto> dataList) {

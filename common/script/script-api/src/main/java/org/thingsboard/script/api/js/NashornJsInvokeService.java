@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.js;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -190,4 +191,8 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
         }
     }
 
+    @Override
+    protected boolean isLocal() {
+        return true;
+    }
 }

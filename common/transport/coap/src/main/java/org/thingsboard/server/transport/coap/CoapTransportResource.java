@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap;
 
 import com.google.gson.JsonParseException;
@@ -28,6 +29,9 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceRequestMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ResponseStatus;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 import org.thingsboard.server.transport.coap.callback.CoapNoOpCallback;
 import org.thingsboard.server.transport.coap.callback.CoapResponseCodeCallback;
@@ -37,6 +41,7 @@ import org.thingsboard.server.transport.coap.client.CoapClientContext;
 import org.thingsboard.server.transport.coap.client.TbCoapClientState;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +61,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private static final int FEATURE_TYPE_POSITION_CERTIFICATE_REQUEST = 3;
     private static final int REQUEST_ID_POSITION_CERTIFICATE_REQUEST = 4;
+
+    private static final String INTEGRATIONS_RESOURCE_NAME = "i";
 
     private final ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> dtlsSessionsMap;
     private final long timeout;
@@ -141,7 +148,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         try {
             UUID sessionId = UUID.randomUUID();
             log.trace("[{}] Processing provision publish msg [{}]!", sessionId, exchange.advanced().getRequest());
-            TransportProtos.ProvisionDeviceRequestMsg provisionRequestMsg;
+            ProvisionDeviceRequestMsg provisionRequestMsg;
             TransportPayloadType payloadType;
             try {
                 provisionRequestMsg = transportContext.getJsonCoapAdaptor().convertToProvisionRequestMsg(sessionId, exchange.advanced().getRequest());
@@ -379,10 +386,21 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     @Override
     public Resource getChild(String name) {
+        if (INTEGRATIONS_RESOURCE_NAME.equals(name)) {
+            Collection<Resource> children = getChildren();
+            Resource integrationResource = null;
+            for (Resource resource : children) {
+                if (INTEGRATIONS_RESOURCE_NAME.equals(resource.getName())) {
+                    integrationResource = resource;
+                    break;
+                }
+            }
+            return integrationResource;
+        }
         return this;
     }
 
-    private static class DeviceProvisionCallback implements TransportServiceCallback<TransportProtos.ProvisionDeviceResponseMsg> {
+    private static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
         private final CoapExchange exchange;
         private final TransportPayloadType payloadType;
 
@@ -392,9 +410,9 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
 
         @Override
-        public void onSuccess(TransportProtos.ProvisionDeviceResponseMsg msg) {
+        public void onSuccess(ProvisionDeviceResponseMsg msg) {
             CoAP.ResponseCode responseCode = CoAP.ResponseCode.CREATED;
-            if (!msg.getStatus().equals(TransportProtos.ResponseStatus.SUCCESS)) {
+            if (!msg.getStatus().equals(ResponseStatus.SUCCESS)) {
                 responseCode = CoAP.ResponseCode.BAD_REQUEST;
             }
             if (payloadType.equals(TransportPayloadType.JSON)) {

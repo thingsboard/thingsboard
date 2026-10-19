@@ -1,11 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import {
   CellActionDescriptor,
   CellActionDescriptorType,
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -29,6 +31,8 @@ import {
   MobileAppDeleteDialogData,
   RemoveAppDialogComponent
 } from '@home/pages/mobile/applications/remove-app-dialog.component';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class MobileAppTableConfigResolver  {
@@ -39,7 +43,8 @@ export class MobileAppTableConfigResolver  {
               private datePipe: DatePipe,
               private mobileAppService: MobileAppService,
               private truncatePipe: TruncatePipe,
-              private dialog: MatDialog
+              private dialog: MatDialog,
+              private userPermissionsService: UserPermissionsService,
               ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP;
@@ -108,18 +113,22 @@ export class MobileAppTableConfigResolver  {
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<MobileApp> {
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 
   private configureCellActions(): Array<CellActionDescriptor<MobileApp>> {
-    return [
-      {
-        name: this.translate.instant('action.delete'),
-        icon: 'delete',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.deleteEntity($event, entity)
-      }
-    ];
+    if (this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP, Operation.DELETE)) {
+      return [
+        {
+          name: this.translate.instant('action.delete'),
+          icon: 'delete',
+          isEnabled: () => true,
+          onAction: ($event, entity) => this.deleteEntity($event, entity)
+        }
+      ];
+    }
+    return [];
   }
 
   private deleteEntity($event: Event, entity: MobileApp) {

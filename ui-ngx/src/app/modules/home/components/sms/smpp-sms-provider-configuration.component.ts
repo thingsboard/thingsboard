@@ -1,7 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { booleanAttribute, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import {
   AwsSnsSmsProviderConfiguration,
   BindTypes,
@@ -54,16 +61,16 @@ export class SmppSmsProviderConfigurationComponent  implements ControlValueAcces
 
   smppVersions = smppVersions;
 
-  bindTypes = Object.keys(BindTypes);
+  bindTypes = Object.values(BindTypes);
   bindTypesTranslation = bindTypesTranslationMap;
 
-  typeOfNumber = Object.keys(TypeOfNumber);
+  typeOfNumber = Object.values(TypeOfNumber);
   typeOfNumberMap = typeOfNumberMap;
 
-  numberingPlanIdentification = Object.keys(NumberingPlanIdentification);
+  numberingPlanIdentification = Object.values(NumberingPlanIdentification);
   numberingPlanIdentificationMap = numberingPlanIdentificationMap;
 
-  codingSchemes = Object.keys(CodingSchemes);
+  codingSchemes = Object.values(CodingSchemes);
   codingSchemesMap = codingSchemesMap;
 
   private propagateChange = (v: any) => { };

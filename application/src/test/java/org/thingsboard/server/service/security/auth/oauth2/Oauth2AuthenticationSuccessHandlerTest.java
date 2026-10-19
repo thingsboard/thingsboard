@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import jakarta.servlet.http.Cookie;
@@ -17,10 +18,12 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -60,14 +63,14 @@ public class Oauth2AuthenticationSuccessHandlerTest {
     public void before() {
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
-        when(systemSecurityService.getBaseUrl(any(TenantId.class), any(CustomerId.class), any(HttpServletRequest.class))).thenReturn(BASE_URL);
+        when(systemSecurityService.getBaseUrl(any(Authority.class), any(TenantId.class), any(CustomerId.class), any(HttpServletRequest.class))).thenReturn(BASE_URL);
         when(response.encodeRedirectURL(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
     public void testInAppPathIsTakenFromPrevUriCookie() {
         givenPrevUriCookie(PREV_URI + "?state=someState");
-        assertThat(successHandler.getBaseUrl(request, null)).isEqualTo(BASE_URL);
+        assertThat(successHandler.getBaseUrl(request, null, null)).isEqualTo(BASE_URL);
         assertThat(successHandler.getPrevUri(request, response, null)).isEqualTo(PREV_URI + "?state=someState");
     }
 
@@ -93,14 +96,14 @@ public class Oauth2AuthenticationSuccessHandlerTest {
     @Test
     public void testBaseUrlWithoutPrevUriCookie() {
         when(request.getCookies()).thenReturn(null);
-        assertThat(successHandler.getBaseUrl(request, null)).isEqualTo(BASE_URL);
+        assertThat(successHandler.getBaseUrl(request, null, null)).isEqualTo(BASE_URL);
         assertThat(successHandler.getPrevUri(request, response, null)).isEmpty();
     }
 
     @Test
     public void testCallbackUrlSchemeIgnoresPrevUri() {
         givenPrevUriCookie(PREV_URI);
-        assertThat(successHandler.getBaseUrl(request, "tbmobile")).isEqualTo("tbmobile:");
+        assertThat(successHandler.getBaseUrl(request, "tbmobile", null)).isEqualTo("tbmobile:");
         assertThat(successHandler.getPrevUri(request, response, "tbmobile")).isEmpty();
     }
 
@@ -164,6 +167,9 @@ public class Oauth2AuthenticationSuccessHandlerTest {
         when(oAuth2AuthorizedClientService.loadAuthorizedClient(anyString(), anyString())).thenReturn(authorizedClient);
 
         SecurityUser securityUser = mock(SecurityUser.class);
+        when(securityUser.getAuthority()).thenReturn(Authority.TENANT_ADMIN);
+        when(securityUser.getTenantId()).thenReturn(TenantId.SYS_TENANT_ID);
+        when(securityUser.getCustomerId()).thenReturn(new CustomerId(EntityId.NULL_UUID));
         OAuth2ClientMapper mapper = mock(OAuth2ClientMapper.class);
         when(mapper.getOrCreateUserByClientPrincipal(any(), any(), anyString(), any())).thenReturn(securityUser);
         when(oauth2ClientMapperProvider.getOAuth2ClientMapperByType(any())).thenReturn(mapper);

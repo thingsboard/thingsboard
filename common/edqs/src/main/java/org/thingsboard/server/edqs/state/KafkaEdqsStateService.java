@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.state;
 
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -117,15 +119,16 @@ public class KafkaEdqsStateService implements EdqsStateService {
                                 EdqsEventMsg eventMsg = msg.getEventMsg();
                                 ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
                                 EdqsObject object = mapper.deserialize(objectType, eventMsg.getData().toByteArray(), true);
+                                EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
 
                                 if (eventMsg.hasVersion()) {
-                                    if (!versionsStore.isNew(mapper.getKey(object), eventMsg.getVersion())) {
+                                    EdqsObjectKey objectKey = mapper.getKey(object);
+                                    if (!versionsStore.isNew(objectKey, eventMsg.getVersion(), eventType, eventMsg.getVersionsResetOnDelete())) {
                                         continue;
                                     }
                                 }
 
                                 TenantId tenantId = getTenantId(msg);
-                                EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
                                 String key = object.stringKey();
                                 log.trace("[{}] Saving to backup [{}] [{}] [{}]", tenantId, objectType, eventType, key);
                                 stateProducer.send(tenantId, objectType, object.stringKey(), msg);

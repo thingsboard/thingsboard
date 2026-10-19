@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -61,8 +62,8 @@ public class SparkplugMetricUtil {
                     return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.DOUBLE_V)
                             .setDoubleV(f.doubleValue()).build());
                 case Double:
-                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.LONG_V)
-                            .setLongV(Double.valueOf(protoMetric.getDoubleValue()).longValue()).build());
+                    return Optional.of(builderProto.setKey(key).setType(TransportProtos.KeyValueType.DOUBLE_V)
+                            .setDoubleV(protoMetric.getDoubleValue()).build());
                 case Int8:
                 case UInt8:
                 case Int16:

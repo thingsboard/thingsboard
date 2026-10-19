@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -57,10 +57,6 @@ export class EditLinksDialogComponent extends
 
   linksFormArray(): UntypedFormArray {
     return this.editLinksFormGroup.get('links') as UntypedFormArray;
-  }
-
-  trackByLink(index: number, linkControl: AbstractControl): any {
-    return linkControl;
   }
 
   linkDrop(event: CdkDragDrop<string[]>) {

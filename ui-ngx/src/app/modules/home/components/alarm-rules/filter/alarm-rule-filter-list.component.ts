@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { booleanAttribute, Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -49,14 +50,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 })
 export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
 
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
+
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
   @Input()
   operation: ComplexOperation = ComplexOperation.AND;
-
-  @Input()
-  readonly = false;
 
   filterListFormGroup = this.fb.group({
     filters: this.fb.array([])
@@ -160,7 +161,7 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
         isAdd,
         arguments: this.arguments,
         usedArguments: this.getUsedArguments,
-        readonly
+        readonly: this.readonly || readonly,
       }
     }).afterClosed();
   }

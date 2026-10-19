@@ -1,15 +1,16 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
 <section class="tb-widget-settings" [formGroup]="updateImageAttributeWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <tb-string-pattern-autocomplete class="mat-block flex-1" 
-                                              brackets="curly" 
+    <tb-string-pattern-autocomplete class="mat-block flex-1"
+                                              brackets="curly"
                                               subscriptSizing="fixed"
+                                              appearance="outline"
                                               predefinedValuesButton="true"
                                               label="{{ 'widgets.input-widgets.widget-title' | translate }}"
                                               [predefinedValues]="predefinedValues"

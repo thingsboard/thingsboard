@@ -1,0 +1,70 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .ai-credits-donut,
+  .mat-mdc-icon-button {
+    --_donut-color: #198038;
+    --_donut-track: rgba(0, 0, 0, 0.12);
+
+    &.WARNING {
+      --_donut-color: #FAA405;
+      --_donut-track: rgba(250, 164, 5, 0.2);
+    }
+
+    &.DISABLED {
+      --_donut-color: #D12730;
+      --_donut-track: rgba(209, 39, 48, 0.2);
+    }
+  }
+
+  .ai-credits-donut {
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--tb-primary-500, #00695c);
+      outline-offset: 2px;
+    }
+
+    .donut-spinner {
+      width: 30px;
+    }
+
+    .donut-title {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.76);
+    }
+
+    .donut-usage {
+      font-size: 13px;
+      line-height: 16px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  }
+
+  .update-btn {
+    --mat-button-outlined-outline-color: rgba(0, 0, 0, 0.12);
+    --mat-button-outlined-horizontal-padding: 12px;
+  }
+}
+
+:host ::ng-deep .mat-mdc-progress-spinner {
+  --mat-progress-spinner-active-indicator-color: var(--_donut-color);
+
+  .mdc-circular-progress__determinate-circle {
+    stroke-linecap: round;
+  }
+
+  .mdc-circular-progress__determinate-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid var(--_donut-track);
+    box-sizing: border-box;
+  }
+}

@@ -1,0 +1,114 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-info-panel">
+  <div class="tb-entity-info-title" translate>solution-creator.entity-info</div>
+  <div class="tb-entity-info-panel-content">
+    <div class="property">
+      <span>{{ 'solution-creator.name' | translate }}</span>
+      <span>{{ entity.name }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property">
+      <span>{{ 'entity.entity-type' | translate }}</span>
+      <span>{{ entity.entityType }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    @if (entity.scope) {
+      <div class="property">
+        <span>{{ 'solution-creator.scope' | translate }}</span>
+        <span>{{ entity.scope }}</span>
+      </div>
+      <mat-divider></mat-divider>
+    }
+    @if (entity.description) {
+      <div class="property column">
+        <span>{{ 'solution-creator.description' | translate }}</span>
+        <span class="description-text">{{ entity.description }}</span>
+      </div>
+      <mat-divider></mat-divider>
+    }
+    @if (entityInfoType) {
+      <tb-toggle-select class="my-3" appearance="stroked" [(ngModel)]="entityInfoType" [ngModelOptions]="{standalone: true}">
+        @if (attributes?.length) {
+          <tb-toggle-option value="ATTRIBUTE">{{ 'attribute.attributes' | translate }}</tb-toggle-option>
+        }
+        @if (timeseries?.length) {
+          <tb-toggle-option value="TIMESERIES">{{ 'attribute.scope-telemetry' | translate }}</tb-toggle-option>
+        }
+        @if (relations?.length) {
+          <tb-toggle-option value="RELATION">{{ 'relation.relations' | translate }}</tb-toggle-option>
+        }
+      </tb-toggle-select>
+      @switch (entityInfoType) {
+        @case ('ATTRIBUTE') {
+          @for (key of attributes ; track key.key; let last=$last) {
+            <div class="property">
+              <span>{{ key.key }}</span>
+              <span>{{ key.dataType | titlecase }}
+                @if (key.enumValues) {
+                  <span>({{ key.enumValues.join('/') }})</span>
+                }
+              </span>
+            </div>
+            @if (!last) {
+              <mat-divider></mat-divider>
+            }
+          }
+        }
+        @case ('TIMESERIES') {
+          @for (key of timeseries; track key.key; let last=$last) {
+            <div class="property">
+              <span>{{ key.key}}
+                @if (key.calculatedFieldName) {
+                  <tb-icon
+                    class="tb-mat-18"
+                    matTooltip="{{ 'solution-creator.generated-by-calculated-field-name' | translate: {name: key.calculatedFieldName} }}"
+                    matTooltipPosition="above">
+                    mdi:function-variant
+                  </tb-icon>
+                } @else if (key.units) {
+                  <span>&nbsp;({{ key.units }})</span>
+                }
+              </span>
+              <span>{{ key.dataType | titlecase }}
+                @if (key.enumValues) {
+                  <span>({{ key.enumValues.join('/') }})</span>
+                }
+              </span>
+            </div>
+            @if (!last) {
+              <mat-divider></mat-divider>
+            }
+          }
+        }
+        @case ('RELATION') {
+          @for (relation of relations; track relation.child; let last = $last) {
+            <div class="property">
+              <span>{{ relation.child }}</span>
+              <span>{{ relation.type }}
+                @if (relation.cardinality) {
+                  <span>({{ relation.cardinality }})</span>
+                }
+              </span>
+            </div>
+            @if (!last) {
+              <mat-divider></mat-divider>
+            }
+          }
+        }
+      }
+    }
+  </div>
+  <div class="flex h-10 items-end justify-end gap-4">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</div>

@@ -1,44 +1,55 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="legendConfigForm">
-  <div *ngIf="!hideDirection" class="tb-form-row space-between">
-    <div>{{ 'legend.direction' | translate }}</div>
-    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-      <mat-select formControlName="direction">
-        <mat-option *ngFor="let direction of legendDirections" [value]="direction">
-          {{ legendDirectionTranslations.get(legendDirection[direction]) | translate }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+  @if (!hideDirection) {
+    <div class="tb-form-row space-between">
+      <div>{{ 'legend.direction' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="direction">
+          @for (direction of legendDirections; track direction) {
+            <mat-option [value]="direction">
+              {{ legendDirectionTranslations.get(legendDirection[direction]) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
   <div class="tb-form-row space-between">
     <div>{{ 'legend.position' | translate }}</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="position">
-        <mat-option *ngFor="let pos of legendPositions" [value]="pos"
+        @for (pos of legendPositions; track pos) {
+          <mat-option [value]="pos"
                     [disabled]="!hideDirection &&
                                  legendConfigForm.get('direction').value === legendDirection.row &&
                                  (pos === legendPosition.left || pos === legendPosition.right)">
-          {{ legendPositionTranslations.get(legendPosition[pos]) | translate }}
-        </mat-option>
+            {{ legendPositionTranslations.get(legendPosition[pos]) | translate }}
+          </mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="tb-form-row space-between column-lt-md">
-    <div translate>legend.show-values</div>
-    <mat-chip-listbox multiple formControlName="showValues">
-      <mat-chip-option value="min">{{ 'legend.min-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="max">{{ 'legend.max-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="average">{{ 'legend.average-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="total">{{ 'legend.total-option' | translate }}</mat-chip-option>
-      <mat-chip-option value="latest">{{ 'legend.latest-option' | translate }}</mat-chip-option>
-    </mat-chip-listbox>
-  </div>
-  <mat-slide-toggle class="mat-slide" formControlName="sortDataKeys">
-    {{ 'legend.sort-legend' | translate }}
-  </mat-slide-toggle>
+  @if (!hideValues) {
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>legend.show-values</div>
+      <mat-chip-listbox multiple formControlName="showValues">
+        <mat-chip-option value="min">{{ 'legend.min-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="max">{{ 'legend.max-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="average">{{ 'legend.average-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="total">{{ 'legend.total-option' | translate }}</mat-chip-option>
+        <mat-chip-option value="latest">{{ 'legend.latest-option' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+  }
+  @if (!hideSortDataKeys) {
+    <mat-slide-toggle class="mat-slide" formControlName="sortDataKeys">
+      {{ 'legend.sort-legend' | translate }}
+    </mat-slide-toggle>
+  }
 </ng-container>

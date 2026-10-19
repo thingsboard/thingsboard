@@ -1,8 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -26,9 +29,10 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.MigrationService;
 import org.thingsboard.server.service.system.SystemPatchApplier;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -52,8 +56,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -81,20 +84,13 @@ public class SystemPatchApplierTest {
     private ImageService imageService;
 
     @Mock
-    private LtsMigrationService ltsMigrationService;
+    private MigrationService migrationService;
 
     @InjectMocks
     private SystemPatchApplier reconciler;
 
     @TempDir
     Path tempDir;
-
-    private void runPostSchemaCallback() {
-        doAnswer(invocation -> {
-            invocation.getArgument(2, Runnable.class).run();
-            return null;
-        }).when(ltsMigrationService).applyMigrations(anyString(), anyString(), any());
-    }
 
     @Test
     void whenLockIsNotAcquired_thenAcquiredIsSuccess() {
@@ -459,41 +455,111 @@ public class SystemPatchApplierTest {
     // --- applyPatchIfNeeded flow tests ---
 
     @Test
-    void whenVersionIncreased_thenSystemDataIsSyncedOnlyByTheMigrationCallback() {
+    void whenVersionIncreased_thenSyncsWidgetTypeBundleAndImageDataAfterMigrationsAndBeforeRecordingVersions() throws Exception {
         when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
         when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
-        when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types"));
-        when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
-        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        // Widget-type leg: a new widget type the DB does not have yet.
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        WidgetTypeDetails fileWidget = createTestWidgetType("new_widget", "New Widget");
+        Files.writeString(widgetTypesDir.resolve("new_widget.json"), JacksonUtil.toString(fileWidget));
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+        when(widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "new_widget")).thenReturn(null);
+
+        // Bundle leg: an existing bundle whose title the file changes. widgetTypeFqns is left empty so this leg's
+        // signal stays on widgetsBundleService alone, distinct from the widget-type leg on widgetTypeService.
+        Path widgetBundlesDir = tempDir.resolve("widget_bundles");
+        Files.createDirectories(widgetBundlesDir);
+        Files.writeString(widgetBundlesDir.resolve("charts.json"),
+                "{\"widgetsBundle\":{\"alias\":\"charts\",\"title\":\"New Title\"},\"widgetTypeFqns\":[]}");
+        when(installScripts.getWidgetBundlesDir()).thenReturn(widgetBundlesDir);
+        WidgetsBundle existingBundle = createTestBundle("charts", "Old Title");
+        when(widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "charts")).thenReturn(existingBundle);
+
+        // Image leg: a system image the DB does not have yet.
+        Path dataDir = tempDir.resolve("data");
+        Path imagesDir = dataDir.resolve(InstallScripts.RESOURCES_DIR).resolve("images");
+        Files.createDirectories(imagesDir);
+        byte[] imageBytes = new byte[]{7, 7, 7};
+        Files.write(imagesDir.resolve("new_icon.svg"), imageBytes);
+        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
+        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
+
+        // applyMigrations is mocked and its callback argument is deliberately left uninvoked: if the sync were
+        // nested back inside that callback (round-1's defect), none of the three calls below would happen at all,
+        // so this also proves the legs are NOT reached through it.
+        List<String> appliedVersions = List.of("4.3.1.0");
+        when(migrationService.applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any())).thenReturn(appliedVersions);
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        ArgumentCaptor<Runnable> postSchemaPhase = ArgumentCaptor.forClass(Runnable.class);
-        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), postSchemaPhase.capture());
-        verify(jdbcTemplate, never()).execute(anyString());
-
-        postSchemaPhase.getValue().run();
-
-        verify(jdbcTemplate).execute(contains("CREATE OR REPLACE VIEW"));
+        // The severity fix under test: the widget-type, bundle and image legs run strictly after the applyMigrations
+        // call returns and strictly before recordVersions and the final stamp, so a sync failure still blocks the
+        // stamp instead of racing past it. Each leg's signal sits on a different mock, so one InOrder pins all three
+        // at once.
+        InOrder inOrder = inOrder(migrationService, widgetTypeService, widgetsBundleService, imageService, schemaSettingsService);
+        inOrder.verify(migrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), any());
+        inOrder.verify(widgetTypeService).saveWidgetType(argThat(w -> "new_widget".equals(w.getFqn())));
+        inOrder.verify(widgetsBundleService).saveWidgetsBundle(argThat(b -> "New Title".equals(b.getTitle())));
+        inOrder.verify(imageService).createOrUpdateSystemImage(eq("new_icon.svg"), eq(imageBytes));
+        inOrder.verify(migrationService).recordVersions(appliedVersions);
+        inOrder.verify(schemaSettingsService).updateSchemaVersion();
     }
 
     @Test
-    void whenMigrationCallbackNotInvoked_thenNothingIsSyncedOutsideIt() {
+    void whenVersionIncreased_thenReplaysViewsThenFunctionsOnlyWhenTheBetweenPhasesCallbackRuns() throws Exception {
         when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
         when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
-        // Lenient: only reached if system data were synced outside the callback.
-        lenient().when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types_missing"));
-        lenient().when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
-        lenient().when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data_missing").toString());
 
+        when(installScripts.getWidgetTypesDir()).thenReturn(tempDir.resolve("widget_types_missing"));
+        when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
+        when(installScripts.getDataDir()).thenReturn(tempDir.resolve("data").toString());
+
+        // applyMigrations is mocked, so its callback argument is NOT auto-run: capture it and drive it by hand.
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        verify(ltsMigrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), any());
-        verify(jdbcTemplate, never()).execute(anyString());
+        ArgumentCaptor<Runnable> betweenPhases = ArgumentCaptor.forClass(Runnable.class);
+        verify(migrationService).applyMigrations(eq("4.3.0.0"), eq("4.3.1.0"), eq(false), betweenPhases.capture());
+
+        String schemaViewsSql = Resources.toString(Resources.getResource("sql/schema-views.sql"), StandardCharsets.UTF_8);
+        String schemaFunctionsSql = Resources.toString(Resources.getResource("sql/schema-functions.sql"), StandardCharsets.UTF_8);
+
+        // The replay happens ONLY once the callback runs: with it not yet run, neither script has executed.
+        verify(jdbcTemplate, never()).execute(schemaViewsSql);
+        verify(jdbcTemplate, never()).execute(schemaFunctionsSql);
+
+        betweenPhases.getValue().run();
+        InOrder inOrder = inOrder(jdbcTemplate);
+        inOrder.verify(jdbcTemplate).execute(schemaViewsSql);
+        inOrder.verify(jdbcTemplate).execute(schemaFunctionsSql);
+    }
+
+    /**
+     * When the sync fails, nothing is stamped, so the next startup still sees a version change and retries the
+     * whole patch - including the backfills, which applyAfterCommit() must tolerate.
+     */
+    @Test
+    void whenSystemDataSyncFails_thenNoVersionIsRecorded() throws Exception {
+        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
+        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
+        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
+        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
+
+        Path widgetTypesDir = tempDir.resolve("widget_types");
+        Files.createDirectories(widgetTypesDir);
+        Files.writeString(widgetTypesDir.resolve("broken.json"),
+                JacksonUtil.toString(createTestWidgetType("", "Broken Widget")));
+        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
+
+        assertThrows(RuntimeException.class, () -> ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded"));
+
+        verify(migrationService, never()).recordVersions(any());
+        verify(schemaSettingsService, never()).updateSchemaVersion();
     }
 
     @Test
@@ -528,8 +594,6 @@ public class SystemPatchApplierTest {
         when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
         when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
 
-        runPostSchemaCallback();
-
         Path widgetTypesDir = tempDir.resolve("widget_types");
         Files.createDirectories(widgetTypesDir);
         when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
@@ -538,8 +602,9 @@ public class SystemPatchApplierTest {
 
         ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
 
-        verify(schemaSettingsService).updateSchemaVersion();
-        verify(ltsMigrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), any());
+        InOrder inOrder = inOrder(migrationService, schemaSettingsService);
+        inOrder.verify(migrationService).applyMigrations(eq("4.3.1.0"), eq("4.3.2.0"), eq(false), any());
+        inOrder.verify(schemaSettingsService).updateSchemaVersion();
     }
 
     @Test
@@ -745,34 +810,8 @@ public class SystemPatchApplierTest {
     }
 
     // --- applyPatchIfNeeded integration with createMissingSystemImages ---
-
-    @Test
-    void whenApplyPatchIfNeededRuns_thenCreatesMissingImagesAfterWidgets() throws Exception {
-        when(schemaSettingsService.getPackageSchemaVersion()).thenReturn("4.3.1.0");
-        when(schemaSettingsService.getDbSchemaVersion()).thenReturn("4.3.0.0");
-        when(jdbcTemplate.queryForObject(contains("pg_try_advisory_lock"), eq(Boolean.class), anyLong())).thenReturn(true);
-        when(jdbcTemplate.queryForObject(contains("pg_advisory_unlock"), eq(Boolean.class), anyLong())).thenReturn(true);
-        runPostSchemaCallback();
-
-        Path dataDir = tempDir.resolve("data");
-        Path imagesDir = dataDir.resolve(InstallScripts.RESOURCES_DIR).resolve("images");
-        Files.createDirectories(imagesDir);
-        byte[] imgBytes = new byte[]{7, 7, 7};
-        Files.write(imagesDir.resolve("new_icon.svg"), imgBytes);
-        when(installScripts.getDataDir()).thenReturn(dataDir.toString());
-
-        Path widgetTypesDir = tempDir.resolve("widget_types");
-        Files.createDirectories(widgetTypesDir);
-        when(installScripts.getWidgetTypesDir()).thenReturn(widgetTypesDir);
-        when(installScripts.getWidgetBundlesDir()).thenReturn(tempDir.resolve("widget_bundles_missing"));
-
-        when(imageService.getAllImageKeysByTenantId(TenantId.SYS_TENANT_ID)).thenReturn(Collections.emptySet());
-
-        ReflectionTestUtils.invokeMethod(reconciler, "applyPatchIfNeeded");
-
-        verify(imageService).createOrUpdateSystemImage(eq("new_icon.svg"), eq(imgBytes));
-        verify(schemaSettingsService).updateSchemaVersion();
-    }
+    // (the image leg's ordering guarantee is pinned together with the widget-type and bundle legs by
+    // whenVersionIncreased_thenSyncsWidgetTypeBundleAndImageDataAfterMigrationsAndBeforeRecordingVersions above)
 
     @Test
     void whenVersionNotIncreased_thenImagesAreNotTouched() {

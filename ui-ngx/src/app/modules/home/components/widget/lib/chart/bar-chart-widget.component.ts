@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, Input, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Input, OnInit, Optional, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,6 +15,8 @@ import {
   BarChartWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-widget.models';
 import { TbBarsChart } from '@home/components/widget/lib/chart/bars-chart';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-bar-chart-widget',
@@ -22,7 +25,7 @@ import { TbBarsChart } from '@home/components/widget/lib/chart/bars-chart';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class BarChartWidgetComponent implements OnInit {
+export class BarChartWidgetComponent implements OnInit, ChartWidgetComponent {
 
   @ViewChild('latestChart')
   latestChart: LatestChartComponent;
@@ -31,13 +34,17 @@ export class BarChartWidgetComponent implements OnInit {
   ctx: WidgetContext;
 
   @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
   widgetTitlePanel: TemplateRef<any>;
 
   settings: BarChartWidgetSettings;
 
   callbacks: LatestChartComponentCallbacks;
 
-  constructor(private widgetComponent: WidgetComponent,
+  constructor(@Optional() private widgetComponent: WidgetComponent,
               private translate: TranslateService) {
   }
 

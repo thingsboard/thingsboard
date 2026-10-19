@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.query;
 
@@ -21,9 +21,4 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
         return FilterPredicateType.COMPLEX;
     }
 
-    @Schema
-    public enum ComplexOperation {
-        AND,
-        OR
-    }
 }

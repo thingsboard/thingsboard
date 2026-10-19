@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -26,10 +27,10 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
@@ -63,7 +64,7 @@ public class EventController extends BaseController {
             "The eventType field is required. Others are optional. If some of them are set, the filtering will be applied according to them. " +
             "See the examples below for all the fields used for each event type filtering. " + NEW_LINE +
             "Note," + NEW_LINE +
-            " * 'server' - string value representing the server name, identifier or ip address where the platform is running;\n" +
+            " * 'server' - string value representing the server name, identif   ier or ip address where the platform is running;\n" +
             " * 'errorStr' - the case insensitive 'contains' filter based on error message." + NEW_LINE +
             "## Error Event Filter" + NEW_LINE +
             EVENT_ERROR_FILTER_OBJ + NEW_LINE +

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -22,10 +23,11 @@ export class ResourceService {
 
   }
 
-  public getResources(pageLink: PageLink, resourceType?: ResourceType, resourceSubType?: ResourceSubType, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
+  public getResources(pageLink: PageLink, resourceType?: ResourceType | ResourceType[], resourceSubType?: ResourceSubType, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
     let url = `/api/resource${pageLink.toQuery()}`;
-    if (isNotEmptyStr(resourceType)) {
-      url += `&resourceType=${resourceType}`;
+    const resourceTypes = Array.isArray(resourceType) ? resourceType : (isNotEmptyStr(resourceType) ? [resourceType] : []);
+    if (resourceTypes.length) {
+      url += `&resourceType=${resourceTypes.join(',')}`;
     }
     if (isNotEmptyStr(resourceSubType)) {
       url += `&resourceSubType=${resourceSubType}`;

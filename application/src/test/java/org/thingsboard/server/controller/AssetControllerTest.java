@@ -1,8 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
@@ -28,21 +28,24 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetDao;
-import org.thingsboard.server.exception.DataValidationException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +62,7 @@ public class AssetControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;
+    private final String classNameAsset = "Asset";
 
     @Autowired
     private AssetDao assetDao;
@@ -107,7 +111,7 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(), savedTenant.getId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
 
         Assert.assertNotNull(savedAsset);
@@ -123,11 +127,38 @@ public class AssetControllerTest extends AbstractControllerTest {
         savedAsset.setName("My new asset");
         doPost("/api/asset", savedAsset, Asset.class);
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(), savedTenant.getId(),
-                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
+        testNotifyEntityEntityGroupNullAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
 
         Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
         Assert.assertEquals(foundAsset.getName(), savedAsset.getName());
+    }
+
+    @Test
+    public void testShouldForbidAssetCreationAcrossCustomerBoundaries() throws Exception {
+        loginDifferentCustomerAdmin();
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        asset.setTenantId(tenantId);
+        asset.setCustomerId(customerId);
+
+        doPost("/api/asset", asset)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermissionCreate + "ASSET" + " '" + asset.getName() + "'!")));
+
+        //create valid asset
+        loginCustomerAdminUser();
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        // try to update user under first customer
+        loginDifferentCustomerAdmin();
+        savedAsset.setLabel("new label");
+
+        doPost("/api/asset", savedAsset)
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermissionWrite + "ASSET" + " '" + asset.getName() + "'!")));
     }
 
     @Test
@@ -143,8 +174,10 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         asset.setName("Normal name");
@@ -154,8 +187,10 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
         asset.setType("default");
@@ -165,8 +200,10 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
-                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new ThingsboardException(msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED, new DataValidationException(msgError));
     }
 
     @Test
@@ -180,19 +217,63 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService);
 
+        String msgError = classNameAsset.toUpperCase(Locale.ENGLISH) + " '" + savedAsset.getName() + "'!";
         doPost("/api/asset", savedAsset)
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
+                .andExpect(statusReason(containsString(msgErrorPermissionWrite + msgError)));
 
-        testNotifyEntityNever(savedAsset.getId(), savedAsset);
+        testNotifyEntityEqualsOneTimeServiceNeverError(savedAsset, savedDifferentTenant.getId(), savedDifferentTenantUser.getId(),
+                DIFFERENT_TENANT_ADMIN_EMAIL, ActionType.UPDATED,
+                new ThingsboardException(msgErrorPermissionWrite + msgError, ThingsboardErrorCode.PERMISSION_DENIED));
+
+        Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
+                .andExpect(statusReason(containsString(msgErrorPermissionDelete + msgError)));
+
 
         testNotifyEntityNever(savedAsset.getId(), savedAsset);
 
         deleteDifferentTenant();
+    }
+
+    @Test
+    public void testUpdateAssetWithNewOwnerShouldBeProhibited() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("Test customer");
+        Customer savedTestCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Customer customer2 = new Customer();
+        customer2.setTitle("Test customer2");
+        Customer savedTestCustomer2 = doPost("/api/customer", customer2, Customer.class);
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        asset.setCustomerId(savedTestCustomer.getId());
+        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        savedAsset.setCustomerId(savedTestCustomer2.getId());
+        doPost("/api/asset", savedAsset)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity owner can`t be changed. Please use owner api to change owner")));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(savedAsset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED,
+                new DataValidationException("Entity owner can`t be changed. Please use owner api to change owner"));
+
+        Mockito.reset(tbClusterService, auditLogService);
+        savedAsset.setCustomerId(new CustomerId(EntityId.NULL_UUID));
+        doPost("/api/asset", savedAsset)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity owner can`t be changed. Please use owner api to change owner")));
+
+        testNotifyEntityEqualsOneTimeServiceNeverError(savedAsset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED,
+                new DataValidationException("Entity owner can`t be changed. Please use owner api to change owner"));
     }
 
     @Test
@@ -275,14 +356,14 @@ public class AssetControllerTest extends AbstractControllerTest {
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.DELETED, savedAsset.getId().getId().toString());
 
         String assetIdStr = savedAsset.getId().getId().toString();
         doGet("/api/asset/" + assetIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound(classNameAsset, assetIdStr))));
     }
 
     @Test
@@ -407,7 +488,7 @@ public class AssetControllerTest extends AbstractControllerTest {
         String assetIdStr = savedAsset1.getId().getId().toString();
         doGet("/api/asset/" + assetIdStr)
                 .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
+                .andExpect(statusReason(containsString(msgErrorNoFound(classNameAsset, assetIdStr))));
     }
 
     @Test
@@ -420,7 +501,7 @@ public class AssetControllerTest extends AbstractControllerTest {
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
         Assert.assertEquals("default", savedAsset.getType());
 
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
+        testNotifyEntityEntityGroupNullAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED);
     }
@@ -438,143 +519,10 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString(msgError)));
 
         testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
+                tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new ThingsboardException(msgError,
+                        ThingsboardErrorCode.PERMISSION_DENIED));
+        testNotifyEntityEqualsOneTimeServiceNeverError(asset, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
-    }
-
-    @Test
-    public void testAssignUnassignAssetToCustomer() throws Exception {
-        Asset asset = new Asset();
-        asset.setName("My asset");
-        asset.setType("default");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
-
-        Customer customer = new Customer();
-        customer.setTitle("My customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Asset assignedAsset = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(savedCustomer.getId(), assignedAsset.getCustomerId());
-
-        testNotifyAssignUnassignEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
-                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, assignedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
-
-        Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(savedCustomer.getId(), foundAsset.getCustomerId());
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Asset unassignedAsset =
-                doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
-
-        testNotifyAssignUnassignEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
-                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, savedAsset.getId().toString(), savedCustomer.getId().toString(), savedCustomer.getTitle());
-
-        foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
-    }
-
-    @Test
-    public void testAssignUnassignAssetToPublicCustomer() throws Exception {
-        Asset asset = new Asset();
-        asset.setName("My asset");
-        asset.setType("default");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Asset assignedAsset = doPost("/api/customer/public/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-
-        Customer publicCustomer = doGet("/api/customer/" + assignedAsset.getCustomerId(), Customer.class);
-        Assert.assertTrue(publicCustomer.isPublic());
-
-        testNotifyAssignUnassignEntityAllOneTime(assignedAsset, assignedAsset.getId(), assignedAsset.getId(),
-                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, assignedAsset.getId().toString(),
-                publicCustomer.getId().toString(), publicCustomer.getTitle());
-
-        Asset foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(publicCustomer.getId(), foundAsset.getCustomerId());
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        Asset unassignedAsset =
-                doDelete("/api/customer/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, unassignedAsset.getCustomerId().getId());
-
-        testNotifyAssignUnassignEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
-                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED, savedAsset.getId().toString(),
-                publicCustomer.getId().toString(), publicCustomer.getTitle());
-
-        foundAsset = doGet("/api/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, foundAsset.getCustomerId().getId());
-    }
-
-    @Test
-    public void testAssignAssetToNonExistentCustomer() throws Exception {
-        Asset asset = new Asset();
-        asset.setName("My asset");
-        asset.setType("default");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        String customerIdStr = Uuids.timeBased().toString();
-        doPost("/api/customer/" + customerIdStr
-                + "/asset/" + savedAsset.getId().getId().toString())
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Customer", customerIdStr))));
-
-        testNotifyEntityNever(asset.getId(), asset);
-    }
-
-    @Test
-    public void testAssignAssetToCustomerFromDifferentTenant() throws Exception {
-        loginSysAdmin();
-
-        Tenant tenant2 = new Tenant();
-        tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = saveTenant(tenant2);
-        Assert.assertNotNull(savedTenant2);
-
-        User tenantAdmin2 = new User();
-        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin2.setTenantId(savedTenant2.getId());
-        tenantAdmin2.setEmail("tenant3@thingsboard.org");
-        tenantAdmin2.setFirstName("Joe");
-        tenantAdmin2.setLastName("Downs");
-
-        createUserAndLogin(tenantAdmin2, "testPassword1");
-
-        Customer customer = new Customer();
-        customer.setTitle("Different customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-
-        login(tenantAdmin.getEmail(), "testPassword1");
-
-        Asset asset = new Asset();
-        asset.setName("My asset");
-        asset.setType("default");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/asset/" + savedAsset.getId().getId().toString())
-                .andExpect(status().isForbidden())
-                .andExpect(statusReason(containsString(msgErrorPermission)));
-
-        testNotifyEntityNever(savedAsset.getId(), savedAsset);
-
-        loginSysAdmin();
-
-        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -786,275 +734,6 @@ public class AssetControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFindCustomerAssets() throws Exception {
-        Customer customer = new Customer();
-        customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
-        CustomerId customerId = customer.getId();
-
-        List<Asset> assets = new ArrayList<>();
-        for (int i = 0; i < 128; i++) {
-            Asset asset = new Asset();
-            asset.setName("Asset" + i);
-            asset.setType("default");
-            asset = doPost("/api/asset", asset, Asset.class);
-            assets.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/asset/" + asset.getId().getId().toString(), Asset.class));
-        }
-
-        List<Asset> loadedAssets = new ArrayList<>();
-        PageLink pageLink = new PageLink(23);
-        PageData<Asset> pageData = null;
-        do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<PageData<Asset>>() {
-                    }, pageLink);
-            loadedAssets.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        assets.sort(idComparator);
-        loadedAssets.sort(idComparator);
-
-        Assert.assertEquals(assets, loadedAssets);
-    }
-
-    @Test
-    public void testFindCustomerAssetsByName() throws Exception {
-        Customer customer = new Customer();
-        customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
-        CustomerId customerId = customer.getId();
-
-        String title1 = "Asset title 1";
-        List<Asset> assetsTitle1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
-            Asset asset = new Asset();
-            String suffix = StringUtils.randomAlphanumeric(15);
-            String name = title1 + suffix;
-            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            asset.setName(name);
-            asset.setType("default");
-            asset = doPost("/api/asset", asset, Asset.class);
-            assetsTitle1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/asset/" + asset.getId().getId().toString(), Asset.class));
-        }
-        String title2 = "Asset title 2";
-        List<Asset> assetsTitle2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
-            Asset asset = new Asset();
-            String suffix = StringUtils.randomAlphanumeric(15);
-            String name = title2 + suffix;
-            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            asset.setName(name);
-            asset.setType("default");
-            asset = doPost("/api/asset", asset, Asset.class);
-            assetsTitle2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/asset/" + asset.getId().getId().toString(), Asset.class));
-        }
-
-        List<Asset> loadedAssetsTitle1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15, 0, title1);
-        PageData<Asset> pageData = null;
-        do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<PageData<Asset>>() {
-                    }, pageLink);
-            loadedAssetsTitle1.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        assetsTitle1.sort(idComparator);
-        loadedAssetsTitle1.sort(idComparator);
-
-        Assert.assertEquals(assetsTitle1, loadedAssetsTitle1);
-
-        List<Asset> loadedAssetsTitle2 = new ArrayList<>();
-        pageLink = new PageLink(4, 0, title2);
-        do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                    new TypeReference<PageData<Asset>>() {
-                    }, pageLink);
-            loadedAssetsTitle2.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        assetsTitle2.sort(idComparator);
-        loadedAssetsTitle2.sort(idComparator);
-
-        Assert.assertEquals(assetsTitle2, loadedAssetsTitle2);
-
-        for (Asset asset : loadedAssetsTitle1) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
-                    .andExpect(status().isOk());
-        }
-
-        pageLink = new PageLink(4, 0, title1);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>() {
-                }, pageLink);
-        Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
-
-        for (Asset asset : loadedAssetsTitle2) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
-                    .andExpect(status().isOk());
-        }
-
-        pageLink = new PageLink(4, 0, title2);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>() {
-                }, pageLink);
-        Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
-    }
-
-    @Test
-    public void testFindCustomerAssetsByType() throws Exception {
-        Customer customer = new Customer();
-        customer.setTitle("Test customer");
-        customer = doPost("/api/customer", customer, Customer.class);
-        CustomerId customerId = customer.getId();
-
-        String title1 = "Asset title 1";
-        String type1 = "typeC";
-        List<Asset> assetsType1 = new ArrayList<>();
-        for (int i = 0; i < 125; i++) {
-            Asset asset = new Asset();
-            String suffix = StringUtils.randomAlphanumeric(15);
-            String name = title1 + suffix;
-            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            asset.setName(name);
-            asset.setType(type1);
-            asset = doPost("/api/asset", asset, Asset.class);
-            assetsType1.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/asset/" + asset.getId().getId().toString(), Asset.class));
-        }
-        String title2 = "Asset title 2";
-        String type2 = "typeD";
-        List<Asset> assetsType2 = new ArrayList<>();
-        for (int i = 0; i < 143; i++) {
-            Asset asset = new Asset();
-            String suffix = StringUtils.randomAlphanumeric(15);
-            String name = title2 + suffix;
-            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
-            asset.setName(name);
-            asset.setType(type2);
-            asset = doPost("/api/asset", asset, Asset.class);
-            assetsType2.add(doPost("/api/customer/" + customerId.getId().toString()
-                    + "/asset/" + asset.getId().getId().toString(), Asset.class));
-        }
-
-        List<Asset> loadedAssetsType1 = new ArrayList<>();
-        PageLink pageLink = new PageLink(15);
-        PageData<Asset> pageData = null;
-        do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                    new TypeReference<PageData<Asset>>() {
-                    }, pageLink, type1);
-            loadedAssetsType1.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        assetsType1.sort(idComparator);
-        loadedAssetsType1.sort(idComparator);
-
-        Assert.assertEquals(assetsType1, loadedAssetsType1);
-
-        List<Asset> loadedAssetsType2 = new ArrayList<>();
-        pageLink = new PageLink(4);
-        do {
-            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                    new TypeReference<PageData<Asset>>() {
-                    }, pageLink, type2);
-            loadedAssetsType2.addAll(pageData.getData());
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
-
-        assetsType2.sort(idComparator);
-        loadedAssetsType2.sort(idComparator);
-
-        Assert.assertEquals(assetsType2, loadedAssetsType2);
-
-        for (Asset asset : loadedAssetsType1) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
-                    .andExpect(status().isOk());
-        }
-
-        pageLink = new PageLink(4);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                new TypeReference<PageData<Asset>>() {
-                }, pageLink, type1);
-        Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
-
-        for (Asset asset : loadedAssetsType2) {
-            doDelete("/api/customer/asset/" + asset.getId().getId().toString())
-                    .andExpect(status().isOk());
-        }
-
-        pageLink = new PageLink(4);
-        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/assets?type={type}&",
-                new TypeReference<PageData<Asset>>() {
-                }, pageLink, type2);
-        Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
-    }
-
-    @Test
-    public void testAssignAssetToEdge() throws Exception {
-        Edge edge = constructEdge("My edge", "default");
-        Edge savedEdge = doPost("/api/edge", edge, Edge.class);
-
-        Asset asset = new Asset();
-        asset.setName("My asset");
-        asset.setType("default");
-        Asset savedAsset = doPost("/api/asset", asset, Asset.class);
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_EDGE,
-                savedAsset.getId().getId().toString(), savedEdge.getId().getId().toString(), edge.getName());
-
-
-        PageData<Asset> pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>() {
-                }, new PageLink(100));
-
-        Assert.assertEquals(1, pageData.getData().size());
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doDelete("/api/edge/" + savedEdge.getId().getId().toString()
-                + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
-
-
-        testNotifyEntityAllOneTime(savedAsset, savedAsset.getId(), savedAsset.getId(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.UNASSIGNED_FROM_EDGE, savedAsset.getId().getId().toString(), savedEdge.getId().getId().toString(), savedEdge.getName());
-
-        pageData = doGetTypedWithPageLink("/api/edge/" + savedEdge.getId().getId().toString() + "/assets?",
-                new TypeReference<PageData<Asset>>() {
-                }, new PageLink(100));
-
-        Assert.assertEquals(0, pageData.getData().size());
-    }
-
-    @Test
     public void testDeleteAssetWithDeleteRelationsOk() throws Exception {
         AssetId assetId = createAsset("Asset for Test WithRelationsOk").getId();
         testEntityDaoWithRelationsOk(savedTenant.getId(), assetId, "/api/asset/" + assetId);
@@ -1089,6 +768,88 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         Asset fifthAsset = doPost("/api/asset?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", asset, Asset.class);
         assertThat(fifthAsset.getName()).isEqualTo("My unique asset_2");
+    }
+
+    @Test
+    public void testSaveAssetWithDuplicateName() throws Exception {
+        // Per-tenant asset name uniqueness is enforced at the application layer (AssetDataValidator),
+        // which is the only guard under Citus where the asset_name_unq_key DB constraint is dropped.
+        Asset asset = new Asset();
+        asset.setName("Duplicate name asset");
+        asset.setType("default");
+        doPost("/api/asset", asset, Asset.class);
+
+        Asset duplicate = new Asset();
+        duplicate.setName("Duplicate name asset");
+        duplicate.setType("default");
+        doPost("/api/asset", duplicate)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Asset with such name already exists!")));
+    }
+
+    @Test
+    public void testUpdateAssetWithSameNameAsExistingFails() throws Exception {
+        createAsset("Asset A");
+        Asset savedAssetB = createAsset("Asset B");
+
+        savedAssetB.setName("Asset A");
+        doPost("/api/asset", savedAssetB)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Asset with such name already exists!")));
+    }
+
+    @Test
+    public void testSaveAssetWithUnchangedNameSucceeds() throws Exception {
+        Asset savedAsset = createAsset("My asset");
+
+        // Re-saving the same asset unchanged must not trip the name uniqueness check.
+        Asset resaved = doPost("/api/asset", savedAsset, Asset.class);
+        Assert.assertEquals(savedAsset.getId(), resaved.getId());
+        Assert.assertEquals("My asset", resaved.getName());
+
+        // Modifying a non-name field (label) and re-saving must also succeed.
+        resaved.setLabel("Updated label");
+        Asset updated = doPost("/api/asset", resaved, Asset.class);
+        Assert.assertEquals(savedAsset.getId(), updated.getId());
+        Assert.assertEquals("My asset", updated.getName());
+        Assert.assertEquals("Updated label", updated.getLabel());
+    }
+
+    @Test
+    public void testSameAssetNameAllowedAcrossTenants() throws Exception {
+        createAsset("Shared asset name");
+
+        loginDifferentTenant();
+        Asset differentTenantAsset = new Asset();
+        differentTenantAsset.setName("Shared asset name");
+        differentTenantAsset.setType("default");
+        Asset savedDifferentTenantAsset = doPost("/api/asset", differentTenantAsset, Asset.class);
+        Assert.assertNotNull(savedDifferentTenantAsset);
+        Assert.assertEquals("Shared asset name", savedDifferentTenantAsset.getName());
+
+        deleteDifferentTenant();
+    }
+
+    @Test
+    public void testSaveAssetWithDuplicateExternalId() throws Exception {
+        // Per-tenant asset external_id uniqueness is enforced at the application layer (AssetDataValidator),
+        // which is the only guard under Citus where the asset_external_id_unq_key DB constraint is dropped.
+        AssetId externalId = new AssetId(UUID.randomUUID());
+
+        Asset asset = new Asset();
+        asset.setName("Asset with external id");
+        asset.setType("default");
+        asset.setExternalId(externalId);
+        Asset saved = doPost("/api/asset", asset, Asset.class);
+        assertThat(saved.getExternalId()).isEqualTo(externalId);
+
+        Asset duplicate = new Asset();
+        duplicate.setName("Another asset with the same external id");
+        duplicate.setType("default");
+        duplicate.setExternalId(externalId);
+        doPost("/api/asset", duplicate)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Asset with such external id already exists!")));
     }
 
     private Asset createAsset(String name) {

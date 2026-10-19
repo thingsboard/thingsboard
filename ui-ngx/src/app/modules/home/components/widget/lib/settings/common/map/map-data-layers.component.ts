@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
@@ -149,10 +149,6 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
 
   dataLayersFormArray(): UntypedFormArray {
     return this.dataLayersFormGroup.get('dataLayers') as UntypedFormArray;
-  }
-
-  trackByDataLayer(index: number, dataLayerControl: AbstractControl): any {
-    return dataLayerControl;
   }
 
   removeDataLayer(index: number) {

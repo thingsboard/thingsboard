@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,10 +23,12 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
+import org.thingsboard.server.common.data.alarm.AlarmFilter;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmPropagationInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
+import org.thingsboard.server.common.data.alarm.AlarmRef;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
@@ -39,6 +42,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -57,11 +61,13 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.page.SortOrder.Direction.ASC;
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
@@ -130,6 +136,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
+    public AlarmInfo findAlarmInfoByOriginatorAndId(TenantId tenantId, EntityId originator, AlarmId alarmId) {
+        return DaoUtil.getData(alarmRepository.findAlarmInfoByOriginatorAndId(tenantId.getId(), originator.getId(), alarmId.getId()));
+    }
+
+    @Override
     public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, UUID key) {
         return findByIdAsync(tenantId, key);
     }
@@ -194,6 +205,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                 )
         );
     }
+
 
     @Override
     public PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
@@ -267,8 +279,34 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        return alarmQueryRepository.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
+    public long findAlarmCount(TenantId tenantId, AlarmQuery query, AlarmFilter filter) {
+        log.trace("Try to find alarm count by entity [{}][{}], status [{}], pageLink [{}] and filter [{}]", query.getAffectedEntityId(), query.getAffectedEntityId().getEntityType(), query.getStatus(), query.getPageLink(), filter);
+        EntityId affectedEntity = query.getAffectedEntityId();
+        AlarmStatusFilter asf = AlarmStatusFilter.from(filter.getStatusList());
+        Long startTime;
+        if (query.getPageLink().getStartTime() != null && filter.getStartTime() != null) {
+            startTime = Math.max(query.getPageLink().getStartTime(), filter.getStartTime());
+        } else {
+            startTime = query.getPageLink().getStartTime() != null ? query.getPageLink().getStartTime() : filter.getStartTime();
+        }
+        return alarmRepository.findAlarmCount(
+                tenantId.getId(),
+                affectedEntity.getId(),
+                affectedEntity.getEntityType().name(),
+                startTime,
+                query.getPageLink().getEndTime(),
+                filter.getTypesList(),
+                filter.getSeverityList(),
+                asf.hasClearFilter(),
+                asf.hasClearFilter() && asf.getClearFilter(),
+                asf.hasAckFilter(),
+                asf.hasAckFilter() && asf.getAckFilter()
+        );
+    }
+
+
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        return alarmQueryRepository.findAlarmDataByQueryForEntities(tenantId, mergedUserPermissions, query, orderedEntityIds);
     }
 
     @Override
@@ -282,19 +320,23 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public PageData<AlarmId> findAlarmsIdsByEndTsBeforeAndTenantId(Long time, TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.pageToPageData(alarmRepository.findAlarmsIdsByEndTsBeforeAndTenantId(time, tenantId.getId(), DaoUtil.toPageable(pageLink)))
-                .mapData(AlarmId::new);
+    public PageData<AlarmRef> findExpiredAlarmRefsByTenantId(Long time, TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(alarmRepository.findExpiredAlarmRefsByTenantId(time, tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, long createdTimeOffset, AlarmId idOffset, int limit) {
-        Slice<TbPair<UUID, Long>> result;
+    public int unassignAlarmsByAssignee(TenantId tenantId, UserId assigneeId, long unassignTs) {
+        return alarmRepository.unassignAlarmsByAssignee(tenantId.getId(), assigneeId.getId(), unassignTs);
+    }
+
+    @Override
+    public PageData<AlarmRef> findAlarmRefsByAssigneeId(TenantId tenantId, UserId userId, long createdTimeOffset, AlarmId idOffset, int limit) {
+        Slice<AlarmRef> result;
         Pageable pageRequest = toPageable(new PageLink(limit), List.of(SortOrder.of("createdTime", ASC), SortOrder.of("id", ASC)));
         if (idOffset == null) {
-            result = alarmRepository.findAlarmIdsByAssigneeId(tenantId.getId(), userId.getId(), pageRequest);
+            result = alarmRepository.findAlarmRefsByAssigneeId(tenantId.getId(), userId.getId(), pageRequest);
         } else {
-            result = alarmRepository.findAlarmIdsByAssigneeId(tenantId.getId(), userId.getId(), createdTimeOffset, idOffset.getId(), pageRequest);
+            result = alarmRepository.findAlarmRefsByAssigneeId(tenantId.getId(), userId.getId(), createdTimeOffset, idOffset.getId(), pageRequest);
         }
         return DaoUtil.pageToPageData(result);
     }
@@ -314,16 +356,27 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public void createEntityAlarmRecord(EntityAlarm entityAlarm) {
         log.debug("Saving entity {}", entityAlarm);
-        entityAlarmRepository.save(new EntityAlarmEntity(entityAlarm));
+        // Direct INSERT instead of repository save(): with an assigned composite id and no Persistable, save() goes
+        // through Hibernate merge(), whose pre-write SELECT is keyed on (entity_id, alarm_id) only. Under Citus that
+        // omits the originator_id distribution column and turns into a multi-shard scatter-gather per record.
+        EntityAlarmEntity entity = new EntityAlarmEntity(entityAlarm);
+        entityAlarmRepository.insert(entity.getTenantId(), entity.getEntityType(), entity.getEntityId(), entity.getOriginatorId(),
+                entity.getCreatedTime(), entity.getAlarmType(), entity.getCustomerId(), entity.getAlarmId());
     }
 
     @Override
-    public List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, AlarmId id) {
-        log.trace("[{}] Try to find entity alarm records using [{}]", tenantId, id);
-        return DaoUtil.convertDataList(entityAlarmRepository.findAllByAlarmId(id.getId()));
+    public List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, EntityId originator, AlarmId id) {
+        log.trace("[{}] Try to find entity alarm records using [{}][{}]", tenantId, originator, id);
+        return DaoUtil.convertDataList(entityAlarmRepository.findAllByOriginatorIdAndAlarmId(originator.getId(), id.getId()));
     }
 
     @Override
+    public List<EntityAlarm> findEntityAlarmRecordsByEntityTypes(TenantId tenantId, EntityId originator, AlarmId id, List<EntityType> types) {
+        log.trace("[{}] Try to find entity alarm records using [{}][{}] [{}]", tenantId, originator, id, types);
+        List<String> propagationTypes = types.stream().distinct().map(Enum::name).collect(Collectors.toList());
+        return DaoUtil.convertDataList(entityAlarmRepository.findAllByOriginatorIdAndAlarmIdAndEntityTypeIn(originator.getId(), id.getId(), propagationTypes));
+    }
+
     public List<EntityAlarm> findEntityAlarmRecordsByEntityId(TenantId tenantId, EntityId entityId) {
         return DaoUtil.convertDataList(entityAlarmRepository.findAllByEntityId(entityId.getId()));
     }
@@ -357,6 +410,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                 getDetailsAsString(request.getDetails()),
                 ap.isPropagate(),
                 ap.isPropagateToOwner(),
+                ap.isPropagateToOwnerHierarchy(),
                 ap.isPropagateToTenant(),
                 getPropagationTypes(ap),
                 alarmCreationEnabled
@@ -365,6 +419,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
+        if (request.getOriginator() == null) {
+            // Defensive: every caller builds the request via AlarmUpdateRequest.fromAlarm(...), which always
+            // populates the originator. Guard for symmetry with the ack/clear/assign/unassign paths so a raw-builder
+            // caller that omits it gets a clean failed result instead of an NPE below.
+            return AlarmApiCallResult.builder().successful(false).build();
+        }
         UUID tenantUUID = request.getTenantId().getId();
         UUID alarmUUID = request.getAlarmId().getId();
         log.debug("[{}][{}] updateAlarm {}", tenantUUID, alarmUUID, request);
@@ -372,47 +432,54 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         AlarmPropagationInfo ap = getSafePropagationInfo(request.getPropagation());
         return toAlarmApiResult(alarmRepository.updateAlarm(
                 tenantUUID,
+                request.getOriginator().getId(),
                 alarmUUID,
                 request.getSeverity().name(),
                 request.getStartTs(), request.getEndTs(),
                 getDetailsAsString(request.getDetails()),
                 ap.isPropagate(),
                 ap.isPropagateToOwner(),
+                ap.isPropagateToOwnerHierarchy(),
                 ap.isPropagateToTenant(),
                 getPropagationTypes(ap)
         ));
     }
 
     @Override
-    public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId id, long ackTs) {
+    public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, EntityId originator, AlarmId id, long ackTs) {
         log.debug("[{}][{}] acknowledgeAlarm [{}]", tenantId, id, ackTs);
-        return toAlarmApiResult(alarmRepository.acknowledgeAlarm(tenantId.getId(), id.getId(), ackTs));
+        return toAlarmApiResult(alarmRepository.acknowledgeAlarm(tenantId.getId(), originator.getId(), id.getId(), ackTs));
     }
 
     @Override
-    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId id, long clearTs, JsonNode details) {
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, EntityId originator, AlarmId id, long clearTs, JsonNode details) {
         log.debug("[{}][{}] clearAlarm [{}]", tenantId, id, clearTs);
-        return toAlarmApiResult(alarmRepository.clearAlarm(tenantId.getId(), id.getId(), clearTs, details != null ? getDetailsAsString(details) : null));
+        return toAlarmApiResult(alarmRepository.clearAlarm(tenantId.getId(), originator.getId(), id.getId(), clearTs, details != null ? getDetailsAsString(details) : null));
     }
 
     @Override
-    public AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId id, UserId assigneeId, long assignTime) {
-        return toAlarmApiResult(alarmRepository.assignAlarm(tenantId.getId(), id.getId(), assigneeId.getId(), assignTime));
+    public AlarmApiCallResult assignAlarm(TenantId tenantId, EntityId originator, AlarmId id, UserId assigneeId, long assignTime) {
+        return toAlarmApiResult(alarmRepository.assignAlarm(tenantId.getId(), originator.getId(), id.getId(), assigneeId.getId(), assignTime));
     }
 
     @Override
-    public AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId id, long unassignTime) {
-        return toAlarmApiResult(alarmRepository.unassignAlarm(tenantId.getId(), id.getId(), unassignTime));
+    public AlarmApiCallResult unassignAlarm(TenantId tenantId, EntityId originator, AlarmId id, long unassignTime) {
+        return toAlarmApiResult(alarmRepository.unassignAlarm(tenantId.getId(), originator.getId(), id.getId(), unassignTime));
     }
 
     @Override
-    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
-        return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, query, orderedEntityIds);
+    public void removeByOriginatorAndId(TenantId tenantId, EntityId originator, AlarmId alarmId) {
+        alarmRepository.deleteByOriginatorIdAndId(originator.getId(), alarmId.getId());
+    }
+
+    @Override
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions mergedUserPermissions, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
+        return alarmQueryRepository.countAlarmsByQuery(tenantId, customerId, mergedUserPermissions, query, orderedEntityIds);
     }
 
     @Override
     public PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink) {
-        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink, false));
+        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink, "type"));
         if (page.isEmpty()) {
             return PageData.emptyPageData();
         }
@@ -422,8 +489,39 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
+    public List<String> findTenantAlarmTypeNames(UUID tenantId, int limit) {
+        return alarmRepository.findTenantAlarmTypeNames(tenantId, limit);
+    }
+
+    @Override
+    public boolean addAlarmType(UUID tenantId, String type) {
+        return alarmRepository.addAlarmType(tenantId, type) > 0;
+    }
+
+    @Override
     public boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types) {
-        return alarmRepository.deleteTypeIfNoAlarmsExist(tenantId, types) > 0;
+        // Citus splits this in two: a multi-shard SELECT on the distributed alarm table to find which candidate
+        // types still have alarms, then a pure reference-table DELETE on alarm_types for the orphaned remainder.
+        // A single DELETE-on-reference joining the distributed alarm table is rejected by Citus, so the existence
+        // check and the delete can no longer be one atomic statement. That opens a TOCTOU window the original atomic
+        // DELETE...WHERE NOT EXISTS did not have: if an alarm of an "orphaned" type is created between the SELECT and
+        // the DELETE, that type's alarm_types row is still removed. To close it, re-run the existence check over just
+        // the deleted types (one batched SELECT) and re-register those that reappeared via the idempotent insert, so a
+        // type that gained an alarm mid-cleanup ends up registered again rather than missing until the next createAlarm.
+        Set<String> stillUsed = alarmRepository.findExistingAlarmTypes(tenantId, types);
+        Set<String> orphaned = new HashSet<>(types);
+        orphaned.removeAll(stillUsed);
+        if (orphaned.isEmpty()) {
+            return false;
+        }
+        if (alarmRepository.deleteAlarmTypes(tenantId, orphaned) == 0) {
+            return false;
+        }
+        Set<String> reappeared = alarmRepository.findExistingAlarmTypes(tenantId, orphaned);
+        for (String type : reappeared) {
+            alarmRepository.addAlarmType(tenantId, type);
+        }
+        return true;
     }
 
     @Override
@@ -517,6 +615,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         alarm.setCleared(json.get(ModelConstants.ALARM_CLEARED_PROPERTY).asBoolean());
         alarm.setPropagate(json.get(ModelConstants.ALARM_PROPAGATE_PROPERTY).asBoolean());
         alarm.setPropagateToOwner(json.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_PROPERTY).asBoolean());
+        alarm.setPropagateToOwnerHierarchy(json.get(ModelConstants.ALARM_PROPAGATE_TO_OWNER_HIERARCHY_PROPERTY).asBoolean());
         alarm.setPropagateToTenant(json.get(ModelConstants.ALARM_PROPAGATE_TO_TENANT_PROPERTY).asBoolean());
         alarm.setStartTs(json.get(ModelConstants.ALARM_START_TS_PROPERTY).asLong());
         alarm.setEndTs(json.get(ModelConstants.ALARM_END_TS_PROPERTY).asLong());

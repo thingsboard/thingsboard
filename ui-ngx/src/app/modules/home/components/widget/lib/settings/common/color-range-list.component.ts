@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -78,6 +79,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   @coerceBoolean()
+  useThemePalette = false;
+
+  @Input()
+  @coerceBoolean()
   advancedMode = false;
 
   modelValue: any;
@@ -151,14 +156,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   get rangeListFormGroups(): FormGroup[] {
     return this.rangeListFormArray.controls as FormGroup[];
-  }
-
-  trackByRange(index: number, rangeControl: AbstractControl): any {
-    return rangeControl;
-  }
-
-  public trackByAdvancedRange(index: number, advancedRangeControl: AbstractControl): any {
-    return advancedRangeControl;
   }
 
   public removeAdvancedRange(index: number) {

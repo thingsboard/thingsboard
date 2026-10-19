@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.limit;
 
 import lombok.Getter;
@@ -35,6 +36,16 @@ public enum LimitedApi {
     EDGE_EVENTS_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeEventRateLimitsPerEdge, "Edge events per edge", false),
     EDGE_UPLINK_MESSAGES(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimits, "Edge uplink messages", true),
     EDGE_UPLINK_MESSAGES_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimitsPerEdge, "Edge uplink messages per edge", false),
+    AGENT_EVENTS(DefaultTenantProfileConfiguration::getAgentEventRateLimits, "Agent events", true),
+    AGENT_EVENTS_PER_AGENT(DefaultTenantProfileConfiguration::getAgentEventRateLimitsPerAgent, "Agent events per agent", false),
+    AGENT_LOG_CHUNKS(DefaultTenantProfileConfiguration::getAgentLogChunkRateLimits, "Agent log chunks", true),
+    AGENT_LOG_CHUNKS_PER_AGENT(DefaultTenantProfileConfiguration::getAgentLogChunkRateLimitsPerAgent, "Agent log chunks per agent", false),
+    INTEGRATION_MSGS_PER_TENANT(DefaultTenantProfileConfiguration::getIntegrationMsgsPerTenantRateLimit, "integration messages", true),
+    INTEGRATION_MSGS_PER_DEVICE(DefaultTenantProfileConfiguration::getIntegrationMsgsPerDeviceRateLimit, "integration messages per device", false),
+    INTEGRATION_MSGS_PER_ASSET(DefaultTenantProfileConfiguration::getIntegrationMsgsPerAssetRateLimit, "integration messages per asset", false),
+    INTEGRATION_EVENTS(false, true),
+    CONVERTER_EVENTS(false, true),
+    REPORTS("reports generation", true),
     PASSWORD_RESET(false, true),
     TWO_FA_VERIFICATION_CODE_SEND(false, true),
     TWO_FA_VERIFICATION_CODE_CHECK(false, true),
@@ -44,7 +55,9 @@ public enum LimitedApi {
     TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE("transport messages per gateway device", false),
     EMAILS("emails sending", true),
     WS_SUBSCRIPTIONS("WS subscriptions", false),
-    CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true);
+    CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true),
+    TRENDZ_PUBLIC_SYNC("Trendz sync from public endpoint", false),
+    AI_CHAT_REQUESTS("AI chat requests", true);
 
     private final Function<DefaultTenantProfileConfiguration, String> configExtractor;
     private final boolean perTenant;

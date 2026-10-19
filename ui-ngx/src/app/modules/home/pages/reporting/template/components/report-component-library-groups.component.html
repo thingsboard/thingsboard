@@ -1,0 +1,17 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-report-component-library-groups">
+  @for (group of reportComponentLibraryGroups; track group;) {
+    <tb-report-component-library-group
+      [context]="context"
+      [subReport]="subReport"
+      [format]="format"
+      [filter]="filter"
+      [group]="group">
+    </tb-report-component-library-group>
+  }
+</div>

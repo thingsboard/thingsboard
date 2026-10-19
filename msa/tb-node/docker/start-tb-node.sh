@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -24,17 +24,11 @@ cd ${pkg.installFolder}/bin
 
 if [ "$INSTALL_TB" == "true" ]; then
 
-    if [ "$LOAD_DEMO" == "true" ]; then
-        loadDemo=true
-    else
-        loadDemo=false
-    fi
-
     echo "Starting ThingsBoard installation ..."
 
     exec java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
-                        -Dinstall.load_demo=${loadDemo} \
                         -Dinstall.upgrade=false \
+                        -Dplatform=docker \
                         -Dlogging.config=/usr/share/thingsboard/bin/install/logback.xml \
                         org.springframework.boot.loader.launch.PropertiesLauncher
 
@@ -47,6 +41,7 @@ elif [ "$UPGRADE_TB" == "true" ]; then
 
     exec java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.upgrade=true \
+                    -Dplatform=docker \
                     -Dinstall.upgrade.from_version=${fromVersion} \
                     -Dlogging.config=/usr/share/thingsboard/bin/install/logback.xml \
                     org.springframework.boot.loader.launch.PropertiesLauncher
@@ -57,6 +52,7 @@ else
 
     exec java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardServerApplication \
                         -Dlogging.config=${LOGGING_CONFIG} \
+                        -Dplatform=docker \
                         org.springframework.boot.loader.launch.PropertiesLauncher
 
 fi

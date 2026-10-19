@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   checkBoxCell,
-  DateEntityTableColumn,
+  DateEntityTableColumn, defaultEntityTablePermissions,
   EntityTableColumn,
   EntityTableConfig,
   HeaderActionDescriptor
@@ -20,6 +21,8 @@ import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileComponent } from '@home/components/profile/asset-profile.component';
 import { AssetProfileTabsComponent } from './asset-profile-tabs.component';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class AssetProfilesTableConfigResolver  {
@@ -28,6 +31,7 @@ export class AssetProfilesTableConfigResolver  {
 
   constructor(private assetProfileService: AssetProfileService,
               private importExport: ImportExportService,
+              private userPermissionsService: UserPermissionsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
@@ -63,7 +67,8 @@ export class AssetProfilesTableConfigResolver  {
       {
         name: this.translate.instant('asset-profile.set-default'),
         icon: 'flag',
-        isEnabled: (assetProfile) => !assetProfile.default,
+        isEnabled: (assetProfile) => !assetProfile.default  &&
+          this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.WRITE),
         onAction: ($event, entity) => this.setDefaultAssetProfile($event, entity)
       }
     );
@@ -79,14 +84,18 @@ export class AssetProfilesTableConfigResolver  {
     this.config.saveEntity = assetProfile => this.assetProfileService.saveAssetProfile(assetProfile);
     this.config.deleteEntity = id => this.assetProfileService.deleteAssetProfile(id.id);
     this.config.onEntityAction = action => this.onAssetProfileAction(action);
-    this.config.deleteEnabled = (assetProfile) => assetProfile && !assetProfile.default;
-    this.config.entitySelectionEnabled = (assetProfile) => assetProfile && !assetProfile.default;
+    this.config.deleteEnabled = (assetProfile) => assetProfile && !assetProfile.default &&
+      this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.DELETE);
+    this.config.entitySelectionEnabled = (assetProfile) => assetProfile && !assetProfile.default &&
+      this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.DELETE);
+    this.config.detailsReadonly = (assetProfile) =>
+      !this.userPermissionsService.hasGenericPermission(Resource.ASSET_PROFILE, Operation.WRITE);
     this.config.addActionDescriptors = this.configureAddActions();
   }
 
   resolve(): EntityTableConfig<AssetProfile> {
     this.config.tableTitle = this.translate.instant('asset-profile.asset-profiles');
-
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

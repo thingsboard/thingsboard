@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-agent-metrics-strip" [class.tb-agent-metrics-strip--compact]="compact">
+  <span class="tb-agent-metrics-strip-chip" [matTooltip]="cpuTooltip" matTooltipPosition="above">
+    <mat-icon class="tb-agent-metrics-strip-icon">memory</mat-icon>
+    <span class="tb-agent-metrics-strip-label" translate>agent.metrics-cpu</span>
+    <span class="tb-agent-metrics-strip-value">{{ cpuLabel }}</span>
+  </span>
+  <span class="tb-agent-metrics-strip-chip" [matTooltip]="memTooltip" matTooltipPosition="above">
+    <mat-icon class="tb-agent-metrics-strip-icon">developer_board</mat-icon>
+    <span class="tb-agent-metrics-strip-label" translate>agent.metrics-memory</span>
+    <span class="tb-agent-metrics-strip-value">{{ memLabel }}</span>
+  </span>
+  @if (hasDisk) {
+    <span class="tb-agent-metrics-strip-chip" [matTooltip]="diskTooltip" matTooltipPosition="above">
+      <mat-icon class="tb-agent-metrics-strip-icon">storage</mat-icon>
+      <span class="tb-agent-metrics-strip-label" translate>agent.metrics-disk</span>
+      <span class="tb-agent-metrics-strip-value">{{ diskLabel }}</span>
+    </span>
+  }
+  @if (hasVolume) {
+    <span class="tb-agent-metrics-strip-chip" [matTooltip]="volumeTooltip" matTooltipPosition="above">
+      <mat-icon class="tb-agent-metrics-strip-icon">folder</mat-icon>
+      <span class="tb-agent-metrics-strip-label" translate>agent.metrics-volumes</span>
+      <span class="tb-agent-metrics-strip-value">{{ volumeLabel }}</span>
+    </span>
+  }
+  @if (showChartsButton && !chartsActive) {
+    <button mat-stroked-button
+      type="button"
+      class="tb-agent-metrics-strip-toggle lt-xl:!hidden"
+      (click)="onToggleCharts($event)">
+      <mat-icon>show_chart</mat-icon>
+      <span translate>agent.metrics-show-charts</span>
+    </button>
+    <button mat-icon-button
+      type="button"
+      class="tb-agent-metrics-strip-toggle xl:!hidden"
+      [matTooltip]="'agent.metrics-show-charts' | translate"
+      matTooltipPosition="above"
+      (click)="onToggleCharts($event)">
+      <mat-icon>show_chart</mat-icon>
+    </button>
+  }
+</div>

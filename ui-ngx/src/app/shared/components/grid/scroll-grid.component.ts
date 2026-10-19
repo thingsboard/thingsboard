@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   AfterViewInit, ChangeDetectorRef,
@@ -126,10 +126,6 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   trackByItemsRow(index: number, itemsRow: T[]): number {
     return index;
-  }
-
-  trackByItem(index: number, item: T): T {
-    return item;
   }
 
   public update() {

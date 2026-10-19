@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.data.domain.Limit;
@@ -20,7 +21,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
-            "AND (:textSearch is NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
     Page<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") UUID systemTenantId,
                                                        @Param("textSearch") String textSearch,
                                                        Pageable pageable);
@@ -120,6 +121,23 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     @Query("SELECT externalId FROM WidgetsBundleEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
+            "AND wb.id IN :widgetsBundleIds")
+    List<WidgetsBundleEntity> findSystemWidgetsBundlesByIdIn(@Param("systemTenantId") UUID systemTenantId,
+                                                             @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
+            "AND wb.id IN :widgetsBundleIds")
+    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
+                                                                           @Param("nullTenantId") UUID nullTenantId,
+                                                                           @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE " +
+            "wb.id IN (:widgetsBundleIds) AND (wb.tenantId = :tenantId OR wb.tenantId = :systemTenantId)")
+    List<WidgetsBundleEntity> findSystemOrTenantWidgetsBundlesByIdIn(@Param("tenantId") UUID tenantId,
+                                                                     @Param("systemTenantId") UUID systemTenantId,
+                                                                     @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+
     @Query(nativeQuery = true, value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id = :tenantId and wb.image = :imageLink limit :lmt")
     List<WidgetsBundleEntity> findByTenantAndImageUrl(@Param("tenantId") UUID tenantId, @Param("imageLink") String imageLink, @Param("lmt") int lmt);
 
@@ -129,11 +147,4 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields(w.id, w.createdTime, w.tenantId," +
             "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
     List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
-
-    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE " +
-            "wb.id IN (:widgetsBundleIds) AND (wb.tenantId = :tenantId OR wb.tenantId = :systemTenantId)")
-    List<WidgetsBundleEntity> findSystemOrTenantWidgetsBundlesByIdIn(@Param("tenantId") UUID tenantId,
-                                                                     @Param("systemTenantId") UUID systemTenantId,
-                                                                     @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
-
 }

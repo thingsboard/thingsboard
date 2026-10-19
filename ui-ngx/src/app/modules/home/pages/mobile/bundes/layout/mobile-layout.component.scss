@@ -1,7 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-@import './../scss/constants';
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host{
   .mobile-layout-container {
     width: 100%;
@@ -129,7 +128,7 @@
           inset: 0;
           opacity: 0.32;
           border-radius: 6px;
-          border: 1px solid $tb-primary-color;
+          border: 1px solid var(--tb-primary-500);
           pointer-events: none;
         }
       }
