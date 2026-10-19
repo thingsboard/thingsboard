@@ -360,8 +360,13 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     }
 
     private void testSendNotificationMsgToEdgeServiceTimeEntityEqAny(TenantId tenantId, ActionType actionType, int cntTime) {
+        // Count only entities that can be synced to edge. Background services may save non-edge entities for the
+        // tenant at any moment (e.g. QUEUE_STATS created by the periodic rule engine stats report), and their
+        // ADDED notifications have no edge event type, so they are dropped by TbClusterService anyway.
+        ArgumentMatcher<EntityId> matcherEdgeEntityId = argument -> argument != null
+                && EdgeUtils.getEdgeEventTypeByEntityType(argument.getEntityType()) != null;
         Mockito.verify(tbClusterService, times(cntTime)).sendNotificationMsgToEdge(Mockito.eq(tenantId),
-                Mockito.any(), Mockito.any(EntityId.class), Mockito.any(), Mockito.isNull(),
+                Mockito.any(), Mockito.argThat(matcherEdgeEntityId), Mockito.any(), Mockito.isNull(),
                 Mockito.eq(EdgeUtils.getEdgeEventActionTypeByActionType(actionType)), Mockito.any());
     }
 
