@@ -750,18 +750,26 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
     return;
   }
 
-  const {valueY, baseX, width, fontSizeFactor, fontValueBaseline} =
+  const {valueY, baseX, width, Ri, fontSizeFactor, fontValueBaseline} =
     context.barDimensions;
 
   const textX = Math.round(baseX + width / 2);
   const textY = valueY;
 
-  let text = options.valueText ? options.valueText : padValue(options.valueFormat.format(value), options.valueDec) + options.symbol;
+  const text = options.valueText ? options.valueText : padValue(options.valueFormat.format(value), options.valueDec) + options.symbol;
 
   context.save();
   context.textAlign = 'center';
   context.textBaseline = fontValueBaseline;
   context.font = Drawings.font(options, 'Value', fontSizeFactor);
+  if (options.valueText) {
+    const isRound = options.gaugeType === 'donut' || options.gaugeType === 'arc';
+    const maxTextWidth = (isRound ? Ri * 2 : width) * 0.9;
+    const textWidth = context.measureText(text).width;
+    if (textWidth > maxTextWidth) {
+      context.font = Drawings.font(options, 'Value', fontSizeFactor * maxTextWidth / textWidth);
+    }
+  }
   context.lineWidth = 0;
   drawText(context, options, 'Value', text, textX, textY);
   context.restore();

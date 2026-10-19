@@ -8,7 +8,7 @@ import {
   DigitalGaugeSettings
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
@@ -23,7 +23,7 @@ import { UnitService } from '@core/services/unit.service';
 import { isNotEmptyTbUnits } from '@shared/models/unit.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import GenericOptions = CanvasGauges.GenericOptions;
-import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
+import { getGaugeValueText } from '@home/components/widget/lib/analogue-gauge.models';
 
 // @dynamic
 export class TbCanvasDigitalGauge {
@@ -248,36 +248,32 @@ export class TbCanvasDigitalGauge {
   update() {
     if (this.ctx.data.length > 0) {
       const cellData = this.ctx.data[0];
-      if (cellData.data.length > 0) {
-        const tvPair = cellData.data[cellData.data.length -
-        1];
-        let timestamp: number;
-        if (this.localSettings.showTimestamp) {
-          timestamp = tvPair[0];
-          const filter = this.ctx.$injector.get(DatePipe);
-          (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
-            filter.transform(timestamp, this.localSettings.timestampFormat);
+      const tvPair = cellData.data.length > 0 ? cellData.data[cellData.data.length - 1] : null;
+      let timestamp: number;
+      if (this.localSettings.showTimestamp && tvPair) {
+        timestamp = tvPair[0];
+        const filter = this.ctx.$injector.get(DatePipe);
+        (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
+          filter.transform(timestamp, this.localSettings.timestampFormat);
+      }
+      const origValue = tvPair ? tvPair[1] : null;
+      const value = parseFloat(origValue);
+      const options = this.gauge.options as CanvasDigitalGaugeOptions;
+      const valueText = getGaugeValueText(origValue);
+      if (options.valueText !== valueText) {
+        options.valueText = valueText;
+        this.gauge.update({} as CanvasDigitalGaugeOptions);
+      }
+      const gaugeValue = valueText ? options.minValue : value;
+      if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
+        if (!this.gauge.options.animation) {
+          this.gauge._value = gaugeValue;
+        } else {
+          delete this.gauge._value;
         }
-        const origValue = tvPair[1];
-        const value = parseFloat(origValue);
-        const options = this.gauge.options as CanvasDigitalGaugeOptions;
-        const valueText = !isDefinedAndNotNull(origValue) || origValue === '' ? 'N/A'
-          : !isNumeric(origValue) ? NOT_SUPPORTED : '';
-        if (options.valueText !== valueText) {
-          options.valueText = valueText;
-          this.gauge.update({} as CanvasDigitalGaugeOptions);
-        }
-        const gaugeValue = valueText ? options.minValue : value;
-        if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
-          if (!this.gauge.options.animation) {
-            this.gauge._value = gaugeValue;
-          } else {
-            delete this.gauge._value;
-          }
-          this.gauge.value = gaugeValue;
-        } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {
-          this.gauge.timestamp = timestamp;
-        }
+        this.gauge.value = gaugeValue;
+      } else if (this.localSettings.showTimestamp && tvPair && this.gauge.timestamp !== timestamp) {
+        this.gauge.timestamp = timestamp;
       }
     }
   }

@@ -62,6 +62,9 @@ interface BaseGaugeModel extends BaseGauge {
   _value?: number;
 }
 
+export const getGaugeValueText = (value: any): string =>
+  !isDefinedAndNotNull(value) || value === '' ? 'N/A' : !isNumeric(value) ? NOT_SUPPORTED : '';
+
 export abstract class TbBaseGauge<S, O extends GenericOptions> {
 
   private gauge: BaseGaugeModel;
@@ -81,27 +84,23 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   update() {
     if (this.ctx.data.length > 0) {
       const cellData = this.ctx.data[0];
-      if (cellData.data.length > 0) {
-        const tvPair = cellData.data[cellData.data.length - 1];
-        const origValue = tvPair[1];
-        let value = parseFloat(origValue);
-        if (this.formatValue) {
-          value = parseFloat(this.formatValue.format(value));
+      const origValue = cellData.data.length > 0 ? cellData.data[cellData.data.length - 1][1] : null;
+      let value = parseFloat(origValue);
+      if (this.formatValue) {
+        value = parseFloat(this.formatValue.format(value));
+      }
+      const valueText = getGaugeValueText(origValue);
+      if (this.gauge.options.valueText !== valueText) {
+        this.gauge.update({valueText} as GenericOptions);
+      }
+      const gaugeValue = valueText ? this.gauge.options.minValue : value;
+      if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
+        if (!this.gauge.options.animation) {
+          this.gauge._value = gaugeValue;
+        } else {
+          delete this.gauge._value;
         }
-        const valueText = !isDefinedAndNotNull(origValue) || origValue === '' ? 'N/A'
-          : !isNumeric(origValue) ? NOT_SUPPORTED : '';
-        if (this.gauge.options.valueText !== valueText) {
-          this.gauge.update({valueText} as GenericOptions);
-        }
-        const gaugeValue = valueText ? this.gauge.options.minValue : value;
-        if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
-          if (!this.gauge.options.animation) {
-            this.gauge._value = gaugeValue;
-          } else {
-            delete this.gauge._value;
-          }
-          this.gauge.value = gaugeValue;
-        }
+        this.gauge.value = gaugeValue;
       }
     }
   }
