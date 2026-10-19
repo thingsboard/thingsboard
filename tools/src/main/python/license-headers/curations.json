@@ -50,24 +50,6 @@
       "contentHash": "sha256:6f960791993777f636b230e3829422af292370a5b5a113b082dc2d05ee151491"
     },
     {
-      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Migration.java",
-      "header": "ce-modified",
-      "reason": "CE interface application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigration.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigration.java at 5954190c32f (blob f0cadee1f657ab6d1a0f670f1166ef3140ec4438); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:c12598c1c6ccd66fe6cfd7833fe1624d379c937151df7d13bf162212cb7344aa"
-    },
-    {
-      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/MigrationService.java",
-      "header": "ce-modified",
-      "reason": "CE service application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java at 5954190c32f (blob 2f063c3a1a469cb578503bdf548f5e1a4cfb4035); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:f72de342ef3308706b866bb311ede8c07c4027a2b413154a4002807561887ed3"
-    },
-    {
-      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Version.java",
-      "header": "ce-modified",
-      "reason": "CE class application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java at 5954190c32f (blob fa59efcc5a2d50079e495e42c141139fc57f178b); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:d7698c48f928583c2ade63ed5f16620677bb6d0a59376d9dbe1fb1ee1457a095"
-    },
-    {
       "path": "application/src/main/java/org/thingsboard/server/service/integration/rpc/IntegrationSessionCaffeineCache.java",
       "header": "busl",
       "reason": "Typed cache adapter for a PE feature. Reviewed as a new PE cache registration using the shared cache framework: service/cache identity and entity/key types are PE-specific. Constructor and Spring annotation overlap with CE cache adapters is framework template use, analogous to the maintainer-resolved PE entity ID wrappers. Reviewed similarity candidate application/src/main/java/org/thingsboard/server/service/sync/vc/VersionControlTaskCaffeineCache.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob d234314aee9f02efb853f0a3372f9e0de1b7869c).",
@@ -132,24 +114,6 @@
       "header": "busl",
       "reason": "PE WebSocket logs subscription command added in 4005afabb81 as part of the PE agent feature introduced on lts-4.4, which has no counterpart in CE. The candidate CE application/src/main/java/org/thingsboard/server/service/ws/notification/cmd/NotificationsUnsubCmd.java shares only the WebSocket command boilerplate. Reviewed candidate at a0aff29ef42d3636473b017115a9334b48d54d15 (blob 1a7a6119358).",
       "contentHash": "sha256:fd319f8910fa50f4db8dd30fe3f90e60e34910e1ddc0bb9db390db64f56b27db"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationIntegrationTest.java",
-      "header": "ce-modified",
-      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java at 5954190c32f (blob cf60ec2e4b5fce7a55862805e9bd959c125ce17e); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:24cb205ad1c7a7577284aa2fca5b245d60e0c554accfe9f26021a6d60e0807ce"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationServiceTest.java",
-      "header": "ce-modified",
-      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationServiceTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationServiceTest.java at 5954190c32f (blob 18ee8b6506742c7bf3e39a8fe0e5d9e9370e5614); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:1ba9703bfe4a8fdb30ef11d151c9de62b4f89279ad030738021986db9fd64d8d"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/VersionTest.java",
-      "header": "ce-modified",
-      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsVersionTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsVersionTest.java at 5954190c32f (blob f3d280a915e59fb37e93c45e6404b09728a772a8); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:6a1b1d2f264dbae3ad420d9eef4466449a50f9f721c7256441a4aab0e4a87037"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/install/update/DefaultDataUpdateServiceTest.java",
