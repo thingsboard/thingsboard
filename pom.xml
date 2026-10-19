@@ -1066,6 +1066,11 @@
                                         <exclude>com.datastax.oss:java-driver-core</exclude>
                                     </excludes>
                                 </bannedDependencies>
+                                <requireSameVersions>
+                                    <dependencies>
+                                        <dependency>io.netty:netty-tcnative*</dependency>
+                                    </dependencies>
+                                </requireSameVersions>
                             </rules>
                         </configuration>
                     </execution>
