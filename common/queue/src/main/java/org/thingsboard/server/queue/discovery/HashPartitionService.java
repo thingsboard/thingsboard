@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.discovery;
 
 import com.google.common.hash.HashFunction;
@@ -109,7 +96,7 @@ public class HashPartitionService implements PartitionService {
 
     private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
 
-    private List<ServiceInfo> currentOtherServices;
+    private volatile List<ServiceInfo> currentOtherServices;
     private final Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
     private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
 
@@ -548,6 +535,23 @@ public class HashPartitionService implements PartitionService {
     @Override
     public Set<String> getAllServiceIds(ServiceType serviceType) {
         return getAllServices(serviceType).stream().map(ServiceInfo::getServiceId).collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean isKnownServiceId(ServiceType serviceType, String serviceId) {
+        ServiceInfo current = serviceInfoProvider.getServiceInfo();
+        if (serviceId.equals(current.getServiceId()) && current.getServiceTypesList().contains(serviceType.name())) {
+            return true;
+        }
+        List<ServiceInfo> others = currentOtherServices;
+        if (others != null) {
+            for (ServiceInfo serviceInfo : others) {
+                if (serviceId.equals(serviceInfo.getServiceId()) && serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

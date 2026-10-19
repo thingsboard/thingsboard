@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,6 +24,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -58,11 +46,13 @@ import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -152,6 +142,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Autowired
     private TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
+
+    @Autowired
+    private PartitionService partitionService;
 
     @Autowired
     private TopicService topicService;
@@ -377,10 +370,13 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         } finally {
             newEventLock.unlock();
         }
+        // Claim ownership before writing the active state, not after: onEdgeDisconnect on the node this edge
+        // just left reads the cache to decide whether to clear the flag, so publishing the claim first keeps
+        // it from seeing a stale owner and clearing a state we have already set.
+        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         save(tenantId, edgeId, ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
-        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         edgeEventsMigrationProcessed.putIfAbsent(edgeId, Boolean.FALSE);
         scheduleEdgeEventsCheck(edgeGrpcSession);
@@ -554,10 +550,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             // reconnecting session has just set, and updateSessionEventsFlag only lifts FALSE, not a
             // missing entry, which would leave the check loop idle forever. deleteEdge still clears it
             sessionsById.remove(sessionId);
-            edgeIdServiceIdCache.evict(edgeId);
             TenantId tenantId = toRemove.getEdge().getTenantId();
+            // A newer session on another node may have already claimed this edge and set active=true.
+            // Clearing the flag here would leave the edge marked inactive while it is in fact connected,
+            // which silently drops every downlink event that is not queued for offline edges.
+            // When ownership is unknown (no cache entry) fall through and persist the inactive state.
+            if (!isOwnedByAnotherNode(edgeId)) {
+                save(tenantId, edgeId, ACTIVITY_STATE, false);
+            }
             long lastDisconnectTs = System.currentTimeMillis();
-            save(tenantId, edgeId, ACTIVITY_STATE, false);
             save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
             pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
             destroySession(toRemove);
@@ -575,6 +576,38 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
             }
         }
+        // Only evict if the cache still points at this node and no live session for this edge is left here.
+        // If the edge already reconnected to another TB-Core node, that node has overwritten the entry and owns it;
+        // if a newer session on this node replaced a stale one, that session owns it - evicting in either case
+        // would wipe the live owner's claim and defeat the activity-state guard above.
+        if (!sessions.containsKey(edgeId) && isOwnedByThisNode(edgeId)) {
+            edgeIdServiceIdCache.evict(edgeId);
+        }
+    }
+
+    // The edge's service-id cache entry points at a different node that is still a live TB-Core service.
+    // Two cases deliberately do NOT count as "owned by another node", so that the caller falls through and
+    // persists the inactive state:
+    //   - no cache entry: ownership is unknown, not claimed by someone else;
+    //   - entry naming a node that is no longer in the cluster: the edge sessions cache has no TTL by default
+    //     (CACHE_SPECS_EDGE_SESSIONS_TTL=0) and is only ever evicted by the owning node, so a node that died
+    //     without evicting would otherwise keep the edge marked active forever, with no reconciler to correct it.
+    private boolean isOwnedByAnotherNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        if (wrapper == null) {
+            return false;
+        }
+        String ownerServiceId = wrapper.get();
+        if (ownerServiceId == null || serviceInfoProvider.getServiceId().equals(ownerServiceId)) {
+            return false;
+        }
+        return partitionService.getAllServiceIds(ServiceType.TB_CORE).contains(ownerServiceId);
+    }
+
+    // The edge's service-id cache entry still points at this node, i.e. this node is the recorded owner.
+    private boolean isOwnedByThisNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        return wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get());
     }
 
     /**

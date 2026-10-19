@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { BaseData } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
@@ -21,11 +7,6 @@ import { getEntityDetailsPageURL } from '@core/utils';
 export interface WidgetInstalledItemDescriptor {
   type: 'WIDGET';
   widgetTypeId: { id: string };
-}
-
-export interface DashboardInstalledItemDescriptor {
-  type: 'DASHBOARD';
-  dashboardId: { id: string };
 }
 
 export interface CalculatedFieldInstalledItemDescriptor {
@@ -64,7 +45,6 @@ export interface SolutionTemplateInstalledItemDescriptor {
 
 export type IotHubInstalledItemDescriptor =
   | WidgetInstalledItemDescriptor
-  | DashboardInstalledItemDescriptor
   | CalculatedFieldInstalledItemDescriptor
   | AlarmRuleInstalledItemDescriptor
   | RuleChainInstalledItemDescriptor
@@ -154,10 +134,6 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     case 'WIDGET':
       entityId = descriptor.widgetTypeId?.id;
       entityType = EntityType.WIDGET_TYPE;
-      break;
-    case 'DASHBOARD':
-      entityId = descriptor.dashboardId?.id;
-      entityType = EntityType.DASHBOARD;
       break;
     case 'CALCULATED_FIELD':
     case 'ALARM_RULE':

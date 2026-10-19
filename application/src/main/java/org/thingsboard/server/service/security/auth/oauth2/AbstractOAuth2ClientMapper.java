@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -95,7 +82,7 @@ public abstract class AbstractOAuth2ClientMapper {
 
         UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, oauth2User.getEmail());
 
-        User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
+        User user = findUserForClient(oauth2User.getEmail(), oAuth2Client);
 
         if (user == null && !config.isAllowUserCreation()) {
             throw new UsernameNotFoundException("User not found: " + oauth2User.getEmail());
@@ -104,7 +91,7 @@ public abstract class AbstractOAuth2ClientMapper {
         if (user == null) {
             userCreationLock.lock();
             try {
-                user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, oauth2User.getEmail());
+                user = findUserForClient(oauth2User.getEmail(), oAuth2Client);
                 if (user == null) {
                     user = new User();
                     if (oauth2User.getCustomerId() == null && StringUtils.isEmpty(oauth2User.getCustomerName())) {
@@ -112,7 +99,12 @@ public abstract class AbstractOAuth2ClientMapper {
                     } else {
                         user.setAuthority(Authority.CUSTOMER_USER);
                     }
-                    TenantId tenantId = oauth2User.getTenantId() != null ? oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
+                    TenantId tenantId;
+                    if (oAuth2Client.getTenantId().isSysTenantId()) {
+                        tenantId = oauth2User.getTenantId() != null ? oauth2User.getTenantId() : getTenantId(oauth2User.getTenantName());
+                    } else {
+                        tenantId = oAuth2Client.getTenantId();
+                    }
                     user.setTenantId(tenantId);
                     CustomerId customerId = oauth2User.getCustomerId() != null ?
                             oauth2User.getCustomerId() : getCustomerId(user.getTenantId(), oauth2User.getCustomerName());
@@ -162,6 +154,23 @@ public abstract class AbstractOAuth2ClientMapper {
             log.error("Can't get or create security user from oauth2 user", e);
             throw new RuntimeException("Can't get or create security user from oauth2 user", e);
         }
+    }
+
+    /**
+     * The user is matched by email alone, and the email is whatever the provider chose to send. A client registered by a
+     * tenant must therefore only ever resolve users of that same tenant; a system client is platform-wide by design.
+     */
+    private User findUserForClient(String email, OAuth2Client oAuth2Client) {
+        User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, email);
+        if (user == null || oAuth2Client.getTenantId().isSysTenantId()) {
+            return user;
+        }
+        if (user.getTenantId().equals(oAuth2Client.getTenantId())) {
+            return user;
+        }
+        log.warn("OAuth2 client [{}] of tenant [{}] cannot resolve user [{}] [{}] of tenant [{}]: outside of the client tenant",
+                oAuth2Client.getId(), oAuth2Client.getTenantId(), user.getId(), email, user.getTenantId());
+        throw new UsernameNotFoundException("User not found: " + email);
     }
 
     private TenantId getTenantId(String name) throws Exception {
