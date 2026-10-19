@@ -13,7 +13,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @Slf4j
 @Service
 @TbCoreComponent
-@ConditionalOnExpression("${sql.ttl.api_keys.enabled:true} && ${sql.ttl.api_keys.ttl:0} > 0")
+@ConditionalOnExpression("${sql.ttl.api_keys.enabled:true}")
 public class ApiKeysCleanUpService extends AbstractCleanUpService {
 
     public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =
