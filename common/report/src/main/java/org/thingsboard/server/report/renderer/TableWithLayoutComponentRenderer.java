@@ -216,7 +216,7 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
                         .fontFamily(font != null && font.getFamily() != null && !font.getFamily().isEmpty() ? font.getFamily() : null)
                         .textAlignment(cellSettings.getTextAlignment() != null ? cellSettings.getTextAlignment().name() : null)
                         .verticalAlignment(cellSettings.getVerticalAlignment() != null ? cellSettings.getVerticalAlignment().name() : null)
-                        .borderStyle(cellSettings.getBorderStyle())
+                        .borderType(cellSettings.getBorderType())
                         .borderWidth(cellSettings.getBorderWidth())
                         .borderColor(cellSettings.getBorderColor() != null ? ColorUtils.normalizeCssColor(cellSettings.getBorderColor()) : null)
                         .build();
@@ -250,6 +250,8 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
     static class CellVariables {
         // matches the 1px baseline set on th/td in main.css / report-component-style.scss
         private static final int DEFAULT_BORDER_WIDTH_PX = 1;
+        // double border needs at least 3px to render two visible lines
+        private static final int DOUBLE_BORDER_MIN_WIDTH_PX = 3;
 
         private String key;
         private String value;
@@ -262,7 +264,7 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
         private String fontFamily;
         private String textAlignment;
         private String verticalAlignment;
-        private BorderType borderStyle;
+        private BorderType borderType;
         private Integer borderWidth;
         private String borderColor;
         private boolean header;
@@ -314,10 +316,11 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
         // border on any other side would sit right next to the neighboring cell's own
         // border and look doubled, so custom borders are restricted to those same sides.
         private void appendBorderStyle(StringBuilder style) {
-            if (borderWidth == null && borderStyle == null && borderColor == null) {
+            if (borderWidth == null && borderType == null && borderColor == null) {
                 return;
             }
-            int width = borderWidth != null ? borderWidth : DEFAULT_BORDER_WIDTH_PX;
+            int defaultWidth = borderType == BorderType.DOUBLE ? DOUBLE_BORDER_MIN_WIDTH_PX : DEFAULT_BORDER_WIDTH_PX;
+            int width = borderWidth != null ? borderWidth : defaultWidth;
             List<String> sides = new ArrayList<>();
             sides.add("right");
             sides.add("bottom");
@@ -329,8 +332,8 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
             }
             for (String side : sides) {
                 style.append("border-").append(side).append("-width:").append(width).append("px;");
-                if (borderStyle != null) {
-                    style.append("border-").append(side).append("-style:").append(borderStyle.getValue()).append(";");
+                if (borderType != null) {
+                    style.append("border-").append(side).append("-style:").append(borderType.getValue()).append(";");
                 }
                 if (borderColor != null) {
                     style.append("border-").append(side).append("-color:").append(borderColor).append(";");
