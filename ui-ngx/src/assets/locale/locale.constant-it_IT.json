@@ -6281,8 +6281,7 @@
     "type-rule-chain": "Catena di regole",
     "type-rule-chain-plural": "Catene di regole",
     "type-device": "Dispositivo",
-    "type-device-plural": "Dispositivi",
-    "selected": "Selezionato"
+    "type-device-plural": "Dispositivi"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7993,7 +7992,6 @@
     "endpoint-url-pattern": "Pattern URL endpoint",
     "endpoint-url-pattern-required": "Pattern URL endpoint richiesto",
     "request-method": "Metodo richiesta",
-    "use-simple-client-http-factory": "Utilizza client HTTP semplice",
     "ignore-request-body": "Senza corpo richiesta",
     "request-body-template": "Modello del corpo della richiesta",
     "request-body-template-hint": "Usa <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> per i metadati, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> per i valori del messaggio. Se vuoto, il payload del messaggio viene usato come corpo della richiesta. Per i payload non JSON, abilita 'Analizza come testo semplice'. <br/><br/> Puoi inserire un segreto usando il segnaposto <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, dove 'name' è l'identificatore del segreto e 'type' è TEXT o TEXT_FILE. È utile nei campi di configurazione dei nodi regola che non supportano direttamente 'Usa segreto'. Esempio: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8169,7 +8167,6 @@
     "proxy-port-range": "La porta proxy deve essere compresa tra 1 e 65535.",
     "proxy-user": "Utente proxy",
     "proxy-password": "Password proxy",
-    "proxy-scheme": "Schema proxy",
     "numbers-to-template": "Numeri di telefono al template",
     "numbers-to-template-required": "Numeri di telefono al template richiesti",
     "numbers-to-template-hint": "Numeri di telefono separati da virgola, usa <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> per il valore dai metadati, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> per il valore dal corpo del messaggio",
@@ -8954,8 +8951,6 @@
     "single-entity": "Entità singola",
     "group-entities": "Gruppo di entità",
     "entities-group-owner": "Proprietario del gruppo di entità",
-    "single-device": "Dispositivo singolo",
-    "group-of-devices": "Gruppo di dispositivi",
     "devices-group-owner": "Proprietario del gruppo di dispositivi",
     "message-body": "Corpo del messaggio",
     "target": "Destinatario",
@@ -11367,22 +11362,6 @@
     "ai-credits-usage": "Crediti IA: {{ used }} di {{ max }} utilizzati",
     "ai-credits-description": "Hai utilizzato <strong>{{ used }}</strong> dei tuoi <strong>{{ max }}</strong> crediti IA questo mese. Il limite si azzera il {{ date }}. Per aumentare la tua disponibilità di crediti IA, contatta l'amministratore di sistema."
   },
-  "solution-template": {
-    "solution-template": "Template di soluzione",
-    "solution-templates": "Template di soluzioni",
-    "management": "Gestisci template di soluzioni",
-    "details": "Dettagli",
-    "install": "Installa",
-    "level": "Livello",
-    "install-title": "Template di soluzione installato con successo",
-    "install-failed-title": "Installazione del template di soluzione fallita",
-    "instructions": "Istruzioni",
-    "goto-main-dashboard": "Vai alla dashboard principale",
-    "delete": "Elimina",
-    "delete-solution-title": "Sei sicuro di voler eliminare la soluzione '{{solutionTitle}}'?",
-    "delete-solution-text": "Attenzione, dopo la conferma la soluzione e tutti i dati correlati saranno irrimediabilmente cancellati.",
-    "installing": "Installazione del template di soluzione in corso..."
-  },
   "markdown": {
     "edit": "Modifica",
     "preview": "Anteprima",
@@ -11399,20 +11378,8 @@
     "app-title": "Titolo dell'applicazione",
     "favicon": "Icona del sito web",
     "favicon-desc": "Icona nella scheda del browser e nei segnalibri. PNG o ICO, dimensioni consigliate: 32×32 px",
-    "favicon-description": "Immagine *.ico, *.gif o *.png con dimensione massima {{kbSize}} KByte.",
-    "favicon-size-error": "L'immagine del sito è troppo grande. La dimensione massima consentita è {{kbSize}} KByte.",
-    "favicon-type-error": "Formato immagine non valido. Sono accettate solo immagini ICO, GIF o PNG.",
-    "drop-favicon-image": "Trascina un'icona o fai clic per selezionare un file da caricare.",
-    "drop-favicon-image-or": "Trascina e rilascia un'icona oppure",
-    "no-favicon-image": "Nessuna icona selezionata",
     "logo": "Logo",
     "logo-desc": "SVG o PNG, altezza minima 96px, fino a 200 KB",
-    "logo-description": "Qualsiasi immagine con dimensione massima di {{kbSize}} KByte.",
-    "logo-size-error": "L'immagine del logo è troppo grande. La dimensione massima consentita è {{kbSize}} KByte.",
-    "logo-type-error": "Formato file del logo non valido. Sono accettate solo immagini.",
-    "drop-logo-image": "Trascina un'immagine del logo o fai clic per selezionare un file da caricare.",
-    "drop-logo-image-or": "Trascina e rilascia un'immagine del logo oppure",
-    "no-logo-image": "Nessun logo selezionato",
     "logo-height": "Altezza logo, px",
     "logo-height-desc": "Ridimensiona il logo in proporzione e lo centra. Aumenta l'altezza (fino a 200px) per i loghi alti",
     "collapsed-logo": "Logo della barra laterale compressa",
@@ -11456,11 +11423,9 @@
     "error-verification-url": "Il nome di dominio non deve contenere i simboli '/' e ':'. Esempio: thingsboard.io",
     "show-connectivity-dialog": "Mostra finestra di connettività",
     "show-connectivity-dialog-desc": "Mostra la finestra di connettività del dispositivo con le istruzioni di connessione dopo la creazione di un dispositivo",
-    "hide-connectivity-dialog": "Nascondi dialogo di connettività",
     "override-trendz-add-on-name": "Sostituisci il nome dell'add-on Trendz analytics",
     "override-trendz-add-on-name-desc": "Rinomina il componente aggiuntivo \"Trendz\" in \"Advanced analytics\" in tutta la piattaforma",
     "show-platform-name-version-bottom-left-corner": "Mostra nome e versione della piattaforma nell'angolo in basso a sinistra",
-    "override-trendz-add-on-name-hint": "Quando abilitato, 'Trendz analytics' sarà visualizzato come 'Analisi avanzate' in tutta la piattaforma.",
     "show-platform-name-version": "Mostra nome e versione della piattaforma",
     "platform-name": "Nome della piattaforma",
     "platform-version": "Versione della piattaforma",
@@ -12686,9 +12651,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13025,10 +12988,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Credenziali",
-      "here-app-id": "ID app HERE",
-      "here-app-code": "Codice app HERE",
       "here-api-key": "Chiave API HERE",
-      "here-use-new-version-api-3": "Usa API versione 3",
       "tencent-maps-api-key": "Chiave API Tencent Maps",
       "tencent-map-type-roadmap": "Stradale",
       "tencent-map-type-satelite": "Satellitare",
@@ -13924,7 +13884,6 @@
       "roles-and-permissions": "Ruoli e permessi",
       "groups": "Gruppi",
       "integrations": "Integrazioni",
-      "solution-templates": "Template di soluzioni",
       "scheduler": "Pianificatore",
       "white-labeling": "Personalizzazione del marchio"
     },
@@ -13938,11 +13897,6 @@
       "critical": "Critico",
       "assigned-to-me": "Assegnato a me",
       "total": "Totale"
-    },
-    "solution-templates": {
-      "title": "Template di soluzioni",
-      "prototype-plan": "Piano prototipo",
-      "startup-plan": "Piano startup"
     },
     "getting-started": {
       "get-started": "Inizia",
