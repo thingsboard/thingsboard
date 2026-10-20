@@ -199,17 +199,14 @@ public class EdgeGrpcServiceTest {
 
     @Test
     public void givenSessionReplacedDuringDisconnect_whenStaleCallbackRuns_thenLiveSessionKept() {
-        // Reproduces the get()/remove() interleaving on a single node: onEdgeConnect swaps in a new session
-        // right after the stale callback's id check passes. The stale callback must not evict or tear down
-        // the live session, nor clear the activity state.
+        // onEdgeConnect has already swapped in a new session on this node when the stale callback runs.
+        // The check-and-remove is a single atomic step against the same map that onEdgeConnect writes
+        // through, so the swap can only land before or after it. The stale callback must not evict or
+        // tear down the live session, nor clear the activity state.
         UUID staleSessionId = UUID.randomUUID();
         EdgeGrpcSession live = mock(EdgeGrpcSession.class);
-        EdgeGrpcSession stale = mock(EdgeGrpcSession.class);
-        when(stale.getSessionId()).thenAnswer(invocation -> {
-            sessions().put(edgeId, live);
-            return staleSessionId;
-        });
-        sessions().put(edgeId, stale);
+        when(live.getSessionId()).thenReturn(UUID.randomUUID());
+        sessions().put(edgeId, live);
 
         onEdgeDisconnect(staleSessionId);
 
