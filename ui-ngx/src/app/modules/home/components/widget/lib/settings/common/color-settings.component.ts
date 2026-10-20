@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import {
   Component,
   forwardRef,
@@ -25,14 +11,14 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ColorRange, ColorSettings, ColorType, ComponentStyle } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, ComponentStyle, normalizeColorRangeSettings } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   ColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/color-settings-panel.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
@@ -143,11 +129,9 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
 
   writeValue(value: ColorSettings): void {
     if (value) {
-      this.modelValue = value;
-      if (isDefinedAndNotNull(this.modelValue.rangeList) && !isDefinedAndNotNull(this.modelValue.rangeList?.advancedMode)) {
-        const range = deepClone(this.modelValue.rangeList) as ColorRange[];
-        this.modelValue.rangeList = deepClone({advancedMode: false, range});
-      }
+      this.modelValue = isDefinedAndNotNull(value.rangeList)
+        ? {...value, rangeList: normalizeColorRangeSettings(value.rangeList)}
+        : value;
       this.updateColorStyle();
     }
   }

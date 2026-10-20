@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   NotificationTarget,
   NotificationTargetConfigType,
@@ -43,6 +30,8 @@ import { AuthUser } from '@shared/models/user.model';
 export interface RecipientNotificationDialogData {
   target?: NotificationTarget;
   isAdd?: boolean;
+  readonly?: boolean;
+  name?: string;
 }
 
 @Component({
@@ -69,6 +58,7 @@ export class RecipientNotificationDialogComponent extends
 
   entityType = EntityType;
   isAdd = true;
+  dialogTitle = 'notification.add-notification-recipients-group';
 
   private readonly destroy$ = new Subject<void>();
   private userFilterFormControls: string[];
@@ -83,6 +73,9 @@ export class RecipientNotificationDialogComponent extends
 
     if (isDefinedAndNotNull(data.isAdd)) {
       this.isAdd = data.isAdd;
+      if (!this.isAdd) {
+        this.dialogTitle = 'notification.edit-notification-recipients-group';
+      }
     }
 
     this.targetNotificationForm = this.fb.group({
@@ -96,6 +89,8 @@ export class RecipientNotificationDialogComponent extends
           tenantProfilesIds: [{value: null, disabled: true}],
           customerId: [{value: null, disabled: true}, Validators.required],
           usersIds: [{value: null, disabled: true}, Validators.required],
+          groupsIds: [{value: null, disabled: true}, Validators.required],
+          rolesIds: [{value: null, disabled: true}, Validators.required]
         }),
         conversationType: [{value: SlackChanelType.PUBLIC_CHANNEL, disabled: true}],
         conversation: [{value: '', disabled: true}, Validators.required],
@@ -105,6 +100,10 @@ export class RecipientNotificationDialogComponent extends
         description: [null]
       })
     });
+
+    if (this.data.name) {
+      this.targetNotificationForm.get('name').patchValue(this.data.name, {emitEvent: false});
+    }
 
     this.targetNotificationForm.get('configuration.type').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -150,6 +149,12 @@ export class RecipientNotificationDialogComponent extends
         case NotificationTargetConfigType.CUSTOMER_USERS:
           this.targetNotificationForm.get('configuration.usersFilter.customerId').enable({emitEvent: false});
           break;
+        case NotificationTargetConfigType.USER_GROUP_LIST:
+          this.targetNotificationForm.get('configuration.usersFilter.groupsIds').enable({emitEvent: false});
+          break;
+        case NotificationTargetConfigType.USER_ROLE:
+          this.targetNotificationForm.get('configuration.usersFilter.rolesIds').enable({emitEvent: false});
+          break;
       }
     });
 
@@ -176,6 +181,11 @@ export class RecipientNotificationDialogComponent extends
         && isUndefinedOrNull(this.data.target.configuration.useOldApi)) {
         this.targetNotificationForm.get('configuration.useOldApi').patchValue(true, {emitEvent: false});
       }
+    }
+
+    if(data?.readonly) {
+      this.dialogTitle = 'notification.view-notification-recipients-group';
+      this.targetNotificationForm.disable({emitEvent: false});
     }
   }
 

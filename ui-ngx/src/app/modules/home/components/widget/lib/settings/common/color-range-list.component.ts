@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -30,12 +17,13 @@ import {
   AdvancedColorRange,
   ColorRange,
   ColorRangeSettings,
+  normalizeColorRangeSettings,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -92,6 +80,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   @coerceBoolean()
+  useThemePalette = false;
+
+  @Input()
+  @coerceBoolean()
   advancedMode = false;
 
   modelValue: any;
@@ -135,11 +127,11 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   writeValue(value: any): void {
     if (value) {
       let rangeList: ColorRangeSettings = {};
-      if (this.simpleRange || (isUndefined(value?.advancedMode) && value?.length)) {
+      if (this.simpleRange) {
         rangeList.advancedMode = false;
-        rangeList.range = value;
+        rangeList.range = normalizeColorRangeSettings(value).range;
       } else {
-        rangeList = deepClone(value);
+        rangeList = normalizeColorRangeSettings(value);
       }
       this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode || false, {emitEvent: false});
       if (isDefinedAndNotNull(rangeList?.range)) {
@@ -165,14 +157,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   get rangeListFormGroups(): FormGroup[] {
     return this.rangeListFormArray.controls as FormGroup[];
-  }
-
-  trackByRange(index: number, rangeControl: AbstractControl): any {
-    return rangeControl;
-  }
-
-  public trackByAdvancedRange(index: number, advancedRangeControl: AbstractControl): any {
-    return advancedRangeControl;
   }
 
   public removeAdvancedRange(index: number) {

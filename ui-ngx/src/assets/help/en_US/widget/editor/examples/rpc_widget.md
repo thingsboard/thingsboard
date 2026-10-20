@@ -13,14 +13,14 @@ The **Widget Editor** will open, pre-populated with default **Control** template
 ```html
     <form #rpcForm="ngForm" (submit)="sendCommand()">
       <div class="mat-content mat-padding flex flex-col">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>RPC method</mat-label>
           <input matInput required name="rpcMethod" #rpcMethodField="ngModel" [(ngModel)]="rpcMethod"/>
           <mat-error *ngIf="rpcMethodField.hasError('required')">
             RPC method name is required.
           </mat-error>
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>RPC params</mat-label>
           <input matInput required name="rpcParams" #rpcParamsField="ngModel" [(ngModel)]="rpcParams"/>
           <mat-error *ngIf="rpcParamsField.hasError('required')">
@@ -116,9 +116,8 @@ To test how this widget performs RPC commands, we will need to place it in a das
 - Login as Tenant administrator.
 - Navigate to **Devices** and create new device with some name, for ex. "My RPC Device".
 - Open device details and click "Copy Access Token" button to copy device access token to clipboard.
-- Download [mqtt-js-rpc-from-server.sh{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/reference/resources/mqtt-js-rpc-from-server.sh) and [mqtt-js-rpc-from-server.js{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/reference/resources/mqtt-js-rpc-from-server.js). Place these files in a folder.
-  Edit **mqtt-js-rpc-from-server.sh** - replace **$ACCESS_TOKEN** with your device access token from the clipboard. And install mqtt client library.
-- Run **mqtt-js-rpc-from-server.sh** script. You should see a "connected" message in the console.
+- Save the **mqtt-js-rpc-from-server.js** file from the [MQTT RPC API{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/reference/mqtt-api/rpc/) guide to a folder on your PC and install the mqtt client library.
+- Export your device access token by running `export TOKEN=$ACCESS_TOKEN` (replace **$ACCESS_TOKEN** with the token from the clipboard), then run the script with `node mqtt-js-rpc-from-server.js`. You should see a "connected" message in the console.
 - Navigate to **Dashboards** and create a new dashboard with some name, for ex. "My first control dashboard". Open this dashboard.
 - Click dashboard "edit" button. In the dashboard edit mode, click the "Entity aliases" button located on the dashboard toolbar.
 
@@ -167,7 +166,7 @@ In order to test "Two way" RPC command mode, we need to change the corresponding
 
 ![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample-response-two-way.png)
 
-- stop **mqtt-js-rpc-from-server.sh** script.
+- stop **mqtt-js-rpc-from-server.js** script.
   Click **Send RPC command** button. You should see the following response in the widget.
 
 ![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample-response-timeout.png)

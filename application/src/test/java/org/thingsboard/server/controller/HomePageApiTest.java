@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
@@ -49,6 +37,7 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.wl.WhiteLabelingParams;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
@@ -74,10 +63,9 @@ public class HomePageApiTest extends AbstractControllerTest {
     private TbApiUsageStateClient apiUsageStateClient;
 
     @Autowired
-    private TbTenantProfileCache tenantProfileCache;
-
-    @Autowired
     private AdminSettingsService adminSettingsService;
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
 
     @Autowired
     private DomainService domainService;
@@ -85,10 +73,10 @@ public class HomePageApiTest extends AbstractControllerTest {
     @Autowired
     private OAuth2ClientService oAuth2ClientService;
 
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
-    @MockBean
+    @MockitoBean
     private SmsService smsService;
 
     private static final int DEFAULT_DASHBOARDS_COUNT = 0;
@@ -283,6 +271,12 @@ public class HomePageApiTest extends AbstractControllerTest {
 
     @Test
     public void testGetFeaturesInfo() throws Exception {
+        loginSysAdmin();
+
+        WhiteLabelingParams whiteLabelingParams = doGet("/api/whiteLabel/currentWhiteLabelParams", WhiteLabelingParams.class);
+        whiteLabelingParams.setAppTitle("App name");
+        doPost("/api/whiteLabel/whiteLabelParams", whiteLabelingParams, WhiteLabelingParams.class);
+
         String mail = "test@thingsboard.org";
         Mockito.doAnswer(invocation -> {
             AdminSettings mailSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
@@ -296,14 +290,13 @@ public class HomePageApiTest extends AbstractControllerTest {
         Mockito.when(smsService.isConfigured(TenantId.SYS_TENANT_ID))
                 .then(a -> adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "sms") != null);
 
-        loginSysAdmin();
-
         FeaturesInfo featuresInfo = doGet("/api/admin/featuresInfo", FeaturesInfo.class);
         Assert.assertNotNull(featuresInfo);
         Assert.assertFalse(featuresInfo.isEmailEnabled());
         Assert.assertFalse(featuresInfo.isSmsEnabled());
         Assert.assertFalse(featuresInfo.isTwoFaEnabled());
         Assert.assertFalse(featuresInfo.isNotificationEnabled());
+        Assert.assertTrue(featuresInfo.isWhiteLabelingEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
         AdminSettings mailSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
@@ -319,6 +312,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertFalse(featuresInfo.isSmsEnabled());
         Assert.assertFalse(featuresInfo.isTwoFaEnabled());
         Assert.assertFalse(featuresInfo.isNotificationEnabled());
+        Assert.assertTrue(featuresInfo.isWhiteLabelingEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
         AdminSettings smsSettings = new AdminSettings();
@@ -331,6 +325,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isSmsEnabled());
         Assert.assertFalse(featuresInfo.isTwoFaEnabled());
         Assert.assertFalse(featuresInfo.isNotificationEnabled());
+        Assert.assertTrue(featuresInfo.isWhiteLabelingEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
         AdminSettings twoFaSettingsSettings = new AdminSettings();
@@ -348,6 +343,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isSmsEnabled());
         Assert.assertTrue(featuresInfo.isTwoFaEnabled());
         Assert.assertFalse(featuresInfo.isNotificationEnabled());
+        Assert.assertTrue(featuresInfo.isWhiteLabelingEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
         AdminSettings notificationsSettings = new AdminSettings();
@@ -366,13 +362,14 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isSmsEnabled());
         Assert.assertTrue(featuresInfo.isTwoFaEnabled());
         Assert.assertTrue(featuresInfo.isNotificationEnabled());
+        Assert.assertTrue(featuresInfo.isWhiteLabelingEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
         OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
         OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
 
         Domain domain = createDomain(TenantId.SYS_TENANT_ID, "my.home.domain", true, true);
-        doPost("/api/domain?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), domain, Domain.class);
+        Domain savedDomain = doPost("/api/domain?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), domain, Domain.class);
 
         featuresInfo = doGet("/api/admin/featuresInfo", FeaturesInfo.class);
         Assert.assertNotNull(featuresInfo);
@@ -380,13 +377,15 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isSmsEnabled());
         Assert.assertTrue(featuresInfo.isTwoFaEnabled());
         Assert.assertTrue(featuresInfo.isNotificationEnabled());
+        Assert.assertTrue(featuresInfo.isWhiteLabelingEnabled());
         Assert.assertTrue(featuresInfo.isOauthEnabled());
 
         adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "notifications");
         adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "twoFaSettings");
         adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "sms");
+        adminSettingsService.deleteAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, "whiteLabelParams");
         oAuth2ClientService.deleteOauth2ClientsByTenantId(TenantId.SYS_TENANT_ID);
-        domainService.deleteDomainsByTenantId(TenantId.SYS_TENANT_ID);
+        domainService.deleteDomainById(TenantId.SYS_TENANT_ID, savedDomain.getId());
     }
 
     @Test
@@ -407,10 +406,10 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(0, usageInfo.getAssets());
         Assert.assertEquals(configuration.getMaxAssets(), usageInfo.getMaxAssets());
 
-        Assert.assertEquals(1, usageInfo.getCustomers());
+        Assert.assertEquals(2, usageInfo.getCustomers());
         Assert.assertEquals(configuration.getMaxCustomers(), usageInfo.getMaxCustomers());
 
-        Assert.assertEquals(2, usageInfo.getUsers());
+        Assert.assertEquals(4, usageInfo.getUsers());
         Assert.assertEquals(configuration.getMaxUsers(), usageInfo.getMaxUsers());
 
         Assert.assertEquals(DEFAULT_DASHBOARDS_COUNT, usageInfo.getDashboards());
@@ -465,7 +464,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         }
 
         usageInfo = doGet("/api/usage", UsageInfo.class);
-        Assert.assertEquals(customers.size() + 1, usageInfo.getCustomers());
+        Assert.assertEquals(customers.size() + 2, usageInfo.getCustomers());
 
         List<User> users = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
@@ -476,7 +475,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         }
 
         usageInfo = doGet("/api/usage", UsageInfo.class);
-        Assert.assertEquals(users.size() + 2, usageInfo.getUsers());
+        Assert.assertEquals(users.size() + 4, usageInfo.getUsers());
 
         List<Dashboard> dashboards = new ArrayList<>();
         for (int i = 0; i < 97; i++) {

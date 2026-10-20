@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-language-autocomplete {
+  .mat-mdc-option .mdc-list-item__primary-text {
+    white-space: nowrap;
+  }
+
+  .language-code {
+    display: inline-block;
+    opacity: 0.38;
+    min-width: 60px;
+    margin-right: 8px;
+  }
+
+  .language-code-prefix {
+    opacity: 0.38;
+    margin: 0 4px 0 17px;
+  }
+}

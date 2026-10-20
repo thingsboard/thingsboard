@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CellActionDescriptor,
   DateEntityTableColumn,
@@ -21,6 +8,7 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import {
+  notificationAiAssistantConfig,
   NotificationDeliveryMethodInfoMap,
   NotificationRequest,
   NotificationRequestInfo,
@@ -29,6 +17,9 @@ import {
   NotificationRequestStatusTranslateMap,
   NotificationTemplate
 } from '@shared/models/notification.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -47,6 +38,8 @@ import {
 } from '@home/pages/notification/sent/sent-error-dialog.component';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class SentTableConfigResolver  {
@@ -54,10 +47,12 @@ export class SentTableConfigResolver  {
   private readonly config: EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> =
     new EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo>();
 
-  constructor(private notificationService: NotificationService,
+  constructor(private store: Store<AppState>,
+              private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private userPermissionsService: UserPermissionsService) {
 
     this.config.entityType = EntityType.NOTIFICATION_REQUEST;
     this.config.detailsPanelEnabled = false;
@@ -77,6 +72,9 @@ export class SentTableConfigResolver  {
     this.config.cellActionDescriptors = this.configureCellActions();
 
     this.config.onEntityAction = action => this.onRequestAction(action);
+
+    this.config.deleteEnabled = () => this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
+    this.config.entitySelectionEnabled = () => this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
 
     this.config.handleRowClick = (event, entity) => {
       if ((event.target as HTMLElement).getElementsByClassName('stats').length || (event.target as HTMLElement).className === 'stats') {
@@ -98,6 +96,9 @@ export class SentTableConfigResolver  {
         () => ({}), false),
       new EntityTableColumn<NotificationRequest>('templateName', 'notification.template', '70%')
     );
+
+    this.config.aiAssistantConfig = notificationAiAssistantConfig(
+      this.store, this.userPermissionsService, this.translate, AiAssistantViewType.SENT_NOTIFICATION_LIST);
   }
 
   resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationRequest, PageLink, NotificationRequestInfo> {
@@ -108,7 +109,8 @@ export class SentTableConfigResolver  {
     return [{
       name: this.translate.instant('notification.notify-again'),
       icon: 'mdi:repeat-variant',
-      isEnabled: (request) => request.status !== NotificationRequestStatus.SCHEDULED,
+      isEnabled: (request) => request.status !== NotificationRequestStatus.SCHEDULED &&
+        this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE),
       onAction: ($event, entity) => this.createRequest($event, entity)
     }];
   }

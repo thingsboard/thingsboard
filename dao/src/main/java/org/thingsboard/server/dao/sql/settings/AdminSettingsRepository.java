@@ -1,25 +1,17 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.settings;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.model.sql.AdminSettingsEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AdminSettingsRepository extends JpaRepository<AdminSettingsEntity, UUID> {
@@ -33,5 +25,10 @@ public interface AdminSettingsRepository extends JpaRepository<AdminSettingsEnti
     boolean existsByTenantIdAndKey(UUID tenantId, String key);
 
     Page<AdminSettingsEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(settings.id, 'ADMIN_SETTINGS', settings.key) " +
+            "FROM AdminSettingsEntity settings WHERE settings.tenantId = :tenantId AND ilike(settings.jsonValue, CONCAT('%', :placeholder, '%'))")
+    List<EntityInfo> findByTenantIdAndSecretPlaceholder(@Param("tenantId") UUID tenantId,
+                                                        @Param("placeholder") String placeholder);
 
 }

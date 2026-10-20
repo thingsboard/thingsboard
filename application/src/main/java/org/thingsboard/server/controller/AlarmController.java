@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,11 +36,11 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,6 +59,9 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_DELETE_CHECK;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_WRITE_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
@@ -85,8 +76,6 @@ public class AlarmController extends BaseController {
     private final TbAlarmService tbAlarmService;
 
     public static final String ALARM_ID = "alarmId";
-    private static final String ALARM_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the originator of alarm is owned by the same tenant. " +
-            "If the user has the authority of 'Customer User', the server checks that the originator of alarm belongs to the customer. ";
     private static final String ALARM_QUERY_SEARCH_STATUS_DESCRIPTION = "A string value representing one of the AlarmSearchStatus enumeration value";
 
     private static final String ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the AlarmSearchStatus enumeration value";
@@ -102,7 +91,8 @@ public class AlarmController extends BaseController {
             "filled in the AlarmInfo object  field: 'originatorName' or will returns as null.";
 
     @ApiOperation(value = "Get Alarm (getAlarmById)",
-            notes = "Fetch the Alarm object based on the provided Alarm Id. " + ALARM_SECURITY_CHECK)
+            notes = "Fetch the Alarm object based on the provided Alarm Id. "
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/alarm/{alarmId}")
     public Alarm getAlarmById(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
@@ -113,8 +103,8 @@ public class AlarmController extends BaseController {
     }
 
     @ApiOperation(value = "Get Alarm Info (getAlarmInfoById)",
-            notes = "Fetch the Alarm Info object based on the provided Alarm Id. " +
-                    ALARM_SECURITY_CHECK + ALARM_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Fetch the Alarm Info object based on the provided Alarm Id. " + ALARM_INFO_DESCRIPTION +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/alarm/info/{alarmId}")
     public AlarmInfo getAlarmInfoById(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
@@ -134,7 +124,10 @@ public class AlarmController extends BaseController {
                     "If the user tries to create 'HighTemperature' alarm for the same device again, the previous alarm will be updated (the 'end_ts' will be set to current timestamp). " +
                     "If the user clears the alarm (see 'Clear Alarm(clearAlarm)'), than new alarm with the same type and same device may be created. " +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Alarm entity. " +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "\n\nThe alarm originator is an immutable routing key: when updating an existing alarm, the 'originator' in the request body " +
+                    "must match the stored alarm's originator. A request that references an existing alarm id but carries a different originator " +
+                    "is treated as a lookup miss and causes a 'Not Found' error. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/alarm")
     public Alarm saveAlarm(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
@@ -149,7 +142,8 @@ public class AlarmController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Alarm (deleteAlarm)",
-            notes = "Deletes the Alarm. Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes the Alarm. Referencing non-existing Alarm Id will cause an error."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_DELETE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/alarm/{alarmId}")
     public boolean deleteAlarm(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
@@ -162,7 +156,8 @@ public class AlarmController extends BaseController {
     @ApiOperation(value = "Acknowledge Alarm (ackAlarm)",
             notes = "Acknowledge the Alarm. " +
                     "Once acknowledged, the 'ack_ts' field will be set to current timestamp and special rule chain event 'ALARM_ACK' will be generated. " +
-                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "Referencing non-existing Alarm Id will cause an error."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/alarm/{alarmId}/ack")
     @ResponseStatus(value = HttpStatus.OK)
@@ -170,14 +165,14 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        //TODO: return correct error code if the alarm is not found or already cleared
         return tbAlarmService.ack(alarm, getCurrentUser());
     }
 
     @ApiOperation(value = "Clear Alarm (clearAlarm)",
             notes = "Clear the Alarm. " +
                     "Once cleared, the 'clear_ts' field will be set to current timestamp and special rule chain event 'ALARM_CLEAR' will be generated. " +
-                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "Referencing non-existing Alarm Id will cause an error."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/alarm/{alarmId}/clear")
     @ResponseStatus(value = HttpStatus.OK)
@@ -185,7 +180,6 @@ public class AlarmController extends BaseController {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
-        //TODO: return correct error code if the alarm is not found or already cleared
         return tbAlarmService.clear(alarm, getCurrentUser());
     }
 
@@ -228,8 +222,8 @@ public class AlarmController extends BaseController {
     }
 
     @ApiOperation(value = "Get Alarms (getAlarmsByEntity)",
-            notes = "Returns a page of alarms for the selected entity. Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. " +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Returns a page of alarms for the selected entity. Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. "
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/alarm/{entityType}/{entityId}")
     public PageData<AlarmInfo> getAlarmsByEntity(
@@ -269,11 +263,9 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
         checkEntityId(entityId, Operation.READ);
-        UserId assigneeUserId = null;
-        if (assigneeId != null) {
-            assigneeUserId = new UserId(UUID.fromString(assigneeId));
-        }
+        UserId assigneeUserId = checkAssigneeId(assigneeId);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
         return checkNotNull(alarmService.findAlarms(getCurrentUser().getTenantId(), new AlarmQuery(entityId, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)));
@@ -284,7 +276,7 @@ public class AlarmController extends BaseController {
                     "If the user has the authority of 'Tenant Administrator', the server returns alarms that belongs to the tenant of current user. " +
                     "If the user has the authority of 'Customer User', the server returns alarms that belongs to the customer of current user. " +
                     "Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. " +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/alarms")
     public PageData<AlarmInfo> getAllAlarms(
@@ -317,12 +309,10 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        UserId assigneeUserId = null;
-        if (assigneeId != null) {
-            assigneeUserId = new UserId(UUID.fromString(assigneeId));
-        }
+        UserId assigneeUserId = checkAssigneeId(assigneeId);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
+        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
         if (getCurrentUser().isCustomerUser()) {
             return checkNotNull(alarmService.findCustomerAlarms(getCurrentUser().getTenantId(), getCurrentUser().getCustomerId(), new AlarmQuery(null, pageLink, alarmSearchStatus, alarmStatus, assigneeUserId, fetchOriginator)));
         } else {
@@ -384,12 +374,10 @@ public class AlarmController extends BaseController {
             }
         }
         List<String> alarmTypeList = typeList != null ? Arrays.asList(typeList) : Collections.emptyList();
-        UserId assigneeUserId = null;
-        if (assigneeId != null) {
-            assigneeUserId = new UserId(UUID.fromString(assigneeId));
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
+        checkEntityId(entityId, Operation.READ);
+        UserId assigneeUserId = checkAssigneeId(assigneeId);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-
         return checkNotNull(alarmService.findAlarmsV2(getCurrentUser().getTenantId(), new AlarmQueryV2(entityId, pageLink, alarmTypeList, alarmStatusList, alarmSeverityList, assigneeUserId)));
     }
 
@@ -441,10 +429,8 @@ public class AlarmController extends BaseController {
             }
         }
         List<String> alarmTypeList = typeList != null ? Arrays.asList(typeList) : Collections.emptyList();
-        UserId assigneeUserId = null;
-        if (assigneeId != null) {
-            assigneeUserId = new UserId(UUID.fromString(assigneeId));
-        }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
+        UserId assigneeUserId = checkAssigneeId(assigneeId);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
 
         if (getCurrentUser().isCustomerUser()) {
@@ -456,7 +442,7 @@ public class AlarmController extends BaseController {
 
     @ApiOperation(value = "Get Highest Alarm Severity (getHighestAlarmSeverity)",
             notes = "Search the alarms by originator ('entityType' and entityId') and optional 'status' or 'searchStatus' filters and returns the highest AlarmSeverity(CRITICAL, MAJOR, MINOR, WARNING or INDETERMINATE). " +
-                    "Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/alarm/highestSeverity/{entityType}/{entityId}")
     public AlarmSeverity getHighestAlarmSeverity(
@@ -480,6 +466,7 @@ public class AlarmController extends BaseController {
             throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
                     "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
+        accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, Operation.READ);
         checkEntityId(entityId, Operation.READ);
         return alarmService.findHighestAlarmSeverity(getCurrentUser().getTenantId(), entityId, alarmSearchStatus,
                 alarmStatus, assigneeId);

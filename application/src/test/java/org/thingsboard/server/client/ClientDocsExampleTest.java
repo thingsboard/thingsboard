@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.client;
 
 import org.junit.Test;
@@ -25,6 +13,8 @@ import org.thingsboard.client.model.BooleanFilterPredicate;
 import org.thingsboard.client.model.BooleanOperation;
 import org.thingsboard.client.model.Device;
 import org.thingsboard.client.model.EntityCountQuery;
+import org.thingsboard.client.model.EntityGroup;
+import org.thingsboard.client.model.EntityGroupInfo;
 import org.thingsboard.client.model.EntityKey;
 import org.thingsboard.client.model.EntityKeyType;
 import org.thingsboard.client.model.EntityKeyValueType;
@@ -33,6 +23,8 @@ import org.thingsboard.client.model.EntityTypeFilter;
 import org.thingsboard.client.model.FilterPredicateValueBoolean;
 import org.thingsboard.client.model.KeyFilter;
 import org.thingsboard.client.model.PageDataDevice;
+import org.thingsboard.client.model.Role;
+import org.thingsboard.client.model.RoleType;
 import org.thingsboard.client.model.TsData;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -41,16 +33,18 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
  * Mirrors every code snippet from the Java client documentation page
- * ({@code /docs/reference/java-client/}, CE edition). Each snippet appears
+ * ({@code /docs/pe/reference/java-client/}, PE edition). Each snippet appears
  * character-for-character with two allowances:
  * <ul>
  *   <li>placeholder values ({@code "{BASE_URL}"}, {@code "YOUR_API_KEY_VALUE"},
  *       {@code "YOUR_DEVICE_ID"}, {@code "YOUR_ASSET_ID"},
+ *       {@code "YOUR_CUSTOMER_ID"}, {@code "YOUR_DEVICE_GROUP_ID"},
  *       {@code "nonexistent-id"}, {@code "tenant@thingsboard.org"},
  *       {@code "tenant"}) are swapped for real test values;</li>
  *   <li>{@code System.out.println} / {@code System.out.printf} calls inside the
@@ -63,7 +57,7 @@ import static org.junit.Assert.fail;
 @DaoSqlTest
 public class ClientDocsExampleTest extends AbstractApiClientTest {
 
-    // /docs/reference/java-client/#quickstart
+    // /docs/pe/reference/java-client/#quickstart
     @Test
     public void testQuickstart() throws Exception {
         // setup: real API key for the snippet's "YOUR_API_KEY_VALUE" placeholder
@@ -82,7 +76,7 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         Device newDevice = new Device();
         newDevice.setName("Quickstart Device");
         newDevice.setType("default");
-        Device savedDevice = client.saveDevice(newDevice, null, null, null, null);
+        Device savedDevice = client.saveDevice(newDevice, null, null, null, null, null, null);
 
         String deviceId = savedDevice.getId().getId().toString();
         client.saveEntityTelemetry("DEVICE", deviceId, "ANY", """
@@ -96,7 +90,7 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertReturns404(() -> client.getDeviceById(deviceId));
     }
 
-    // /docs/reference/java-client/#api-key-recommended
+    // /docs/pe/reference/java-client/#api-key-recommended
     @Test
     public void testAuthenticationViaApiKey() throws Exception {
         // setup: real API key for the snippet's "YOUR_API_KEY_VALUE" placeholder
@@ -117,7 +111,7 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals(TENANT_ADMIN_USERNAME, client.getUser().getEmail());
     }
 
-    // /docs/reference/java-client/#username-and-password-jwt
+    // /docs/pe/reference/java-client/#username-and-password-jwt
     @Test
     public void testAuthenticationViaCredentials() throws Exception {
         // === doc snippet ===
@@ -130,7 +124,7 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals(TENANT_ADMIN_USERNAME, client.getUser().getEmail());
     }
 
-    // /docs/reference/java-client/#rate-limit-handling
+    // /docs/pe/reference/java-client/#rate-limit-handling
     @Test
     public void testRateLimitHandlingBuilderOptions() throws Exception {
         // setup: real url + api key that the snippet references as locals
@@ -154,14 +148,14 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals(TENANT_ADMIN_USERNAME, client.getUser().getEmail());
     }
 
-    // /docs/reference/java-client/#working-with-entities
+    // /docs/pe/reference/java-client/#working-with-entities
     @Test
     public void testWorkingWithEntities() throws Exception {
         // === doc snippet ===
         Device newDevice = new Device();
         newDevice.setName("Test Device");
         newDevice.setType("default");
-        Device savedDevice = client.saveDevice(newDevice, null, null, null, null);
+        Device savedDevice = client.saveDevice(newDevice, null, null, null, null, null, null);
 
         String deviceId = savedDevice.getId().getId().toString();
         Device fetched = client.getDeviceById(deviceId);
@@ -173,14 +167,14 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertReturns404(() -> client.getDeviceById(deviceId));
     }
 
-    // /docs/reference/java-client/#push-telemetry
+    // /docs/pe/reference/java-client/#push-telemetry
     @Test
     public void testPushTelemetry() throws Exception {
         // setup: create a real device whose id replaces "YOUR_DEVICE_ID"
         Device setup = new Device();
         setup.setName("Telemetry Setup Device");
         setup.setType("default");
-        String realDeviceId = client.saveDevice(setup, null, null, null, null)
+        String realDeviceId = client.saveDevice(setup, null, null, null, null, null, null)
                 .getId().getId().toString();
 
         // === doc snippet ===
@@ -197,14 +191,14 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals("87", latest.get("humidity").get(0).getValue().toString());
     }
 
-    // /docs/reference/java-client/#read-and-write-attributes-read-modify-write
+    // /docs/pe/reference/java-client/#read-and-write-attributes
     @Test
     public void testReadModifyWriteAttributes() throws Exception {
         // setup: create a real asset whose id replaces "YOUR_ASSET_ID"
         Asset setupAsset = new Asset();
         setupAsset.setName("Counter Setup Asset");
         setupAsset.setType("building");
-        String realAssetId = client.saveAsset(setupAsset, null, null, null)
+        String realAssetId = client.saveAsset(setupAsset, null, null, null, null, null)
                 .getId().getId().toString();
 
         // === doc snippet ===
@@ -227,7 +221,7 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals(updated, ((Number) after.get(0).getValue()).longValue());
     }
 
-    // /docs/reference/java-client/#paginated-tenant-list
+    // /docs/pe/reference/java-client/#paginated-tenant-list
     @Test
     public void testPaginatedTenantList() throws Exception {
         // setup: populate the tenant with a few devices so the iteration has something to walk
@@ -236,7 +230,7 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
             Device d = new Device();
             d.setName("Page Setup Device " + i);
             d.setType("default");
-            client.saveDevice(d, null, null, null, null);
+            client.saveDevice(d, null, null, null, null, null, null);
         }
 
         // === doc snippet ===
@@ -252,19 +246,19 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals((long) expectedDeviceCount, devices.getTotalElements().longValue());
     }
 
-    // /docs/reference/java-client/#filtered-query-with-entity-data-query-api
+    // /docs/pe/reference/java-client/#filtered-query-with-entity-data-query-api
     @Test
     public void testEntityDataQueryCountFiltered() throws Exception {
         // setup: create a mix of active and inactive devices for the count query
         Device active1 = client.saveDevice(
                 new Device().name("Active_1").type("default"),
-                null, null, null, null);
+                null, null, null, null, null, null);
         Device active2 = client.saveDevice(
                 new Device().name("Active_2").type("default"),
-                null, null, null, null);
+                null, null, null, null, null, null);
         client.saveDevice(
                 new Device().name("Inactive_1").type("default"),
-                null, null, null, null);
+                null, null, null, null, null, null);
         client.saveEntityAttributesV2("DEVICE", active1.getId().getId().toString(),
                 "SERVER_SCOPE", "{\"active\": true}");
         client.saveEntityAttributesV2("DEVICE", active2.getId().getId().toString(),
@@ -292,7 +286,72 @@ public class ClientDocsExampleTest extends AbstractApiClientTest {
         assertEquals(2L, client.countEntitiesByQuery(activeQuery).longValue());
     }
 
-    // /docs/reference/java-client/#error-handling
+    // /docs/pe/reference/java-client/#create-and-populate-a-group  (PE-only)
+    @Test
+    public void testCreateAndPopulateGroup() throws Exception {
+        // setup: create a real device whose id replaces "YOUR_DEVICE_ID"
+        Device setupDevice = new Device();
+        setupDevice.setName("Group Member Device");
+        setupDevice.setType("default");
+        String realDeviceId = client.saveDevice(setupDevice, null, null, null, null, null, null)
+                .getId().getId().toString();
+
+        // === doc snippet ===
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Acme Devices");
+        deviceGroup.setType(EntityGroup.TypeEnum.DEVICE);
+        EntityGroupInfo savedGroup = client.saveEntityGroup(deviceGroup);
+        String deviceGroupId = savedGroup.getId().getId().toString();
+
+        // addEntitiesToEntityGroup takes a List<String> of raw UUID strings
+        client.addEntitiesToEntityGroup(deviceGroupId, List.of(realDeviceId));
+
+        // post-snippet verification: the device is actually a member of the group
+        List<String> memberIds = client.getEntities(deviceGroupId, "100", "0", null, null, null)
+                .getData().stream()
+                .map(e -> e.getId().getId().toString())
+                .toList();
+        assertEquals(1, memberIds.size());
+        assertEquals(realDeviceId, memberIds.get(0));
+    }
+
+    // /docs/pe/reference/java-client/#share-with-a-customer  (PE-only)
+    @Test
+    public void testShareWithCustomer() throws Exception {
+        // setup: real customer id and real device-group id that the snippet locals
+        // ("YOUR_CUSTOMER_ID" / "YOUR_DEVICE_GROUP_ID") stand in for
+        String realCustomerId = savedClientCustomer.getId().getId().toString();
+        EntityGroup setupGroup = new EntityGroup();
+        setupGroup.setName("Acme Devices");
+        setupGroup.setType(EntityGroup.TypeEnum.DEVICE);
+        String realDeviceGroupId = client.saveEntityGroup(setupGroup)
+                .getId().getId().toString();
+
+        // === doc snippet ===
+        String customerId = realCustomerId;
+        String deviceGroupId = realDeviceGroupId;
+
+        Role role = new Role();
+        role.setName("Acme Device Readers");
+        role.setType(RoleType.GROUP);
+        Role savedRole = client.saveRole(role);
+        String roleId = savedRole.getId().getId().toString();
+
+        EntityGroupInfo allUsers = client.getEntityGroupAllByOwnerAndType(
+                "CUSTOMER", customerId, "USER");
+        String userGroupId = allUsers.getId().getId().toString();
+
+        client.shareEntityGroupToChildOwnerUserGroup(deviceGroupId, userGroupId, roleId);
+
+        // post-snippet verification: the share call produced a real role + user group id
+        assertNotNull(roleId);
+        assertNotNull(userGroupId);
+        assertTrue(client.getEntityGroupPermissions(deviceGroupId).stream()
+                .anyMatch(p -> p.getRoleId() != null
+                        && p.getRoleId().getId().toString().equals(roleId)));
+    }
+
+    // /docs/pe/reference/java-client/#error-handling
     @Test
     public void testErrorHandling404() {
         // setup: a real (random) UUID that doesn't resolve, replacing "nonexistent-id";

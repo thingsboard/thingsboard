@@ -1,30 +1,20 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-card-content flex flex-col gap-2">
   @if (hasDashboardsAccess) {
     <div class="tb-card-header">
-      <a class="tb-title-link" routerLink="/dashboards">{{ 'widgets.recent-dashboards.title' | translate }}</a>
+      <a class="tb-title-link" [routerLink]="dashboardsLink">{{ 'widgets.recent-dashboards.title' | translate }}</a>
       <div class="flex flex-row items-center justify-start gap-2 lt-md:items-center lt-md:justify-between">
         <tb-toggle-header #dashboardsToggle [value]="toggleValue" name="usageToggle" (valueChange)="toggleValueChange($event)">
           <tb-toggle-option value="last">{{ 'widgets.recent-dashboards.last' | translate }}</tb-toggle-option>
           <tb-toggle-option value="starred">{{ 'widgets.recent-dashboards.starred' | translate }}</tb-toggle-option>
         </tb-toggle-header>
-        @if (authUser.authority === authority.TENANT_ADMIN) {
+        @if (authUser.authority === authority.TENANT_ADMIN && (resource.DASHBOARD | hasGenericPermission:operation.CREATE)) {
           @if (hasDevice) {
             <a class="md:!hidden"
             mat-flat-button color="primary" routerLink="/dashboards/all" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>
@@ -98,11 +88,10 @@
                                      subscriptSizing="dynamic"
                                      appearance="outline"
                                      [useIdValue]="false"
-                                     [customerId]="customerId"
                                      label=""
-                                     placeholder="{{ 'dashboard.select-dashboard' | translate }}"
-          [(ngModel)]="starredDashboardValue" (ngModelChange)="onStarDashboard($event)"></tb-dashboard-autocomplete>
-        }
+                                   placeholder="{{ 'dashboard.select-dashboard' | translate }}"
+                                   [(ngModel)]="starredDashboardValue" (ngModelChange)="onStarDashboard($event)"></tb-dashboard-autocomplete>
+      }
       }
     } @else {
       <div class="tb-no-dashboards">

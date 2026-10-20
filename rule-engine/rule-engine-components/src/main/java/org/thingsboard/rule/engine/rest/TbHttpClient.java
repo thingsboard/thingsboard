@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
@@ -41,7 +29,10 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.thingsboard.rule.engine.mail.TbMsgToEmailNode;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.blob.BlobEntity;
+import org.thingsboard.server.common.data.id.BlobEntityId;
 import org.thingsboard.server.common.data.util.KeyValueEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -54,11 +45,13 @@ import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -363,7 +356,7 @@ public class TbHttpClient {
             if ((HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
                     HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method)) &&
                     !config.isIgnoreRequestBody()) {
-                req.body(BodyInserters.fromValue(getRequestBody(task.msg())));
+                req.body(BodyInserters.fromValue(getRequestBody(task.ctx(), task.msg())));
             }
 
             req.retrieve()
@@ -474,8 +467,8 @@ public class TbHttpClient {
         return UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
     }
 
-    private Object getRequestBody(TbMsg msg) {
-        if (StringUtils.isNotBlank(config.getRequestBodyTemplate())) {
+    private Object getRequestBody(TbContext ctx, TbMsg msg) {
+        if (StringUtils.isNotEmpty(config.getRequestBodyTemplate())) {
             boolean escapeJson = !config.isParseToPlainText();
             String processedTemplate = TbNodeUtils.processPattern(config.getRequestBodyTemplate(), msg, escapeJson);
             if (config.isParseToPlainText()) {
@@ -487,12 +480,33 @@ public class TbHttpClient {
                 throw new RuntimeException("Request body template produced invalid JSON: " + processedTemplate, e);
             }
         }
-        return getData(msg, config.isParseToPlainText());
+        return getData(ctx, msg, config.isParseToPlainText());
     }
 
-    private Object getData(TbMsg tbMsg, boolean parseToPlainText) {
-        String data = tbMsg.getData();
-        return parseToPlainText ? JacksonUtil.toPlainText(data) : JacksonUtil.toJsonNode(data);
+    private Object getData(TbContext ctx, TbMsg msg, boolean parseToPlainText) {
+        String data = msg.getData();
+
+        List<BlobEntityId> attachments = new ArrayList<>();
+        String attachmentsStr = msg.getMetaData().getValue(TbMsgToEmailNode.ATTACHMENTS);
+        if (!StringUtils.isEmpty(attachmentsStr)) {
+            String[] attachmentsStrArray = attachmentsStr.split(",");
+            for (String attachmentStr : attachmentsStrArray) {
+                attachments.add(new BlobEntityId(UUID.fromString(attachmentStr)));
+            }
+        }
+
+        boolean isBlobData = false;
+        if (!attachments.isEmpty()) {
+            BlobEntity blobEntity = ctx.getPeContext().getBlobEntityService().findBlobEntityById(ctx.getTenantId(), attachments.getFirst());
+            if (blobEntity != null) {
+                data = StandardCharsets.UTF_8.decode(blobEntity.getData()).toString();
+                isBlobData = true;
+            } else {
+                log.warn("[{}] Attachments {} not found", ctx.getTenantId(), attachmentsStr);
+            }
+        }
+
+        return parseToPlainText ? JacksonUtil.toPlainText(data) : isBlobData ? data : JacksonUtil.toJsonNode(data);
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {

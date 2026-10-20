@@ -1,0 +1,84 @@
+var data = decodeToJson(payload);
+
+var deviceName = data.device_id != null ? "Production 1 - " + data.device_id : "Device A";
+var deviceType = data.device_type != null ? data.device_type : "default";
+var groupName = "Production";
+// var customerName = 'Customer A';
+// use assetName and assetType instead of deviceName and deviceType
+// to automatically create assets instead of devices.
+// var assetName = 'Asset A';
+// var assetType = 'building';
+var dateString = data.timestamp != null ? data.timestamp : "";
+
+// --- attributes and telemetry objects ---
+var telemetry = {};
+var attributes = {};
+// --- attributes and telemetry objects ---
+
+// --- Timestamp parsing
+var timestamp = -1;
+if (dateString != null) {
+  timestamp = new Date(dateString).getTime();
+  if (timestamp == -1) {
+      var secondsSeparatorIndex = dateString.lastIndexOf('.') + 1;
+      var millisecondsEndIndex = dateString.lastIndexOf('+');
+      if (millisecondsEndIndex == -1) {
+          millisecondsEndIndex = dateString.lastIndexOf('Z');
+      }
+      if (millisecondsEndIndex == -1) {
+          millisecondsEndIndex = dateString.lastIndexOf('-');
+      }
+      if (millisecondsEndIndex == -1) {
+          if (dateString.length >= secondsSeparatorIndex + 3) {
+              dateString = dateString.substring(0, secondsSeparatorIndex + 3);
+          }
+      } else {
+          dateString = dateString.substring(0, secondsSeparatorIndex + 3) +
+              dateString.substring(millisecondsEndIndex, dateString.length);
+      }
+      timestamp = new Date(dateString).getTime();
+  }
+}
+// If we cannot parse timestamp - we will use the current timestamp
+if (timestamp == -1) {
+    timestamp = Date.now();
+}
+// --- Timestamp parsing
+
+// You can add some keys manually to attributes, telemetry
+attributes.deviceId = data.device_id;
+
+// You can exclude some keys from the result
+var excludeFromTelemetryList = ["device_id", "timestamp", ];
+// var excludeFromAttributesList = ["device_id", "timestamp", ];
+
+// Message parsing
+var telemetryData = {};
+var attributesData = {};
+// To avoid paths in the decoded objects we passing false value to function as "pathInKey" argument.
+// Warning: pathInKey can cause already found fields to be overwritten with the last value found, e.g. receive_at from uplink_message will be written receive_at in the root.
+telemetryData.putAll(toFlatMap(data, excludeFromTelemetryList, false));
+// attributesData.putAll(toFlatMap(data, excludeFromAttributesList, false));
+
+if (!telemetryData.isEmpty()) {
+    telemetry.putAll(telemetryData);
+}
+if (!attributesData.isEmpty()) {
+    attributes.putAll(attributesData);
+}
+
+var result = {
+    deviceName: deviceName,
+    deviceType: deviceType,
+//  assetName: assetName,
+//  assetType: assetType,
+//  customerName: customerName,
+    groupName: groupName,
+    attributes: attributes,
+    telemetry: {
+        ts: timestamp,
+        values: telemetry
+    }
+};
+
+return result;

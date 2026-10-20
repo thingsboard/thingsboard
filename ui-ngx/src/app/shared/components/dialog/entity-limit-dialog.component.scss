@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-entity-limit-dialog {
+    p,
+    div {
+      &.tb-entity-limit-content {
+        padding: 0 30px;
+        font-size: 1.2em;
+        font-weight: 400;
+        line-height: 1.4em;
+        color: rgba(0, 0, 0, .8);
+      }
+    }
+  }
+}

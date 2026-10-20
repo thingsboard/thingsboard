@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
@@ -26,6 +13,7 @@ import {
 import { deepClone } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-widget-actions-panel',
@@ -44,6 +32,10 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  strokedPanel = false;
 
   actionsFormGroup: UntypedFormGroup;
 
@@ -120,7 +112,8 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        widgetTitle: this.widgetConfigComponent.modelValue.widgetName,
+        widgetName: this.widgetConfigComponent.modelValue.widgetName,
+        widgetTitle: this.widgetConfigComponent.modelValue.config?.title,
         callbacks: this.widgetConfigComponent.widgetConfigCallbacks,
         actionsData,
         widgetType: this.widgetConfigComponent.widgetType,

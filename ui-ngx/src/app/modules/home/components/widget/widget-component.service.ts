@@ -1,25 +1,12 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import {
-  ErrorWidgetType,
+  ErrorWidgetType, isWidgetWithInfo,
   MissingWidgetType,
   toWidgetInfo,
   toWidgetType,
@@ -60,6 +47,7 @@ import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
@@ -86,7 +74,8 @@ export class WidgetComponentService {
               private utils: UtilsService,
               private resources: ResourcesService,
               private translate: TranslateService,
-              private http: HttpClient) {
+              private http: HttpClient,
+              private reportService: DashboardReportService) {
 
     this.cssParser.testMode = false;
 
@@ -207,6 +196,9 @@ export class WidgetComponentService {
           ];
           forkJoin(loadDefaultWidgetInfoTasks).subscribe(
             () => {
+              if (this.reportService.reportView) {
+                this.reportService.openReportSubject.subscribe(() => this.widgetService.clearWidgetInfoInMemoryCache());
+              }
               initSubject.next();
             },
             (e) => {
@@ -239,6 +231,9 @@ export class WidgetComponentService {
   }
 
   public getInstantWidgetInfo(widget: Widget): WidgetInfo {
+    if (isWidgetWithInfo(widget)) {
+      return widget.widgetInfo;
+    }
     const widgetInfo = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn);
     if (widgetInfo) {
       return widgetInfo;

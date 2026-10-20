@@ -241,6 +241,44 @@
           "allowed-platforms": "Povolené platformy"
         }
       },
+    "ai-assistant": {
+        "configure-with-ai": "Nakonfigurovat pomocí AI",
+        "follow-up-prompt-placeholder": "Odpovědět...",
+        "sub-title": "Mohu vám pomoci nastavit a spravovat vaše zařízení, dashboardy, vypočítaná pole, pravidla alarmů a oznámení — stačí popsat, co potřebujete, a o zbytek se postarám.",
+        "new-chat": "Nový chat",
+        "no-chats": "Zatím žádné chaty",
+        "today": "Dnes",
+        "yesterday": "Včera",
+        "last-7-days": "Posledních 7 dní",
+        "older": "Starší",
+        "delete-chat-title": "Opravdu chcete smazat '{{name}}'?",
+        "delete-chat-text": "Všechny zprávy chatu budou ztraceny",
+        "delete-chat-confirm": "Ano, smazat",
+        "action-approval-required": "Vyžadováno schválení akce",
+        "approve": "Schválit",
+        "deny": "Zamítnout",
+        "processing": "Zpracovává se...",
+        "approved": "Hotovo",
+        "denied": "Zamítnuto",
+        "error": "Selhalo",
+        "thinking": "Přemýšlím...",
+        "rename-chat-title": "Přejmenovat tento chat",
+        "main-title": "Ahoj! Jsem váš AI asistent"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "Navrhnout pravidla alarmů",
+        "ai-assistant-example-suggest-rules-message": "Projděte moje zařízení a navrhněte pravidla alarmů, která stojí za to nastavit.",
+        "ai-assistant-example-inactivity-label": "Alarm nečinnosti zařízení",
+        "ai-assistant-example-inactivity-message": "Vytvořte pravidlo alarmu, které spustí varování, když zařízení přestane odesílat telemetrii po dobu delší než 10 minut.",
+        "ai-assistant-initial-prompt-placeholder": "Popište, co chcete nastavit..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "Navrhnout vypočítaná pole",
+        "ai-assistant-example-suggest-fields-message": "Projděte moje zařízení a navrhněte vypočítaná pole, která stojí za to nastavit.",
+        "ai-assistant-example-aggregate-label": "Agregovat telemetrii",
+        "ai-assistant-example-aggregate-message": "Vyberte jedno z mých zařízení a nastavte vypočítané pole, které agreguje několik jeho telemetrických klíčů. Popište, co vytvoříte, a nejprve mě požádejte o potvrzení.",
+        "ai-assistant-initial-prompt-placeholder": "Popište, co chcete nastavit..."
+    },
     "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarmy",
@@ -668,6 +706,11 @@
         "time-to": "Čas do"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "Popište, co chcete nastavit...",
+        "ai-assistant-example-monitor-device-label": "Monitorovat zařízení",
+        "ai-assistant-example-monitor-device-message": "Zařízení je ... Chci nastavit tento dashboard jako zobrazení s jedním stavem pro toto zařízení, které ukazuje jeho nejnovější telemetrii jako karty hodnot nahoře, graf časových řad této telemetrie pod nimi a tabulku jeho aktivních alarmů dole.",
+        "ai-assistant-example-monitor-fleet-label": "Monitorovat flotilu zařízení",
+        "ai-assistant-example-monitor-fleet-message": "Typ zařízení je ... Chci nastavit tento dashboard se dvěma stavy pro tento typ. Stav přehledu by měl vypsat všechna zařízení tohoto typu v tabulce entit a pod ní tabulku aktivních alarmů těchto zařízení. Výběr zařízení otevře stav podrobností, který ukazuje nejnovější telemetrii daného zařízení jako karty hodnot nahoře, graf časových řad této telemetrie pod nimi a tabulku jeho aktivních alarmů dole.",
         "dashboard": "Dashboard",
         "dashboards": "Dashboardy",
         "management": "Správa dashboardů",
@@ -878,6 +921,9 @@
         "toggle-edit-mode": "Přepnout do režimu editace"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "Popište, co chcete nastavit...",
+        "ai-assistant-example-connect-label": "Připojit moje zařízení",
+        "ai-assistant-example-connect-message": "Pomozte mi připojit jedno z mých zařízení k platformě, aby začalo odesílat skutečnou telemetrii.",
         "device": "Zařízení",
         "device-required": "Zařízení je povinné.",
         "devices": "Zařízení",
@@ -1376,6 +1422,12 @@
       "name": "Název",
       "name-starts-with": "Název edge začíná",
       "name-required": "Název je povinný.",
+      "edge-license-key": "Licenční klíč edge",
+      "edge-license-key-required": "Licenční klíč edge je povinný.",
+      "edge-license-key-hint": "Pro získání licence jděte na <a href='https://thingsboard.io/pricing/?active=thingsboard-edge' target='_blank'>pricing page</a> a vyberte is vhodnou licenci.",
+      "cloud-endpoint": "Cloud Endpoint",
+      "cloud-endpoint-required": "Cloud Endpoint je povinný.",
+      "cloud-endpoint-hint": "Edge vyžaduje HTTP(s) přístup do Cloudu (ThingsBoard) pro ověření licenčního klíče. Zadejte prosím Cloud URL, ke které se může edge připojit.",
       "description": "Popis",
       "details": "Detail",
       "events": "Události",
@@ -2083,6 +2135,8 @@
             "isgateway": "Je bránou",
             "activity-time-from-gateway-device": "Čas aktivity ze zařízení brány",
             "description": "Popis",
+            "edge-license-key": "Licenční klíč",
+            "cloud-endpoint": "Cloud Endpoint",
             "routing-key": "Klíč edge",
             "secret": "Edge secret"
         },

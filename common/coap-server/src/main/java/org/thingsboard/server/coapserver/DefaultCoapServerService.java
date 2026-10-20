@@ -1,23 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.coapserver;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.network.CoapEndpoint;
@@ -34,6 +23,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -85,7 +75,9 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
             dtlsSessionsExecutor.shutdownNow();
         }
         log.info("Stopping CoAP server!");
-        server.destroy();
+        if (server != null) {
+            server.destroy();
+        }
         log.info("CoAP server stopped!");
     }
 
@@ -103,32 +95,80 @@ public class DefaultCoapServerService implements CoapServerService, SmartInitial
         return tbDtlsCertificateVerifier != null ? tbDtlsCertificateVerifier.getTbCoapDtlsSessionsMap() : null;
     }
 
-    private CoapServer createCoapServer() throws UnknownHostException {
-        Configuration networkConfig = createNetworkConfiguration();
-        server = new CoapServer(networkConfig);
-
-        CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
-        InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
-        InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
-        noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
-
-        noSecCoapEndpointBuilder.setConfiguration(networkConfig);
-        CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
-        server.addEndpoint(noSecCoapEndpoint);
-        if (isDtlsEnabled()) {
-            createDtlsEndpoint(networkConfig);
-            dtlsSessionsExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName());
-            dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
+    @Override
+    public synchronized Resource addResourceHierarchicallyAndReturnLast(List<String> resourceHierarchy) throws UnknownHostException {
+        Resource childResource = null;
+        CoapServer coapServer = getCoapServer();
+        Resource root = coapServer.getRoot();
+        for (String name : resourceHierarchy) {
+            if (resourceHierarchy.get(0).equals(name)) {
+                childResource = root.getChild(name);
+                if (childResource == null) {
+                    childResource = new CoapResource(name);
+                    coapServer.add(childResource);
+                }
+            } else {
+                if (childResource != null) {
+                    Resource child = childResource.getChild(name);
+                    if (child == null) {
+                        child = new CoapResource(name);
+                        childResource.add(child);
+                        childResource = child;
+                    } else {
+                        childResource = child;
+                    }
+                }
+            }
         }
-        Resource root = server.getRoot();
-        TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
-        server.setMessageDeliverer(messageDeliverer);
-
-        server.start();
-        return server;
+        return childResource;
     }
 
-    private boolean isDtlsEnabled() {
+    private CoapServer createCoapServer() throws UnknownHostException {
+        Configuration networkConfig = createNetworkConfiguration();
+        try {
+            server = new CoapServer(networkConfig);
+            CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
+            InetAddress addr = InetAddress.getByName(coapServerContext.getHost());
+            InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
+            noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
+
+            noSecCoapEndpointBuilder.setConfiguration(networkConfig);
+            CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
+            server.addEndpoint(noSecCoapEndpoint);
+            if (isDtlsEnabled()) {
+                createDtlsEndpoint(networkConfig);
+                dtlsSessionsExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName());
+                dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
+            }
+            Resource root = server.getRoot();
+            TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
+            server.setMessageDeliverer(messageDeliverer);
+
+            server.start();
+            return server;
+        } catch (RuntimeException | UnknownHostException e) {
+            log.error("Failed to start CoAP server, releasing resources", e);
+            try {
+                if (dtlsSessionsExecutor != null) {
+                    dtlsSessionsExecutor.shutdownNow();
+                }
+                if (server != null) {
+                    server.destroy();
+                }
+            } catch (Exception suppressed) {
+                e.addSuppressed(suppressed);
+            } finally {
+                server = null;
+                dtlsSessionsExecutor = null;
+                dtlsConnector = null;
+                dtlsCoapEndpoint = null;
+                tbDtlsCertificateVerifier = null;
+            }
+            throw e;
+        }
+    }
+
+    public boolean isDtlsEnabled() {
         return coapServerContext.getDtlsSettings() != null;
     }
 

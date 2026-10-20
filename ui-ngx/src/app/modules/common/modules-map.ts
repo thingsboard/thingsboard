@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
 import * as AngularCoreRxjsInterop from '@angular/core/rxjs-interop';
@@ -77,6 +64,12 @@ import _moment from 'moment';
 import * as momentTz from 'moment-timezone';
 import * as tslib from 'tslib';
 
+import * as dayGridPlugin from '@fullcalendar/daygrid';
+import * as listPlugin from '@fullcalendar/list';
+import * as timeGridPlugin from '@fullcalendar/timegrid';
+import * as momentPlugin from '@fullcalendar/moment';
+import * as interactionPlugin from '@fullcalendar/interaction';
+import * as FullCalendar from '@fullcalendar/angular';
 import * as CanvasGauges from 'canvas-gauges';
 import * as NgxHmCarousel from 'ngx-hm-carousel';
 
@@ -91,6 +84,7 @@ import * as HighlightPipe from '@shared/pipe/highlight.pipe';
 import * as KeyboardShortcutPipe from '@shared/pipe/keyboard-shortcut.pipe';
 import * as MillisecondsToTimeStringPipe from '@shared/pipe/milliseconds-to-time-string.pipe';
 import * as NospacePipe from '@shared/pipe/nospace.pipe';
+import * as PermissionPipes from '@shared/pipe/permission.pipes';
 import * as SafePipe from '@shared/pipe/safe.pipe';
 import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
 import * as ShortNumberPipe from '@shared/pipe/short-number.pipe';
@@ -179,7 +173,6 @@ import * as HistorySelectorComponent from '@shared/components/time/history-selec
 import * as EntityGatewaySelectComponent from '@shared/components/entity/entity-gateway-select.component';
 import * as ContactComponent from '@shared/components/contact.component';
 import * as OtaPackageAutocompleteComponent from '@shared/components/ota-package/ota-package-autocomplete.component';
-import * as WidgetsBundleSearchComponent from '@shared/components/widgets-bundle-search.component';
 import * as CopyButtonComponent from '@shared/components/button/copy-button.component';
 import * as TogglePasswordComponent from '@shared/components/button/toggle-password.component';
 import * as WidgetButtonComponent from '@shared/components/button/widget-button.component';
@@ -198,6 +191,15 @@ import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.
 import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
 import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
+import * as EntityGroupAutocompleteComponent from '@shared/components/group/entity-group-autocomplete.component';
+import * as OwnerAutocompleteComponent from '@shared/components/group/owner-autocomplete.component';
+import * as EntityGroupSelectComponent from '@shared/components/group/entity-group-select.component';
+import * as EntityGroupListComponent from '@shared/components/group/entity-group-list.component';
+import * as EdgeEntityGroupListComponent from '@shared/components/group/edge-entity-group-list.component';
+import * as OriginatorSelectComponent from '@shared/components/originator-select.component';
+import * as GroupPermissionsComponent from '@shared/components/role/group-permissions.component';
+import * as GroupPermissionDialogComponent from '@shared/components/role/group-permission-dialog.component';
+import * as ShareEntityGroupComponent from '@shared/components/group/share-entity-group.component';
 
 import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
 import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
@@ -326,10 +328,40 @@ import * as DashboardStateDialogComponent from '@home/components/dashboard-page/
 import * as EmbedDashboardDialogComponent from '@home/components/widget/dialog/embed-dashboard-dialog.component';
 import * as EdgeDownlinkTableComponent from '@home/components/edge/edge-downlink-table.component';
 import * as EdgeDownlinkTableHeaderComponent from '@home/components/edge/edge-downlink-table-header.component';
-import * as DisplayWidgetTypesPanelComponent from '@home/components/dashboard-page/widget-types-panel.component';
 import * as AlarmDurationPredicateValueComponent from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import * as DashboardImageDialogComponent from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import * as WidgetContainerComponent from '@home/components/widget/widget-container.component';
+import * as ConverterAutocompleteComponent from '@home/components/converter/converter-autocomplete.component';
+import * as OperationTypeListComponent from '@home/components/role/operation-type-list.component';
+import * as ResourceTypeAutocompleteComponent from '@home/components/role/resource-type-autocomplete.component';
+import * as PermissionListComponent from '@home/components/role/permission-list.component';
+import * as ViewRoleDialogComponent from '@home/components/role/view-role-dialog.component';
+import * as GroupEntitiesTableComponent from '@home/components/group/group-entities-table.component';
+import * as GroupEntityTabsComponent from '@home/components/group/group-entity-tabs.component';
+import * as GroupEntityTableHeaderComponent from '@home/components/group/group-entity-table-header.component';
+import * as EntityGroupComponent from '@home/components/group/entity-group.component';
+import * as EntityGroupTabsComponent from '@home/components/group/entity-group-tabs.component';
+import * as EntityGroupSettingsComponent from '@home/components/group/entity-group-settings.component';
+import * as EntityGroupColumnComponent from '@home/components/group/entity-group-column.component';
+import * as EntityGroupColumnsComponent from '@home/components/group/entity-group-columns.component';
+import * as EntityGroupColumnDialogComponent from '@home/components/group/entity-group-column-dialog.component';
+import * as AddGroupEntityDialogComponent from '@home/components/group/add-group-entity-dialog.component';
+import * as RegistrationPermissionsComponent from '@home/components/role/registration-permissions.component';
+import * as EntityGroupWizardDialogComponent from '@home/components/wizard/entity-group-wizard-dialog.component';
+import * as OtaUpdateEventConfigComponent from '@home/components/scheduler/config/ota-update-event-config.component';
+import * as SchedulerEventsComponent from '@home/components/scheduler/scheduler-events.component';
+import * as SchedulerEventDialogComponent from '@home/components/scheduler/scheduler-event-dialog.component';
+import * as SchedulerEventTypeAutocompleteComponent from '@home/components/scheduler/scheduler-event-type-autocomplete.component';
+import * as SchedulerEventConfigComponent from '@home/components/scheduler/scheduler-event-config.component';
+import * as SchedulerEventTemplateConfigComponent from '@home/components/scheduler/scheduler-event-template-config.component';
+import * as SendRpcRequestComponent from '@home/components/scheduler/config/send-rpc-request.component';
+import * as UpdateAttributesComponent from '@home/components/scheduler/config/update-attributes.component';
+import * as AttributeKeyValueTableComponent from '@home/components/scheduler/config/attribute-key-value-table.component';
+import * as GenerateReportComponent from '@home/components/scheduler/config/generate-dashboard-report.component';
+import * as ReportConfigComponent from '@home/components/scheduler/config/dashboard-report-config.component';
+import * as SelectDashboardStateDialogComponent from '@home/components/scheduler/config/select-dashboard-state-dialog.component';
+import * as EmailConfigComponent from '@home/components/scheduler/config/email-config.component';
+import * as SchedulerEventScheduleComponent from '@home/components/scheduler/scheduler-event-schedule.component';
 import * as TenantProfileQueuesComponent from '@home/components/profile/queue/tenant-profile-queues.component';
 import * as QueueFormComponent from '@home/components/queue/queue-form.component';
 import * as AssetProfileComponent from '@home/components/profile/asset-profile.component';
@@ -342,12 +374,17 @@ import * as DatapointsLimitComponent from '@shared/components/time/datapoints-li
 import * as AggregationTypeSelectComponent from '@shared/components/time/aggregation/aggregation-type-select.component';
 import * as AggregationOptionsConfigComponent from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
+import * as SecretKeyInputComponent from '@shared/components/secret-storage/secret-key-input.component';
+import * as SecretFileInputComponent from '@shared/components/secret-storage/secret-file-input.component';
+import * as SecretStorageDialogComponent from '@shared/components/secret-storage/secret-storage-dialog.component';
+import * as SecretAutocompleteComponent from '@shared/components/secret-storage/secret-autocomplete.component';
 import * as AIModelDialogComponent from '@home/components/ai-model/ai-model-dialog.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, of } from 'rxjs';
 import { isJSResourceUrl } from '@shared/public-api';
 import { ɵɵinterpolate, ɵɵinterpolate2 } from '@angular/core';
+
 
 class ModulesMap implements IModulesMap {
 
@@ -416,6 +453,12 @@ class ModulesMap implements IModulesMap {
     'moment-timezone': momentTz,
     tslib,
 
+    '@fullcalendar/daygrid': dayGridPlugin,
+    '@fullcalendar/list': listPlugin,
+    '@fullcalendar/timegrid': timeGridPlugin,
+    '@fullcalendar/moment': momentPlugin,
+    '@fullcalendar/interaction': interactionPlugin,
+    '@fullcalendar/angular': FullCalendar,
     'canvas-gauges': CanvasGauges,
     'ngx-hm-carousel': NgxHmCarousel,
 
@@ -430,6 +473,7 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/keyboard-shortcut.pipe': KeyboardShortcutPipe,
     '@shared/pipe/milliseconds-to-time-string.pipe': MillisecondsToTimeStringPipe,
     '@shared/pipe/nospace.pipe': NospacePipe,
+    '@shared/pipe/permission.pipes': PermissionPipes,
     '@shared/pipe/safe.pipe': SafePipe,
     '@shared/pipe/selectable-columns.pipe': SelectableColumnsPipe,
     '@shared/pipe/short-number.pipe': ShortNumberPipe,
@@ -530,7 +574,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/entity/entity-gateway-select.component': EntityGatewaySelectComponent,
     '@shared/components/contact.component': ContactComponent,
     '@shared/components/ota-package/ota-package-autocomplete.component': OtaPackageAutocompleteComponent,
-    '@shared/components/widgets-bundle-search.component': WidgetsBundleSearchComponent,
     '@shared/components/button/copy-button.component': CopyButtonComponent,
     '@shared/components/button/toggle-password.component': TogglePasswordComponent,
     '@shared/components/button/widget-button.component': WidgetButtonComponent,
@@ -549,6 +592,19 @@ class ModulesMap implements IModulesMap {
     '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
+    '@shared/components/group/entity-group-autocomplete.component': EntityGroupAutocompleteComponent,
+    '@shared/components/group/owner-autocomplete.component': OwnerAutocompleteComponent,
+    '@shared/components/group/entity-group-select.component': EntityGroupSelectComponent,
+    '@shared/components/group/entity-group-list.component': EntityGroupListComponent,
+    '@shared/components/group/edge-entity-group-list.component': EdgeEntityGroupListComponent,
+    '@shared/components/originator-select.component': OriginatorSelectComponent,
+    '@shared/components/role/group-permissions.component': GroupPermissionsComponent,
+    '@shared/components/role/group-permission-dialog.component': GroupPermissionDialogComponent,
+    '@shared/components/group/share-entity-group.component': ShareEntityGroupComponent,
+    '@shared/components/secret-storage/secret-key-input.component': SecretKeyInputComponent,
+    '@shared/components/secret-storage/secret-file-input.component': SecretFileInputComponent,
+    '@shared/components/secret-storage/secret-storage-dialog.component': SecretStorageDialogComponent,
+    '@shared/components/secret-storage/secret-autocomplete.component': SecretAutocompleteComponent,
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
     '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
@@ -679,10 +735,40 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/dialog/embed-dashboard-dialog.component': EmbedDashboardDialogComponent,
     '@home/components/edge/edge-downlink-table.component': EdgeDownlinkTableComponent,
     '@home/components/edge/edge-downlink-table-header.component': EdgeDownlinkTableHeaderComponent,
-    '@home/components/dashboard-page/widget-types-panel.component': DisplayWidgetTypesPanelComponent,
     '@home/components/profile/alarm/alarm-duration-predicate-value.component': AlarmDurationPredicateValueComponent,
     '@home/components/dashboard-page/dashboard-image-dialog.component': DashboardImageDialogComponent,
     '@home/components/widget/widget-container.component': WidgetContainerComponent,
+    '@home/components/converter/converter-autocomplete.component': ConverterAutocompleteComponent,
+    '@home/components/role/operation-type-list.component': OperationTypeListComponent,
+    '@home/components/role/resource-type-autocomplete.component': ResourceTypeAutocompleteComponent,
+    '@home/components/role/permission-list.component': PermissionListComponent,
+    '@home/components/role/view-role-dialog.component': ViewRoleDialogComponent,
+    '@home/components/group/group-entities-table.component': GroupEntitiesTableComponent,
+    '@home/components/group/group-entity-tabs.component': GroupEntityTabsComponent,
+    '@home/components/group/group-entity-table-header.component': GroupEntityTableHeaderComponent,
+    '@home/components/group/entity-group.component': EntityGroupComponent,
+    '@home/components/group/entity-group-tabs.component': EntityGroupTabsComponent,
+    '@home/components/group/entity-group-settings.component': EntityGroupSettingsComponent,
+    '@home/components/group/entity-group-column.component': EntityGroupColumnComponent,
+    '@home/components/group/entity-group-columns.component': EntityGroupColumnsComponent,
+    '@home/components/group/entity-group-column-dialog.component': EntityGroupColumnDialogComponent,
+    '@home/components/group/add-group-entity-dialog.component': AddGroupEntityDialogComponent,
+    '@home/components/role/registration-permissions.component': RegistrationPermissionsComponent,
+    '@home/components/wizard/entity-group-wizard-dialog.component': EntityGroupWizardDialogComponent,
+    '@home/components/scheduler/config/ota-update-event-config.component': OtaUpdateEventConfigComponent,
+    '@home/components/scheduler/scheduler-events.component': SchedulerEventsComponent,
+    '@home/components/scheduler/scheduler-event-dialog.component': SchedulerEventDialogComponent,
+    '@home/components/scheduler/scheduler-event-type-autocomplete.component': SchedulerEventTypeAutocompleteComponent,
+    '@home/components/scheduler/scheduler-event-config.component': SchedulerEventConfigComponent,
+    '@home/components/scheduler/scheduler-event-template-config.component': SchedulerEventTemplateConfigComponent,
+    '@home/components/scheduler/config/send-rpc-request.component': SendRpcRequestComponent,
+    '@home/components/scheduler/config/update-attributes.component': UpdateAttributesComponent,
+    '@home/components/scheduler/config/attribute-key-value-table.component': AttributeKeyValueTableComponent,
+    '@home/components/scheduler/config/generate-report.component': GenerateReportComponent,
+    '@home/components/scheduler/config/report-config.component': ReportConfigComponent,
+    '@home/components/scheduler/config/select-dashboard-state-dialog.component': SelectDashboardStateDialogComponent,
+    '@home/components/scheduler/config/email-config.component': EmailConfigComponent,
+    '@home/components/scheduler/scheduler-event-schedule.component': SchedulerEventScheduleComponent,
     '@home/components/profile/queue/tenant-profile-queues.component': TenantProfileQueuesComponent,
     '@home/components/queue/queue-form.component': QueueFormComponent,
     '@home/components/ai-model/ai-model-dialog.component': AIModelDialogComponent,

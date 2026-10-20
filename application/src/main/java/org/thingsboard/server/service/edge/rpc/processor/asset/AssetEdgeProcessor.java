@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import com.google.common.util.concurrent.Futures;
@@ -20,19 +8,22 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.edge.rpc.EdgeVersionComparator;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -49,7 +40,7 @@ import java.util.UUID;
 public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProcessor {
 
     @Override
-    public ListenableFuture<Void> processAssetMsgFromEdge(TenantId tenantId, Edge edge, AssetUpdateMsg assetUpdateMsg) {
+    public ListenableFuture<Void> processAssetMsgFromEdge(TenantId tenantId, Edge edge, AssetUpdateMsg assetUpdateMsg, EdgeVersion edgeVersion) {
         log.trace("[{}] executing processAssetMsgFromEdge [{}] from edge [{}]", tenantId, assetUpdateMsg, edge.getId());
         AssetId assetId = new AssetId(new UUID(assetUpdateMsg.getIdMSB(), assetUpdateMsg.getIdLSB()));
         try {
@@ -61,12 +52,20 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
                     yield Futures.immediateFuture(null);
                 }
                 case ENTITY_DELETED_RPC_MESSAGE -> {
-                    deleteAsset(tenantId, edge, assetId);
+                    if (assetUpdateMsg.hasEntityGroupIdMSB() && assetUpdateMsg.hasEntityGroupIdLSB()) {
+                        EntityGroupId entityGroupId = new EntityGroupId(
+                                new UUID(assetUpdateMsg.getEntityGroupIdMSB(), assetUpdateMsg.getEntityGroupIdLSB()));
+                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, assetId);
+                    } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
+                        deleteAsset(tenantId, edge, assetId);
+                    } else {
+                        removeAssetFromEdgeAllAssetGroup(tenantId, edge, assetId);
+                    }
                     yield Futures.immediateFuture(null);
                 }
                 default -> handleUnsupportedMsgType(assetUpdateMsg.getMsgType());
             };
-        } catch (DataValidationException e) {
+        } catch (DataValidationException | ThingsboardException e) {
             if (e.getMessage().contains("limit reached")) {
                 log.warn("[{}] Number of allowed asset violated {}", tenantId, assetUpdateMsg, e);
                 return Futures.immediateFuture(null);
@@ -78,14 +77,14 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
         }
     }
 
-    private void saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, Edge edge) {
+    private void saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg, Edge edge) throws ThingsboardException {
         Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg);
         Boolean created = resultPair.getFirst();
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, assetId);
-            edgeCtx.getAssetService().assignAssetToEdge(tenantId, assetId, edge.getId());
         }
+        addAssetToEdgeAllAssetGroup(tenantId, edge, assetId);
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {
             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET, EdgeEventActionType.UPDATED, assetId, null);
@@ -97,15 +96,26 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
         pushEntityEventToRuleEngine(tenantId, edge, asset, TbMsgType.ENTITY_CREATED);
     }
 
+    private void addAssetToEdgeAllAssetGroup(TenantId tenantId, Edge edge, AssetId assetId) {
+        Asset asset = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
+        addEntityToEdgeAllGroup(tenantId, edge, asset);
+    }
+
+    private void removeAssetFromEdgeAllAssetGroup(TenantId tenantId, Edge edge, AssetId assetId) {
+        Asset assetToDelete = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
+        removeEntityFromEdgeAllGroup(tenantId, edge, assetToDelete);
+    }
+
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
+        EntityGroupId entityGroupId = edgeEvent.getEntityGroupId() != null ? new EntityGroupId(edgeEvent.getEntityGroupId()) : null;
         switch (edgeEvent.getAction()) {
-            case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
+            case ADDED, ADDED_TO_ENTITY_GROUP, UPDATED, ASSIGNED_TO_EDGE -> {
                 Asset asset = edgeCtx.getAssetService().findAssetById(edgeEvent.getTenantId(), assetId);
                 if (asset != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    AssetUpdateMsg assetUpdateMsg = EdgeMsgConstructorUtils.constructAssetUpdatedMsg(msgType, asset);
+                    AssetUpdateMsg assetUpdateMsg = EdgeMsgConstructorUtils.constructAssetUpdatedMsg(msgType, asset, entityGroupId);
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAssetUpdateMsg(assetUpdateMsg);
@@ -117,10 +127,10 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
                     return builder.build();
                 }
             }
-            case DELETED, UNASSIGNED_FROM_EDGE -> {
+            case DELETED, REMOVED_FROM_ENTITY_GROUP, UNASSIGNED_FROM_EDGE, CHANGE_OWNER -> {
                 return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAssetUpdateMsg(EdgeMsgConstructorUtils.constructAssetDeleteMsg(assetId))
+                        .addAssetUpdateMsg(EdgeMsgConstructorUtils.constructAssetDeleteMsg(assetId, entityGroupId))
                         .build();
             }
         }

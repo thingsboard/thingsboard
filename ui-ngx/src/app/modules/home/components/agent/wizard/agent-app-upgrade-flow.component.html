@@ -1,0 +1,187 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (!embedded) {
+  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+    @if (showBack) {
+      <button mat-icon-button (click)="back.emit()" type="button" tabindex="-1">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+    }
+    <div class="tb-install-wizard-toolbar-content">
+      <h2>{{ 'agent.app-upgrade-title' | translate }}@if (existingApplication) {
+        :
+      }</h2>
+      @if (existingApplication) {
+        <span class="flex-1">
+          {{ 'agent.app-upgrade-heading' | translate: { name: existingApplication?.name, from: fromVersion || '—', to: toVersion || '—' } }}
+        </span>
+      }
+    </div>
+    <div tb-help="agentAppUpgrade"></div>
+    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+}
+
+<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+
+  @if (loadingTemplate || loadingProfile) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span translate>agent.app-upgrade-loading</span>
+    </div>
+  }
+  @if (!loadingTemplate && !loadingProfile && loadError) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadError }}</span>
+    </div>
+  }
+
+  @if (!(loadingTemplate || loadingProfile || loadError)) {
+    <mat-stepper linear #stepper
+      [orientation]="(stepperOrientation | async)"
+      [labelPosition]="(stepperLabelPosition | async)">
+      @if (showProfileUpgradeStep) {
+        <mat-step [label]="'agent.app-upgrade-profile-step' | translate"
+          [completed]="profileUpgraded">
+          @if (loadingProfile) {
+            <div class="loading-state">
+              <mat-spinner diameter="20"></mat-spinner>
+              <span translate>agent.app-upgrade-profile-loading</span>
+            </div>
+          }
+          @if (!loadingProfile && profileLoadError) {
+            <div class="error-state">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ profileLoadError }}</span>
+            </div>
+          }
+          @if (!loadingProfile && !profileLoadError && profile && template) {
+            <div class="summary-card" style="margin-bottom: 16px;">
+              <div class="summary-row">
+                <span class="label" translate>agent.app-upgrade-profile-name</span>
+                <span class="value">{{ profile.name }}</span>
+              </div>
+              <div class="summary-row">
+                <span class="label" translate>agent.app-upgrade-summary-versions</span>
+                <span class="value">{{ fromVersion || '—' }} → {{ toVersion || '—' }}</span>
+              </div>
+            </div>
+            <p class="hint" translate>agent.app-upgrade-profile-hint</p>
+            <div class="diff-header-row">
+              <div class="diff-header added">
+                {{ 'agent.app-upgrade-template-new' | translate: { version: toVersion || '—' } }}
+              </div>
+              <div class="diff-header removed" translate>agent.app-upgrade-profile-current</div>
+              @if (profileUpgraded) {
+                <div class="diff-readonly-chip">
+                  <mat-icon>lock</mat-icon>
+                  <span translate>agent.app-diff-read-only</span>
+                </div>
+              }
+              <button type="button" class="diff-sync-toggle"
+                [class.active]="diffSyncScroll"
+                [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+                (click)="diffSyncScroll = !diffSyncScroll">
+                <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+              </button>
+            </div>
+            <tb-agent-compose-diff [left]="profileProposedYaml" [right]="profileCurrentYaml" [readOnly]="profileUpgraded" [syncScroll]="diffSyncScroll" (rightChange)="profileComposeYaml = $event"></tb-agent-compose-diff>
+            <p class="diff-hint" translate>agent.app-upgrade-diff-hint</p>
+          }
+          <div class="step-footer">
+            @if (!profileUpgraded) {
+              <button mat-raised-button color="primary"
+                (click)="submitProfileUpgrade()"
+                [disabled]="!canSubmitProfileUpgrade()"
+                >
+                <mat-icon>upgrade</mat-icon>
+                <span>{{ 'agent.app-upgrade-profile-cta' | translate }}</span>
+              </button>
+            }
+            @if (profileUpgraded) {
+              <button mat-raised-button color="primary" matStepperNext>
+                {{ 'action.next' | translate }}
+                <mat-icon iconPositionEnd>chevron_right</mat-icon>
+              </button>
+            }
+          </div>
+        </mat-step>
+      }
+      <mat-step [label]="'agent.app-install-step3' | translate">
+        @if (canHaveRelatedEntity && isProfileBoundUpgrade) {
+          <tb-agent-related-entity-autocomplete
+            [appType]="selectedType || existingApplication?.appType"
+            [disabled]="!!lockedRelatedEntity"
+            [required]="relatedEntityRequired"
+            [ngModel]="relatedEntityId"
+            (ngModelChange)="relatedEntityId = $event">
+          </tb-agent-related-entity-autocomplete>
+        }
+        <tb-agent-app-step-inputs [bindings]="bindings"></tb-agent-app-step-inputs>
+        @if (!isProfileBoundUpgrade) {
+          <div class="diff-header-row">
+            <div class="diff-header added">
+              {{ 'agent.app-upgrade-template-new' | translate: { version: toVersion || '—' } }}
+            </div>
+            <div class="diff-header removed" translate>agent.app-upgrade-current</div>
+            <button type="button" class="diff-sync-toggle"
+              [class.active]="diffSyncScroll"
+              [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+              (click)="diffSyncScroll = !diffSyncScroll">
+              <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+            </button>
+          </div>
+          <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml" [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
+          <p class="diff-hint" translate>agent.app-upgrade-diff-hint</p>
+        }
+        <div class="step-footer">
+          <button mat-raised-button color="primary" matStepperNext [disabled]="!canSubmit()">
+            {{ 'action.next' | translate }}
+            <mat-icon iconPositionEnd>chevron_right</mat-icon>
+          </button>
+        </div>
+      </mat-step>
+      <mat-step [label]="'agent.app-install-step4' | translate">
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="label" translate>agent.app-name</span>
+            <span class="value">{{ appName }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="label" translate>agent.app-upgrade-summary-versions</span>
+            <span class="value">{{ fromVersion || '—' }} → {{ toVersion || '—' }}</span>
+          </div>
+          @if (hasBackupVolumeInput) {
+            <div class="summary-row">
+              <span class="label" translate>agent.app-upgrade-summary-volumes-label</span>
+              <span class="value">
+                {{ 'agent.app-upgrade-summary-volumes' | translate: { count: selectedBackupVolumeCount } }}
+              </span>
+            </div>
+          }
+        </div>
+        <div class="info-box">
+          <mat-icon>info</mat-icon>
+          <span translate>agent.app-upgrade-rollback-info</span>
+        </div>
+        <div class="step-footer">
+          <button mat-button matStepperPrevious [disabled]="submitting">
+            <mat-icon>chevron_left</mat-icon>
+            {{ 'action.back' | translate }}
+          </button>
+          <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
+            <mat-icon>upgrade</mat-icon>
+            <span>{{ 'agent.app-upgrade-cta' | translate }}</span>
+          </button>
+        </div>
+      </mat-step>
+    </mat-stepper>
+  }
+</div>

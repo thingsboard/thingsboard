@@ -1,0 +1,77 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="request-white-labeling-dialog pack">
+  <div class="offer-strip">
+    <span class="t">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a4.6 4.6 0 0 0-4.6 4.6v2.2H6.5A2.5 2.5 0 0 0 4 11.3v8.2A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5v-8.2a2.5 2.5 0 0 0-2.5-2.5h-.9V6.6A4.6 4.6 0 0 0 12 2zm2.6 6.8V6.6a2.6 2.6 0 0 0-5.2 0v2.2z"></path></svg>
+      {{ 'platform-feature.white-labeling.not-in-ce-grant' | translate }}
+    </span>
+  </div>
+  <div class="offer-body">
+    <button mat-icon-button class="close-btn tb-mat-40" (click)="cancel()">
+      <tb-icon class="tb-mat-20">close</tb-icon>
+    </button>
+    <div class="wl-col">
+      <div class="head">
+        <img src="/assets/license/tb-pro-mark.svg" alt width="80" height="78">
+        <div class="t">
+          <p class="offer-kick">{{ (isSysAdmin ? 'platform-feature.white-labeling.add' : 'platform-feature.white-labeling.request') | translate }}</p>
+          <h2>{{ 'platform-feature.white-labeling.offer-title' | translate }}</h2>
+        </div>
+      </div>
+      <p> {{ 'platform-feature.white-labeling.pack-offer-lede' | translate }} </p>
+      <div class="offer-pack">
+        <h2>{{ ( isSysAdmin ? 'subscription.add-pe-pack' :'subscription.request-pe-pack') | translate }}</h2>
+        <p class="offer-note">{{ 'subscription.pe-pack-extend-ce' | translate }}</p>
+        <tb-pe-pack-offer-cards class="offer-cards"
+                                [showIntegrations]="!isCustomerUser"
+                                [showScheduler]="true"
+                                [showReports]="true"
+                                [disableNavigation]="isSysAdmin"
+                                (cardClick)="gotoPage($event)">
+        </tb-pe-pack-offer-cards>
+      </div>
+      @if (isTenantAdmin) {
+        <p class="self">{{ 'subscription.sys-admin-pe-pack-note' | translate }}</p>
+      }
+      <div class="acts">
+        <button mat-button
+                color="primary"
+                (click)="cancel()">
+          {{ 'action.close' | translate }}
+        </button>
+        @if (isSysAdmin) {
+          <button mat-flat-button color="primary" (click)="addToLicense($event)">
+            {{ 'subscription.add-to-license' | translate }}
+          </button>
+        } @else {
+          @if (pePackRequested) {
+            <span class="offer-done">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+              {{ 'subscription.requested' | translate }}
+            </span>
+          } @else {
+            <button mat-flat-button color="primary" (click)="requestAccess($event)">
+              {{ 'subscription.request-access' | translate }}
+            </button>
+          }
+        }
+      </div>
+      @if (sendError) {
+        <div class="tb-error-messages -ml-2.5" role="alert">
+          <div class="tb-error-message">
+            @if (sendNetworkError) {
+              {{ 'setup.errors.no-connection' | translate }}
+            } @else {
+              {{ sendErrorMessage }}
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

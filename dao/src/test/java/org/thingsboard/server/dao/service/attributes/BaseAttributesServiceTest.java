@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.attributes;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -35,6 +23,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -121,8 +110,37 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void removeAllRoundTrip() throws Exception {
+        // Runs the delete-with-version path against a real database: the routed branch under
+        // CitusAttributesServiceSqlTest and the plain branch under AttributesServiceSqlTest.
+        var deviceId = new DeviceId(UUID.randomUUID());
+        var scope = AttributeScope.SERVER_SCOPE;
+        saveAttribute(tenantId, deviceId, scope, "removedKey1", "value1");
+        saveAttribute(tenantId, deviceId, scope, "removedKey2", "value2");
+
+        List<String> removedKeys = attributesService.removeAll(tenantId, deviceId, scope, List.of("removedKey1")).get(10, TimeUnit.SECONDS);
+        Assert.assertEquals(List.of("removedKey1"), removedKeys);
+        Optional<AttributeKvEntry> removedEntry = attributesService.find(tenantId, deviceId, scope, "removedKey1").get(10, TimeUnit.SECONDS);
+        Assert.assertTrue(removedEntry.isEmpty());
+
+        List<TbPair<String, Long>> removedWithVersions = Futures.allAsList(
+                attributesDao.removeAllWithVersions(tenantId, deviceId, scope, List.of("removedKey2"))).get(10, TimeUnit.SECONDS);
+        assertThat(removedWithVersions).hasSize(1);
+        Assert.assertEquals("removedKey2", removedWithVersions.get(0).getFirst());
+        Assert.assertNotNull("Deleting an existing attribute must return its version", removedWithVersions.get(0).getSecond());
+
+        List<AttributeKvEntry> remaining = attributesService.findAll(tenantId, deviceId, scope).get(10, TimeUnit.SECONDS);
+        Assert.assertTrue(remaining.isEmpty());
+
+        // Deleting an already-absent key reports a null version instead of failing.
+        List<TbPair<String, Long>> removedAgain = Futures.allAsList(
+                attributesDao.removeAllWithVersions(tenantId, deviceId, scope, List.of("removedKey2"))).get(10, TimeUnit.SECONDS);
+        assertThat(removedAgain).containsExactly(TbPair.of("removedKey2", null));
+    }
+
+    @Test
     public void testDummyRequestWithEmptyResult() throws Exception {
-        var future = attributesService.find(new TenantId(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), AttributeScope.SERVER_SCOPE, "TEST");
+        var future = attributesService.find(TenantId.fromUUID(UUID.randomUUID()), new DeviceId(UUID.randomUUID()), AttributeScope.SERVER_SCOPE, "TEST");
         Assert.assertNotNull(future);
         var result = future.get(10, TimeUnit.SECONDS);
         Assert.assertTrue(result.isEmpty());
@@ -130,7 +148,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testConcurrentFetchAndUpdate() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
         try {
             for (int i = 0; i < 100; i++) {
@@ -144,7 +162,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testConcurrentFetchAndUpdateMulti() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
         try {
             for (int i = 0; i < 100; i++) {
@@ -158,7 +176,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFetchAndUpdateEmpty() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         var scope = AttributeScope.SERVER_SCOPE;
         var key = "TEST";
@@ -172,7 +190,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFetchAndUpdateMulti() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         var scope = AttributeScope.SERVER_SCOPE;
         var key1 = "TEST1";
@@ -204,7 +222,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllKeysByEntityId() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
@@ -217,7 +235,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllKeysByEntityIdAndAttributeType() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
@@ -230,7 +248,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAllByEntityIdAndAttributeType() {
-        var tenantId = new TenantId(UUID.randomUUID());
+        var tenantId = TenantId.fromUUID(UUID.randomUUID());
         var deviceId = new DeviceId(UUID.randomUUID());
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");

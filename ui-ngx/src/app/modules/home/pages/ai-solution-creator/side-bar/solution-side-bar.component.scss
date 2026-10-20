@@ -1,0 +1,133 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  border-radius: 8px;
+  .side-bar {
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    width: 56px;
+    height: 100%;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+
+    &.with-transition {
+      transition: width 0.15s ease-in-out;
+    }
+
+    &.expanded {
+      width: 240px;
+    }
+    &:not(.expanded) {
+      cursor: pointer;
+    }
+  }
+  .list-chats {
+    overflow: auto;
+    --mat-button-text-label-text-weight: 400;
+    --mat-button-text-label-text-color: rgba(0, 0, 0, 0.87);
+    .title {
+      padding: 0 8px;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.38);
+      margin-bottom: 8px;
+    }
+    a {
+      letter-spacing: 0.25px;
+      border-radius: 4px;
+    }
+
+  }
+  .icon-button {
+    font-size: 0;
+    display: inline-flex;
+  }
+}
+
+:host ::ng-deep {
+  .mat-mdc-button.mat-mdc-button-base {
+    display: inline-flex;
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    align-items: center;
+    overflow: hidden;
+    line-height: 32px;
+    border-radius: 0;
+    .actions:not(:hover) {
+      --mat-button-text-hover-state-layer-opacity: 0;
+    }
+    .actions:not(.open-menu) {
+      display: none;
+    }
+    &:hover {
+      background-color: rgba(255,255,255,0.08);
+      padding-right: 0;
+      .actions {
+        display: block;
+      }
+    }
+    &.tb-active {
+      --mat-button-text-hover-state-layer-opacity: 0;
+
+      &:before {
+        display: block;
+        height: auto;
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--tb-primary-500);
+        opacity: 0.1;
+        pointer-events: none;
+      }
+    }
+    .mat-icon {
+      margin-right: 8px;
+    }
+    &.menu {
+      &.open-menu {
+        padding-right: 0;
+        .mat-mdc-button-persistent-ripple::before {
+          opacity: var(--mat-button-text-hover-state-layer-opacity, var(--mat-app-hover-state-layer-opacity));
+          content: "";
+        }
+      }
+      .mat-icon {
+        margin: auto;
+      }
+    }
+    span.mdc-button__label {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      & > span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+::ng-deep {
+  .solution-menu.mat-mdc-menu-panel {
+    --mat-menu-item-spacing: 8px;
+    --mat-menu-item-label-text-size: 14px;
+    --mat-menu-item-with-icon-leading-spacing: 12px;
+    --mat-menu-item-with-icon-trailing-spacing: 12px;
+
+    .mat-mdc-menu-item {
+      min-height: 40px;
+    }
+
+    .delete {
+      --mat-menu-item-icon-color: var(--tb-accent-500);
+      --mat-menu-item-label-text-color: var(--tb-accent-500);
+    }
+  }
+}

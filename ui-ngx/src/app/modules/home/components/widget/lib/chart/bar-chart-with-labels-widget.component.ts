@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -21,7 +8,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   Renderer2,
   TemplateRef,
   ViewChild,
@@ -41,6 +28,8 @@ import {
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import { DataKey } from '@shared/models/widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartWidgetComponent } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
     selector: 'tb-bar-chart-with-labels-widget',
@@ -49,7 +38,7 @@ import { WidgetComponent } from '@home/components/widget/widget.component';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class BarChartWithLabelsWidgetComponent implements ChartWidgetComponent, OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('chartShape', {static: false})
   chartShape: ElementRef<HTMLElement>;
@@ -61,6 +50,10 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   showLegend: boolean;
   legendClass: string;
@@ -75,7 +68,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
 
   private timeSeriesChart: TbTimeSeriesChart;
 
-  constructor(public widgetComponent: WidgetComponent,
+  constructor(@Optional() public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
@@ -114,6 +107,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
   ngAfterViewInit() {
     const settings = barChartWithLabelsTimeSeriesSettings(this.settings);
     this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer);
+    this.ctx.widgetActions = this.timeSeriesChart.getWidgetActions();
   }
 
   ngOnDestroy() {
