@@ -9159,6 +9159,7 @@
                 "line-type-solid": "Solid",
                 "line-type-dashed": "Dashed",
                 "line-type-dotted": "Dotted",
+                "line-type-double": "Double",
                 "line-width": "Line width"
             },
             "page-break": {

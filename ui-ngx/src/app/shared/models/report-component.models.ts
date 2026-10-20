@@ -133,13 +133,31 @@ export interface ReportDataKeySettings {
   type: ReportDataKeySettingsType;
 }
 
+export enum BorderType {
+  solid = 'solid',
+  dashed = 'dashed',
+  dotted = 'dotted',
+  double = 'double'
+}
+
+export const borderTypes = Object.keys(BorderType) as BorderType[];
+
+export const borderTypeTranslations = new Map<BorderType, string>(
+  [
+    [BorderType.solid, 'report-template.component.divider.line-type-solid'],
+    [BorderType.dashed, 'report-template.component.divider.line-type-dashed'],
+    [BorderType.dotted, 'report-template.component.divider.line-type-dotted'],
+    [BorderType.double, 'report-template.component.divider.line-type-double']
+  ]
+);
+
 export interface TableReportCellSettings {
   font?: Font;
   color?: string;
   backgroundColor?: string;
   textAlignment?: alignment;
   verticalAlignment?: alignment;
-  borderStyle?: string;
+  borderType?: BorderType;
   borderColor?: string;
   borderWidth?: number;
 }
@@ -238,30 +256,16 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
     default: null
   },
   {
-    id: 'borderStyle',
+    id: 'borderType',
     type: FormPropertyType.select,
     name: '{i18n:report-template.border}',
     subLabel: '{i18n:report-template.style}',
     fieldClass: 'standard-width',
-    items: [
-      {
-        label: 'solid',
-        value: 'solid'
-      },
-      {
-        label: 'dashed',
-        value: 'dashed'
-      },
-      {
-        label: 'dotted',
-        value: 'dotted'
-      },
-      {
-        label: 'double',
-        value: 'double'
-      }
-    ],
-    default: 'solid'
+    items: borderTypes.map(type => ({
+      label: `{i18n:${borderTypeTranslations.get(type)}}`,
+      value: type
+    })),
+    default: BorderType.solid
   },
   {
     id: 'borderColor',
@@ -1029,22 +1033,6 @@ export const borderLengthTranslations = new Map<BorderLength, string>(
   [
     [BorderLength.LONG, 'report-template.component.divider.divider-type-long'],
     [BorderLength.SHORT, 'report-template.component.divider.divider-type-short']
-  ]
-);
-
-export enum BorderType {
-  solid = 'solid',
-  dashed = 'dashed',
-  dotted = 'dotted'
-}
-
-export const borderTypes = Object.keys(BorderType) as BorderType[];
-
-export const borderTypeTranslations = new Map<BorderType, string>(
-  [
-    [BorderType.solid, 'report-template.component.divider.line-type-solid'],
-    [BorderType.dashed, 'report-template.component.divider.line-type-dashed'],
-    [BorderType.dotted, 'report-template.component.divider.line-type-dotted']
   ]
 );
 

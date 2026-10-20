@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { Directive } from '@angular/core';
 import { AbstractReportComponentPreview } from '@home/pages/reporting/template/components/report-component.component';
-import { TableReportCellSettings, TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
+import { BorderType, TableReportCellSettings, TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
 import { ComponentStyle, Font, textStyle } from '@shared/models/widget-settings.models';
 import { deepClone } from '@core/utils';
 import { DataKey } from '@shared/models/widget.models';
 import { Direction } from '@shared/models/page/sort-order';
+
+const DEFAULT_TABLE_BORDER_WIDTH_PX = 1;
+const DOUBLE_BORDER_MIN_WIDTH_PX = 3;
 
 @Directive()
 export abstract class AbstractReportTablePreviewComponent<C extends TableReportComponentConfig> extends AbstractReportComponentPreview<C> {
@@ -56,12 +59,12 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
   }
 
 
-  headerStyle(column: DataKey, index: number): ComponentStyle {
-    return this.styleFromColumnSettings(column, true, index === 0);
+  headerStyle(column: DataKey, firstColumn: boolean): ComponentStyle {
+    return this.styleFromColumnSettings(column, true, firstColumn);
   }
 
-  cellStyle(column: DataKey, index: number): ComponentStyle {
-    return this.styleFromColumnSettings(column, false, index === 0);
+  cellStyle(column: DataKey, firstColumn: boolean): ComponentStyle {
+    return this.styleFromColumnSettings(column, false, firstColumn);
   }
 
   columnWidth(column: DataKey): string {
@@ -114,10 +117,11 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
   // neighboring cell's own border and look doubled, so custom borders are restricted to those
   // same sides, matching the Thymeleaf table template this preview mirrors.
   private applyBorderStyle(style: ComponentStyle, cellSettings: TableReportCellSettings, header: boolean, firstColumn: boolean): void {
-    if (cellSettings.borderWidth == null && cellSettings.borderColor == null && cellSettings.borderStyle == null) {
+    if (cellSettings.borderWidth == null && cellSettings.borderColor == null && cellSettings.borderType == null) {
       return;
     }
-    const width = (cellSettings.borderWidth != null ? cellSettings.borderWidth : 1) + 'px';
+    const defaultWidth = cellSettings.borderType === BorderType.double ? DOUBLE_BORDER_MIN_WIDTH_PX : DEFAULT_TABLE_BORDER_WIDTH_PX;
+    const width = (cellSettings.borderWidth ?? defaultWidth) + 'px';
     const sides = ['Right', 'Bottom'];
     if (firstColumn) {
       sides.push('Left');
@@ -127,8 +131,8 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
     }
     for (const side of sides) {
       style['border' + side + 'Width'] = width;
-      if (cellSettings.borderStyle != null) {
-        style['border' + side + 'Style'] = cellSettings.borderStyle;
+      if (cellSettings.borderType != null) {
+        style['border' + side + 'Style'] = cellSettings.borderType;
       }
       if (cellSettings.borderColor != null) {
         style['border' + side + 'Color'] = cellSettings.borderColor;
