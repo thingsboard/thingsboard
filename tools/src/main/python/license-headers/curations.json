@@ -476,18 +476,6 @@
       "contentHash": "sha256:c5da9a11ed196635c09972733cf511bee2bd111242c0d084d115d37e2e7524c5"
     },
     {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserGroupListFilter.java",
-      "header": "busl",
-      "reason": "PE user group notification target filter UserGroupListFilter.java; the path has never existed in CE history. Similarity to the CE candidate is the shared filter shape, not a relocation of the CE implementation. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserListFilter.java at aeaf9d1e299 (blob 07cd0280ba84ab71b6823242e18c7c7285296b84).",
-      "contentHash": "sha256:64563fbc6ee416025b555c14cf3c517c5027bfc112a883078cc717ed471c5b52"
-    },
-    {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserRoleFilter.java",
-      "header": "busl",
-      "reason": "PE role-based notification target filter UserRoleFilter.java; the path has never existed in CE history. Similarity to the CE candidate is the shared filter shape, not a relocation of the CE implementation. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/notification/targets/platform/UserListFilter.java at aeaf9d1e299 (blob 07cd0280ba84ab71b6823242e18c7c7285296b84).",
-      "contentHash": "sha256:007e94e798f25a9d0ccd1716b8a68eada4fe3ced71e531bd0538c2c56e24ecb7"
-    },
-    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Operation.java",
       "header": "ce-modified",
       "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Operation.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob b481176e53d5d4e1460882c578b4e4c00f895b3b); a move alone does not imply PE authorship.",
@@ -504,12 +492,6 @@
       "header": "busl",
       "reason": "PE-specific data/configuration type EntityGroupNameFilter.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/query/EntityNameFilter.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob a3889bc7c07de44917eac165a9c4e8578bbbcd62).",
       "contentHash": "sha256:46cc0073210fb81fb1a71f44604042da6056f78f62468cf45bdc78cdaf8cdd09"
-    },
-    {
-      "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/StateEntityFilter.java",
-      "header": "busl",
-      "reason": "PE entity filter StateEntityFilter.java; the path has never existed in CE history. Similarity to the CE candidate is the shared filter shape, not a relocation of the CE implementation. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/query/SingleEntityFilter.java at aeaf9d1e299 (blob dacd7de6eae6cd80cfd63047dad8951d76aeb455).",
-      "contentHash": "sha256:46835b82b0320007209a5d53528f9fdb534af41c2fcb5a528754c316c530394a"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/StateEntityOwnerFilter.java",
