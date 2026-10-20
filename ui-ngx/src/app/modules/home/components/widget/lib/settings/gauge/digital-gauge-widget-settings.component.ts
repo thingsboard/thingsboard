@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 import { Datasource, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { Component } from '@angular/core';
 import {
