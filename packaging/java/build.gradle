@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import org.apache.tools.ant.filters.ReplaceTokens
+import org.redline_rpm.header.Flags
 
 plugins {
     id "com.netflix.nebula.ospackage" version "12.1.1"
@@ -30,6 +32,16 @@ ospackage {
         // Strip the version from the jar filename
         rename { String fileName ->
             "${pkgName}.jar"
+        }
+        filePermissions {
+            unix('r-x------')  // 0500
+        }
+        into "bin"
+    }
+
+    from("${buildDir}/control/launcher") {
+        rename { String fileName ->
+            "${pkgName}"
         }
         filePermissions {
             unix('r-x------')  // 0500
@@ -91,11 +103,18 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    // Support Java 25 (current), plus Java 21 and Java 17 (backward compatibility) for RPM-based distros
-    // Keep using RPM boolean expression syntax since .or() chaining is for DEB only
-    requires("(java-17 or java-17-headless or jre-17 or jre-17-headless or " +
-              "java-21 or java-21-headless or jre-21 or jre-21-headless or " +
-              "java-25 or java-25-headless or jre-25 or jre-25-headless)")
+    // The RPM writer overwrites the file in place without truncating it, so a smaller rebuild keeps stale bytes
+    doFirst {
+        archiveFile.get().asFile.delete()
+    }
+
+    // RPM boolean expression syntax, since .or() chaining is for DEB only
+    requires("(java-25 or java-25-headless or jre-25 or jre-25-headless)")
+    requires("shadow-utils", "", Flags.SCRIPT_PRE)
+    if ("${pkgRequiresFonts}".equalsIgnoreCase("true")) {
+        requires("fontconfig")
+        requires("dejavu-sans-fonts")
+    }
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -138,9 +157,14 @@ buildDeb {
 
     archiveFileName = "${pkgName}.deb"
 
-    requires("openjdk-17-jre").or("java17-runtime").or("oracle-java17-installer").or("openjdk-17-jre-headless")
-            .or("openjdk-21-jre").or("java21-runtime").or("oracle-java21-installer").or("openjdk-21-jre-headless")
-            .or("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
+    requires("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
+    preDepends("adduser")
+    if ("${pkgRequiresFonts}".equalsIgnoreCase("true")) {
+        requires("fontconfig")
+        requires("fonts-dejavu-core")
+        // Debian and Ubuntu OpenJDK builds load the system HarfBuzz for text layout but only recommend it
+        requires("libharfbuzz0b")
+    }
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"

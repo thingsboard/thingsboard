@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -12,7 +12,6 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
@@ -43,7 +42,6 @@ public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInf
     @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTION_PROPERTY)
     private String description;
 
-    @Type(StringArrayType.class)
     @Column(name = ModelConstants.WIDGET_TYPE_TAGS_PROPERTY, columnDefinition = "text[]")
     private String[] tags;
 

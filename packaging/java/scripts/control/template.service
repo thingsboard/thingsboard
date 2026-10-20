@@ -4,7 +4,7 @@ After=syslog.target
 
 [Service]
 User=${pkg.user}
-ExecStart=${pkg.installFolder}/bin/${pkg.name}.jar
+ExecStart=${pkg.installFolder}/bin/${pkg.name}
 SuccessExitStatus=143
 
 # Service shall be restarted in 30 seconds when the service process exits, is killed, or a timeout is reached.

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -45,7 +46,7 @@ public class CertPemCredentials implements ClientCredentials {
     @Override
     public SslContext initSslContext() {
         try {
-            SslContextBuilder builder = SslContextBuilder.forClient();
+            SslContextBuilder builder = SslContextBuilder.forClient().endpointIdentificationAlgorithm(null);
             if (StringUtils.hasLength(caCert)) {
                 builder.trustManager(createAndInitTrustManagerFactory());
             }

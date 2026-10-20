@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.credentials;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,6 +24,6 @@ public interface ClientCredentials {
 
     @JsonIgnore
     default SslContext initSslContext() throws SSLException{
-        return SslContextBuilder.forClient().build();
+        return SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build();
     }
 }

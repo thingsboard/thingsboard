@@ -24,6 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.http.converter.HttpMessageConverters;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -325,7 +327,7 @@ public class RestClient implements Closeable {
     public enum AuthType {JWT, API_KEY}
 
     public RestClient(String baseURL) {
-        this(new RestTemplate(), baseURL);
+        this(newRestTemplate(), baseURL);
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
@@ -338,7 +340,8 @@ public class RestClient implements Closeable {
 
     public RestClient(RestTemplate restTemplate, String baseURL, AuthType authType, String token) {
         this.restTemplate = restTemplate;
-        this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
+        this.loginRestTemplate = newRestTemplate();
+        this.loginRestTemplate.setRequestFactory(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
@@ -371,11 +374,18 @@ public class RestClient implements Closeable {
     }
 
     public static RestClient withApiKey(String baseURL, String token) {
-        return withApiKey(new RestTemplate(), baseURL, token);
+        return withApiKey(newRestTemplate(), baseURL, token);
     }
 
     public static RestClient withApiKey(RestTemplate rt, String baseURL, String token) {
         return new RestClient(rt, baseURL, AuthType.API_KEY, token);
+    }
+
+    // Without an explicit converter, Spring picks Jackson 3 whenever it is on the classpath
+    @SuppressWarnings("removal")
+    private static RestTemplate newRestTemplate() {
+        return new RestTemplate(HttpMessageConverters.forClient().registerDefaults()
+                .withJsonConverter(new MappingJackson2HttpMessageConverter()).build());
     }
 
     public String getToken() {
@@ -5144,7 +5154,7 @@ public class RestClient implements Closeable {
             params.put("force", force);
         }
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseURL + "/api/customMenu");
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseURL + "/api/customMenu");
 
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             builder.queryParam(entry.getKey(), entry.getValue());

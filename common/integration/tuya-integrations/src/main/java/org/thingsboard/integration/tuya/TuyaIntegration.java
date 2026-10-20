@@ -14,7 +14,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.HmacSHA256Util;
 import org.thingsboard.common.util.JacksonUtil;
@@ -438,7 +437,7 @@ public class TuyaIntegration extends AbstractIntegration<TuyaIntegrationMsg> {
     private RequestEntity<Object> createGetRequest(String path, boolean getToken) throws Exception {
         HttpMethod httpMethod = HttpMethod.GET;
         String ts = String.valueOf(System.currentTimeMillis());
-        MultiValueMap<String, String> httpHeaders = createHeaders(ts);
+        HttpHeaders httpHeaders = createHeaders(ts);
         String strToSign;
         if (getToken) {
             strToSign = tuyaIntegrationConfiguration.getAccessId() + ts + formatStringToSign(path, getBodyHash(null), httpMethod);
@@ -455,7 +454,7 @@ public class TuyaIntegration extends AbstractIntegration<TuyaIntegrationMsg> {
     private RequestEntity<Object> createPostRequest(String path, ObjectNode body) throws Exception {
         HttpMethod httpMethod = HttpMethod.POST;
         String ts = String.valueOf(System.currentTimeMillis());
-        MultiValueMap<String, String> httpHeaders = createHeaders(ts);
+        HttpHeaders httpHeaders = createHeaders(ts);
         httpHeaders.add("access_token", accessToken.getAccessToken());
         String strToSign = tuyaIntegrationConfiguration.getAccessId() + accessToken.getAccessToken() +
                 ts + formatStringToSign(path, getBodyHash(body.toString()), httpMethod);

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server.model;
 
 import jakarta.annotation.PreDestroy;
@@ -65,7 +66,7 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
     @Autowired
     private LwM2MTelemetryLogService logService;
 
-    ConcurrentMap<String, LwM2MModelConfig> currentModelConfigs;
+    ConcurrentMap<String, LwM2MModelConfig> currentModelConfigs = new ConcurrentHashMap<>();
 
     @AfterStartUp(order = AfterStartUp.BEFORE_TRANSPORT_SERVICE)
     public void init() {

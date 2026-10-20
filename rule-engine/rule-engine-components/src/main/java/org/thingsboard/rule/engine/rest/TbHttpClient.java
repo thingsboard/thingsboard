@@ -48,7 +48,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
@@ -520,7 +519,7 @@ public class TbHttpClient {
         return ctx.transformMsg(origMsg, metaData, body);
     }
 
-    void headersToMetaData(Map<String, List<String>> headers, BiConsumer<String, String> consumer) {
+    void headersToMetaData(HttpHeaders headers, BiConsumer<String, String> consumer) {
         if (headers == null) {
             return;
         }
