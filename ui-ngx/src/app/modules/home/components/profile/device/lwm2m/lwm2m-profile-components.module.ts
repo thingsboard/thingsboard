@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { NgModule } from '@angular/core';
 import { Lwm2mDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/lwm2m/lwm2m-device-profile-transport-configuration.component';

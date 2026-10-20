@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="generatorConfigForm" class="tb-form-panel no-border no-padding">
@@ -40,15 +41,27 @@
   </div>
 
   <div class="tb-form-panel no-padding-bottom stroked">
-    <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
-    <tb-entity-select class="flex-1"
-                      appearance="outline"
-                      required="true"
-                      useAliasEntityTypes="true"
-                      [allowedEntityTypes]="allowedEntityTypes"
-                      [additionEntityTypes]="additionEntityTypes"
-                      formControlName="originator">
-    </tb-entity-select>
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
+      <tb-toggle-select appearance="fill" formControlName="isEntityGroup">
+        <tb-toggle-option [value]="false">{{ 'rule-node-config.single-entity' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="true">{{ 'rule-node-config.entity-group' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if (!generatorConfigForm.get('isEntityGroup').value) {
+      <tb-entity-select class="flex-1"
+        appearance="outline" required="true"
+        useAliasEntityTypes="true"
+        [allowedEntityTypes]="allowedEntityTypes"
+        [additionEntityTypes]="additionEntityTypes"
+        formControlName="originator">
+      </tb-entity-select>
+    }
+    @if (generatorConfigForm.get('isEntityGroup').value) {
+      <tb-target-entity
+        [allowedGroupTypes]="entityGroupTypes"
+      formControlName="originator"></tb-target-entity>
+    }
   </div>
   <div class="tb-form-panel stroked">
     <mat-expansion-panel class="tb-settings" expanded>
@@ -74,11 +87,11 @@
             </tb-toggle-select>
           }
           <button toolbarSuffixButton
-                  mat-icon-button
-                  matTooltip="{{ testScriptLabel | translate }}"
-                  matTooltipPosition="above"
-                  class="tb-mat-32"
-                  (click)="testScript()">
+            mat-icon-button
+            matTooltip="{{ testScriptLabel | translate }}"
+            matTooltipPosition="above"
+            class="tb-mat-32"
+            (click)="testScript()">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
         </tb-js-func>
@@ -102,11 +115,11 @@
             </tb-toggle-option>
           </tb-toggle-select>
           <button toolbarSuffixButton
-                  mat-icon-button
-                  matTooltip="{{ testScriptLabel | translate }}"
-                  matTooltipPosition="above"
-                  class="tb-mat-32"
-                  (click)="testScript()">
+            mat-icon-button
+            matTooltip="{{ testScriptLabel | translate }}"
+            matTooltipPosition="above"
+            class="tb-mat-32"
+            (click)="testScript()">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
         </tb-js-func>

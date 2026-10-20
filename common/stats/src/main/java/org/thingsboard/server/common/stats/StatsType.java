@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.stats;
 
 public enum StatsType {
@@ -9,6 +10,7 @@ public enum StatsType {
     JS_INVOKE("jsInvoke"),
     TBEL_INVOKE("tbelInvoke"),
     RATE_EXECUTOR("rateExecutor"),
+    INTEGRATION("integration"),
     HOUSEKEEPER("housekeeper"),
     EDGE("edge"),
     EDQS("edqs");
@@ -22,4 +24,5 @@ public enum StatsType {
     public String getName() {
         return name;
     }
+
 }

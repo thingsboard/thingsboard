@@ -1,11 +1,14 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-col items-center justify-center"
-     style="width: 100%;">
+     [class.dark-foreground]="wl.loginDarkForeground$ | async"
+     style="width: 100%;"
+     [style.background-color]="wl.loginPageBackgroundColor$ | async">
   @if (isLoading$ | async) {
     <mat-progress-bar color="warn" class="progress-bar" mode="indeterminate"></mat-progress-bar>
   }

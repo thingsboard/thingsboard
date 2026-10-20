@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -8,6 +9,7 @@ import { Tenant, TenantInfo } from '@app/shared/models/tenant.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { ContactBasedComponent } from '../../components/entity/contact-based.component';
+import { isDefined } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { CountryData } from '@shared/models/country.models';
@@ -46,6 +48,11 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
+            allowWhiteLabeling: [entity && entity.additionalInfo
+                     && isDefined(entity.additionalInfo.allowWhiteLabeling) ? entity.additionalInfo.allowWhiteLabeling : true],
+            allowCustomerWhiteLabeling: [entity && entity.additionalInfo
+                    && isDefined(entity.additionalInfo.allowCustomerWhiteLabeling) ?
+                        entity.additionalInfo.allowCustomerWhiteLabeling : true],
             homeDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null],
             homeDashboardHideToolbar: [entity && entity.additionalInfo &&
             isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
@@ -58,12 +65,17 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
   updateEntityForm(entity: Tenant) {
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({tenantProfileId: entity.tenantProfileId});
-    this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
-    this.entityForm.patchValue({additionalInfo:
-        {homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null}});
-    this.entityForm.patchValue({additionalInfo:
-        {homeDashboardHideToolbar: entity.additionalInfo &&
-          isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
+    this.entityForm.patchValue({additionalInfo: {
+      description: entity.additionalInfo ? entity.additionalInfo.description : '',
+      allowWhiteLabeling: entity.additionalInfo
+        && isDefined(entity.additionalInfo.allowWhiteLabeling) ? entity.additionalInfo.allowWhiteLabeling : true,
+      allowCustomerWhiteLabeling: entity.additionalInfo
+        && isDefined(entity.additionalInfo.allowCustomerWhiteLabeling) ?
+          entity.additionalInfo.allowCustomerWhiteLabeling : true,
+      homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null,
+      homeDashboardHideToolbar: entity.additionalInfo &&
+        isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true
+    }});
   }
 
   updateFormState() {

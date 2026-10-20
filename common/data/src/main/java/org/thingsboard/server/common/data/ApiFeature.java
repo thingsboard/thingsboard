@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import lombok.Getter;
@@ -12,7 +13,9 @@ public enum ApiFeature {
     TBEL("tbelExecutionApiState", "Tbel functions execution"),
     EMAIL("emailApiState", "Email messages"),
     SMS("smsApiState", "SMS messages"),
-    ALARM("alarmApiState", "Alarms");
+    ALARM("alarmApiState", "Alarms"),
+    REPORT("reportApiState", "Reports"),
+    AI("aiApiState", "AI");
 
     @Getter
     private final String apiStateKey;

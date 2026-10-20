@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.cf;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,8 +16,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasAdditionalInfo;
 import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
@@ -34,7 +35,7 @@ import java.util.Set;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, HasDebugSettings, HasAdditionalInfo {
+public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, TenantEntity, HasVersion, HasDebugSettings, HasAdditionalInfo {
 
     public static final Map<EntityType, Set<CalculatedFieldType>> SUPPORTED_ENTITIES = Map.of(
             EntityType.DEVICE, CalculatedFieldType.all,
@@ -120,6 +121,11 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @JsonSetter
     public void setDebugMode(boolean debugMode) {
         this.debugMode = debugMode;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.CALCULATED_FIELD;
     }
 
     @Override

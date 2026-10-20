@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -7,7 +8,8 @@ import {
   HostBinding,
   Injector,
   OnDestroy,
-  OnInit
+  OnInit,
+  TemplateRef
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -16,10 +18,11 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isUndefined, isUndefinedOrNull } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { DialogService } from '@core/services/dialog.service';
+import { EntityGroupStateInfo } from '@home/models/group/group-entities-table-config.models';
 import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
 
 @Component({
@@ -35,6 +38,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   headerSubtitle: string;
 
   isReadOnly = false;
+
+  entityGroup: EntityGroupStateInfo<BaseData<HasId>>;
 
   backNavigationCommands?: any[];
 
@@ -53,6 +58,10 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     return this.entitiesTableConfigValue;
   }
 
+  get headerExtensionTemplate(): TemplateRef<unknown> | null {
+    return this.entityComponent?.headerExtensionTemplate ?? null;
+  }
+
   @HostBinding('class') 'tb-absolute-fill';
 
   constructor(private route: ActivatedRoute,
@@ -64,7 +73,12 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               private dialogService: DialogService,
               protected store: Store<AppState>) {
     super(store, injector, cd);
-    this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    if (isDefinedAndNotNull(this.route.snapshot.data.entityGroup) && isUndefinedOrNull(this.route.snapshot.data.entitiesTableConfig)) {
+      this.entityGroup = this.route.snapshot.data.entityGroup;
+      this.entitiesTableConfig = this.entityGroup.entityGroupConfig;
+    } else {
+      this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    }
     this.backNavigationCommands = this.route.snapshot.data.backNavigationCommands;
   }
 
@@ -76,6 +90,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     this.subscriptions.push(this.entityAction.subscribe((action) => {
       if (action.action === 'delete') {
         this.deleteEntity(action.event, action.entity);
+      } else if (action.action === 'reload') {
+        this.reload();
       }
     }));
     this.subscriptions.push(this.route.paramMap.subscribe( paramMap => {

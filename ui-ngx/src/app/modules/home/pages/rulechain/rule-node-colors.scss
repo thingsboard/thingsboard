@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @mixin rule-node-colors {
   &.tb-filter-type {
     background-color: #f1e861;
@@ -15,6 +16,10 @@
 
   &.tb-action-type {
     background-color: #f1928f;
+  }
+
+  &.tb-analytics-type {
+    background-color: #31d2cc;
   }
 
   &.tb-external-type {

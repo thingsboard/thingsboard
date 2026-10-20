@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 import { CustomTimeSchedulerItem } from "@shared/models/device.models";
 import { DashboardId } from "@shared/models/id/dashboard-id";
@@ -146,6 +147,50 @@ export interface BaseComplexFilterPredicate<T extends AlarmRuleFilterPredicate> 
 }
 
 export type ComplexAlarmRuleFilterPredicate = BaseComplexFilterPredicate<AlarmRuleFilterPredicate>;
+
+export interface AlarmRuleFilterPredicateFormValue {
+  operation?: AlarmRuleStringOperation | AlarmRuleNumericOperation | AlarmRuleBooleanOperation | ComplexOperation;
+  value?: AlarmRuleValue<string | number | boolean>;
+  ignoreCase?: boolean;
+  predicates?: AlarmRuleFilterPredicate[];
+}
+
+export type ValueAlarmRuleFilterPredicateType = Exclude<AlarmRuleFilterPredicateType, AlarmRuleFilterPredicateType.NO_DATA>;
+
+export function toAlarmRuleFilterPredicate(type: ValueAlarmRuleFilterPredicateType,
+                                            formValue: AlarmRuleFilterPredicateFormValue): Exclude<AlarmRuleFilterPredicate, NoDataAlarmRuleFilterPredicate> {
+  switch (type) {
+    case AlarmRuleFilterPredicateType.STRING:
+      return {
+        type: AlarmRuleFilterPredicateType.STRING,
+        operation: formValue.operation as AlarmRuleStringOperation,
+        value: formValue.value as AlarmRuleValue<string>,
+        ignoreCase: !!formValue.ignoreCase
+      };
+    case AlarmRuleFilterPredicateType.NUMERIC:
+      return {
+        type: AlarmRuleFilterPredicateType.NUMERIC,
+        operation: formValue.operation as AlarmRuleNumericOperation,
+        value: formValue.value as AlarmRuleValue<number>
+      };
+    case AlarmRuleFilterPredicateType.BOOLEAN:
+      return {
+        type: AlarmRuleFilterPredicateType.BOOLEAN,
+        operation: formValue.operation as AlarmRuleBooleanOperation,
+        value: formValue.value as AlarmRuleValue<boolean>
+      };
+    case AlarmRuleFilterPredicateType.COMPLEX:
+      return {
+        type: AlarmRuleFilterPredicateType.COMPLEX,
+        operation: formValue.operation as ComplexOperation,
+        predicates: formValue.predicates
+      };
+    default: {
+      const exhaustiveCheck: never = type;
+      throw new Error(`Unsupported alarm rule filter predicate type: ${exhaustiveCheck}`);
+    }
+  }
+}
 
 export interface AlarmRuleFilterConfig {
   name?: Array<string>;

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnInit } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -10,6 +11,8 @@ import { DialogService } from '@core/services/dialog.service';
 import { AuthUser } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MAX_SAFE_PAGE_SIZE, PageLink } from '@shared/models/page/page-link';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
@@ -62,6 +65,8 @@ export class AlarmCommentComponent implements OnInit {
 
   authUser: AuthUser;
 
+  hasAlarmWritePermission: boolean;
+
   alarmCommentFormGroup: FormGroup;
 
   alarmComments: Array<AlarmComment>;
@@ -91,9 +96,11 @@ export class AlarmCommentComponent implements OnInit {
               public dateAgoPipe: DateAgoPipe,
               private utilsService: UtilsService,
               private datePipe: DatePipe,
-              private importExportService: ImportExportService) {
+              private importExportService: ImportExportService,
+              private userPermissionsService: UserPermissionsService) {
 
     this.authUser = getCurrentAuthUser(store);
+    this.hasAlarmWritePermission = this.userPermissionsService.hasGenericPermission(Resource.ALARM, Operation.WRITE);
 
     this.alarmCommentFormGroup = this.fb.group(
       {
@@ -133,10 +140,10 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.editedDateAgo = this.dateAgoPipe.transform(alarmComment.comment.editedOn) + '\n';
             displayDataElement.showActions = false;
             const isCommentAuthor = this.authUser.userId === alarmComment.userId?.id;
-            // Mirrors backend AlarmCommentController#deleteAlarmComment / checkUserPermission:
-            // author may edit and delete own comments; tenant admin may delete any comment.
-            displayDataElement.canEdit = isCommentAuthor;
-            displayDataElement.canDelete = isCommentAuthor || this.authUser.authority === Authority.TENANT_ADMIN;
+            // Matches backend: editing requires Alarm WRITE permission and being the comment author,
+            // while deleting only requires Alarm WRITE permission (any such user may delete any comment).
+            displayDataElement.canEdit = isCommentAuthor && this.hasAlarmWritePermission;
+            displayDataElement.canDelete = this.hasAlarmWritePermission;
             displayDataElement.isSystemComment = false;
             displayDataElement.avatarBgColor = this.utilsService.stringToHslColor(displayDataElement.displayName,
               40, 60);

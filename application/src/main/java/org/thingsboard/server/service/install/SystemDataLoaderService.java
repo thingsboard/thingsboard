@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
-public interface SystemDataLoaderService {
+import com.fasterxml.jackson.databind.JsonNode;
 
-    void createSysAdmin() throws Exception;
+public interface SystemDataLoaderService {
 
     void createDefaultTenantProfiles() throws Exception;
 
@@ -14,11 +15,13 @@ public interface SystemDataLoaderService {
 
     void updateSecuritySettings() throws Exception;
 
+    void loadMailTemplates() throws Exception;
+
+    void updateMailTemplates(JsonNode value) throws Exception;
+
     void createOAuth2Templates() throws Exception;
 
     void loadSystemWidgets() throws Exception;
-
-    void loadDemoData() throws Exception;
 
     void createQueues();
 
@@ -26,4 +29,5 @@ public interface SystemDataLoaderService {
 
     void updateDefaultNotificationConfigs(boolean updateTenants);
 
+    void createDefaultCustomMenu();
 }

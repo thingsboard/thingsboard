@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { AlarmId } from '@shared/models/id/alarm-id';
@@ -12,7 +13,6 @@ import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/tab
 import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
-import { HasTenantId } from '@shared/models/entity.models';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 
 export enum AlarmsMode {
@@ -92,7 +92,7 @@ export const alarmSeverityBackgroundColors = new Map<AlarmSeverity, string>(
   ]
 );
 
-export interface Alarm extends BaseData<AlarmId>, HasTenantId {
+export interface Alarm extends BaseData<AlarmId> {
   tenantId: TenantId;
   customerId: CustomerId;
   assigneeId: UserId;

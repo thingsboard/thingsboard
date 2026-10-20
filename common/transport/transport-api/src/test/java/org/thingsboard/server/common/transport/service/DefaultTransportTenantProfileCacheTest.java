@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.transport.service;
 
 import com.google.common.util.concurrent.Striped;
@@ -171,6 +172,8 @@ class DefaultTransportTenantProfileCacheTest {
         state.setEmailExecState(ApiUsageStateValue.ENABLED);
         state.setSmsExecState(ApiUsageStateValue.ENABLED);
         state.setAlarmExecState(ApiUsageStateValue.ENABLED);
+        state.setReportExecState(ApiUsageStateValue.ENABLED);
+        state.setAiState(ApiUsageStateValue.ENABLED);
         state.setVersion(1L);
         return state;
     }

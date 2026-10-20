@@ -1,0 +1,31 @@
+{
+  "tenantId": {
+    "entityType": "TENANT",
+    "id": "e47343f0-5a68-11eb-a280-b979e84eaa51"
+  },
+  "name": "Water Meter",
+  "description": "",
+  "type": "DEFAULT",
+  "transportType": "DEFAULT",
+  "provisionType": "DISABLED",
+  "defaultRuleChainId": {
+    "entityType": "RULE_CHAIN",
+    "id": "95c148c0-599a-11eb-940c-293b71ac913c"
+  },
+  "defaultQueueName": null,
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "type": "DEFAULT"
+    },
+    "provisionConfiguration": {
+      "type": "DISABLED",
+      "provisionDeviceSecret": null
+    }
+  },
+  "provisionDeviceKey": null,
+  "default": false,
+  "jsonId": "58183d7e-4b7a-4ad6-a476-5d6c6571174c"
+}

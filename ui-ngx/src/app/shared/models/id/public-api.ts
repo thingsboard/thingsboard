@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 export * from './alarm-id';
 export * from './asset-id';
 export * from './audit-log-id';
@@ -12,6 +13,7 @@ export * from './entity-id';
 export * from './entity-view-id';
 export * from './event-id';
 export * from './has-uuid';
+export * from './job-id';
 export * from './mobile-app-bundle-id';
 export * from './mobile-app-id';
 export * from './notification-id';
@@ -30,5 +32,15 @@ export * from './widget-type-id';
 export * from './widgets-bundle-id';
 export * from './edge-id';
 export * from './asset-id';
+export * from './secret-storage-id';
 export * from './ai-model-id';
+export * from './report-template-id';
+export * from './report-id';
 export * from './api-key-id';
+export * from './agent-id';
+export * from './agent-profile-id';
+export * from './agent-application-id';
+export * from './agent-app-event-id';
+export * from './agent-app-unit-id';
+export * from './agent-app-profile-id';
+export * from './agent-bulk-action-id';

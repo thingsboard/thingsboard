@@ -1,6 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import './rule-node-colors';
+@import "../../../../../scss/constants";
 
 .tb-rulechain {
   width: 100%;
@@ -50,6 +52,10 @@
     z-index: 2;
   }
 
+  &:not(:has(button.mdc-fab.version-control-button)) button.mdc-fab.add-note-button {
+    right: 60px;
+  }
+
   .tb-library-node-btn {
     width: 20px;
     height: 90px;
@@ -73,7 +79,7 @@
       content: "";
       pointer-events: none;
       border-radius: 0 0 0 15px;
-      box-shadow: -10px 0px 0 0px #fff;
+      box-shadow: -10px 0px 0 0px var(--mat-fab-small-container-color);
       border: none;
     }
     &:after {
@@ -85,7 +91,7 @@
       content: "";
       pointer-events: none;
       border-top-left-radius: 15px;
-      box-shadow: -10px 0px 0px 0px #fff;
+      box-shadow: -10px 0px 0px 0px var(--mat-fab-small-container-color);
       border: none;
     }
   }

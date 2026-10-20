@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as CanvasGauges from 'canvas-gauges';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
@@ -130,6 +131,7 @@ export class TbCanvasDigitalGauge {
       ticks: this.localSettings.ticks,
 
       title: this.localSettings.title,
+
       fontTitleSize: this.localSettings.titleFont.size,
       fontTitleStyle: this.localSettings.titleFont.style,
       fontTitleWeight: this.localSettings.titleFont.weight,

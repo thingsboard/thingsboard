@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, ViewChild } from '@angular/core';
 import { getCurrentAuthState, isDefinedAndNotNull, NodeScriptTestService } from '@core/public-api';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -12,6 +13,8 @@ import {
 import type { JsFuncComponent } from '@app/shared/components/js-func.component';
 import { EntityType } from '@app/shared/models/entity-type.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
+import { allowedEntityGroupTypes } from '@home/components/rule-node/rule-node-config.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'tb-action-node-generator-config',
@@ -25,6 +28,7 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
   @ViewChild('tbelFuncComponent', {static: false}) tbelFuncComponent: JsFuncComponent;
 
   generatorConfigForm: UntypedFormGroup;
+  entityGroupTypes = allowedEntityGroupTypes;
 
   tbelEnabled = getCurrentAuthState(this.store).tbelEnabled;
 
@@ -34,7 +38,8 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
 
   allowedEntityTypes = [
     EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.CUSTOMER,
-    EntityType.USER, EntityType.DASHBOARD
+    EntityType.USER, EntityType.DASHBOARD, EntityType.CONVERTER,
+    EntityType.INTEGRATION, EntityType.SCHEDULER_EVENT, EntityType.BLOB_ENTITY, EntityType.REPORT_TEMPLATE, EntityType.REPORT, EntityType.ROLE, EntityType.EDGE
   ];
 
   additionEntityTypes = {
@@ -58,13 +63,22 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
 
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.generatorConfigForm = this.fb.group({
+      isEntityGroup: [configuration ? configuration.isEntityGroup : false, []],
       msgCount: [configuration ? configuration.msgCount : null, [Validators.required, Validators.min(0)]],
       periodInSeconds: [configuration ? configuration.periodInSeconds : null, [Validators.required, Validators.min(1)]],
-      originator: [configuration ? configuration.originator : {id: null, entityType: EntityType.RULE_NODE}, []],
+      originator: [configuration ? configuration.originator : null, [Validators.required]],
       scriptLang: [configuration ? configuration.scriptLang : ScriptLanguage.JS, [Validators.required]],
       jsScript: [configuration ? configuration.jsScript : null, []],
       tbelScript: [configuration ? configuration.tbelScript : null, []]
     });
+
+    this.generatorConfigForm.get('isEntityGroup').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.cleanKeys());
+  }
+
+  private cleanKeys() {
+    this.generatorConfigForm.get('originator').patchValue(null, {emitEvent: false});
   }
 
   protected validatorTriggers(): string[] {
@@ -86,6 +100,7 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
 
   protected prepareInputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
     return {
+      isEntityGroup: isDefinedAndNotNull(configuration?.originatorType) ? configuration.originatorType == EntityType.ENTITY_GROUP : false,
       msgCount: isDefinedAndNotNull(configuration?.msgCount) ? configuration?.msgCount : 0,
       periodInSeconds: isDefinedAndNotNull(configuration?.periodInSeconds) ? configuration?.periodInSeconds : 1,
       originator: {
@@ -99,7 +114,7 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
   }
 
   protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
-    if (configuration.originator) {
+    if (isDefinedAndNotNull(configuration.originator)) {
       configuration.originatorId = configuration.originator.id;
       configuration.originatorType = configuration.originator.entityType;
     } else {
@@ -107,6 +122,7 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
       configuration.originatorType = null;
     }
     delete configuration.originator;
+    delete configuration.isEntityGroup;
     return configuration;
   }
 

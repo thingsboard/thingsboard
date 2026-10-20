@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import {
   AbstractControl,
@@ -140,7 +140,7 @@ export class CountWidgetSettingsComponent extends PageComponent implements OnIni
   }
 
   private updateModel() {
-    const value: CountWidgetSettings = this.countWidgetConfigForm.value;
+    const value: CountWidgetSettings = this.countWidgetConfigForm.getRawValue();
     this.propagateChange(value);
   }
 

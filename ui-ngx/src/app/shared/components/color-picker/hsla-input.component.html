@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="color-input-container">
@@ -31,13 +32,15 @@
       <span>L</span>
     }
   </div>
-  <div class="tb-form-row tb-flex no-gap no-border no-padding column align-center">
-    <mat-form-field class="color-input number" appearance="outline" subscriptSizing="dynamic">
-      <input matInput type="number" [min]="0" [max]="100" [value]="alphaValue" (inputChange)="onAlphaInputChange($event)" />
-      <span matSuffix>{{suffixValue}}</span>
-    </mat-form-field>
-    @if (labelVisible) {
-      <span>A</span>
-    }
-  </div>
+  @if (alpha) {
+    <div class="tb-form-row tb-flex no-gap no-border no-padding column align-center">
+      <mat-form-field class="color-input number" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" [min]="0" [max]="100" [value]="alphaValue" (inputChange)="onAlphaInputChange($event)" />
+        <span matSuffix>{{suffixValue}}</span>
+      </mat-form-field>
+      @if (labelVisible) {
+        <span>A</span>
+      }
+    </div>
+  }
 </div>

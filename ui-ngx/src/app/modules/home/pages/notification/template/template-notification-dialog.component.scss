@@ -1,7 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../../scss/constants";
-@import "../../../../../../theme";
 
 :host {
   width: 780px;
@@ -49,6 +49,10 @@
     }
   }
 
+  .toggle {
+    margin-bottom: 16px;
+  }
+
   .tb-hint {
     padding: 0 0 8px;
   }
@@ -83,6 +87,58 @@
         @media #{$mat-gt-sm} {
           min-width: 500px;
         }
+      }
+      .mat-horizontal-stepper-content[aria-expanded=true] {
+        height: 100%;
+        position: relative;
+      }
+    }
+  }
+
+  .mat-radio-group {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 8px;
+
+    .mat-radio-button {
+      flex: 1 1 100%;
+      padding: 14px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+
+      .mat-radio-label {
+        white-space: break-spaces;
+        align-items: start;
+      }
+
+      &:not(:last-child){
+        margin-bottom: 8px;
+      }
+
+      &.mat-radio-checked {
+        border-color: var(--tb-accent-500);
+      }
+    }
+  }
+
+  .mat-form-field {
+    .mat-form-field-wrapper {
+      padding-bottom: 0px;
+
+      .mat-form-field-underline {
+        position: initial !important;
+        display: block;
+        margin-top: -1px;
+      }
+
+      .mat-form-field-subscript-wrapper,
+      .mat-form-field-ripple {
+        position: initial !important;
+        display: table;
+      }
+
+      .mat-form-field-subscript-wrapper {
+        min-height: calc(1em + 1px);
       }
     }
   }

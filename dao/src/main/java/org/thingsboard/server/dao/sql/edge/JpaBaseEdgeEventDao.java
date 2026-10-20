@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -45,7 +46,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
-    private static final List<SortOrder> SORT_ORDERS = Collections.singletonList(new SortOrder("seqId"));
 
     private final UUID systemTenantId = NULL_UUID;
 
@@ -73,7 +73,11 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     @Value("${sql.edge_events.partition_size:168}")
     private int partitionSizeInHours;
 
+    @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
+    private long edgeEventsTtl;
+
     private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_TABLE_NAME;
+    private static final List<SortOrder> SORT_ORDERS = Collections.singletonList(new SortOrder("seqId"));
 
     private TbSqlBlockingQueueWrapper<EdgeEventEntity, Void> queue;
 
@@ -176,6 +180,36 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
     @Override
     public void cleanupEvents(long ttl) {
         partitioningRepository.dropPartitionsBefore(TABLE_NAME, ttl, TimeUnit.HOURS.toMillis(partitionSizeInHours));
+    }
+
+    @Override
+    public void migrateEdgeEvents() {
+        long startTime = edgeEventsTtl > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(edgeEventsTtl) : 1629158400000L;
+
+        long currentTime = System.currentTimeMillis();
+        var partitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);
+        long numberOfPartitions = (currentTime - startTime) / partitionStepInMs;
+
+        if (numberOfPartitions > 1000) {
+            String error = "Please adjust your edge event partitioning configuration. Configuration with partition size " +
+                    "of " + partitionSizeInHours + " hours and corresponding TTL will use " + numberOfPartitions + " " +
+                    "(> 1000) partitions which is not recommended!";
+            log.error(error);
+            throw new RuntimeException(error);
+        }
+
+        while (startTime < currentTime) {
+            var endTime = startTime + partitionStepInMs;
+            log.info("Migrating edge event for time period: {} - {}", startTime, endTime);
+            callMigrationFunction(startTime, endTime, partitionStepInMs);
+            startTime = endTime;
+        }
+        log.info("Event edge migration finished");
+        jdbcTemplate.execute("DROP TABLE IF EXISTS old_edge_event");
+    }
+
+    private void callMigrationFunction(long startTime, long endTime, long partitionSIzeInMs) {
+        jdbcTemplate.update("CALL migrate_edge_event(?, ?, ?)", startTime, endTime, partitionSIzeInMs);
     }
 
     @Override

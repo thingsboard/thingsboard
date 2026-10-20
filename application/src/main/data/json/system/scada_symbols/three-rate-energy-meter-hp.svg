@@ -38,7 +38,7 @@
     },
     {
       "tag": "night-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.nightValueFont, ctx.properties.nightValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.nightRate, {units: ctx.properties.units, decimals: ctx.properties.nightValueDecimals, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "tag": "off-peak-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.offPeakValueFont, ctx.properties.offPeakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.offPeakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.offPeakValueFont, ctx.properties.offPeakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.offPeakRate, {units: ctx.properties.units, decimals: ctx.properties.offPeakValueDecimals, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -58,7 +58,7 @@
     },
     {
       "tag": "peak-rate",
-      "stateRenderFunction": "ctx.api.font(element, ctx.properties.peakValueFont, ctx.properties.peakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.peakRate, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));",
+      "stateRenderFunction": "ctx.api.font(element, ctx.properties.peakValueFont, ctx.properties.peakValueColor);\nctx.api.text(element, ctx.api.formatValue(ctx.values.peakRate, {units: ctx.properties.units, decimals: ctx.properties.peakValueDecimals, ignoreUnitSymbol: true}));",
       "actions": null
     },
     {
@@ -512,6 +512,19 @@
       "visible": true
     },
     {
+      "id": "offPeakValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.off-peak-rate}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
       "id": "offPeakValueFont",
       "name": "{i18n:scada.symbol.value}",
       "group": "{i18n:scada.symbol.off-peak-rate}",
@@ -591,6 +604,19 @@
       "visible": true
     },
     {
+      "id": "nightValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.night-rate}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
       "id": "nightValueFont",
       "name": "{i18n:scada.symbol.value}",
       "group": "{i18n:scada.symbol.night-rate}",
@@ -666,6 +692,19 @@
       "type": "color",
       "default": "#000",
       "disableOnProperty": "showPeakLabel",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "peakValueDecimals",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.peak-rate}",
+      "type": "number",
+      "default": 0,
+      "subLabel": "{i18n:scada.symbol.decimals}",
+      "min": 0,
+      "max": 10,
+      "step": 1,
       "disabled": false,
       "visible": true
     },

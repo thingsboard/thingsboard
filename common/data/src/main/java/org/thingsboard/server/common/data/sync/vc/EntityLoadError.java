@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.sync.vc;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +26,10 @@ public class EntityLoadError implements Serializable {
 
     public static EntityLoadError credentialsError(EntityId sourceId) {
         return EntityLoadError.builder().type("DEVICE_CREDENTIALS_CONFLICT").source(sourceId).build();
+    }
+
+    public static EntityLoadError routingKeyError(EntityId sourceId) {
+        return EntityLoadError.builder().type("INTEGRATION_ROUTING_KEY_CONFLICT").source(sourceId).build();
     }
 
     public static EntityLoadError referenceEntityError(EntityId sourceId, EntityId targetId) {

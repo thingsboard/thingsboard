@@ -1,0 +1,70 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (loaded && hasTemplates) {
+  <section class="tb-quick-start-panel">
+    <div class="tb-quick-start-header">
+      <mat-icon class="tb-quick-start-bolt">bolt</mat-icon>
+      <div class="tb-quick-start-titles">
+        <div class="tb-quick-start-title">{{ 'agent.quick-start-title' | translate }}</div>
+        <div class="tb-quick-start-subtitle">{{ 'agent.quick-start-subtitle' | translate }}</div>
+      </div>
+      @if (entries.length) {
+        <div class="tb-quick-start-filters">
+          @for (filter of filters; track filter.key) {
+            <span
+              class="tb-quick-start-chip"
+              [class.active]="activeFilter === filter.key"
+            (click)="activeFilter = filter.key">{{ filter.label | translate }}</span>
+          }
+        </div>
+      }
+    </div>
+    @if (visibleEntries.length) {
+      <div class="tb-quick-start-cards">
+        @for (entry of visibleEntries; track entry.templateVersion) {
+          <div class="tb-quick-start-card" @cardAnim>
+            <div class="tb-quick-start-card-head">
+              <div class="tb-quick-start-card-icon">
+                <mat-icon>{{ appIcon(entry.appType) }}</mat-icon>
+              </div>
+              <div class="tb-quick-start-card-info">
+                <div class="tb-quick-start-card-name" [matTooltip]="entry.name" matTooltipPosition="above">{{ entry.name }}</div>
+                <div class="tb-quick-start-card-badges">
+                  <span class="tb-quick-start-badge predefined">{{ 'agent.app-install-virtual-profile-badge' | translate }}</span>
+                  <span [class]="'tb-quick-start-badge ' + entry.appType.toLowerCase()">{{ entry.appType }}</span>
+                </div>
+              </div>
+            </div>
+            <button mat-flat-button color="primary" class="tb-quick-start-create"
+              [disabled]="isCreating(entry)"
+              (click)="create(entry)">
+              @if (!isCreating(entry)) {
+                <mat-icon>add</mat-icon>
+              }
+              @if (isCreating(entry)) {
+                <mat-spinner diameter="18"></mat-spinner>
+              }
+              {{ 'action.create' | translate }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+    @if (allCreated) {
+      <div class="tb-quick-start-empty" @fadeAnim>
+        <mat-icon class="tb-quick-start-empty-success">check_circle</mat-icon>
+        {{ 'agent.quick-start-all-created' | translate }}
+      </div>
+    }
+    @if (noMatch) {
+      <div class="tb-quick-start-empty" @fadeAnim>
+        <mat-icon>filter_list_off</mat-icon>
+        {{ 'agent.quick-start-no-match' | translate }}
+      </div>
+    }
+  </section>
+}

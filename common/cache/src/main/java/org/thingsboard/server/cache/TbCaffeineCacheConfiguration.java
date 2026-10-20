@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -76,7 +77,7 @@ public class TbCaffeineCacheConfiguration {
     private Weigher<? super Object, ? super Object> collectionSafeWeigher() {
         return (Weigher<Object, Object>) (key, value) -> {
             if (value instanceof Collection) {
-                return ((Collection) value).size();
+                return ((Collection<?>) value).size();
             }
             return 1;
         };

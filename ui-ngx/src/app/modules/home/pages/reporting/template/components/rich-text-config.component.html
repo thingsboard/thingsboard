@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border h-full" [formGroup]="reportConfigForm">
+  <div class="tb-report-component-config-header">
+    <tb-toggle-select [(ngModel)]="settingsTab" [ngModelOptions]="{standalone: true}" appearance="fill">
+      <tb-toggle-option value="content">{{ 'report-template.content' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="data">{{ 'report-template.data' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="layout">{{ 'report-template.layout' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  <div class="tb-form-panel no-border no-padding flex-1 overflow-y-auto" [class.!hidden]="settingsTab !== 'content'">
+    <tb-report-rich-text class="flex-1" [variables]="variables()" [background]="reportConfigForm.get('layout').value?.background" formControlName="value"></tb-report-rich-text>
+  </div>
+  <tb-datasources [class.!hidden]="settingsTab !== 'data'"
+                  class="overflow-y-auto"
+                  formControlName="dataSources"
+                  stroked
+                  reportMode
+                  [dataSourcesOptions]="{
+                    widgetType: widgetType.latest,
+                    maxDatasources: -1,
+                    datasourcesOptional: true,
+                    dataKeysOptional: true,
+                    allowFunctions: false
+                  }"
+                  hideDataKeyColor
+                  [callbacks]="callbacks"
+                  [aliasController]="context.aliasController">
+  </tb-datasources>
+  <tb-report-component-layout-settings class="overflow-y-auto" [class.!hidden]="settingsTab !== 'layout'" formControlName="layout">
+  </tb-report-component-layout-settings>
+</div>

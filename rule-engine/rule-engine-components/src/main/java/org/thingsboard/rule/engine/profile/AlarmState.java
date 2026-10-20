@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.profile;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -115,7 +116,7 @@ class AlarmState {
                     stateUpdate = clearAlarmState(stateUpdate, state);
                 }
                 AlarmApiCallResult result = ctx.getAlarmService().clearAlarm(
-                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearState)
+                        ctx.getTenantId(), currentAlarm.getOriginator(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearState)
                 );
                 if (result.isCleared()) {
                     pushMsg(ctx, msg, new TbAlarmResult(false, false, true, result.getAlarm()), clearState);
@@ -249,6 +250,7 @@ class AlarmState {
             newAlarm.setTenantId(ctx.getTenantId());
             newAlarm.setPropagate(alarmDefinition.isPropagate());
             newAlarm.setPropagateToOwner(alarmDefinition.isPropagateToOwner());
+            newAlarm.setPropagateToOwnerHierarchy(alarmDefinition.isPropagateToOwnerHierarchy());
             newAlarm.setPropagateToTenant(alarmDefinition.isPropagateToTenant());
             if (alarmDefinition.getPropagateRelationTypes() != null) {
                 newAlarm.setPropagateRelationTypes(alarmDefinition.getPropagateRelationTypes());

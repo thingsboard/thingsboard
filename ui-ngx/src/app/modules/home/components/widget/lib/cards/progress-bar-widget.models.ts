@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BackgroundSettings,
   BackgroundType,
@@ -71,7 +72,7 @@ export const progressBarDefaultSettings: ProgressBarWidgetSettings = {
     lineHeight: '16px'
   },
   ticksColor: 'rgba(0,0,0,0.54)',
-  barColor: constantColor('rgba(63, 82, 221, 1)'),
+  barColor: constantColor('var(--tb-primary-500)'),
   barBackground: 'rgba(0, 0, 0, 0.04)',
   background: {
     type: BackgroundType.color,

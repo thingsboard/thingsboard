@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
@@ -43,6 +43,8 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Getter
     private volatile String lastMsg;
+    @Getter
+    private volatile Integer closeCode;
     private volatile CountDownLatch reply;
     private volatile CountDownLatch update;
 
@@ -82,6 +84,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
+        closeCode = i;
         log.info("CLOSED.");
         closeLatch.countDown();
     }

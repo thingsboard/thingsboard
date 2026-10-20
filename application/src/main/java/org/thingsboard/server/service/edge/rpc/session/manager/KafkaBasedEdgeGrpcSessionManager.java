@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.session.manager;
 
@@ -114,8 +114,8 @@ public class KafkaBasedEdgeGrpcSessionManager extends AbstractEdgeGrpcSessionMan
         TenantId tenantId = state.getTenantId();
         EdgeId edgeId = state.getEdgeId();
 
-        if (!sessions.hasByEdgeId(edgeId)) {
-            log.debug("[{}] Session was removed and edge event consumer must not be started [{}]",
+        if (!sessions.isCurrent(this)) {
+            log.debug("[{}] Session is not current anymore and edge event consumer must not be started [{}]",
                     tenantId, edgeId.getId());
             return;
         }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -25,6 +26,8 @@ import { MatSort } from '@angular/material/sort';
 import { fromEvent, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, first, tap } from 'rxjs/operators';
 import {
+  mergeWidgetActionsMap,
+  stripRuntimeWidgetActionFields,
   toWidgetActionDescriptor,
   WidgetActionCallbacks,
   WidgetActionDescriptorInfo,
@@ -32,15 +35,26 @@ import {
   WidgetActionsDatasource
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionDescriptor, WidgetActionSource, WidgetActionType, widgetType } from '@shared/models/widget.models';
+import {
+  WidgetActionDescriptor,
+  WidgetActionSource,
+  WidgetActionsMap,
+  WidgetActionType,
+  widgetActionTypes,
+  widgetType
+} from '@shared/models/widget.models';
 import {
   WidgetActionDialogComponent,
   WidgetActionDialogData
 } from '@home/components/widget/action/widget-action-dialog.component';
-import { deepClone } from '@core/utils';
+import { deepClone, isNotEmptyStr } from '@core/utils';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { DomSanitizer } from '@angular/platform-browser';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { ItemBufferService } from '@core/services/item-buffer.service';
 
 @Component({
     selector: 'tb-manage-widget-actions',
@@ -61,11 +75,27 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   @Input() widgetType: widgetType;
 
+  @Input() widgetName: string;
+
+  @Input() widgetTitle: string;
+
   @Input() defaultIconColor: string;
 
   @Input() callbacks: WidgetActionCallbacks;
 
   @Input() actionSources: {[actionSourceId: string]: WidgetActionSource};
+
+  @Input() actionTypes: WidgetActionType[];
+
+  @Input() customFunctionArgs: string[];
+
+  @Input()
+  @coerceBoolean()
+  isEntityGroup = false;
+
+  @Input()
+  @coerceBoolean()
+  outlinedBorder = false;
 
   @Input() additionalWidgetActionTypes: WidgetActionType[];
 
@@ -76,7 +106,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   dataSource: WidgetActionsDatasource;
   dragDisabled = true;
 
-  private actionsMap: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
+  private actionsMap: WidgetActionsMap;
   private viewsInited = false;
   private dirtyValue = false;
   private widgetResize$: ResizeObserver;
@@ -96,7 +126,9 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
               private cd: ChangeDetectorRef,
               private elementRef: ElementRef,
               private zone: NgZone,
-              private sanitizer: DomSanitizer) {
+              private sanitizer: DomSanitizer,
+              private importExportService: ImportExportService,
+              private itembuffer: ItemBufferService) {
     super();
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
@@ -180,6 +212,142 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.openWidgetActionDialog($event);
   }
 
+  get hasActions(): boolean {
+    return this.actionsMap && Object.keys(this.actionsMap).some(id => this.actionsMap[id]?.length > 0);
+  }
+
+  importActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExportService.importWidgetActions().subscribe((importedActionsMap) => {
+      if (importedActionsMap) {
+        this.applyImportedActions(importedActionsMap, 'widget-config.import-actions-imported');
+      }
+    });
+  }
+
+  copyAction($event: Event, action: WidgetActionDescriptorInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.itembuffer.copyWidgetActions({[action.actionSourceId]: [this.prepareActionForTransfer(action)]});
+    this.store.dispatch(new ActionNotificationShow(
+      {message: this.translate.instant('widget-config.action-copied'),
+        type: 'success', duration: 1500}));
+  }
+
+  pasteActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const actionsMap = this.itembuffer.pasteWidgetActions();
+    if (actionsMap) {
+      this.applyImportedActions(actionsMap, 'widget-config.paste-actions-pasted');
+    }
+  }
+
+  get hasActionsInBuffer(): boolean {
+    return this.itembuffer.hasWidgetActions();
+  }
+
+  private get allowedActionTypes(): WidgetActionType[] {
+    const predefinedActionTypes = this.actionTypes?.length ? this.actionTypes : widgetActionTypes;
+    return this.additionalWidgetActionTypes?.length ?
+      predefinedActionTypes.concat(this.additionalWidgetActionTypes) : predefinedActionTypes;
+  }
+
+  private prepareActionForTransfer(action: WidgetActionDescriptorInfo): WidgetActionDescriptor {
+    return stripRuntimeWidgetActionFields(toWidgetActionDescriptor(action));
+  }
+
+  private applyImportedActions(importedActionsMap: WidgetActionsMap, appliedMessage: string) {
+    const result = mergeWidgetActionsMap(this.actionsMap, importedActionsMap, this.actionSources,
+      this.allowedActionTypes, () => this.callbacks.fetchCellClickColumns()?.length ?? 0);
+    if (result.imported) {
+      this.onActionsUpdated();
+    }
+    const messageParts = [this.translate.instant(appliedMessage, {count: result.imported})];
+    if (result.skipped) {
+      messageParts.push(this.translate.instant('widget-config.import-actions-skipped', {count: result.skipped}));
+    }
+    if (result.columnIndexesReset) {
+      messageParts.push(this.translate.instant('widget-config.import-actions-columns-reset', {count: result.columnIndexesReset}));
+    }
+    const hasWarnings = !!(result.skipped || result.columnIndexesReset);
+    this.store.dispatch(new ActionNotificationShow(
+      {message: messageParts.join('<br/>'),
+        type: hasWarnings ? 'warn' : 'success',
+        duration: hasWarnings ? 6000 : 2000}));
+  }
+
+  duplicateAction($event: Event, action: WidgetActionDescriptorInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.applyImportedActions({[action.actionSourceId]: [this.prepareActionForTransfer(action)]},
+      'widget-config.duplicate-actions-duplicated');
+  }
+
+  clearActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const title = this.translate.instant('widget-config.clear-actions-title');
+    const content = this.translate.instant('widget-config.clear-actions-text');
+    this.dialogs.confirm(title, content,
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'), true).subscribe(
+      (res) => {
+        if (res) {
+          for (const actionSourceId of Object.keys(this.actionsMap)) {
+            delete this.actionsMap[actionSourceId];
+          }
+          this.onActionsUpdated();
+        }
+      });
+  }
+
+  exportActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const baseName = this.widgetName || 'widget';
+    const fileName = `${baseName}${isNotEmptyStr(this.widgetTitle) ? `_${this.widgetTitle}` : ''}_actions`;
+    this.importExportService.exportWidgetActions(this.prepareActionsMap(), fileName);
+  }
+
+  copyAllActions($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.itembuffer.copyWidgetActions(this.prepareActionsMap());
+    this.store.dispatch(new ActionNotificationShow(
+      {message: this.translate.instant('widget-config.actions-copied'),
+        type: 'success', duration: 1500}));
+  }
+
+  private prepareActionsMap(): WidgetActionsMap {
+    const preparedActionsMap: WidgetActionsMap = {};
+    for (const actionSourceId of Object.keys(this.actionsMap)) {
+      const actions = this.actionsMap[actionSourceId];
+      if (actions?.length) {
+        preparedActionsMap[actionSourceId] = actions.map(action => stripRuntimeWidgetActionFields(deepClone(action)));
+      }
+    }
+    return preparedActionsMap;
+  }
+
+  exportAction($event: Event, action: WidgetActionDescriptorInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const exportedActionsMap: WidgetActionsMap = {
+      [action.actionSourceId]: [this.prepareActionForTransfer(action)]
+    };
+    this.importExportService.exportWidgetActions(exportedActionsMap, `${action.name}_action`);
+  }
+
   editAction($event: Event, action: WidgetActionDescriptorInfo) {
     this.openWidgetActionDialog($event, action);
   }
@@ -224,9 +392,12 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
         callbacks: this.callbacks,
         actionsData,
         action: deepClone(action),
+        actionTypes: this.actionTypes,
+        customFunctionArgs: this.customFunctionArgs,
         widgetType: this.widgetType,
         defaultIconColor: this.defaultIconColor,
-        additionalWidgetActionTypes: this.additionalWidgetActionTypes
+        additionalWidgetActionTypes: this.additionalWidgetActionTypes,
+        isEntityGroup: this.isEntityGroup,
       }
     }).afterClosed().subscribe(
       (res) => {
@@ -333,7 +504,7 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     this.disabled = isDisabled;
   }
 
-  writeValue(actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>}): void {
+  writeValue(actions?: WidgetActionsMap): void {
     this.actionsMap = actions ?? {};
     setTimeout(() => {
       if (!this.destroyed) {

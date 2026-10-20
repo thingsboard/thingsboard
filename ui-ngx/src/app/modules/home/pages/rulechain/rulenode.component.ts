@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Component, OnInit } from '@angular/core';
 import { FcNodeComponent } from 'ngx-flowchart';
@@ -39,7 +40,7 @@ export class RuleNodeComponent extends FcNodeComponent implements OnInit {
     }
     if (node.configuration?.ruleChainId) {
       if (node.ruleChainType === RuleChainType.EDGE) {
-        this.router.navigateByUrl(`/edgeManagement/ruleChains/${node.configuration?.ruleChainId}`);
+        this.router.navigateByUrl(`/edgeManagement/templates/ruleChains/${node.configuration?.ruleChainId}`);
       } else {
         this.router.navigateByUrl(`/ruleChains/${node.configuration?.ruleChainId}`);
       }

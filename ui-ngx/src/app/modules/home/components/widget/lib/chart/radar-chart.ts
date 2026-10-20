@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { TbLatestChart } from '@home/components/widget/lib/chart/latest-chart';
 import { radarChartDefaultSettings, RadarChartSettings } from '@home/components/widget/lib/chart/radar-chart.models';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -12,7 +13,7 @@ import {
   createRadialOpacityGradient,
   toAnimationOption
 } from '@home/components/widget/lib/chart/chart.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, plainColorFromVariable } from '@core/utils';
 import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { AreaStyleOption, SeriesLabelOption } from 'echarts/types/src/util/types';
 import { RadarIndicatorOption } from 'echarts/types/src/coord/radar/RadarModel';
@@ -91,7 +92,8 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
         areaStyleOption.opacity = this.settings.fillAreaSettings.opacity;
       } else if (this.settings.fillAreaSettings.type === ChartFillType.gradient) {
         areaStyleOption.opacity = 1;
-        areaStyleOption.color = createRadialOpacityGradient(this.settings.color, this.settings.fillAreaSettings.gradient);
+        areaStyleOption.color = createRadialOpacityGradient(
+          plainColorFromVariable(this.settings.color), this.settings.fillAreaSettings.gradient);
       }
     }
 
@@ -101,7 +103,7 @@ export class TbRadarChart extends TbLatestChart<RadarChartSettings> {
         data: [{
           id: 1,
           itemStyle: {
-            color: this.settings.color
+            color: plainColorFromVariable(this.settings.color)
           },
           label: labelOption,
           symbol: this.settings.showPoints ? this.settings.pointShape : 'none',

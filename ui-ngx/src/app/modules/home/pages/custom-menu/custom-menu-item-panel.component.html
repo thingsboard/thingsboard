@@ -1,0 +1,31 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-custom-menu-item-panel">
+  <div class="tb-custom-menu-item-title">{{ title | translate }}</div>
+  <div class="tb-custom-menu-item-panel-content">
+    <tb-custom-menu-item
+      [scope]="scope"
+      menuItemTypeEditable="false"
+      [formControl]="customMenuItemControl">
+    </tb-custom-menu-item>
+  </div>
+  <div class="tb-custom-menu-item-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="apply()"
+            [disabled]="customMenuItemControl.invalid || !customMenuItemControl.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

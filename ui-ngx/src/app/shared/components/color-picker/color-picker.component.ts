@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, forwardRef, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import { Color, ColorPickerControl } from '@iplab/ngx-color-picker';
 import { Subscription } from 'rxjs';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import { isString } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 export enum ColorType {
   hex = 'hex',
@@ -34,6 +36,13 @@ const colorPresetsHex =
     standalone: false
 })
 export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
+
+  @Input()
+  @coerceBoolean()
+  disableAlpha = false;
+
+  @Input()
+  defaultColor = '#fff';
 
   presentations = [ColorType.hex, ColorType.rgba, ColorType.hsla];
   control = new ColorPickerControl();
@@ -77,7 +86,7 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   writeValue(value: string): void {
     const valid = this.isValidColorValue(value);
     this.setValue = valid;
-    this.control.setValueFrom(valid ? value : '#fff');
+    this.control.setValueFrom(valid ? value : this.defaultColor);
     this.modelValue = value;
 
     if (this.control.initType === ColorType.hexa) {
@@ -110,13 +119,13 @@ export class ColorPickerComponent implements ControlValueAccessor, OnDestroy {
   getValueByType(color: Color, type: ColorType): string {
     switch (type) {
       case ColorType.hex:
-        return color.toHexString(this.control.value.getRgba().getAlpha() !== 1);
+        return color.toHexString(!this.disableAlpha && this.control.value.getRgba().getAlpha() !== 1);
       case ColorType.rgba:
-        return this.control.value.getRgba().getAlpha() !== 1 ? color.toRgbaString() : color.toRgbString();
+        return !this.disableAlpha && this.control.value.getRgba().getAlpha() !== 1 ? color.toRgbaString() : color.toRgbString();
       case ColorType.hsla:
-        return this.control.value.getRgba().getAlpha() !== 1 ? color.toHslaString() : color.toHslString();
+        return !this.disableAlpha && this.control.value.getRgba().getAlpha() !== 1 ? color.toHslaString() : color.toHslString();
       default:
-        return color.toRgbaString();
+        return !this.disableAlpha ? color.toRgbaString() : color.toRgbString();
     }
   }
 }

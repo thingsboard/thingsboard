@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
@@ -15,7 +16,7 @@
           <mat-form-field class="mat-block tb-relation-direction" appearance="outline" subscriptSizing="dynamic">
             <mat-label translate>relation.direction</mat-label>
             <mat-select [ngModel]="direction"
-                        (ngModelChange)="directionChanged($event)">
+              (ngModelChange)="directionChanged($event)">
               @for (type of directionTypes; track type) {
                 <mat-option [value]="type">
                   {{ directionTypeTranslations.get(directions[type]) | translate }}
@@ -25,20 +26,22 @@
           </mat-form-field>
         </div>
         <span class="flex-1"></span>
-        <button mat-icon-button [disabled]="isLoading$ | async"
-                (click)="addRelation($event)"
-                matTooltip="{{ 'action.add' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>add</mat-icon>
-        </button>
+        @if (!readonly) {
+          <button mat-icon-button [disabled]="isLoading$ | async"
+            (click)="addRelation($event)"
+            matTooltip="{{ 'action.add' | translate }}"
+            matTooltipPosition="above">
+            <mat-icon>add</mat-icon>
+          </button>
+        }
         <button mat-icon-button [disabled]="isLoading$ | async" (click)="reloadRelations()"
-                matTooltip="{{ 'action.refresh' | translate }}"
-                matTooltipPosition="above">
+          matTooltip="{{ 'action.refresh' | translate }}"
+          matTooltipPosition="above">
           <mat-icon>refresh</mat-icon>
         </button>
         <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterFilterMode()"
-                matTooltip="{{ 'action.search' | translate }}"
-                matTooltipPosition="above">
+          matTooltip="{{ 'action.search' | translate }}"
+          matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
       </div>
@@ -46,19 +49,19 @@
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
-                matTooltip="{{ 'action.search' | translate }}"
-                matTooltipPosition="above">
+          matTooltip="{{ 'action.search' | translate }}"
+          matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
         <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
-                 [formControl]="textSearch"
-                 placeholder="{{ 'common.enter-search' | translate }}"/>
+            [formControl]="textSearch"
+            placeholder="{{ 'common.enter-search' | translate }}"/>
         </mat-form-field>
         <button mat-icon-button (click)="exitFilterMode()"
-                matTooltip="{{ 'action.close' | translate }}"
-                matTooltipPosition="above">
+          matTooltip="{{ 'action.close' | translate }}"
+          matTooltipPosition="above">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -69,27 +72,27 @@
           {{ 'relation.selected-relations' | translate:{count: dataSource.selection.selected.length} }}
         </span>
         <button mat-icon-button [disabled]="isLoading$ | async"
-                matTooltip="{{ 'action.delete' | translate }}"
-                matTooltipPosition="above"
-                (click)="deleteRelations($event)">
+          matTooltip="{{ 'action.delete' | translate }}"
+          matTooltipPosition="above"
+          (click)="deleteRelations($event)">
           <mat-icon>delete</mat-icon>
         </button>
       </div>
     </mat-toolbar>
     <div class="table-container flex-1">
       <table mat-table [dataSource]="dataSource"
-             matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
-                          [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
-                          [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
+              [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+              [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
             </mat-checkbox>
           </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             <mat-checkbox (click)="$event.stopPropagation()"
-                          (change)="$event ? dataSource.selection.toggle(relation) : null"
-                          [checked]="dataSource.selection.isSelected(relation)">
+              (change)="$event ? dataSource.selection.toggle(relation) : null"
+              [checked]="dataSource.selection.isSelected(relation)">
             </mat-checkbox>
           </mat-cell>
         </ng-container>
@@ -159,35 +162,46 @@
           <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
           </mat-header-cell>
           <mat-cell *matCellDef="let relation">
-            <div class="flex flex-1 flex-row items-stretch justify-end">
-              <button mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'relation.edit' | translate }}"
-                      matTooltipPosition="above"
-                      (click)="editRelation($event, relation)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button [disabled]="isLoading$ | async"
-                      matTooltip="{{ 'relation.delete' | translate }}"
-                      matTooltipPosition="above"
-                      (click)="deleteRelation($event, relation)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+            @if (isRelationEditable(relation)) {
+              <div class="flex flex-1 flex-row items-stretch justify-end">
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'relation.edit' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="editRelation($event, relation)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'relation.delete' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="deleteRelation($event, relation)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <div class="flex flex-1 flex-row items-stretch justify-end">
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'action.view' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="showRelation($event, relation)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+              </div>
+            }
           </mat-cell>
         </ng-container>
         <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row class="mat-row-select"
-                 [class.mat-selected]="dataSource.selection.isSelected(relation)"
-        *matRowDef="let relation; columns: displayedColumns;" (click)="dataSource.selection.toggle(relation)"></mat-row>
+          [class.mat-selected]="dataSource.selection.isSelected(relation)"
+        *matRowDef="let relation; columns: displayedColumns;" (click)="onRowClick($event, relation)"></mat-row>
       </table>
       <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
       class="no-data-found flex items-center justify-center" translate>{{ 'relation.no-relations-text' }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"
-                   [pageIndex]="pageLink.page"
-                   [pageSize]="pageLink.pageSize"
-                   [pageSizeOptions]="[10, 20, 30]"
+      [pageIndex]="pageLink.page"
+      [pageSize]="pageLink.pageSize"
+      [pageSizeOptions]="[10, 20, 30]"
     [hidePageSize]="hidePageSize"></mat-paginator>
   </div>
 </div>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Observable, of } from 'rxjs';
@@ -8,6 +9,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
@@ -17,7 +19,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
 import { getEntityDetailsPageURL } from '@core/utils';
-import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
     selector: 'tb-rule-chain-autocomplete',
@@ -48,6 +50,9 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -59,6 +64,10 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  showHint: boolean;
 
   @ViewChild('ruleChainInput', {static: true}) ruleChainInput: ElementRef;
   @ViewChild('ruleChainInput', {read: MatAutocompleteTrigger}) ruleChainAutocomplete: MatAutocompleteTrigger;
@@ -146,7 +155,7 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
           this.modelValue = entity.id.id;
           this.ruleChainURL = getEntityDetailsPageURL(this.modelValue,EntityType.RULE_CHAIN);
           if (this.ruleChainType === RuleChainType.EDGE) {
-            this.ruleChainURL = '/edgeManagement' + this.ruleChainURL;
+            this.ruleChainURL = '/edgeManagement/templates' + this.ruleChainURL;
           }
           this.selectRuleChainFormGroup.get('ruleChainId').patchValue(entity, {emitEvent: false});
         },

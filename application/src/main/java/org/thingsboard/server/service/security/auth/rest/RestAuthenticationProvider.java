@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.rest;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,13 +17,14 @@ import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.AbstractAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
@@ -31,6 +33,7 @@ import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 @Component
@@ -41,16 +44,18 @@ public class RestAuthenticationProvider extends AbstractAuthenticationProvider {
     private final SystemSecurityService systemSecurityService;
     private final SecuritySettingsService securitySettingsService;
     private final UserService userService;
+    private final UserPermissionsService userPermissionsService;
     private final TwoFactorAuthService twoFactorAuthService;
 
     @Autowired
-    public RestAuthenticationProvider(final UserService userService,
-                                      final CustomerService customerService,
+    public RestAuthenticationProvider(final UserService userService, final CustomerService customerService,
+                                      final UserPermissionsService userPermissionsService,
                                       final SystemSecurityService systemSecurityService,
                                       SecuritySettingsService securitySettingsService,
                                       TwoFactorAuthService twoFactorAuthService) {
-        super(customerService, null);
+        super(customerService, null, userPermissionsService);
         this.userService = userService;
+        this.userPermissionsService = userPermissionsService;
         this.systemSecurityService = systemSecurityService;
         this.securitySettingsService = securitySettingsService;
         this.twoFactorAuthService = twoFactorAuthService;
@@ -119,7 +124,14 @@ public class RestAuthenticationProvider extends AbstractAuthenticationProvider {
                 throw new InsufficientAuthenticationException("User has no authority assigned");
             }
 
-            return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
+            MergedUserPermissions userPermissions;
+            try {
+                userPermissions = userPermissionsService.getMergedPermissions(user, false);
+            } catch (Exception e) {
+                throw new BadCredentialsException("Failed to get user permissions", e);
+            }
+
+            return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal, userPermissions);
         } catch (Exception e) {
             systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOGIN, e);
             throw e;

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.mfa.provider.impl;
 
 import org.springframework.cache.CacheManager;
@@ -45,7 +46,7 @@ public class EmailTwoFaProvider extends OtpBasedTwoFaProvider<EmailTwoFaProvider
     @Override
     protected void sendVerificationCode(SecurityUser user, String verificationCode, EmailTwoFaProviderConfig providerConfig, EmailTwoFaAccountConfig accountConfig) throws ThingsboardException {
         try {
-            mailService.sendTwoFaVerificationEmail(accountConfig.getEmail(), verificationCode, providerConfig.getVerificationCodeLifetime());
+            mailService.sendTwoFaVerificationEmail(user.getTenantId(), accountConfig.getEmail(), verificationCode, providerConfig.getVerificationCodeLifetime());
         } catch (Exception e) {
             throw new ThingsboardException("Couldn't send 2FA verification email", ThingsboardErrorCode.GENERAL);
         }

@@ -1,0 +1,135 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (!embedded) {
+  <mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+    <div class="tb-install-wizard-toolbar-content">
+      <h2>{{ (isEdit ? 'agent.edit-profile' : 'agent.add-profile') | translate }}</h2>
+    </div>
+    <div tb-help="agentProfiles"></div>
+    <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+}
+
+<div mat-dialog-content class="tb-install-wizard-body" [class.tb-install-wizard-embedded]="embedded">
+
+  <mat-stepper linear #stepper [labelPosition]="(stepperLabelPosition | async)">
+
+    <mat-step [stepControl]="step1Form" [label]="'agent.add-profile-step-details' | translate">
+      <form [formGroup]="step1Form" autocomplete="off">
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>agent.profile-name</mat-label>
+          <input matInput formControlName="name" required
+            [placeholder]="'agent.profile-name-placeholder' | translate">
+          @if (step1Form.get('name').hasError('required')) {
+            <mat-error>
+              {{ 'agent.profile-name-required' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>agent.description</mat-label>
+          <textarea matInput formControlName="description" rows="2"></textarea>
+        </mat-form-field>
+        <mat-form-field class="mat-block" appearance="outline">
+          <mat-label translate>agent.provisioning-strategy</mat-label>
+          <mat-select formControlName="provisionType">
+            @for (type of agentProvisionTypes; track type) {
+              <mat-option [value]="type">
+                {{ agentProvisionTypeTranslationMap.get(type) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="tb-wizard-hint">
+          <mat-icon class="hint-icon">help_outline</mat-icon>
+          <div>
+            <div class="hint-title">
+              {{ 'agent.provisioning-strategy-label' | translate: {
+              strategy: agentProvisionTypeTranslationMap.get(step1Form.get('provisionType').value) | translate
+              } }}
+            </div>
+            <div class="hint-body">
+              {{ agentProvisionTypeDescriptionMap.get(step1Form.get('provisionType').value) | translate }}
+            </div>
+          </div>
+        </div>
+      </form>
+    </mat-step>
+
+    <mat-step [label]="'agent.add-profile-step-app-profiles' | translate">
+      <form [formGroup]="step2Form" autocomplete="off">
+        <div class="tb-wizard-hint">
+          <mat-icon class="hint-icon">help_outline</mat-icon>
+          <div>
+            <div class="hint-title">{{ 'agent.add-profile-app-profiles-hint-title' | translate }}</div>
+            <div class="hint-body">
+              {{ 'agent.add-profile-app-profiles-hint' | translate: { profileName: step1Form.get('name').value } }}
+            </div>
+          </div>
+        </div>
+        @if (assignmentsLoadState === 'failed') {
+          <div class="tb-wizard-hint">
+            <mat-icon class="hint-icon">warning_amber</mat-icon>
+            <div>
+              <div class="hint-body">{{ 'agent.add-profile-assignments-load-failed' | translate }}</div>
+              <button mat-button color="primary" type="button" (click)="loadAssignedAppProfiles()">
+                {{ 'action.retry' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+        <div class="app-profile-picker-row">
+          <tb-agent-app-profile-list
+            class="app-profile-picker-field"
+            formControlName="appProfileIds"
+            labelText="{{ 'agent.application-profiles' | translate }}"
+            placeholderText="{{ 'agent.application-profiles' | translate }}"
+            appearance="outline">
+          </tb-agent-app-profile-list>
+          @if (canCreateAppProfile) {
+            <button mat-button color="primary" type="button"
+              class="create-profile-btn"
+              (click)="createAppProfile()">
+              <mat-icon>add</mat-icon>
+              <span>{{ 'agent.create-new-application-profile' | translate }}</span>
+            </button>
+          }
+        </div>
+      </form>
+    </mat-step>
+
+  </mat-stepper>
+
+  <div class="step-footer">
+    @if (stepper?.selectedIndex === 0) {
+      @if (showBack) {
+        <button mat-button type="button" (click)="back()">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+      }
+      <button mat-button type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+      <button mat-raised-button color="primary" type="button" [disabled]="step1Form.invalid" (click)="stepper.next()">
+        {{ 'action.next' | translate }}
+        <mat-icon iconPositionEnd>chevron_right</mat-icon>
+      </button>
+    } @else {
+      <button mat-button type="button" (click)="stepper.previous()">
+        <mat-icon>chevron_left</mat-icon>
+        {{ 'action.back' | translate }}
+      </button>
+      <button mat-raised-button color="primary" type="button"
+        [disabled]="!canSubmit()"
+        (click)="submit()">
+        {{ (isEdit ? 'action.save' : 'action.add') | translate }}
+      </button>
+    }
+  </div>
+
+</div>

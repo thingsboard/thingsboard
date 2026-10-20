@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors;
 
 import lombok.Data;
@@ -155,7 +156,8 @@ public class DefaultTbActorSystem implements TbActorSystem {
         broadcastToChildren(parent, childFilter, msg, false);
     }
 
-    private void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg, boolean highPriority) {
+    @Override
+    public void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg, boolean highPriority) {
         Set<TbActorId> children = parentChildMap.get(parent);
         if (children != null) {
             children.stream().filter(childFilter).forEach(id -> {

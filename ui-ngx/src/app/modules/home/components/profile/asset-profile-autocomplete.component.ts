@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   ElementRef,
@@ -31,6 +32,7 @@ import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileDialogComponent, AssetProfileDialogData } from './asset-profile-dialog.component';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { Operation, Resource } from '@shared/models/security.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -48,6 +50,10 @@ import { Authority } from '@shared/models/authority.enum';
     standalone: false
 })
 export class AssetProfileAutocompleteComponent implements ControlValueAccessor, OnInit {
+
+  resource = Resource;
+
+  operation = Operation;
 
   selectAssetProfileFormGroup: UntypedFormGroup;
 

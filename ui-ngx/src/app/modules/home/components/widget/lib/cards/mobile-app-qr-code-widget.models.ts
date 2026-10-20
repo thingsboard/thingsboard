@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { BadgePosition, QRCodeConfig } from '@shared/models/mobile-app.models';
 import { BackgroundType } from '@shared/models/widget-settings.models';

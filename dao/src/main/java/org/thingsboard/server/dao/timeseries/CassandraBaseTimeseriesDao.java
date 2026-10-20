@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.timeseries;
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
@@ -120,6 +121,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     private PreparedStatement partitionInsertTtlStmt;
     private PreparedStatement[] saveStmts;
     private PreparedStatement[] saveTtlStmts;
+    private PreparedStatement findOneStmt;
     private PreparedStatement[] fetchStmtsAsc;
     private PreparedStatement[] fetchStmtsDesc;
     private PreparedStatement deleteStmt;
@@ -155,6 +157,18 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
+    public ListenableFuture<TsKvEntry> findOneAsync(TenantId tenantId, EntityId entityId, long ts, String key) {
+        PreparedStatement proto = getFindOneStmt();
+        BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(proto.bind());
+        stmtBuilder.setString(0, entityId.getEntityType().name());
+        stmtBuilder.setUuid(1, entityId.getId());
+        stmtBuilder.setString(2, key);
+        stmtBuilder.setLong(3, toPartitionTs(ts));
+        stmtBuilder.setLong(4, ts);
+        BoundStatement stmt = stmtBuilder.build();
+        return getFuture(executeAsyncRead(tenantId, stmt), rs -> convertResultToTsKvEntry(key, rs.one()));
+    }
+
     public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<ReadTsKvQueryResult>> futures = queries.stream()
                 .map(query -> findAllAsync(tenantId, entityId, query)).collect(Collectors.toList());
@@ -163,9 +177,18 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
     @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        return save(tenantId, entityId, tsKvEntry, ttl, false);
+    }
+
+    @Override
+    public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl, boolean overwriteValue) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         ttl = computeTtl(ttl);
-        int dataPointDays = tsKvEntry.getDataPoints() * Math.max(1, (int) (ttl / SECONDS_IN_DAY));
+        int dataPoints = tsKvEntry.getDataPoints();
+        if (overwriteValue && !setNullValuesEnabled) { //TODO: remove all changes related to the 'overwriteValue' after release.
+            dataPoints += 4;
+        }
+        int dataPointDays = dataPoints * Math.max(1, (int) (ttl / SECONDS_IN_DAY));
         long partition = toPartitionTs(tsKvEntry.getTs());
         String entityType = entityId.getEntityType().name();
         UUID entityIdId = entityId.getId();
@@ -173,18 +196,20 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         long ts = tsKvEntry.getTs();
         DataType type = tsKvEntry.getDataType();
         BoundStatementBuilder stmtBuilder;
-        if (setNullValuesEnabled) {
-            Boolean booleanValue = tsKvEntry.getBooleanValue().orElse(null);
-            String strValue = tsKvEntry.getStrValue().orElse(null);
-            Long longValue = tsKvEntry.getLongValue().orElse(null);
-            Double doubleValue = tsKvEntry.getDoubleValue().orElse(null);
-            String jsonValue = tsKvEntry.getJsonValue().orElse(null);
-            if (ttl == 0) {
-                stmtBuilder = new BoundStatementBuilder(getSaveWithNullStmt()
-                        .bind(entityType, entityIdId, entryKey, partition, ts, booleanValue, strValue, longValue, doubleValue, jsonValue));
-            } else {
-                stmtBuilder = new BoundStatementBuilder(getSaveWithNullWithTtlStmt()
-                        .bind(entityType, entityIdId, entryKey, partition, ts, booleanValue, strValue, longValue, doubleValue, jsonValue, (int) ttl));
+        if (setNullValuesEnabled || overwriteValue) {
+            stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getSaveWithNullStmt() : getSaveWithNullWithTtlStmt()).bind());
+            stmtBuilder.setString(0, entityType)
+                    .setUuid(1, entityIdId)
+                    .setString(2, entryKey)
+                    .setLong(3, partition)
+                    .setLong(4, ts);
+            tsKvEntry.getBooleanValue().ifPresentOrElse(l -> stmtBuilder.setBoolean(5, l), () -> stmtBuilder.setToNull(5));
+            tsKvEntry.getStrValue().ifPresentOrElse(l -> stmtBuilder.setString(6, l), () -> stmtBuilder.setToNull(6));
+            tsKvEntry.getLongValue().ifPresentOrElse(l -> stmtBuilder.setLong(7, l), () -> stmtBuilder.setToNull(7));
+            tsKvEntry.getDoubleValue().ifPresentOrElse(l -> stmtBuilder.setDouble(8, l), () -> stmtBuilder.setToNull(8));
+            tsKvEntry.getJsonValue().ifPresentOrElse(l -> stmtBuilder.setString(9, l), () -> stmtBuilder.setToNull(9));
+            if (ttl > 0) {
+                stmtBuilder.setInt(10, (int) ttl);
             }
         } else {
             stmtBuilder = new BoundStatementBuilder((ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind());
@@ -708,6 +733,25 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
             }
         }
         return partitionInsertTtlStmt;
+    }
+
+    private PreparedStatement getFindOneStmt() {
+        if (findOneStmt == null) {
+            findOneStmt = prepare(SELECT_PREFIX +
+                    ModelConstants.KEY_COLUMN + "," +
+                    ModelConstants.TS_COLUMN + "," +
+                    ModelConstants.STRING_VALUE_COLUMN + "," +
+                    ModelConstants.BOOLEAN_VALUE_COLUMN + "," +
+                    ModelConstants.LONG_VALUE_COLUMN + "," +
+                    ModelConstants.DOUBLE_VALUE_COLUMN + " " +
+                    " FROM " + ModelConstants.TS_KV_CF +
+                    " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.TS_COLUMN + " = ? ");
+        }
+        return findOneStmt;
     }
 
     private static String getColumnName(DataType type) {

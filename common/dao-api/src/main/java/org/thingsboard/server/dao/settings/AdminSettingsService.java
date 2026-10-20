@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.settings;
 
 import org.thingsboard.server.common.data.AdminSettings;
@@ -13,6 +14,12 @@ public interface AdminSettingsService extends EntityDaoService {
 
     AdminSettings findAdminSettingsById(TenantId tenantId, AdminSettingsId adminSettingsId);
 
+    /**
+     * @deprecated
+     * <p> Use {@link #findAdminSettingsByTenantIdAndKey} instead.
+     *
+     */
+    @Deprecated
     AdminSettings findAdminSettingsByKey(TenantId tenantId, String key);
 
     AdminSettings findAdminSettingsByTenantIdAndKey(TenantId tenantId, String key);

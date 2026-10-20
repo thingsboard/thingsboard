@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../../scss/constants";
 
 :host {
@@ -44,7 +45,7 @@
 
 .tb-iot-hub-items-installed-btn {
   &.mat-primary {
-    --mat-button-outlined-outline-color: #{$tb-primary-color};
+    --mat-button-outlined-outline-color: var(--tb-primary-500);
   }
 }
 

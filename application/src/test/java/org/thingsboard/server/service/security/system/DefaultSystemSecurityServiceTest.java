@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.system;
 
 import org.junit.Before;
@@ -19,9 +20,13 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 
 import java.util.UUID;
 
@@ -47,6 +52,14 @@ public class DefaultSystemSecurityServiceTest {
     private AuditLogService auditLogService;
     @Mock
     private SecuritySettingsService securitySettingsService;
+    @Mock
+    private JwtTokenFactory tokenFactory;
+    @Mock
+    private UserPermissionsService userPermissionsService;
+    @Mock
+    private CustomerService customerService;
+    @Mock
+    private WhiteLabelingService whiteLabelingService;
 
     private DefaultSystemSecurityService systemSecurityService;
 
@@ -60,7 +73,7 @@ public class DefaultSystemSecurityServiceTest {
 
     @Before
     public void setUp() {
-        systemSecurityService = new DefaultSystemSecurityService(adminSettingsService, encoder, userService, mailService, auditLogService, securitySettingsService);
+        systemSecurityService = new DefaultSystemSecurityService(adminSettingsService, encoder, tokenFactory, userService, userPermissionsService, customerService, mailService, auditLogService, whiteLabelingService, securitySettingsService);
 
         tenantId = TenantId.fromUUID(UUID.randomUUID());
         userId = new UserId(UUID.randomUUID());
@@ -185,7 +198,7 @@ public class DefaultSystemSecurityServiceTest {
                 .isInstanceOf(LockedException.class);
 
         verify(userService).setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-        verify(mailService).sendAccountLockoutEmail(eq(username), eq(notificationEmail), eq(5));
+        verify(mailService).sendAccountLockoutEmail(eq(tenantId), eq(username), eq(notificationEmail), eq(5));
     }
 
 }

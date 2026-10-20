@@ -1,18 +1,19 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import tinycolor from 'tinycolor2';
-import Highlight = CanvasGauges.Highlight;
-import BaseGauge = CanvasGauges.BaseGauge;
-import GenericOptions = CanvasGauges.GenericOptions;
 import { TbUnit } from '@shared/models/unit.models';
 import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
 import { DataKey } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import Highlight = CanvasGauges.Highlight;
+import BaseGauge = CanvasGauges.BaseGauge;
+import GenericOptions = CanvasGauges.GenericOptions;
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'

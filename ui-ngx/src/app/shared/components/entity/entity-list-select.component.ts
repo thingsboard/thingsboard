@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { booleanAttribute, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -7,6 +8,7 @@ import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isDefinedAndNotNull } from '@core/utils';
+import { Operation } from '@shared/models/security.models';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 interface EntityListSelectModel {
@@ -37,6 +39,9 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   useAliasEntityTypes: boolean;
+
+  @Input()
+  operation: Operation;
 
   @Input({transform: booleanAttribute})
   required: boolean;
@@ -73,7 +78,8 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
               private destroyRef: DestroyRef) {
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
-      this.useAliasEntityTypes);
+                                                                         this.useAliasEntityTypes,
+                                                                         this.operation);
     if (entityTypes.length === 1) {
       this.displayEntityTypeSelect = false;
       this.defaultEntityType = entityTypes[0];

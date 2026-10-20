@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="modelsFormGroup">
@@ -12,18 +13,55 @@
           <mat-panel-title class="flex items-center justify-start">
             <span class="tb-panel-title">{{ objectLwM2M.get('name').value }}</span>&nbsp;#{{ objectLwM2M.get('keyId').value }}
             <span class="flex-1"></span>
-            <tb-profile-lwm2m-attributes
-              formControlName="attributes"
-              [modelName]="getNameObject(objectLwM2M.value)">
-            </tb-profile-lwm2m-attributes>
-            @if (!disabled && objectLwM2M.get('multiple').value) {
+            @if (isGtSm) {
+              <tb-profile-lwm2m-attributes
+                formControlName="attributes"
+                [modelName]="getNameObject(objectLwM2M.value)">
+              </tb-profile-lwm2m-attributes>
+              @if (!disabled && objectLwM2M.get('multiple').value) {
+                <button type="button"
+                        mat-icon-button
+                        (click)="addInstances($event, objectLwM2M)"
+                        matTooltip="{{ 'device-profile.lwm2m.add-new-instances' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon class="material-icons">note_add</mat-icon>
+                </button>
+              }
+            } @else {
+              <tb-profile-lwm2m-attributes
+                #attributesCva="tbLwm2mAttributes"
+                class="!hidden"
+                formControlName="attributes"
+                [modelName]="getNameObject(objectLwM2M.value)">
+              </tb-profile-lwm2m-attributes>
               <button type="button"
                       mat-icon-button
-                      (click)="addInstances($event, objectLwM2M)"
-                      matTooltip="{{ 'device-profile.lwm2m.add-new-instances' | translate }}"
+                      (click)="$event.stopPropagation()"
+                      [matMenuTriggerFor]="objectMenu"
+                      [disabled]="disabled && attributesCva.isEmpty()"
+                      matTooltip="{{ 'action.more' | translate }}"
                       matTooltipPosition="above">
-                <mat-icon class="material-icons">note_add</mat-icon>
+                <mat-icon class="material-icons">more_vert</mat-icon>
               </button>
+              <mat-menu #objectMenu="matMenu">
+                @if (!(disabled && attributesCva.isEmpty())) {
+                  <button type="button"
+                          mat-menu-item
+                          [disabled]="attributesCva.isDisableBtn()"
+                          (click)="attributesCva.openAttributesDialog()">
+                    <mat-icon class="material-icons">{{ attributesCva.iconButton }}</mat-icon>
+                    <span>{{ attributesCva.tooltipButton | translate }}</span>
+                  </button>
+                }
+                @if (!disabled && objectLwM2M.get('multiple').value) {
+                  <button type="button"
+                          mat-menu-item
+                          (click)="openAddInstancesDialog(objectLwM2M)">
+                    <mat-icon class="material-icons">note_add</mat-icon>
+                    <span translate>device-profile.lwm2m.add-new-instances</span>
+                  </button>
+                }
+              </mat-menu>
             }
           </mat-panel-title>
         </mat-expansion-panel-header>

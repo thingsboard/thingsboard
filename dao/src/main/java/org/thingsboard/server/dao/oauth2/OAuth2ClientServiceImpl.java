@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.oauth2;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
@@ -76,9 +78,9 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    public List<OAuth2Client> findOAuth2ClientsByTenantId(TenantId tenantId) {
+    public List<OAuth2Client> findOAuth2ClientsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findOAuth2ClientsByTenantId [{}]", tenantId);
-        return oauth2ClientDao.findByTenantId(tenantId.getId(), new PageLink(Integer.MAX_VALUE)).getData();
+        return oauth2ClientDao.findByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), new PageLink(Integer.MAX_VALUE)).getData();
     }
 
     @Override
@@ -105,9 +107,9 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    public PageData<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<OAuth2ClientInfo> findOAuth2ClientInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findOAuth2ClientInfosByTenantId tenantId=[{}]", tenantId);
-        PageData<OAuth2Client> clients = oauth2ClientDao.findByTenantId(tenantId.getId(), pageLink);
+        PageData<OAuth2Client> clients = oauth2ClientDao.findByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
         return clients.mapData(OAuth2ClientInfo::new);
     }
 

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (mobileAppQrCodeWidgetConfigForm) {
@@ -17,10 +18,19 @@
       <div class="tb-form-panel no-border no-padding">
         <div class="tb-form-panel">
           <div class="tb-form-panel-title" translate>widget-config.appearance</div>
-          <div class="tb-form-hint tb-primary-fill">{{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}</div>
+          <div class="tb-form-hint tb-primary-fill">
+            {{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}
+            @if (displayConfigurationHint) {
+              <button mat-icon-button color="primary" class="tb-mat-24"
+                style="position: absolute;top: 9px"
+                (click)="navigateToMobileAppSettings($event)">
+                <mat-icon class="material-icons tb-mat-16">open_in_new</mat-icon>
+              </button>
+            }
+          </div>
           <div class="tb-form-row space-between no-padding-bottom column-xs">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="badgeEnabled"
-                              (click)="$event.stopPropagation()">
+              (click)="$event.stopPropagation()">
               {{ 'admin.mobile-app.badges' | translate }}
             </mat-slide-toggle>
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
@@ -50,7 +60,7 @@
                 <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
               <tb-font-settings formControlName="titleFont"
-                                [previewText]="mobileAppQrCodeWidgetConfigForm.get('title').value">
+                [previewText]="mobileAppQrCodeWidgetConfigForm.get('title').value">
               </tb-font-settings>
               <tb-color-input asBoxInput colorClearButton formControlName="titleColor">
               </tb-color-input>
@@ -66,9 +76,9 @@
               </mat-form-field>
               <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
               <tb-material-icon-select asBoxInput
-                                       iconClearButton
-                                       [color]="mobileAppQrCodeWidgetConfigForm.get('iconColor').value"
-                                       formControlName="titleIcon">
+                iconClearButton
+                [color]="mobileAppQrCodeWidgetConfigForm.get('iconColor').value"
+                formControlName="titleIcon">
               </tb-material-icon-select>
               <tb-color-input asBoxInput colorClearButton formControlName="iconColor">
               </tb-color-input>

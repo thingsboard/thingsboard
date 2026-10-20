@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { PageComponent } from '@shared/components/page.component';
 import { Directive, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import {
@@ -32,10 +33,13 @@ import { ResourceService } from '@core/http/resource.service';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityGroupService } from '@core/http/entity-group.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { DashboardReportService } from '@core/http/dashboard-report.service';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { UtilsService } from '@core/services/utils.service';
 import { UnitService } from '@core/services/unit.service';
@@ -72,6 +76,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.attributeService = this.$injector.get(AttributeService);
     this.ctx.entityRelationService = this.$injector.get(EntityRelationService);
     this.ctx.entityService = this.$injector.get(EntityService);
+    this.ctx.entityGroupService = this.$injector.get(EntityGroupService);
     this.ctx.authService = this.$injector.get(AuthService);
     this.ctx.dialogs = this.$injector.get(DialogService);
     this.ctx.customDialog = this.$injector.get(CustomDialogService);
@@ -87,6 +92,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
     this.ctx.http = this.$injector.get(HttpClient);
     this.ctx.sanitizer = this.$injector.get(DomSanitizer);
     this.ctx.router = this.$injector.get(Router);
+    this.ctx.reportService = this.$injector.get(DashboardReportService);
+    this.ctx.wl = this.$injector.get(WhiteLabelingService);
 
     this.ctx.$scope = this;
     if (this.ctx.defaultSubscription) {

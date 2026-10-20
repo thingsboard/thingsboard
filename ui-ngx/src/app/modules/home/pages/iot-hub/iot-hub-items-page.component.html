@@ -1,6 +1,6 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
     SPDX-License-Identifier: Apache-2.0
 
 -->
@@ -35,7 +35,8 @@
   <!-- Browse component (without tabs) -->
   <tb-iot-hub-browse
     [activeType]="config.type"
-    [hideTabs]="true">
+    [hideTabs]="true"
+    (installedItemsChanged)="loadInstalledCount()">
   </tb-iot-hub-browse>
 
   <!-- Become a Creator footer -->

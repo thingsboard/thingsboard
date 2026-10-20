@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor, NG_VALIDATORS,
@@ -85,8 +86,8 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
       value: [null],
       entityAlias: [null, [Validators.required]]
     });
-    this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
-    this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
+    this.latestKeyFormControl = this.fb.control(null);
+    this.entityKeyFormControl = this.fb.control(null);
     merge(
       this.latestKeyFormControl.valueChanges,
       this.entityKeyFormControl.valueChanges,

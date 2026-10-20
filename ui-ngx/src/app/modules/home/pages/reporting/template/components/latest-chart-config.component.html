@@ -1,0 +1,377 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border h-full" [formGroup]="reportConfigForm">
+  <div class="tb-report-component-config-header">
+    <tb-toggle-select [(ngModel)]="settingsTab" [ngModelOptions]="{standalone: true}" appearance="fill">
+      <tb-toggle-option value="data">{{ 'report-template.data' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="layout">{{ 'report-template.layout' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'data'">
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
+        {{ 'widget-config.title' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <tb-string-pattern-autocomplete formControlName="title"
+          class="flex-1"
+          appearance="outline" subscriptSizing="dynamic"
+          brackets="curly"
+          predefinedValuesButton
+        [predefinedValues]="['entityName', 'entityLabel']"></tb-string-pattern-autocomplete>
+        <tb-font-settings formControlName="titleFont"
+          [allowedFontWeights]="['normal', 'bold', '500']"
+          [allowedFontStyles]="['normal', 'italic']"
+          forceSizeUnit="px"
+          disabledLineHeight
+          clearButton
+          [initialPreviewStyle]="{color: reportConfigForm.get('titleColor').value}"
+          [previewText]="reportConfigForm.get('title').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+          colorClearButton
+          formControlName="titleColor">
+        </tb-color-input>
+        <tb-alignment [allowedAlignments]="['left', 'center', 'right']" formControlName="titleAlignment"></tb-alignment>
+      </div>
+    </div>
+    <tb-datasources
+      [configMode]="basicMode"
+      stroked
+      displayDatasourceFilterForBasicMode
+      hideDataKeys
+      formControlName="dataSources"
+      [dataSourcesOptions]="{
+                  widgetType: widgetType.latest,
+                  maxDatasources: 1,
+                  datasourcesOptional: false,
+                  allowFunctions: false
+      }"
+      [callbacks]="callbacks"
+      [aliasController]="context.aliasController">
+    </tb-datasources>
+    <tb-data-keys-panel
+      [dataKeysPanelOptions]="{
+          widgetType: widgetType.latest,
+          callbacks: callbacks,
+          hasAdditionalLatestDataKeys: false,
+          widget: widget
+        }"
+      reportMode
+      stroked
+      panelTitle="{{ 'widgets.chart.series' | translate }}"
+      addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+      keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+      removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+      noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+      requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+      hideUnits
+      hideDecimals
+      hideDataKeyUnits
+      hideDataKeyDecimals
+      [datasourceType]="datasource?.type"
+      [deviceId]="datasource?.deviceId"
+      [entityAliasId]="datasource?.entityAliasId"
+      formControlName="series">
+    </tb-data-keys-panel>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+          {{ 'widgets.latest-chart.sort-series' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widget-config.units-short</div>
+        <tb-unit-input
+          [supportsUnitConversion]="false"
+          formControlName="units">
+        </tb-unit-input>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widget-config.decimals-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    @switch (subType) {
+      @case ('latestBarChart') {
+        <ng-container *ngTemplateOutlet="barChart"></ng-container>
+      }
+      @case ('pieChart') {
+        <ng-container *ngTemplateOutlet="pieChart"></ng-container>
+      }
+      @case ('doughnutChart') {
+        <ng-container *ngTemplateOutlet="doughnutChart"></ng-container>
+      }
+      @case ('horizontalDoughnutChart') {
+        <ng-container *ngTemplateOutlet="doughnutChart"></ng-container>
+      }
+    }
+    <div class="tb-form-panel stroked tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" [expanded]="reportConfigForm.get('showLegend').value" [disabled]="!reportConfigForm.get('showLegend').value">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
+              {{ 'widget-config.legend' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div class="tb-form-row space-between">
+            <div>{{ 'legend.position' | translate }}</div>
+            <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="legendPosition">
+                @for (pos of legendPositions; track pos) {
+                  <mat-option [value]="pos">
+                    {{ legendPositionTranslationMap.get(pos) | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{ 'legend.label' | translate }}</div>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <tb-font-settings formControlName="legendLabelFont"
+                [allowedFontWeights]="['normal', 'bold', '500']"
+                [allowedFontStyles]="['normal', 'italic']"
+                forceSizeUnit="px"
+                disabledLineHeight
+                previewText="Wind">
+              </tb-font-settings>
+              <tb-color-input asBoxInput
+                colorClearButton
+                formControlName="legendLabelColor">
+              </tb-color-input>
+            </div>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{ 'legend.value' | translate }}</div>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <tb-font-settings formControlName="legendValueFont"
+                [allowedFontWeights]="['normal', 'bold', '500']"
+                [allowedFontStyles]="['normal', 'italic']"
+                forceSizeUnit="px"
+                disabledLineHeight
+                [previewText]="valuePreviewFn">
+              </tb-font-settings>
+              <tb-color-input asBoxInput
+                colorClearButton
+                formControlName="legendValueColor">
+              </tb-color-input>
+            </div>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="legendShowTotal">
+              {{ 'legend.show-total' | translate }}
+            </mat-slide-toggle>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </div>
+  <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'layout'">
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.chart.chart-height' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="height" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        <div matSuffix>px</div>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.chart.chart-width' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="widthType">
+            @for (widthType of imageWidthTypes; track widthType) {
+              <mat-option [value]="widthType">
+                {{ imageWidthTypeTranslations.get(widthType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (reportConfigForm.get('widthType').value === 'custom') {
+          <div class="tb-small-label" translate>report-template.width</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="customWidth" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+        }
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.chart.chart-alignment' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="alignment">
+          @for (alignment of imageAlignments; track alignment) {
+            <mat-option [value]="alignment">
+              {{ imageAlignmentTranslations.get(alignment) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <tb-report-component-layout-settings formControlName="layout">
+    </tb-report-component-layout-settings>
+  </div>
+</div>
+
+<ng-template #barChart>
+  <ng-container [formGroup]="reportConfigForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
+      <tb-chart-bar-settings
+        formControlName="barSettings"
+        reportMode
+        [series]="false">
+      </tb-chart-bar-settings>
+    </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-axis</div>
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.chart.chart-axis.scale</div>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="axisMin"
+              type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="axisMax"
+              type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+          <tb-font-settings formControlName="axisTickLabelFont"
+            clearButton
+            [allowedFontWeights]="['normal', 'bold', '500']"
+            [allowedFontStyles]="['normal', 'italic']"
+            disabledLineHeight
+            forceSizeUnit="px"
+            previewText="100">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+            colorClearButton
+            useThemePalette
+            formControlName="axisTickLabelColor">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+
+<ng-template #pieChart>
+  <ng-container [formGroup]="reportConfigForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.pie-chart.pie-chart-appearance</div>
+      <div class="tb-form-row space-between column-xs">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
+          {{ 'widgets.pie-chart.label' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="labelPosition">
+              @for (position of pieChartLabelPositions; track position) {
+                <mat-option [value]="position">
+                  {{ pieChartLabelPositionTranslationMap.get(position) | translate }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <tb-font-settings formControlName="labelFont"
+            [allowedFontWeights]="['normal', 'bold', '500']"
+            [allowedFontStyles]="['normal', 'italic']"
+            disabledLineHeight
+            forceSizeUnit="px"
+            [previewText]="'Wind<br/>55%'">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+            colorClearButton
+            formControlName="labelColor">
+          </tb-color-input>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.pie-chart.border' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="pieBorderWidth" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+          <tb-color-input asBoxInput
+            colorClearButton
+            formControlName="pieBorderColor">
+          </tb-color-input>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.pie-chart.radius' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="pieRadius" type="number" min="0" max="100" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>%</div>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="clockwise">
+          {{ 'widgets.latest-chart.clockwise-layout' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+
+<ng-template #doughnutChart>
+  <ng-container [formGroup]="reportConfigForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.doughnut.doughnut-appearance</div>
+      <tb-image-cards-select rowHeight="{{ doughnutHorizontal ? '8:5' : '5:4' }}"
+                             [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-sm': 1
+                                    }}"
+        label="{{ 'widgets.doughnut.layout' | translate }}" formControlName="doughnutLayout">
+        @for (layout of doughnutLayouts; track layout) {
+          <tb-image-cards-select-option
+            [value]="layout"
+            [image]="doughnutLayoutImageMap.get(layout)">
+            {{ doughnutLayoutTranslationMap.get(layout) | translate }}
+          </tb-image-cards-select-option>
+        }
+      </tb-image-cards-select>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+          {{ 'widgets.latest-chart.auto-scale' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="clockwise">
+          {{ 'widgets.latest-chart.clockwise-layout' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div [class.!hidden]="!doughnutTotalEnabled" class="tb-form-row space-between">
+        <div>{{ 'widgets.doughnut.central-total-value' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <tb-font-settings formControlName="totalValueFont"
+            [allowedFontWeights]="['normal', 'bold', '500']"
+            [allowedFontStyles]="['normal', 'italic']"
+            forceSizeUnit="px"
+            disabledLineHeight
+            [previewText]="valuePreviewFn">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+            colorClearButton
+            formControlName="totalValueColor">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

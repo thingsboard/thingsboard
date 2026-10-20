@@ -1,0 +1,53 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="language">
+  <mat-form-field class="tb-language-autocomplete mat-block" appearance="outline">
+    <mat-label translate>custom-translation.language</mat-label>
+    @if ((languageAutocomplete.isOpen || language.get('language').value) && !disabled) {
+      <div matPrefix class="language-code-prefix">
+        {{ getLocaleCode(language.get('language').value) }}
+      </div>
+    }
+    <input matInput
+      #languageInput
+      formControlName="language"
+      (focusin)="onFocus()"
+      [matAutocomplete]="languageAutocomplete"
+      >
+    <mat-autocomplete
+      class="tb-autocomplete tb-language-autocomplete"
+      #languageAutocomplete="matAutocomplete"
+      [displayWith]="displayTranslateFn">
+      @for (tranlation of filteredTranslation | async; track tranlation) {
+        <mat-option [value]="tranlation">
+          <span class="language-code" [innerHTML]="(tranlation[0]) | highlight:searchText:true"></span>
+          <span [innerHTML]="(tranlation[1]) | highlight:searchText:true"></span>
+        </mat-option>
+      }
+      @if (!(filteredTranslation | async)?.length) {
+        <mat-option [value]="null">
+          <span>
+            {{ 'custom-translation.no-translation-matching' | translate: {search: searchText} }}
+          </span>
+        </mat-option>
+      }
+    </mat-autocomplete>
+    @if (language.get('language').value && !disabled) {
+      <button
+        type="button"
+        matSuffix mat-icon-button aria-label="Clear"
+        (click)="clear()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+    }
+    @if (language.get('language').hasError('required')) {
+      <mat-error>
+        {{ 'custom-translation.language-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+</section>

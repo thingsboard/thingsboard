@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -10,8 +11,15 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,6 +56,37 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         Assert.assertNull("Verify we do not expose API key value on update", updatedApiKey.getValue());
 
         doDelete("/api/apiKey/" + updatedApiKey.getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testCreateInternalApiKey_thenFailed() throws Exception {
+        loginSysAdmin();
+
+        Map<Resource, Set<Operation>> permissions = new HashMap<>();
+        permissions.put(Resource.DEVICE, Set.of(Operation.READ, Operation.WRITE));
+        permissions.put(Resource.DASHBOARD, Set.of(Operation.READ));
+        Map<Authority, Map<Resource, Set<Operation>>> operationsByResource = new HashMap<>();
+        operationsByResource.put(Authority.SYS_ADMIN, permissions);
+        AuthorityPermissionsInfo authorityPermissionsInfo = new AuthorityPermissionsInfo();
+        authorityPermissionsInfo.setOperationsByResource(operationsByResource);
+
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo(authorityPermissionsInfo);
+        doPost("/api/apiKey", apiKeyInfo)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testSaveInternalApiKeyAsTenantAdmin_shouldFail() throws Exception {
+        Map<Resource, Set<Operation>> permissions = new HashMap<>();
+        permissions.put(Resource.DEVICE, Set.of(Operation.READ));
+        Map<Authority, Map<Resource, Set<Operation>>> operationsByResource = new HashMap<>();
+        operationsByResource.put(Authority.TENANT_ADMIN, permissions);
+        AuthorityPermissionsInfo authorityPermissionsInfo = new AuthorityPermissionsInfo();
+        authorityPermissionsInfo.setOperationsByResource(operationsByResource);
+
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo(authorityPermissionsInfo);
+        doPost("/api/apiKey", apiKeyInfo)
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -132,6 +171,16 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         apiKeyInfo.setDescription(description);
         apiKeyInfo.setEnabled(enabled);
         apiKeyInfo.setUserId(tenantAdminUserId);
+        return apiKeyInfo;
+    }
+
+    private ApiKeyInfo constructApiKeyInfo(AuthorityPermissionsInfo info) {
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setDescription("API key description for internal API key");
+        apiKeyInfo.setUserId(currentUserId);
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setPermissions(info);
+        apiKeyInfo.setInternal(true);
         return apiKeyInfo;
     }
 

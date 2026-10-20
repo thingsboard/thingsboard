@@ -1,0 +1,92 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="coapIntegrationConfigForm">
+
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.coap-security-mode</mat-label>
+    <mat-select formControlName="securityMode" required>
+      @for (type of coapSecurityModes; track type) {
+        <mat-option [value]="type">
+          {{getCoapSecurityModeTranslations(type) | translate}}
+        </mat-option>
+      }
+    </mat-select>
+    @if (coapIntegrationConfigForm.get('securityMode').hasError('required')) {
+      <mat-error>
+        {{ 'integration.coap-security-mode-required' | translate }}
+      </mat-error>
+    }
+  </mat-form-field>
+  <fieldset>
+    @if (noSecureMode || mixedMode) {
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.base-url</mat-label>
+        <input matInput formControlName="baseUrl" required>
+        @if (coapIntegrationConfigForm.get('baseUrl').hasError('required')) {
+          <mat-error translate>
+            integration.base-url-required
+          </mat-error>
+        }
+      </mat-form-field>
+    }
+    @if (dtlsMode || mixedMode) {
+      <mat-form-field appearance="outline" class="mat-block">
+        <mat-label translate>integration.coap-dtls-base-url</mat-label>
+        <input matInput formControlName="dtlsBaseUrl" required>
+        @if (coapIntegrationConfigForm.get('dtlsBaseUrl').hasError('required')) {
+          <mat-error translate>
+            integration.coap-dtls-base-url-required
+          </mat-error>
+        }
+      </mat-form-field>
+    }
+  </fieldset>
+  @if (noSecureMode || mixedMode) {
+    <div class="flex flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.coap-endpoint</mat-label>
+        <input matInput formControlName="coapEndpoint">
+      </mat-form-field>
+      <button mat-icon-button ngxClipboard type="button" color="primary"
+              (cbOnSuccess)="onCoapEndpointCopied()"
+              [cbContent]="coapIntegrationConfigForm.get('coapEndpoint').value"
+              matTooltip="{{'integration.copy-coap-endpoint-url' | translate }}">
+        <mat-icon class="tb-mat-20">content_copy</mat-icon>
+      </button>
+    </div>
+  }
+  @if (dtlsMode || mixedMode) {
+    <div class="flex flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" class="mat-block flex-1">
+        <mat-label translate>integration.coap-dtls-endpoint</mat-label>
+        <input matInput formControlName="dtlsCoapEndpoint">
+      </mat-form-field>
+      <button mat-icon-button ngxClipboard type="button" color="primary"
+              (cbOnSuccess)="onDtlsCoapEndpointCopied()"
+              [cbContent]="coapIntegrationConfigForm.get('dtlsCoapEndpoint').value"
+              matTooltip="{{'integration.copy-coap-dtls-endpoint-url' | translate }}">
+        <mat-icon class="tb-mat-20">content_copy</mat-icon>
+      </button>
+    </div>
+  }
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+
+</section>

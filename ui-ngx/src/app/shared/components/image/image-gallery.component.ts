@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ImageResourceInfo,
   ResourceInfoWithReferences,
@@ -315,11 +316,15 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     return this.authUser.authority === Authority.SYS_ADMIN;
   }
 
+  public get isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
+  }
+
   private computeDisplayedColumns(): string[] {
     let columns: string[];
     if (this.selectionMode) {
       columns = ['preview', 'title'];
-      if (!this.isSysAdmin && this.includeSystemImages) {
+      if (this.isTenantAdmin && this.includeSystemImages) {
         columns.push('system');
       }
       columns.push('imageSelect');

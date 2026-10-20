@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
@@ -36,7 +37,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDevice() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.addBtn().click();
@@ -50,7 +51,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithDescription() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.enterDescription(deviceName);
@@ -67,7 +68,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Add device without the name")
     public void createDeviceWithoutName() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.nameField().click();
         createDeviceTab.addBtn().click();
@@ -79,7 +80,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     @Test(groups = "smoke")
     @Description("Create device only with spase in name")
     public void createDeviceWithOnlySpace() {
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(" ");
         createDeviceTab.addBtn().click();
@@ -95,7 +96,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         Device device = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME));
         deviceName = device.getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.addBtn().click();
@@ -110,7 +111,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithoutRefresh() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.addBtn().click();
@@ -123,7 +124,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithoutDeviceProfile() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.clearProfileFieldBtn().click();
@@ -139,7 +140,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithEnableGateway() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.checkboxGateway().click();
@@ -154,7 +155,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
     public void createDeviceWithEnableOverwriteActivityTimeForConnected() {
         deviceName = ENTITY_NAME + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.checkboxGateway().click();
@@ -172,7 +173,7 @@ public class CreateDeviceTest extends AbstractDeviceTest {
         deviceName = ENTITY_NAME + random();
         String deviceLabel = "device label " + random();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
         createDeviceTab.enterLabel(deviceLabel);
@@ -184,27 +185,27 @@ public class CreateDeviceTest extends AbstractDeviceTest {
 
     @Test(groups = "smoke")
     @Description("Add device with assignee on customer")
-    public void createDeviceWithAssignee() {
+    public void createDeviceWithOwner() {
         deviceName = ENTITY_NAME + random();
         String customer = "Customer A";
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.openCreateDeviceView();
         createDeviceTab.enterName(deviceName);
-        createDeviceTab.assignOnCustomer(customer);
+        createDeviceTab.changeOwnerOn(customer);
         createDeviceTab.addBtn().click();
 
-        assertIsDisplayed(devicePage.deviceCustomerOnPage(deviceName));
-        assertThat(devicePage.deviceCustomerOnPage(deviceName).getText())
-                .as("Customer added correctly").isEqualTo(customer);
+        assertIsDisplayed(devicePage.deviceOwnerOnPage(deviceName));
+        assertThat(devicePage.deviceOwnerOnPage(deviceName).getText())
+                .as("Owner changed correctly").isEqualTo(customer);
     }
 
     @Test(groups = "smoke")
     @Description("Go to devices documentation page")
     public void documentation() {
-        String urlPath = "docs/user-guide/ui/devices/";
+        String urlPath = "docs/pe/user-guide/ui/devices/";
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity("Thermostat T1").click();
         devicePage.goToHelpPage();
 

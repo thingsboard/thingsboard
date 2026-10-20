@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="pubSubConfigForm" class="flex flex-col">
@@ -23,16 +24,12 @@
       </mat-error>
     }
   </mat-form-field>
-  <tb-file-input style="padding-bottom: 24px;"
-                 formControlName="serviceAccountKey"
-                 [existingFileName]="pubSubConfigForm.get('serviceAccountKeyFileName').value"
-                 (fileNameChanged)="pubSubConfigForm.get('serviceAccountKeyFileName').setValue($event)"
-                 required
-                 requiredAsError
-                 label="{{'rule-node-config.gcp-service-account-key' | translate}}"
-                 noFileText="rule-node-config.no-file"
-                 dropLabel="{{'rule-node-config.drop-file' | translate}}">
-  </tb-file-input>
+  <tb-secret-file-input formControlName="serviceAccountKey"
+                        label="{{'rule-node-config.gcp-service-account-key' | translate}}"
+                        required
+                        [existingFileName]="pubSubConfigForm.get('serviceAccountKeyFileName').value"
+                        (fileNameChanged)="pubSubConfigForm.get('serviceAccountKeyFileName').setValue($event)">
+  </tb-secret-file-input>
   <label translate class="tb-title">rule-node-config.message-attributes</label>
   <div class="tb-hint" [innerHTML]="'rule-node-config.message-attributes-hint' | translate | safe: 'html'"></div>
   <tb-kv-map-config

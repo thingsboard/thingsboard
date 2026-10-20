@@ -1,40 +1,36 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.asset;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.EntityInfo;
+
+import java.util.List;
 
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class AssetInfo extends Asset {
 
-    private static final long serialVersionUID = -4094528227011066194L;
+    @Valid
+    @Schema(description = "Owner name", accessMode = Schema.AccessMode.READ_ONLY)
+    private String ownerName;
 
-    @Schema(description = "Title of the Customer that owns the asset.", accessMode = Schema.AccessMode.READ_ONLY)
-    private String customerTitle;
-    @Schema(description = "Indicates special 'Public' Customer that is auto-generated to use the assets on public dashboards.", accessMode = Schema.AccessMode.READ_ONLY)
-    private boolean customerIsPublic;
-
-    @Schema(description = "Name of the corresponding Asset Profile.", accessMode = Schema.AccessMode.READ_ONLY)
-    private String assetProfileName;
-
+    @Valid
+    @Schema(description = "Groups", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<EntityInfo> groups;
 
     public AssetInfo() {
         super();
     }
 
-    public AssetInfo(AssetId assetId) {
-        super(assetId);
-    }
-
-    public AssetInfo(Asset asset, String customerTitle, boolean customerIsPublic, String assetProfileName) {
+    public AssetInfo(Asset asset, String ownerName, List<EntityInfo> groups) {
         super(asset);
-        this.customerTitle = customerTitle;
-        this.customerIsPublic = customerIsPublic;
-        this.assetProfileName = assetProfileName;
+        this.ownerName = ownerName;
+        this.groups = groups;
     }
 }

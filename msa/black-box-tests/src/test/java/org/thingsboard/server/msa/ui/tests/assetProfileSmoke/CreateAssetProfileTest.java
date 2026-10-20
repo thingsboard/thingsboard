@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.assetProfileSmoke;
 
 import io.qameta.allure.Description;
@@ -167,7 +168,7 @@ public class CreateAssetProfileTest extends AbstractDriverBaseTest {
     @Test(priority = 40, groups = "smoke")
     @Description("Go to asset profile documentation page")
     public void documentation() {
-        String urlPath = "docs/user-guide/asset-profiles/";
+        String urlPath = "docs/pe/user-guide/asset-profiles/";
 
         sideBarMenuView.openAssetProfiles();
         profilesPage.profileNames().get(0).click();

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="sliderWidgetSettingsForm">
@@ -91,11 +92,11 @@
           </tb-font-settings>
           <tb-color-input asBoxInput
                           colorClearButton
-                          formControlName="valueColor">
-          </tb-color-input>
-        </div>
+                          useThemePalette
+                        formControlName="valueColor">
+        </tb-color-input>
       </div>
-    }
+    </div>}
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.slider.range' | translate }}</div>
       <div class="flex flex-row items-center justify-start gap-2">
@@ -119,6 +120,7 @@
         </tb-font-settings>
         <tb-color-input asBoxInput
                         colorClearButton
+                        useThemePalette
                         formControlName="ticksColor">
         </tb-color-input>
       </div>
@@ -133,6 +135,7 @@
                  step="1" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-color-input asBoxInput
+                        useThemePalette
                         formControlName="tickMarksColor">
         </tb-color-input>
       </div>
@@ -143,6 +146,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.main</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="mainColor">
           </tb-color-input>
         </div>
@@ -150,6 +154,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.background</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="backgroundColor">
           </tb-color-input>
         </div>
@@ -161,6 +166,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.main</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="mainColorDisabled">
           </tb-color-input>
         </div>
@@ -168,6 +174,7 @@
         <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.background</div>
           <tb-color-input asBoxInput
+                          useThemePalette
                           formControlName="backgroundColorDisabled">
           </tb-color-input>
         </div>
@@ -189,27 +196,29 @@
                                    formControlName="leftIcon">
           </tb-material-icon-select>
           <tb-color-input asBoxInput
-                          formControlName="leftIconColor">
-          </tb-color-input>
-        </div>
+                          useThemePalette
+                        formControlName="leftIconColor">
+        </tb-color-input>
       </div>
+    </div>
     }
     @if (sliderWidgetSettingsForm.get('layout').value === sliderLayout.extended) {
       <div
-        class="tb-form-row column-xs">
-        <div class="fixed-title-width">
-          {{ 'widgets.slider.right-icon' | translate }}
-        </div>
-        <div class="flex flex-1 flex-row items-center justify-start gap-2">
-          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
-            <input matInput type="number" min="0" formControlName="rightIconSize" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
-          <tb-css-unit-select class="flex-1" formControlName="rightIconSizeUnit"></tb-css-unit-select>
-          <tb-material-icon-select asBoxInput
-                                   [color]="sliderWidgetSettingsForm.get('rightIconColor').value"
-                                   formControlName="rightIcon">
-          </tb-material-icon-select>
-          <tb-color-input asBoxInput
+         class="tb-form-row column-xs">
+      <div class="fixed-title-width">
+        {{ 'widgets.slider.right-icon' | translate }}
+      </div>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="rightIconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select class="flex-1" formControlName="rightIconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 [color]="sliderWidgetSettingsForm.get('rightIconColor').value"
+                                 formControlName="rightIcon">
+        </tb-material-icon-select>
+        <tb-color-input asBoxInput
+                        useThemePalette
                           formControlName="rightIconColor">
           </tb-color-input>
         </div>

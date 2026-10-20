@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardState } from '@shared/models/dashboard.models';
@@ -12,9 +13,11 @@ import { UtilsService } from '@core/services/utils.service';
 import { base64toObj, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { WINDOW } from '@core/services/window.service';
 import { MobileService } from '@core/services/mobile.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
+// @dynamic
 @Component({
     selector: 'tb-default-state-controller',
     templateUrl: './default-state-controller.component.html',
@@ -26,15 +29,16 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   constructor(protected router: Router,
+              @Inject(WINDOW) protected window: Window,
               protected route: ActivatedRoute,
               protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
-              private utils: UtilsService,
+              protected utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
               private dashboardUtils: DashboardUtilsService,
               private breadcrumbService: BreadcrumbService) {
-    super(router, route, ngZone, statesControllerService);
+    super(router, route, utils, window, ngZone, statesControllerService);
   }
 
   ngOnInit(): void {

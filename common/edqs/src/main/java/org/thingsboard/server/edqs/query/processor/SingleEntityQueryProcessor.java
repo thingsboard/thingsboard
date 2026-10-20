@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edqs.query.processor;
 
 import org.thingsboard.server.common.data.EntityType;
@@ -7,8 +8,11 @@ import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.edqs.data.EntityData;
 import org.thingsboard.server.edqs.query.EdqsQuery;
+import org.thingsboard.server.edqs.query.SortableEntityData;
 import org.thingsboard.server.edqs.repo.TenantRepo;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -24,12 +28,35 @@ public class SingleEntityQueryProcessor extends AbstractSingleEntityTypeQueryPro
     }
 
     @Override
-    protected void processCustomerQuery(UUID customerId, Consumer<EntityData<?>> processor) {
-        processAll(ed -> {
-            if (checkCustomerId(customerId, ed)) {
+    protected void processCustomerGenericRead(UUID customerId, Consumer<EntityData<?>> processor) {
+        EntityData ed = repository.getEntityMap(entityType).get(entityId);
+        if (ed != null && ed.getPermissionCustomerId() != null && matches(ed)) {
+            if (customerId.equals(ed.getPermissionCustomerId()) || repository.getAllCustomers(customerId).contains(ed.getPermissionCustomerId())) {
                 processor.accept(ed);
             }
-        });
+        }
+    }
+
+    @Override
+    protected List<SortableEntityData> processCustomerGenericReadWithGroups(UUID customerId, boolean readAttrPermissions, boolean readTsPermissions, List<GroupPermissions> groupPermissions) {
+        EntityData ed = repository.getEntityMap(entityType).get(entityId);
+        if (!matches(ed)) {
+            return Collections.emptyList();
+        } else {
+            boolean genericRead = customerId.equals(ed.getPermissionCustomerId()) || repository.getAllCustomers(customerId).contains(ed.getPermissionCustomerId());
+            CombinedPermissions permissions = getCombinedPermissions(ed.getId(), genericRead, readAttrPermissions, readTsPermissions, groupPermissions);
+            if (permissions.isRead()) {
+                SortableEntityData sortData = toSortData(ed, permissions);
+                return Collections.singletonList(sortData);
+            } else {
+                return Collections.emptyList();
+            }
+        }
+    }
+
+    @Override
+    protected void processGroupsOnly(List<GroupPermissions> groupPermissions, Consumer<EntityData<?>> processor) {
+        processAll(processor);
     }
 
     @Override

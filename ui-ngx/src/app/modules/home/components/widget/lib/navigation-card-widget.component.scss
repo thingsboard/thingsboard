@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   width: 100%;
   height: 100%;
@@ -7,13 +8,13 @@
 
 :host ::ng-deep {
   .tb-nav-button.mat-mdc-outlined-button {
-    background: #fff;
     width: 100%;
     height: 100% !important;
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: rgba(0,0,0,0.76);
+    background: var(--tb-primary-background-color);
+    color: var(--tb-menu-text-color);
     .mat-icon {
       margin: auto !important;
     }

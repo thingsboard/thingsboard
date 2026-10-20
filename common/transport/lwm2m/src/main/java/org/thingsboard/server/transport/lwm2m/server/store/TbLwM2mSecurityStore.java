@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         } else if (securityInfo.usePSK() && securityInfo.getEndpoint().equals(SecurityMode.NO_SEC.toString())
                 && securityInfo.getPskIdentity().equals(SecurityMode.NO_SEC.toString())
                 && Arrays.equals(SecurityMode.NO_SEC.toString().getBytes(), securityInfo.getPreSharedKey())) {
+            log.info("securityInfo (null): [usePSK() & Endpoint == SecurityMode.NO_SEC]");
             return null;
         }
         return securityInfo;

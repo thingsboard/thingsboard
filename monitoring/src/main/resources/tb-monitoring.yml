@@ -1,6 +1,7 @@
 #
-# SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+# SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 #
 
 monitoring:
@@ -101,6 +102,44 @@ monitoring:
           name_prefix: '${LWM2M_TRANSPORT_TARGET_NAME_PREFIX:}'
         # To add more targets, use following environment variables:
         # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
+
+  integrations:
+    http:
+      # Enable HTTP integration checks
+      enabled: '${HTTP_INTEGRATION_MONITORING_ENABLED:false}'
+      # HTTP request timeout in milliseconds
+      request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
+      target:
+        # HTTP integration base url, http://DOMAIN by default
+        base_url: '${HTTP_INTEGRATION_BASE_URL:http://${monitoring.domain}}'
+        # Whether to monitor IPs associated with the domain from base url
+        check_domain_ips: '${HTTP_INTEGRATION_CHECK_DOMAIN_IPS:false}'
+        # Prefix for the target name
+        name_prefix: '${HTTP_INTEGRATION_TARGET_NAME_PREFIX:}'
+    coap:
+      # Enable CoAP integration checks
+      enabled: '${COAP_INTEGRATION_MONITORING_ENABLED:false}'
+      # CoAP request timeout in milliseconds
+      request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
+      target:
+        # CoAP integration base url, coap://DOMAIN by default
+        base_url: '${COAP_INTEGRATION_BASE_URL:coap://${monitoring.domain}}'
+        # Whether to monitor IPs associated with the domain from base url
+        check_domain_ips: '${COAP_INTEGRATION_CHECK_DOMAIN_IPS:false}'
+        # Prefix for the target name
+        name_prefix: '${COAP_INTEGRATION_TARGET_NAME_PREFIX:}'
+    mqtt:
+      # Enable MQTT integration checks
+      enabled: '${MQTT_INTEGRATION_MONITORING_ENABLED:false}'
+      # MQTT request timeout in milliseconds
+      request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
+      target:
+        # MQTT integration base url, tcp://DOMAIN:1883 by default
+        base_url: '${MQTT_INTEGRATION_BASE_URL:tcp://${monitoring.domain}:1883}'
+        # Whether to monitor IPs associated with the domain from base url
+        check_domain_ips: '${MQTT_INTEGRATION_CHECK_DOMAIN_IPS:false}'
+        # Prefix for the target name
+        name_prefix: '${MQTT_INTEGRATION_TARGET_NAME_PREFIX:}'
 
   edqs:
     enabled: "${EDQS_MONITORING_ENABLED:false}"

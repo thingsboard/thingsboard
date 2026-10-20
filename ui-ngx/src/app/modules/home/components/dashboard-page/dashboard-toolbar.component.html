@@ -1,20 +1,21 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-fab-toolbar [isOpen]="toolbarOpened" direction="left"
+<mat-fab-toolbar color="tb-primary" [isOpen]="toolbarOpened" direction="left"
                  [class.is-fullscreen]="forceFullscreen">
   <mat-fab-trigger>
-    <button mat-fab color="#fff"
+    <button mat-fab color="tb-primary"
             [matTooltip]="!toolbarOpened ? ('dashboard.open-toolbar' | translate) : ''"
             matTooltipPosition="below"
             (click)="onTriggerClick()">
       <mat-icon>more_horiz</mat-icon>
     </button>
   </mat-fab-trigger>
-  <mat-toolbar>
+  <mat-toolbar color="tb-primary">
     <mat-fab-actions class="mat-toolbar-tools">
       <ng-content></ng-content>
     </mat-fab-actions>

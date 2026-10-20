@@ -1,0 +1,23 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-report-component-library-group tb-form-panel">
+  <mat-expansion-panel #expansionPanel class="tb-settings" expanded>
+    <mat-expansion-panel-header class="flex flex-row flex-wrap">
+      <mat-panel-title>
+        {{ reportComponentLibraryGroupTranslations.get(group) | translate }}
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <tb-report-component-library
+      nestedLibrary
+      [context]="context"
+      [format]="format"
+      [filter]="filter"
+      [group]="group"
+      [subReport]="subReport">
+    </tb-report-component-library>
+  </mat-expansion-panel>
+</div>

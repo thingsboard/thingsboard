@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../../scss/constants";
 
 $containerHeight: 96px !default;
@@ -11,10 +12,17 @@ $containerHeight: 96px !default;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    &.tb-no-padding {
+      padding: 0;
+    }
     label.tb-title {
-      display: block;
+      display: flex;
       padding-bottom: 0;
     }
+  }
+
+  .pointer-event {
+    pointer-events: auto;
   }
 
   .tb-image-select-container {

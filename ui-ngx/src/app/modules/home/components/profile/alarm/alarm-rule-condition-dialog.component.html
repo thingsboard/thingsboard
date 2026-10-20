@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="conditionFormGroup" (ngSubmit)="save()" style="width: 900px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ (readonly ? 'device-profile.alarm-rule-condition' : 'device-profile.edit-alarm-rule-condition') | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -29,7 +30,7 @@
           formControlName="keyFilters">
         </tb-key-filter-list>
         <section formGroupName="spec" style="margin-top: 1em">
-          <mat-form-field class="mat-block" hideRequiredMarker>
+          <mat-form-field class="mat-block" appearance="outline" hideRequiredMarker>
             <mat-label translate>device-profile.condition-type</mat-label>
             <mat-select formControlName="type" required>
               @for (alarmConditionType of alarmConditionTypes; track alarmConditionType) {
@@ -54,7 +55,7 @@
               </tb-alarm-duration-predicate-value>
               @if (conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION) {
                 <div class="max-w-23% flex-full">
-                  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+                  <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
                     <mat-select formControlName="unit" required
                                 placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
                       @for (timeUnit of timeUnits; track timeUnit) {

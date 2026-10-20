@@ -1,13 +1,18 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.integration.Integration;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -42,13 +47,30 @@ public class NoXssValidatorTest {
 
     @Test
     public void givenEntityWithMaliciousValueInAdditionalInfo_thenReturnValidationError() {
-        Asset invalidAsset = new Asset();
         String maliciousValue = "qwerty<script>alert(document.cookie)</script>qwerty";
-        invalidAsset.setAdditionalInfo(JacksonUtil.newObjectNode()
-                .set("description", new TextNode(maliciousValue)));
+        JsonNode description = JacksonUtil.newObjectNode()
+                .set("description", new TextNode(maliciousValue));
 
+        Asset invalidAsset = new Asset();
+        invalidAsset.setAdditionalInfo(description);
+        assetEntityFieldIsMalformed(invalidAsset);
+
+        EntityGroup invalidEntityGroup = new EntityGroup();
+        invalidEntityGroup.setAdditionalInfo(description);
+        assetEntityFieldIsMalformed(invalidEntityGroup);
+
+        Converter invalidConverter = new Converter();
+        invalidConverter.setAdditionalInfo(description);
+        assetEntityFieldIsMalformed(invalidConverter);
+
+        Integration invalidIntegration = new Integration();
+        invalidIntegration.setAdditionalInfo(description);
+        assetEntityFieldIsMalformed(invalidIntegration);
+    }
+
+    private void assetEntityFieldIsMalformed(Object data) {
         assertThatThrownBy(() -> {
-            ConstraintValidator.validateFields(invalidAsset);
+            ConstraintValidator.validateFields(data);
         }).hasMessageContaining("is malformed");
     }
 

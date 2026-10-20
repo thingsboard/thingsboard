@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.mobile;
 
 import org.thingsboard.server.common.data.id.TenantId;
@@ -14,6 +15,8 @@ public interface QrCodeSettingService {
     QrCodeSettings findQrCodeSettings(TenantId tenantId);
 
     MobileApp findAppFromQrCodeSettings(TenantId sysTenantId, PlatformType platformType);
+
+    QrCodeSettings getMergedQrCodeSettings(TenantId tenantId);
 
     void deleteByTenantId(TenantId tenantId);
 

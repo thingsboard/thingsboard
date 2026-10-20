@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.asset;
 
 import org.springframework.data.domain.Limit;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.AssetProfileCacheInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.edqs.fields.AssetProfileFields;
@@ -37,6 +39,11 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.common.data.asset.AssetProfileInfo(a.id, a.tenantId, a.name, a.image, a.defaultDashboardId) " +
+            "FROM AssetProfileEntity a WHERE " +
+            "a.tenantId = :tenantId AND a.id IN :assetProfileIds")
+    List<AssetProfileInfo> findAssetProfileInfosByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
+                                                                  @Param("assetProfileIds") List<UUID> assetProfileIds);
     @Query("SELECT a FROM AssetProfileEntity a " +
             "WHERE a.tenantId = :tenantId AND a.isDefault = true")
     AssetProfileEntity findByDefaultTrueAndTenantId(@Param("tenantId") UUID tenantId);
@@ -61,9 +68,14 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
 
     Page<AssetProfileEntity> findAllByImageNotNull(Pageable pageable);
 
+    // Non-correlated IN-subquery semi-join (an "active" profile = one referenced by at least one asset of the
+    // same tenant). This replaces the prior comma cross-join + DISTINCT, which materialized one row per
+    // (profile, asset) pair before dedup (pathological fan-out). The IN form is equivalent (same names, no
+    // ordering on either) and is both Citus-legal and faster in plain mode, so it is kept unconditional.
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(ap.id, 'ASSET_PROFILE', ap.name) " +
-            "FROM AssetProfileEntity ap WHERE ap.tenantId = :tenantId AND EXISTS " +
-            "(SELECT 1 FROM AssetEntity a WHERE a.tenantId = :tenantId AND a.assetProfileId = ap.id)")
+            "FROM AssetProfileEntity ap " +
+            "WHERE ap.tenantId = :tenantId " +
+            "AND ap.id IN (SELECT a.assetProfileId FROM AssetEntity a WHERE a.tenantId = :tenantId)")
     List<EntityInfo> findActiveTenantAssetProfileNames(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ASSET_PROFILE', a.name) " +
@@ -74,10 +86,8 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
             "a.name, a.version, a.isDefault) FROM AssetProfileEntity a WHERE a.id > :id ORDER BY a.id")
     List<AssetProfileFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
-    @Query("SELECT new org.thingsboard.server.common.data.asset.AssetProfileInfo(a.id, a.tenantId, a.name, a.image, a.defaultDashboardId) " +
-            "FROM AssetProfileEntity a WHERE " +
-            "a.tenantId = :tenantId AND a.id IN :assetProfileIds")
-    List<AssetProfileInfo> findAssetProfileInfosByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
-                                                                  @Param("assetProfileIds") List<UUID> assetProfileIds);
+    @Query("SELECT new org.thingsboard.server.common.data.AssetProfileCacheInfo(a.id, a.tenantId, a.name, a.defaultRuleChainId, a.defaultQueueName) " +
+            "FROM AssetProfileEntity a WHERE a.id > :id ORDER BY a.id")
+    List<AssetProfileCacheInfo> findAssetProfileCacheInfos(@Param("id") UUID id, Limit limit);
 
 }

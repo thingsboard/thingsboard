@@ -1,20 +1,32 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   display: flex;
   width: 100%;
   height: 100%;
 
+  .tb-router-tabs-container {
+    &.tb-router-tabs-container-bordered {
+      background: #fff;
+      border-bottom: solid 1px rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  :host-context(.openAiAssistant) {
+    .tb-router-tabs-container {
+      margin-right: 16px;
+      border-right: solid 1px rgba(0, 0, 0, 0.12);
+    }
+  }
+
   .mat-mdc-tab-nav-bar.tb-router-tabs {
-    --mat-tab-container-height: 38px;
-    --mat-tab-divider-height: 1px;
-    --mat-tab-divider-color: rgba(0, 0, 0, 0.12);
+    --mat-tab-container-height: 48px;
     a.mat-mdc-tab-link {
       display: inline-flex;
       align-items: center;
       overflow: hidden;
-      line-height: 38px;
-      min-width: 200px;
+      line-height: 48px;
       border-bottom: none;
       .mat-icon {
         margin-right: 8px;

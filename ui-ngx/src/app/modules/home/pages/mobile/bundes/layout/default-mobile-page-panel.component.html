@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-default-mobile-page-panel" [formGroup]="mobilePageFormGroup">
@@ -28,7 +29,7 @@
     </div>
     <div class="flex items-center justify-center gap-2">
       <tb-material-icon-select asBoxInput
-                               color="#305680"
+                               color="var(--tb-primary-500)"
                                formControlName="icon">
       </tb-material-icon-select>
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">

@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <ng-container [formGroup]="latestChartWidgetSettingsForm">
@@ -280,6 +281,7 @@
             </tb-font-settings>
             <tb-color-input asBoxInput
                             colorClearButton
+                            useThemePalette
                             formControlName="axisTickLabelColor">
             </tb-color-input>
           </div>
@@ -328,6 +330,7 @@
             </tb-font-settings>
             <tb-color-input asBoxInput
                             colorClearButton
+                            useThemePalette
                             formControlName="axisTickLabelColor">
             </tb-color-input>
           </div>
@@ -369,6 +372,7 @@
           <div translate>widgets.radar-chart.color</div>
           <tb-color-input asBoxInput
                           colorClearButton
+                          useThemePalette
                           formControlName="color">
           </tb-color-input>
         </div>

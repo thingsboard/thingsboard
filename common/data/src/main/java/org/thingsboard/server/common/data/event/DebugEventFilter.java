@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,16 +9,15 @@ import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 
 @Data
-@Schema
 public abstract class DebugEventFilter implements EventFilter {
 
     @Schema(description = "String value representing the server name, identifier or ip address where the platform is running", example = "ip-172-31-24-152")
-    protected String server;
+    private String server;
     @Schema(description = "Boolean value to filter the errors", allowableValues = {"false", "true"})
     @JsonProperty("isError")
-    protected boolean isError;
+    private boolean isError;
     @Schema(description = "The case insensitive 'contains' filter based on error message", example = "not present in the DB")
-    protected String errorStr;
+    private String errorStr;
 
     @JsonProperty("isError")
     public boolean isError() {
@@ -31,7 +31,7 @@ public abstract class DebugEventFilter implements EventFilter {
 
     @Override
     public boolean isNotEmpty() {
-        return !StringUtils.isEmpty(server) || isError || !StringUtils.isEmpty(errorStr);
+        return !StringUtils.isEmpty(server) || !StringUtils.isEmpty(errorStr) || isError;
     }
 
 }

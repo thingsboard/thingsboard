@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -21,7 +22,7 @@ import { ForceTwoFactorAuthLoginComponent } from '@modules/login/pages/login/for
     CreatePasswordComponent,
     TwoFactorAuthLoginComponent,
     LinkExpiredComponent,
-    ForceTwoFactorAuthLoginComponent,
+    ForceTwoFactorAuthLoginComponent
   ],
   imports: [
     CommonModule,

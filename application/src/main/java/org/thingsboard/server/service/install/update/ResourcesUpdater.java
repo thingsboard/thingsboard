@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install.update;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.wl.WhiteLabeling;
+import org.thingsboard.server.common.data.wl.WhiteLabelingType;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
@@ -30,7 +33,9 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
+import org.thingsboard.server.dao.wl.WhiteLabelingDao;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
@@ -45,6 +50,7 @@ public class ResourcesUpdater {
     private final WidgetsBundleDao widgetsBundleDao;
     private final WidgetTypeDao widgetTypeDao;
     private final WidgetTypeService widgetTypeService;
+    private final WhiteLabelingDao whiteLabelingDao;
     private final TenantDao tenantDao;
     private final DashboardDao dashboardDao;
     private final DashboardService dashboardService;
@@ -63,6 +69,32 @@ public class ResourcesUpdater {
         updateImages(widgetTypesIds, "widget type", imageService::updateImagesUsage, widgetTypeDao);
     }
 
+    public void updateWhiteLabelingImages() {
+        log.info("Updating white-labeling images...");
+        var whiteLabelingEntities = new PageDataIterable<>(pageLink -> {
+            return whiteLabelingDao.findAllByType(pageLink, Set.of(WhiteLabelingType.GENERAL, WhiteLabelingType.LOGIN));
+        }, 64);
+        int updatedCount = 0;
+        int totalCount = 0;
+        for (WhiteLabeling whiteLabeling : whiteLabelingEntities) {
+            totalCount++;
+            try {
+                boolean updated = imageService.replaceBase64WithImageUrl(whiteLabeling);
+                if (updated) {
+                    whiteLabelingDao.save(whiteLabeling.getTenantId(), whiteLabeling);
+                    log.debug("[{}] Updated white-labeling images", whiteLabeling.getTenantId());
+                    updatedCount++;
+                }
+            } catch (Exception e) {
+                log.error("[{}] Failed to update white-labeling images", whiteLabeling.getTenantId(), e);
+            }
+            if (totalCount % 100 == 0) {
+                log.info("Processed {} white-labeling entities so far", totalCount);
+            }
+        }
+        log.info("Updated {} white-labeling entities out of {}", updatedCount, totalCount);
+    }
+
     public void updateDashboardsImages() {
         log.info("Updating dashboards images...");
         updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::updateImagesUsage, dashboardDao);
@@ -71,7 +103,7 @@ public class ResourcesUpdater {
     public void createSystemImagesAndResources(Dashboard defaultDashboard) {
         defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
         if (CollectionUtils.isNotEmpty(defaultDashboard.getResources())) {
-            resourceService.importResources(defaultDashboard.getTenantId(), defaultDashboard.getResources());
+            resourceService.importResources(defaultDashboard.getTenantId(), null, defaultDashboard.getResources());
         }
         imageService.updateImagesUsage(defaultDashboard);
         log.debug("Created/updated system images and resources for default dashboard '{}'", defaultDashboard.getTitle());
@@ -207,7 +239,7 @@ public class ResourcesUpdater {
             try {
                 entity = dao.findById(TenantId.SYS_TENANT_ID, id.getId());
             } catch (Exception e) {
-                log.error("Failed to update {} images: error fetching entity by id [{}]: {}", type, id.getId(), StringUtils.abbreviate(e.toString(), 1000));
+                log.error("Failed to update {} images: error fetching {} by id [{}]: {}", type, type, id.getId(), StringUtils.abbreviate(e.toString(), 1000));
                 continue;
             }
             try {

@@ -1,10 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.attributes;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -14,14 +18,34 @@ import java.util.List;
 @Repository
 public class AttributeKvInsertRepository extends AbstractVersionedInsertRepository<AttributeKvEntity> {
 
-    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') " +
+    @Autowired
+    private CitusSettings citusSettings;
+
+    private static final String SEQ_VERSION = "nextval('attribute_kv_version_seq')";
+    private static final String INCREMENT_VERSION = "attribute_kv.version + 1";
+
+    // The *_TEMPLATE strings below are resolved via String.format in initQueries(); any literal '%' added
+    // to this SQL must be escaped as '%%' or String.format will throw at startup.
+    private static final String BATCH_UPDATE_TEMPLATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = %s " +
             "WHERE entity_id = ? and attribute_type =? and attribute_key = ? RETURNING version;";
 
-    private static final String INSERT_OR_UPDATE =
+    private static final String INSERT_OR_UPDATE_TEMPLATE =
             "INSERT INTO attribute_kv (entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, json_v, last_update_ts, version) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?,  cast(? AS json), ?, nextval('attribute_kv_version_seq')) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?,  cast(? AS json), ?, %1$s) " +
                     "ON CONFLICT (entity_id, attribute_type, attribute_key) " +
-                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') RETURNING version;";
+                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = %2$s RETURNING version;";
+
+    private String batchUpdateQuery;
+    private String insertOrUpdateQuery;
+
+    @PostConstruct
+    private void initQueries() {
+        boolean citus = citusSettings.isEnabled();
+        String insertVersion = citus ? CITUS_INSERT_VERSION : SEQ_VERSION;
+        String updateVersion = citus ? INCREMENT_VERSION : SEQ_VERSION;
+        this.batchUpdateQuery = String.format(BATCH_UPDATE_TEMPLATE, updateVersion);
+        this.insertOrUpdateQuery = String.format(INSERT_OR_UPDATE_TEMPLATE, insertVersion, updateVersion);
+    }
 
     @Override
     protected void setOnBatchUpdateValues(PreparedStatement ps, int i, List<AttributeKvEntity> entities) throws SQLException {
@@ -97,11 +121,11 @@ public class AttributeKvInsertRepository extends AbstractVersionedInsertReposito
 
     @Override
     protected String getBatchUpdateQuery() {
-        return BATCH_UPDATE;
+        return batchUpdateQuery;
     }
 
     @Override
     protected String getInsertOrUpdateQuery() {
-        return INSERT_OR_UPDATE;
+        return insertOrUpdateQuery;
     }
 }

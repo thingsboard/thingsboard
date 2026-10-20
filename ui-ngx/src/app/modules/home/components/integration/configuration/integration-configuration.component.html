@@ -1,0 +1,223 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="integrationConfigurationForm" class="tb-integration-configuration">
+  @switch (integrationType) {
+    @case (integrationTypes.MQTT) {
+      <tb-mqtt-integration-form formControlName="configuration"
+                                [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                [isEdgeTemplate]="isEdgeTemplate"
+                                [allowLocalNetwork]="allowLocalNetwork">
+      </tb-mqtt-integration-form>
+    }
+    @case (integrationTypes.HTTP) {
+      <tb-http-integration-form formControlName="configuration"
+                                [routingKey]="routingKey"
+                                [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                [allowLocalNetwork]="allowLocalNetwork">
+      </tb-http-integration-form>
+    }
+    @case (integrationTypes.TTN) {
+      <tb-ttn-integration-form formControlName="configuration"
+                               [executeRemotelyTemplate]="executeRemotelyTemplate"
+                               [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                               [allowLocalNetwork]="allowLocalNetwork">
+      </tb-ttn-integration-form>
+    }
+    @case (integrationTypes.AWS_IOT) {
+      <tb-aws-iot-integration-form formControlName="configuration"
+                                   [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                   [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                   [allowLocalNetwork]="allowLocalNetwork">
+      </tb-aws-iot-integration-form>
+    }
+    @case (integrationTypes.TTI) {
+      <tb-tti-integration-form formControlName="configuration"
+                               [executeRemotelyTemplate]="executeRemotelyTemplate"
+                               [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                               [allowLocalNetwork]="allowLocalNetwork">
+      </tb-tti-integration-form>
+    }
+    @case (integrationTypes.SIGFOX) {
+      <tb-sigfox-integration-form formControlName="configuration"
+                                  [routingKey]="routingKey"
+                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                  [allowLocalNetwork]="allowLocalNetwork">
+      </tb-sigfox-integration-form>
+    }
+    @case (integrationTypes.KPN) {
+      <tb-kpn-integration-form formControlName="configuration"
+                                  [routingKey]="routingKey"
+                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                  [allowLocalNetwork]="allowLocalNetwork">
+      </tb-kpn-integration-form>
+    }
+    @case (integrationTypes.OCEANCONNECT) {
+      <tb-ocean-connect-integration-form formControlName="configuration"
+                                         [routingKey]="routingKey"
+                                         [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                         [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                         [allowLocalNetwork]="allowLocalNetwork">
+      </tb-ocean-connect-integration-form>
+    }
+    @case (integrationTypes.TMOBILE_IOT_CDP) {
+      <tb-t-mobile-iot-cdp-integration-form formControlName="configuration"
+                                            [routingKey]="routingKey"
+                                            [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                            [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                            [allowLocalNetwork]="allowLocalNetwork">
+      </tb-t-mobile-iot-cdp-integration-form>
+    }
+    @case (integrationTypes.OPC_UA) {
+      <tb-opc-ua-integration-form formControlName="configuration"
+                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                  [allowLocalNetwork]="allowLocalNetwork">
+      </tb-opc-ua-integration-form>
+    }
+    @case (integrationTypes.LORIOT) {
+      <tb-loriot-integration-form formControlName="configuration"
+                                  [routingKey]="routingKey"
+                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                  [allowLocalNetwork]="allowLocalNetwork">
+      </tb-loriot-integration-form>
+    }
+    @case (integrationTypes.CHIRPSTACK) {
+      <tb-chirp-stack-integration-form formControlName="configuration"
+                                       [routingKey]="routingKey"
+                                       [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                       [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                       [allowLocalNetwork]="allowLocalNetwork">
+      </tb-chirp-stack-integration-form>
+    }
+    @case (integrationTypes.PARTICLE) {
+      <tb-particle-integration-form formControlName="configuration"
+                                       [routingKey]="routingKey"
+                                       [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                       [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                       [allowLocalNetwork]="allowLocalNetwork">
+      </tb-particle-integration-form>
+    }
+    @case (integrationTypes.PUB_SUB) {
+      <tb-pubsub-integration-form formControlName="configuration"
+                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-pubsub-integration-form>
+    }
+    @case (integrationTypes.APACHE_PULSAR) {
+      <tb-apache-pulsar-integration-form formControlName="configuration"
+                                         [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                         [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                         [allowLocalNetwork]="allowLocalNetwork">
+      </tb-apache-pulsar-integration-form>
+    }
+    @case (integrationTypes.AWS_KINESIS) {
+      <tb-aws-kinesis-integration-form formControlName="configuration"
+                                       [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                       [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-aws-kinesis-integration-form>
+    }
+    @case (integrationTypes.TCP) {
+      <tb-tcp-integration-form formControlName="configuration"
+                               [isSetDownlink]="isSetDownlink"
+                               [executeRemotelyTemplate]="executeRemotelyTemplate"
+                               [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-tcp-integration-form>
+    }
+    @case (integrationTypes.UDP) {
+      <tb-udp-integration-form formControlName="configuration"
+                               [isSetDownlink]="isSetDownlink"
+                               [executeRemotelyTemplate]="executeRemotelyTemplate"
+                               [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-udp-integration-form>
+    }
+    @case (integrationTypes.THINGPARK) {
+      <tb-thing-spark-integration-form formControlName="configuration"
+                                       [routingKey]="routingKey"
+                                       [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                       [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                       [allowLocalNetwork]="allowLocalNetwork">
+      </tb-thing-spark-integration-form>
+    }
+    @case (integrationTypes.TPE) {
+      <tb-thing-spark-enterprise-integration-form formControlName="configuration"
+                                                  [routingKey]="routingKey"
+                                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                                  [allowLocalNetwork]="allowLocalNetwork">
+      </tb-thing-spark-enterprise-integration-form>
+    }
+    @case (integrationTypes.CUSTOM) {
+      <tb-custom-integration-form formControlName="configuration"
+                                  [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                  [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-custom-integration-form>
+    }
+    @case (integrationTypes.AZURE_EVENT_HUB) {
+      <tb-azure-event-hub-integration-form formControlName="configuration"
+                                           [isSetDownlink]="isSetDownlink"
+                                           [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                           [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-azure-event-hub-integration-form>
+    }
+    @case (integrationTypes.AZURE_IOT_HUB) {
+      <tb-azure-iot-hub-integration-form formControlName="configuration"
+                                         [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                         [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                         [allowLocalNetwork]="allowLocalNetwork">
+      </tb-azure-iot-hub-integration-form>
+    }
+    @case (integrationTypes.AZURE_SERVICE_BUS) {
+      <tb-azure-services-bus-integration-form formControlName="configuration"
+                                              [isSetDownlink]="isSetDownlink"
+                                              [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                              [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-azure-services-bus-integration-form>
+    }
+    @case (integrationTypes.COAP) {
+      <tb-coap-integration-form formControlName="configuration"
+                                [routingKey]="routingKey"
+                                [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-coap-integration-form>
+    }
+    @case (integrationTypes.AWS_SQS) {
+      <tb-aws-sqs-integration-form formControlName="configuration"
+                                   [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                   [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                   [allowLocalNetwork]="allowLocalNetwork">
+      </tb-aws-sqs-integration-form>
+    }
+    @case (integrationTypes.KAFKA) {
+      <tb-kafka-integration-form formControlName="configuration"
+                                 [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                 [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                 [allowLocalNetwork]="allowLocalNetwork">
+      </tb-kafka-integration-form>
+    }
+    @case (integrationTypes.RABBITMQ) {
+      <tb-rabbit-mq-integration-form formControlName="configuration"
+                                     [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                     [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
+                                     [allowLocalNetwork]="allowLocalNetwork">
+      </tb-rabbit-mq-integration-form>
+    }
+    @case (integrationTypes.TUYA) {
+      <tb-tuya-integration-form formControlName="configuration"
+                                     [executeRemotelyTemplate]="executeRemotelyTemplate"
+                                     [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate">
+      </tb-tuya-integration-form>
+    }
+    @default {
+      Not Found!!
+    }
+  }
+</section>

@@ -1,14 +1,15 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-dynamic-form-array tb-form-panel stroked" [class.no-padding-right]="!disabled || !propertiesFormArray().controls.length">
   <mat-expansion-panel class="tb-settings" expanded>
     <mat-expansion-panel-header class="flex flex-row flex-wrap">
       <mat-panel-title>
-        <div class="tb-form-panel-title">{{ title }}</div>
+        <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ hint }}">{{ title }}</div>
       </mat-panel-title>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>

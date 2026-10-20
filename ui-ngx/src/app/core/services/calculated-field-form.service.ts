@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DestroyRef, inject, Injectable } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { pairwise, switchMap } from 'rxjs/operators';
@@ -43,6 +44,7 @@ export class CalculatedFieldFormService {
         arguments: this.fb.control({}, Validators.required),
         propagate: [false],
         propagateToOwner: [false],
+        propagateToOwnerHierarchy: [false],
         propagateToTenant: [false],
         propagateRelationTypes: [null],
         createRules: [null, Validators.required],

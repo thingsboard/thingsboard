@@ -1,40 +1,45 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (!standalone) {
   <div class="tb-details-buttons xs:flex xs:flex-col">
+    @if (resource.WIDGET_TYPE | hasGenericPermission: operation.READ) {
+      <button mat-stroked-button color="primary"
+        [disabled]="(isLoading$ | async)"
+        (click)="onEntityAction($event, 'open')"
+        [class.!hidden]="isEdit">
+        {{'widgets-bundle.open-widgets-bundle' | translate }}
+      </button>
+    }
+    @if (resource.WIDGET_TYPE | hasGenericPermission: operation.READ) {
+      <button mat-stroked-button color="primary"
+        [disabled]="(isLoading$ | async)"
+        (click)="onEntityAction($event, 'openDetails')"
+        [class.!hidden]="isEdit || isDetailsPage">
+        {{'common.open-details-page' | translate }}
+      </button>
+    }
     <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'open')"
-            [class.!hidden]="isEdit">
-      {{'widgets-bundle.open-widgets-bundle' | translate }}
-    </button>
-    <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openDetails')"
-            [class.!hidden]="isEdit || isDetailsPage">
-      {{'common.open-details-page' | translate }}
-    </button>
-    <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'export')"
-            [class.!hidden]="isEdit">
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'export')"
+      [class.!hidden]="isEdit">
       {{'widgets-bundle.export' | translate }}
     </button>
     <button mat-stroked-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'delete')"
-            [class.!hidden]="hideDelete() || isEdit">
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'delete')"
+      [class.!hidden]="hideDelete() || isEdit">
       {{'widgets-bundle.delete' | translate }}
     </button>
   </div>
 }
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset [disabled]="(isLoading$ | async)">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>widgets-bundle.title</mat-label>
         <input matInput formControlName="title" required>
@@ -50,8 +55,8 @@
         }
       </mat-form-field>
       <tb-gallery-image-input class="flex-1"
-                              label="{{'widgets-bundle.image-preview' | translate}}"
-                              formControlName="image">
+        label="{{'widgets-bundle.image-preview' | translate}}"
+        formControlName="image">
       </tb-gallery-image-input>
       <mat-slide-toggle formControlName="scada" style="padding-bottom: 16px;">
         {{ 'widgets-bundle.scada' | translate }}

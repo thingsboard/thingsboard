@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.job.task;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,12 +22,16 @@ import org.thingsboard.server.common.data.job.JobType;
 @Schema(
         discriminatorProperty = "jobType",
         discriminatorMapping = {
+                @DiscriminatorMapping(value = "CF_REPROCESSING", schema = CfReprocessingTask.class),
+                @DiscriminatorMapping(value = "REPORT", schema = ReportTask.class),
                 @DiscriminatorMapping(value = "DUMMY", schema = DummyTask.class)
         }
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "jobType")
 @JsonSubTypes({
+        @Type(name = "CF_REPROCESSING", value = CfReprocessingTask.class),
+        @Type(name = "REPORT", value = ReportTask.class),
         @Type(name = "DUMMY", value = DummyTask.class)
 })
 @SuperBuilder

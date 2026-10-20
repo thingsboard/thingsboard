@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-@if (!textMode) {
+@if ((wl.isEnableHelpLinks$() | async) && !textMode) {
   <fieldset class="tb-help-popup-button-container">
     <div #toggleHelpButton
          class="tb-toggle-help-popup-button"
@@ -27,7 +28,7 @@
     </div>
   </fieldset>
 }
-@if (textMode) {
+@if ((wl.isEnableHelpLinks$() | async) && textMode) {
   <fieldset class="tb-help-popup-button-container">
     <div #toggleHelpTextButton
          class="tb-toggle-help-popup-text-button"

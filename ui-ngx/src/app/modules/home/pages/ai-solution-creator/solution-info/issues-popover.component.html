@@ -1,0 +1,38 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="issues-popover">
+  <div class="header">
+    <span tbTruncateWithTooltip>{{ entry.primary.additionalData?.name }}</span>
+    <div class="subtitle">{{ subtitle }}</div>
+  </div>
+  <div class="body">
+    @if (showSections) {
+      <div class="section-header section-error">
+        <span>{{ ('event.errors' | translate).toUpperCase() }}</span>
+        <span class="section-count">{{ entry.errors.length }}</span>
+      </div>
+    }
+    @for (item of entry.errors; track $index) {
+      <div class="issue error">
+        <mat-icon class="severity-icon" fontIcon="error_outline"></mat-icon>
+        <span class="message">{{ getError(item) }}</span>
+      </div>
+    }
+    @if (showSections) {
+      <div class="section-header section-warn">
+        <span>{{ ('event.warnings' | translate).toUpperCase() }}</span>
+        <span class="section-count">{{ entry.warnings.length }}</span>
+      </div>
+    }
+    @for (item of entry.warnings; track $index) {
+      <div class="issue warn">
+        <mat-icon class="severity-icon" fontIcon="warning"></mat-icon>
+        <span class="message">{{ getError(item) }}</span>
+      </div>
+    }
+  </div>
+</div>

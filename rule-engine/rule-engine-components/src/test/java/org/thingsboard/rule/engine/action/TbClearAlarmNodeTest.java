@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -102,7 +103,7 @@ class TbClearAlarmNodeTest {
 
         when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(immediateFuture(null));
         when(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, "SomeType")).thenReturn(FluentFuture.from(immediateFuture(activeAlarm)));
-        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
+        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getOriginator()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)
                         .cleared(true)
@@ -162,7 +163,7 @@ class TbClearAlarmNodeTest {
 
         when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(immediateFuture(null));
         when(alarmServiceMock.findAlarmByIdAsync(tenantId, id)).thenReturn(immediateFuture(activeAlarm));
-        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
+        when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getOriginator()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)
                         .cleared(true)

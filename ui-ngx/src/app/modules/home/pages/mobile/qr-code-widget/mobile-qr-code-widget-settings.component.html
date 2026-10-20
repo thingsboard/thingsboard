@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-card appearance="outlined" class="settings-card">
@@ -19,105 +20,131 @@
   }
   <mat-card-content style="padding-top: 16px">
     <div class="tb-form-panel no-border no-padding" [formGroup]="mobileAppSettingsForm">
-      <div class="tb-form-panel">
-        <div class="tb-form-row column-xs no-border no-padding space-between">
-          <div class="tb-form-panel-title" translate>admin.mobile-app.applications</div>
-          <tb-toggle-select formControlName="useDefaultApp">
-            <tb-toggle-option [value]="true">{{ 'admin.mobile-app.default' | translate }}</tb-toggle-option>
-            <tb-toggle-option [value]="false">{{ 'admin.mobile-app.custom' | translate }}</tb-toggle-option>
-          </tb-toggle-select>
-        </div>
-        @if (!mobileAppSettingsForm.get('useDefaultApp').value) {
-          <div class="tb-form-row column-xs">
-            <div class="fixed-title-width-230">{{ 'mobile.bundle' | translate }}</div>
-            <tb-entity-autocomplete
-              class="flex-1"
-              required
-              inlineField
-              useFullEntityId
-              placeholder="{{ 'mobile.bundle' | translate }}"
-              [entityType]="entityType.MOBILE_APP_BUNDLE"
-              formControlName="mobileAppBundleId">
-            </tb-entity-autocomplete>
+      @if (isTenantAdmin()) {
+        <section>
+          <div class="tb-form-row no-border no-padding-bottom">
+            <mat-slide-toggle class="mat-slide" formControlName="useSystemSettings">
+              {{ 'admin.mobile-app.use-system-settings' | translate }}
+            </mat-slide-toggle>
           </div>
-        }
-        <div class="tb-form-row stroked no-padding-bottom">
-          <mat-slide-toggle class="mat-slide" formControlName="androidEnabled" (click)="$event.stopPropagation()">
-            {{ 'admin.mobile-app.android' | translate }}
-          </mat-slide-toggle>
-        </div>
-        <div class="tb-form-row stroked no-padding-bottom">
-          <mat-slide-toggle class="mat-slide" formControlName="iosEnabled" (click)="$event.stopPropagation()">
-            {{ 'admin.mobile-app.ios' | translate }}
-          </mat-slide-toggle>
-        </div>
-      </div>
-      <div class="tb-form-panel" formGroupName="qrCodeConfig">
-        <div class="tb-form-row column-xs no-border no-padding space-between">
-          <div class="tb-form-panel-title" translate>admin.mobile-app.appearance-on-home-page</div>
-          <tb-toggle-select formControlName="showOnHomePage">
-            <tb-toggle-option [value]="true">{{ 'admin.mobile-app.enabled' | translate }}</tb-toggle-option>
-            <tb-toggle-option [value]="false">{{ 'admin.mobile-app.disabled' | translate }}</tb-toggle-option>
-          </tb-toggle-select>
-        </div>
-        @if (mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
-          <div class="tb-form-panel stroked no-padding no-gap">
-            <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-              <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
-                                (click)="$event.stopPropagation()">
-                {{ 'admin.mobile-app.badges' | translate }}
-              </mat-slide-toggle>
-              <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-                <mat-select formControlName="badgePosition">
-                  @for (badgePosition of badgePositionTranslationsMap | keyvalue; track badgePosition) {
-                    <mat-option [value]="badgePosition.key">
-                      {{ badgePosition.value | translate }}
-                    </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+          @if (!mobileAppSettingsForm.get('useSystemSettings').value && !setBaseURL) {
+            <div class="tb-form-hint flex items-center gap-2">
+              <mat-icon>warning</mat-icon>
+              <span class="flex-1">
+                {{'admin.mobile-app.warning-not-set-white-labeling' | translate }} <a routerLink="/white-labeling/loginWhiteLabel" translate>admin.mobile-app.base-url</a>
+              </span>
             </div>
+          }
+        </section>
+      }
+      @if (!mobileAppSettingsForm.get('useSystemSettings').value) {
+        <div class="tb-form-panel">
+          <div class="tb-form-row column-xs no-border no-padding space-between">
+            <div class="tb-form-panel-title" translate>admin.mobile-app.applications</div>
+            <tb-toggle-select formControlName="useDefaultApp">
+              <tb-toggle-option [value]="true">{{ 'admin.mobile-app.default' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="false">{{ 'admin.mobile-app.custom' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
           </div>
-        }
-        @if (mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
-          <div class="tb-form-panel stroked no-padding no-gap">
-            <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-              <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
-                {{ 'admin.mobile-app.label' | translate }}
-              </mat-slide-toggle>
-              <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-                <input matInput formControlName="qrCodeLabel" placeholder="{{'admin.mobile-app.set' | translate}}">
-                @if (!mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').untouched &&
-                  mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required') ||
-                  mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('maxlength')) {
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
+          @if (!mobileAppSettingsForm.get('useDefaultApp').value) {
+            <div class="tb-form-row column-xs">
+              <div class="fixed-title-width-230">{{ 'mobile.bundle' | translate }}</div>
+              <tb-entity-autocomplete
+                class="flex-1"
+                required
+                inlineField
+                useFullEntityId
+                placeholder="{{ 'mobile.bundle' | translate }}"
+                [entityType]="entityType.MOBILE_APP_BUNDLE"
+                formControlName="mobileAppBundleId">
+              </tb-entity-autocomplete>
+            </div>
+          }
+          <div class="tb-form-row stroked no-padding-bottom">
+            <mat-slide-toggle class="mat-slide" formControlName="androidEnabled" (click)="$event.stopPropagation()">
+              {{ 'admin.mobile-app.android' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row stroked no-padding-bottom">
+            <mat-slide-toggle class="mat-slide" formControlName="iosEnabled" (click)="$event.stopPropagation()">
+              {{ 'admin.mobile-app.ios' | translate }}
+            </mat-slide-toggle>
+          </div>
+        </div>
+      }
+      @if (!mobileAppSettingsForm.get('useSystemSettings').value) {
+        <div class="tb-form-panel" formGroupName="qrCodeConfig">
+          <div class="tb-form-row column-xs no-border no-padding space-between">
+            <div class="tb-form-panel-title" translate>admin.mobile-app.appearance-on-home-page</div>
+            <tb-toggle-select formControlName="showOnHomePage">
+              <tb-toggle-option [value]="true">{{ 'admin.mobile-app.enabled' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="false">{{ 'admin.mobile-app.disabled' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+          </div>
+          @if (mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
+            <div class="tb-form-panel stroked no-padding no-gap">
+              <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
+                <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
+                  (click)="$event.stopPropagation()">
+                  {{ 'admin.mobile-app.badges' | translate }}
+                </mat-slide-toggle>
+                <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="badgePosition">
+                    @for (badgePosition of badgePositionTranslationsMap | keyvalue; track badgePosition) {
+                      <mat-option [value]="badgePosition.key">
+                        {{ badgePosition.value | translate }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          }
+          @if (mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
+            <div class="tb-form-panel stroked no-padding no-gap">
+              <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
+                <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
+                  {{ 'admin.mobile-app.label' | translate }}
+                </mat-slide-toggle>
+                <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput formControlName="qrCodeLabel" placeholder="{{'admin.mobile-app.set' | translate}}">
+                  @if (!mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').untouched &&
+                    mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required') ||
+                    mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('maxlength')) {
+                    <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
                         [matTooltip]="(mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required') ?
                          'admin.mobile-app.label-required' : 'admin.mobile-app.label-max-length') | translate"
-                    class="tb-error">
-                    warning
-                  </mat-icon>
-                }
-              </mat-form-field>
+                      class="tb-error">
+                      warning
+                    </mat-icon>
+                  }
+                </mat-form-field>
+              </div>
             </div>
-          </div>
-        }
-        @if (mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
-          <div class="tb-form-panel tb-qrcode-preview">
-            <div class="tb-form-panel-title" translate>admin.mobile-app.preview</div>
-            <tb-mobile-app-qrcode-widget
-              [mobileAppSettings]="mobileAppSettingsForm.getRawValue()">
-            </tb-mobile-app-qrcode-widget>
-          </div>
-        }
+          }
+          @if (mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
+            <div class="tb-form-panel tb-qrcode-preview">
+              <div class="tb-form-panel-title" translate>admin.mobile-app.preview</div>
+              <tb-mobile-app-qrcode-widget
+                [mobileAppSettings]="mobileAppSettingsForm.getRawValue()">
+              </tb-mobile-app-qrcode-widget>
+            </div>
+          }
+        </div>
+      }
+    </div>
+    @if (!readonly) {
+      <div class="tb-flex row flex-end" style="margin-top: 16px">
+        <button mat-button mat-raised-button color="primary" (click)="save()"
+          [disabled]="(isLoading$ | async) || mobileAppSettingsForm.invalid || !mobileAppSettingsForm.dirty">
+          {{ 'action.save' | translate }}
+        </button>
       </div>
-    </div>
-    <div class="tb-flex row flex-end" style="margin-top: 16px">
-      <button mat-button mat-raised-button color="primary" (click)="save()"
-              [disabled]="(isLoading$ | async) || mobileAppSettingsForm.invalid || !mobileAppSettingsForm.dirty">
-        {{ 'action.save' | translate }}
-      </button>
-    </div>
+    }
   </mat-card-content>
 </mat-card>
+<ng-template #baseUrl>
+  '<a routerLink="/home" translate>admin.mobile-app.base-url</a> '
+</ng-template>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -23,6 +24,7 @@ import { DatePipe } from '@angular/common';
 import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
 import { UtilsService } from "@core/services/utils.service";
 import { ActivatedRoute, Router } from "@angular/router";
+import { UserPermissionsService } from "@core/http/user-permissions.service";
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 
 @Component({
@@ -41,6 +43,8 @@ export class AlarmRulesTableComponent {
   entityId = input<EntityId>();
   entityName = input<string>();
   ownerId = input<EntityId>();
+  readonly = input(false);
+  hideClearEventAction  = input(false);
 
   alarmRulesTableConfig: AlarmRulesTableConfig;
 
@@ -59,6 +63,7 @@ export class AlarmRulesTableComponent {
               private destroyRef: DestroyRef,
               private route: ActivatedRoute,
               private router: Router,
+              private userPermissionsService: UserPermissionsService,
               private iotHubActions: IotHubActionsService
   ) {
     this.pageMode = !!this.route.snapshot.data.isPage;
@@ -79,6 +84,9 @@ export class AlarmRulesTableComponent {
           this.entityDebugSettingsService,
           this.utilsService,
           this.router,
+          this.readonly(),
+          this.hideClearEventAction(),
+          this.userPermissionsService,
           this.iotHubActions,
           this.pageMode,
         );

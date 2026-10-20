@@ -1,19 +1,22 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<section class="tb-widget-settings flex flex-col" [formGroup]="roundSwitchWidgetSettingsForm">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <mat-form-field class="mat-block flex-1" appearance="outline">
-      <mat-label translate>widgets.rpc.switch-title</mat-label>
-      <input matInput formControlName="title">
-    </mat-form-field>
-  </fieldset>
+<ng-container [formGroup]="roundSwitchWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.rpc.common-settings</div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>widgets.rpc.switch-title</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
   <tb-switch-rpc-settings [aliasController]="aliasController"
                           [targetDevice]="targetDevice"
                           formControlName="switchRpcSettings">
   </tb-switch-rpc-settings>
-</section>
+</ng-container>

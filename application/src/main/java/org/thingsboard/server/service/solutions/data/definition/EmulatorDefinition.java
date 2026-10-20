@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data.definition;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.service.solutions.data.SolutionInstallContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,8 +46,11 @@ public class EmulatorDefinition {
         telemetryProfiles = new ArrayList<>(profilesMap.values());
     }
 
+    public long getOldestTs(SolutionInstallContext ctx) {
+        return getOldestTs(ctx.getInstallTs());
+    }
+
     public long getOldestTs(long startTs) {
         return startTs - TimeUnit.DAYS.toMillis(publishPeriodInDays) - publishFrequencyInSeconds;
     }
-
 }

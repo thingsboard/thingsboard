@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
@@ -285,8 +286,10 @@ export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator
   }
 
   changeCustomScheduler($event: MatChipSelectionChange, index: number) {
-    const value = $event.selected;
-    this.disabledSelectedTime(value, index, true);
+    if (!this.disabled) {
+      const value = $event.selected;
+      this.disabledSelectedTime(value, index, true);
+    }
   }
 
   private disabledSelectedTime(enable: boolean, index: number, emitEvent = false) {

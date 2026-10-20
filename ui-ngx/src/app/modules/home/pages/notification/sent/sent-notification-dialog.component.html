@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header">
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
   <div tb-help="sentNotification"></div>
@@ -96,6 +97,41 @@
                   }
                 </section>
               </section>
+              @if (!isSysAdmin()) {
+                <div class="tb-form-panel stroked no-padding-bottom no-gap mb-5">
+                  <mat-slide-toggle class="toggle" formControlName="attachReport">
+                    <div tb-hint-tooltip-icon="{{ 'notification.attach-report-hint' | translate }}" translate>
+                      notification.attach-report
+                    </div>
+                  </mat-slide-toggle>
+                  @if (notificationRequestForm.get('template.configuration.attachReport').value) {
+                    <div class="tb-form-panel outlined">
+                      <tb-report-template-autocomplete
+                        required
+                        appearance="outline"
+                        [type]="ReportTemplateType.REPORT"
+                        includeCustomers
+                        showError
+                        formControlName="reportTemplateId">
+                        <span tb-error>{{'report-template.report-template-required' | translate}}</span>
+                      </tb-report-template-autocomplete>
+                      <tb-entity-autocomplete
+                        appearance="outline"
+                        required
+                        useFullEntityId
+                        [entityType]="entityType.USER"
+                        formControlName="userId">
+                      </tb-entity-autocomplete>
+                      <tb-timezone-select
+                        appearance="outline"
+                        userTimezoneByDefault
+                        required
+                        formControlName="timezone">
+                      </tb-timezone-select>
+                    </div>
+                  }
+                </div>
+              }
             </section>
           }
         </div>
@@ -109,7 +145,7 @@
             placeholderText="{{ 'notification.recipient' | translate }}"
             requiredText="{{ 'notification.recipients-required' | translate }}"
             [entityType]="entityType.NOTIFICATION_TARGET"
-            subType="{{ notificationType.GENERAL }}">
+            entitySubType="{{ notificationType.GENERAL }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix
                     (click)="createTarget($event, createTargetButton)">

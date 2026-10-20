@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -32,9 +33,11 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
+      useCellContentFunctionOnExport: true,
       cellContentFunction: '',
       defaultColumnVisibility: 'visible',
       columnSelectionToDisplay: 'enabled',
+      columnExportOption: 'onlyVisible',
       disableSorting: false
     };
   }
@@ -46,9 +49,11 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
+      useCellContentFunctionOnExport: [settings.useCellContentFunctionOnExport, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
       defaultColumnVisibility: [settings.defaultColumnVisibility, []],
       columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
+      columnExportOption: [settings.columnExportOption, []],
       disableSorting: [settings.disableSorting, []]
     });
   }
@@ -67,8 +72,10 @@ export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
     }
     if (useCellContentFunction) {
       this.entitiesTableKeySettingsForm.get('cellContentFunction').enable();
+      this.entitiesTableKeySettingsForm.get('useCellContentFunctionOnExport').enable();
     } else {
       this.entitiesTableKeySettingsForm.get('cellContentFunction').disable();
+      this.entitiesTableKeySettingsForm.get('useCellContentFunctionOnExport').disable();
     }
     this.entitiesTableKeySettingsForm.get('cellStyleFunction').updateValueAndValidity({emitEvent});
     this.entitiesTableKeySettingsForm.get('cellContentFunction').updateValueAndValidity({emitEvent});

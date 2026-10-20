@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-images tb-absolute-fill" [class.tb-dialog-mode]="dialogMode" [class.mat-padding]="!dialogMode">
@@ -35,7 +36,7 @@
               </button>
             </div>
           </div>
-          @if (!isSysAdmin) {
+          @if (isTenantAdmin) {
             <mat-slide-toggle
               class="lt-lg:!hidden"
               [ngModel]="includeSystemImages"
@@ -87,7 +88,7 @@
           </button>
         </section>
       </div>
-      @if (!isSysAdmin) {
+      @if (isTenantAdmin) {
         <mat-slide-toggle class="gt-md:!hidden"
                           [ngModel]="includeSystemImages"
         (ngModelChange)="includeSystemImagesChanged($event)">{{ (isScada ? 'scada.include-system-symbols' : 'image.include-system-images') | translate }}</mat-slide-toggle>

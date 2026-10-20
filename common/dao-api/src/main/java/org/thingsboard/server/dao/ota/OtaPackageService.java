@@ -1,11 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.ota;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -39,6 +42,10 @@ public interface OtaPackageService extends EntityDaoService {
     void deleteOtaPackage(TenantId tenantId, OtaPackageId otaPackageId);
 
     void deleteOtaPackagesByTenantId(TenantId tenantId);
+
+    OtaPackageInfo findOtaPackageInfoByDeviceIdAndType(DeviceId deviceId, OtaPackageType type);
+
+    PageData<OtaPackageInfo> findOtaPackageInfosByGroupIdAndHasData(EntityGroupId deviceGroupId, OtaPackageType type, PageLink pageLink);
 
     long sumDataSizeByTenantId(TenantId tenantId);
 

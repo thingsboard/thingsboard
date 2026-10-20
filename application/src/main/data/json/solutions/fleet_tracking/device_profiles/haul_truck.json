@@ -1,0 +1,24 @@
+{
+  "name": "Haul truck",
+  "description": "Haul truck used for transporting clay between zones inside the mine site.",
+  "type": "DEFAULT",
+  "transportType": "DEFAULT",
+  "provisionType": "DISABLED",
+  "defaultRuleChainId": null,
+  "defaultQueueName": null,
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "type": "DEFAULT"
+    },
+    "provisionConfiguration": {
+      "type": "DISABLED",
+      "provisionDeviceSecret": null
+    }
+  },
+  "provisionDeviceKey": null,
+  "default": false,
+  "jsonId": "93855be4-461e-4a35-b925-50a70d30c738"
+}

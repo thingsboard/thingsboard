@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="createAlarmConfigForm" class="flex flex-col">
@@ -136,7 +137,10 @@
       <mat-checkbox formControlName="propagateToOwner">
         {{ 'rule-node-config.propagate-to-owner' | translate }}
       </mat-checkbox>
-      <mat-checkbox formControlName="propagateToTenant">
+      <mat-checkbox formControlName="propagateToOwnerHierarchy">
+      {{ 'rule-node-config.propagate-to-owner-hierarchy' | translate }}
+    </mat-checkbox>
+    <mat-checkbox formControlName="propagateToTenant">
         {{ 'rule-node-config.propagate-to-tenant' | translate }}
       </mat-checkbox>
     </section>

@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<div class="tb-form-panel tb-y-axes-panel">
+<div class="tb-form-panel tb-y-axes-panel" [class.stroked]="stroked">
   <div class="tb-form-panel-title">{{ 'widgets.time-series-chart.y-axes' | translate }}</div>
   <div class="tb-form-table">
     <div class="tb-form-table-header no-padding-right">
@@ -29,7 +30,8 @@
           <tb-time-series-chart-y-axis-row class="flex-1"
                                            [formControl]="axisControl"
                                            [advanced]="advanced"
-                                           [supportsUnitConversion]="supportsUnitConversion"
+                                           [reportMode]="reportMode"
+                                            [supportsUnitConversion]="supportsUnitConversion"
                                            (axisRemoved)="removeAxis($index)">
           </tb-time-series-chart-y-axis-row>
           <div class="tb-form-table-row-cell-buttons">
