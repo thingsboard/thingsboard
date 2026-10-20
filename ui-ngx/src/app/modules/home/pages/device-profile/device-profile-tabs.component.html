@@ -6,9 +6,10 @@
 
 -->
 @if (entity) {
-  @if (!isEdit) {
+  @if (!isEdit && (resource.DEVICE_PROFILE | hasGenericPermission: operation.READ_ATTRIBUTES)) {
     <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
       <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                          [readonly]="!(resource.DEVICE_PROFILE | hasGenericPermission: operation.WRITE_ATTRIBUTES)"
                           [active]="attributesTab.isActive"
                           [entityId]="entity.id"
                           [entityName]="entity.name">
