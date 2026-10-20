@@ -28,7 +28,7 @@
     <div class="item-row" [class]="itemLimitClass(itemType, count, max)">
       <span class="item-name">{{ usageItemTypeTranslationMap.get(itemType) | translate }}</span>
       <span class="item-meter">
-        <i [style.width.%]="max > 0 ? (count / max) * 100 : 0"></i>
+        <i [style.width.%]="itemMeterWidth(count, max)"></i>
       </span>
       <span class="item-value">
         @if (max !== 0) {
