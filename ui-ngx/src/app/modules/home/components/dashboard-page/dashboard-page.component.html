@@ -511,6 +511,7 @@
                             [widgetLayout]="editingWidgetLayout"
                             [showLayoutConfig]="showLayoutConfigInEdit(editingLayoutCtx)"
                             [isDefaultBreakpoint]="editingLayoutCtx?.breakpoint === 'default'"
+                            [isHtmlPage]="isHtml"
                             (revertWidgetConfig)="onRevertWidgetEdit()"
                             (applyWidgetConfig)="saveWidget()">
             </tb-edit-widget>
