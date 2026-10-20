@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,13 +11,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.id.CustomMenuId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
-public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId>, HasTitle, HasVersion {
+public class Customer extends ContactBased<CustomerId> implements HasTenantId, HasTitle, GroupEntity<CustomerId>, ExportableEntity<CustomerId>, HasVersion {
 
     private static final long serialVersionUID = -1599722990298929275L;
 
@@ -39,11 +29,17 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
     private String title;
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
+    @Schema(description = "JSON object with parent Customer Id")
+    private CustomerId parentCustomerId;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private CustomerId externalId;
     @Getter @Setter
     private Long version;
+
+    @Getter @Setter
+    private CustomMenuId customMenuId;
 
     public Customer() {
         super();
@@ -56,9 +52,11 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
     public Customer(Customer customer) {
         super(customer);
         this.tenantId = customer.getTenantId();
+        this.parentCustomerId = customer.getParentCustomerId();
         this.title = customer.getTitle();
         this.externalId = customer.getExternalId();
         this.version = customer.getVersion();
+        this.customMenuId = customer.getCustomMenuId();
     }
 
     public TenantId getTenantId() {
@@ -67,6 +65,41 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
 
     public void setTenantId(TenantId tenantId) {
         this.tenantId = tenantId;
+    }
+
+    public CustomerId getParentCustomerId() {
+        return parentCustomerId;
+    }
+
+    public void setParentCustomerId(CustomerId parentCustomerId) {
+        this.parentCustomerId = parentCustomerId;
+    }
+
+    @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "JSON object with parent Customer Id")
+    public CustomerId getCustomerId() {
+        return parentCustomerId;
+    }
+
+    @Schema(description = "JSON object with Customer or Tenant Id", accessMode = Schema.AccessMode.READ_ONLY)
+    @Override
+    public EntityId getOwnerId() {
+        return parentCustomerId != null && !parentCustomerId.isNullUid() ? parentCustomerId : tenantId;
+    }
+
+    @Override
+    public void setOwnerId(EntityId entityId) {
+        if (EntityType.CUSTOMER.equals(entityId.getEntityType())) {
+            this.parentCustomerId = new CustomerId(entityId.getId());
+        } else {
+            this.parentCustomerId = new CustomerId(CustomerId.NULL_UUID);
+        }
+    }
+
+    @JsonIgnore
+    public boolean isSubCustomer() {
+        return parentCustomerId != null && !parentCustomerId.isNullUid();
     }
 
     public String getTitle() {
@@ -80,7 +113,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
     @Schema(description = "JSON object with the customer Id. " +
             "Specify this field to update the customer. " +
             "Referencing non-existing customer Id will cause error. " +
-            "Omit this field to create new customer." )
+            "Omit this field to create new customer.")
     @Override
     public CustomerId getId() {
         return super.getId();
@@ -204,4 +237,12 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         builder.append("]");
         return builder.toString();
     }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.CUSTOMER;
+    }
+
+
 }

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
@@ -21,6 +9,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -40,7 +29,11 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
+import org.thingsboard.rule.engine.mail.TbMsgToEmailNode;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.blob.BlobEntity;
+import org.thingsboard.server.common.data.id.BlobEntityId;
+import org.thingsboard.server.common.data.util.KeyValueEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import reactor.core.scheduler.Schedulers;
@@ -50,11 +43,15 @@ import reactor.netty.transport.ProxyProvider;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -166,10 +163,6 @@ public class TbHttpClient {
                     SslContext sslContext = config.getCredentials().initSslContext();
                     httpClient = httpClient.secure(t -> t.sslContext(sslContext));
                 }
-            } else if (config.isUseSimpleClientHttpFactory()) {
-                if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
-                    throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
-                }
             } else {
                 SslContext sslContext = config.getCredentials().initSslContext();
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));
@@ -223,10 +216,7 @@ public class TbHttpClient {
     }
 
     EventLoopGroup getSharedOrCreateEventLoopGroup(EventLoopGroup eventLoopGroupShared) {
-        if (eventLoopGroupShared != null) {
-            return eventLoopGroupShared;
-        }
-        return this.eventLoopGroup = new NioEventLoopGroup();
+        return Objects.requireNonNullElseGet(eventLoopGroupShared, () -> this.eventLoopGroup = new NioEventLoopGroup());
     }
 
     private void checkSystemProxyProperties() throws TbNodeException {
@@ -341,8 +331,22 @@ public class TbHttpClient {
         boolean asyncStarted = false;
         try {
             String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), task.msg());
+
+            List<KeyValueEntry<String, String>> processedQueryParams;
+            if (config.getQueryParams() != null) {
+                processedQueryParams = config.getQueryParams().stream()
+                        .map(param -> {
+                            var processedParamName = TbNodeUtils.processPattern(param.key(), task.msg());
+                            var processedParamValue = TbNodeUtils.processPattern(param.value(), task.msg());
+                            return new KeyValueEntry<>(processedParamName, processedParamValue);
+                        })
+                        .toList();
+            } else {
+                processedQueryParams = null;
+            }
+
             HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
-            URI uri = buildEncodedUri(endpointUrl);
+            URI uri = buildEncodedUri(endpointUrl, processedQueryParams);
 
             RequestBodySpec req = webClient
                     .method(method)
@@ -352,7 +356,7 @@ public class TbHttpClient {
             if ((HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
                     HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method)) &&
                     !config.isIgnoreRequestBody()) {
-                req.body(BodyInserters.fromValue(getData(task.msg(), config.isParseToPlainText())));
+                req.body(BodyInserters.fromValue(getRequestBody(task.ctx(), task.msg())));
             }
 
             req.retrieve()
@@ -398,13 +402,13 @@ public class TbHttpClient {
         if (origin instanceof WebClientResponseException restClientResponseException
                 && restClientResponseException.getStatusCode().is2xxSuccessful()) {
             // return cause instead of original exception in case 2xx status code
-            // this will provide meaningful error message to the user
+            // this will provide a meaningful error message to the user
             return new RuntimeException(restClientResponseException.getCause());
         }
         return origin;
     }
 
-    public URI buildEncodedUri(String endpointUrl) {
+    public URI buildEncodedUri(String endpointUrl, List<KeyValueEntry<String, String>> queryParams) {
         if (endpointUrl == null) {
             throw new RuntimeException("Url string cannot be null!");
         }
@@ -412,7 +416,13 @@ public class TbHttpClient {
             throw new RuntimeException("Url string cannot be empty!");
         }
 
-        URI uri = UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
+        URI uri;
+        if (queryParams != null) {
+            uri = buildEncodedUriNew(endpointUrl, queryParams);
+        } else {
+            uri = buildEncodedUriLegacy(endpointUrl);
+        }
+
         if (uri.getScheme() == null || uri.getScheme().isEmpty()) {
             throw new RuntimeException("Transport scheme(protocol) must be provided!");
         }
@@ -428,9 +438,75 @@ public class TbHttpClient {
         return uri;
     }
 
-    private Object getData(TbMsg tbMsg, boolean parseToPlainText) {
-        String data = tbMsg.getData();
-        return parseToPlainText ? JacksonUtil.toPlainText(data) : JacksonUtil.toJsonNode(data);
+    private URI buildEncodedUriNew(String endpointUrl, List<KeyValueEntry<String, String>> queryParams) {
+        try {
+            URIBuilder builder = new URIBuilder(endpointUrl);
+            queryParams.forEach(param -> builder.addParameter(param.key(), param.value()));
+            return builder.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(
+                    "Invalid request URL: '" + endpointUrl + "'. The URL must be valid and properly encoded. " +
+                            "If URL contains special characters (e.g., spaces), they must be percent-encoded (e.g., '/my device/' should be '/my%20device/').", e);
+        }
+    }
+
+    /**
+     * @deprecated Query params embedded in the URL string are not encoded correctly.
+     * <p>
+     * In query strings, {@code +} is interpreted as a space (URL form encoding),
+     * so {@code email=user+tag@test.com} becomes {@code email=user tag@test.com} on the server.
+     * <p>
+     * Pre-encoding the URL (e.g., {@code email=user%2Btag@test.com}) doesn't help
+     * because {@code .encode()} will double-encode it to {@code email=user%252Btag@test.com}.
+     * <p>
+     * Use {@link #buildEncodedUriNew} with a separate query params list,
+     * where values are encoded exactly once: {@code +} → {@code %2B}, {@code @} → {@code %40}.
+     */
+    @Deprecated(forRemoval = true)
+    private URI buildEncodedUriLegacy(String endpointUrl) {
+        return UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
+    }
+
+    private Object getRequestBody(TbContext ctx, TbMsg msg) {
+        if (StringUtils.isNotEmpty(config.getRequestBodyTemplate())) {
+            boolean escapeJson = !config.isParseToPlainText();
+            String processedTemplate = TbNodeUtils.processPattern(config.getRequestBodyTemplate(), msg, escapeJson);
+            if (config.isParseToPlainText()) {
+                return processedTemplate;
+            }
+            try {
+                return JacksonUtil.toJsonNode(processedTemplate);
+            } catch (Exception e) {
+                throw new RuntimeException("Request body template produced invalid JSON: " + processedTemplate, e);
+            }
+        }
+        return getData(ctx, msg, config.isParseToPlainText());
+    }
+
+    private Object getData(TbContext ctx, TbMsg msg, boolean parseToPlainText) {
+        String data = msg.getData();
+
+        List<BlobEntityId> attachments = new ArrayList<>();
+        String attachmentsStr = msg.getMetaData().getValue(TbMsgToEmailNode.ATTACHMENTS);
+        if (!StringUtils.isEmpty(attachmentsStr)) {
+            String[] attachmentsStrArray = attachmentsStr.split(",");
+            for (String attachmentStr : attachmentsStrArray) {
+                attachments.add(new BlobEntityId(UUID.fromString(attachmentStr)));
+            }
+        }
+
+        boolean isBlobData = false;
+        if (!attachments.isEmpty()) {
+            BlobEntity blobEntity = ctx.getPeContext().getBlobEntityService().findBlobEntityById(ctx.getTenantId(), attachments.getFirst());
+            if (blobEntity != null) {
+                data = StandardCharsets.UTF_8.decode(blobEntity.getData()).toString();
+                isBlobData = true;
+            } else {
+                log.warn("[{}] Attachments {} not found", ctx.getTenantId(), attachmentsStr);
+            }
+        }
+
+        return parseToPlainText ? JacksonUtil.toPlainText(data) : isBlobData ? data : JacksonUtil.toJsonNode(data);
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
@@ -451,7 +527,7 @@ public class TbHttpClient {
         headers.forEach((key, values) -> {
             if (values != null && !values.isEmpty()) {
                 if (values.size() == 1) {
-                    consumer.accept(key, values.get(0));
+                    consumer.accept(key, values.getFirst());
                 } else {
                     consumer.accept(key, JacksonUtil.toString(values));
                 }

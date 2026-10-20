@@ -1,0 +1,82 @@
+/** Decoder **/
+
+// Decode payload to json
+var json = decodeToJson(payload);
+
+// Set general device information
+var deviceName = 'Sigfox-' + json.device;
+var deviceType = 'Sigfox device';
+var groupName = 'Control room devices';
+// var customerName = 'Customer A';
+// use assetName and assetType instead of deviceName and deviceType
+// to automatically create assets instead of devices.
+// var assetName = 'Asset A';
+// var assetType = 'building';
+
+// Parse specific device information, it may be different, depends on device type
+var attrByte = parseInt(json.data.substring(0, 2), 16); // force TBEL to convert to INT
+var autoCalibration = (attrByte & 0x1) === 1 ? "on" : "off"; // bitmask for first bit
+var zeroPointAdjusted = ((attrByte & 0x2) >> 1) === 1 ? true : false; // bitmask for second bit; right shift one bit to get second bit to the LSB position
+var transmitPower = ((attrByte & 0x4) >> 2) === 1 ? "full" : "low"; // bitmask for third bit; right shift two bits to get third bit to the LSB position
+var powerControl = ((attrByte & 0x8) >> 3) === 1 ? "on" : "off"; // bitmask for third bit; right shift three bits to get fourth bit to the LSB position
+var firmwareVersion = attrByte >> 4; // shift right to bring the nibble down to the first four bits; result is INT
+
+var data = json.data;
+
+var temperature = null;
+var humidity = null;
+var co2 = null;
+var co2Baseline = null;
+
+if (data != null) {
+  if (data.length() >= 6) {
+    temperature = toFixed(parseInt(json.data.substring(2, 6), 16) / 10.0 - 40, 1);
+  }
+  if (data.length() >= 8) {
+    humidity = parseInt(json.data.substring(6, 8), 16);
+  }
+  if (data.length() >= 12) {
+    co2 = parseInt(json.data.substring(8, 12), 16);
+  }
+
+  if (data.length() >= 14) {
+    var co2BaselineN = parseInt(json.data.substring(12, 14), 16);
+    if (co2BaselineN === 0) {
+        co2Baseline = 400;
+    } else {
+        co2Baseline = co2BaselineN * 10;
+    }
+  }
+}
+
+var result = {
+    // Use deviceName and deviceType or assetName and assetType, but not both.
+    deviceName: deviceName,
+    deviceType: deviceType,
+//  assetName: assetName,
+//  assetType: assetType,
+//  customerName: customerName,
+    groupName: groupName,
+    attributes: {
+        sigfoxId: json.device,
+        deviceTypeId: json.deviceTypeId,
+        autoCalibration: autoCalibration,
+        zeroPointAdjusted: zeroPointAdjusted,
+        transmitPower: transmitPower,
+        powerControl: powerControl,
+        fwVersion: firmwareVersion
+    },
+    telemetry: {
+        ts: json.time + "000",
+        values: {
+            temperature: temperature,
+            humidity: humidity,
+            co2: co2,
+            co2Baseline: co2Baseline,
+            customData1: json["customData#int1"],
+            customData2: json["customData#int2"],
+        }
+    }
+};
+
+return result;

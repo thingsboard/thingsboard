@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -21,7 +8,7 @@ import { AppState } from '@core/core.state';
 import { MatDialog } from '@angular/material/dialog';
 import { Dashboard, WidgetLayout } from '@shared/models/dashboard.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
-import { Widget, WidgetConfigMode } from '@shared/models/widget.models';
+import { Widget, widgetActionSources, WidgetConfigMode } from '@shared/models/widget.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigComponentData } from '../../models/widget-component.models';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
@@ -67,6 +54,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
   @coerceBoolean()
   isDefaultBreakpoint= true;
 
+  @Input()
+  @coerceBoolean()
+  isHtmlPage = false;
+
   @Output()
   applyWidgetConfig = new EventEmitter<void>();
 
@@ -108,7 +99,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['widget', 'widgetLayout'].includes(propName)) {
+        if (['widget', 'widgetLayout', 'isHtmlPage'].includes(propName)) {
           reloadConfig = true;
         }
       }
@@ -149,7 +140,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       widgetInfo.typeLatestDataKeySettingsForm : (widgetInfo.latestDataKeySettingsForm || []);
     const typeParameters = widgetInfo.typeParameters;
     const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
-    const actionSources = widgetInfo.actionSources;
+    const actionSources = {...widgetInfo.actionSources};
+    if (this.isHtmlPage) {
+      delete actionSources[widgetActionSources.headerButton.value];
+    }
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
 
     this.widgetConfig = {

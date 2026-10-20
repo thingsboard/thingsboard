@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,7 +31,8 @@ import java.io.Serializable;
                 @DiscriminatorMapping(value = "EDGE_CONNECTION", schema = EdgeConnectionNotificationRuleTriggerConfig.class),
                 @DiscriminatorMapping(value = "EDGE_COMMUNICATION_FAILURE", schema = EdgeCommunicationFailureNotificationRuleTriggerConfig.class),
                 @DiscriminatorMapping(value = "TASK_PROCESSING_FAILURE", schema = TaskProcessingFailureNotificationRuleTriggerConfig.class),
-                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = ResourcesShortageNotificationRuleTriggerConfig.class)
+                @DiscriminatorMapping(value = "RESOURCES_SHORTAGE", schema = ResourcesShortageNotificationRuleTriggerConfig.class),
+                @DiscriminatorMapping(value = "INTEGRATION_LIFECYCLE_EVENT", schema = IntegrationLifecycleEventNotificationRuleTriggerConfig.class)
         }
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -58,6 +47,7 @@ import java.io.Serializable;
         @Type(value = NewPlatformVersionNotificationRuleTriggerConfig.class, name = "NEW_PLATFORM_VERSION"),
         @Type(value = EntitiesLimitNotificationRuleTriggerConfig.class, name = "ENTITIES_LIMIT"),
         @Type(value = ApiUsageLimitNotificationRuleTriggerConfig.class, name = "API_USAGE_LIMIT"),
+        @Type(value = IntegrationLifecycleEventNotificationRuleTriggerConfig.class, name = "INTEGRATION_LIFECYCLE_EVENT"),
         @Type(value = RateLimitsNotificationRuleTriggerConfig.class, name = "RATE_LIMITS"),
         @Type(value = EdgeConnectionNotificationRuleTriggerConfig.class, name = "EDGE_CONNECTION"),
         @Type(value = EdgeCommunicationFailureNotificationRuleTriggerConfig.class, name = "EDGE_COMMUNICATION_FAILURE"),

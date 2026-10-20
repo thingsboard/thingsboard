@@ -1,23 +1,9 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import L, { TB } from 'leaflet';
 import { guid, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
-import { Map as MapLibreGLMap, LngLat as MapLibreGLLngLat } from 'maplibre-gl';
+import { Map as MapLibreGLMap, setWorkerUrl } from 'maplibre-gl';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -1084,6 +1070,9 @@ const chinaProvider = (type: string, options?: L.TileLayerOptions): L.TB.TileLay
   return new ChinaProvider(type, options);
 }
 
+// The worker is copied to assets by angular.json, bundlers cannot resolve it from import.meta.url
+setWorkerUrl(new URL('assets/maplibre-gl/maplibre-gl-worker.mjs', document.baseURI).href);
+
 class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
   options: TB.MapLibreGL.LeafletMapLibreGLMapOptions;
@@ -1260,23 +1249,19 @@ class MapLibreGLLayer extends L.Layer implements TB.MapLibreGL.MapLibreGLLayer {
 
     this._transformGL(gl);
 
-    if (gl.transform.width !== size.x || gl.transform.height !== size.y) {
+    if (container.clientWidth !== size.x || container.clientHeight !== size.y) {
       container.style.width  = size.x + 'px';
       container.style.height = size.y + 'px';
       gl.resize();
-    } else {
-      gl._update();
     }
   }
 
   private _transformGL(gl: MapLibreGLMap) {
     const center = this._map.getCenter();
-    const tr = gl._getTransformForUpdate();
-    if (!tr) { return; }
-    tr.setCenter(MapLibreGLLngLat.convert([center.lng, center.lat]));
-    tr.setZoom(this._map.getZoom() - 1);
-    gl.transform.apply(tr);
-    gl._fireMoveEvents();
+    gl.jumpTo({
+      center: [center.lng, center.lat],
+      zoom: this._map.getZoom() - 1
+    });
   }
 
   private _pinchZoom() {

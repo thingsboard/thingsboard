@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
@@ -40,11 +28,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 import java.util.UUID;
@@ -93,6 +81,7 @@ public class TenantProfileController extends BaseController {
             @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
+        checkEntityId(tenantProfileId, Operation.READ);
         return checkNotNull(tenantProfileService.findTenantProfileInfoById(getTenantId(), tenantProfileId));
     }
 
@@ -101,6 +90,7 @@ public class TenantProfileController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/tenantProfileInfo/default")
     public EntityInfo getDefaultTenantProfileInfo() throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, Operation.READ);
         return checkNotNull(tenantProfileService.findDefaultTenantProfileInfo(getTenantId()));
     }
 
@@ -144,6 +134,9 @@ public class TenantProfileController extends BaseController {
                     "      \"transportGatewayDeviceMsgRateLimit\": \"20:1,600:60\",\n" +
                     "      \"transportGatewayDeviceTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
                     "      \"transportGatewayDeviceTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"integrationMsgsPerTenantRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"integrationMsgsPerDeviceRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"integrationMsgsPerAssetRateLimit\": \"20:1,600:60\",\n" +
                     "      \"maxTransportMessages\": 10000000,\n" +
                     "      \"maxTransportDataPoints\": 10000000,\n" +
                     "      \"maxREExecutions\": 4000000,\n" +
@@ -159,15 +152,16 @@ public class TenantProfileController extends BaseController {
                     "      \"rpcTtlDays\": 0,\n" +
                     "      \"queueStatsTtlDays\": 0,\n" +
                     "      \"ruleEngineExceptionsTtlDays\": 0,\n" +
+                    "      \"blobEntityTtlDays\": 0,\n" +
                     "      \"warnThreshold\": 0,\n" +
-                    "      \"maxCalculatedFieldsPerEntity\": 5,\n" +
+                    "      \"maxCalculatedFieldsPerEntity\": 100,\n" +
                     "      \"maxArgumentsPerCF\": 10,\n" +
                     "      \"minAllowedScheduledUpdateIntervalInSecForCF\": 10,\n" +
                     "      \"maxRelationLevelPerCfArgument\": 2,\n" +
-                    "      \"maxRelatedEntitiesToReturnPerCfArgument\": 100,\n" +
+                    "      \"maxRelatedEntitiesToReturnPerCfArgument\": 1000,\n" +
                     "      \"maxDataPointsPerRollingArg\": 1000,\n" +
-                    "      \"maxStateSizeInKBytes\": 32,\n" +
-                    "      \"maxSingleValueArgumentSizeInKBytes\": 2," +
+                    "      \"maxStateSizeInKBytes\": 512,\n" +
+                    "      \"maxSingleValueArgumentSizeInKBytes\": 32," +
                     "      \"minAllowedDeduplicationIntervalInSecForCF\": 10," +
                     "      \"minAllowedAggregationIntervalInSecForCF\": 60," +
                     "      \"intermediateAggregationIntervalInSecForCF\": 300," +
@@ -236,6 +230,7 @@ public class TenantProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantProfileService.findTenantProfiles(getTenantId(), pageLink));
     }
@@ -255,6 +250,7 @@ public class TenantProfileController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantProfileService.findTenantProfileInfos(getTenantId(), pageLink));
     }
@@ -262,7 +258,9 @@ public class TenantProfileController extends BaseController {
     @Hidden
     @GetMapping(value = "/tenantProfiles", params = {"ids"})
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    public List<TenantProfile> getTenantProfilesByIds(@RequestParam("ids") UUID[] ids) {
+    public List<TenantProfile> getTenantProfilesByIds(@Parameter(description = "Comma-separated list of tenant profile ids", array = @ArraySchema(schema = @Schema(type = "string")))
+                                                      @RequestParam("ids") UUID[] ids) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, Operation.READ);
         return tenantProfileService.findTenantProfilesByIds(TenantId.SYS_TENANT_ID, ids);
     }
 
@@ -270,7 +268,7 @@ public class TenantProfileController extends BaseController {
     @GetMapping(value = "/tenantProfiles/list")
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     public List<TenantProfile> getTenantProfileList(@Parameter(description = "Comma-separated list of tenant profile ids", array = @ArraySchema(schema = @Schema(type = "string")))
-                                                    @RequestParam("ids") UUID[] ids) {
+                                                    @RequestParam("ids") UUID[] ids) throws ThingsboardException {
         return getTenantProfilesByIds(ids);
     }
 

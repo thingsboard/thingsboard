@@ -1,22 +1,9 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
+import { Direction } from '@shared/models/page/sort-order';
 
 export enum ItemType {
   WIDGET = 'WIDGET',
-  DASHBOARD = 'DASHBOARD',
   SOLUTION_TEMPLATE = 'SOLUTION_TEMPLATE',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
   ALARM_RULE = 'ALARM_RULE',
@@ -27,7 +14,6 @@ export enum ItemType {
 export const itemTypeTranslations = new Map<ItemType, string>(
   [
     [ItemType.WIDGET, 'item.type-widget'],
-    [ItemType.DASHBOARD, 'item.type-dashboard'],
     [ItemType.SOLUTION_TEMPLATE, 'item.type-solution-template'],
     [ItemType.CALCULATED_FIELD, 'item.type-calculated-field'],
     [ItemType.ALARM_RULE, 'item.type-alarm-rule'],
@@ -42,7 +28,6 @@ export const itemTypeTranslations = new Map<ItemType, string>(
 // mapping stays consistent across the app.
 export const itemTypeIcons: Record<string, string> = {
   [ItemType.WIDGET]: 'widgets',
-  [ItemType.DASHBOARD]: 'dashboard',
   [ItemType.SOLUTION_TEMPLATE]: 'apps',
   [ItemType.CALCULATED_FIELD]: 'mdi:function-variant',
   [ItemType.RULE_CHAIN]: 'settings_ethernet',
@@ -53,11 +38,24 @@ export const itemTypeIcons: Record<string, string> = {
 export const getItemTypeIcon = (type?: string | null): string =>
   type && itemTypeIcons[type] ? itemTypeIcons[type] : 'category';
 
+/** Colour for a type with no colour of its own. */
+export const DEFAULT_ITEM_TYPE_COLOR = '#5f6368';
+
+/** Colour per item type, wherever an item's type is marked with one. */
+export const itemTypeColors: Record<string, string> = {
+  [ItemType.WIDGET]: '#2c9755',
+  [ItemType.SOLUTION_TEMPLATE]: '#2b6bb4',
+  [ItemType.CALCULATED_FIELD]: '#3cb4e0',
+  [ItemType.RULE_CHAIN]: '#a95ae2',
+  [ItemType.ALARM_RULE]: '#d66f2e',
+  [ItemType.DEVICE]: '#4b63cc'
+};
+
+export const getItemTypeColor = (type?: string | null): string =>
+  type && itemTypeColors[type] ? itemTypeColors[type] : DEFAULT_ITEM_TYPE_COLOR;
+
 /**
  * Item types discoverable to creators in the marketplace UI.
- * DASHBOARD is intentionally absent (IoT Hub no longer accepts Dashboard contributions).
- * Defensive code paths (item card, detail dialog descriptor switch, installed-items table,
- * install handler, /iot-hub/dashboards route) remain functional for already-installed items.
  */
 export const CREATOR_VISIBLE_ITEM_TYPES: ItemType[] = [
   ItemType.WIDGET,
@@ -66,6 +64,40 @@ export const CREATOR_VISIBLE_ITEM_TYPES: ItemType[] = [
   ItemType.CALCULATED_FIELD,
   ItemType.ALARM_RULE,
   ItemType.RULE_CHAIN,
+];
+
+/** Item types a cross-type surface (search page, popup) shows, in display order. */
+export const CROSS_TYPE_ITEM_TYPES: ItemType[] = [
+  ItemType.DEVICE,
+  ItemType.SOLUTION_TEMPLATE,
+  ItemType.WIDGET,
+  ItemType.CALCULATED_FIELD,
+  ItemType.ALARM_RULE,
+  ItemType.RULE_CHAIN,
+];
+
+/** Types drawn as a coloured icon tile rather than a screenshot. */
+export const isCompactItemType = (type?: string | null): boolean =>
+  type === ItemType.CALCULATED_FIELD || type === ItemType.ALARM_RULE || type === ItemType.RULE_CHAIN;
+
+/** Sort property served by relevance ranking. */
+export const RELEVANCE_SORT_PROPERTY = 'relevance';
+
+export interface SortOption {
+  value: string;
+  label: string;
+  direction: Direction;
+}
+
+/**
+ * The sort menu of every IoT Hub surface with a search field; the first entry is the default.
+ * Relevance stays the default with an empty field, where it orders by install count.
+ */
+export const IOT_HUB_SORT_OPTIONS: SortOption[] = [
+  { value: RELEVANCE_SORT_PROPERTY, label: 'iot-hub.sort-most-relevant', direction: Direction.DESC },
+  { value: 'totalInstallCount', label: 'iot-hub.sort-most-installed', direction: Direction.DESC },
+  { value: 'publishedTime', label: 'iot-hub.sort-newest', direction: Direction.DESC },
+  { value: 'name', label: 'iot-hub.sort-name', direction: Direction.ASC }
 ];
 
 export interface FilterParamInfo {

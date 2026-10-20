@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.cf;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -46,6 +34,7 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.entitiy.cf.CalculatedFieldReprocessingValidator.CfReprocessingValidationResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
@@ -64,6 +53,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     private static final int TIMEOUT = 20;
 
     private final CalculatedFieldService calculatedFieldService;
+    private final CalculatedFieldReprocessingValidator cfReprocessingValidator;
 
     @Autowired(required = false)
     private TbelInvokeService tbelInvokeService;
@@ -111,6 +101,17 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CALCULATED_FIELD), actionType, user, e, calculatedFieldId.toString());
             throw e;
         }
+    }
+
+    @Override
+    public void delete(CalculatedFieldId calculatedFieldId, User user) {
+        CalculatedField calculatedField = calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
+        delete(calculatedField, user);
+    }
+
+    @Override
+    public CfReprocessingValidationResult validateForReprocessing(CalculatedField calculatedField) {
+        return cfReprocessingValidator.validate(calculatedField);
     }
 
     @Override

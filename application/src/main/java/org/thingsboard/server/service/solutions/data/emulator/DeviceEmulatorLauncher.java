@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data.emulator;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -26,6 +14,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -67,19 +56,7 @@ public class DeviceEmulatorLauncher extends AbstractEmulatorLauncher<Device> {
                             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, entity.getTenantId(), entity.getId());
                             UUID sessionId = UUID.randomUUID();
                             TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
-                                    .setSessionInfo(TransportProtos.SessionInfoProto.newBuilder()
-                                            .setSessionIdMSB(sessionId.getMostSignificantBits())
-                                            .setSessionIdLSB(sessionId.getLeastSignificantBits())
-                                            .setDeviceIdMSB(entity.getId().getId().getMostSignificantBits())
-                                            .setDeviceIdLSB(entity.getId().getId().getLeastSignificantBits())
-                                            .setDeviceProfileIdMSB(entity.getId().getId().getMostSignificantBits())
-                                            .setDeviceProfileIdLSB(entity.getId().getId().getLeastSignificantBits())
-                                            .setDeviceName(entity.getName())
-                                            .setDeviceType(entity.getType())
-                                            .setTenantIdMSB(entity.getTenantId().getId().getMostSignificantBits())
-                                            .setTenantIdLSB(entity.getTenantId().getId().getLeastSignificantBits())
-                                            .setNodeId(serviceInfoProvider.getServiceId())
-                                            .build())
+                                    .setSessionInfo(ProtoUtils.toSessionInfo(sessionId, serviceInfoProvider.getServiceId(), entity))
                                     .setSubscriptionInfo(TransportProtos.SubscriptionInfoProto.newBuilder().setLastActivityTime(System.currentTimeMillis()).build())
                                     .build();
                             tbQueueProducerProvider.getTbCoreMsgProducer().send(tpi,
@@ -95,4 +72,5 @@ public class DeviceEmulatorLauncher extends AbstractEmulatorLauncher<Device> {
                     .build());
         }
     }
+
 }

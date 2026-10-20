@@ -1,32 +1,21 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { Customer } from '@shared/models/customer.model';
+import { CustomerInfo } from '@shared/models/customer.model';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { ContactBasedComponent } from '../../components/entity/contact-based.component';
-import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { GroupContactBasedComponent } from '@home/components/group/group-contact-based.component';
+import { GroupEntityTableConfig } from '@home/models/group/group-entities-table-config.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { AuthState } from '@core/auth/auth.models';
+import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { CountryData } from '@shared/models/country.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { CMAssigneeType, CMScope } from '@shared/models/custom-menu.models';
 
 @Component({
     selector: 'tb-customer',
@@ -34,20 +23,28 @@ import { CountryData } from '@shared/models/country.models';
     styleUrls: ['./customer.component.scss'],
     standalone: false
 })
-export class CustomerComponent extends ContactBasedComponent<Customer> {
+export class CustomerComponent extends GroupContactBasedComponent<CustomerInfo> {
+
+  CMScope = CMScope;
+
+  CMAssigneeType = CMAssigneeType;
 
   isPublic = false;
 
-  authState: AuthState = getCurrentAuthState(this.store);
+  allowCustomerWhiteLabeling = getCurrentAuthState(this.store).customerWhiteLabelingAllowed;
+  whiteLabelingAllowed = getCurrentAuthState(this.store).whiteLabelingAllowed;
+  edgesSupportEnabled = getCurrentAuthState(this.store).edgesSupportEnabled;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: Customer,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Customer>,
+              @Inject('entity') protected entityValue: CustomerInfo,
+              @Inject('entitiesTableConfig')
+              protected entitiesTableConfigValue: EntityTableConfig<CustomerInfo> | GroupEntityTableConfig<CustomerInfo>,
               protected fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
-              protected countryData: CountryData) {
-    super(store, fb, entityValue, entitiesTableConfigValue, cd, countryData);
+              protected countryData: CountryData,
+              protected userPermissionsService: UserPermissionsService) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd, countryData, userPermissionsService);
   }
 
   hideDelete() {
@@ -58,31 +55,97 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
     }
   }
 
-  buildEntityForm(entity: Customer): UntypedFormGroup {
+  hideManageUsers() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageUsersEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  hideManageCustomers() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageCustomersEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  hideManageAssets() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageAssetsEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  hideManageDevices() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageDevicesEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  hideManageEntityViews() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageEntityViewsEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  hideManageEdges() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageEdgesEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  hideManageAgents() {
+    return this.isGroupMode();
+  }
+
+  hideManageDashboards() {
+    if (this.isGroupMode()) {
+      return !this.groupEntitiesTableConfig.manageDashboardsEnabled(this.entity);
+    } else {
+      return false;
+    }
+  }
+
+  buildEntityForm(entity: CustomerInfo): UntypedFormGroup {
     return this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
+            allowWhiteLabeling: [entity && entity.additionalInfo
+            && isDefined(entity.additionalInfo.allowWhiteLabeling) ? entity.additionalInfo.allowWhiteLabeling : true],
             homeDashboardId: [entity && entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null],
             homeDashboardHideToolbar: [entity && entity.additionalInfo &&
             isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true]
           }
-        )
+        ),
+        customMenuId: [entity?.customMenuId]
       }
     );
   }
 
-  updateEntityForm(entity: Customer) {
+  updateEntityForm(entity: CustomerInfo) {
     this.isPublic = entity.additionalInfo && entity.additionalInfo.isPublic;
     this.entityForm.patchValue({title: entity.title});
-    this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
-    this.entityForm.patchValue({additionalInfo:
-        {homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null}});
-    this.entityForm.patchValue({additionalInfo:
-        {homeDashboardHideToolbar: entity.additionalInfo &&
-          isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
+    this.entityForm.patchValue({additionalInfo: {
+        description: entity.additionalInfo ? entity.additionalInfo.description : '',
+        allowWhiteLabeling: entity.additionalInfo
+        && isDefined(entity.additionalInfo.allowWhiteLabeling) ? entity.additionalInfo.allowWhiteLabeling : true,
+        homeDashboardId: entity.additionalInfo ? entity.additionalInfo.homeDashboardId : null,
+        homeDashboardHideToolbar: entity.additionalInfo &&
+        isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true
+      }});
+    this.entityForm.patchValue({customMenuId: entity.customMenuId});
   }
 
   onCustomerIdCopied(event) {
@@ -94,9 +157,5 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
-  }
-
-  edgesSupportEnabled() {
-    return this.authState.edgesSupportEnabled;
   }
 }

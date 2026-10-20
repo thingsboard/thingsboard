@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.alarm;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -44,6 +32,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
@@ -59,12 +48,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.ASSIGNED_TO_USER;
 import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.UNASSIGNED_BY_USER;
-import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.UNASSIGNED_FROM_DELETED_USER;
 
 @SpringJUnitConfig(DefaultTbAlarmService.class)
 class DefaultTbAlarmServiceTest {
@@ -87,6 +76,8 @@ class DefaultTbAlarmServiceTest {
     EntitiesVersionControlService vcService;
     @MockitoBean
     AccessControlService accessControlService;
+    @MockitoBean
+    EntityGroupService entityGroupService;
     @MockitoBean
     TenantService tenantService;
     @MockitoBean
@@ -123,26 +114,26 @@ class DefaultTbAlarmServiceTest {
     @Test
     void testAck() throws ThingsboardException {
         var alarm = new Alarm();
-        when(alarmSubscriptionService.acknowledgeAlarm(any(), any(), anyLong()))
+        when(alarmSubscriptionService.acknowledgeAlarm(any(), any(), any(), anyLong()))
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).alarm(new AlarmInfo()).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService).saveAlarmComment(any(), any(), any());
         verify(logEntityActionService).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_ACK), any());
-        verify(alarmSubscriptionService).acknowledgeAlarm(any(), any(), anyLong());
+        verify(alarmSubscriptionService).acknowledgeAlarm(any(), any(), any(), anyLong());
     }
 
     @Test
     void testClear() throws ThingsboardException {
         var alarm = new Alarm();
         alarm.setAcknowledged(true);
-        when(alarmSubscriptionService.clearAlarm(any(), any(), anyLong(), any()))
+        when(alarmSubscriptionService.clearAlarm(any(), any(), any(), anyLong(), any()))
                 .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).alarm(new AlarmInfo()).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService).saveAlarmComment(any(), any(), any());
         verify(logEntityActionService).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_CLEAR), any());
-        verify(alarmSubscriptionService).clearAlarm(any(), any(), anyLong(), any());
+        verify(alarmSubscriptionService).clearAlarm(any(), any(), any(), anyLong(), any());
     }
 
     @Test
@@ -157,21 +148,24 @@ class DefaultTbAlarmServiceTest {
 
         var user = new User();
 
-        when(alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId())).thenReturn(true);
+        when(alarmSubscriptionService.deleteAlarm(tenantId, alarmOriginator, alarm.getId())).thenReturn(true);
 
         // WHEN
         boolean actual = service.delete(alarm, user);
 
         assertThat(actual).isTrue();
         verify(logEntityActionService).logEntityAction(tenantId, alarmOriginator, alarm, alarm.getCustomerId(), ActionType.ALARM_DELETE, user, alarm.getId());
-        verify(alarmSubscriptionService).deleteAlarm(tenantId, alarm.getId());
+        verify(alarmSubscriptionService).deleteAlarm(tenantId, alarmOriginator, alarm.getId());
     }
 
     @Test
     void testDelete_deleteApiReturnsFalse_shouldNotLogActionAndReturnFalse() {
         // GIVEN
+        var alarmOriginator = new DeviceId(Uuids.timeBased());
+
         var alarm = new Alarm(new AlarmId(Uuids.timeBased()));
         alarm.setTenantId(tenantId);
+        alarm.setOriginator(alarmOriginator);
 
         var user = new User();
 
@@ -180,7 +174,7 @@ class DefaultTbAlarmServiceTest {
 
         assertThat(actual).isFalse();
         verifyNoInteractions(logEntityActionService);
-        verify(alarmSubscriptionService).deleteAlarm(tenantId, alarm.getId());
+        verify(alarmSubscriptionService).deleteAlarm(tenantId, alarmOriginator, alarm.getId());
     }
 
     @Test
@@ -196,7 +190,7 @@ class DefaultTbAlarmServiceTest {
 
         var exception = new RuntimeException("failed to delete alarm");
 
-        when(alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId())).thenThrow(exception);
+        when(alarmSubscriptionService.deleteAlarm(tenantId, alarmOriginator, alarm.getId())).thenThrow(exception);
 
         // WHEN-THEN
         assertThatThrownBy(() -> service.delete(alarm, user))
@@ -204,14 +198,14 @@ class DefaultTbAlarmServiceTest {
                 .hasMessage("failed to delete alarm");
 
         verify(logEntityActionService).logEntityAction(tenantId, new DeviceId(EntityId.NULL_UUID), ActionType.ALARM_DELETE, user, exception, alarm.getId());
-        verify(alarmSubscriptionService).deleteAlarm(tenantId, alarm.getId());
+        verify(alarmSubscriptionService).deleteAlarm(tenantId, alarmOriginator, alarm.getId());
     }
 
     @Test
     void testUnassignAlarm() throws ThingsboardException {
         AlarmInfo alarm = new AlarmInfo();
         alarm.setId(new AlarmId(UUID.randomUUID()));
-        when(alarmSubscriptionService.unassignAlarm(any(), any(), anyLong()))
+        when(alarmSubscriptionService.unassignAlarm(any(), any(), any(), anyLong()))
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).alarm(alarm).build());
 
         User user = new User();
@@ -234,30 +228,31 @@ class DefaultTbAlarmServiceTest {
     }
 
     @Test
-    void testUnassignDeletedUserAlarms() throws ThingsboardException {
-        AlarmInfo alarm = new AlarmInfo();
-        alarm.setId(new AlarmId(UUID.randomUUID()));
+    void testUnassignDeletedUserAlarmsByIds_resolvesOriginatorViaPlainAlarmLookup() {
+        var alarmId = new AlarmId(UUID.randomUUID());
+        var originator = new DeviceId(UUID.randomUUID());
+        var userId = new UserId(UUID.randomUUID());
+        var alarm = new Alarm(alarmId);
+        alarm.setTenantId(tenantId);
+        alarm.setOriginator(originator);
+        when(alarmSubscriptionService.findAlarmById(tenantId, alarmId)).thenReturn(alarm);
+        when(alarmSubscriptionService.unassignAlarm(eq(tenantId), eq(originator), eq(alarmId), anyLong()))
+                .thenReturn(AlarmApiCallResult.builder().successful(true).modified(false).build());
 
-        when(alarmSubscriptionService.unassignAlarm(any(), any(), anyLong()))
-                .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).alarm(alarm).build());
+        service.unassignDeletedUserAlarmsByIds(tenantId, userId, "John", List.of(alarmId.getId()), 100L);
 
-        User user = new User();
-        user.setEmail("testEmail@gmail.com");
-        user.setId(new UserId(UUID.randomUUID()));
-        service.unassignDeletedUserAlarms(tenantId, user.getId(), user.getTitle(), List.of(alarm.getUuidId()), System.currentTimeMillis());
+        verify(alarmSubscriptionService).unassignAlarm(tenantId, originator, alarmId, 100L);
+    }
 
-        ObjectNode commentNode = JacksonUtil.newObjectNode();
-        commentNode.put("text", String.format(UNASSIGNED_FROM_DELETED_USER.getText(), user.getTitle()));
-        commentNode.put("subtype", UNASSIGNED_FROM_DELETED_USER.name());
-        commentNode.put("userName", user.getTitle());
+    @Test
+    void testUnassignDeletedUserAlarmsByIds_skipsMissingAlarm() {
+        var alarmId = new AlarmId(UUID.randomUUID());
+        var userId = new UserId(UUID.randomUUID());
+        when(alarmSubscriptionService.findAlarmById(tenantId, alarmId)).thenReturn(null);
 
-        AlarmComment expectedAlarmComment = AlarmComment.builder()
-                .alarmId(alarm.getId())
-                .type(AlarmCommentType.SYSTEM)
-                .comment(commentNode)
-                .build();
+        service.unassignDeletedUserAlarmsByIds(tenantId, userId, "John", List.of(alarmId.getId()), 100L);
 
-        verify(alarmCommentService).saveAlarmComment(eq(alarm), eq(expectedAlarmComment), eq(null));
+        verify(alarmSubscriptionService, never()).unassignAlarm(any(), any(), any(), anyLong());
     }
 
 }

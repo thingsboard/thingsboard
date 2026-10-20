@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AliasFilterType, EntityFilters } from '@shared/models/alias.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { SortDirection } from '@angular/material/sort';
@@ -217,6 +204,47 @@ export function createDefaultFilterPredicate(valueType: EntityKeyValueType, comp
   return predicate;
 }
 
+export interface KeyFilterPredicateFormValue {
+  operation?: StringOperation | NumericOperation | BooleanOperation | ComplexOperation;
+  value?: FilterPredicateValue<string | number | boolean>;
+  ignoreCase?: boolean;
+  predicates?: KeyFilterPredicateInfo[];
+}
+
+export function toKeyFilterPredicate(type: FilterPredicateType, formValue: KeyFilterPredicateFormValue): KeyFilterPredicate {
+  switch (type) {
+    case FilterPredicateType.STRING:
+      return {
+        type: FilterPredicateType.STRING,
+        operation: formValue.operation as StringOperation,
+        value: formValue.value as FilterPredicateValue<string>,
+        ignoreCase: !!formValue.ignoreCase
+      };
+    case FilterPredicateType.NUMERIC:
+      return {
+        type: FilterPredicateType.NUMERIC,
+        operation: formValue.operation as NumericOperation,
+        value: formValue.value as FilterPredicateValue<number>
+      };
+    case FilterPredicateType.BOOLEAN:
+      return {
+        type: FilterPredicateType.BOOLEAN,
+        operation: formValue.operation as BooleanOperation,
+        value: formValue.value as FilterPredicateValue<boolean>
+      };
+    case FilterPredicateType.COMPLEX:
+      return {
+        type: FilterPredicateType.COMPLEX,
+        operation: formValue.operation as ComplexOperation,
+        predicates: formValue.predicates
+      };
+    default: {
+      const exhaustiveCheck: never = type;
+      throw new Error(`Unsupported filter predicate type: ${exhaustiveCheck}`);
+    }
+  }
+}
+
 export function getDynamicSourcesForAllowUser(allow: boolean): DynamicValueSourceType[] {
   const dynamicValueSourceTypes = [DynamicValueSourceType.CURRENT_TENANT,
     DynamicValueSourceType.CURRENT_CUSTOMER];
@@ -401,20 +429,21 @@ export interface FilterInfo {
   filter: string;
   editable: boolean;
   keyFilters: Array<KeyFilterInfo>;
+  keyFiltersOperation?: ComplexOperation;
 }
 
 export interface FiltersInfo {
   datasourceFilters: {[datasourceIndex: number]: FilterInfo};
 }
 
-export function keyFiltersToText(translate: TranslateService, datePipe: DatePipe, keyFilters: Array<KeyFilter>): string {
+export function keyFiltersToText(translate: TranslateService, datePipe: DatePipe, keyFilters: Array<KeyFilter>,
+                                  operation: ComplexOperation = ComplexOperation.AND): string {
   const filtersText = keyFilters.map(keyFilter =>
-      keyFilterToText(translate, datePipe, keyFilter,
-        keyFilters.length > 1 ? ComplexOperation.AND : undefined));
+      keyFilterToText(translate, datePipe, keyFilter, operation));
   let result: string;
   if (filtersText.length > 1) {
-    const andText = translate.instant('filter.operation.and');
-    result = filtersText.join(' <span class="tb-filter-complex-operation">' + andText + '</span> ');
+    const opText = translate.instant(complexOperationTranslationMap.get(operation));
+    result = filtersText.join(' <span class="tb-filter-complex-operation">' + opText + '</span> ');
   } else {
     result = filtersText[0];
   }
@@ -802,6 +831,7 @@ export const singleEntityFilterFromDeviceId = (deviceId: string): EntityFilter =
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
   keyFilters?: Array<KeyFilter>;
+  keyFiltersOperation?: ComplexOperation;
 }
 
 export interface AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
@@ -838,6 +868,19 @@ export interface EntityData {
 export interface AlarmData extends AlarmInfo {
   entityId: string;
   latest: {[entityKeyType: string]: {[key: string]: TsValue}};
+}
+
+export function getLatestDataValue(latest: {[entityKeyType: string]: {[key: string]: TsValue}},
+                                   entityKeyType: EntityKeyType, key: string, defaultValue?: string): string {
+  let value = defaultValue;
+  const fields = latest[entityKeyType];
+  if (fields) {
+    const tsValue = fields[key];
+    if (tsValue && isDefinedAndNotNull(tsValue.value)) {
+      value = tsValue.value;
+    }
+  }
+  return value;
 }
 
 export function entityPageDataChanged(prevPageData: PageData<EntityData>, nextPageData: PageData<EntityData>): boolean {
@@ -940,13 +983,15 @@ export const getFilterId = (filters: Filters, filterInfo: FilterInfo): string =>
     const newFilterName = createFilterName(filters, filterInfo.filter);
     newFilterId = guid();
     filters[newFilterId] = {id: newFilterId, filter: newFilterName,
-      keyFilters: filterInfo.keyFilters, editable: filterInfo.editable};
+      keyFilters: filterInfo.keyFilters, editable: filterInfo.editable,
+      keyFiltersOperation: filterInfo.keyFiltersOperation};
   }
   return newFilterId;
 }
 
 const isFilterEqual = (filter1: FilterInfo, filter2: FilterInfo): boolean => {
-  return isEqual(filter1.keyFilters, filter2.keyFilters);
+  return isEqual(filter1.keyFilters, filter2.keyFilters) &&
+    filter1.keyFiltersOperation === filter2.keyFiltersOperation;
 }
 
 const createFilterName = (filters: Filters, filter: string): string => {

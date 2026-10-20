@@ -1,0 +1,34 @@
+{
+  "type": "SCRIPT",
+  "name": "Save activity status",
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "6a35bc50-3a98-4169-8f1c-544bcc4d4076"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "active": {
+        "refEntityKey": {
+          "key": "active",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": "return {\n    ts: ctx.latestTs,\n    values: {\n        activityState: active\n    }\n}",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    }
+  }
+}

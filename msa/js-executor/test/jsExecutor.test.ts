@@ -1,22 +1,10 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JsExecutor } from '../api/jsExecutor';
+import { oauthBearerProvider } from '../queue/oAuthBearerProvider';
 
 // describe('js-executor') groups all cases under <testsuite name="js-executor">
 // in the JUnit XML so they show up under that suite in TeamCity's Tests tab,
@@ -78,6 +66,38 @@ test('non-sandbox path passes string args through unchanged', async () => {
     assert.equal(out.msgIsString, true);
     assert.equal(out.count, 3);
     assert.equal(out.first, 'hello');
+});
+
+test('oauthBearerProvider rejects missing client credentials', () => {
+    assert.throws(
+        () => oauthBearerProvider({ clientId: '', clientSecret: 'x', endpointUrl: 'https://idp/token', refreshThresholdMs: 60000 }),
+        /client_id, client_secret and endpoint_url/,
+    );
+    assert.throws(
+        () => oauthBearerProvider({ clientId: 'x', clientSecret: '', endpointUrl: 'https://idp/token', refreshThresholdMs: 60000 }),
+        /client_id, client_secret and endpoint_url/,
+    );
+    assert.throws(
+        () => oauthBearerProvider({ clientId: 'x', clientSecret: 'y', endpointUrl: '', refreshThresholdMs: 60000 }),
+        /client_id, client_secret and endpoint_url/,
+    );
+});
+
+test('oauthBearerProvider rejects non-numeric refresh threshold', () => {
+    assert.throws(
+        () => oauthBearerProvider({
+            clientId: 'x', clientSecret: 'y', endpointUrl: 'https://idp/token',
+            refreshThresholdMs: 'soon' as unknown as number,
+        }),
+        /refresh_threshold must be a non-negative number/,
+    );
+    assert.throws(
+        () => oauthBearerProvider({
+            clientId: 'x', clientSecret: 'y', endpointUrl: 'https://idp/token',
+            refreshThresholdMs: -1,
+        }),
+        /refresh_threshold must be a non-negative number/,
+    );
 });
 
 }); // describe('js-executor')

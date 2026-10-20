@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -69,6 +57,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
     private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
+    private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
+    private final SystemUpdateMsgHandler systemUpdateMsgHandler;
 
     private final ConcurrentMap<QueueKey, TbRuleEngineQueueConsumerManager> consumers = new ConcurrentHashMap<>();
 
@@ -83,11 +73,15 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                                               TbApiUsageStateService apiUsageStateService,
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
-                                              JwtSettingsService jwtSettingsService) {
+                                              JwtSettingsService jwtSettingsService,
+                                              TbMsgPackProcessingContextFactory packProcessingContextFactory,
+                                              SystemUpdateMsgHandler systemUpdateMsgHandler) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
+        this.packProcessingContextFactory = packProcessingContextFactory;
+        this.systemUpdateMsgHandler = systemUpdateMsgHandler;
     }
 
     @Override
@@ -190,6 +184,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
         } else if (nfMsg.getQueueDeleteMsgsCount() > 0) {
             deleteQueues(nfMsg.getQueueDeleteMsgsList());
             callback.onSuccess();
+        } else if (nfMsg.hasSystemUpdateMsg()) {
+            // Must stay ahead of the trailing else, which would ack the signal and drop it; pinned by SystemUpdateMsgHandlingTest.
+            systemUpdateMsgHandler.handle(nfMsg.getSystemUpdateMsg(), callback);
         } else {
             log.trace("Received notification with missing handler");
             callback.onSuccess();
@@ -253,6 +250,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
+                .packProcessingContextFactory(packProcessingContextFactory)
                 .build();
         consumers.put(queueKey, consumer);
         consumer.init(queue);

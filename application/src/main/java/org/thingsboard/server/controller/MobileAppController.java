@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,6 +25,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.Views;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.LoginMobileInfo;
 import org.thingsboard.server.common.data.mobile.UserMobileInfo;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
@@ -48,18 +37,19 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.selfregistration.SignUpSelfRegistrationParams;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.mobile.TbMobileAppService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.permission.Resource.MOBILE_APP;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -84,10 +74,11 @@ public class MobileAppController extends BaseController {
                                               @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
                                               @RequestParam PlatformType platform) {
         List<OAuth2ClientLoginInfo> oauth2Clients = oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(pkgName, platform);
+        SignUpSelfRegistrationParams signUpParams = getSignUpParams(pkgName, platform);
         MobileApp mobileApp = mobileAppService.findMobileAppByPkgNameAndPlatformType(pkgName, platform);
         StoreInfo storeInfo = Optional.ofNullable(mobileApp).map(MobileApp::getStoreInfo).orElse(null);
         MobileAppVersionInfo versionInfo = Optional.ofNullable(mobileApp).map(MobileApp::getVersionInfo).orElse(null);
-        return new LoginMobileInfo(oauth2Clients, storeInfo, versionInfo);
+        return new LoginMobileInfo(oauth2Clients, signUpParams, storeInfo, versionInfo);
     }
 
     @ApiOperation(value = "Get user mobile app basic info (getUserMobileInfo)", notes = AVAILABLE_FOR_ANY_AUTHORIZED_USER)
@@ -100,7 +91,7 @@ public class MobileAppController extends BaseController {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         HomeDashboardInfo homeDashboardInfo = securityUser.isSystemAdmin() ? null : getHomeDashboardInfo(securityUser, user.getAdditionalInfo());
-        MobileAppBundle mobileAppBundle = mobileAppBundleService.findMobileAppBundleByPkgNameAndPlatform(securityUser.getTenantId(), pkgName, platform);
+        MobileAppBundle mobileAppBundle = mobileAppBundleService.findMobileAppBundleByPkgNameAndPlatform(securityUser.getTenantId(), pkgName, platform, false);
         MobileApp mobileApp = mobileAppService.findMobileAppByPkgNameAndPlatformType(pkgName, platform);
         StoreInfo storeInfo = Optional.ofNullable(mobileApp).map(MobileApp::getStoreInfo).orElse(null);
         MobileAppVersionInfo versionInfo = Optional.ofNullable(mobileApp).map(MobileApp::getVersionInfo).orElse(null);
@@ -119,7 +110,7 @@ public class MobileAppController extends BaseController {
             @Parameter(description = "A JSON value representing the Mobile Application.", required = true)
             @RequestBody @Valid MobileApp mobileApp) throws Exception {
         mobileApp.setTenantId(getTenantId());
-        checkEntity(mobileApp.getId(), mobileApp, Resource.MOBILE_APP);
+        checkEntity(mobileApp.getId(), mobileApp, MOBILE_APP);
         return tbMobileAppService.save(mobileApp, getCurrentUser());
     }
 
@@ -138,6 +129,7 @@ public class MobileAppController extends BaseController {
                                                    @RequestParam(required = false) String sortProperty,
                                                    @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), MOBILE_APP, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return mobileAppService.findMobileAppsByTenantId(getTenantId(), platformType, pageLink);
     }
@@ -158,6 +150,14 @@ public class MobileAppController extends BaseController {
         MobileAppId mobileAppId = new MobileAppId(id);
         MobileApp mobileApp = checkMobileAppId(mobileAppId, Operation.DELETE);
         tbMobileAppService.delete(mobileApp, getCurrentUser());
+    }
+
+    private SignUpSelfRegistrationParams getSignUpParams(String pkgName, PlatformType platform) {
+        MobileAppBundle mobileAppBundle = mobileAppBundleService.findMobileAppBundleByPkgNameAndPlatform(TenantId.SYS_TENANT_ID, pkgName, platform,false);
+        if (mobileAppBundle == null || mobileAppBundle.getSelfRegistrationParams() == null || !mobileAppBundle.getSelfRegistrationParams().getEnabled()) {
+            return null;
+        }
+        return mobileAppBundle.getSelfRegistrationParams().toSignUpSelfRegistrationParams(platform);
     }
 
     private JsonNode getVisiblePages(MobileAppBundle mobileAppBundle) throws JsonProcessingException {

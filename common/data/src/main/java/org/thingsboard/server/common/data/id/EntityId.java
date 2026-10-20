@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,20 +19,32 @@ import java.util.UUID;
         discriminatorProperty = "entityType",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "ADMIN_SETTINGS", schema = AdminSettingsId.class),
+                @DiscriminatorMapping(value = "AGENT", schema = AgentId.class),
+                @DiscriminatorMapping(value = "AGENT_APPLICATION", schema = AgentApplicationId.class),
+                @DiscriminatorMapping(value = "AGENT_APP_EVENT", schema = AgentAppEventId.class),
+                @DiscriminatorMapping(value = "AGENT_APP_PROFILE", schema = AgentAppProfileId.class),
+                @DiscriminatorMapping(value = "AGENT_APP_UNIT", schema = AgentAppUnitId.class),
+                @DiscriminatorMapping(value = "AGENT_BULK_ACTION", schema = AgentBulkActionId.class),
+                @DiscriminatorMapping(value = "AGENT_PROFILE", schema = AgentProfileId.class),
                 @DiscriminatorMapping(value = "AI_MODEL", schema = AiModelId.class),
                 @DiscriminatorMapping(value = "ALARM", schema = AlarmId.class),
                 @DiscriminatorMapping(value = "API_KEY", schema = ApiKeyId.class),
                 @DiscriminatorMapping(value = "API_USAGE_STATE", schema = ApiUsageStateId.class),
                 @DiscriminatorMapping(value = "ASSET", schema = AssetId.class),
                 @DiscriminatorMapping(value = "ASSET_PROFILE", schema = AssetProfileId.class),
+                @DiscriminatorMapping(value = "BLOB_ENTITY", schema = BlobEntityId.class),
                 @DiscriminatorMapping(value = "CALCULATED_FIELD", schema = CalculatedFieldId.class),
+                @DiscriminatorMapping(value = "CONVERTER", schema = ConverterId.class),
                 @DiscriminatorMapping(value = "CUSTOMER", schema = CustomerId.class),
                 @DiscriminatorMapping(value = "DASHBOARD", schema = DashboardId.class),
                 @DiscriminatorMapping(value = "DEVICE", schema = DeviceId.class),
                 @DiscriminatorMapping(value = "DEVICE_PROFILE", schema = DeviceProfileId.class),
                 @DiscriminatorMapping(value = "DOMAIN", schema = DomainId.class),
                 @DiscriminatorMapping(value = "EDGE", schema = EdgeId.class),
+                @DiscriminatorMapping(value = "ENTITY_GROUP", schema = EntityGroupId.class),
                 @DiscriminatorMapping(value = "ENTITY_VIEW", schema = EntityViewId.class),
+                @DiscriminatorMapping(value = "GROUP_PERMISSION", schema = GroupPermissionId.class),
+                @DiscriminatorMapping(value = "INTEGRATION", schema = IntegrationId.class),
                 @DiscriminatorMapping(value = "JOB", schema = JobId.class),
                 @DiscriminatorMapping(value = "MOBILE_APP", schema = MobileAppId.class),
                 @DiscriminatorMapping(value = "MOBILE_APP_BUNDLE", schema = MobileAppBundleId.class),
@@ -57,9 +57,14 @@ import java.util.UUID;
                 @DiscriminatorMapping(value = "OTA_PACKAGE", schema = OtaPackageId.class),
                 @DiscriminatorMapping(value = "QUEUE", schema = QueueId.class),
                 @DiscriminatorMapping(value = "QUEUE_STATS", schema = QueueStatsId.class),
+                @DiscriminatorMapping(value = "REPORT", schema = ReportId.class),
+                @DiscriminatorMapping(value = "REPORT_TEMPLATE", schema = ReportTemplateId.class),
+                @DiscriminatorMapping(value = "ROLE", schema = RoleId.class),
                 @DiscriminatorMapping(value = "RPC", schema = RpcId.class),
                 @DiscriminatorMapping(value = "RULE_CHAIN", schema = RuleChainId.class),
                 @DiscriminatorMapping(value = "RULE_NODE", schema = RuleNodeId.class),
+                @DiscriminatorMapping(value = "SCHEDULER_EVENT", schema = SchedulerEventId.class),
+                @DiscriminatorMapping(value = "SECRET", schema = SecretId.class),
                 @DiscriminatorMapping(value = "TB_RESOURCE", schema = TbResourceId.class),
                 @DiscriminatorMapping(value = "TENANT", schema = TenantId.class),
                 @DiscriminatorMapping(value = "TENANT_PROFILE", schema = TenantProfileId.class),

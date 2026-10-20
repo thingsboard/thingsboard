@@ -1,0 +1,56 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="opcSubscriptionForm">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>integration.subscription-tags</legend>
+    <div class="flex flex-col gap-2">
+      @for (subscriptionTag of opcSubscriptionArrayControls; track subscriptionTag; let i = $index) {
+        <div class="flex flex-1 flex-row items-center justify-start gap-2"
+             [formGroup]="subscriptionTag">
+          <mat-form-field appearance="outline" class="mat-block flex-1" subscriptSizing="dynamic">
+            <mat-label translate>integration.key</mat-label>
+            <input matInput required formControlName="key">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="mat-block flex-1" subscriptSizing="dynamic">
+            <mat-label translate>integration.path</mat-label>
+            <input matInput required formControlName="path">
+          </mat-form-field>
+          <mat-checkbox [aria-label]="'integration.required' | translate" formControlName="required">
+            {{ 'integration.required' | translate }}
+          </mat-checkbox>
+          @if (!disabled) {
+            <button mat-icon-button
+                    type="button"
+                    color="primary"
+                    (click)="removeSubscriptionTag(i)"
+                    [class.invisibility]="opcSubscriptionArrayControls.length === 1"
+                    [matTooltip]="'integration.remove-subscription-tag' | translate"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (!opcSubscriptionArray.length) {
+      <div [class.disabled]="disabled" class="no-data-found flex items-center justify-center"
+            translate>
+        integration.add-subscription-tag-prompt
+      </div>
+    }
+    @if (!disabled) {
+      <button mat-stroked-button color="primary"
+              type="button"
+              class="mt-4"
+              (click)="addSubscriptionTag()"
+              [matTooltip]="'integration.add-subscription-tag' | translate"
+              matTooltipPosition="above">
+        <span translate>integration.add-subscription-tag</span>
+      </button>
+    }
+  </fieldset>
+</section>

@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-drop-list tb-report-drop-block"
+  [class]="'tb-align-'+verticalAlignment"
+  [style.padding-right.pt]="paddingRight"
+  [style.padding-left.pt]="paddingLeft"
+  [style.min-height.px]="reportComponentHeight"
+  [cdkDropListData]="components"
+  [cdkDropListConnectedTo]="context.dragDropCtx.dropLists"
+  [cdkDropListEnterPredicate]="allowDropPredicate"
+  cdkDropListSortingDisabled
+  cdkDropListOrientation="horizontal"
+  cdkDropListAutoScrollStep="20"
+  (cdkDropListDropped)="componentDrop($event)"
+  (cdkDropListEntered)="dropListEnter($event)"
+  (cdkDropListExited)="dropListExit($event)"
+  cdkDropList>
+  @if (showNoReportComponent) {
+    <div class="tb-no-report-component"
+      [style.right.pt]="paddingRight"
+      [style.left.pt]="paddingLeft"
+      >
+      <div translate class="p-4 text-center">
+        report-template.drop-report-component
+      </div>
+    </div>
+  }
+  @for (item of components; track item) {
+    <div cdkDrag class="tb-draggable tb-report-component-draggable"
+      #reportComponentDrag
+      [class.!hidden]="componentEntering"
+      [cdkDragData]="item"
+      (cdkDragMoved)="dragMoved($event)"
+      (cdkDragReleased)="dragReleased($event)"
+      (cdkDragStarted)="componentDragStarted($event)"
+      (cdkDragEnded)="componentDragEnded()">
+      <tb-report-component [reportComponent]="item"
+        innerComponent
+        [selected]="selected"
+        [context]="context"
+        [format]="format"
+        [width]="reportComponentDrag.offsetWidth"
+        [parentScale]="scale"
+        (edit)="onComponentEdit(item)"
+      (remove)="componentRemove(item)"></tb-report-component>
+    </div>
+  }
+</div>

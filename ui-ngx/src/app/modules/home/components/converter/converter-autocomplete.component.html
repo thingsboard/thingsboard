@@ -1,0 +1,76 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectConverterFormGroup" class="mat-block" [appearance]="appearance">
+  <mat-label>{{ labelText | translate }}</mat-label>
+  <input matInput type="text"
+    #converterInput
+    formControlName="entity"
+    (focusin)="onFocus()"
+    [required]="required"
+    [matAutocomplete]="entityAutocomplete"
+    [class.!hidden]="showDetailsPageLink && disabled && selectConverterFormGroup.get('entity').value">
+  @if (showDetailsPageLink && selectConverterFormGroup.get('entity').value && disabled) {
+    <a aria-label="Open converter" [routerLink]=converterURL>
+      {{ displayEntityFn(selectConverterFormGroup.get('entity').value) }}
+    </a>
+  }
+  @if (selectConverterFormGroup.get('entity').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  @if (selectConverterFormGroup.get('entity').value?.id && !disabled && addNewConverter && (resource.CONVERTER | hasGenericPermission: operation.WRITE)) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Edit"
+      matTooltip="{{ 'converter.edit' | translate }}"
+      matTooltipPosition="above"
+      (click)="openConverterDialog($event, true)">
+      <mat-icon class="material-icons">edit</mat-icon>
+    </button>
+  }
+  @if (!selectConverterFormGroup.get('entity').value && !disabled && addNewConverter && (resource.CONVERTER | hasGenericPermission: operation.WRITE)) {
+    <button
+      type="button"
+      mat-button color="primary" matSuffix
+      (click)="openConverterDialog($event, false, searchText)">
+      <span style="white-space: nowrap">{{'entity.create-new' | translate}}</span>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete"
+    #entityAutocomplete="matAutocomplete"
+    [displayWith]="displayEntityFn">
+    @for(entity of filteredEntities | async; track entity.id.id) {
+      <mat-option [value]="entity"><span [innerHTML]="entity.name | highlight:searchText:true"></span></mat-option>
+      } @empty {
+      <mat-option [value]="null" class="tb-not-found">
+        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+          @if(!textIsNotEmpty(searchText) || !addNewConverter) {
+            <span translate>converter.no-converters-found</span>
+          } @else {
+            <span>
+              {{ 'converter.no-converters-matching' | translate:{entity: (searchText | truncate: true: 6: &apos;...&apos;)} }}
+            </span>
+            @if ((resource.CONVERTER | hasGenericPermission: operation.WRITE)) {
+              <span>
+                <a translate (click)="openConverterDialog($event, false, searchText)">converter.create-new-converter</a>
+              </span>
+            }
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (selectConverterFormGroup.get('entity').hasError('required')) {
+    <mat-error>
+      {{ requiredText | translate }}
+    </mat-error>
+  }
+</mat-form-field>

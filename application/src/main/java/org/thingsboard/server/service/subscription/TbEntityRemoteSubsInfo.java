@@ -1,21 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -37,12 +28,13 @@ public class TbEntityRemoteSubsInfo {
     @Getter
     private final Map<String, TbSubscriptionsInfo> subs = new ConcurrentHashMap<>(); // By service ID
 
-    public boolean updateAndCheckIsEmpty(String serviceId, TbEntitySubEvent event) {
+    public TbEntitySubsUpdateInfo updateAndCheckIsEmpty(String serviceId, TbEntitySubEvent event) {
         var current = subs.get(serviceId);
         if (current != null && current.seqNumber > event.getSeqNumber()) {
             log.warn("[{}][{}] Duplicate subscription event received. Current: {}, Event: {}",
                     tenantId, entityId, current, event.getInfo());
-            return false;
+            boolean isDuplicate = true;
+            return new TbEntitySubsUpdateInfo(isDuplicate, isEmpty());
         }
         switch (event.getType()) {
             case CREATED:
@@ -52,27 +44,35 @@ public class TbEntityRemoteSubsInfo {
                 var newSubInfo = event.getInfo();
                 if (newSubInfo.isEmpty()) {
                     subs.remove(serviceId);
-                    return isEmpty();
                 } else {
                     subs.put(serviceId, newSubInfo);
                 }
                 break;
             case DELETED:
                 subs.remove(serviceId);
-                return isEmpty();
+                break;
         }
-        return false;
+        boolean isDuplicate = false;
+        return new TbEntitySubsUpdateInfo(isDuplicate, isEmpty());
     }
 
-    public boolean removeAndCheckIsEmpty(String serviceId) {
-        if (subs.remove(serviceId) != null) {
-            return subs.isEmpty();
-        } else {
-            return false;
+    public TbEntitySubsUpdateInfo removeAndGetUpdateInfo(String serviceId) {
+        if (subs.remove(serviceId) == null) {
+            return null;
         }
+        return new TbEntitySubsUpdateInfo(false, isEmpty());
     }
 
     public boolean isEmpty() {
         return subs.isEmpty();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TbEntitySubsUpdateInfo {
+
+        private boolean isDuplicate;
+        private boolean isEmpty;
     }
 }

@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-attribute-kv-table {
+    span.no-data-found {
+      position: relative;
+      display: flex;
+      height: 40px;
+
+      &.disabled {
+        color: rgba(0, 0, 0, .38);
+      }
+
+      &.required {
+        color: rgb(221, 44, 0);
+      }
+    }
+  }
+}

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, ElementRef, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -39,6 +26,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import printTemplate from '@home/pages/security/authentication-dialog/backup-code-print-template.raw';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { mergeMap, tap } from 'rxjs/operators';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 enum ForceTwoFAState {
@@ -67,6 +55,8 @@ enum BackupCodeState {
     standalone: false
 })
 export class ForceTwoFactorAuthLoginComponent extends PageComponent implements OnInit, OnDestroy {
+
+  @HostBinding('class') class = 'tb-custom-css';
 
   TwoFactorAuthProviderType = TwoFactorAuthProviderType;
   providersData = twoFactorAuthProvidersLoginData;
@@ -106,7 +96,8 @@ export class ForceTwoFactorAuthLoginComponent extends PageComponent implements O
               private importExportService: ImportExportService,
               public dialog: MatDialog,
               public dialogService: DialogService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              public wl: WhiteLabelingService) {
     super(store);
   }
 

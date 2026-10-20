@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.customerSmoke;
 
 import io.qameta.allure.Description;
@@ -26,7 +14,7 @@ import org.testng.annotations.Test;
 import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
 import org.thingsboard.server.msa.ui.pages.CustomerPageHelper;
 import org.thingsboard.server.msa.ui.pages.LoginPageHelper;
-import org.thingsboard.server.msa.ui.pages.SideBarMenuViewElements;
+import org.thingsboard.server.msa.ui.pages.SideBarMenuViewHelper;
 
 import static org.thingsboard.server.msa.ui.base.AbstractBasePage.random;
 import static org.thingsboard.server.msa.ui.utils.Const.EMPTY_CUSTOMER_MESSAGE;
@@ -35,14 +23,14 @@ import static org.thingsboard.server.msa.ui.utils.Const.SAME_NAME_WARNING_CUSTOM
 
 public class CreateCustomerTest extends AbstractDriverBaseTest {
 
-    private SideBarMenuViewElements sideBarMenuView;
+    private SideBarMenuViewHelper sideBarMenuView;
     private CustomerPageHelper customerPage;
     private String customerName;
 
     @BeforeClass
     public void login() {
         new LoginPageHelper(driver).authorizationTenant();
-        sideBarMenuView = new SideBarMenuViewElements(driver);
+        sideBarMenuView = new SideBarMenuViewHelper(driver);
         customerPage = new CustomerPageHelper(driver);
     }
 
@@ -61,7 +49,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     public void createCustomer() {
         String customerName = ENTITY_NAME + random();
 
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.plusBtn().click();
         customerPage.addCustomerViewEnterName(customerName);
         customerPage.addBtnC().click();
@@ -82,7 +70,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
         String email = "email@mail.com";
         String number = "12015550123";
 
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.plusBtn().click();
         customerPage.addCustomerViewEnterName(customerName);
         customerPage.selectCountryAddEntityView();
@@ -123,10 +111,12 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description("Add customer without the name")
     public void createCustomerWithoutName() {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.plusBtn().click();
+        customerPage.addBtnC().click();
 
-        Assert.assertFalse(customerPage.addBtnV().isEnabled());
+        Assert.assertTrue(customerPage.addEntityView().isDisplayed(), "Add entity view steel open");
+        Assert.assertEquals(customerPage.errorMessage().getText(), "Title is required.", "Error message");
     }
 
     @Epic("Customers smoke tests")
@@ -134,7 +124,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description("Create customer only with spase in name")
     public void createCustomerWithOnlySpace() {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.plusBtn().click();
         customerPage.addCustomerViewEnterName(Keys.SPACE);
         customerPage.addBtnC().click();
@@ -151,7 +141,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 20, groups = "smoke")
     @Description("Create a customer with the same name")
     public void createCustomerSameName() {
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.setCustomerName();
         String customerName = customerPage.getCustomerName();
         customerPage.plusBtn().click();
@@ -172,7 +162,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     public void createCustomerWithoutRefresh() {
         String customerName = ENTITY_NAME + random();
 
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.plusBtn().click();
         customerPage.addCustomerViewEnterName(customerName);
         customerPage.addBtnC().click();
@@ -187,9 +177,9 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
     @Test(priority = 40, groups = "smoke")
     @Description("Go to customer documentation page")
     public void documentation() {
-        String urlPath = "docs/user-guide/ui/customers/";
+        String urlPath = "/docs/pe/user-guide/ui/customers/";
 
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.setCustomerName();
         customerPage.customer(customerPage.getCustomerName()).click();
         customerPage.goToHelpPage();
@@ -205,7 +195,7 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
         String customerName = ENTITY_NAME;
         String number = "12015550123";
 
-        sideBarMenuView.customerBtn().click();
+        sideBarMenuView.goToAllCustomers();
         customerPage.plusBtn().click();
         customerPage.addCustomerViewEnterName(customerName);
         customerPage.enterText(customerPage.phoneNumberAddEntityView(), number);

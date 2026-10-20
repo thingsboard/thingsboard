@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, Inject, SkipSelf } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -37,9 +24,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { deepClone, isUndefined } from '@core/utils';
-import { Filter, Filters, KeyFilterInfo } from '@shared/models/query/query.models';
+import { ComplexOperation, Filter, Filters, KeyFilterInfo } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import {
+  AlarmTableReportComponentConfig,
+  DataReportComponentConfig,
+  ReportComponentConfig,
+  ReportComponentType
+} from '@shared/models/report-component.models';
+import { reportComponentTypesData } from '@home/pages/reporting/template/components/report-component.models';
+import { MatTable } from '@angular/material/table';
 
 export interface FiltersDialogData {
   filters: Filters;
@@ -49,6 +44,9 @@ export interface FiltersDialogData {
   disableAdd?: boolean;
   singleFilter?: Filter;
   customTitle?: string;
+  disableUserEdit?: boolean;
+  reportMode?: boolean;
+  reportComponents?:  ReportComponentConfig[];
 }
 
 @Component({
@@ -61,14 +59,19 @@ export interface FiltersDialogData {
 export class FiltersDialogComponent extends DialogComponent<FiltersDialogComponent, Filters>
   implements ErrorStateMatcher {
 
+  @ViewChild(MatTable) table: MatTable<Filter>;
+
   title: string;
   disableAdd: boolean;
+  disableUserEdit: boolean;
 
   filterToWidgetsMap: {[filterId: string]: Array<string>} = {};
 
   filterNames: Set<string> = new Set<string>();
 
   filtersFormGroup: UntypedFormGroup;
+
+  displayedColumns: string[];
 
   submitted = false;
 
@@ -86,6 +89,8 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
     super(store, router, dialogRef);
     this.title = data.customTitle ? data.customTitle : 'filter.filters';
     this.disableAdd = this.data.disableAdd;
+    this.disableUserEdit = this.data.disableUserEdit;
+    this.displayedColumns = this.disableUserEdit ? ['filter', 'actions'] : ['filter', 'editable', 'actions'];
 
     if (data.widgets) {
       let widgetsTitleList: Array<string>;
@@ -112,10 +117,32 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         });
       }
     }
+
+    if(data.reportMode && data.reportComponents.length) {
+      let componentsTitleList: Array<string>;
+      this.data.reportComponents.forEach((component) => {
+        const datasources = component.type === ReportComponentType.ALARM_TABLE ? [(component as AlarmTableReportComponentConfig).alarmSource] : (component as DataReportComponentConfig).dataSources;
+        if (Array.isArray(datasources) && datasources.length) {
+          datasources.forEach((datasource) => {
+            if (datasource.filterId) {
+              componentsTitleList = this.filterToWidgetsMap[datasource.filterId];
+              if (!componentsTitleList) {
+                componentsTitleList = [];
+                this.filterToWidgetsMap[datasource.filterId] = componentsTitleList;
+              }
+              if (!componentsTitleList.includes(reportComponentTypesData.getReportComponentTypeData(component.type, component.subType).title)) {
+                componentsTitleList.push(reportComponentTypesData.getReportComponentTypeData(component.type, component.subType).title);
+              }
+            }
+          });
+        }
+      });
+    }
+
     const filterControls: Array<AbstractControl> = [];
     for (const filterId of Object.keys(this.data.filters)) {
       const filter = this.data.filters[filterId];
-      if (isUndefined(filter.editable)) {
+      if (!this.disableUserEdit && isUndefined(filter.editable)) {
         filter.editable = true;
       }
       this.filterNames.add(filter.filter);
@@ -132,8 +159,11 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       id: [filterId],
       filter: [filter ? filter.filter : null, [Validators.required]],
       keyFilters: [filter ? filter.keyFilters : [], [Validators.required]],
-      editable: [filter ? filter.editable : true]
+      keyFiltersOperation: [filter?.keyFiltersOperation]
     });
+    if (!this.disableUserEdit) {
+      filterFormControl.addControl('editable', this.fb.control(filter ? filter.editable : true));
+    }
     return filterFormControl;
   }
 
@@ -154,9 +184,10 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
     if (widgetsTitleList) {
       let widgetsListHtml = '';
       for (const widgetTitle of widgetsTitleList) {
-        widgetsListHtml += '<br/>\'' + widgetTitle + '\'';
+        widgetsListHtml += '<br/>\'' + this.translate.instant(widgetTitle) + '\'';
       }
-      const message = this.translate.instant('filter.unable-delete-filter-text',
+      const messageKey = this.data.reportMode ? 'filter.unable-delete-filter-text-components' : 'filter.unable-delete-filter-text';
+      const message = this.translate.instant(messageKey,
         {filter: filter.filter, widgetsList: widgetsListHtml});
       this.dialogs.alert(this.translate.instant('filter.unable-delete-filter-title'),
         message, this.translate.instant('action.close'), true);
@@ -165,6 +196,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       this.filterNames.delete(filter.filter);
       this.filtersFormGroup.markAsDirty();
     }
+    this.table.renderRows();
   }
 
   private getNextDuplicatedName(filterName: string): string {
@@ -191,6 +223,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         insert(index + 1, this.createFilterFormControl(duplicatedFilter.id, duplicatedFilter));
       this.filterNames.add(duplicatedFilter.filter);
     }
+    this.table.renderRows();
   }
 
   public addFilter() {
@@ -215,6 +248,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd,
+        disableUserEdit: this.disableUserEdit,
         filters: filtersArray,
         filter: isAdd ? null : deepClone(filter)
       }
@@ -223,11 +257,15 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         if (isAdd) {
           (this.filtersFormGroup.get('filters') as UntypedFormArray)
             .push(this.createFilterFormControl(result.id, result));
+          this.table.renderRows();
         } else {
           const filterFormControl = (this.filtersFormGroup.get('filters') as UntypedFormArray).at(index);
           filterFormControl.get('filter').patchValue(result.filter);
-          filterFormControl.get('editable').patchValue(result.editable);
           filterFormControl.get('keyFilters').patchValue(result.keyFilters);
+          filterFormControl.get('keyFiltersOperation').patchValue(result.keyFiltersOperation);
+          if (!this.disableUserEdit) {
+            filterFormControl.get('editable').patchValue(result.editable);
+          }
         }
         this.filterNames.add(result.filter);
         this.filtersFormGroup.markAsDirty();
@@ -252,7 +290,8 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
       const filterId: string = filterValue.id;
       const filter: string = filterValue.filter;
       const keyFilters: Array<KeyFilterInfo> = filterValue.keyFilters;
-      const editable: boolean = filterValue.editable;
+      const editable: boolean = !this.disableUserEdit ? filterValue.editable : false;
+      const keyFiltersOperation: ComplexOperation = filterValue.keyFiltersOperation;
       if (uniqueFilterList[filter]) {
         valid = false;
         message = this.translate.instant('filter.duplicate-filter-error', {filter});
@@ -263,7 +302,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         break;
       } else {
         uniqueFilterList[filter] = filter;
-        filters[filterId] = {id: filterId, filter, keyFilters, editable};
+        filters[filterId] = {id: filterId, filter, keyFilters, editable, keyFiltersOperation};
       }
     }
     if (valid) {

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, Input, OnInit, Optional } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -42,7 +29,8 @@ import {
   chartShapeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
+import { getSourceTbUnitSymbol, isNotEmptyTbUnits, TbUnit } from '@shared/models/unit.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-time-series-chart-line-settings',
@@ -85,6 +73,20 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
   @Input()
   chartType: TimeSeriesChartType;
 
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
+
+  @Input()
+  @coerceBoolean()
+  hideFillSettings = false;
+
+  @Input()
+  decimals: number;
+
+  @Input()
+  units: string;
+
   private modelValue: LineSeriesSettings;
 
   private propagateChange = null;
@@ -92,7 +94,7 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
   public lineSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private dataKeyConfigComponent: DataKeyConfigComponent,
+              @Optional() private dataKeyConfigComponent: DataKeyConfigComponent,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
   }
@@ -113,9 +115,11 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
       enablePointLabelBackground: [null, []],
       pointLabelBackground: [null, []],
       pointShape: [null, []],
-      pointSize: [null, [Validators.min(0)]],
-      fillAreaSettings: [null, []]
+      pointSize: [null, [Validators.min(0)]]
     });
+    if (!this.hideFillSettings) {
+      this.lineSettingsFormGroup.addControl('fillAreaSettings', this.fb.control([null, []]));
+    }
     this.lineSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -215,11 +219,18 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
   }
 
   private _pointLabelPreviewFn(): string {
-    const dataKey = this.dataKeyConfigComponent.modelValue;
-    const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
-    const units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : widgetConfig.config.units;
-    const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
-      (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
+    let units: TbUnit;
+    let decimals: number;
+    if (this.dataKeyConfigComponent) {
+      const dataKey = this.dataKeyConfigComponent.modelValue;
+      const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
+      units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : widgetConfig.config.units;
+      decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
+        (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
+    } else {
+      units = this.units;
+      decimals = this.decimals;
+    }
     return formatValue(22, decimals, getSourceTbUnitSymbol(units), false);
   }
 }

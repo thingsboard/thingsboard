@@ -1,25 +1,16 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.mqtt;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -33,27 +24,51 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttPubAckMessage;
+import io.netty.handler.codec.mqtt.MqttPubReplyMessageVariableHeader;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttReasonCodes.PubAck;
+import io.netty.handler.codec.mqtt.MqttReasonCodes.PubComp;
+import io.netty.handler.codec.mqtt.MqttReasonCodes.PubRec;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.mqtt.MqttOrderedAcknowledgementCtx.MqttMsgWrapper;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> {
 
+    private final AtomicLong publishMsgCount = new AtomicLong(0);
+
+    private final boolean backPressureEnabled;
+    private final int highWatermark;
+    private final int lowWatermark;
+
     private final MqttClientImpl client;
     private final Promise<MqttConnectResult> connectFuture;
+    private final MqttOrderedAcknowledgementCtx mqttOrderedAcknowledgementCtxQoS1;
+    private final MqttOrderedAcknowledgementCtx mqttOrderedAcknowledgementCtxQoS2;
 
     MqttChannelHandler(MqttClientImpl client, Promise<MqttConnectResult> connectFuture) {
         this.client = client;
         this.connectFuture = connectFuture;
+        this.backPressureEnabled = client.getClientConfig().isBackPressureEnabled();
+        this.highWatermark = client.getClientConfig().getBackPressureHighWatermark();
+        this.lowWatermark = client.getClientConfig().getBackPressureLowWatermark();
+        MqttVersion mqttVersion = client.getClientConfig().getProtocolVersion();
+        this.mqttOrderedAcknowledgementCtxQoS1 = new MqttOrderedAcknowledgementCtx(client.getClientConfig().getClientId(), mqttVersion, MqttMessageType.PUBACK);
+        this.mqttOrderedAcknowledgementCtxQoS2 = new MqttOrderedAcknowledgementCtx(client.getClientConfig().getClientId(), mqttVersion, MqttMessageType.PUBREC);
     }
 
     @Override
@@ -120,7 +135,6 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                 this.client.getClientConfig().getUsername(),
                 this.client.getClientConfig().getPassword() != null ? this.client.getClientConfig().getPassword().getBytes(CharsetUtil.UTF_8) : null
         );
-        log.debug("{} Sending CONNECT", client.getClientConfig().getOwnerId());
         ctx.channel().writeAndFlush(new MqttConnectMessage(fixedHeader, variableHeader, payload));
     }
 
@@ -130,43 +144,57 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     ListenableFuture<Void> invokeHandlersForIncomingPublish(MqttPublishMessage message) {
+        String topic = message.variableHeader().topicName();
+        ByteBuf payload = message.payload();
+
         var future = Futures.immediateVoidFuture();
         var handlerInvoked = new AtomicBoolean();
         try {
             for (MqttSubscription subscription : ImmutableSet.copyOf(this.client.getSubscriptions().values())) {
-                if (subscription.matches(message.variableHeader().topicName())) {
-                    future = Futures.transform(future, x -> {
-                        if (subscription.isOnce() && subscription.isCalled()) {
-                            return null;
-                        }
-                        message.payload().markReaderIndex();
-                        subscription.setCalled(true);
-                        subscription.getHandler().onMessage(message.variableHeader().topicName(), message.payload());
+                if (!subscription.matches(topic)) {
+                    continue;
+                }
+                future = Futures.transformAsync(future, __ -> {
+                    if (subscription.isOnce() && subscription.isCalled()) {
+                        return Futures.immediateVoidFuture();
+                    }
+                    payload.markReaderIndex();
+                    subscription.setCalled(true);
+                    var handlerFuture = adaptFuture(subscription.getHandler().onMessage(topic, payload));
+
+                    return Futures.transformAsync(handlerFuture, ___ -> {
                         if (subscription.isOnce()) {
                             this.client.off(subscription.getTopic(), subscription.getHandler());
                         }
-                        message.payload().resetReaderIndex();
+                        payload.resetReaderIndex();
                         handlerInvoked.set(true);
-                        return null;
+                        return Futures.immediateVoidFuture();
+                    }, client.getHandlerExecutor());
+                }, client.getHandlerExecutor());
+            }
+
+            future = Futures.transformAsync(future, __ -> {
+                if (!handlerInvoked.get() && client.getDefaultHandler() != null) {
+                    payload.markReaderIndex();
+                    var defaultFuture = adaptFuture(client.getDefaultHandler().onMessage(topic, payload));
+
+                    return Futures.transformAsync(defaultFuture, ___ -> {
+                        payload.resetReaderIndex();
+                        return Futures.immediateVoidFuture();
                     }, client.getHandlerExecutor());
                 }
-            }
-            future = Futures.transform(future, x -> {
-                if (!handlerInvoked.get() && client.getDefaultHandler() != null) {
-                    client.getDefaultHandler().onMessage(message.variableHeader().topicName(), message.payload());
-                }
-                return null;
+                return Futures.immediateVoidFuture();
             }, client.getHandlerExecutor());
         } finally {
             Futures.addCallback(future, new FutureCallback<>() {
                 @Override
                 public void onSuccess(Void result) {
-                    message.payload().release();
+                    payload.release();
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    message.payload().release();
+                    payload.release();
                 }
             }, MoreExecutors.directExecutor());
         }
@@ -174,7 +202,9 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleConack(Channel channel, MqttConnAckMessage message) {
-        log.debug("{} Handling CONNACK", client.getClientConfig().getOwnerId());
+        if (log.isTraceEnabled()) {
+            log.trace("[{}][{}] Handling CONNACK: {}", client.getClientConfig().getOwnerId(), client.getClientConfig().getClientId(), message);
+        }
         switch (message.variableHeader().connectReturnCode()) {
             case CONNECTION_ACCEPTED:
                 this.connectFuture.setSuccess(new MqttConnectResult(true, MqttConnectReturnCode.CONNECTION_ACCEPTED, channel.closeFuture()));
@@ -189,7 +219,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                     channel.write(publish.getMessage());
                     publish.setSent(true);
                     if (publish.getQos() == MqttQoS.AT_MOST_ONCE) {
-                        publish.getFuture().setSuccess(null); //We don't get an ACK for QOS 0
+                        publish.getFuture().setSuccess(null); // We don't get an ACK for QOS 0
                         this.client.getPendingPublishes().remove(publish.getMessageId());
                     }
                 });
@@ -206,7 +236,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
             case CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION:
                 this.connectFuture.setSuccess(new MqttConnectResult(false, message.variableHeader().connectReturnCode(), channel.closeFuture()));
                 channel.close();
-                // Don't start reconnect logic here
+                // Don't start reconnecting logic here
                 break;
         }
         if (this.client.getCallback() != null) {
@@ -238,35 +268,87 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handlePublish(Channel channel, MqttPublishMessage message) {
-        switch (message.fixedHeader().qosLevel()) {
-            case AT_MOST_ONCE:
-                invokeHandlersForIncomingPublish(message);
-                break;
-
-            case AT_LEAST_ONCE:
-                var future = invokeHandlersForIncomingPublish(message);
-                if (message.variableHeader().packetId() != -1) {
-                    future.addListener(() -> {
-                        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBACK, false, MqttQoS.AT_MOST_ONCE, false, 0);
-                        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(message.variableHeader().packetId());
-                        channel.writeAndFlush(new MqttPubAckMessage(fixedHeader, variableHeader));
-                    }, MoreExecutors.directExecutor());
-                }
-                break;
-
-            case EXACTLY_ONCE:
-                if (message.variableHeader().packetId() != -1) {
-                    MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREC, false, MqttQoS.AT_MOST_ONCE, false, 0);
-                    MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(message.variableHeader().packetId());
-                    MqttMessage pubrecMessage = new MqttMessage(fixedHeader, variableHeader);
-
-                    MqttIncomingQos2Publish incomingQos2Publish = new MqttIncomingQos2Publish(message);
-                    this.client.getQos2PendingIncomingPublishes().put(message.variableHeader().packetId(), incomingQos2Publish);
-
-                    channel.writeAndFlush(pubrecMessage);
-                }
-                break;
+        if (log.isTraceEnabled()) {
+            log.trace("[{}][{}] Handling PUBLISH: {}", client.getClientConfig().getOwnerId(), client.getClientConfig().getClientId(), message);
         }
+
+        MqttQoS qoS = message.fixedHeader().qosLevel();
+        checkBackPressure(channel, true, qoS);
+
+        switch (qoS) {
+            case AT_MOST_ONCE -> {
+                invokeHandlersForIncomingPublish(message);
+            }
+
+            case AT_LEAST_ONCE -> {
+                final int msgId = message.variableHeader().packetId();
+                var msgWrapper = mqttOrderedAcknowledgementCtxQoS1.addMsgId(msgId);
+
+                if (msgWrapper == null) {
+                    checkBackPressure(channel, false, qoS);
+                    return;
+                }
+
+                var future = invokeHandlersForIncomingPublish(message);
+                DonAsynchron.withCallback(future,
+                        (_) -> {
+                            processPubAck(channel, msgWrapper, PubAck.SUCCESS.byteValue());
+                            checkBackPressure(channel, false, qoS);
+                        },
+                        (t) -> {
+                            log.error("Error invoke future for client {} with QoS {}", client.getClientConfig().getClientId(), MqttQoS.AT_LEAST_ONCE, t);
+                            processPubAck(channel, msgWrapper, PubAck.UNSPECIFIED_ERROR.byteValue());
+                            checkBackPressure(channel, false, qoS);
+                        }
+                );
+            }
+
+            case EXACTLY_ONCE -> {
+                final int msgId = message.variableHeader().packetId();
+
+                if (!client.getQos2PendingMsgIds().add(msgId)) {
+                    log.debug("Duplicate QoS2 message received for client {} with msgId {}. Skipping processing.", client.getClientConfig().getClientId(), msgId);
+                    processPubRec(channel, msgId, PubRec.PACKET_IDENTIFIER_IN_USE.byteValue());
+                    checkBackPressure(channel, false, qoS);
+                    return;
+                }
+
+                var msgWrapper = mqttOrderedAcknowledgementCtxQoS2.addMsgId(msgId);
+                if (msgWrapper == null) {
+                    checkBackPressure(channel, false, qoS);
+                    return;
+                }
+                var future = invokeHandlersForIncomingPublish(message);
+                DonAsynchron.withCallback(future,
+                        (_) -> {
+                            processPubRec(channel, msgWrapper, PubRec.SUCCESS.byteValue());
+                            checkBackPressure(channel, false, qoS);
+                        },
+                        (t) -> {
+                            log.error("Error invoke future for client {} with QoS {}", client.getClientConfig().getClientId(), MqttQoS.EXACTLY_ONCE, t);
+                            processPubRec(channel, msgWrapper, PubRec.UNSPECIFIED_ERROR.byteValue());
+                            client.getQos2PendingMsgIds().remove(msgId);
+                            checkBackPressure(channel, false, qoS);
+                        }
+                );
+            }
+        }
+    }
+
+    private void processPubAck(Channel channel, MqttMsgWrapper msgWrapper, byte reasonCode) {
+        processPubAck(channel, msgWrapper, reasonCode, true);
+    }
+
+    private void processPubAck(Channel channel, MqttMsgWrapper msgWrapper, byte reasonCode, boolean sendAck) {
+        this.mqttOrderedAcknowledgementCtxQoS1.ack(channel, msgWrapper, reasonCode, sendAck);
+    }
+
+    private void processPubRec(Channel channel, MqttMsgWrapper msgWrapper, byte reasonCode) {
+        processPubRec(channel, msgWrapper, reasonCode, true);
+    }
+
+    private void processPubRec(Channel channel, MqttMsgWrapper msgWrapper, byte reasonCode, boolean sendAck) {
+        this.mqttOrderedAcknowledgementCtxQoS2.ack(channel, msgWrapper, reasonCode, sendAck);
     }
 
     private void handleUnsuback(MqttUnsubAckMessage message) {
@@ -284,13 +366,12 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handlePuback(MqttPubAckMessage message) {
-        log.trace("{} Handling PUBACK", client.getClientConfig().getOwnerId());
-        client.getPendingPublishes().computeIfPresent(message.variableHeader().messageId(), (__, pendingPublish) -> {
+        this.client.getPendingPublishes().computeIfPresent(message.variableHeader().messageId(), (__, pendingPublish) -> {
             pendingPublish.getFuture().setSuccess(null);
             pendingPublish.onPubackReceived();
             pendingPublish.getPayload().release();
-            if (client.getCallback() != null) {
-                client.getCallback().onPubAck(message);
+            if (this.client.getCallback() != null) {
+                this.client.getCallback().onPubAck(message);
             }
             return null;
         });
@@ -309,21 +390,29 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         pendingPublish.startPubrelRetransmissionTimer(this.client.getEventLoop().next(), this.client::sendAndFlushPacket);
     }
 
+    private void processPubRec(Channel channel, int msgId, byte reasonCodeValue) {
+        sendMqttReply(channel, MqttMessageType.PUBREC, msgId, reasonCodeValue);
+    }
+
     private void handlePubrel(Channel channel, MqttMessage message) {
-        var future = Futures.immediateVoidFuture();
-        if (this.client.getQos2PendingIncomingPublishes().containsKey(((MqttMessageIdVariableHeader) message.variableHeader()).messageId())) {
-            MqttIncomingQos2Publish incomingQos2Publish = this.client.getQos2PendingIncomingPublishes().get(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
-            future = invokeHandlersForIncomingPublish(incomingQos2Publish.getIncomingPublish());
-            future = Futures.transform(future, x -> {
-                this.client.getQos2PendingIncomingPublishes().remove(incomingQos2Publish.getIncomingPublish().variableHeader().packetId());
-                return null;
-            }, MoreExecutors.directExecutor());
-        }
-        future.addListener(() -> {
-            MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);
-            MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(((MqttMessageIdVariableHeader) message.variableHeader()).messageId());
-            channel.writeAndFlush(new MqttMessage(fixedHeader, variableHeader));
-        }, MoreExecutors.directExecutor());
+        log.trace("[{}][{}] Handling PUBREL: {}", client.getClientConfig().getOwnerId(), client.getClientConfig().getClientId(), message);
+        final int msgId = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
+        byte reasonCode = this.client.getQos2PendingMsgIds().remove(msgId)
+                ? PubComp.SUCCESS.byteValue()
+                : PubComp.PACKET_IDENTIFIER_NOT_FOUND.byteValue();
+        processPubComp(channel, msgId, reasonCode);
+    }
+
+    private void processPubComp(Channel channel, int msgId, byte reasonCodeValue) {
+        sendMqttReply(channel, MqttMessageType.PUBCOMP, msgId, reasonCodeValue);
+    }
+
+    private void sendMqttReply(Channel channel, MqttMessageType type, int msgId, byte reasonCodeValue) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(type, false, MqttQoS.AT_MOST_ONCE, false, 0);
+        MqttMessage message = MqttVersion.MQTT_5.equals(client.getClientConfig().getProtocolVersion())
+                ? new MqttMessage(fixedHeader, new MqttPubReplyMessageVariableHeader(msgId, reasonCodeValue, null))
+                : new MqttMessage(fixedHeader, MqttMessageIdVariableHeader.from(msgId));
+        channel.writeAndFlush(message);
     }
 
     private void handlePubcomp(MqttMessage message) {
@@ -336,7 +425,6 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleDisconnect(MqttMessage message) {
-        log.debug("{} Handling DISCONNECT", client.getClientConfig().getOwnerId());
         if (this.client.getCallback() != null) {
             this.client.getCallback().onDisconnect(message);
         }
@@ -358,4 +446,37 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
             ReferenceCountUtil.release(cause);
         }
     }
+
+    private ListenableFuture<Void> adaptFuture(Future<Void> future) {
+        if (future instanceof ListenableFuture<Void> lf) {
+            return lf;
+        }
+        if (future instanceof CompletableFuture<Void> cf) {
+            SettableFuture<Void> settable = SettableFuture.create();
+            cf.whenComplete((result, error) -> {
+                if (error != null) {
+                    settable.setException(error);
+                } else {
+                    settable.set(result);
+                }
+            });
+            return settable;
+        }
+        return JdkFutureAdapters.listenInPoolThread(future, client.getHandlerExecutor());
+    }
+
+    private void checkBackPressure(Channel channel, boolean increment, MqttQoS qoS) {
+        if (!backPressureEnabled || MqttQoS.AT_MOST_ONCE.equals(qoS)) {
+            return;
+        }
+        long count = increment ? publishMsgCount.incrementAndGet() : publishMsgCount.decrementAndGet();
+        if (increment && count >= highWatermark && channel.config().isAutoRead()) {
+            channel.config().setAutoRead(false);
+            log.debug("Paused MQTT reads: queue {} >= {}", count, highWatermark);
+        } else if (!increment && count < lowWatermark && !channel.config().isAutoRead()) {
+            channel.config().setAutoRead(true);
+            log.debug("Resumed MQTT reads: queue {} < {}", count, lowWatermark);
+        }
+    }
+
 }

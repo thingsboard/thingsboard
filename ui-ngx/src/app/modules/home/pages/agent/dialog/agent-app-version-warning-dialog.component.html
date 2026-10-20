@@ -1,0 +1,62 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div mat-dialog-title class="tb-app-version-warning-header" [class.destructive]="destructive">
+  <mat-icon class="warn-icon">warning</mat-icon>
+  <h2>{{ titleKey | translate }}</h2>
+  <div tb-help="agentAppProfileVersions"></div>
+  <button mat-icon-button (click)="cancel()" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div mat-dialog-content class="tb-app-version-warning-body">
+
+  <p class="warning-text">
+    {{ textKey | translate: {
+    appName: data.appName,
+    profileName: data.profileName,
+    appVersion: data.appVersion,
+    profileVersion: data.profileVersion
+    } }}
+  </p>
+
+  <div class="app-summary">
+    <div class="summary-row">
+      <span class="label" translate>agent.app-name</span>
+      <span class="value">{{ data.appName }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label" translate>agent.app-current-version</span>
+      <span class="value">{{ data.appVersion }}</span>
+    </div>
+    <div class="summary-row">
+      <span class="label" translate>agent.app-profile-version</span>
+      <span class="value">{{ data.profileVersion }}</span>
+    </div>
+  </div>
+</div>
+
+<div mat-dialog-actions align="end" class="tb-app-version-warning-footer">
+  <button mat-button (click)="cancel()">
+    {{ 'action.cancel' | translate }}
+  </button>
+  @if (showUpgradeFirst) {
+    <button mat-stroked-button (click)="confirm()">
+      <span>{{ confirmKey | translate }}</span>
+    </button>
+  }
+  @if (showUpgradeFirst) {
+    <button mat-raised-button color="primary" (click)="upgradeFirst()">
+      <span>{{ 'agent.app-assign-upgrade-first' | translate }}</span>
+    </button>
+  }
+  @if (!showUpgradeFirst) {
+    <button mat-raised-button [color]="destructive ? 'warn' : 'primary'" (click)="confirm()">
+      <span>{{ confirmKey | translate }}</span>
+    </button>
+  }
+</div>

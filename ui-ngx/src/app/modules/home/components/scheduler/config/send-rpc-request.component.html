@@ -1,0 +1,79 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="sendRpcRequestFormGroup" class="tb-send-rpc-request tb-form-panel no-border no-padding flex flex-col">
+  <div class="tb-form-panel stroked no-padding-bottom">
+    <div class="tb-form-panel-title" translate>scheduler.target</div>
+    <tb-originator-select
+      required
+      [allowedEntityTypes]="[entityType.DEVICE]"
+      singleEntityText="device.device"
+      groupOfEntitiesText="entity-group.device-group"
+      entitiesGroupOwnerText="scheduler.devices-group-owner"
+      formControlName="originatorId">
+    </tb-originator-select>
+  </div>
+  <fieldset class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>scheduler.rpc-settings</div>
+    <fieldset class="tb-form-panel no-border no-padding flex flex-col" formGroupName="msgBody">
+      <div class="tb-form-row column-xs flex items-center justify-between">
+        <div class="fixed-title-width tb-required" translate>scheduler.rpc-method</div>
+        <div class="max-width-content">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="method" required>
+            @if (sendRpcRequestFormGroup.get('msgBody.method').hasError('required') ||
+              sendRpcRequestFormGroup.get('msgBody.method').hasError('pattern')) {
+              <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="getMethodValidationText()"
+                class="material-icons tb-suffix-show-always tb-error">
+                warning
+              </mat-icon>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+      <tb-json-object-edit
+        class="tb-scheduler-event-configuration-json"
+        formControlName="params"
+        label="{{ 'scheduler.rpc-params' | translate }}"
+        jsonRequired
+        [fillHeight]="true">
+      </tb-json-object-edit>
+    </fieldset>
+    <fieldset class="tb-form-panel no-border no-padding flex flex-col" formGroupName="metadata">
+      <div class="tb-form-row column-xs flex items-center justify-between">
+        <div translate>scheduler.rpc-request-timeout</div>
+        <div class="max-width-content">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="timeout"
+              placeholder="{{ 'scheduler.set' | translate }}">
+            @if (sendRpcRequestFormGroup.get('metadata.timeout').hasError('min')) {
+              <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="'scheduler.rpc-value-min-error' | translate : {min: 0}"
+                class="material-icons tb-suffix-show-always tb-error">
+                warning
+              </mat-icon>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs flex items-center justify-between">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="oneway">
+          {{ 'scheduler.rpc-request-oneway-command' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row column-xs flex items-center justify-between">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="persistent">
+          {{ 'scheduler.rpc-request-persistent' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </fieldset>
+  </fieldset>
+</section>

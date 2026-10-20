@@ -1,30 +1,27 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatOptionSelectionChange } from '@angular/material/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { forkJoin, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, switchMap } from 'rxjs/operators';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { PageData } from '@shared/models/page/page-data';
 import { MpItemVersionQuery, MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
-import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
+import {
+  CROSS_TYPE_ITEM_TYPES,
+  getItemTypeColor,
+  isCompactItemType,
+  getItemTypeIcon,
+  ItemType,
+  itemTypeColors,
+  itemTypeTranslations,
+  RELEVANCE_SORT_PROPERTY
+} from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -46,15 +43,8 @@ interface HeroTypeConfig {
   icon: string;
 }
 
-interface SearchResultGroup {
-  type: ItemType;
-  items: MpItemVersionView[];
-}
-
-const SEARCH_GROUP_ORDER: ItemType[] = [
-  ItemType.DEVICE, ItemType.SOLUTION_TEMPLATE, ItemType.WIDGET,
-  ItemType.CALCULATED_FIELD, ItemType.ALARM_RULE, ItemType.RULE_CHAIN
-];
+/** Rows the search popup shows: page 0 of the search page's own request. */
+const SEARCH_POPUP_PAGE_SIZE = 10;
 
 @Component({
   selector: 'tb-iot-hub-home',
@@ -65,12 +55,15 @@ const SEARCH_GROUP_ORDER: ItemType[] = [
 export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   readonly ItemType = ItemType;
+  readonly isCompactType = isCompactItemType;
 
   searchText = '';
   searchResults: MpItemVersionView[] = [];
-  searchResultGroups: SearchResultGroup[] = [];
+  /** Everything the search matched, for the footer's "See all N results". */
+  searchTotal = 0;
   searchLoaded = false;
   searchLoading = false;
+  searchFailed = false;
   @ViewChild(MatAutocompleteTrigger) searchAutoTrigger: MatAutocompleteTrigger;
   @ViewChild('searchInput', {read: ElementRef}) searchInputRef: ElementRef;
   private searchSubject = new Subject<string>();
@@ -79,27 +72,27 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
 
   heroTypes: HeroTypeConfig[] = [
     {
-      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: '#4b63cc',
+      type: ItemType.DEVICE, labelKey: 'item.type-device-plural', color: itemTypeColors[ItemType.DEVICE],
       icon: 'assets/iot-hub/hero-device-cluster.svg'
     },
     {
-      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: '#2b6bb4',
+      type: ItemType.SOLUTION_TEMPLATE, labelKey: 'item.type-solution-template-plural', color: itemTypeColors[ItemType.SOLUTION_TEMPLATE],
       icon: 'assets/iot-hub/hero-solution-template-cluster.svg'
     },
     {
-      type: ItemType.WIDGET, labelKey: 'item.type-widget-plural', color: '#2c9755',
+      type: ItemType.WIDGET, labelKey: 'item.type-widget-plural', color: itemTypeColors[ItemType.WIDGET],
       icon: 'assets/iot-hub/hero-widget-cluster.svg'
     },
     {
-      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: '#3cb4e0',
+      type: ItemType.CALCULATED_FIELD, labelKey: 'item.type-calculated-field-plural', color: itemTypeColors[ItemType.CALCULATED_FIELD],
       icon: 'assets/iot-hub/hero-calculated-field-cluster.svg'
     },
     {
-      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: '#d66f2e',
+      type: ItemType.ALARM_RULE, labelKey: 'item.type-alarm-rule-plural', color: itemTypeColors[ItemType.ALARM_RULE],
       icon: 'assets/iot-hub/hero-alarm-rule-cluster.svg'
     },
     {
-      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: '#a95ae2',
+      type: ItemType.RULE_CHAIN, labelKey: 'item.type-rule-chain-plural', color: itemTypeColors[ItemType.RULE_CHAIN],
       icon: 'assets/iot-hub/hero-rule-chain-cluster.svg'
     }
   ];
@@ -167,17 +160,23 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     });
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(300),
-      distinctUntilChanged(),
       switchMap(text => {
         this.searchLoading = true;
-        const sortOrder: SortOrder = { property: 'totalInstallCount', direction: Direction.DESC };
-        const pageLink = new PageLink(10, 0, text.trim() || null, sortOrder);
-        const query = new MpItemVersionQuery(pageLink);
-        return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true });
+        const trimmed = text.trim();
+        // One list ranked across every type the platform surfaces. With an empty field relevance
+        // is served as the install count.
+        const sortOrder: SortOrder = { property: RELEVANCE_SORT_PROPERTY, direction: Direction.DESC };
+        const pageLink = new PageLink(SEARCH_POPUP_PAGE_SIZE, 0, trimmed || null, sortOrder);
+        const query = new MpItemVersionQuery(pageLink, { types: CROSS_TYPE_ITEM_TYPES });
+        // A failure must not end the subscription.
+        return this.iotHubApiService.getPublishedVersions(query, { ignoreLoading: true }).pipe(
+          catchError(() => of(null as PageData<MpItemVersionView>))
+        );
       })
-    ).subscribe(result => {
-      this.searchResults = result.data;
-      this.searchResultGroups = this.groupSearchResults(result.data);
+    ).subscribe(page => {
+      this.searchFailed = !page;
+      this.searchResults = page?.data ?? [];
+      this.searchTotal = page?.totalElements ?? 0;
       this.searchLoaded = true;
       this.searchLoading = false;
     });
@@ -241,7 +240,26 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     setTimeout(() => this.searchAutoTrigger?.openPanel());
   }
 
-  onSearch(): void {
+  onRowSelected(event: MatOptionSelectionChange, item: MpItemVersionView): void {
+    if (event.isUserInput) {
+      this.openItemDetail(item);
+    }
+  }
+
+  onFooterSelected(event: MatOptionSelectionChange): void {
+    if (event.isUserInput) {
+      this.seeAllResults();
+    }
+  }
+
+  /**
+   * Enter in the field opens the search page - unless the autocomplete has just used this press
+   * to select a highlighted row, which it marks with preventDefault before this handler runs.
+   */
+  onSearchEnter(event: KeyboardEvent): void {
+    if (event.defaultPrevented || event.isComposing) {
+      return;
+    }
     this.seeAllResults();
   }
 
@@ -249,12 +267,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     this.searchAutoTrigger?.closePanel();
     const search = this.searchText?.trim() || undefined;
     void this.router.navigate(['/iot-hub/search'], { queryParams: { search } });
-  }
-
-  isCompactType(type: ItemType): boolean {
-    return type === ItemType.CALCULATED_FIELD
-        || type === ItemType.ALARM_RULE
-        || type === ItemType.RULE_CHAIN;
   }
 
   getCompactIcon(item: MpItemVersionView): string {
@@ -269,9 +281,13 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     return getItemTypeIcon(type);
   }
 
-  getSearchGroupLabel(type: ItemType): string {
+  getItemTypeColor(type: ItemType): string {
+    return getItemTypeColor(type);
+  }
+
+  getItemTypeLabel(type: ItemType): string {
     const key = itemTypeTranslations.get(type);
-    return key ? this.translate.instant(key + '-plural') : type;
+    return key ? this.translate.instant(key) : type;
   }
 
   navigateToBrowse(type: ItemType): void {
@@ -290,7 +306,6 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
   private getTypeRoute(type: ItemType): string {
     switch (type) {
       case ItemType.WIDGET: return 'widgets';
-      case ItemType.DASHBOARD: return 'dashboards';
       case ItemType.SOLUTION_TEMPLATE: return 'solution-templates';
       case ItemType.CALCULATED_FIELD: return 'calculated-fields';
       case ItemType.ALARM_RULE: return 'alarm-rules';
@@ -537,21 +552,4 @@ export class TbIotHubHomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  private groupSearchResults(items: MpItemVersionView[]): SearchResultGroup[] {
-    const groupMap = new Map<ItemType, MpItemVersionView[]>();
-    for (const item of items) {
-      if (!SEARCH_GROUP_ORDER.includes(item.type)) {
-        continue;
-      }
-      let list = groupMap.get(item.type);
-      if (!list) {
-        list = [];
-        groupMap.set(item.type, list);
-      }
-      list.push(item);
-    }
-    return SEARCH_GROUP_ORDER
-      .filter(type => groupMap.has(type))
-      .map(type => ({ type, items: groupMap.get(type) }));
-  }
 }

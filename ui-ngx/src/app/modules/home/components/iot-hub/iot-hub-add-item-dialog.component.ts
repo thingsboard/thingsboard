@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -27,6 +14,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { IotHubActionsService } from './iot-hub-actions.service';
+import { isBuiltInItem } from './iot-hub-utils';
 import {
   IotHubSelectCfEntityDialogData,
   TbIotHubSelectCfEntityDialogComponent
@@ -36,6 +24,8 @@ export interface IotHubAddItemDialogData {
   itemType: ItemType;
   itemSubType?: string;
   entityId?: EntityId;
+  entityGroupId?: string;
+  customerId?: string;
 }
 
 export interface IotHubAddItemDialogResult {
@@ -78,6 +68,20 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
   }
 
   onAddItem(item: MpItemVersionView): void {
+    if (isBuiltInItem(item)) {
+      // Built-in content is already part of the platform — open the local copy instead of
+      // installing a duplicate, and install only if that copy no longer exists.
+      this.iotHubActions.openBuiltInOrConfirmInstall(item).subscribe(action => {
+        if (action === 'install-requested') {
+          this.doAddItem(item);
+        }
+      });
+      return;
+    }
+    this.doAddItem(item);
+  }
+
+  private doAddItem(item: MpItemVersionView): void {
     if (this.itemType === ItemType.DEVICE) {
       this.installDeviceItem(item);
       return;
@@ -101,9 +105,18 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
     this.installItem(item, installData);
   }
 
-  private installItem(item: MpItemVersionView, installData?: { entityId: EntityId }): void {
+  private installItem(item: MpItemVersionView, installData?: { entityId?: EntityId; entityGroupId?: string; customerId?: string }): void {
     this.isInstalling = true;
     const versionId = item.id as string;
+    if (this.data.entityGroupId || this.data.customerId) {
+      installData = installData ? { ...installData } : {};
+      if (this.data.entityGroupId) {
+        installData.entityGroupId = this.data.entityGroupId;
+      }
+      if (this.data.customerId) {
+        installData.customerId = this.data.customerId;
+      }
+    }
     this.iotHubApiService.installItemVersion(versionId, { ignoreLoading: true }, installData).subscribe({
       next: (result) => {
         this.isInstalling = false;
@@ -129,7 +142,10 @@ export class TbIotHubAddItemDialogComponent extends DialogComponent<TbIotHubAddI
   }
 
   private installDeviceItem(item: MpItemVersionView): void {
-    this.iotHubActions.installDevice(item).subscribe(result => {
+    this.iotHubActions.installDevice(item, {
+      entityGroupId: this.data.entityGroupId,
+      customerId: this.data.customerId
+    }).subscribe(result => {
       if (result === 'installed') {
         this.dialogRef.close({ item, descriptor: { type: 'DEVICE' } } as IotHubAddItemDialogResult);
       }

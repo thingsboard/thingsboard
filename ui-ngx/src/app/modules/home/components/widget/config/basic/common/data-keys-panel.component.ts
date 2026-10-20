@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   ChangeDetectorRef,
   Component,
@@ -21,7 +8,7 @@ import {
   forwardRef,
   Input,
   OnChanges,
-  OnInit,
+  OnInit, Optional,
   SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
@@ -38,16 +25,37 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKey, DatasourceType, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
 import { dataKeyRowValidator, dataKeyValid } from '@home/components/widget/config/basic/common/data-key-row.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import {
+  DataKeySettingsFormFunction,
+  DataKeySettingsFunction
+} from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TimeSeriesChartYAxisId } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isDefinedAndNotNull } from '@core/utils';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { IAliasController } from '@core/api/widget-api.models';
+
+export interface DataKeysPanelOptions {
+  widgetType?: widgetType;
+  callbacks?: WidgetConfigCallbacks;
+  settingsForm?: FormProperty[];
+  settingsFormFunction?: DataKeySettingsFormFunction;
+  settingsFormTrimDefaults?: boolean;
+  settingsDirective?: string;
+  settingsFunction?: DataKeySettingsFunction;
+  latestSettingsForm?: FormProperty[];
+  latestSettingsFormFunction?: DataKeySettingsFormFunction;
+  latestSettingsFormTrimDefaults?: boolean;
+  hasAdditionalLatestDataKeys?: boolean;
+  widget?: Widget;
+}
 
 @Component({
     selector: 'tb-data-keys-panel',
@@ -72,6 +80,10 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  stroked = false;
 
   @Input()
   panelTitle: string;
@@ -99,6 +111,10 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   @Input()
   deviceId: string;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Input()
   @coerceBoolean()
@@ -139,6 +155,12 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   @Input()
   yAxisIds: TimeSeriesChartYAxisId[];
 
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeysPanelOptions: DataKeysPanelOptions;
+
   dataKeyType: DataKeyType;
 
   keysListFormGroup: UntypedFormGroup;
@@ -146,24 +168,52 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   errorText = '';
 
   get widgetType(): widgetType {
-    return this.widgetConfigComponent.widgetType;
+    return this.widgetConfigComponent?.widgetType || this.getDataKeysPanelOption('widgetType');
   }
 
-  get callbacks(): DataKeysCallbacks {
-    return this.widgetConfigComponent.widgetConfigCallbacks;
+  get callbacks(): WidgetConfigCallbacks {
+    return this.widgetConfigComponent?.widgetConfigCallbacks || this.getDataKeysPanelOption('callbacks');
+  }
+
+  get widget(): Widget {
+    return this.widgetConfigComponent?.widget || this.getDataKeysPanelOption('widget');
   }
 
   get hasAdditionalLatestDataKeys(): boolean {
-    return !this.hideSourceSelection && this.widgetConfigComponent.widgetType === widgetType.timeseries &&
-      this.widgetConfigComponent.modelValue?.typeParameters?.hasAdditionalLatestDataKeys;
+    return !this.hideSourceSelection && this.widgetType === widgetType.timeseries &&
+      (this.widgetConfigComponent?.modelValue?.typeParameters?.hasAdditionalLatestDataKeys || this.getDataKeysPanelOption('hasAdditionalLatestDataKeys'));
   }
 
   get dataKeySettingsForm(): FormProperty[] {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsForm;
+    return this.widgetConfigComponent?.modelValue?.dataKeySettingsForm || this.getDataKeysPanelOption('settingsForm');
+  }
+
+  get dataKeySettingsFormFunction(): DataKeySettingsFormFunction {
+    return this.getDataKeysPanelOption('settingsFormFunction');
+  }
+
+  get dataKeySettingsFormTrimDefaults(): boolean {
+    return this.hasDataKeysPanelOptions('settingsFormTrimDefaults') ? this.getDataKeysPanelOption('settingsFormTrimDefaults') : false;
+  }
+
+  get dataKeySettingsDirective(): string {
+    return this.widgetConfigComponent?.modelValue?.dataKeySettingsDirective || this.getDataKeysPanelOption('settingsDirective');
+  }
+
+  get latestDataKeySettingsForm(): FormProperty[] {
+    return this.widgetConfigComponent?.modelValue?.latestDataKeySettingsForm || this.getDataKeysPanelOption('latestSettingsForm');
+  }
+
+  get latestDataKeySettingsFormFunction(): DataKeySettingsFormFunction {
+    return this.getDataKeysPanelOption('latestSettingsFormFunction');
+  }
+
+  get latestDataKeySettingsFormTrimDefaults(): boolean {
+    return this.hasDataKeysPanelOptions('latestSettingsFormTrimDefaults') ? this.getDataKeysPanelOption('latestSettingsFormTrimDefaults') : false;
   }
 
   get dataKeySettingsFunction(): DataKeySettingsFunction {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
+    return this.widgetConfigComponent?.modelValue?.dataKeySettingsFunction || this.getDataKeysPanelOption('settingsFunction');
   }
 
   get dragEnabled(): boolean {
@@ -184,7 +234,7 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
               private dialog: MatDialog,
               private cd: ChangeDetectorRef,
               private utils: UtilsService,
-              private widgetConfigComponent: WidgetConfigComponent,
+              @Optional() private widgetConfigComponent: WidgetConfigComponent,
               private destroyRef: DestroyRef) {
   }
 
@@ -274,10 +324,6 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
     return this.keysListFormGroup.get('keys') as UntypedFormArray;
   }
 
-  trackByKey(index: number, keyControl: AbstractControl): any {
-    return keyControl;
-  }
-
   removeKey(index: number) {
     (this.keysListFormGroup.get('keys') as UntypedFormArray).removeAt(index);
   }
@@ -303,6 +349,18 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
       });
     }
     return this.fb.array(keysControls);
+  }
+
+  private hasDataKeysPanelOptions(key: string): boolean {
+    if (this.dataKeysPanelOptions) {
+      return isDefinedAndNotNull(this.dataKeysPanelOptions[key]);
+    } else {
+      return false;
+    }
+  }
+
+  private getDataKeysPanelOption<T>(key: string): T {
+    return this.dataKeysPanelOptions && this.dataKeysPanelOptions[key];
   }
 
 }
