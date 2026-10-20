@@ -6281,8 +6281,7 @@
     "type-rule-chain": "Cadeia de regras",
     "type-rule-chain-plural": "Cadeias de regras",
     "type-device": "Dispositivo",
-    "type-device-plural": "Dispositivos",
-    "selected": "Selecionado"
+    "type-device-plural": "Dispositivos"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7993,7 +7992,6 @@
     "endpoint-url-pattern": "Padrão de URL do Endpoint",
     "endpoint-url-pattern-required": "O padrão de URL do Endpoint é obrigatório",
     "request-method": "Método da solicitação",
-    "use-simple-client-http-factory": "Usar factory HTTP de cliente simples",
     "ignore-request-body": "Sem corpo de solicitação",
     "request-body-template": "Modelo do corpo da requisição",
     "request-body-template-hint": "Use <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> para metadados e <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> para valores da mensagem. Se estiver vazio, o payload da mensagem será usado como corpo da requisição. Para payloads que não sejam JSON, habilite 'Converter para texto simples'. <br/><br/> Você pode injetar um segredo usando o placeholder <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, em que 'name' é o identificador do segredo e 'type' é TEXT ou TEXT_FILE. Isso é útil em campos de configuração do nó de regra que não oferecem suporte direto a 'Usar segredo'. Exemplo: <code><span style=\"color: #000;\">$&#123;</span>secret:senha do locatário;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8169,7 +8167,6 @@
     "proxy-port-range": "A porta do proxy deve estar no intervalo de 1 a 65535.",
     "proxy-user": "Usuário do proxy",
     "proxy-password": "Senha do proxy",
-    "proxy-scheme": "Esquema do proxy",
     "numbers-to-template": "Números de telefone para o template",
     "numbers-to-template-required": "Números de telefone para o template são obrigatórios",
     "numbers-to-template-hint": "Números de telefone separados por vírgula. Use <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> para valor de metadados, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> para valor do corpo da mensagem",
@@ -8954,8 +8951,6 @@
     "single-entity": "Entidade única",
     "group-entities": "Entidades do grupo",
     "entities-group-owner": "Proprietário do grupo de entidades",
-    "single-device": "Dispositivo único",
-    "group-of-devices": "Grupo de dispositivos",
     "devices-group-owner": "Proprietário do grupo de dispositivos",
     "message-body": "Corpo da mensagem",
     "target": "Destino",
@@ -11367,22 +11362,6 @@
     "ai-credits-usage": "Créditos de IA: {{ used }} de {{ max }} usados",
     "ai-credits-description": "Você usou <strong>{{ used }}</strong> dos seus <strong>{{ max }}</strong> créditos de IA este mês. O limite será redefinido em {{ date }}. Para aumentar sua cota de créditos de IA, entre em contato com o administrador do sistema."
   },
-  "solution-template": {
-    "solution-template": "Modelo de solução",
-    "solution-templates": "Modelos de solução",
-    "management": "Gerenciar modelos de solução",
-    "details": "Detalhes",
-    "install": "Instalar",
-    "level": "Nível",
-    "install-title": "Modelo de solução instalado com sucesso",
-    "install-failed-title": "Falha na instalação do modelo de solução",
-    "instructions": "Instruções",
-    "goto-main-dashboard": "Ir para o dashboard principal",
-    "delete": "Excluir",
-    "delete-solution-title": "Tem certeza de que deseja excluir a solução '{{solutionTitle}}'?",
-    "delete-solution-text": "Atenção: após a confirmação, a solução e todos os dados relacionados se tornarão irrecuperáveis.",
-    "installing": "Instalando modelo de solução..."
-  },
   "markdown": {
     "edit": "Editar",
     "preview": "Pré-visualização",
@@ -11399,20 +11378,8 @@
     "app-title": "Título da aplicação",
     "favicon": "Ícone do site",
     "favicon-desc": "Ícone na aba do navegador e nos favoritos. PNG ou ICO, recomendado 32×32 px",
-    "favicon-description": "Imagem *.ico, *.gif ou *.png com tamanho máximo de {{kbSize}} KBytes.",
-    "favicon-size-error": "A imagem do site é muito grande. O tamanho máximo permitido é {{kbSize}} KBytes.",
-    "favicon-type-error": "Formato de arquivo de imagem do site inválido. Somente imagens ICO, GIF ou PNG são aceitas.",
-    "drop-favicon-image": "Arraste um ícone do site ou clique para selecionar um arquivo para enviar.",
-    "drop-favicon-image-or": "Arraste e solte um ícone do site ou",
-    "no-favicon-image": "Nenhum ícone selecionado",
     "logo": "Logo",
     "logo-desc": "SVG ou PNG, altura mínima de 96px, até 200 KB",
-    "logo-description": "Qualquer imagem com tamanho máximo de {{kbSize}} KBytes.",
-    "logo-size-error": "A imagem do logo é muito grande. O tamanho máximo permitido é {{kbSize}} KBytes.",
-    "logo-type-error": "Formato de arquivo do logo inválido. Somente imagens são aceitas.",
-    "drop-logo-image": "Arraste uma imagem do logo ou clique para selecionar um arquivo para enviar.",
-    "drop-logo-image-or": "Arraste e solte uma imagem do logo ou",
-    "no-logo-image": "Nenhum logo selecionado",
     "logo-height": "Altura do logo, px",
     "logo-height-desc": "Dimensiona o logotipo proporcionalmente e o centraliza. Aumente a altura (até 200px) para logotipos altos",
     "collapsed-logo": "Logotipo da barra lateral recolhida",
@@ -11456,11 +11423,9 @@
     "error-verification-url": "O nome do domínio não deve conter os símbolos '/' e ':'. Exemplo: thingsboard.io",
     "show-connectivity-dialog": "Mostrar diálogo de conectividade",
     "show-connectivity-dialog-desc": "Mostra o diálogo de conectividade do dispositivo com instruções de conexão após a criação de um dispositivo",
-    "hide-connectivity-dialog": "Ocultar diálogo de conectividade",
     "override-trendz-add-on-name": "Substituir o nome do complemento Trendz analytics",
     "override-trendz-add-on-name-desc": "Renomeia o complemento \"Trendz\" para \"Analytics avançado\" em toda a plataforma",
     "show-platform-name-version-bottom-left-corner": "Mostrar nome e versão da plataforma no canto inferior esquerdo",
-    "override-trendz-add-on-name-hint": "Quando habilitado, 'Trendz analytics' será exibido como 'Advanced analytics' em toda a plataforma.",
     "show-platform-name-version": "Exibir nome e versão da plataforma",
     "platform-name": "Nome da plataforma",
     "platform-version": "Versão da plataforma",
@@ -12686,9 +12651,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13025,10 +12988,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Credenciais",
-      "here-app-id": "ID do app HERE",
-      "here-app-code": "Código do app HERE",
       "here-api-key": "Chave de API HERE",
-      "here-use-new-version-api-3": "Usar versão 3 da API",
       "tencent-maps-api-key": "Chave de API do Tencent Maps",
       "tencent-map-type-roadmap": "Mapa de ruas",
       "tencent-map-type-satelite": "Satélite",
@@ -13924,7 +13884,6 @@
       "roles-and-permissions": "Funções & Permissões",
       "groups": "Grupos",
       "integrations": "Integrações",
-      "solution-templates": "Modelos de solução",
       "scheduler": "Agendador",
       "white-labeling": "Personalização de marca"
     },
@@ -13938,11 +13897,6 @@
       "critical": "Crítico",
       "assigned-to-me": "Atribuído a mim",
       "total": "Total"
-    },
-    "solution-templates": {
-      "title": "Modelos de solução",
-      "prototype-plan": "Plano protótipo",
-      "startup-plan": "Plano startup"
     },
     "getting-started": {
       "get-started": "Começar",
