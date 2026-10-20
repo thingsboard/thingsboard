@@ -197,6 +197,9 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
     }
 
     private ListenableFuture<Void> processPostTelemetry(TenantId tenantId, CustomerId customerId, EntityId entityId, TransportProtos.PostTelemetryMsg msg, TbMsgMetaData metaData) {
+        if (msg.getTsKvListCount() == 0) {
+            return Futures.immediateFuture(null);
+        }
         SettableFuture<Void> futureToSet = SettableFuture.create();
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
@@ -260,6 +263,14 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> attributesToSave) {
+                try {
+                    pushToRuleEngine(attributesToSave);
+                } catch (Exception e) {
+                    onFailure(e);
+                }
+            }
+
+            private void pushToRuleEngine(List<AttributeKvEntry> attributesToSave) {
                 JsonObject jsonToSave = filterAttributesFromJson(json, attributesToSave);
                 var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
                 TbMsg tbMsg = TbMsg.newMsg()
@@ -312,7 +323,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                     saveAttributesAndPushToRuleEngine(attributesToSave);
                 } catch (DataValidationException | IncorrectParameterException e) {
                     // a failed response makes the edge resend the batch forever, so invalid attributes are acked and dropped
-                    log.warn("[{}] Skipping invalid attributes update [{}]: {}", tenantId, msg, e.getMessage());
+                    log.warn("[{}][{}] Skipping invalid attributes update, keys {}: {}", tenantId, entityId, json.keySet(), e.getMessage());
                     futureToSet.set(null);
                 } catch (Exception e) {
                     onFailure(e);
