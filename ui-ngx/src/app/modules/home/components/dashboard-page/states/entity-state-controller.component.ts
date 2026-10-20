@@ -23,7 +23,7 @@ import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
-import { base64toObj, deepClone, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
+import { base64toObj, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -61,7 +61,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.syncStateObjectWithDashboardState(this.preservedState);
+      this.stateObject = this.normalizeStateObject(this.preservedState);
       this.selectedStateIndex = this.stateObject.length - 1;
       setTimeout(() => {
         this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
@@ -84,7 +84,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   protected onStatesChanged() {
     const prevStateId = this.getStateId();
-    this.stateObject = this.syncStateObjectWithDashboardState(this.stateObject);
+    this.stateObject = this.normalizeStateObject(this.stateObject);
     this.selectedStateIndex = this.stateObject.length - 1;
     const newStateId = this.getStateId();
     if (newStateId !== prevStateId) {
@@ -264,20 +264,6 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       }
     }
     return this.normalizeStateObject(result);
-  }
-
-  private syncStateObjectWithDashboardState(stateObject: StateControllerState): StateControllerState {
-    const result = this.normalizeStateObject(stateObject);
-    const currentStateId = this.dashboardCtrl.dashboardCtx.state;
-    if (currentStateId && this.states[currentStateId] && result[result.length - 1].id !== currentStateId) {
-      const stateIndex = result.map((stateObj) => stateObj.id).lastIndexOf(currentStateId);
-      if (stateIndex > -1) {
-        result.splice(stateIndex + 1);
-      } else {
-        result.push({ id: currentStateId, params: deepClone(result[result.length - 1].params || {}) });
-      }
-    }
-    return result;
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean, replaceCurrentHistoryUrl?: boolean) {

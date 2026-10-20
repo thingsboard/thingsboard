@@ -136,11 +136,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   protected normalizeStateObject(stateObject: StateControllerState): StateControllerState {
     const result = (stateObject || []).filter((stateObj) => stateObj.id && this.states[stateObj.id]);
     if (!result.length) {
-      const currentStateId = this.dashboardCtrl.dashboardCtx.state;
-      result.push({
-        id: currentStateId && this.states[currentStateId] ? currentStateId : this.dashboardUtils.getRootStateId(this.states),
-        params: {}
-      });
+      result.push({ id: this.dashboardUtils.getRootStateId(this.states), params: {} });
     }
     return result;
   }
