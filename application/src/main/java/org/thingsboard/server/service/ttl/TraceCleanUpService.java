@@ -27,7 +27,7 @@ public class TraceCleanUpService extends AbstractCleanUpService {
 
     @Value("${sql.ttl.traces.spans_ttl:604800}")
     private long spansTtlInSec;
-    @Value("${sql.ttl.traces.trace_groups_ttl:2592000}")
+    @Value("${sql.ttl.traces.trace_groups_ttl:604800}")
     private long traceGroupsTtlInSec;
     @Value("${sql.ttl.traces.rule_engine_stats_ttl:2592000}")
     private long ruleEngineStatsTtlInSec;

@@ -700,7 +700,7 @@ sql:
       execution_interval_ms: "${SQL_TTL_TRACES_EXECUTION_INTERVAL_MS:3600000}" # Default value - 1 hour (max random initial delay and fixed period)
       # Spans and trace summaries, by span start time; 0 disables. Accurate to sql.traces.partition_size. Default value - 7 days
       spans_ttl: "${SQL_TTL_TRACES_SPANS_SECS:604800}"
-      trace_groups_ttl: "${SQL_TTL_TRACES_GROUPS_SECS:2592000}" # Execution path day buckets; 0 disables. Default value - 30 days
+      trace_groups_ttl: "${SQL_TTL_TRACES_GROUPS_SECS:604800}" # Execution path day buckets; 0 disables. Default value - 7 days
       rule_engine_stats_ttl: "${SQL_TTL_RULE_ENGINE_STATS_SECS:2592000}" # rule_node_* stats; 0 disables. Default value - 30 days
       removal_batch_size: "${SQL_TTL_TRACES_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     agent_bulk_actions:
