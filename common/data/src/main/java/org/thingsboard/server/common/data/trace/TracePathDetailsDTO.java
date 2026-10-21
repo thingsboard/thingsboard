@@ -32,37 +32,22 @@ package org.thingsboard.server.common.data.trace;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Execution path details")
-public class TracePathDetailsDTO {
-    private String pathId;
-    private String rootQueueId;
-    private String rootQueueName;
-    private String rootMessageType;
-    private String rootRuleChainId;
-    private String rootRuleChainName;
-    private long processedTraces;
-    private long processedTracesWithTimeout;
-    private long processedTracesWithError;
-    private long storedTraces;
-    private long totalTime;
-    private long maxTime;
-    private long totalInQueueTime;
-    private long totalRuleNodeProcessingTime;
-    private long errorCount;
-    private long lastObserved;
-
+@Schema(description = "Execution path details: the path summary plus its rule node tree")
+public class TracePathDetailsDTO extends TracePathDTO {
     @Schema(description = "Root rule node(s) of the path with their downstream subtree")
     private List<RuleNodeTreeNodeDTO> ruleNodeTree;
 }
