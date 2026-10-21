@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.ai.TbAiModelChatRequest;
 
 import java.util.List;
 
@@ -90,7 +91,24 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(savedModel.getTenantId()).isEqualTo(tenantId);
         assertThat(savedModel.getName()).isEqualTo("Test model");
         assertThat(savedModel.getConfiguration()).isEqualTo(model.getConfiguration());
+        assertThat(savedModel.isAvailableViaApi()).isFalse();
         assertThat(savedModel.getExternalId()).isNull();
+    }
+
+    @Test
+    public void saveAiModel_whenAvailableViaApiIsSet_shouldPersistIt() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        AiModel model = constructValidOpenAiModel("Test model");
+        model.setAvailableViaApi(true);
+
+        // WHEN
+        var savedModel = doPost("/api/ai/model", model, AiModel.class);
+
+        // THEN
+        assertThat(savedModel.isAvailableViaApi()).isTrue();
+        assertThat(doGet("/api/ai/model/" + savedModel.getId(), AiModel.class).isAvailableViaApi()).isTrue();
     }
 
     @Test
@@ -242,6 +260,132 @@ public class AiModelControllerTest extends AbstractControllerTest {
         } finally {
             SsrfProtectionValidator.setEnabled(false);
         }
+    }
+
+    /* --- Chat with saved model API tests --- */
+
+    @Test
+    public void sendChatRequestToAiModel_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + Uuids.timeBased() + "/chat", constructChatRequest());
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenModelDoesNotExist_shouldReturnNotFound() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var nonexistentModelId = new AiModelId(Uuids.timeBased());
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + nonexistentModelId + "/chat", constructChatRequest());
+
+        // THEN
+        result.andExpect(status().isNotFound())
+                .andExpect(statusReason(is("AI model with id [" + nonexistentModelId + "] is not found")));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenModelIsNotAvailableViaApi_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
+
+        // THEN
+        result.andExpect(status().isForbidden())
+                .andExpect(statusReason(is("AI model with id [" + model.getId() + "] is not available via API")));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenTenantAdmin_shouldUseStoredConfigurationAndReturnProviderError() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatRequest(), TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).contains("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenCustomerAdmin_shouldBeAllowedAndHideProviderError() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        loginCustomerAdminUser();
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatRequest(), TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).isEqualTo("Failed to get a response from the AI model");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenCustomerUserWithoutInvokePermission_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
+
+        // THEN
+        result.andExpect(status().isForbidden())
+                .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
+    }
+
+    /* --- Customer permission tests --- */
+
+    @Test
+    public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowInvokeOnly() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+        loginCustomerAdminUser();
+
+        // WHEN / THEN
+        assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "WRITE")).isFalse();
+        assertThat(hasAiModelPermission(model, "DELETE")).isFalse();
+    }
+
+    @Test
+    public void aiModelPermission_whenCustomerUserGrantedReadOnAllResources_shouldDenyReadAndInvoke() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+        loginCustomerUser();
+
+        // WHEN / THEN
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
     }
 
     /* --- Get by ID API tests --- */
@@ -440,6 +584,27 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(result4.getTotalPages()).isEqualTo(0);
         assertThat(result4.getTotalElements()).isEqualTo(0);
         assertThat(result4.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModels_testFilterByAvailableViaApi() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var available = constructValidOpenAiModel("Available model");
+        available.setAvailableViaApi(true);
+        available = doPost("/api/ai/model", available, AiModel.class);
+        var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
+
+        // WHEN
+        PageData<AiModel> onlyAvailable = doGetTypedWithPageLink("/api/ai/model?availableViaApi=true&", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModel> onlyUnavailable = doGetTypedWithPageLink("/api/ai/model?availableViaApi=false&", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModel> all = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(10));
+
+        // THEN
+        assertThat(onlyAvailable.getData()).containsExactly(available);
+        assertThat(onlyUnavailable.getData()).containsExactly(unavailable);
+        assertThat(all.getData()).containsExactlyInAnyOrder(available, unavailable);
     }
 
     @Test
@@ -701,6 +866,33 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // THEN
         assertThat(deleted).isFalse();
+    }
+
+    private AiModel saveModelAvailableViaApiWithBlockedBaseUrl() throws Exception {
+        var modelConfig = OpenAiChatModelConfig.builder()
+                .providerConfig(OpenAiProviderConfig.builder()
+                        .baseUrl("http://10.0.0.1:8080/")
+                        .apiKey("test-api-key")
+                        .build())
+                .modelId("gpt-4o")
+                .build();
+
+        var model = AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model")
+                .configuration(modelConfig)
+                .availableViaApi(true)
+                .build();
+
+        return doPost("/api/ai/model", model, AiModel.class);
+    }
+
+    private TbAiModelChatRequest constructChatRequest() {
+        return new TbAiModelChatRequest(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))), null);
+    }
+
+    private boolean hasAiModelPermission(AiModel model, String operation) throws Exception {
+        return doGet("/api/permission/AI_MODEL/" + model.getId() + "/" + operation, Boolean.class);
     }
 
     private AiModel constructValidOpenAiModel(String name) {

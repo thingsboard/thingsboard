@@ -22,6 +22,8 @@ public interface AiModelService extends EntityDaoService {
 
     PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink);
+
     Optional<AiModel> findAiModelByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
     FluentFuture<Optional<AiModel>> findAiModelByTenantIdAndIdAsync(TenantId tenantId, AiModelId modelId);

@@ -90,6 +90,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
     this.aiModelForms = this.fb.group({
       name: [this.data.AIModel ? this.data.AIModel.name : '', [Validators.required, Validators.maxLength(255), Validators.pattern(/.*\S.*/)]],
       modelType: [ModelType.CHAT],
+      availableViaApi: [this.data.AIModel?.availableViaApi ?? false],
       configuration: this.fb.group({
         provider: [this.provider, []],
         providerConfig: this.fb.group({

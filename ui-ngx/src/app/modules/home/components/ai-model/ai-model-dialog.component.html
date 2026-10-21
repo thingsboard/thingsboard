@@ -39,6 +39,12 @@
           </mat-error>
         }
       </mat-form-field>
+      <div class="tb-form-row no-border no-padding"
+           tb-hint-tooltip-icon="{{ 'ai-models.available-via-api-hint' | translate }}">
+        <mat-slide-toggle class="mat-slide" formControlName="availableViaApi">
+          {{ 'ai-models.available-via-api' | translate }}
+        </mat-slide-toggle>
+      </div>
     </section>
     <div formGroupName="configuration" class="tb-form-panel no-border no-padding">
       <section class="tb-form-panel stroked no-padding-bottom">

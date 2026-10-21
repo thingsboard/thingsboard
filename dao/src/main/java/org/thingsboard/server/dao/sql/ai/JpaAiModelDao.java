@@ -61,8 +61,13 @@ class JpaAiModelDao extends JpaAbstractDao<AiModelEntity, AiModel> implements Ai
 
     @Override
     public PageData<AiModel> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findByTenantId(TenantId.fromUUID(tenantId), null, pageLink);
+    }
+
+    @Override
+    public PageData<AiModel> findByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink) {
         return DaoUtil.toPageData(aiModelRepository.findByTenantId(
-                tenantId, StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), toPageRequest(pageLink))
+                tenantId.getId(), availableViaApi, StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), toPageRequest(pageLink))
         );
     }
 

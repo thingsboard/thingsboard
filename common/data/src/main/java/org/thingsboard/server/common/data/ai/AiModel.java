@@ -70,6 +70,15 @@ public final class AiModel extends BaseData<AiModelId> implements TenantEntity, 
     )
     private AiModelConfig configuration;
 
+    @Schema(
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+            accessMode = Schema.AccessMode.READ_WRITE,
+            description = "Whether the model can be used via the AI model chat API by users with the 'INVOKE' permission. " +
+                    "Roles that grant all operations, such as the default 'Customer Administrator' role, include 'INVOKE'",
+            defaultValue = "false"
+    )
+    private boolean availableViaApi;
+
     private AiModelId externalId;
 
     public AiModel() {}
@@ -85,6 +94,7 @@ public final class AiModel extends BaseData<AiModelId> implements TenantEntity, 
         version = model.getVersion();
         name = model.getName();
         configuration = model.getConfiguration();
+        availableViaApi = model.isAvailableViaApi();
         externalId = model.getExternalId() == null ? null : new AiModelId(model.getExternalId().getId());
     }
 

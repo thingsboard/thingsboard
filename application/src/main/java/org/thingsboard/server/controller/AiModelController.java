@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.rule.engine.ai.TbResponseFormat;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
 import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -32,6 +34,8 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.AiChatModelService;
+import org.thingsboard.server.service.ai.TbAiModelChatRequest;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -45,6 +49,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DE
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @Validated
 @RestController
@@ -107,12 +112,14 @@ class AiModelController extends BaseController {
             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "provider", "modelId"}))
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-            @RequestParam(required = false) String sortOrder
+            @RequestParam(required = false) String sortOrder,
+            @Parameter(description = "Filter by the 'available via API' flag; all models are returned when omitted")
+            @RequestParam(required = false) Boolean availableViaApi
     ) throws ThingsboardException {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return aiModelService.findAiModelsByTenantId(user.getTenantId(), pageLink);
+        return aiModelService.findAiModelsByTenantId(user.getTenantId(), availableViaApi, pageLink);
     }
 
     @ApiOperation(
@@ -152,15 +159,66 @@ class AiModelController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/chat")
     public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) throws ThingsboardException {
-        ChatRequest langChainChatRequest = tbChatRequest.toLangChainChatRequest();
-        AiChatModelConfig<?> chatModelConfig = tbChatRequest.chatModelConfig();
+        return executeChatRequest(tbChatRequest.chatModelConfig(), tbChatRequest.toLangChainChatRequest());
+    }
 
-        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(getTenantId(), chatModelConfig, langChainChatRequest)
+    @ApiOperation(
+            value = "Send request to a saved AI chat model (sendChatRequestToAiModel)",
+            notes = "Submits a single prompt - made up of an optional system message and a required user message - to the AI chat model " +
+                    "with the specified `id`, using its saved configuration, and returns either the generated answer or an error envelope. " +
+                    "The model must be marked as available via API, and the user must have the 'INVOKE' permission for AI models. " +
+                    "Roles that grant all operations, such as the default 'Customer Administrator' role, include 'INVOKE', " +
+                    "so marking a model as available via API makes it callable by every user with such a role." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping("/{modelUuid}/chat")
+    public DeferredResult<TbChatResponse> sendChatRequestToAiModel(
+            @Parameter(
+                    description = "ID of the AI model record",
+                    required = true,
+                    example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
+            )
+            @PathVariable UUID modelUuid,
+            @Valid @RequestBody TbAiModelChatRequest request
+    ) throws ThingsboardException {
+        AiModel model = checkAiModelId(new AiModelId(modelUuid), Operation.INVOKE);
+        if (!model.isAvailableViaApi()) {
+            throw new ThingsboardException("AI model with id [" + modelUuid + "] is not available via API", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
+        if (!(model.getConfiguration() instanceof AiChatModelConfig<?> chatModelConfig)) {
+            throw new ThingsboardException("AI model with id [" + modelUuid + "] is not a chat model", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+
+        ChatRequest chatRequest = new TbChatRequest(request.systemMessage(), request.userMessage(), chatModelConfig).toLangChainChatRequest();
+        TbResponseFormat responseFormat = request.responseFormat();
+        if (responseFormat != null) {
+            if (!responseFormat.isSupportedBy(chatModelConfig)) {
+                throw new ThingsboardException("AI model with id [" + modelUuid + "] does not support '" + responseFormat.type() + "' response format",
+                        ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
+            chatRequest = chatRequest.toBuilder().responseFormat(responseFormat.toLangChainResponseFormat()).build();
+        }
+        return executeChatRequest(chatModelConfig, chatRequest);
+    }
+
+    private DeferredResult<TbChatResponse> executeChatRequest(AiChatModelConfig<?> chatModelConfig, ChatRequest chatRequest) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(user.getTenantId(), chatModelConfig, chatRequest)
                 .transform(chatResponse -> (TbChatResponse) new TbChatResponse.Success(chatResponse.aiMessage().text()), directExecutor())
-                .catching(Throwable.class, ex -> new TbChatResponse.Failure(ex.getMessage()), directExecutor());
+                .catching(Throwable.class, ex -> toFailure(user, ex), directExecutor());
 
         Integer requestTimeoutSeconds = chatModelConfig.timeoutSeconds();
         return requestTimeoutSeconds != null ? wrapFuture(future, Duration.ofSeconds(requestTimeoutSeconds).toMillis()) : wrapFuture(future);
+    }
+
+    private TbChatResponse.Failure toFailure(SecurityUser user, Throwable ex) {
+        if (!user.isCustomerUser()) {
+            return new TbChatResponse.Failure(ex.getMessage());
+        }
+        // Provider errors may reveal configuration details that customer users must not see
+        log.debug("[{}] Chat request of customer user [{}] failed", user.getTenantId(), user.getId(), ex);
+        return new TbChatResponse.Failure("Failed to get a response from the AI model");
     }
 
 }
