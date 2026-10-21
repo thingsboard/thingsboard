@@ -30,6 +30,7 @@
  */
 package org.thingsboard.server.dao.sql.tracecoverage;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,16 @@ public class JpaTraceCoverageSettingDao extends JpaAbstractDao<TraceCoverageSett
     @Override
     public TraceCoverageSetting findByTenantId(UUID tenantId) {
         return DaoUtil.getData(repository.findByTenantId(tenantId));
+    }
+
+    @Override
+    @Transactional
+    public TraceCoverageSetting upsertByTenantId(UUID tenantId, TraceCoverageSetting setting) {
+        TraceCoverageSettingEntity entity = new TraceCoverageSettingEntity(setting);
+        entity.setUuid(Uuids.timeBased());
+        entity.setCreatedTime(System.currentTimeMillis());
+        entity.setTenantId(tenantId);
+        return DaoUtil.getData(repository.upsertByTenantId(entity));
     }
 
     @Override

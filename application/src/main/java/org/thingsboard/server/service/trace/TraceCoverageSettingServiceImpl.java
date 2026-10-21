@@ -62,14 +62,8 @@ public class TraceCoverageSettingServiceImpl implements TraceCoverageSettingServ
         validateTenantId(tenantId);
         validate(setting);
 
-        setting.setTenantId(tenantId.getId());
-
-        TraceCoverageSetting existing = traceCoverageSettingDao.findByTenantId(tenantId.getId());
-        if (existing != null) {
-            setting.setId(existing.getId());
-            setting.setCreatedTime(existing.getCreatedTime());
-        }
-        TraceCoverageSetting saved = traceCoverageSettingDao.save(tenantId, setting);
+        // The id and created time are never taken from the request: the row is found by tenant.
+        TraceCoverageSetting saved = traceCoverageSettingDao.upsertByTenantId(tenantId.getId(), setting);
         broadcastCacheInvalidation(ComponentLifecycleEvent.UPDATED);
         return saved;
     }

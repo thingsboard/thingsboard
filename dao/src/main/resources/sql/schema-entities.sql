@@ -1307,7 +1307,8 @@ CREATE TABLE IF NOT EXISTS trace_coverage_setting
     switch_period_seconds                 int         NOT NULL DEFAULT 60,
     related_trace_sample_interval_seconds int         NOT NULL DEFAULT 1800,
     message_payload_recording             varchar(16) NOT NULL DEFAULT 'NONE',
-    max_trace_groups_per_day              int         NOT NULL DEFAULT 10000
+    max_trace_groups_per_day              int         NOT NULL DEFAULT 10000,
+    CONSTRAINT trace_coverage_setting_tenant_id_unq_key UNIQUE (tenant_id)
 );
 
 CREATE TABLE IF NOT EXISTS calculated_field (
