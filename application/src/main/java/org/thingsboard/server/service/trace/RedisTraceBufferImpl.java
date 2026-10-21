@@ -34,6 +34,9 @@ import java.util.stream.Collectors;
 @Component
 @ConditionalOnExpression(TraceConditions.SHARED_CACHE)
 public class RedisTraceBufferImpl implements TraceBuffer {
+    // Cluster hash tag shared by a partition's deadlines ZSET and its trace hashes, so scripts touch one slot.
+    private static final String PARTITION_TAG = "trace-p";
+
     private static final int TRACE_PARTITION_COUNT = 64;
     private static final int TRACE_SCRIPT_NUM_KEYS = 1;
 
@@ -347,10 +350,10 @@ public class RedisTraceBufferImpl implements TraceBuffer {
         if (CollectionUtils.isEmpty(traceKeys)) {
             return;
         }
-        Map<String, List<String>> tracesByHashTag = traceKeys.stream()
-                .collect(Collectors.groupingBy(RedisTraceBufferImpl::traceKeyHashTag));
+        Map<Integer, List<String>> tracesByPartition = traceKeys.stream()
+                .collect(Collectors.groupingBy(RedisTraceBufferImpl::traceKeyPartition));
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            tracesByHashTag.forEach((hashTag, keys) -> {
+            tracesByPartition.forEach((partition, keys) -> {
                 try {
                     byte[][] hashKeys = keys.stream()
                             .map(RedisTraceBufferImpl::raw)
@@ -358,12 +361,11 @@ public class RedisTraceBufferImpl implements TraceBuffer {
                     connection.keyCommands().del(hashKeys);
 
                     byte[][] members = keys.stream()
-                            .map(RedisTraceBufferImpl::traceKeyMember)
-                            .map(RedisTraceBufferImpl::raw)
+                            .map(key -> raw(key.substring(traceKeyPrefix(partition).length())))
                             .toArray(byte[][]::new);
-                    connection.zSetCommands().zRem(raw("trace:deadlines:" + hashTag), members);
+                    connection.zSetCommands().zRem(raw(deadlinesKey(partition)), members);
                 } catch (Exception e) {
-                    log.warn("Failed to remove {} traces for partition [{}]", keys.size(), hashTag, e);
+                    log.warn("Failed to remove {} traces for partition [{}]", keys.size(), partition, e);
                 }
             });
         }
@@ -413,7 +415,7 @@ public class RedisTraceBufferImpl implements TraceBuffer {
             }
             Set<String> result = new HashSet<>(members.size());
             for (byte[] member : members) {
-                result.add("trace:{trace-p" + partition + "}:" + new String(member, StandardCharsets.UTF_8));
+                result.add(traceKeyPrefix(partition) + new String(member, StandardCharsets.UTF_8));
             }
             return result;
         } catch (Exception e) {
@@ -475,11 +477,11 @@ public class RedisTraceBufferImpl implements TraceBuffer {
     }
 
     private static String deadlinesKey(int partition) {
-        return "trace:deadlines:{trace-p" + partition + "}";
+        return "trace:deadlines:{" + PARTITION_TAG + partition + "}";
     }
 
     private static String traceKeyPrefix(int partition) {
-        return "trace:{trace-p" + partition + "}:";
+        return "trace:{" + PARTITION_TAG + partition + "}:";
     }
 
     private static RedisTraceKey parseTraceKey(String traceKey) {
@@ -490,12 +492,10 @@ public class RedisTraceBufferImpl implements TraceBuffer {
         return new RedisTraceKey(tenantId, traceId);
     }
 
-    private static String traceKeyHashTag(String traceKey) {
-        return traceKey.substring(traceKey.indexOf('{'), traceKey.indexOf('}') + 1);
-    }
-
-    private static String traceKeyMember(String traceKey) {
-        return traceKey.substring(traceKey.indexOf("}:") + 2);
+    // Inverse of traceKeyPrefix(partition): the N in "trace:{trace-pN}:<member>".
+    private static int traceKeyPartition(String traceKey) {
+        int start = traceKey.indexOf(PARTITION_TAG) + PARTITION_TAG.length();
+        return Integer.parseInt(traceKey.substring(start, traceKey.indexOf('}', start)));
     }
 
     private static byte[] raw(String value) {
