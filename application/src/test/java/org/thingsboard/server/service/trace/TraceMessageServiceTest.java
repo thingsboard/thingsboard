@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.trace;
 
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.trace.ReadWriteSpan;
 import io.opentelemetry.sdk.trace.ReadableSpan;
@@ -11,11 +12,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting.MessagePayloadRecording;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -36,11 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * A message can arrive carrying a payload flag from an earlier trace (or set by a client); only the tenant's
- * coverage setting, captured when the trace starts, may decide whether payloads are recorded.
- */
-class TraceMessageServicePayloadFlagTest {
+class TraceMessageServiceTest {
 
     private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
     private final List<ReadableSpan> endedSpans = new CopyOnWriteArrayList<>();
@@ -85,6 +85,8 @@ class TraceMessageServicePayloadFlagTest {
         tracerProvider.close();
     }
 
+    // A message can arrive carrying a payload flag from an earlier trace (or set by a client); only the tenant's
+    // coverage setting, captured when the trace starts, may decide whether payloads are recorded.
     @Test
     void givenStaleFlagAndNoneRecording_whenSelectedForCoverage_thenFlagIsRemoved() {
         TbMsg msg = msgWithStaleFlag();
@@ -133,6 +135,31 @@ class TraceMessageServicePayloadFlagTest {
 
         assertThat(msg.isTraceAuthorized()).isTrue();
         assertThat(msg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD)).isNull();
+    }
+
+    @Test
+    void givenSpanAttributesFail_whenRuleNodeEnter_thenSpanEndsAsErrorAndTraceStateIsCleared() {
+        TbMsg msg = msgWithStaleFlag();
+        msg.getMetaData().putValue(DataConstants.TRACE_ID, "0af7651916cd43dd8448eb211c80319c");
+        msg.getMetaData().putValue(DataConstants.TRACE_PARENT, "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01");
+        msg.setTraceAuthorized(true);
+        RuleNode ruleNode = new RuleNode(new RuleNodeId(UUID.randomUUID()));
+        ruleNode.setName("Save Timeseries");
+        // No rule chain id: addSpanAttributes throws after the span has started.
+        DefaultTbContext tbContext = Mockito.mock(DefaultTbContext.class);
+        Mockito.when(tbContext.getTenantId()).thenReturn(tenantId);
+        Mockito.when(tbContext.getRuleChainName()).thenReturn("Root Rule Chain");
+        Mockito.when(tbContext.getSelf()).thenReturn(ruleNode);
+
+        service.onRuleNodeEnter(tbContext, msg);
+
+        assertThat(endedSpans).hasSize(1);
+        assertThat(endedSpans.get(0).toSpanData().getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
+        Mockito.verify(tbContext).setProcessingMsgSpan(null);
+        Mockito.verify(tbContext, Mockito.never()).setProcessingMsgSpan(Mockito.argThat(span -> span != null));
+        assertThat(msg.isTraced()).isFalse();
+        assertThat(msg.isTraceAuthorized()).isFalse();
+        assertThat(msg.getTraceParent()).isNull();
     }
 
     private void givenRecording(MessagePayloadRecording recording) {

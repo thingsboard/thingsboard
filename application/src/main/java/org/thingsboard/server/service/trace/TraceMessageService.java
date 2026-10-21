@@ -148,6 +148,7 @@ public class TraceMessageService {
         TenantId tenantId = tbContext.getTenantId();
         String ruleChainName = tbContext.getRuleChainName();
         RuleNode ruleNode = tbContext.getSelf();
+        Span span = null;
         try {
             if (tbMsg.getTraceParent() == null) {
                 return;
@@ -175,7 +176,7 @@ public class TraceMessageService {
             SpanBuilder spanBuilder = tracer.spanBuilder(TraceUtils.buildSpanName(ruleChainName, ruleNode))
                     .setParent(Context.current().with(Span.wrap(parentSpanContext)));
 
-            Span span = spanBuilder.startSpan();
+            span = spanBuilder.startSpan();
 
             if (!span.isRecording()) {
                 stripTraceState(tbMsg);
@@ -191,6 +192,13 @@ public class TraceMessageService {
             tbContext.setProcessingMsgSpan(span);
         } catch (Exception e) {
             log.warn("[{}] Failed to evaluate traceable message", tenantId, e);
+            // Don't leave a half-built span on the context or trace keys on the message that point to it.
+            if (span != null) {
+                span.setStatus(StatusCode.ERROR, "Trace instrumentation failed: " + e.getMessage());
+                span.end();
+            }
+            tbContext.setProcessingMsgSpan(null);
+            stripTraceState(tbMsg);
         }
     }
 
