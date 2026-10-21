@@ -139,9 +139,12 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         if (traceMessageService != null) {
             msgIdToTraceId = new ConcurrentHashMap<>();
         }
+        // Each attempt gets a new pack context, so the retry flag has to outlive it: a retry must not re-sample traces.
+        boolean retry = false;
         while (!stopped && !consumer.isStopped()) {
             TbMsgPackProcessingContext packCtx = packProcessingContextFactory.create(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
             packCtx.setMsgIdAndTraceIdMap(msgIdToTraceId);
+            packCtx.setHasRetry(retry);
             // Decide trace-id coverage for the whole pack once, before per-message submission.
             if (traceMessageService != null) {
                 traceMessageService.onMessagePack(queue.getTenantId(), packCtx);
@@ -176,7 +179,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 consumer.commit();
                 break;
             } else {
-                packCtx.setHasRetry(true);
+                retry = true;
                 submitStrategy.update(decision.getReprocessMap());
             }
         }
