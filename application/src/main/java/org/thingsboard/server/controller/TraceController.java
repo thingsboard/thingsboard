@@ -80,6 +80,8 @@ import java.util.stream.Collectors;
 @PreAuthorize("hasAuthority('TENANT_ADMIN')")
 @RequiredArgsConstructor
 public class TraceController extends BaseController {
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final TraceService traceService;
     private final TraceCoverageSettingService traceCoverageSettingService;
 
@@ -304,7 +306,6 @@ public class TraceController extends BaseController {
             @RequestParam(required = false, defaultValue = "DESC") SortOrder sortOrder) throws ThingsboardException {
         checkReadPermission();
         validateTimeRange(startTime, endTime);
-        int effectivePageSize = Math.min(Math.max(pageSize, 1), 100);
         return traceService.getPathsPaginated(getTenantId(), TracePathListQuery.builder()
                 .startTime(startTime).endTime(endTime)
                 .rootQueueId(rootQueueId != null ? rootQueueId.toString() : null)
@@ -312,7 +313,7 @@ public class TraceController extends BaseController {
                 .rootRuleChainId(rootRuleChainId != null ? rootRuleChainId.toString() : null)
                 .ruleNodeId(ruleNodeId != null ? ruleNodeId.toString() : null)
                 .errorsOnly(errorsOnly)
-                .page(Math.max(page, 0)).pageSize(effectivePageSize)
+                .page(clampPage(page)).pageSize(clampPageSize(pageSize))
                 .sortField(sortBy).sortOrder(sortOrder)
                 .build());
     }
@@ -379,11 +380,19 @@ public class TraceController extends BaseController {
                 .ruleChainId(trimToNull(ruleChainId))
                 .ruleNodeId(trimToNull(ruleNodeId))
                 .pathId(trimToNull(pathId))
-                .page(page)
-                .pageSize(pageSize)
+                .page(clampPage(page))
+                .pageSize(clampPageSize(pageSize))
                 .sortField(sortBy)
                 .sortOrder(sortOrder)
                 .build();
+    }
+
+    private static int clampPage(int page) {
+        return Math.max(page, 0);
+    }
+
+    private static int clampPageSize(int pageSize) {
+        return Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE);
     }
 
     // Traces carry message payloads, so they are guarded by the rule chain permissions.
