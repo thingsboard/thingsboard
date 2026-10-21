@@ -2,15 +2,22 @@ package org.thingsboard.server.service.trace;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -225,5 +232,51 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
         buffer.append(List.of(span));
 
         assertThat(onlyTrace(buffer).spans().iterator().next()).isSameAs(span);
+    }
+
+    @Test
+    void appendsRacingTheDrainAreDrainedExactlyOnce() throws Exception {
+        int spansToAppend = 200_000;
+        // TTL 0: every trace is claimable the moment it's appended, so the drain constantly races the writer.
+        CaffeineTraceBuffer buffer = new CaffeineTraceBuffer(Integer.MAX_VALUE, 0, UNLIMITED_SPANS, statsFactory(new SimpleMeterRegistry()));
+        UUID tenantId = UUID.randomUUID();
+        String traceId = randomTraceId();
+        Set<String> drained = ConcurrentHashMap.newKeySet();
+        AtomicInteger duplicates = new AtomicInteger();
+        AtomicBoolean writing = new AtomicBoolean(true);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> drainer = executor.submit(() -> {
+                while (writing.get()) {
+                    collect(buffer.drainExpired(System.currentTimeMillis(), Integer.MAX_VALUE), drained, duplicates);
+                }
+            });
+            Future<?> writer = executor.submit(() -> {
+                for (int i = 0; i < spansToAppend; i++) {
+                    buffer.append(List.of(span(tenantId, traceId, "span-" + i, null, "n")));
+                }
+            });
+            writer.get(60, TimeUnit.SECONDS);
+            writing.set(false);
+            drainer.get(60, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
+        }
+        collect(buffer.drainExpired(Long.MAX_VALUE, Integer.MAX_VALUE), drained, duplicates);
+
+        assertThat(duplicates.get()).isZero();
+        assertThat(drained).hasSize(spansToAppend);
+        assertThat(((AtomicLong) ReflectionTestUtils.getField(buffer, "bufferedSpans")).get()).isZero();
+    }
+
+    private static void collect(List<LoadedTrace> loaded, Set<String> drained, AtomicInteger duplicates) {
+        for (LoadedTrace trace : loaded) {
+            for (BufferedSpan span : trace.trace().spans()) {
+                if (!drained.add(span.getSpanId())) {
+                    duplicates.incrementAndGet();
+                }
+            }
+        }
     }
 }

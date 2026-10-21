@@ -87,24 +87,35 @@ public class CaffeineTraceBuffer implements TraceBuffer {
 
     @Override
     public List<LoadedTrace> drainExpired(long now, int maxSpans) {
-        List<String> claimed = new ArrayList<>();
+        List<LoadedTrace> loaded = new ArrayList<>();
         int spans = 0;
-        for (Map.Entry<String, BufferedTraceEntry> entry : traces.asMap().entrySet()) {
-            if (entry.getValue().deadline() > now) {
+        for (Map.Entry<String, BufferedTraceEntry> candidate : traces.asMap().entrySet()) {
+            if (candidate.getValue().deadline() > now) {
                 continue;
             }
-            claimed.add(entry.getKey());
-            spans += entry.getValue().spanCount();
+            // Re-check and remove under the key's lock, which append also takes: a span appended after the scan
+            // either moved the deadline (the trace stays) or is part of what is drained, never dropped in between.
+            // removal still fires onRemoval (EXPLICIT), which releases exactly the spans the entry held.
+            BufferedTraceEntry[] claimed = new BufferedTraceEntry[1];
+            traces.asMap().computeIfPresent(candidate.getKey(), (key, entry) -> {
+                if (entry.deadline() > now) {
+                    return entry;
+                }
+                claimed[0] = entry;
+                return null;
+            });
+            if (claimed[0] == null) {
+                continue;
+            }
+            TraceSnapshot snapshot = claimed[0].snapshot();
+            TraceIdentity identity = parseTraceIdentity(candidate.getKey());
+            loaded.add(new LoadedTrace(candidate.getKey(), new BufferedTrace(identity.tenantId(), identity.traceId(),
+                    snapshot.truncated(), snapshot.spans())));
+            spans += snapshot.spans().size();
             if (spans >= maxSpans) {
                 break;
             }
         }
-        if (claimed.isEmpty()) {
-            return List.of();
-        }
-
-        List<LoadedTrace> loaded = load(claimed);
-        remove(claimed);
         return loaded;
     }
 
