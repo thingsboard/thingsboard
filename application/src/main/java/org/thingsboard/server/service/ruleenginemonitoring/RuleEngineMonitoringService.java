@@ -50,6 +50,8 @@ import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeExecStatsRow;
@@ -193,14 +195,28 @@ public class RuleEngineMonitoringService {
         }
     }
 
-    public void recordQueueOutcomes(TbMsgPackProcessingContext packCtx, Queue queue, String serviceId) {
+    /**
+     * Records one outcome per message of a pack attempt. Successes are final; a timeout or failure is recorded only
+     * when the message won't be retried ({@code toReprocess}), so a retried message counts once, with its final result.
+     */
+    public void recordQueueOutcomes(TbMsgPackProcessingContext packCtx, Queue queue, String serviceId, Set<UUID> toReprocess) {
         long startTs = System.currentTimeMillis();
         try {
             UUID queueTenantId = queue.getTenantId().getId();
             UUID queueId = queue.getId().getId();
-            recordOutcomesForMap(packCtx, packCtx.getPendingMap(), queueTenantId, queueId, serviceId, MetricType.TIMEOUT);
-            recordOutcomesForMap(packCtx, packCtx.getFailedMap(), queueTenantId, queueId, serviceId, MetricType.FAILURE);
-            recordOutcomesForMap(packCtx, packCtx.getSuccessMap(), queueTenantId, queueId, serviceId, MetricType.SUCCESS);
+            // Messages still running keep moving out of pending while this runs: copy pending first, then drop from it
+            // whatever has meanwhile failed or succeeded, so no message gets two outcomes.
+            Map<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> timedOut = new HashMap<>(packCtx.getPendingMap());
+            Map<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> failed = new HashMap<>(packCtx.getFailedMap());
+            Map<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> succeeded = new HashMap<>(packCtx.getSuccessMap());
+            timedOut.keySet().removeAll(failed.keySet());
+            timedOut.keySet().removeAll(succeeded.keySet());
+            timedOut.keySet().removeAll(toReprocess);
+            failed.keySet().removeAll(succeeded.keySet());
+            failed.keySet().removeAll(toReprocess);
+            recordOutcomesForMap(packCtx, timedOut, queueTenantId, queueId, serviceId, MetricType.TIMEOUT);
+            recordOutcomesForMap(packCtx, failed, queueTenantId, queueId, serviceId, MetricType.FAILURE);
+            recordOutcomesForMap(packCtx, succeeded, queueTenantId, queueId, serviceId, MetricType.SUCCESS);
         } catch (Exception e) {
             log.error("Failed to record queue outcomes", e);
         } finally {
@@ -385,7 +401,7 @@ public class RuleEngineMonitoringService {
     }
 
     private void recordOutcomesForMap(TbMsgPackProcessingContext packCtx,
-                                      Map<UUID, ?> map,
+                                      Map<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> map,
                                       UUID queueTenantId, UUID queueId, String serviceId, MetricType metricType) {
         boolean isSysQueue = TenantId.SYS_TENANT_ID.getId().equals(queueTenantId);
         boolean trackLastVisitedNode = queueTimeoutLastVisitedRuleNodeEnabled && metricType == MetricType.TIMEOUT;
@@ -394,11 +410,10 @@ public class RuleEngineMonitoringService {
             return;
         }
         Map<UUID, Map<UUID, QueueMetrics>> grouped = new HashMap<>();
-        for (UUID msgId : map.keySet()) {
-            UUID tenantId = isSysQueue ? packCtx.getMsgTenantId(msgId) : queueTenantId;
-            if (tenantId == null) {
-                tenantId = queueTenantId;
-            }
+        for (Map.Entry<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> entry : map.entrySet()) {
+            UUID msgId = entry.getKey();
+            ToRuleEngineMsg proto = entry.getValue().getValue();
+            UUID tenantId = isSysQueue ? new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()) : queueTenantId;
             UUID nodeId = NULL_RULE_NODE_UUID;
             if (trackLastVisitedNode) {
                 RuleNodeInfo ruleNodeInfo = packCtx.getLastVisitedRuleNode(msgId);

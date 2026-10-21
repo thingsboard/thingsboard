@@ -170,7 +170,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 stats.log(result, decision.isCommit());
             }
 
-            reportToRuleEngineMonitoring(packCtx, queue);
+            reportToRuleEngineMonitoring(packCtx, queue, decision.isCommit() ? Set.of() : decision.getReprocessMap().keySet());
 
             packCtx.cleanup();
 
@@ -185,12 +185,12 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         }
     }
 
-    private void reportToRuleEngineMonitoring(TbMsgPackProcessingContext packCtx, Queue queue) {
+    private void reportToRuleEngineMonitoring(TbMsgPackProcessingContext packCtx, Queue queue, Set<UUID> toReprocess) {
         try {
             if (ruleEngineMonitoringService == null) {
                 return;
             }
-            ruleEngineMonitoringService.recordQueueOutcomes(packCtx, queue, ctx.getServiceInfoProvider().getServiceId());
+            ruleEngineMonitoringService.recordQueueOutcomes(packCtx, queue, ctx.getServiceInfoProvider().getServiceId(), toReprocess);
         } catch (Exception e) {
             log.error("Failed to report queue outcome to monitoring service", e);
         }
