@@ -55,7 +55,6 @@ CREATE TABLE IF NOT EXISTS span
 
 -- Indexes for span table
 CREATE INDEX IF NOT EXISTS idx_span_tenant_trace ON span (tenant_id, trace_id);
-CREATE INDEX IF NOT EXISTS idx_span_attributes_jsonb_gin ON span USING gin (attributes_jsonb);
 CREATE INDEX IF NOT EXISTS idx_span_tenant_end_time
     ON span (tenant_id, end_time DESC);
 
