@@ -479,13 +479,13 @@
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Operation.java",
       "header": "ce-modified",
       "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Operation.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob b481176e53d5d4e1460882c578b4e4c00f895b3b); a move alone does not imply PE authorship.",
-      "contentHash": "sha256:d4bcb4e694df750984b311d786923a3a68291c5e1e45cb7715a0db9541d9dbe7"
+      "contentHash": "sha256:f57a3606b1303177721db29d33490e8a763f02a7a660c1358c55d4efff6f9e6b"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/permission/Resource.java",
       "header": "ce-modified",
       "reason": "Reviewed relocation from application/src/main/java/org/thingsboard/server/service/security/permission/Resource.java in PE commit d97b2f71224e96c27fbdf287f592a08b6fa0407b. The source exists in shared CE ancestry 4c2aa4a60368318eafc2dea155b93721668654c4. The relocated CE permission enum has PE permission/group extensions. Compared with CE fa82445a7078506defbaadc5bea07227dc1b016d (blob d8b4dd8f4ef95df06ba22fd584813f437a8b453a); a move alone does not imply PE authorship.",
-      "contentHash": "sha256:635cb50f3945d1bca662a7100a6129bea1270755bf4fe7cd6bc9849f228a4f08"
+      "contentHash": "sha256:0f4157c5bea567a4fc31dfd45e793fe111a26e520a27442bf9f72b18348beb7d"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/query/EntityGroupNameFilter.java",
