@@ -33,7 +33,8 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
-                   [formControlName]="field.key">
+                   [formControlName]="field.key"
+                   autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore>
             <button mat-icon-button matSuffix type="button"
                     (click)="togglePasswordVisible(field.key)">
               <mat-icon>{{ passwordVisible[field.key] ? 'visibility_off' : 'visibility' }}</mat-icon>
@@ -60,7 +61,8 @@
         @case (FormFieldType.INTEGER) {
           <mat-form-field appearance="outline">
             <mat-label>{{ field.label }}</mat-label>
-            <input matInput type="number" [formControlName]="field.key">
+            <input matInput type="number" [formControlName]="field.key"
+                   autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
             @if (field.helpText) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
@@ -75,7 +77,8 @@
         @default {
           <mat-form-field appearance="outline">
             <mat-label>{{ field.label }}</mat-label>
-            <input matInput [formControlName]="field.key">
+            <input matInput [formControlName]="field.key"
+                   autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"
                       [matTooltip]="'iot-hub.generate-random-value' | translate"
