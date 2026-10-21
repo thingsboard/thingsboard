@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT_MSG_DATA;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT_MSG_METADATA;
+
 /**
  * Raw-SQL reads for the trace tables: dynamic filters, aggregations and jsonb predicates.
  */
@@ -256,8 +259,8 @@ public class TraceQueryRepository {
             sql.append("AND EXISTS (SELECT 1 FROM span sp WHERE sp.trace_id = ts.trace_id AND sp.tenant_id = ts.tenant_id AND sp.name = :spanName) ");
             params.addValue("spanName", spanName);
         }
-        appendSpanAttributeLike(sql, params, "input.msg.data", "messageData", messageData);
-        appendSpanAttributeLike(sql, params, "input.msg.metadata", "messageMetadata", messageMetadata);
+        appendSpanAttributeLike(sql, params, INPUT_MSG_DATA, "messageData", messageData);
+        appendSpanAttributeLike(sql, params, INPUT_MSG_METADATA, "messageMetadata", messageMetadata);
         return sql.toString();
     }
 

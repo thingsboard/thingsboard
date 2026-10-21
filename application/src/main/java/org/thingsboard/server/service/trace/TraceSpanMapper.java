@@ -20,14 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_NAME;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.TENANT_ID;
+
 @Slf4j
 @Component
 @ConditionalOnExpression(TraceConditions.TRACE_ENABLED)
 public class TraceSpanMapper {
-    private static final AttributeKey<String> TENANT_ID_KEY = AttributeKey.stringKey("tenant.id");
-    private static final AttributeKey<String> QUEUE_NAME_KEY = AttributeKey.stringKey("queue.name");
+    private static final AttributeKey<String> TENANT_ID_KEY = AttributeKey.stringKey(TENANT_ID);
+    private static final AttributeKey<String> QUEUE_NAME_KEY = AttributeKey.stringKey(QUEUE_NAME);
     private static final String EXCEPTION_STACKTRACE_ATTRIBUTE = "exception.stacktrace";
-    private static final String QUEUE_ID_ATTR = "queue.id";
 
     private final QueueCacheService queueCacheService;
     private final String serviceId;
@@ -67,7 +70,7 @@ public class TraceSpanMapper {
             try {
                 UUID queueId = queueCacheService.getQueueId(UUID.fromString(tenantIdStr), queueName);
                 if (queueId != null) {
-                    payload.put(QUEUE_ID_ATTR, queueId.toString());
+                    payload.put(QUEUE_ID, queueId.toString());
                 }
             } catch (Exception e) {
                 log.debug("Failed to resolve queue id for tenant [{}] queue [{}]", tenantIdStr, queueName, e);

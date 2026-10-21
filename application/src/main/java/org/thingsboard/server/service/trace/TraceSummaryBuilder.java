@@ -14,15 +14,16 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSAGE_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSAGE_TYPE;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.ORIGINATOR_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_NAME;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_TIMEOUT;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_CHAIN_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_NODE_ID;
+
 @Component
 public class TraceSummaryBuilder {
-    private static final String ORIGINATOR_ID_ATTR = "originator.id";
-    private static final String QUEUE_NAME_ATTR = "queue.name";
-    private static final String RULE_CHAIN_ID_ATTR = "rule.chain.id";
-    private static final String RULE_NODE_ID_ATTR = "rule.node.id";
-    private static final String MESSAGE_TYPE_ATTR = "message.type";
-    private static final String MESSAGE_ID_ATTR = "message.id";
-    private static final String QUEUE_TIMEOUT_ATTR = "queue.cancel.time.out.messages";
 
     private final TracePathBuilder tracePathBuilder;
 
@@ -78,14 +79,14 @@ public class TraceSummaryBuilder {
                 path.rootQueueId(),
                 path.messageType(),
                 path.rootRuleChainId() != null ? path.rootRuleChainId().toString() : null,
-                distinctAttributeValues(spans, ORIGINATOR_ID_ATTR),
-                distinctAttributeValues(spans, QUEUE_NAME_ATTR),
-                distinctAttributeValues(spans, RULE_CHAIN_ID_ATTR),
-                distinctAttributeValues(spans, RULE_NODE_ID_ATTR),
-                distinctAttributeValues(spans, MESSAGE_TYPE_ATTR),
-                distinctAttributeValues(spans, MESSAGE_ID_ATTR),
+                distinctAttributeValues(spans, ORIGINATOR_ID),
+                distinctAttributeValues(spans, QUEUE_NAME),
+                distinctAttributeValues(spans, RULE_CHAIN_ID),
+                distinctAttributeValues(spans, RULE_NODE_ID),
+                distinctAttributeValues(spans, MESSAGE_TYPE),
+                distinctAttributeValues(spans, MESSAGE_ID),
                 errorCount > 0,
-                spans.stream().anyMatch(span -> hasAttribute(span, QUEUE_TIMEOUT_ATTR)));
+                spans.stream().anyMatch(span -> hasAttribute(span, QUEUE_TIMEOUT)));
     }
 
     private static List<String> distinctServiceNames(Collection<BufferedSpan> spans) {

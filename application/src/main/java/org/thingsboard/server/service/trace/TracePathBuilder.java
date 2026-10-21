@@ -22,14 +22,15 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSAGE_TYPE;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_CHAIN_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_NODE_ID;
+
 @Slf4j
 @Component
 public class TracePathBuilder {
     private static final String QUEUE_TIMEOUT_SPAN_NAME = "Queue Message Processing Time Out";
-    private static final String QUEUE_ID_ATTR = "queue.id";
-    private static final String RULE_CHAIN_ID_ATTR = "rule.chain.id";
-    private static final String RULE_NODE_ID_ATTR = "rule.node.id";
-    private static final String MESSAGE_TYPE_ATTR = "message.type";
 
     public Optional<TracePath> build(BufferedTrace trace) {
         if (trace == null || CollectionUtils.isEmpty(trace.spans())) {
@@ -38,10 +39,10 @@ public class TracePathBuilder {
 
         List<BufferedSpan> pathSpans = trace.spans().stream()
                 .filter(span -> !QUEUE_TIMEOUT_SPAN_NAME.equals(span.getName()))
-                .filter(span -> spanUuid(span, QUEUE_ID_ATTR) != null
-                        && spanUuid(span, RULE_CHAIN_ID_ATTR) != null
-                        && spanUuid(span, RULE_NODE_ID_ATTR) != null
-                        && TraceUtils.spanString(span, MESSAGE_TYPE_ATTR) != null)
+                .filter(span -> spanUuid(span, QUEUE_ID) != null
+                        && spanUuid(span, RULE_CHAIN_ID) != null
+                        && spanUuid(span, RULE_NODE_ID) != null
+                        && TraceUtils.spanString(span, MESSAGE_TYPE) != null)
                 .toList();
         if (pathSpans.isEmpty()) {
             log.warn("Trace [{}] has no rule-node spans after filtering; skipping", trace.traceId());
@@ -59,14 +60,14 @@ public class TracePathBuilder {
         }
 
         BufferedSpan firstInitialSpan = initialSpans.get(0);
-        UUID rootQueueId = spanUuid(firstInitialSpan, QUEUE_ID_ATTR);
-        UUID rootRuleChainId = spanUuid(firstInitialSpan, RULE_CHAIN_ID_ATTR);
-        String messageType = TraceUtils.spanString(firstInitialSpan, MESSAGE_TYPE_ATTR);
+        UUID rootQueueId = spanUuid(firstInitialSpan, QUEUE_ID);
+        UUID rootRuleChainId = spanUuid(firstInitialSpan, RULE_CHAIN_ID);
+        String messageType = TraceUtils.spanString(firstInitialSpan, MESSAGE_TYPE);
 
         boolean sameInitialContext = initialSpans.stream().allMatch(span ->
-                Objects.equals(rootQueueId, spanUuid(span, QUEUE_ID_ATTR))
-                        && Objects.equals(rootRuleChainId, spanUuid(span, RULE_CHAIN_ID_ATTR))
-                        && Objects.equals(messageType, TraceUtils.spanString(span, MESSAGE_TYPE_ATTR)));
+                Objects.equals(rootQueueId, spanUuid(span, QUEUE_ID))
+                        && Objects.equals(rootRuleChainId, spanUuid(span, RULE_CHAIN_ID))
+                        && Objects.equals(messageType, TraceUtils.spanString(span, MESSAGE_TYPE)));
         if (!sameInitialContext) {
             log.warn("Trace [{}] has inconsistent initial context across initial spans; skipping", trace.traceId());
             return Optional.empty();
@@ -74,9 +75,9 @@ public class TracePathBuilder {
 
         Set<VisitedRuleNode> visitedRuleNodes = pathSpans.stream()
                 .map(span -> new VisitedRuleNode(
-                        spanUuid(span, QUEUE_ID_ATTR),
-                        spanUuid(span, RULE_CHAIN_ID_ATTR),
-                        spanUuid(span, RULE_NODE_ID_ATTR)))
+                        spanUuid(span, QUEUE_ID),
+                        spanUuid(span, RULE_CHAIN_ID),
+                        spanUuid(span, RULE_NODE_ID)))
                 .collect(Collectors.toSet());
 
         String pathId = computePathId(rootQueueId, rootRuleChainId, messageType, visitedRuleNodes);
@@ -90,12 +91,12 @@ public class TracePathBuilder {
         Map<UUID, Set<UUID>> incomingConnections = new HashMap<>();
         Map<UUID, Set<UUID>> outgoingConnections = new HashMap<>();
         for (BufferedSpan span : pathSpans) {
-            UUID nodeId = spanUuid(span, RULE_NODE_ID_ATTR);
+            UUID nodeId = spanUuid(span, RULE_NODE_ID);
             BufferedSpan parent = span.getParentSpanId() != null ? spansById.get(span.getParentSpanId()) : null;
             if (nodeId == null || parent == null) {
                 continue;
             }
-            UUID parentNodeId = spanUuid(parent, RULE_NODE_ID_ATTR);
+            UUID parentNodeId = spanUuid(parent, RULE_NODE_ID);
             if (parentNodeId == null || parentNodeId.equals(nodeId)) {
                 continue;
             }
@@ -111,12 +112,12 @@ public class TracePathBuilder {
     private Map<String, TraceGroup.RuleNodePathMetric> computeRuleNodePathMetrics(List<BufferedSpan> pathSpans) {
         Map<String, TraceGroup.RuleNodePathMetric> metrics = new HashMap<>();
         for (BufferedSpan span : pathSpans) {
-            UUID ruleNodeId = spanUuid(span, RULE_NODE_ID_ATTR);
+            UUID ruleNodeId = spanUuid(span, RULE_NODE_ID);
             if (ruleNodeId == null) {
                 continue;
             }
             TraceGroup.RuleNodePathMetric metric = metrics.computeIfAbsent(ruleNodeId.toString(),
-                    k -> new TraceGroup.RuleNodePathMetric(0L, 0L, 0L, spanUuid(span, RULE_CHAIN_ID_ATTR)));
+                    k -> new TraceGroup.RuleNodePathMetric(0L, 0L, 0L, spanUuid(span, RULE_CHAIN_ID)));
             metric.setTotalTime(metric.getTotalTime() + TraceUtils.spanDuration(span));
             metric.setTotalCount(metric.getTotalCount() + 1);
             if (TraceUtils.isErrorSpan(span)) {

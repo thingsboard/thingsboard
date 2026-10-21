@@ -79,6 +79,21 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT_MSG_DATA;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT_MSG_METADATA;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSAGE_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSAGE_TYPE;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.ORIGINATOR_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.OUTPUT_MSG_DATA;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.OUTPUT_MSG_METADATA;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_NAME;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_TIMEOUT;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_CHAIN_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_CHAIN_NAME;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_NODE_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_NODE_MAX_EXECUTIONS;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.TENANT_ID;
+
 
 @Slf4j
 @Service
@@ -172,7 +187,7 @@ public class TraceMessageService {
             if (span == null) {
                 return;
             }
-            span.setAttribute("rule.node.max.executions", maxRuleNodeExecutions);
+            span.setAttribute(RULE_NODE_MAX_EXECUTIONS, maxRuleNodeExecutions);
             span.setStatus(StatusCode.ERROR, "Max rule node executions exceeded");
             span.end();
         } catch (Exception e) {
@@ -252,10 +267,10 @@ public class TraceMessageService {
 
                 Span span = tracer.spanBuilder("Queue Message Processing Time Out")
                         .setParent(Context.current().with(Span.wrap(parentSpanContext)))
-                        .setAttribute("message.id", tbMsgProto.getId())
-                        .setAttribute("tenant.id", traceMetadata.getTenantId())
-                        .setAttribute("queue.name", packCtx.getQueueName())
-                        .setAttribute("queue.cancel.time.out.messages", packCtx.isSkipTimeoutMsgsPossible())
+                        .setAttribute(MESSAGE_ID, tbMsgProto.getId())
+                        .setAttribute(TENANT_ID, traceMetadata.getTenantId())
+                        .setAttribute(QUEUE_NAME, packCtx.getQueueName())
+                        .setAttribute(QUEUE_TIMEOUT, packCtx.isSkipTimeoutMsgsPossible())
                         .startSpan();
                 span.setStatus(StatusCode.OK);
                 span.end();
@@ -484,11 +499,11 @@ public class TraceMessageService {
         }
         Span span = tracer.spanBuilder(TRACE_MESSAGE_SNAPSHOT_SPAN)
                 .setParent(Context.current().with(Span.wrap(parentSpanContext)))
-                .setAttribute("message.id", tbMsg.getId().toString())
-                .setAttribute("tenant.id", tenantId.getId().toString())
-                .setAttribute("queue.name", packCtx != null ? packCtx.getQueueName() : tbMsg.getQueueName())
-                .setAttribute("input.msg.data", tbMsg.getData())
-                .setAttribute("input.msg.metadata", serializeMetadataToJson(tbMsg.getMetaData()))
+                .setAttribute(MESSAGE_ID, tbMsg.getId().toString())
+                .setAttribute(TENANT_ID, tenantId.getId().toString())
+                .setAttribute(QUEUE_NAME, packCtx != null ? packCtx.getQueueName() : tbMsg.getQueueName())
+                .setAttribute(INPUT_MSG_DATA, tbMsg.getData())
+                .setAttribute(INPUT_MSG_METADATA, serializeMetadataToJson(tbMsg.getMetaData()))
                 .startSpan();
         span.setStatus(StatusCode.OK);
         span.end();
@@ -698,25 +713,25 @@ public class TraceMessageService {
 
     private void addOutputMsgAttributes(Span span, TbMsg msg, boolean recordMsgPayload) {
         if (recordMsgPayload) {
-            span.setAttribute("output.msg.data", msg.getData());
-            span.setAttribute("output.msg.metadata", serializeMetadataToJson(msg.getMetaData()));
+            span.setAttribute(OUTPUT_MSG_DATA, msg.getData());
+            span.setAttribute(OUTPUT_MSG_METADATA, serializeMetadataToJson(msg.getMetaData()));
         }
     }
 
     private void addSpanAttributes(Span span, TbMsg tbMsg,
                                    String ruleChainName, RuleNode ruleNode, TenantId tenantId, boolean recordMsgPayload) {
-        span.setAttribute("message.id", tbMsg.getId().toString())
-                .setAttribute("rule.chain.id", ruleNode.getRuleChainId().getId().toString())
-                .setAttribute("rule.node.id", ruleNode.getId().getId().toString())
-                .setAttribute("rule.chain.name", ruleChainName)
-                .setAttribute("message.type", tbMsg.getType())
-                .setAttribute("queue.name", tbMsg.getQueueName())
-                .setAttribute("originator.id", tbMsg.getOriginator().getId().toString())
-                .setAttribute("tenant.id", tenantId.getId().toString());
+        span.setAttribute(MESSAGE_ID, tbMsg.getId().toString())
+                .setAttribute(RULE_CHAIN_ID, ruleNode.getRuleChainId().getId().toString())
+                .setAttribute(RULE_NODE_ID, ruleNode.getId().getId().toString())
+                .setAttribute(RULE_CHAIN_NAME, ruleChainName)
+                .setAttribute(MESSAGE_TYPE, tbMsg.getType())
+                .setAttribute(QUEUE_NAME, tbMsg.getQueueName())
+                .setAttribute(ORIGINATOR_ID, tbMsg.getOriginator().getId().toString())
+                .setAttribute(TENANT_ID, tenantId.getId().toString());
 
         if (recordMsgPayload) {
-            span.setAttribute("input.msg.data", tbMsg.getData())
-                    .setAttribute("input.msg.metadata", serializeMetadataToJson(tbMsg.getMetaData()));
+            span.setAttribute(INPUT_MSG_DATA, tbMsg.getData())
+                    .setAttribute(INPUT_MSG_METADATA, serializeMetadataToJson(tbMsg.getMetaData()));
         }
     }
 
