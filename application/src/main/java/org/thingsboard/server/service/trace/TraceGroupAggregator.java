@@ -74,7 +74,7 @@ public class TraceGroupAggregator {
             metrics.setMaxTime(Math.max(metrics.getMaxTime(), traceDuration));
             metrics.setTotalInQueueTime(metrics.getTotalInQueueTime() + path.totalInQueueTime());
             metrics.setTotalRuleNodeProcessingTime(metrics.getTotalRuleNodeProcessingTime() + path.totalRuleNodeProcessingTime());
-            mergeRuleNodePathMetrics(metrics.getRuleNodePathMetrics(), path.ruleNodePathMetrics());
+            TraceGroup.mergeRuleNodePathMetrics(metrics.getRuleNodePathMetrics(), path.ruleNodePathMetrics());
             sourceBufferKeys.add(loaded.bufferKey());
         }
 
@@ -145,22 +145,5 @@ public class TraceGroupAggregator {
     private static List<UUID> connectionsOf(Map<UUID, Set<UUID>> connections, UUID ruleNodeId) {
         Set<UUID> nodes = connections.get(ruleNodeId);
         return nodes == null || nodes.isEmpty() ? new ArrayList<>() : new ArrayList<>(nodes);
-    }
-
-    private static void mergeRuleNodePathMetrics(Map<String, TraceGroup.RuleNodePathMetric> target,
-                                                 Map<String, TraceGroup.RuleNodePathMetric> source) {
-        if (source == null) {
-            return;
-        }
-        source.forEach((ruleNodeId, metric) -> {
-            TraceGroup.RuleNodePathMetric acc = target.computeIfAbsent(ruleNodeId,
-                    k -> new TraceGroup.RuleNodePathMetric(0L, 0L, 0L, metric.getRuleChainId()));
-            acc.setTotalTime(acc.getTotalTime() + metric.getTotalTime());
-            acc.setTotalCount(acc.getTotalCount() + metric.getTotalCount());
-            acc.setErrors(acc.getErrors() + metric.getErrors());
-            if (acc.getRuleChainId() == null) {
-                acc.setRuleChainId(metric.getRuleChainId());
-            }
-        });
     }
 }

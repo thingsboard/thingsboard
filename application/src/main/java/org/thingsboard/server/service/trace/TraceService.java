@@ -312,19 +312,7 @@ public class TraceService {
 
         Map<String, TraceGroup.RuleNodePathMetric> mergedMetrics = new HashMap<>();
         for (TraceGroup row : rows) {
-            if (row.getRuleNodePathMetrics() == null) {
-                continue;
-            }
-            row.getRuleNodePathMetrics().forEach((nodeId, metric) -> {
-                TraceGroup.RuleNodePathMetric acc = mergedMetrics.computeIfAbsent(nodeId,
-                        k -> new TraceGroup.RuleNodePathMetric(0L, 0L, 0L, metric.getRuleChainId()));
-                acc.setTotalTime(acc.getTotalTime() + metric.getTotalTime());
-                acc.setTotalCount(acc.getTotalCount() + metric.getTotalCount());
-                acc.setErrors(acc.getErrors() + metric.getErrors());
-                if (acc.getRuleChainId() == null) {
-                    acc.setRuleChainId(metric.getRuleChainId());
-                }
-            });
+            TraceGroup.mergeRuleNodePathMetrics(mergedMetrics, row.getRuleNodePathMetrics());
         }
         long errorCount = mergedMetrics.values().stream().mapToLong(TraceGroup.RuleNodePathMetric::getErrors).sum();
 

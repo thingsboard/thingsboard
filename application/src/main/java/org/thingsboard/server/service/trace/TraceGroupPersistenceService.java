@@ -166,25 +166,8 @@ public class TraceGroupPersistenceService {
         merged.setMaxTime(Math.max(merged.getMaxTime(), contribution.getMaxTime()));
         merged.setTotalInQueueTime(merged.getTotalInQueueTime() + contribution.getTotalInQueueTime());
         merged.setTotalRuleNodeProcessingTime(merged.getTotalRuleNodeProcessingTime() + contribution.getTotalRuleNodeProcessingTime());
-        mergeRuleNodePathMetrics(merged.getRuleNodePathMetrics(), contribution.getRuleNodePathMetrics());
+        TraceGroup.mergeRuleNodePathMetrics(merged.getRuleNodePathMetrics(), contribution.getRuleNodePathMetrics());
         return merged;
-    }
-
-    private void mergeRuleNodePathMetrics(Map<String, TraceGroup.RuleNodePathMetric> target,
-                                          Map<String, TraceGroup.RuleNodePathMetric> source) {
-        if (source == null) {
-            return;
-        }
-        source.forEach((ruleNodeId, metric) -> {
-            TraceGroup.RuleNodePathMetric acc = target.computeIfAbsent(ruleNodeId,
-                    k -> new TraceGroup.RuleNodePathMetric(0L, 0L, 0L, metric.getRuleChainId()));
-            acc.setTotalTime(acc.getTotalTime() + metric.getTotalTime());
-            acc.setTotalCount(acc.getTotalCount() + metric.getTotalCount());
-            acc.setErrors(acc.getErrors() + metric.getErrors());
-            if (acc.getRuleChainId() == null) {
-                acc.setRuleChainId(metric.getRuleChainId());
-            }
-        });
     }
 
     private List<TraceSummaryInfo> summaryInfoByTraceId(List<String> traceIds,

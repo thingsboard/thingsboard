@@ -63,6 +63,27 @@ public class TraceGroup {
         private long totalCount;
         private long errors;
         private UUID ruleChainId;
+
+        public void add(RuleNodePathMetric other) {
+            totalTime += other.totalTime;
+            totalCount += other.totalCount;
+            errors += other.errors;
+            if (ruleChainId == null) {
+                ruleChainId = other.ruleChainId;
+            }
+        }
+    }
+
+    /**
+     * Adds every per-rule-node metric of {@code source} into {@code target}, keyed by rule node id.
+     */
+    public static void mergeRuleNodePathMetrics(Map<String, RuleNodePathMetric> target, Map<String, RuleNodePathMetric> source) {
+        if (source == null) {
+            return;
+        }
+        source.forEach((ruleNodeId, metric) -> target
+                .computeIfAbsent(ruleNodeId, k -> new RuleNodePathMetric(0L, 0L, 0L, metric.getRuleChainId()))
+                .add(metric));
     }
 
     public static long floorToDay(long timestampMs) {
