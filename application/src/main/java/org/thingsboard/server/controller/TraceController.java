@@ -263,7 +263,7 @@ public class TraceController extends BaseController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(description = "Page size (default: 20, max: 100)")
             @RequestParam(required = false, defaultValue = "20") int pageSize,
-            @Parameter(description = "Sort field: START_TIME, END_TIME, FIRST_SPAN_NAME, DURATION, SPAN_COUNT, ERROR_COUNT, CREATED_TIME, TOTAL_SPAN_TIME, or IN_QUEUE_TIME (default: START_TIME)")
+            @Parameter(description = "Sort field (default: START_TIME); the allowed values are listed in the schema")
             @RequestParam(required = false, defaultValue = "START_TIME") TraceSortField sortBy,
             @Parameter(description = "Sort order: ASC or DESC (default: DESC)")
             @RequestParam(required = false, defaultValue = "DESC") SortOrder sortOrder) throws ThingsboardException {
@@ -301,7 +301,7 @@ public class TraceController extends BaseController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @Parameter(description = "Page size (default: 20, max: 100)")
             @RequestParam(required = false, defaultValue = "20") int pageSize,
-            @Parameter(description = "Sort field (default: TRACES_COUNT)")
+            @Parameter(description = "Sort field (default: TRACES_COUNT); the allowed values are listed in the schema")
             @RequestParam(required = false, defaultValue = "TRACES_COUNT") TracePathSortField sortBy,
             @Parameter(description = "Sort order: ASC or DESC (default: DESC)")
             @RequestParam(required = false, defaultValue = "DESC") SortOrder sortOrder) throws ThingsboardException {
