@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS rule_node_exec_stats
     CONSTRAINT rule_node_exec_stats_pkey
         PRIMARY KEY (bucket_time, queue_id, tenant_id, service_id, rule_chain_id, rule_node_id)
 );
+-- Monitoring queries are per tenant over a time range; the PK leads with bucket_time and would scan every tenant.
+CREATE INDEX IF NOT EXISTS idx_rule_node_exec_stats_tenant_bucket ON rule_node_exec_stats (tenant_id, bucket_time);
 
 CREATE TABLE IF NOT EXISTS rule_node_queue_stats
 (
@@ -143,6 +145,7 @@ CREATE TABLE IF NOT EXISTS rule_node_queue_stats
         PRIMARY KEY (bucket_time, queue_tenant_id, queue_id, tenant_id, service_id, rule_chain_id,
                      last_visited_rule_node_id)
 );
+CREATE INDEX IF NOT EXISTS idx_rule_node_queue_stats_tenant_bucket ON rule_node_queue_stats (tenant_id, bucket_time);
 
 CREATE TABLE IF NOT EXISTS rule_node_queue_lag_stats
 (
