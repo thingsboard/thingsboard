@@ -41,7 +41,9 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -55,9 +57,9 @@ public class QueueCacheService {
     private final RuleEngineMonitoringDao dao;
     private final TbTenantProfileCache tenantProfileCache;
     private final long queueCacheTtlMs;
+    // Only reloads and invalidations take the lock; lookups (one per exported span) read the snapshot lock-free.
     private final Lock queueUpdateLock = new ReentrantLock();
-    private List<QueueShortInfo> queues = List.of();
-    private long queuesLoadedAtMs;
+    private volatile QueuesSnapshot snapshot;
 
     public QueueCacheService(RuleEngineMonitoringDao dao,
                              TbTenantProfileCache tenantProfileCache,
@@ -71,43 +73,61 @@ public class QueueCacheService {
         if (tenantId == null || queueName == null) {
             return null;
         }
-        Collection<QueueShortInfo> allQueues = getAllQueues();
         TenantProfile profile = tenantProfileCache.get(TenantId.fromUUID(tenantId));
         boolean usesSystemQueues = profile != null && !profile.isIsolatedTbRuleEngine();
         UUID lookupTenantId = usesSystemQueues ? TenantId.SYS_TENANT_ID.getId() : tenantId;
-        return allQueues.stream()
-                .filter(q -> lookupTenantId.equals(q.tenantId()) && queueName.equals(q.name()))
-                .map(QueueShortInfo::id)
-                .findFirst()
-                .orElse(null);
+        return getSnapshot().queueIds().get(new QueueNameKey(lookupTenantId, queueName));
     }
 
     public Collection<QueueShortInfo> getAllQueues() {
-        queueUpdateLock.lock();
-        try {
-            if (queues.isEmpty() || queuesExpired()) {
-                queues = List.copyOf(dao.findAllQueuesShortInfo());
-                queuesLoadedAtMs = System.currentTimeMillis();
-                log.debug("Reloaded queues {}", queues);
-            }
-            return queues;
-        } finally {
-            queueUpdateLock.unlock();
-        }
-    }
-
-    private boolean queuesExpired() {
-        return System.currentTimeMillis() - queuesLoadedAtMs > queueCacheTtlMs;
+        return getSnapshot().queues();
     }
 
     // Called by the rule engine consumer service on every queue create/update/delete notification.
     public void invalidateQueues() {
         queueUpdateLock.lock();
         try {
-            queues = List.of();
-            queuesLoadedAtMs = 0;
+            snapshot = null;
         } finally {
             queueUpdateLock.unlock();
+        }
+    }
+
+    private QueuesSnapshot getSnapshot() {
+        QueuesSnapshot current = snapshot;
+        if (current != null && !isExpired(current)) {
+            return current;
+        }
+        queueUpdateLock.lock();
+        try {
+            current = snapshot;
+            if (current == null || isExpired(current)) {
+                current = QueuesSnapshot.of(dao.findAllQueuesShortInfo(), System.currentTimeMillis());
+                snapshot = current;
+                log.debug("Reloaded queues {}", current.queues());
+            }
+            return current;
+        } finally {
+            queueUpdateLock.unlock();
+        }
+    }
+
+    private boolean isExpired(QueuesSnapshot snapshot) {
+        return System.currentTimeMillis() - snapshot.loadedAtMs() > queueCacheTtlMs;
+    }
+
+    private record QueueNameKey(UUID tenantId, String name) {
+    }
+
+    private record QueuesSnapshot(List<QueueShortInfo> queues, Map<QueueNameKey, UUID> queueIds, long loadedAtMs) {
+
+        static QueuesSnapshot of(Collection<QueueShortInfo> loaded, long loadedAtMs) {
+            Map<QueueNameKey, UUID> queueIds = new HashMap<>();
+            for (QueueShortInfo queue : loaded) {
+                // first one wins, as the former linear scan did
+                queueIds.putIfAbsent(new QueueNameKey(queue.tenantId(), queue.name()), queue.id());
+            }
+            return new QueuesSnapshot(List.copyOf(loaded), Map.copyOf(queueIds), loadedAtMs);
         }
     }
 }
