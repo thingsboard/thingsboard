@@ -60,7 +60,7 @@ public interface TraceDao {
     PageData<TracePathDTO> findPathsPaginated(UUID tenantId, long startTime, long endTime,
                                               String rootQueueId, String rootMessageType, String rootRuleChainId,
                                               String ruleNodeId, boolean errorsOnly,
-                                              int page, int pageSize, String sortField, String sortOrder);
+                                              int page, int pageSize, TracePathSortField sortField, SortOrder sortOrder);
 
     TraceProjection findTraceById(UUID tenantId, String traceId);
 
@@ -80,7 +80,7 @@ public interface TraceDao {
                                                   boolean errorsOnly,
                                                   String ruleChainId, String ruleNodeId, String pathId, boolean hasTimeOutsByQueue,
                                                   int page, int pageSize,
-                                                  String sortField, String sortOrder);
+                                                  TraceSortField sortField, SortOrder sortOrder);
 
     boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs);
 

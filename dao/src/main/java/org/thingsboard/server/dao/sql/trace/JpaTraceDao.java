@@ -103,7 +103,7 @@ public class JpaTraceDao implements TraceDao {
     public PageData<TracePathDTO> findPathsPaginated(UUID tenantId, long startTime, long endTime,
                                                      String rootQueueId, String rootMessageType, String rootRuleChainId,
                                                      String ruleNodeId, boolean errorsOnly,
-                                                     int page, int pageSize, String sortField, String sortOrder) {
+                                                     int page, int pageSize, TracePathSortField sortField, SortOrder sortOrder) {
         // A window starting mid-day must still match that day's bucket.
         return traceQueryRepository.findPathsPaginated(tenantId, floorToDay(startTime), endTime, rootQueueId, rootMessageType,
                 rootRuleChainId, ruleNodeId, errorsOnly, page, pageSize, sortField, sortOrder);
@@ -155,7 +155,7 @@ public class JpaTraceDao implements TraceDao {
     }
 
     @Override
-    public PageData<TraceProjection> findTracesPaginated(UUID tenantId, String serviceName, long startTime, long endTime, String spanName, String queueName, String originatorId, String messageType, String messageId, String messageData, String messageMetadata, String traceId, boolean errorsOnly, String ruleChainId, String ruleNodeId, String pathId, boolean hasTimeOutsByQueue, int page, int pageSize, String sortField, String sortOrder) {
+    public PageData<TraceProjection> findTracesPaginated(UUID tenantId, String serviceName, long startTime, long endTime, String spanName, String queueName, String originatorId, String messageType, String messageId, String messageData, String messageMetadata, String traceId, boolean errorsOnly, String ruleChainId, String ruleNodeId, String pathId, boolean hasTimeOutsByQueue, int page, int pageSize, TraceSortField sortField, SortOrder sortOrder) {
         if (traceId != null && !traceId.isEmpty()) {
             TraceProjection trace = traceQueryRepository.findTraceById(tenantId, traceId);
             if (trace != null) {

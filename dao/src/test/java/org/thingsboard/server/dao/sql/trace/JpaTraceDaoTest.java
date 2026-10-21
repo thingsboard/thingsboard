@@ -79,7 +79,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         traceDao.saveTraceGroups(List.of(traceGroup(10, 1)), List.of());
 
         assertEquals(1, traceDao.findPathsPaginated(tenantId, BUCKET, BUCKET + DAY,
-                null, "POST_TELEMETRY_REQUEST", null, ruleNodeId.toString(), true, 0, 10, "ERROR_COUNT", "ASC").getTotalElements());
+                null, "POST_TELEMETRY_REQUEST", null, ruleNodeId.toString(), true, 0, 10, TracePathSortField.ERROR_COUNT, SortOrder.ASC).getTotalElements());
         assertEquals(0, traceDao.findPathsPaginated(tenantId, BUCKET, BUCKET + DAY,
                 null, null, null, UUID.randomUUID().toString(), false, 0, 10, null, null).getTotalElements());
     }
@@ -238,6 +238,25 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void givenEverySortField_whenSearchTracesAndPaths_thenQueriesRun() {
+        traceDao.upsertTraceSummaries(List.of(traceSummary()));
+        traceDao.saveSpans(List.of(span("span-1", "{}")));
+        traceDao.saveTraceGroups(List.of(traceGroup(10, 1)), List.of());
+
+        for (TraceSortField sortField : TraceSortField.values()) {
+            for (SortOrder sortOrder : SortOrder.values()) {
+                assertEquals(sortField + " " + sortOrder, 1, traceDao.findTracesPaginated(tenantId, null, BUCKET, BUCKET + DAY,
+                        null, null, null, null, null, null, null, null, false, null, null, null, false, 0, 10,
+                        sortField, sortOrder).getTotalElements());
+            }
+        }
+        for (TracePathSortField sortField : TracePathSortField.values()) {
+            assertEquals(sortField.name(), 1, traceDao.findPathsPaginated(tenantId, BUCKET, BUCKET + DAY,
+                    null, null, null, null, false, 0, 10, sortField, SortOrder.ASC).getData().size());
+        }
+    }
+
+    @Test
     public void givenNoTraceSchema_whenCleanUp_thenNothingFails() {
         dropTraceSchema();
 
@@ -267,7 +286,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     private PageData<TraceProjection> search(String pathId, boolean errorsOnly, String ruleNodeFilter,
                                              String spanName, String messageData) {
         return traceDao.findTracesPaginated(tenantId, null, BUCKET, BUCKET + DAY, spanName, null, null, null, null,
-                messageData, null, null, errorsOnly, null, ruleNodeFilter, pathId, false, 0, 10, "START_TIME", "DESC");
+                messageData, null, null, errorsOnly, null, ruleNodeFilter, pathId, false, 0, 10, TraceSortField.START_TIME, SortOrder.DESC);
     }
 
     private TraceGroup traceGroup(long processedTraces, long errors) {

@@ -158,15 +158,13 @@ public class TraceService {
     }
 
     public PageData<Trace> searchTracesPaginated(TenantId tenantId, TraceSearchQuery query) {
-        String sortFieldStr = query.getSortField() != null ? query.getSortField().name() : TraceSortField.START_TIME.name();
-        String sortOrderStr = query.getSortOrder() != null ? query.getSortOrder().name() : SortOrder.DESC.name();
 
         PageData<TraceProjection> entities = traceDao.findTracesPaginated(
                 tenantId.getId(), query.getServiceName(), query.getStartTime(), query.getEndTime(), query.getSpanName(), query.getQueueName(),
                 query.getOriginatorId(), query.getMessageType(), query.getMessageId(), query.getMessageData(),
                 query.getMessageMetadata(), query.getTraceId(), query.isErrorsOnly(),
                 query.getRuleChainId(), query.getRuleNodeId(), query.getPathId(), query.isHasTimeOutsByQueue(),
-                query.getPage(), query.getPageSize(), sortFieldStr, sortOrderStr);
+                query.getPage(), query.getPageSize(), query.getSortField(), query.getSortOrder());
 
         Map<String, String> queueNames = new HashMap<>();
         List<Trace> traces = entities.getData().stream()
@@ -180,12 +178,10 @@ public class TraceService {
         if (query.getEndTime() <= query.getStartTime()) {
             throw new IllegalArgumentException("End time must be after start time");
         }
-        String sortField = query.getSortField() != null ? query.getSortField().name() : TracePathSortField.TRACES_COUNT.name();
-        String sortOrder = query.getSortOrder() != null ? query.getSortOrder().name() : SortOrder.DESC.name();
         PageData<TracePathDTO> pageData = traceDao.findPathsPaginated(
                 tenantId.getId(), query.getStartTime(), query.getEndTime(),
                 query.getRootQueueId(), query.getRootMessageType(), query.getRootRuleChainId(), query.getRuleNodeId(),
-                query.isErrorsOnly(), query.getPage(), query.getPageSize(), sortField, sortOrder);
+                query.isErrorsOnly(), query.getPage(), query.getPageSize(), query.getSortField(), query.getSortOrder());
         enrichPathNames(tenantId, pageData.getData());
         return pageData;
     }

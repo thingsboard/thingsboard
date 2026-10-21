@@ -28,35 +28,33 @@
  * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.dao.sql.trace;
 
-import lombok.Getter;
+/**
+ * Sort columns of the execution path list, each with the aggregated column it orders by.
+ */
+public enum TracePathSortField {
+    TRACES_COUNT("processed_traces"),
+    STORED_TRACES("stored_traces"),
+    TIMEOUT_TRACES("processed_traces_with_timeout"),
+    ERROR_TRACES("processed_traces_with_error"),
+    LAST_OBSERVED("last_observed"),
+    AVG_TIME("avg_time"),
+    AVG_IN_QUEUE_TIME("avg_in_queue_time"),
+    AVG_RULE_NODE_PROCESSING_TIME("avg_rule_node_processing_time"),
+    MAX_TIME("max_time"),
+    ERROR_COUNT("error_count"),
+    ROOT_QUEUE("root_queue_id"),
+    ROOT_MESSAGE_TYPE("root_message_type"),
+    ROOT_RULE_CHAIN("root_rule_chain_id");
 
-@Getter
-public enum TraceSortField {
-    START_TIME("startTime"),
+    private final String column;
 
-    END_TIME("endTime"),
+    TracePathSortField(String column) {
+        this.column = column;
+    }
 
-    FIRST_SPAN_NAME("firstSpanName"),
-
-    DURATION("duration"),
-
-    SPAN_COUNT("spanCount"),
-
-    ERROR_COUNT("errorCount"),
-
-    RULE_NODE_COUNT("ruleNodeCount"),
-
-    CREATED_TIME("createdTime"),
-
-    TOTAL_SPAN_TIME("totalSpanTime"),
-
-    IN_QUEUE_TIME("inQueueTime");
-
-    private final String fieldName;
-
-    TraceSortField(String fieldName) {
-        this.fieldName = fieldName;
+    public String getColumn() {
+        return column;
     }
 }

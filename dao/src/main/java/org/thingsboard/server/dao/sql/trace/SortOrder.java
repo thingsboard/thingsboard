@@ -28,20 +28,9 @@
  * DOES NOT CONVEY OR IMPLY ANY RIGHTS TO REPRODUCE, DISCLOSE OR DISTRIBUTE ITS CONTENTS,
  * OR TO MANUFACTURE, USE, OR SELL ANYTHING THAT IT  MAY DESCRIBE, IN WHOLE OR IN PART.
  */
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.dao.sql.trace;
 
-import lombok.Getter;
-import org.springframework.data.domain.Sort;
-
-@Getter
 public enum SortOrder {
-    ASC(Sort.Direction.ASC),
-
-    DESC(Sort.Direction.DESC);
-
-    private final Sort.Direction direction;
-
-    SortOrder(Sort.Direction direction) {
-        this.direction = direction;
-    }
+    ASC,
+    DESC
 }

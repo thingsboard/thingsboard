@@ -137,7 +137,7 @@ public class TraceQueryRepository {
     public PageData<TracePathDTO> findPathsPaginated(UUID tenantId, long startTime, long endTime,
                                                      String rootQueueId, String rootMessageType, String rootRuleChainId,
                                                      String ruleNodeId, boolean errorsOnly,
-                                                     int page, int pageSize, String sortField, String sortOrder) {
+                                                     int page, int pageSize, TracePathSortField sortField, SortOrder sortOrder) {
         int safePageSize = Math.max(1, pageSize);
         int safePage = Math.max(0, page);
 
@@ -184,7 +184,8 @@ public class TraceQueryRepository {
                 "MAX(last_observed) AS last_observed, " +
                 PATH_ERROR_SUM + " AS error_count " +
                 "FROM trace_group " + where + groupBy + having +
-                " ORDER BY " + pathSortColumn(sortField) + " " + ("ASC".equalsIgnoreCase(sortOrder) ? "ASC" : "DESC") +
+                " ORDER BY " + (sortField != null ? sortField : TracePathSortField.TRACES_COUNT).getColumn() + " " +
+                (sortOrder != null ? sortOrder : SortOrder.DESC).name() +
                 ", path_id ASC LIMIT :limit OFFSET :offset";
         params.addValue("limit", safePageSize).addValue("offset", (long) safePage * safePageSize);
         List<TracePathDTO> data = jdbcTemplate.query(dataSql, params, (rs, rowNum) -> mapTracePath(rs));
@@ -206,7 +207,7 @@ public class TraceQueryRepository {
                                             String queueName, String originatorId, String messageType, String messageId,
                                             String messageData, String messageMetadata, boolean errorsOnly,
                                             String ruleChainId, String ruleNodeId, Collection<String> pathTraceIds,
-                                            boolean hasTimeOutsByQueue, String sortField, String sortOrder, Pageable pageable) {
+                                            boolean hasTimeOutsByQueue, TraceSortField sortField, SortOrder sortOrder, Pageable pageable) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         String filters = buildTraceSummaryFilters(params, tenantId, serviceName, startTime, endTime, spanName, queueName,
                 originatorId, messageType, messageId, messageData, messageMetadata, errorsOnly,
@@ -219,7 +220,7 @@ public class TraceQueryRepository {
         }
 
         String dataSql = "SELECT " + TRACE_SUMMARY_COLUMNS + filters +
-                getOrderByClause(sortField, "ASC".equals(sortOrder)) +
+                (sortField != null ? sortField : TraceSortField.START_TIME).orderBy(sortOrder != null ? sortOrder : SortOrder.DESC) +
                 "LIMIT :pageSize OFFSET :offset";
         params.addValue("pageSize", pageable.getPageSize()).addValue("offset", pageable.getOffset());
         List<TraceProjection> content = jdbcTemplate.query(dataSql, params, TRACE_PROJECTION_MAPPER);
@@ -278,45 +279,6 @@ public class TraceQueryRepository {
                     .append(" ESCAPE '\\') ");
             params.addValue(paramName, "%" + value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
         }
-    }
-
-    private static String getOrderByClause(String sortField, boolean isAsc) {
-        String direction = isAsc ? "ASC" : "DESC";
-        return switch (sortField) {
-            case "FIRST_SPAN_NAME" ->
-                    "ORDER BY (SELECT sp.name FROM span sp WHERE sp.trace_id = ts.trace_id AND sp.tenant_id = ts.tenant_id ORDER BY sp.start_time ASC LIMIT 1) " + direction + ", ts.trace_id ASC ";
-            case "DURATION" -> "ORDER BY ts.duration " + direction + ", ts.trace_id ASC ";
-            case "END_TIME" -> "ORDER BY ts.end_time " + direction + ", ts.trace_id ASC ";
-            case "SPAN_COUNT" -> "ORDER BY ts.span_count " + direction + ", ts.trace_id ASC ";
-            case "ERROR_COUNT" -> "ORDER BY ts.error_count " + direction + ", ts.trace_id ASC ";
-            case "RULE_NODE_COUNT" -> "ORDER BY COALESCE(jsonb_array_length(ts.rule_node_ids_jsonb), 0) " + direction + ", ts.trace_id ASC ";
-            case "CREATED_TIME" -> "ORDER BY ts.created_time " + direction + ", ts.trace_id ASC ";
-            case "TOTAL_SPAN_TIME" -> "ORDER BY ts.total_span_time " + direction + " NULLS LAST, ts.trace_id ASC ";
-            case "IN_QUEUE_TIME" -> "ORDER BY ts.in_queue_time " + direction + " NULLS LAST, ts.trace_id ASC ";
-            default -> "ORDER BY ts.start_time " + direction + ", ts.trace_id ASC ";
-        };
-    }
-
-    private static String pathSortColumn(String sortField) {
-        if (sortField == null) {
-            return "processed_traces";
-        }
-        return switch (sortField) {
-            case "LAST_OBSERVED" -> "last_observed";
-            case "AVG_TIME" -> "avg_time";
-            case "AVG_IN_QUEUE_TIME" -> "avg_in_queue_time";
-            case "AVG_RULE_NODE_PROCESSING_TIME" -> "avg_rule_node_processing_time";
-            case "MAX_TIME" -> "max_time";
-            case "ERROR_COUNT" -> "error_count";
-            case "ROOT_QUEUE" -> "root_queue_id";
-            case "ROOT_MESSAGE_TYPE" -> "root_message_type";
-            case "ROOT_RULE_CHAIN" -> "root_rule_chain_id";
-            case "TRACES_COUNT" -> "processed_traces";
-            case "STORED_TRACES" -> "stored_traces";
-            case "TIMEOUT_TRACES" -> "processed_traces_with_timeout";
-            case "ERROR_TRACES" -> "processed_traces_with_error";
-            default -> "processed_traces";
-        };
     }
 
     private static TracePathDTO mapTracePath(ResultSet rs) throws SQLException {

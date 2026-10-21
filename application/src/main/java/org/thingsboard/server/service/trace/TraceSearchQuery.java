@@ -33,6 +33,8 @@ package org.thingsboard.server.service.trace;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.dao.sql.trace.SortOrder;
+import org.thingsboard.server.dao.sql.trace.TraceSortField;
 
 @Data
 @Builder
