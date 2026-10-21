@@ -64,7 +64,6 @@ import org.thingsboard.server.service.trace.SpanEventDTO;
 import org.thingsboard.server.service.trace.SpanLinkDTO;
 import org.thingsboard.server.service.trace.SpanSubResourceQuery;
 import org.thingsboard.server.service.trace.SpanTreeNode;
-import org.thingsboard.server.service.trace.TraceDTO;
 import org.thingsboard.server.service.trace.TraceSearchQuery;
 import org.thingsboard.server.service.trace.TraceService;
 import org.thingsboard.server.service.trace.TraceSpanListQuery;
@@ -115,11 +114,11 @@ public class TraceController extends BaseController {
                     "In-queue time is calculated accounting for parallel/overlapping spans using interval merging. " +
                     "Total span time is the sum of all individual span durations.")
     @GetMapping("/{traceId}")
-    public TraceDTO getTrace(
+    public Trace getTrace(
             @Parameter(description = "Trace ID (string, OpenTelemetry format)", required = true)
             @PathVariable String traceId) throws ThingsboardException {
         checkReadPermission();
-        return TraceDTO.fromTrace(traceService.getTrace(getTenantId(), traceId));
+        return traceService.getTrace(getTenantId(), traceId);
     }
 
     @Operation(summary = "Get spans by trace ID",
@@ -212,7 +211,7 @@ public class TraceController extends BaseController {
                     "Supports pagination and sorting. Returns traces with the first span name included. " +
                     "When traceId is specified, returns only that trace (other filters ignored).")
     @GetMapping
-    public PageData<TraceDTO> searchTraces(
+    public PageData<Trace> searchTraces(
             @Parameter(description = "Service name filter (optional)")
             @RequestParam(required = false) String serviceName,
             @Parameter(description = "Start time in milliseconds (epoch)", required = true)
@@ -274,11 +273,7 @@ public class TraceController extends BaseController {
         if (!query.hasTraceId()) {
             validateTimeRange(startTime, endTime);
         }
-        PageData<Trace> tracesPage = traceService.searchTracesPaginated(getTenantId(), query);
-        List<TraceDTO> traces = tracesPage.getData().stream()
-                .map(TraceDTO::fromTrace)
-                .collect(Collectors.toList());
-        return new PageData<>(traces, tracesPage.getTotalPages(), tracesPage.getTotalElements(), tracesPage.hasNext());
+        return traceService.searchTracesPaginated(getTenantId(), query);
     }
 
     @Operation(summary = "List execution paths",

@@ -78,12 +78,19 @@ public class Trace {
     @Schema(description = "Total span time in milliseconds (sum of all individual span durations). Can exceed duration when spans run in parallel (e.g. switch branches).", example = "12")
     private Long totalSpanTime;
 
+    @Schema(description = "Root queue id (UUID)")
     private String rootQueueId;
+    @Schema(description = "Root queue name")
     private String queueName;
+    @Schema(description = "Root message type")
     private String messageType;
+    @Schema(description = "Root rule chain id (UUID), name resolved by the UI")
     private String rootRuleChainId;
+    @Schema(description = "Distinct rule nodes touched")
     private Integer ruleNodeCount;
+    @Schema(description = "Whether the trace had any error span")
     private Boolean hasErrors;
+    @Schema(description = "Whether the trace had any queue timeout")
     private Boolean hasQueueTimeouts;
 
     public static Trace fromEntity(TraceProjection entity) {
