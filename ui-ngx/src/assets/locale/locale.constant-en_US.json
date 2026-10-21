@@ -13726,6 +13726,7 @@
             "state-when-result-is": "'{{state}}' when result is",
             "parameters": "Parameters",
             "convert-value-function": "Convert value function",
+            "rpc-params-function": "RPC parameters function",
             "error": {
                 "target-entity-is-not-set": "Target entity is not set!",
                 "failed-to-perform-action": "Failed to perform the <b>{{ actionLabel }}</b> action.",
