@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Raw-SQL writes for the trace tables: batch inserts and upserts the JPA layer can't express.
@@ -90,6 +91,10 @@ public class TraceInsertRepository {
 
     private static final int TRACE_GROUP_BATCH_SIZE = 1000;
 
+    private static final int DELETE_BATCH_SIZE = 10_000;
+    private static final String SPAN_DELETE_BATCH_SQL = "DELETE FROM span WHERE ctid IN " +
+            "(SELECT ctid FROM span WHERE tenant_id = ? LIMIT ?)";
+
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
 
@@ -142,6 +147,21 @@ public class TraceInsertRepository {
 
     public boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs) {
         return jdbcTemplate.update(AGGREGATION_LEADER_SQL, serviceId, nowMs + leaseMs, serviceId, nowMs) > 0;
+    }
+
+    public void deleteByTenantId(UUID tenantId) {
+        // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
+        if (!Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass('span') IS NOT NULL", Boolean.class))) {
+            return;
+        }
+        // span is the large one: delete it in batches over its (tenant_id, ...) primary key so no single statement
+        // holds locks and WAL for a whole tenant.
+        int deleted;
+        do {
+            deleted = jdbcTemplate.update(SPAN_DELETE_BATCH_SQL, tenantId, DELETE_BATCH_SIZE);
+        } while (deleted > 0);
+        jdbcTemplate.update("DELETE FROM trace_summary WHERE tenant_id = ?", tenantId);
+        jdbcTemplate.update("DELETE FROM trace_group WHERE tenant_id = ?", tenantId);
     }
 
     private void bindSpan(PreparedStatement statement, SpanEntity span) throws SQLException {

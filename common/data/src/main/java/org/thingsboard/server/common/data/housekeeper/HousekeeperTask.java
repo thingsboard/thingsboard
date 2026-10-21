@@ -105,6 +105,10 @@ public class HousekeeperTask implements Serializable {
         return new HousekeeperTask(tenantId, tenantId, HousekeeperTaskType.DELETE_AI_TENANT_DATA);
     }
 
+    public static HousekeeperTask deleteTraceTenantData(TenantId tenantId) {
+        return new HousekeeperTask(tenantId, tenantId, HousekeeperTaskType.DELETE_TRACE_TENANT_DATA);
+    }
+
     @JsonIgnore
     public String getDescription() {
         return taskType.getDescription() + " for " + entityId.getEntityType().getNormalName().toLowerCase() + " " + entityId.getId();

@@ -9,6 +9,7 @@ import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Batch writes for the rule node / queue / queue lag stats tables.
@@ -102,6 +103,17 @@ public class RuleEngineStatsInsertRepository {
 
     public boolean tryAcquireQueueLagLeader(String serviceId, long nowMs, long leaseMs) {
         return jdbcTemplate.update(QUEUE_LAG_LEADER_SQL, serviceId, nowMs + leaseMs, serviceId, nowMs) > 0;
+    }
+
+    // Queue stats and lag also belong to the tenant through its own (isolated) queues.
+    public void deleteByTenantId(UUID tenantId) {
+        // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
+        if (!Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass('rule_node_exec_stats') IS NOT NULL", Boolean.class))) {
+            return;
+        }
+        jdbcTemplate.update("DELETE FROM rule_node_exec_stats WHERE tenant_id = ?", tenantId);
+        jdbcTemplate.update("DELETE FROM rule_node_queue_stats WHERE tenant_id = ? OR queue_tenant_id = ?", tenantId, tenantId);
+        jdbcTemplate.update("DELETE FROM rule_node_queue_lag_stats WHERE queue_tenant_id = ?", tenantId);
     }
 
 }

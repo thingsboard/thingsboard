@@ -59,6 +59,8 @@ public interface RuleEngineMonitoringDao {
 
     boolean tryAcquireQueueLagLeader(String serviceId, long nowMs, long leaseMs);
 
+    void deleteByTenantId(UUID tenantId);
+
     List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query);
 
     List<QueueLagTableEntry> findQueueLagTable(QueueLagTableQuery query);

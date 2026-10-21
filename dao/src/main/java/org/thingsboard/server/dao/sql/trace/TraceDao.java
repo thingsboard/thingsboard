@@ -83,4 +83,6 @@ public interface TraceDao {
                                                   String sortField, String sortOrder);
 
     boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs);
+
+    void deleteByTenantId(UUID tenantId);
 }

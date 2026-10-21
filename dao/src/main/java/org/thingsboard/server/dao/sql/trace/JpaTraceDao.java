@@ -197,6 +197,11 @@ public class JpaTraceDao implements TraceDao {
         return traceInsertRepository.tryAcquireAggregationLeader(serviceId, nowMs, leaseMs);
     }
 
+    @Override
+    public void deleteByTenantId(UUID tenantId) {
+        traceInsertRepository.deleteByTenantId(tenantId);
+    }
+
     private List<SpanAttributeEntity> toSpanAttributes(SpanEntity span) {
         Map<String, Object> attributes = parseJsonObject(span.getAttributesJsonb());
         if (attributes.isEmpty()) {

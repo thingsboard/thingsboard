@@ -97,6 +97,11 @@ public class JpaRuleEngineMonitoringDao implements RuleEngineMonitoringDao {
     }
 
     @Override
+    public void deleteByTenantId(UUID tenantId) {
+        statsInsertRepository.deleteByTenantId(tenantId);
+    }
+
+    @Override
     public List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query) {
         return statsQueryRepository.findQueueLagTimeseries(query);
     }

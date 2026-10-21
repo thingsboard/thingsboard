@@ -159,6 +159,33 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
         assertTrue(dao.findAllQueuesShortInfo().contains(new QueueShortInfo(queueId, tenantId, "Q-" + queueId, 3, true)));
     }
 
+    @Test
+    public void givenStatsOfTwoTenants_whenDeleteByTenantId_thenOnlyThatTenantsStatsAreRemoved() {
+        UUID otherTenantId = UUID.randomUUID();
+        dao.saveRuleNodeStats(List.of(ruleNodeRow(T0, "svc-1", 1, 0, 10, 10),
+                new RuleNodeExecStatsRow(otherTenantId, queueId, ruleChainId, ruleNodeId, "svc-1", T0, 1, 0, 10, 10, 0)));
+        dao.saveQueueStats(List.of(
+                // the tenant's message on a system queue, and another tenant's message on the tenant's isolated queue
+                new QueueStatsRow(T0, UUID.randomUUID(), tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0),
+                new QueueStatsRow(T0, tenantId, otherTenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0),
+                new QueueStatsRow(T0, otherTenantId, otherTenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0)));
+        dao.saveQueueLagStats(List.of(new QueueLagStatsRow(T0, tenantId, queueId, 5),
+                new QueueLagStatsRow(T0, otherTenantId, queueId, 5)));
+
+        dao.deleteByTenantId(tenantId);
+
+        assertEquals(List.of(otherTenantId), jdbcTemplate.queryForList("SELECT tenant_id FROM rule_node_exec_stats", UUID.class));
+        assertEquals(List.of(otherTenantId), jdbcTemplate.queryForList("SELECT queue_tenant_id FROM rule_node_queue_stats", UUID.class));
+        assertEquals(List.of(otherTenantId), jdbcTemplate.queryForList("SELECT queue_tenant_id FROM rule_node_queue_lag_stats", UUID.class));
+    }
+
+    @Test
+    public void givenNoTraceSchema_whenDeleteByTenantId_thenNothingFails() {
+        cleanUp();
+
+        dao.deleteByTenantId(tenantId);
+    }
+
     private RuleNodeExecStatsRow ruleNodeRow(long bucketTime, String serviceId, long execCount, long errorCount,
                                              long totalDurationMs, long maxDurationMs) {
         return new RuleNodeExecStatsRow(tenantId, queueId, ruleChainId, ruleNodeId, serviceId, bucketTime,

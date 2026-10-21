@@ -185,6 +185,33 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         assertTrue(traceDao.tryAcquireAggregationLeader("node-b", 20_000, 10_000));
     }
 
+    @Test
+    public void givenTraceDataOfTwoTenants_whenDeleteByTenantId_thenOnlyThatTenantsDataIsRemoved() {
+        UUID otherTenantId = UUID.randomUUID();
+        traceDao.upsertTraceSummaries(List.of(traceSummary()));
+        traceDao.saveSpans(List.of(span("span-1", "{}"), span("span-2", "{}")));
+        traceDao.saveTraceGroups(List.of(traceGroup(10, 1)), List.of());
+        jdbcTemplate.update("INSERT INTO span (span_id, trace_id, tenant_id, name, start_time, created_time) " +
+                "VALUES ('span-1', ?, ?, 'Rule Node', 0, 0)", TRACE_ID, otherTenantId);
+
+        traceDao.deleteByTenantId(tenantId);
+
+        assertEquals(List.of(otherTenantId), jdbcTemplate.queryForList("SELECT tenant_id FROM span", UUID.class));
+        assertEquals(0, countRows("trace_summary", tenantId));
+        assertEquals(0, countRows("trace_group", tenantId));
+    }
+
+    @Test
+    public void givenNoTraceSchema_whenDeleteByTenantId_thenNothingFails() {
+        dropTraceSchema();
+
+        traceDao.deleteByTenantId(tenantId);
+    }
+
+    private int countRows(String table, UUID tenantId) {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + table + " WHERE tenant_id = ?", Integer.class, tenantId);
+    }
+
     private PageData<TraceProjection> search(String pathId, boolean errorsOnly, String ruleNodeFilter,
                                              String spanName, String messageData) {
         return traceDao.findTracesPaginated(tenantId, null, BUCKET, BUCKET + DAY, spanName, null, null, null, null,

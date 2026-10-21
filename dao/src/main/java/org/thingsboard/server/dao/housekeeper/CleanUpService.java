@@ -60,6 +60,7 @@ public class CleanUpService {
             }
             if (entityType == EntityType.TENANT) {
                 submitTask(HousekeeperTask.deleteAiTenantData(tenantId));
+                submitTask(HousekeeperTask.deleteTraceTenantData(tenantId));
             }
             if (entityType == EntityType.ALARM && event.getCause() != ActionCause.BULK_DELETION) {
                 // Single-alarm delete: clean up its comments per alarm. Bulk deletions (BULK_DELETION) batch the
