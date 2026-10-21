@@ -81,7 +81,7 @@ class BufferedTraceExporterTest {
     private TraceExportPressureGate gate(int capacity) {
         TraceExportPressureGate gate = new TraceExportPressureGate(statsFactory, capacity, 50, 100);
         for (int i = 0; i < capacity; i++) {
-            gate.onSpanStarted();
+            gate.admitEndedSpan();
         }
         return gate;
     }

@@ -87,12 +87,10 @@ public class TraceExportPressureGate {
         return false;
     }
 
-    void onSpanStarted() {
-        inFlight.incrementAndGet();
-    }
-
+    // Counts ended spans queued for export, not started ones: a span that never ends (timed-out pack,
+    // lost callback) then holds no slot.
     boolean admitEndedSpan() {
-        if (inFlight.get() > capacity) {
+        if (inFlight.incrementAndGet() > capacity) {
             inFlight.decrementAndGet();
             shedSpans.increment();
             return false;

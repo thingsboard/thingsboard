@@ -345,7 +345,8 @@ otel:
       metrics:
         interval-ms: "${OTEL_TRACE_PROCESSOR_METRICS_INTERVAL_MS:5000}"
       pressure:
-        # Percentages of 'batch.max-queue-size'. New trace ids stop first so in-flight traces can finish.
+        # Percentages of 'batch.max-queue-size', measured on ended spans queued for export. New trace ids stop first
+        # so in-flight traces can finish.
         trace-id-max-queue-usage-pct: "${OTEL_TRACE_PROCESSOR_PRESSURE_TRACE_ID_MAX_QUEUE_USAGE_PCT:50}"
         span-max-queue-usage-pct: "${OTEL_TRACE_PROCESSOR_PRESSURE_SPAN_MAX_QUEUE_USAGE_PCT:100}"
   exporter:

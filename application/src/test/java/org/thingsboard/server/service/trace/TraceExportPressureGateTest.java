@@ -78,7 +78,7 @@ class TraceExportPressureGateTest {
 
     private static void admit(TraceExportPressureGate gate, int count) {
         for (int i = 0; i < count; i++) {
-            gate.onSpanStarted();
+            assertThat(gate.admitEndedSpan()).isTrue();
         }
     }
 
@@ -113,17 +113,17 @@ class TraceExportPressureGateTest {
     }
 
     @Test
-    void givenPipelineAtCapacity_whenSpanEnds_thenAdmitted() {
+    void givenQueueOneBelowCapacity_whenSpanEnds_thenAdmitted() {
         TraceExportPressureGate gate = gate(10, 50, 100);
-        admit(gate, 10);
+        admit(gate, 9);
         assertThat(gate.admitEndedSpan()).isTrue();
         assertThat(gate.getInFlight()).isEqualTo(10);
     }
 
     @Test
-    void givenPipelineOverCapacity_whenSpanEnds_thenShedAndSlotReleased() {
+    void givenFullQueue_whenSpanEnds_thenShedAndCountUnchanged() {
         TraceExportPressureGate gate = gate(10, 50, 100);
-        admit(gate, 11);
+        admit(gate, 10);
         assertThat(gate.admitEndedSpan()).isFalse();
         assertThat(gate.getInFlight()).isEqualTo(10);
     }
@@ -149,19 +149,35 @@ class TraceExportPressureGateTest {
     }
 
     @Test
-    void givenSampledSpan_whenStarted_thenCountedBeforeItEnds() {
+    void givenSampledSpan_whenStarted_thenNotCountedUntilItEnds() {
         SpanProcessor delegate = mock(SpanProcessor.class);
         TraceExportPressureGate gate = gate(100, 50, 100);
         PressureAwareSpanProcessor processor = new PressureAwareSpanProcessor(delegate, gate);
 
-        processor.onStart(Context.root(), startedSpan(true));
+        ReadWriteSpan started = startedSpan(true);
+        processor.onStart(Context.root(), started);
 
-        assertThat(gate.getInFlight()).isEqualTo(1);
-        assertThat(processor.isStartRequired()).isTrue();
+        verify(delegate).onStart(Context.root(), started);
+        assertThat(gate.getInFlight()).isZero();
     }
 
     @Test
-    void givenStartedSpan_whenItEnds_thenDelegatedAndStillCountedUntilExport() {
+    void givenSpansStartedButNeverEnded_whenManyExceedCapacity_thenGatesStayOpen() {
+        SpanProcessor delegate = mock(SpanProcessor.class);
+        TraceExportPressureGate gate = gate(100, 50, 100);
+        PressureAwareSpanProcessor processor = new PressureAwareSpanProcessor(delegate, gate);
+
+        for (int i = 0; i < 1000; i++) {
+            processor.onStart(Context.root(), startedSpan(true));
+        }
+
+        assertThat(gate.getInFlight()).isZero();
+        assertThat(gate.canIssueTraceId()).isTrue();
+        assertThat(gate.canCreateSpan()).isTrue();
+    }
+
+    @Test
+    void givenStartedSpan_whenItEnds_thenDelegatedAndCountedUntilExport() {
         SpanProcessor delegate = mock(SpanProcessor.class);
         TraceExportPressureGate gate = gate(100, 50, 100);
         PressureAwareSpanProcessor processor = new PressureAwareSpanProcessor(delegate, gate);
@@ -182,13 +198,14 @@ class TraceExportPressureGateTest {
         TraceExportPressureGate gate = gate(1, 50, 100);
         PressureAwareSpanProcessor processor = new PressureAwareSpanProcessor(delegate, gate);
 
-        processor.onStart(Context.root(), startedSpan(true));
-        processor.onStart(Context.root(), startedSpan(true));
-        assertThat(gate.getInFlight()).isEqualTo(2);
+        ReadableSpan first = sampledSpan(true);
+        processor.onEnd(first);
+        assertThat(gate.getInFlight()).isEqualTo(1);
 
         ReadableSpan ended = sampledSpan(true);
         processor.onEnd(ended);
 
+        verify(delegate).onEnd(first);
         verify(delegate, never()).onEnd(ended);
         assertThat(gate.getInFlight()).isEqualTo(1);
     }
