@@ -119,6 +119,7 @@ public class ContainerTestSuite {
                     new File(targetDir + "advanced/docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose.integration.yml"),
                     new File(targetDir + "docker-compose.mosquitto.yml"),
+                    new File(targetDir + "docker-compose.chirpstack.yml"),
                     new File(targetDir + "docker-compose.opc-ua.yml"),
                     new File(targetDir + "advanced/docker-compose.kafka.yml"),
                     new File(targetDir + "advanced/docker-compose.trendz.yml"),
@@ -158,6 +159,7 @@ public class ContainerTestSuite {
                     .withExposedService("tb-integration-executor1", 8082)
                     .withExposedService("tb-mqtt-integration", 8082)
                     .withExposedService("broker", 1883)
+                    .withExposedService("chirpstack-rest-api", 8090, Wait.forListeningPort().withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-core1", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-core2", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))
                     .waitingFor("tb-rule-engine1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(CONTAINER_STARTUP_TIMEOUT))

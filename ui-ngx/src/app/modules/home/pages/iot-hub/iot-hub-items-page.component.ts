@@ -29,13 +29,6 @@ const PAGE_CONFIGS: Record<string, ItemTypePageConfig> = {
     image: 'assets/iot-hub/items-page-widgets-hero.svg',
     routeSegment: 'widgets'
   },
-  DASHBOARD: {
-    type: ItemType.DASHBOARD,
-    titleKey: 'item.type-dashboard-plural',
-    descriptionKey: 'iot-hub.items-page-desc-dashboards',
-    image: 'assets/iot-hub/items-page-dashboards-hero.svg',
-    routeSegment: 'dashboards'
-  },
   SOLUTION_TEMPLATE: {
     type: ItemType.SOLUTION_TEMPLATE,
     titleKey: 'item.type-solution-template-plural',

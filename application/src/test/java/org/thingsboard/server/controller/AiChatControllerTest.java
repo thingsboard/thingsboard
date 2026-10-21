@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
+import org.thingsboard.ai.common.channel.ChatOperationRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,7 +14,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MvcResult;
-import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.permission.Operation;
@@ -31,7 +33,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,8 +53,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         ObjectNode request = createChatRequest("Energy assistant chat");
         UUID newChatId = UUID.randomUUID();
-        given(tbAiClient.createChat(eq(request), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(TextNode.valueOf(newChatId.toString())));
+        givenOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request), success(TextNode.valueOf(newChatId.toString())));
 
         // WHEN
         JsonNode result = readResponse(doPost("/api/ai/chats", request).andExpect(status().isCreated()), JsonNode.class);
@@ -62,9 +62,8 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         assertThat(result.isTextual()).isTrue();
         assertThat(result.asText()).isEqualTo(newChatId.toString());
 
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).createChat(eq(request), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request));
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
     @Test
@@ -73,15 +72,14 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID chatId = UUID.randomUUID();
         ObjectNode request = JacksonUtil.newObjectNode().put("title", "Renamed chat");
-        given(tbAiClient.updateChat(eq(chatId), eq(request), any(TbAiClient.TokenProvider.class))).willReturn(success());
+        givenOperation(ChannelProtocol.CHAT_UPDATE, new ChatOperationRequest(chatId, request), success());
 
         // WHEN
         doPatch("/api/ai/chats/" + chatId, request).andExpect(status().isNoContent());
 
         // THEN
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).updateChat(eq(chatId), eq(request), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.CHAT_UPDATE, new ChatOperationRequest(chatId, request));
+        assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
     @Test
@@ -89,14 +87,14 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         // GIVEN
         loginTenantAdmin();
         ArrayNode summaries = chatSummaries(UUID.randomUUID(), "Energy assistant chat");
-        given(tbAiClient.listChats(any(TbAiClient.TokenProvider.class))).willReturn(success(summaries));
+        givenOperation(ChannelProtocol.CHAT_LIST, null, success(summaries));
 
         // WHEN
         JsonNode result = doGet("/api/ai/chats", JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(summaries);
-        verify(tbAiClient).listChats(any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.CHAT_LIST, null);
     }
 
     @Test
@@ -105,14 +103,14 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID chatId = UUID.randomUUID();
         ArrayNode messages = chatMessages();
-        given(tbAiClient.getChatMessages(eq(chatId), any(TbAiClient.TokenProvider.class))).willReturn(success(messages));
+        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null), success(messages));
 
         // WHEN
         JsonNode result = doGet("/api/ai/chats/" + chatId + "/messages", JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(messages);
-        verify(tbAiClient).getChatMessages(eq(chatId), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null));
     }
 
     @Test
@@ -120,13 +118,13 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         // GIVEN
         loginTenantAdmin();
         UUID chatId = UUID.randomUUID();
-        given(tbAiClient.deleteChat(eq(chatId), any(TbAiClient.TokenProvider.class))).willReturn(success());
+        givenOperation(ChannelProtocol.CHAT_DELETE, new ChatOperationRequest(chatId, null), success());
 
         // WHEN
         doDelete("/api/ai/chats/" + chatId).andExpect(status().isNoContent());
 
         // THEN
-        verify(tbAiClient).deleteChat(eq(chatId), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.CHAT_DELETE, new ChatOperationRequest(chatId, null));
     }
 
     @Test
@@ -140,8 +138,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 ServerSentEvent.<String>builder().event("message").data("Creating a high-temperature alarm rule...").build(),
                 ServerSentEvent.<String>builder().event("creditsUsed").data("{\"creditsUsed\":5}").build()
         );
-        given(tbAiClient.sendChatMessage(eq(chatId), eq(requestBody), eq("Bearer " + token), eq(acceptLanguage), any(TbAiClient.TokenProvider.class)))
-                .willReturn(upstream);
+        given(tbAiTransport.sendChatMessage(eq(chatId), eq(requestBody), any(TbAiTurnContext.class))).willReturn(upstream);
 
         // WHEN
         MvcResult asyncStart = mockMvc.perform(sendMessageRequest(chatId, requestBody, acceptLanguage))
@@ -158,9 +155,11 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
 
         verify(apiUsageReportClient).report(any(), any(), eq(ApiUsageRecordKey.AI_CREDITS_COUNT), eq(5L));
 
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProvider = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).sendChatMessage(eq(chatId), eq(requestBody), eq("Bearer " + token), eq(acceptLanguage), tokenProvider.capture());
-        assertTokenProviderBelongsToTenantAdmin(tokenProvider.getValue());
+        ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        verify(tbAiTransport).sendChatMessage(eq(chatId), eq(requestBody), context.capture());
+        assertThat(context.getValue().tbAccessToken()).isEqualTo("Bearer " + token);
+        assertThat(context.getValue().acceptLanguage()).isEqualTo(acceptLanguage);
+        assertTokenProviderBelongsToTenantAdmin(context.getValue().tokenProvider());
     }
 
     // ------------------------------------------------------------------------
@@ -180,7 +179,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(MSG_OUT_OF_CREDITS)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -190,15 +189,14 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         givenAiCreditsExhausted();
         ObjectNode request = createChatRequest("Energy assistant chat");
         UUID newChatId = UUID.randomUUID();
-        given(tbAiClient.createChat(eq(request), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(TextNode.valueOf(newChatId.toString())));
+        givenOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request), success(TextNode.valueOf(newChatId.toString())));
 
         // WHEN
         JsonNode result = readResponse(doPost("/api/ai/chats", request).andExpect(status().isCreated()), JsonNode.class);
 
         // THEN
         assertThat(result.asText()).isEqualTo(newChatId.toString());
-        verify(tbAiClient).createChat(eq(request), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.CHAT_CREATE, new ChatOperationRequest(null, request));
     }
 
     // ------------------------------------------------------------------------
@@ -217,7 +215,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(MSG_AI_DISABLED)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -226,7 +224,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID chatId = UUID.randomUUID();
         String error = "Chat service unavailable";
-        given(tbAiClient.getChatMessages(eq(chatId), any(TbAiClient.TokenProvider.class))).willReturn(failure(error));
+        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null), failure(error));
 
         // WHEN
         doGet("/api/ai/chats/" + chatId + "/messages")
@@ -234,7 +232,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(error)));
 
         // THEN
-        verify(tbAiClient).getChatMessages(eq(chatId), any(TbAiClient.TokenProvider.class));
+        verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null));
     }
 
     // ------------------------------------------------------------------------
@@ -252,7 +250,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -266,7 +264,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -283,7 +281,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermissionWrite + AI_RESOURCE)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -300,7 +298,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(msgErrorPermissionRead + AI_RESOURCE)));
 
         // THEN
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     // ------------------------------------------------------------------------

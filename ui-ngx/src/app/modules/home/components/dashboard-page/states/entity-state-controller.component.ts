@@ -41,9 +41,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
               protected utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService,
+              dashboardUtils: DashboardUtilsService,
               private breadcrumbService: BreadcrumbService) {
-    super(router, route, utils, window, ngZone, statesControllerService);
+    super(router, route, utils, window, ngZone, statesControllerService, dashboardUtils);
   }
 
   ngOnInit(): void {
@@ -56,7 +56,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.preservedState;
+      this.stateObject = this.normalizeStateObject(this.preservedState);
       this.selectedStateIndex = this.stateObject.length - 1;
       setTimeout(() => {
         this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
@@ -78,6 +78,13 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   protected onStatesChanged() {
+    const prevStateId = this.getStateId();
+    this.stateObject = this.normalizeStateObject(this.stateObject);
+    this.selectedStateIndex = this.stateObject.length - 1;
+    const newStateId = this.getStateId();
+    if (newStateId !== prevStateId) {
+      this.gotoState(newStateId, true, undefined, true);
+    }
   }
 
   protected onStateChanged() {
@@ -248,32 +255,13 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       try {
         result = base64toObj(stateBase64);
       } catch (e) {
-        result = [ { id: null, params: {} } ];
+        result = [];
       }
     }
-    if (!result) {
-      result = [];
-    }
-    if (!result.length) {
-      result[0] = { id: null, params: {} };
-    }
-    const rootStateId = this.dashboardUtils.getRootStateId(this.states);
-    if (!result[0].id) {
-      result[0].id = rootStateId;
-    }
-    if (!this.states[result[0].id]) {
-      result[0].id = rootStateId;
-    }
-    let i = result.length;
-    while (i--) {
-      if (!result[i].id || !this.states[result[i].id]) {
-        result.splice(i, 1);
-      }
-    }
-    return result;
+    return this.normalizeStateObject(result);
   }
 
-  private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
+  private gotoState(stateId: string, update: boolean, openRightLayout?: boolean, replaceCurrentHistoryUrl?: boolean) {
     const isStateIdChanged = this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
     if (isStateIdChanged) {
@@ -283,11 +271,11 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     }
     if (update) {
-      this.updateLocation(isStateIdChanged);
+      this.updateLocation(replaceCurrentHistoryUrl ?? !isStateIdChanged);
     }
   }
 
-  private updateLocation(isStateIdChanged: boolean) {
+  private updateLocation(replaceCurrentHistoryUrl: boolean) {
     if (this.stateObject[this.stateObject.length - 1].id) {
       let newState;
       if (this.isDefaultState()) {
@@ -295,7 +283,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       } else {
         newState = objToBase64(this.stateObject);
       }
-      this.updateStateParam(newState, !isStateIdChanged);
+      this.updateStateParam(newState, replaceCurrentHistoryUrl);
     }
   }
 

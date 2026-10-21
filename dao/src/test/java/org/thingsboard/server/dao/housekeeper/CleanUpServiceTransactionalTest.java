@@ -79,9 +79,11 @@ public class CleanUpServiceTransactionalTest extends AbstractServiceTest {
     }
 
     private DeleteEntityEvent<Alarm> alarmDeletionEvent() {
+        AlarmId alarmId = new AlarmId(UUID.randomUUID());
         return DeleteEntityEvent.<Alarm>builder()
                 .tenantId(tenantId)
-                .entityId(new AlarmId(UUID.randomUUID()))
+                .entityId(alarmId)
+                .entity(new Alarm(alarmId))
                 .build();
     }
 

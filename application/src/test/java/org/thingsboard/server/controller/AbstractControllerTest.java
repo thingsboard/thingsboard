@@ -119,7 +119,7 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     }
 
     protected TbTestWebSocketClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
-        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + serverPort + path));
+        TbTestWebSocketClient wsClient = buildWebSocketClient(path);
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         if (!path.contains("token=")) {
             wsClient.authenticate(token);
@@ -294,6 +294,10 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
             permissions.put(resource, List.of(Operation.READ, Operation.CREATE, Operation.WRITE, Operation.DELETE));
         }
         return loginAsRestrictedTenantAdmin(tenantId, permissions);
+    }
+
+    protected TbTestWebSocketClient buildWebSocketClient(String path) throws URISyntaxException {
+        return new TbTestWebSocketClient(new URI(WS_URL + serverPort + path));
     }
 
 }

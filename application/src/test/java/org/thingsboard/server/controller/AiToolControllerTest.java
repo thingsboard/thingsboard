@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
+import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.ai.common.channel.ChannelProtocol;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.ai.common.client.TbAiClient;
 import org.thingsboard.common.util.JacksonUtil;
@@ -19,12 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -103,7 +99,7 @@ public class AiToolControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(MSG_AI_DISABLED)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -118,7 +114,7 @@ public class AiToolControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -133,7 +129,7 @@ public class AiToolControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermission)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     @Test
@@ -151,24 +147,21 @@ public class AiToolControllerTest extends AbstractAiControllerTest {
         result.andExpect(status().isForbidden())
                 .andExpect(statusReason(equalTo(msgErrorPermissionWrite + AI_RESOURCE)));
 
-        verifyNoInteractions(tbAiClient);
+        verifyNoAiCalls();
     }
 
     private void givenAiClientResolvesToolApproval(ObjectNode request, ObjectNode response) {
-        given(tbAiClient.resolveToolApproval(eq(request), any(TbAiClient.TokenProvider.class)))
-                .willReturn(success(response));
+        givenOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, request, success(response));
     }
 
     private void givenAiClientRejectsToolApproval(ObjectNode request, String error) {
-        given(tbAiClient.resolveToolApproval(eq(request), any(TbAiClient.TokenProvider.class)))
-                .willReturn(failure(error));
+        givenOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, request, failure(error));
     }
 
     private TbAiClient.TokenProvider verifyAiClientResolvedToolApproval(ObjectNode request) {
-        ArgumentCaptor<TbAiClient.TokenProvider> tokenProviderCaptor = ArgumentCaptor.forClass(TbAiClient.TokenProvider.class);
-        verify(tbAiClient).resolveToolApproval(eq(request), tokenProviderCaptor.capture());
-        verifyNoMoreInteractions(tbAiClient);
-        return tokenProviderCaptor.getValue();
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.TOOL_APPROVAL_RESOLVE, request);
+        verifyNoMoreInteractions(tbAiTransport);
+        return context.tokenProvider();
     }
 
     private static ObjectNode anyDecision() {
