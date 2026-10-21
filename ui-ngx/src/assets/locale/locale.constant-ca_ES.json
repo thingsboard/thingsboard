@@ -3836,7 +3836,8 @@
                 "ADD_TO_GROUP": "Afegeix al grup",
                 "REMOVE_FROM_GROUP": "Elimina del grup",
                 "SHARE_GROUP": "Comparteix el grup",
-                "ASSIGN_TO_TENANT": "Assigna a l'arrendatari"
+                "ASSIGN_TO_TENANT": "Assigna a l'arrendatari",
+                "INVOKE": "Invoca"
             }
         }
     },

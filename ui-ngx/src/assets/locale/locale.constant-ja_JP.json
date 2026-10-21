@@ -1767,6 +1767,8 @@
     "model": "モデル",
     "name": "名前",
     "ai-provider": "AIプロバイダー",
+    "available-via-api": "API経由で利用可能",
+    "available-via-api-hint": "AIモデルの「呼び出し」権限を持つユーザーが、REST APIを介して（例：Trendz Analyticsから）このモデルにチャットリクエストを送信できるようにします。デフォルトの「Customer Administrator」ロールなど、すべての操作を許可するロールには「呼び出し」が含まれるため、そのようなロールを持つすべてのユーザーがこのモデルを呼び出せます。モデルの設定と認証情報が公開されることはありません。顧客ユーザーには、AIモデルに対して「呼び出し」操作のみを付与できます。",
     "no-found": "AIモデルが見つかりません",
     "list": "{ count, plural, =1 {AIモデル} other {AIモデル一覧 # 件} }",
     "selected-fields": "{ count, plural, =1 {1 件のAIモデル} other {# 件のAIモデル} } を選択",
@@ -7679,7 +7681,8 @@
         "SHARE_GROUP": "グループを共有",
         "ASSIGN_TO_TENANT": "テナントに割り当て",
         "READ_CALCULATED_FIELD": "計算フィールドを読み取り",
-        "WRITE_CALCULATED_FIELD": "計算フィールドを書き込み"
+        "WRITE_CALCULATED_FIELD": "計算フィールドを書き込み",
+        "INVOKE": "呼び出し"
       }
     }
   },

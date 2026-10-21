@@ -4739,7 +4739,8 @@
                 "ADD_TO_GROUP": "Voeg toe aan groep",
                 "REMOVE_FROM_GROUP": "Verwijderen uit groep",
                 "SHARE_GROUP": "Groep delen",
-                "ASSIGN_TO_TENANT": "Toewijzen aan tenant"
+                "ASSIGN_TO_TENANT": "Toewijzen aan tenant",
+                "INVOKE": "Aanroepen"
             }
         }
     },

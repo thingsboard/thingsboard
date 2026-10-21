@@ -1767,6 +1767,8 @@
     "model": "Model",
     "name": "Navn",
     "ai-provider": "AI-udbyder",
+    "available-via-api": "Tilgængelig via API",
+    "available-via-api-hint": "Giver brugere med tilladelsen 'Kald' for AI-modeller mulighed for at sende chatforespørgsler til denne model via REST API, f.eks. fra Trendz Analytics. Roller, der giver alle handlinger, såsom standardrollen 'Customer Administrator', omfatter 'Kald', så alle brugere med en sådan rolle kan kalde denne model. Modellens konfiguration og legitimationsoplysninger vises aldrig. Kundebrugere kan kun tildeles handlingen 'Kald' for AI-modeller.",
     "no-found": "Ingen AI-modeller fundet",
     "list": "{ count, plural, =1 {Én model} other {Liste med # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# modeller} } valgt",
@@ -7679,7 +7681,8 @@
         "SHARE_GROUP": "Del gruppe",
         "ASSIGN_TO_TENANT": "Tildel til lejer",
         "READ_CALCULATED_FIELD": "Læs beregnet felt",
-        "WRITE_CALCULATED_FIELD": "Skriv beregnet felt"
+        "WRITE_CALCULATED_FIELD": "Skriv beregnet felt",
+        "INVOKE": "Kald"
       }
     }
   },
