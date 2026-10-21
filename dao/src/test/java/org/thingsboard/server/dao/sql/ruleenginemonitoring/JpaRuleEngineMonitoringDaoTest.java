@@ -7,6 +7,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -160,6 +162,17 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
 
         assertEquals(300, dao.findLastQueueLag(tenantId, null, 22 * MINUTE)); // 2 x 10-minute flush + 2-minute lease
         assertEquals(0, dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
+    }
+
+    @Test
+    public void givenDimensionOfAnotherTable_whenFindStats_thenRejected() {
+        // the repository's IllegalArgumentException, as Spring's exception translation hands it out
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findQueueTable(new QueueTableQuery(tenantId, T0, T0 + MINUTE,
+                Set.of(RuleNodeDimension.RULE_NODE_ID), null, null, null, null)));
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findRuleNodeTable(new RuleNodeTableQuery(tenantId, T0, T0 + MINUTE,
+                Set.of(RuleNodeDimension.LAST_VISITED_RULE_NODE_ID), null, null, null, null)));
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findQueueLagTable(new QueueLagTableQuery(tenantId, T0, T0 + MINUTE,
+                Set.of(RuleNodeDimension.SERVICE_ID), null)));
     }
 
     @Test

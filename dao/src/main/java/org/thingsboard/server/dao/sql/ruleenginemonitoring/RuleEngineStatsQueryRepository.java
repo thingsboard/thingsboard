@@ -19,6 +19,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -61,10 +62,19 @@ public class RuleEngineStatsQueryRepository {
     private static final RowMapper<QueueLagTableEntry> QUEUE_LAG_TABLE_MAPPER = (rs, rowNum) -> new QueueLagTableEntry(
             getLong(rs, "lag"), getUuid(rs, "queue_tenant_id"), getUuid(rs, "queue_id"));
 
+    private static final Set<RuleNodeDimension> RULE_NODE_STATS_DIMENSIONS = EnumSet.of(RuleNodeDimension.TENANT_ID,
+            RuleNodeDimension.SERVICE_ID, RuleNodeDimension.QUEUE_ID, RuleNodeDimension.RULE_CHAIN_ID, RuleNodeDimension.RULE_NODE_ID);
+    private static final Set<RuleNodeDimension> QUEUE_STATS_DIMENSIONS = EnumSet.of(RuleNodeDimension.QUEUE_TENANT_ID,
+            RuleNodeDimension.TENANT_ID, RuleNodeDimension.SERVICE_ID, RuleNodeDimension.QUEUE_ID, RuleNodeDimension.RULE_CHAIN_ID,
+            RuleNodeDimension.LAST_VISITED_RULE_NODE_ID);
+    private static final Set<RuleNodeDimension> QUEUE_LAG_STATS_DIMENSIONS = EnumSet.of(RuleNodeDimension.QUEUE_TENANT_ID,
+            RuleNodeDimension.QUEUE_ID);
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public List<RuleNodeTsKvEntry> findRuleNodeTimeseries(RuleNodeTimeseriesQuery query) {
         Set<RuleNodeDimension> groupBy = query.groupBy();
+        requireDimensions(groupBy, RULE_NODE_STATS_DIMENSIONS);
         String bucketExpr = bucketExpression(query.intervalMs());
 
         StringBuilder sql = new StringBuilder("""
@@ -99,6 +109,7 @@ public class RuleEngineStatsQueryRepository {
 
     public List<RuleNodeTableRow> findRuleNodeTable(RuleNodeTableQuery query) {
         Set<RuleNodeDimension> groupBy = query.groupBy();
+        requireDimensions(groupBy, RULE_NODE_STATS_DIMENSIONS);
 
         StringBuilder sql = new StringBuilder("""
                 SELECT SUM(exec_count)                                      AS exec_count,
@@ -130,6 +141,7 @@ public class RuleEngineStatsQueryRepository {
 
     public List<QueueTimeseriesEntry> findQueueTimeseries(QueueTimeseriesQuery query) {
         Set<RuleNodeDimension> groupBy = query.groupBy();
+        requireDimensions(groupBy, QUEUE_STATS_DIMENSIONS);
         String bucketExpr = bucketExpression(query.intervalMs());
 
         StringBuilder sql = new StringBuilder("""
@@ -164,6 +176,7 @@ public class RuleEngineStatsQueryRepository {
 
     public List<QueueTableEntry> findQueueTable(QueueTableQuery query) {
         Set<RuleNodeDimension> groupBy = query.groupBy();
+        requireDimensions(groupBy, QUEUE_STATS_DIMENSIONS);
 
         StringBuilder sql = new StringBuilder("""
                 SELECT SUM(timeout_count)  AS timeout_count,
@@ -195,6 +208,7 @@ public class RuleEngineStatsQueryRepository {
 
     public List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query) {
         Set<RuleNodeDimension> groupBy = query.groupBy();
+        requireDimensions(groupBy, QUEUE_LAG_STATS_DIMENSIONS);
         String bucketExpr = bucketExpression(query.intervalMs());
 
         StringBuilder sql = new StringBuilder("""
@@ -219,6 +233,7 @@ public class RuleEngineStatsQueryRepository {
 
     public List<QueueLagTableEntry> findQueueLagTable(QueueLagTableQuery query) {
         Set<RuleNodeDimension> groupBy = query.groupBy();
+        requireDimensions(groupBy, QUEUE_LAG_STATS_DIMENSIONS);
 
         StringBuilder sql = new StringBuilder("""
                 SELECT SUM(lag)  AS lag,
@@ -284,6 +299,15 @@ public class RuleEngineStatsQueryRepository {
         if (values != null && !values.isEmpty()) {
             sql.append("  AND ").append(column).append(" IN (:").append(paramName).append(")\n");
             params.addValue(paramName, values);
+        }
+    }
+
+    // The dimensions become GROUP BY columns, so each table accepts only the ones it has.
+    private static void requireDimensions(Set<RuleNodeDimension> groupBy, Set<RuleNodeDimension> allowed) {
+        for (RuleNodeDimension dimension : groupBy) {
+            if (!allowed.contains(dimension)) {
+                throw new IllegalArgumentException("Unsupported group by dimension " + dimension + ", expected one of " + allowed);
+            }
         }
     }
 
