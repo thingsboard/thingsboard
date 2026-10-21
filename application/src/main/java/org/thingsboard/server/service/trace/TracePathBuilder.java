@@ -1,6 +1,5 @@
 package org.thingsboard.server.service.trace;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -42,7 +41,7 @@ public class TracePathBuilder {
                 .filter(span -> spanUuid(span, QUEUE_ID_ATTR) != null
                         && spanUuid(span, RULE_CHAIN_ID_ATTR) != null
                         && spanUuid(span, RULE_NODE_ID_ATTR) != null
-                        && spanString(span, MESSAGE_TYPE_ATTR) != null)
+                        && TraceUtils.spanString(span, MESSAGE_TYPE_ATTR) != null)
                 .toList();
         if (pathSpans.isEmpty()) {
             log.warn("Trace [{}] has no rule-node spans after filtering; skipping", trace.traceId());
@@ -62,12 +61,12 @@ public class TracePathBuilder {
         BufferedSpan firstInitialSpan = initialSpans.get(0);
         UUID rootQueueId = spanUuid(firstInitialSpan, QUEUE_ID_ATTR);
         UUID rootRuleChainId = spanUuid(firstInitialSpan, RULE_CHAIN_ID_ATTR);
-        String messageType = spanString(firstInitialSpan, MESSAGE_TYPE_ATTR);
+        String messageType = TraceUtils.spanString(firstInitialSpan, MESSAGE_TYPE_ATTR);
 
         boolean sameInitialContext = initialSpans.stream().allMatch(span ->
                 Objects.equals(rootQueueId, spanUuid(span, QUEUE_ID_ATTR))
                         && Objects.equals(rootRuleChainId, spanUuid(span, RULE_CHAIN_ID_ATTR))
-                        && Objects.equals(messageType, spanString(span, MESSAGE_TYPE_ATTR)));
+                        && Objects.equals(messageType, TraceUtils.spanString(span, MESSAGE_TYPE_ATTR)));
         if (!sameInitialContext) {
             log.warn("Trace [{}] has inconsistent initial context across initial spans; skipping", trace.traceId());
             return Optional.empty();
@@ -118,22 +117,13 @@ public class TracePathBuilder {
             }
             TraceGroup.RuleNodePathMetric metric = metrics.computeIfAbsent(ruleNodeId.toString(),
                     k -> new TraceGroup.RuleNodePathMetric(0L, 0L, 0L, spanUuid(span, RULE_CHAIN_ID_ATTR)));
-            metric.setTotalTime(metric.getTotalTime() + spanDuration(span));
+            metric.setTotalTime(metric.getTotalTime() + TraceUtils.spanDuration(span));
             metric.setTotalCount(metric.getTotalCount() + 1);
-            if (isErrorSpan(span)) {
+            if (TraceUtils.isErrorSpan(span)) {
                 metric.setErrors(metric.getErrors() + 1);
             }
         }
         return metrics;
-    }
-
-    private static long spanDuration(BufferedSpan span) {
-        Long start = span.getStartTime();
-        Long end = span.getEndTime();
-        if (start == null || end == null) {
-            return 0L;
-        }
-        return Math.max(end - start, 0L);
     }
 
     private static long computeInQueueTime(List<BufferedSpan> spans) {
@@ -173,10 +163,6 @@ public class TracePathBuilder {
         return new long[]{start, Math.max(end, start)};
     }
 
-    private static boolean isErrorSpan(BufferedSpan span) {
-        return "ERROR".equalsIgnoreCase(span.getStatusCode());
-    }
-
     private static String computePathId(UUID rootQueueId, UUID rootRuleChainId, String messageType,
                                         Set<VisitedRuleNode> visitedRuleNodes) {
         List<VisitedRuleNode> sortedNodes = visitedRuleNodes.stream()
@@ -207,21 +193,8 @@ public class TracePathBuilder {
         return uuid == null ? "" : uuid.toString();
     }
 
-    private static String spanString(BufferedSpan span, String attributeKey) {
-        JsonNode attributes = span.getAttributesJsonb();
-        if (attributes == null) {
-            return null;
-        }
-        JsonNode value = attributes.get(attributeKey);
-        if (value == null || value.isNull()) {
-            return null;
-        }
-        String text = value.asText();
-        return text.isEmpty() ? null : text;
-    }
-
     private static UUID spanUuid(BufferedSpan span, String attributeKey) {
-        String value = spanString(span, attributeKey);
+        String value = TraceUtils.spanString(span, attributeKey);
         if (value == null) {
             return null;
         }

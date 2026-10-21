@@ -54,14 +54,14 @@ public class TraceSummaryBuilder {
         Collection<BufferedSpan> spans = trace.spans();
         long startTime = spans.stream().mapToLong(TraceSummaryBuilder::spanStartTime).min().orElse(0L);
         long endTime = spans.stream().mapToLong(TraceSummaryBuilder::spanEndTime).max().orElse(startTime);
-        int errorCount = (int) spans.stream().filter(TraceSummaryBuilder::isErrorSpan).count();
+        int errorCount = (int) spans.stream().filter(TraceUtils::isErrorSpan).count();
         long createdTime = spans.stream().mapToLong(BufferedSpan::getCreatedTime).min().orElse(0L);
         String firstSpanName = spans.stream()
                 .min(Comparator.comparingLong(TraceSummaryBuilder::spanStartTime)
                         .thenComparingLong(BufferedSpan::getCreatedTime))
                 .map(BufferedSpan::getName)
                 .orElse(null);
-        long totalSpanTime = spans.stream().mapToLong(TraceSummaryBuilder::spanDuration).sum();
+        long totalSpanTime = spans.stream().mapToLong(TraceUtils::spanDuration).sum();
         return new TraceSummaryInfo(
                 trace.traceId(),
                 trace.tenantId(),
@@ -99,15 +99,11 @@ public class TraceSummaryBuilder {
 
     private static List<String> distinctAttributeValues(Collection<BufferedSpan> spans, String attributeKey) {
         return spans.stream()
-                .map(span -> spanString(span, attributeKey))
+                .map(span -> TraceUtils.spanString(span, attributeKey))
                 .filter(TraceSummaryBuilder::hasText)
                 .collect(Collectors.toCollection(TreeSet::new))
                 .stream()
                 .toList();
-    }
-
-    private static boolean isErrorSpan(BufferedSpan span) {
-        return "ERROR".equals(span.getStatusCode());
     }
 
     private static boolean hasAttribute(BufferedSpan span, String attributeKey) {
@@ -123,16 +119,6 @@ public class TraceSummaryBuilder {
     private static long spanEndTime(BufferedSpan span) {
         Long end = span.getEndTime();
         return end != null ? end : spanStartTime(span);
-    }
-
-    private static long spanDuration(BufferedSpan span) {
-        return Math.max(spanEndTime(span) - spanStartTime(span), 0L);
-    }
-
-    private static String spanString(BufferedSpan span, String attributeKey) {
-        JsonNode attributes = span.getAttributesJsonb();
-        JsonNode value = attributes != null ? attributes.get(attributeKey) : null;
-        return value != null && !value.isNull() ? value.asText(null) : null;
     }
 
     private static boolean hasText(String value) {

@@ -30,12 +30,15 @@
  */
 package org.thingsboard.server.service.trace;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.opentelemetry.api.trace.SpanContext;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 
 public final class TraceUtils {
     private TraceUtils() {
@@ -133,5 +136,31 @@ public final class TraceUtils {
 
     public static String buildSpanName(String ruleChainName, RuleNode ruleNode) {
         return "[" + ruleChainName + "] [" + ruleNode.getName() + "]";
+    }
+
+    public static boolean isErrorSpan(BufferedSpan span) {
+        return StatusCode.ERROR.name().equals(span.getStatusCode());
+    }
+
+    /**
+     * Duration in ms, or 0 when the span lacks a start or an end time.
+     */
+    public static long spanDuration(BufferedSpan span) {
+        Long start = span.getStartTime();
+        Long end = span.getEndTime();
+        return start != null && end != null ? Math.max(end - start, 0L) : 0L;
+    }
+
+    /**
+     * The attribute as text, or null when it is missing, JSON null or empty.
+     */
+    public static String spanString(BufferedSpan span, String attributeKey) {
+        JsonNode attributes = span.getAttributesJsonb();
+        JsonNode value = attributes != null ? attributes.get(attributeKey) : null;
+        if (value == null || value.isNull()) {
+            return null;
+        }
+        String text = value.asText();
+        return text.isEmpty() ? null : text;
     }
 }
