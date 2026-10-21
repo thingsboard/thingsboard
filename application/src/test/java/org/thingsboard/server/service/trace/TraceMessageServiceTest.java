@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.trace;
 
+import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.trace.ReadWriteSpan;
 import io.opentelemetry.sdk.trace.ReadableSpan;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.SpanProcessor;
+import io.opentelemetry.sdk.trace.data.SpanData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -41,6 +44,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TraceMessageServiceTest {
+
+    private static final String TRACE_ID = "0af7651916cd43dd8448eb211c80319c";
+    private static final String PARENT_SPAN_ID = "b7ad6b7169203331";
+    private static final String TRACE_PARENT = "00-" + TRACE_ID + "-" + PARENT_SPAN_ID + "-01";
 
     private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
     private final List<ReadableSpan> endedSpans = new CopyOnWriteArrayList<>();
@@ -126,9 +133,9 @@ class TraceMessageServiceTest {
         TbMsgPackProcessingContext packCtx = pack();
         packCtx.getMsgIdAndTraceIdMap().put(msg.getId(), TraceRetryMetadata.builder()
                 .tenantId(tenantId.getId().toString())
-                .traceId("0af7651916cd43dd8448eb211c80319c")
-                .traceparent("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01")
-                .spanOnRetry("b7ad6b7169203331")
+                .traceId(TRACE_ID)
+                .traceparent(TRACE_PARENT)
+                .spanOnRetry(PARENT_SPAN_ID)
                 .build());
 
         service.onForwardToRuleEngineActor(tenantId, packCtx, msg);
@@ -139,17 +146,11 @@ class TraceMessageServiceTest {
 
     @Test
     void givenSpanAttributesFail_whenRuleNodeEnter_thenSpanEndsAsErrorAndTraceStateIsCleared() {
-        TbMsg msg = msgWithStaleFlag();
-        msg.getMetaData().putValue(DataConstants.TRACE_ID, "0af7651916cd43dd8448eb211c80319c");
-        msg.getMetaData().putValue(DataConstants.TRACE_PARENT, "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01");
-        msg.setTraceAuthorized(true);
-        RuleNode ruleNode = new RuleNode(new RuleNodeId(UUID.randomUUID()));
-        ruleNode.setName("Save Timeseries");
+        TbMsg msg = tracedMsg();
+        RuleNode ruleNode = ruleNode();
         // No rule chain id: addSpanAttributes throws after the span has started.
-        DefaultTbContext tbContext = Mockito.mock(DefaultTbContext.class);
-        Mockito.when(tbContext.getTenantId()).thenReturn(tenantId);
-        Mockito.when(tbContext.getRuleChainName()).thenReturn("Root Rule Chain");
-        Mockito.when(tbContext.getSelf()).thenReturn(ruleNode);
+        ruleNode.setRuleChainId(null);
+        DefaultTbContext tbContext = ruleNodeContext(ruleNode);
 
         service.onRuleNodeEnter(tbContext, msg);
 
@@ -160,6 +161,53 @@ class TraceMessageServiceTest {
         assertThat(msg.isTraced()).isFalse();
         assertThat(msg.isTraceAuthorized()).isFalse();
         assertThat(msg.getTraceParent()).isNull();
+    }
+
+    @Test
+    void givenTracedMsg_whenMaxRuleNodeExecutionsOnFreshContext_thenErrorSpanIsExported() {
+        TbMsg msg = tracedMsg();
+        DefaultTbContext tbContext = ruleNodeContext(ruleNode());
+
+        service.onMaxRuleNodeExecutions(tbContext, msg, 50);
+
+        assertThat(endedSpans).hasSize(1);
+        SpanData span = endedSpans.get(0).toSpanData();
+        assertThat(span.getName()).isEqualTo("[Root Rule Chain] [Save Timeseries]");
+        assertThat(span.getStatus().getStatusCode()).isEqualTo(StatusCode.ERROR);
+        assertThat(span.getStatus().getDescription()).isEqualTo("Max rule node executions exceeded");
+        assertThat(span.getAttributes().get(AttributeKey.longKey("rule.node.max.executions"))).isEqualTo(50L);
+        assertThat(span.getParentSpanId()).isEqualTo(PARENT_SPAN_ID);
+        assertThat(msg.getTraceParent()).isEqualTo(TRACE_PARENT);
+    }
+
+    @Test
+    void givenUntracedMsg_whenMaxRuleNodeExecutions_thenNoSpan() {
+        service.onMaxRuleNodeExecutions(ruleNodeContext(ruleNode()), msgWithStaleFlag(), 50);
+
+        assertThat(endedSpans).isEmpty();
+    }
+
+    private TbMsg tracedMsg() {
+        TbMsg msg = msgWithStaleFlag();
+        msg.getMetaData().putValue(DataConstants.TRACE_ID, TRACE_ID);
+        msg.getMetaData().putValue(DataConstants.TRACE_PARENT, TRACE_PARENT);
+        msg.setTraceAuthorized(true);
+        return msg;
+    }
+
+    private static RuleNode ruleNode() {
+        RuleNode ruleNode = new RuleNode(new RuleNodeId(UUID.randomUUID()));
+        ruleNode.setRuleChainId(new RuleChainId(UUID.randomUUID()));
+        ruleNode.setName("Save Timeseries");
+        return ruleNode;
+    }
+
+    private DefaultTbContext ruleNodeContext(RuleNode ruleNode) {
+        DefaultTbContext tbContext = Mockito.mock(DefaultTbContext.class);
+        Mockito.when(tbContext.getTenantId()).thenReturn(tenantId);
+        Mockito.when(tbContext.getRuleChainName()).thenReturn("Root Rule Chain");
+        Mockito.when(tbContext.getSelf()).thenReturn(ruleNode);
+        return tbContext;
     }
 
     private void givenRecording(MessagePayloadRecording recording) {

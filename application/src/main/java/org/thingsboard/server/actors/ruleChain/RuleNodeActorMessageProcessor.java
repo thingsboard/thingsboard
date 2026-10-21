@@ -159,7 +159,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 }
             } else {
                 if (tbMsg.isTraced() && traceMessageService != null) {
-                    traceMessageService.onMaxRuleNodeExecutions((DefaultTbContext) msg.getCtx(), tbMsg);
+                    traceMessageService.onMaxRuleNodeExecutions((DefaultTbContext) msg.getCtx(), tbMsg, maxRuleNodeExecutionsPerMessage);
                 }
                 tbMsg.getCallback().onFailure(new RuleNodeException("Message is processed by more than " + maxRuleNodeExecutionsPerMessage + " rule nodes!", ruleChainName, defaultCtx.getSelf()));
             }

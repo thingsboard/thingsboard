@@ -34,7 +34,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.TraceFlags;
@@ -145,76 +144,86 @@ public class TraceMessageService {
     }
 
     public void onRuleNodeEnter(DefaultTbContext tbContext, TbMsg tbMsg) {
-        TenantId tenantId = tbContext.getTenantId();
-        String ruleChainName = tbContext.getRuleChainName();
-        RuleNode ruleNode = tbContext.getSelf();
         Span span = null;
         try {
-            if (tbMsg.getTraceParent() == null) {
+            span = startRuleNodeSpan(tbContext, tbMsg);
+            if (span == null) {
                 return;
             }
-            if (!tbMsg.isTraceAuthorized()) {
-                return;
-            }
-
-            SpanContext parentSpanContext = resolveParentSpanContext(tbMsg);
-            if (parentSpanContext == null || !parentSpanContext.isValid() || !parentSpanContext.isSampled()) {
-                stripTraceState(tbMsg);
-                log.debug("[{}] Failed to set trace context", tenantId);
-                return;
-            }
-
-            boolean recordMsgPayload = TraceUtils.shouldRecordMsgPayload(tbMsg.getMetaData());
-            String traceId = tbMsg.getTraceId();
-
-            if (!pressureGate.canCreateSpan()) {
-                stripTraceState(tbMsg);
-                log.debug("[{}] Trace [{}] span dropped, export queue is full", tenantId, traceId);
-                return;
-            }
-
-            SpanBuilder spanBuilder = tracer.spanBuilder(TraceUtils.buildSpanName(ruleChainName, ruleNode))
-                    .setParent(Context.current().with(Span.wrap(parentSpanContext)));
-
-            span = spanBuilder.startSpan();
-
-            if (!span.isRecording()) {
-                stripTraceState(tbMsg);
-                log.debug("[{}] Trace [{}] span is recording", tenantId, traceId);
-                return;
-            }
-
-            addSpanAttributes(span, tbMsg, ruleChainName, ruleNode, tenantId, recordMsgPayload);
-
             String newTraceParent = TraceUtils.buildTraceparent(span.getSpanContext());
             tbMsg.getMetaData().putValue(DataConstants.TRACE_PARENT, newTraceParent);
             tbContext.setProcessingMsg(tbMsg);
             tbContext.setProcessingMsgSpan(span);
         } catch (Exception e) {
-            log.warn("[{}] Failed to evaluate traceable message", tenantId, e);
+            log.warn("[{}] Failed to evaluate traceable message", tbContext.getTenantId(), e);
             // Don't leave a half-built span on the context or trace keys on the message that point to it.
             if (span != null) {
-                span.setStatus(StatusCode.ERROR, "Trace instrumentation failed: " + e.getMessage());
-                span.end();
+                endWithError(span, e);
             }
             tbContext.setProcessingMsgSpan(null);
             stripTraceState(tbMsg);
         }
     }
 
-    public void onMaxRuleNodeExecutions(DefaultTbContext tbContext, TbMsg tbMsg) {
+    public void onMaxRuleNodeExecutions(DefaultTbContext tbContext, TbMsg tbMsg, int maxRuleNodeExecutions) {
         try {
-            if (!tbMsg.isTraced()) {
+            // The node never runs, so this span is the only record that the trace stopped here.
+            Span span = startRuleNodeSpan(tbContext, tbMsg);
+            if (span == null) {
                 return;
             }
-            Span processingSpan = tbContext.getProcessingMsgSpan();
-            if (processingSpan != null) {
-                processingSpan.setStatus(StatusCode.ERROR, "Max rule node executions exceeded");
-                processingSpan.end();
-            }
+            span.setAttribute("rule.node.max.executions", maxRuleNodeExecutions);
+            span.setStatus(StatusCode.ERROR, "Max rule node executions exceeded");
+            span.end();
         } catch (Exception e) {
-            log.warn("Failed to handle maxRuleNodeExecutionsError trace", e);
+            log.warn("[{}] Failed to handle maxRuleNodeExecutionsError trace", tbContext.getTenantId(), e);
         }
+    }
+
+    /**
+     * Starts the span of the rule node handling {@code tbMsg}, or returns null when the message isn't traceable
+     * (stripping its trace state where the trace can't continue). The caller ends the span.
+     */
+    private Span startRuleNodeSpan(DefaultTbContext tbContext, TbMsg tbMsg) {
+        if (tbMsg.getTraceParent() == null || !tbMsg.isTraceAuthorized()) {
+            return null;
+        }
+        TenantId tenantId = tbContext.getTenantId();
+        SpanContext parentSpanContext = resolveParentSpanContext(tbMsg);
+        if (parentSpanContext == null || !parentSpanContext.isValid() || !parentSpanContext.isSampled()) {
+            stripTraceState(tbMsg);
+            log.debug("[{}] Failed to set trace context", tenantId);
+            return null;
+        }
+        String traceId = tbMsg.getTraceId();
+        if (!pressureGate.canCreateSpan()) {
+            stripTraceState(tbMsg);
+            log.debug("[{}] Trace [{}] span dropped, export queue is full", tenantId, traceId);
+            return null;
+        }
+
+        String ruleChainName = tbContext.getRuleChainName();
+        RuleNode ruleNode = tbContext.getSelf();
+        Span span = tracer.spanBuilder(TraceUtils.buildSpanName(ruleChainName, ruleNode))
+                .setParent(Context.current().with(Span.wrap(parentSpanContext)))
+                .startSpan();
+        if (!span.isRecording()) {
+            stripTraceState(tbMsg);
+            log.debug("[{}] Trace [{}] span is not recording", tenantId, traceId);
+            return null;
+        }
+        try {
+            addSpanAttributes(span, tbMsg, ruleChainName, ruleNode, tenantId, TraceUtils.shouldRecordMsgPayload(tbMsg.getMetaData()));
+        } catch (RuntimeException e) {
+            endWithError(span, e);
+            throw e;
+        }
+        return span;
+    }
+
+    private static void endWithError(Span span, Exception e) {
+        span.setStatus(StatusCode.ERROR, "Trace instrumentation failed: " + e.getMessage());
+        span.end();
     }
 
     public void onPutToQueue(TbMsg sourceMsg, TbMsg childMsg) {
