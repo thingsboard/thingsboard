@@ -243,16 +243,22 @@ public class TraceController extends BaseController {
             @Parameter(description = "Trace ID for exact match (optional). " +
                     "When specified, searches only by this ID and ignores other filters.")
             @RequestParam(required = false) String traceId,
-            @Parameter(description = "When true, return only traces with errors (error_count > 0). Default: false.")
+            @Parameter(description = "When true, return only traces that have at least one error anywhere in the trace. " +
+                    "It is not tied to ruleChainId/ruleNodeId/queueName: combined with them it means \"has an error AND " +
+                    "visited that chain/node/queue\", and the error may be elsewhere in the trace. Default: false.")
             @RequestParam(required = false, defaultValue = "false") boolean errorsOnly,
-            @Parameter(description = "Rule chain ID filter - when combined with errorsOnly=true, returns traces with an ERROR span on this rule chain (optional).")
+            @Parameter(description = "Rule chain ID filter - returns traces that visited this rule chain (optional). " +
+                    "Combined with errorsOnly=true, the error is not required to be on this rule chain.")
             @RequestParam(required = false) String ruleChainId,
-            @Parameter(description = "Rule node ID filter - returns traces that contain a span with this rule node. When combined with errorsOnly=true, narrows to traces with an ERROR span on this node. Can be used independently without ruleChainId (optional).")
+            @Parameter(description = "Rule node ID filter - returns traces that contain a span with this rule node. Combined with " +
+                    "errorsOnly=true, the error is not required to be on this node. Can be used independently without ruleChainId (optional).")
             @RequestParam(required = false) String ruleNodeId,
             @Parameter(description = "Execution path id filter (optional). When set, returns only the path's saved (related) traces: " +
                     "the time range is day-floored to locate the path's trace_group buckets, their related trace ids are collected, " +
                     "and the exact start_time range plus any other filters are still applied on top.")
             @RequestParam(required = false) String pathId,
+            @Parameter(description = "When true, return only traces in which at least one message timed out in a queue pack. " +
+                    "It is not tied to queueName: combined with it, the timeout may be on another queue. Default: false.")
             @RequestParam(required = false) boolean hasTimeOutsByQueue,
             @Parameter(description = "Page number (0-based, default: 0)")
             @RequestParam(required = false, defaultValue = "0") int page,
