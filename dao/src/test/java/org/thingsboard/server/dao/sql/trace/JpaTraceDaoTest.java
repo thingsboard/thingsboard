@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class JpaTraceDaoTest extends AbstractJpaDaoTest {
 
+    private static final long HOUR = 3_600_000L;
     private static final long DAY = 86_400_000L;
     private static final long BUCKET = 20_000 * DAY;
     private static final String PATH_ID = "path-1";
@@ -90,6 +91,27 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         assertEquals(1, groups.size());
         assertEquals(List.of(TRACE_ID), groups.get(0).getRelatedTraceIds());
         assertEquals(ruleNodeId, groups.get(0).getVisitedRuleNodes().get(0).getRuleNodeId());
+    }
+
+    @Test
+    public void givenDayBucket_whenWindowStartsMidDay_thenPathAndGroupsAreFound() {
+        traceDao.saveTraceGroups(List.of(traceGroup(10, 1)), List.of());
+        long start = BUCKET + 10 * HOUR;
+        long end = BUCKET + 11 * HOUR;
+
+        assertEquals(1, traceDao.findPathsPaginated(tenantId, start, end,
+                null, null, null, null, false, 0, 10, null, null).getTotalElements());
+        assertEquals(1, traceDao.findTraceGroupsByPathId(tenantId, PATH_ID, start, end).size());
+    }
+
+    @Test
+    public void givenDayBucket_whenWindowEndsAtThatMidnight_thenNextDayIsExcluded() {
+        traceDao.saveTraceGroups(List.of(traceGroup(10, 1)), List.of());
+        long start = BUCKET - DAY + HOUR;
+
+        assertEquals(0, traceDao.findPathsPaginated(tenantId, start, BUCKET,
+                null, null, null, null, false, 0, 10, null, null).getTotalElements());
+        assertEquals(0, traceDao.findTraceGroupsByPathId(tenantId, PATH_ID, start, BUCKET).size());
     }
 
     @Test

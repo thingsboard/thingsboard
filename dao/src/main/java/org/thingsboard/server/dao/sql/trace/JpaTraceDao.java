@@ -56,13 +56,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup.DAY_BUCKET_MS;
+import static org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup.floorToDay;
+
 @DefaultDataSource
 @Component
 @SqlDao
 @RequiredArgsConstructor
 public class JpaTraceDao implements TraceDao {
-
-    private static final long DAY_BUCKET_MS = 86_400_000L;
 
     private final SpanRepository spanRepository;
     private final TraceInsertRepository traceInsertRepository;
@@ -85,7 +86,7 @@ public class JpaTraceDao implements TraceDao {
 
     @Override
     public List<TraceGroup> findTraceGroupsByPathId(UUID tenantId, String pathId, long startTime, long endTime) {
-        return traceQueryRepository.findTraceGroupsByPathId(tenantId, pathId, startTime, endTime);
+        return traceQueryRepository.findTraceGroupsByPathId(tenantId, pathId, floorToDay(startTime), endTime);
     }
 
     @Override
@@ -103,7 +104,8 @@ public class JpaTraceDao implements TraceDao {
                                                      String rootQueueId, String rootMessageType, String rootRuleChainId,
                                                      String ruleNodeId, boolean errorsOnly,
                                                      int page, int pageSize, String sortField, String sortOrder) {
-        return traceQueryRepository.findPathsPaginated(tenantId, startTime, endTime, rootQueueId, rootMessageType,
+        // A window starting mid-day must still match that day's bucket.
+        return traceQueryRepository.findPathsPaginated(tenantId, floorToDay(startTime), endTime, rootQueueId, rootMessageType,
                 rootRuleChainId, ruleNodeId, errorsOnly, page, pageSize, sortField, sortOrder);
     }
 
@@ -193,10 +195,6 @@ public class JpaTraceDao implements TraceDao {
     @Override
     public boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs) {
         return traceInsertRepository.tryAcquireAggregationLeader(serviceId, nowMs, leaseMs);
-    }
-
-    private static long floorToDay(long timestampMs) {
-        return (timestampMs / DAY_BUCKET_MS) * DAY_BUCKET_MS;
     }
 
     private List<SpanAttributeEntity> toSpanAttributes(SpanEntity span) {

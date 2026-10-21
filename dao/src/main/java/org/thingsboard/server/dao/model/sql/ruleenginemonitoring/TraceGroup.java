@@ -12,6 +12,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TraceGroup {
+    // Groups aggregate per UTC day; bucketTime is the day start.
+    public static final long DAY_BUCKET_MS = 86_400_000L;
+
     private long bucketTime;
     private UUID tenantId;
     private String pathId;
@@ -60,5 +63,9 @@ public class TraceGroup {
         private long totalCount;
         private long errors;
         private UUID ruleChainId;
+    }
+
+    public static long floorToDay(long timestampMs) {
+        return (timestampMs / DAY_BUCKET_MS) * DAY_BUCKET_MS;
     }
 }

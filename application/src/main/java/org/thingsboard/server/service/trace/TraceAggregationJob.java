@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup;
 import org.thingsboard.server.dao.sql.trace.TraceDao;
 import org.thingsboard.server.dao.sql.trace.TraceSummaryInfo;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -24,8 +25,6 @@ import java.util.stream.Collectors;
 @Component
 @ConditionalOnExpression(TraceConditions.TRACE_ENABLED)
 public class TraceAggregationJob {
-    private static final long DAY_BUCKET_MS = 86_400_000L;
-
     private final TraceBuffer buffer;
     private final TraceGroupAggregator aggregator;
     private final TraceGroupPersistenceService persistenceService;
@@ -107,16 +106,12 @@ public class TraceAggregationJob {
     }
 
     private void aggregateAndPersist(List<LoadedTrace> loaded, long now) {
-        long bucketTime = floorToDay(now);
+        long bucketTime = TraceGroup.floorToDay(now);
         Map<TraceGroupKey, TraceGroupContribution> contributions = aggregator.aggregate(loaded, bucketTime, now);
         Map<String, LoadedTrace> tracesByTraceId = loaded.stream()
                 .collect(Collectors.toMap(t -> t.trace().traceId(), Function.identity(), (a, b) -> a));
         Map<String, TraceSummaryInfo> summariesByTraceId = traceSummaryBuilder.buildByTraceId(loaded);
         persistenceService.persist(bucketTime, now,
                 contributions.values(), tracesByTraceId, summariesByTraceId);
-    }
-
-    private static long floorToDay(long timestampMs) {
-        return (timestampMs / DAY_BUCKET_MS) * DAY_BUCKET_MS;
     }
 }
