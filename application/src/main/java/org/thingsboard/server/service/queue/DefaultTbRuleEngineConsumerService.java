@@ -40,6 +40,7 @@ import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedCon
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
+import org.thingsboard.server.service.ruleenginemonitoring.QueueCacheService;
 import org.thingsboard.server.service.ruleenginemonitoring.RuleEngineMonitoringService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.trace.TraceMessageService;
@@ -62,6 +63,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
     private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
     private final TraceMessageService traceMessageService;
     private final RuleEngineMonitoringService ruleEngineMonitoringService;
+    private final QueueCacheService queueCacheService;
     private final SystemUpdateMsgHandler systemUpdateMsgHandler;
 
     private final ConcurrentMap<QueueKey, TbRuleEngineQueueConsumerManager> consumers = new ConcurrentHashMap<>();
@@ -81,6 +83,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                                               TbMsgPackProcessingContextFactory packProcessingContextFactory,
                                               Optional<TraceMessageService> traceMessageService,
                                               Optional<RuleEngineMonitoringService> ruleEngineMonitoringService,
+                                              QueueCacheService queueCacheService,
                                               SystemUpdateMsgHandler systemUpdateMsgHandler) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
@@ -89,6 +92,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
         this.packProcessingContextFactory = packProcessingContextFactory;
         this.traceMessageService = traceMessageService.orElse(null);
         this.ruleEngineMonitoringService = ruleEngineMonitoringService.orElse(null);
+        this.queueCacheService = queueCacheService;
         this.systemUpdateMsgHandler = systemUpdateMsgHandler;
     }
 
@@ -219,6 +223,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
         partitionService.updateQueues(queueUpdateMsgs);
         partitionService.recalculatePartitions(ctx.getServiceInfoProvider().getServiceInfo(),
                 new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
+        queueCacheService.invalidateQueues();
     }
 
     private void deleteQueues(List<QueueDeleteMsg> queueDeleteMsgs) {
@@ -231,6 +236,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
 
         partitionService.removeQueues(queueDeleteMsgs);
         partitionService.recalculatePartitions(ctx.getServiceInfoProvider().getServiceInfo(), new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
+        queueCacheService.invalidateQueues();
     }
 
     @EventListener

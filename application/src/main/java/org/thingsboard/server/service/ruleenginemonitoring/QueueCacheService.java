@@ -32,11 +32,9 @@ package org.thingsboard.server.service.ruleenginemonitoring;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueShortInfo;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -67,17 +65,6 @@ public class QueueCacheService {
         this.dao = dao;
         this.tenantProfileCache = tenantProfileCache;
         this.queueCacheTtlMs = MINUTES.toMillis(queueCacheTtlMin);
-    }
-
-    @EventListener(ComponentLifecycleMsg.class)
-    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
-        switch (event.getEntityId().getEntityType()) {
-            case QUEUE -> {
-                switch (event.getEvent()) {
-                    case CREATED, UPDATED, DELETED -> invalidateQueues();
-                }
-            }
-        }
     }
 
     public UUID getQueueId(UUID tenantId, String queueName) {
@@ -113,7 +100,8 @@ public class QueueCacheService {
         return System.currentTimeMillis() - queuesLoadedAtMs > queueCacheTtlMs;
     }
 
-    private void invalidateQueues() {
+    // Called by the rule engine consumer service on every queue create/update/delete notification.
+    public void invalidateQueues() {
         queueUpdateLock.lock();
         try {
             queues = List.of();
