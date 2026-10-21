@@ -41,6 +41,10 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 
 public final class TraceUtils {
+    // Span names the rule engine produces itself, rather than one per rule node.
+    public static final String QUEUE_TIMEOUT_SPAN_NAME = "Queue Message Processing Time Out";
+    public static final String TRACE_MESSAGE_SNAPSHOT_SPAN_NAME = "Trace Message Snapshot";
+
     private TraceUtils() {
     }
 

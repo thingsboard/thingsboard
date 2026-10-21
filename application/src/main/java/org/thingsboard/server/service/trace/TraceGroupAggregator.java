@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class TraceGroupAggregator {
-    private static final String TIMEOUT_SPAN_NAME = "Queue Message Processing Time Out";
 
     private final TracePathBuilder tracePathBuilder;
 
@@ -135,12 +134,12 @@ public class TraceGroupAggregator {
 
     private static boolean hasTimeout(BufferedTrace trace) {
         return trace != null && trace.spans() != null && trace.spans().stream()
-                .anyMatch(span -> TIMEOUT_SPAN_NAME.equals(span.getName()));
+                .anyMatch(span -> TraceUtils.QUEUE_TIMEOUT_SPAN_NAME.equals(span.getName()));
     }
 
     private static boolean hasError(BufferedTrace trace) {
         return trace != null && trace.spans() != null && trace.spans().stream()
-                .anyMatch(span -> "ERROR".equalsIgnoreCase(span.getStatusCode()));
+                .anyMatch(TraceUtils::isErrorSpan);
     }
 
     private static List<UUID> connectionsOf(Map<UUID, Set<UUID>> connections, UUID ruleNodeId) {

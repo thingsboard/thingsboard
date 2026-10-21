@@ -30,7 +30,6 @@ import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_
 @Slf4j
 @Component
 public class TracePathBuilder {
-    private static final String QUEUE_TIMEOUT_SPAN_NAME = "Queue Message Processing Time Out";
 
     public Optional<TracePath> build(BufferedTrace trace) {
         if (trace == null || CollectionUtils.isEmpty(trace.spans())) {
@@ -38,7 +37,7 @@ public class TracePathBuilder {
         }
 
         List<BufferedSpan> pathSpans = trace.spans().stream()
-                .filter(span -> !QUEUE_TIMEOUT_SPAN_NAME.equals(span.getName()))
+                .filter(span -> !TraceUtils.QUEUE_TIMEOUT_SPAN_NAME.equals(span.getName()))
                 .filter(span -> spanUuid(span, QUEUE_ID) != null
                         && spanUuid(span, RULE_CHAIN_ID) != null
                         && spanUuid(span, RULE_NODE_ID) != null

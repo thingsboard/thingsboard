@@ -99,7 +99,6 @@ import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.TENAN
 @Service
 @ConditionalOnExpression(TraceConditions.TRACE_ENABLED)
 public class TraceMessageService {
-    private static final String TRACE_MESSAGE_SNAPSHOT_SPAN = "Trace Message Snapshot";
 
     private enum TraceIngressType {
         UNTRACED,
@@ -265,7 +264,7 @@ public class TraceMessageService {
                 if (traceMetadata == null) return;
                 SpanContext parentSpanContext = TraceUtils.parseRemoteParentSpanContext(traceMetadata.getTraceparent());
 
-                Span span = tracer.spanBuilder("Queue Message Processing Time Out")
+                Span span = tracer.spanBuilder(TraceUtils.QUEUE_TIMEOUT_SPAN_NAME)
                         .setParent(Context.current().with(Span.wrap(parentSpanContext)))
                         .setAttribute(MESSAGE_ID, tbMsgProto.getId())
                         .setAttribute(TENANT_ID, traceMetadata.getTenantId())
@@ -497,7 +496,7 @@ public class TraceMessageService {
         if (!pressureGate.canCreateSpan()) {
             return;
         }
-        Span span = tracer.spanBuilder(TRACE_MESSAGE_SNAPSHOT_SPAN)
+        Span span = tracer.spanBuilder(TraceUtils.TRACE_MESSAGE_SNAPSHOT_SPAN_NAME)
                 .setParent(Context.current().with(Span.wrap(parentSpanContext)))
                 .setAttribute(MESSAGE_ID, tbMsg.getId().toString())
                 .setAttribute(TENANT_ID, tenantId.getId().toString())
