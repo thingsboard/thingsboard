@@ -31,6 +31,7 @@
 package org.thingsboard.server.service.ruleenginemonitoring;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -74,6 +75,11 @@ public class RuleEngineMonitoringQueryService {
     private final RuleEngineMonitoringDao dao;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;
+
+    @Value("${rule-node-exec-stats.queue-lag-flush-interval-ms:60000}")
+    private long queueLagFlushIntervalMs;
+    @Value("${rule-node-exec-stats.queue-lag-leader-lease-ms:120000}")
+    private long queueLagLeaderLeaseMs;
 
     public RuleEngineMonitoringFilters getFilters(UUID tenantId) {
         List<String> serviceIds = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)
@@ -139,6 +145,11 @@ public class RuleEngineMonitoringQueryService {
                 new QueueLagTimeseriesQuery(queueTenantId, startTs, endTs, dims, queueIds, intervalMs));
     }
 
+    // Lag is written every flush interval by the lease holder; allow a missed flush and a leader handover.
+    private long lagStaleAfterMs() {
+        return 2 * queueLagFlushIntervalMs + queueLagLeaderLeaseMs;
+    }
+
     private UUID resolveQueueTenantId(UUID tenantId) {
         TenantProfile profile = tenantProfileCache.get(TenantId.fromUUID(tenantId));
         boolean usesSystemQueues = profile == null || !profile.isIsolatedTbRuleEngine();
@@ -154,7 +165,7 @@ public class RuleEngineMonitoringQueryService {
     }
 
     public long getCurrentQueueLag(UUID tenantId, List<UUID> queueIds) {
-        return dao.findLastQueueLag(resolveQueueTenantId(tenantId), queueIds);
+        return dao.findLastQueueLag(resolveQueueTenantId(tenantId), queueIds, lagStaleAfterMs());
     }
 
     public List<MergedStatsTableRow> getMergedStatsTable(

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Aggregating reads over the rule node / queue / queue lag stats tables.
@@ -241,7 +240,7 @@ public class RuleEngineStatsQueryRepository {
         return jdbcTemplate.query(sql.toString(), params, QUEUE_LAG_TABLE_MAPPER);
     }
 
-    public long findLastQueueLag(UUID tenantId, List<UUID> queueIds) {
+    public long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs) {
         StringBuilder sql = new StringBuilder("""
                 SELECT COALESCE(SUM(latest.lag), 0)
                 FROM (
@@ -252,7 +251,7 @@ public class RuleEngineStatsQueryRepository {
                 """);
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("tenantId", tenantId)
-                .addValue("startTs", System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5));
+                .addValue("startTs", System.currentTimeMillis() - staleAfterMs);
         appendIn(sql, params, "queue_id", "queueIds", queueIds);
         sql.append("""
                     ORDER BY queue_tenant_id, queue_id, bucket_time DESC

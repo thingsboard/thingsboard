@@ -366,9 +366,7 @@ public class RuleEngineMonitoringService {
             long lag = entry.getValue().stream()
                     .mapToLong(group -> lagByGroup.getOrDefault(group, 0L))
                     .sum();
-            if (lag == 0) {
-                continue;
-            }
+            // A 0 row is what tells "last" the backlog has drained.
             rows.add(new QueueLagStatsRow(bucketTime, queue.tenantId(), queue.id(), lag));
         }
         return rows;
