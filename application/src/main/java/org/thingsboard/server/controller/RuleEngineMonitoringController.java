@@ -31,6 +31,7 @@
 package org.thingsboard.server.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,6 +47,7 @@ import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTableRo
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTsKvEntry;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringFilters;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeDimension;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -65,6 +67,9 @@ import java.util.UUID;
 public class RuleEngineMonitoringController extends BaseController {
     private final RuleEngineMonitoringQueryService queryService;
 
+    @Value("${database.ts_max_intervals:700}")
+    private long maxTsIntervals;
+
     @GetMapping("/filters")
     public RuleEngineMonitoringFilters getFilterOptions() throws ThingsboardException {
         checkRuleChainPermission(Operation.READ);
@@ -83,6 +88,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) Long intervalMs
     ) throws ThingsboardException {
         checkRuleChainPermission(Operation.READ);
+        validateTimeseriesQuery(startTs, endTs, intervalMs);
         UUID tenantId = getTenantId().getId();
         return queryService.getNodeStatsTimeseries(
                 tenantId, startTs, endTs, parseGroupBy(groupBy),
@@ -118,6 +124,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) Long intervalMs
     ) throws ThingsboardException {
         checkRuleChainPermission(Operation.READ);
+        validateTimeseriesQuery(startTs, endTs, intervalMs);
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueStatsTimeseries(
                 tenantId, startTs, endTs, parseQueueGroupBy(groupBy),
@@ -150,6 +157,7 @@ public class RuleEngineMonitoringController extends BaseController {
             @RequestParam(required = false) Long intervalMs
     ) throws ThingsboardException {
         checkRuleChainPermission(Operation.READ);
+        validateTimeseriesQuery(startTs, endTs, intervalMs);
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueLagTimeseries(
                 tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds, intervalMs);
@@ -259,6 +267,24 @@ public class RuleEngineMonitoringController extends BaseController {
             }
         }
         return dims;
+    }
+
+    // Same limits as telemetry queries (BaseTimeseriesService): no intervalMs means the stored buckets are returned as is.
+    private void validateTimeseriesQuery(long startTs, long endTs, Long intervalMs) throws ThingsboardException {
+        if (endTs <= startTs) {
+            throw new ThingsboardException("'endTs' must be greater than 'startTs'", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        if (intervalMs == null) {
+            return;
+        }
+        if (intervalMs < 1) {
+            throw new ThingsboardException("'intervalMs' must be greater than 0, but got " + intervalMs, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        long intervals = (endTs - startTs) / Math.max(intervalMs, 1000);
+        if (intervals > maxTsIntervals) {
+            throw new ThingsboardException("Number of intervals is too high - " + intervals +
+                    ". Increase 'intervalMs' or reduce the time range", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
     }
 
     private void checkRuleChainPermission(Operation operation) throws ThingsboardException {
