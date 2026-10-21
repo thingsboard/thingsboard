@@ -622,6 +622,8 @@ sql:
     partition_size: "${SQL_REPORTS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   notifications:
     partition_size: "${SQL_NOTIFICATIONS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
+  traces:
+    partition_size: "${SQL_TRACES_PARTITION_SIZE_HOURS:24}" # Number of hours per span table partition. Default value - 1 day
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
   batch_sort: "${SQL_BATCH_SORT:true}"
   # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -693,6 +695,14 @@ sql:
     api_keys:
       enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
       checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+    traces:
+      enabled: "${SQL_TTL_TRACES_ENABLED:true}" # Enable/disable TTL (Time To Live) for traces and rule engine monitoring stats
+      execution_interval_ms: "${SQL_TTL_TRACES_EXECUTION_INTERVAL_MS:3600000}" # Default value - 1 hour (max random initial delay and fixed period)
+      # Spans and trace summaries, by span start time; 0 disables. Accurate to sql.traces.partition_size. Default value - 7 days
+      spans_ttl: "${SQL_TTL_TRACES_SPANS_SECS:604800}"
+      trace_groups_ttl: "${SQL_TTL_TRACES_GROUPS_SECS:2592000}" # Execution path day buckets; 0 disables. Default value - 30 days
+      rule_engine_stats_ttl: "${SQL_TTL_RULE_ENGINE_STATS_SECS:2592000}" # rule_node_* stats; 0 disables. Default value - 30 days
+      removal_batch_size: "${SQL_TTL_TRACES_REMOVAL_BATCH_SIZE:10000}" # Batch size for records removal
     agent_bulk_actions:
       enabled: "${SQL_TTL_AGENT_BULK_ACTIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for agent bulk action records
       ttl: "${SQL_TTL_AGENT_BULK_ACTIONS_SECS:604800}" # Default value - 7 days; removing a bulk action also removes the agent app events it created, so those events are retained for the shorter of this TTL and 'agent_app_events.ttl'

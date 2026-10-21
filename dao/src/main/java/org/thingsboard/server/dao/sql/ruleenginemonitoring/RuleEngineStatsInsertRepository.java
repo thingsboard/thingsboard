@@ -50,6 +50,8 @@ public class RuleEngineStatsInsertRepository {
 
     private static final int BATCH_SIZE = 5000;
 
+    private static final List<String> STATS_TABLES = List.of("rule_node_exec_stats", "rule_node_queue_stats", "rule_node_queue_lag_stats");
+
     private final JdbcTemplate jdbcTemplate;
 
     public void saveRuleNodeStats(List<RuleNodeExecStatsRow> rows) {
@@ -104,10 +106,27 @@ public class RuleEngineStatsInsertRepository {
         return jdbcTemplate.update(QUEUE_LAG_LEADER_SQL, serviceId, nowMs + leaseMs, serviceId, nowMs) > 0;
     }
 
+    public void cleanUp(long expTime, int batchSize) {
+        if (!statsSchemaExists()) {
+            return;
+        }
+        for (String table : STATS_TABLES) {
+            String sql = "DELETE FROM " + table + " WHERE ctid IN (SELECT ctid FROM " + table + " WHERE bucket_time < ? LIMIT ?)";
+            int deleted;
+            do {
+                deleted = jdbcTemplate.update(sql, expTime, batchSize);
+            } while (deleted > 0);
+        }
+    }
+
+    // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
+    private boolean statsSchemaExists() {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass('rule_node_exec_stats') IS NOT NULL", Boolean.class));
+    }
+
     // Queue stats and lag also belong to the tenant through its own (isolated) queues.
     public void deleteByTenantId(UUID tenantId) {
-        // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
-        if (!Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass('rule_node_exec_stats') IS NOT NULL", Boolean.class))) {
+        if (!statsSchemaExists()) {
             return;
         }
         jdbcTemplate.update("DELETE FROM rule_node_exec_stats WHERE tenant_id = ?", tenantId);

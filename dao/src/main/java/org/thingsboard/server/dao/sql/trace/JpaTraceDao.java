@@ -202,6 +202,16 @@ public class JpaTraceDao implements TraceDao {
         traceInsertRepository.deleteByTenantId(tenantId);
     }
 
+    @Override
+    public void cleanUp(long spansExpTime, long groupsExpTime, int batchSize) {
+        traceInsertRepository.cleanUp(spansExpTime, groupsExpTime, batchSize);
+    }
+
+    @Override
+    public void cleanUpPartitionsCache(long spansExpTime) {
+        traceInsertRepository.cleanUpPartitionsCache(spansExpTime);
+    }
+
     private List<SpanAttributeEntity> toSpanAttributes(SpanEntity span) {
         Map<String, Object> attributes = parseJsonObject(span.getAttributesJsonb());
         if (attributes.isEmpty()) {

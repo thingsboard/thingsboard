@@ -48,8 +48,10 @@ CREATE TABLE IF NOT EXISTS span
     status_code      varchar(20),
     status_message   varchar(5000),
     created_time     bigint        NOT NULL,
-    CONSTRAINT span_pkey PRIMARY KEY (tenant_id, trace_id, span_id)
-);
+    CONSTRAINT span_pkey PRIMARY KEY (tenant_id, trace_id, span_id, start_time)
+) PARTITION BY RANGE (start_time);
+-- Partitions (span_<partition start ms>, sql.traces.partition_size wide) are created on insert and dropped by the
+-- trace TTL cleanup. start_time never changes for a span, so a re-saved span still lands on its existing row.
 
 -- Indexes for span table
 CREATE INDEX IF NOT EXISTS idx_span_tenant_trace ON span (tenant_id, trace_id);
@@ -106,6 +108,8 @@ CREATE TABLE IF NOT EXISTS trace_summary
 CREATE INDEX IF NOT EXISTS idx_ts_tenant_start_time ON trace_summary (tenant_id, start_time DESC);
 CREATE INDEX IF NOT EXISTS idx_ts_tenant_errors ON trace_summary (tenant_id, start_time DESC) WHERE has_errors = true;
 CREATE INDEX IF NOT EXISTS idx_ts_tenant_end_time ON trace_summary (tenant_id, end_time DESC);
+-- For the trace TTL cleanup
+CREATE INDEX IF NOT EXISTS idx_ts_start_time ON trace_summary (start_time);
 
 CREATE TABLE IF NOT EXISTS rule_node_exec_stats
 (

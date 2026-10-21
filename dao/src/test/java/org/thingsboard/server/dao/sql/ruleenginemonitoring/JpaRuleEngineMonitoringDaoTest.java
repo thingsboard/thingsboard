@@ -208,6 +208,21 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void givenOldAndRecentStats_whenCleanUp_thenOnlyExpiredStatsAreRemoved() {
+        dao.saveRuleNodeStats(List.of(ruleNodeRow(T0, "svc-1", 1, 0, 10, 10), ruleNodeRow(T0 + 10 * MINUTE, "svc-1", 1, 0, 10, 10)));
+        dao.saveQueueStats(List.of(new QueueStatsRow(T0, tenantId, tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0),
+                new QueueStatsRow(T0 + 10 * MINUTE, tenantId, tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0)));
+        dao.saveQueueLagStats(List.of(new QueueLagStatsRow(T0, tenantId, queueId, 5),
+                new QueueLagStatsRow(T0 + 10 * MINUTE, tenantId, queueId, 5)));
+
+        dao.cleanUp(T0 + MINUTE, 1);
+
+        for (String table : List.of("rule_node_exec_stats", "rule_node_queue_stats", "rule_node_queue_lag_stats")) {
+            assertEquals(table, List.of(T0 + 10 * MINUTE), jdbcTemplate.queryForList("SELECT bucket_time FROM " + table, Long.class));
+        }
+    }
+
+    @Test
     public void givenNoTraceSchema_whenDeleteByTenantId_thenNothingFails() {
         cleanUp();
 

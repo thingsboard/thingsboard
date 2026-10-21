@@ -61,6 +61,11 @@ public interface RuleEngineMonitoringDao {
 
     void deleteByTenantId(UUID tenantId);
 
+    /**
+     * Deletes, in batches, all rule engine stats bucketed before {@code expTime}.
+     */
+    void cleanUp(long expTime, int batchSize);
+
     List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query);
 
     List<QueueLagTableEntry> findQueueLagTable(QueueLagTableQuery query);

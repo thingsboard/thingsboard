@@ -56,6 +56,8 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     public void dropTraceSchema() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS span, span_stats_leader, trace_summary, rule_node_exec_stats, " +
                 "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
+        // The span partitions went with the table; the next test must create them again.
+        traceDao.cleanUpPartitionsCache(Long.MAX_VALUE);
     }
 
     @Test
@@ -192,7 +194,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         traceDao.saveSpans(List.of(span("span-1", "{}"), span("span-2", "{}")));
         traceDao.saveTraceGroups(List.of(traceGroup(10, 1)), List.of());
         jdbcTemplate.update("INSERT INTO span (span_id, trace_id, tenant_id, name, start_time, created_time) " +
-                "VALUES ('span-1', ?, ?, 'Rule Node', 0, 0)", TRACE_ID, otherTenantId);
+                "VALUES ('span-1', ?, ?, 'Rule Node', ?, 0)", TRACE_ID, otherTenantId, BUCKET + 100);
 
         traceDao.deleteByTenantId(tenantId);
 
@@ -206,6 +208,56 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         dropTraceSchema();
 
         traceDao.deleteByTenantId(tenantId);
+    }
+
+    @Test
+    public void givenOldAndRecentTraceData_whenCleanUp_thenOnlyExpiredDataIsRemoved() {
+        long recent = BUCKET + 3 * DAY;
+        traceDao.saveSpans(List.of(span("old-span", "{}"), spanAt("recent-span", recent)));
+        traceDao.upsertTraceSummaries(List.of(traceSummary(), traceSummaryAt("recent-trace", recent)));
+        TraceGroup recentGroup = traceGroup(10, 1);
+        recentGroup.setBucketTime(recent);
+        traceDao.saveTraceGroups(List.of(traceGroup(10, 1), recentGroup), List.of());
+        assertEquals(List.of(BUCKET, recent), partitionStarts());
+
+        traceDao.cleanUp(BUCKET + 2 * DAY, BUCKET + 2 * DAY, 1);
+
+        // the old span's whole partition is dropped; batch size 1 still removes every expired row
+        assertEquals(List.of(recent), partitionStarts());
+        assertEquals(List.of("recent-span"), jdbcTemplate.queryForList("SELECT span_id FROM span", String.class));
+        assertEquals(List.of("recent-trace"), jdbcTemplate.queryForList("SELECT trace_id FROM trace_summary", String.class));
+        assertEquals(List.of(recent), jdbcTemplate.queryForList("SELECT bucket_time FROM trace_group", Long.class));
+    }
+
+    @Test
+    public void givenSpanSavedTwice_whenSaveSpans_thenPartitionedTableStillDeduplicates() {
+        traceDao.saveSpans(List.of(span("span-1", "{}")));
+        traceDao.saveSpans(List.of(span("span-1", "{}")));
+
+        assertEquals(1, countRows("span", tenantId));
+    }
+
+    @Test
+    public void givenNoTraceSchema_whenCleanUp_thenNothingFails() {
+        dropTraceSchema();
+
+        traceDao.cleanUp(BUCKET, BUCKET, 10);
+    }
+
+    private List<Long> partitionStarts() {
+        return jdbcTemplate.queryForList("SELECT CAST(substring(c.relname FROM 6) AS bigint) FROM pg_inherits i " +
+                "JOIN pg_class c ON c.oid = i.inhrelid WHERE i.inhparent = 'span'::regclass ORDER BY 1", Long.class);
+    }
+
+    private SpanEntity spanAt(String spanId, long startTime) {
+        return new SpanEntity(spanId, TRACE_ID, tenantId, null, "Rule Node", "INTERNAL", "svc", "{}",
+                "[]", "[]", startTime, startTime + 50, 50L, "OK", null, startTime);
+    }
+
+    private TraceSummaryInfo traceSummaryAt(String traceId, long startTime) {
+        return new TraceSummaryInfo(traceId, tenantId, List.of("svc"), startTime, startTime + 100, 100, 3, 1,
+                startTime, "Rule Node", 80, 20, null, "POST_TELEMETRY_REQUEST", null, List.of(), List.of("Main"),
+                List.of(), List.of(ruleNodeId.toString()), List.of("POST_TELEMETRY_REQUEST"), List.of(), true, false);
     }
 
     private int countRows(String table, UUID tenantId) {

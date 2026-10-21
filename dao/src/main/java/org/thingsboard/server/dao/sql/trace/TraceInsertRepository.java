@@ -14,6 +14,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup;
 import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.Array;
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Raw-SQL writes for the trace tables: batch inserts and upserts the JPA layer can't express.
@@ -39,7 +41,7 @@ public class TraceInsertRepository {
     private static final String SPAN_INSERT_SQL = """
             INSERT INTO span (span_id, trace_id, tenant_id, service_name, parent_span_id, name, kind, attributes_jsonb, events_jsonb, links_jsonb, start_time, end_time, duration, status_code, status_message, created_time)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (tenant_id, trace_id, span_id) DO NOTHING
+            ON CONFLICT (tenant_id, trace_id, span_id, start_time) DO NOTHING
             """;
 
     private static final String TRACE_SUMMARY_INSERT_SQL = """
@@ -92,11 +94,21 @@ public class TraceInsertRepository {
     private static final int TRACE_GROUP_BATCH_SIZE = 1000;
 
     private static final int DELETE_BATCH_SIZE = 10_000;
-    private static final String SPAN_DELETE_BATCH_SQL = "DELETE FROM span WHERE ctid IN " +
-            "(SELECT ctid FROM span WHERE tenant_id = ? LIMIT ?)";
+    // span is partitioned and ctid is only unique within a partition, hence tableoid.
+    private static final String SPAN_DELETE_BATCH_SQL = "DELETE FROM span WHERE (tableoid, ctid) IN " +
+            "(SELECT tableoid, ctid FROM span WHERE tenant_id = ? LIMIT ?)";
+    private static final String TRACE_SUMMARY_EXPIRED_DELETE_BATCH_SQL = "DELETE FROM trace_summary WHERE ctid IN " +
+            "(SELECT ctid FROM trace_summary WHERE start_time < ? LIMIT ?)";
+    private static final String TRACE_GROUP_EXPIRED_DELETE_BATCH_SQL = "DELETE FROM trace_group WHERE ctid IN " +
+            "(SELECT ctid FROM trace_group WHERE bucket_time < ? LIMIT ?)";
+    public static final String SPAN_TABLE = "span";
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
+    private final SqlPartitioningRepository partitioningRepository;
+
+    @Value("${sql.traces.partition_size:24}")
+    private int partitionSizeHours;
 
     @Value("${otel.processor.trace.persistence.postgres.insert-batch-size:250}")
     private int spanInsertBatchSize;
@@ -106,6 +118,12 @@ public class TraceInsertRepository {
             return;
         }
         int batchSize = Math.max(1, spanInsertBatchSize);
+        // Outside the insert transaction: a failed partition DDL must not abort it.
+        long partitionSizeMs = getPartitionSizeMs();
+        spans.stream()
+                .map(span -> partitioningRepository.calculatePartitionStartTime(span.getStartTime(), partitionSizeMs))
+                .distinct()
+                .forEach(partitionStart -> partitioningRepository.createPartitionIfNotExists(SPAN_TABLE, partitionStart, partitionSizeMs));
         log.debug("Saving {} spans using JDBC batch chunks of {}", spans.size(), batchSize);
         transactionTemplate.executeWithoutResult(status ->
                 jdbcTemplate.batchUpdate(SPAN_INSERT_SQL, spans, batchSize, this::bindSpan));
@@ -149,9 +167,41 @@ public class TraceInsertRepository {
         return jdbcTemplate.update(AGGREGATION_LEADER_SQL, serviceId, nowMs + leaseMs, serviceId, nowMs) > 0;
     }
 
+    /**
+     * Drops span partitions that ended before {@code spansExpTime} and deletes, in batches, trace summaries started
+     * before it and trace groups bucketed before {@code groupsExpTime}.
+     */
+    public void cleanUp(long spansExpTime, long groupsExpTime, int batchSize) {
+        if (!traceSchemaExists()) {
+            return;
+        }
+        partitioningRepository.dropPartitionsBefore(SPAN_TABLE, spansExpTime, getPartitionSizeMs());
+        deleteInBatches(TRACE_SUMMARY_EXPIRED_DELETE_BATCH_SQL, spansExpTime, batchSize);
+        deleteInBatches(TRACE_GROUP_EXPIRED_DELETE_BATCH_SQL, groupsExpTime, batchSize);
+    }
+
+    public void cleanUpPartitionsCache(long spansExpTime) {
+        partitioningRepository.cleanupPartitionsCache(SPAN_TABLE, spansExpTime, getPartitionSizeMs());
+    }
+
+    private void deleteInBatches(String sql, long expTime, int batchSize) {
+        int deleted;
+        do {
+            deleted = jdbcTemplate.update(sql, expTime, batchSize);
+        } while (deleted > 0);
+    }
+
+    private long getPartitionSizeMs() {
+        return TimeUnit.HOURS.toMillis(partitionSizeHours);
+    }
+
+    // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
+    private boolean traceSchemaExists() {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass('span') IS NOT NULL", Boolean.class));
+    }
+
     public void deleteByTenantId(UUID tenantId) {
-        // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
-        if (!Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass('span') IS NOT NULL", Boolean.class))) {
+        if (!traceSchemaExists()) {
             return;
         }
         // span is the large one: delete it in batches over its (tenant_id, ...) primary key so no single statement

@@ -102,6 +102,11 @@ public class JpaRuleEngineMonitoringDao implements RuleEngineMonitoringDao {
     }
 
     @Override
+    public void cleanUp(long expTime, int batchSize) {
+        statsInsertRepository.cleanUp(expTime, batchSize);
+    }
+
+    @Override
     public List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query) {
         return statsQueryRepository.findQueueLagTimeseries(query);
     }
