@@ -15,11 +15,10 @@
                 (click)="goBack()">
           <mat-icon>arrow_back</mat-icon>
         </button>
-        <span class="mat-headline-5" [title]="widgetsBundle.title + ': ' + ('widget.widgets' | translate)">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
+        <span class="mat-headline-5" tbTruncateWithTooltip>{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
         <span class="flex-1"></span>
         @if (!isReadOnly) {
-          <button mat-flat-button color="primary" class="tb-add-new-widget-button"
-                  [disabled]="isLoading$ | async"
+          <button mat-flat-button color="primary" [disabled]="isLoading$ | async"
                   [matMenuTriggerFor]="addWidgetMenu">
             <mat-icon>add</mat-icon>
             {{ 'widget.add-new-widget' | translate }}
