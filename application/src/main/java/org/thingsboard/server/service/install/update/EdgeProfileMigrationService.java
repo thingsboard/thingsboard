@@ -25,7 +25,7 @@ import org.thingsboard.server.dao.edge.BaseEdgeProfileService;
 import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.relation.EntityRelationEvent;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.util.ArrayList;
@@ -244,7 +244,7 @@ public class EdgeProfileMigrationService {
 
     // legacy auto-assign reached only edges created after it was set; the profile now claims the chain for every edge
     private void assignMissingRuleChains(TenantId tenantId, EdgeProfile profile, List<UUID> chunk) {
-        JsonNode stamp = EdgeProfileApplier.stamp(profile.getId());
+        JsonNode stamp = EdgeProfileRows.stamp(profile.getId());
         for (RuleChainId rcId : profile.getProfileData().getRuleChainIds()) {
             List<Object> args = new ArrayList<>(List.of(tenantId.getId(), profile.getId().getId(), rcId.getId()));
             args.addAll(chunk);
@@ -259,7 +259,7 @@ public class EdgeProfileMigrationService {
     }
 
     private void stampRuleChainRelations(UUID tenantId, EdgeProfile profile, List<UUID> chunk) {
-        String stamp = EdgeProfileApplier.stamp(profile.getId()).toString();
+        String stamp = EdgeProfileRows.stamp(profile.getId()).toString();
         for (RuleChainId rcId : profile.getProfileData().getRuleChainIds()) {
             List<Object> args = new ArrayList<>(List.of(stamp, rcId.getId(), tenantId, profile.getId().getId()));
             args.addAll(chunk);

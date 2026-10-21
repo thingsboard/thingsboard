@@ -9,22 +9,26 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileData;
 import org.thingsboard.server.common.data.edge.EdgeProfileEntityGroup;
 import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.EdgeProfileApplyOp;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.dao.edge.EdgeProfileService;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileJobService;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows.EdgeAssignmentRowRef;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.Set;
+import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
@@ -33,22 +37,24 @@ import java.util.stream.Collectors;
 public class DefaultTbEdgeProfileService extends AbstractTbEntityService implements TbEdgeProfileService {
 
     private final EdgeProfileService edgeProfileService;
-    private final EdgeProfileApplier edgeProfileApplier;
+    private final EdgeProfileJobService edgeProfileJobService;
 
     @Override
     public EdgeProfile save(EdgeProfile edgeProfile, User user) throws Exception {
         ActionType actionType = edgeProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = edgeProfile.getTenantId();
         try {
-            EdgeProfile stored = null;
             if (edgeProfile.getId() != null) {
-                stored = edgeProfileService.findEdgeProfileById(tenantId, edgeProfile.getId());
-                edgeProfile.setDefault(stored != null && stored.isDefault());
+                EdgeProfile stored = edgeProfileService.findEdgeProfileById(tenantId, edgeProfile.getId());
+                if (stored != null) {
+                    edgeProfile.setDefault(stored.isDefault());
+                    edgeProfile.setRootRuleChainId(stored.getRootRuleChainId());
+                    edgeProfile.setProfileData(new EdgeProfileData(stored.getProfileData()));
+                } else {
+                    edgeProfile.setDefault(false);
+                }
             }
             EdgeProfile saved = checkNotNull(edgeProfileService.saveEdgeProfile(edgeProfile));
-            if (stored != null) {
-                applyNewRows(tenantId, saved, stored);
-            }
             logEntityActionService.logEntityAction(tenantId, saved.getId(), saved, actionType, user);
             return saved;
         } catch (Exception e) {
@@ -57,24 +63,14 @@ public class DefaultTbEdgeProfileService extends AbstractTbEntityService impleme
         }
     }
 
-    // Only newly added rows are pushed out here; removals go through the dedicated remove endpoints.
-    private void applyNewRows(TenantId tenantId, EdgeProfile saved, EdgeProfile stored) {
-        Set<EntityId> existing = EdgeProfileApplier.rowsOf(stored).stream()
-                .map(EdgeProfileApplier.EdgeAssignmentRowRef::id).collect(Collectors.toSet());
-        for (EdgeProfileApplier.EdgeAssignmentRowRef row : EdgeProfileApplier.rowsOf(saved)) {
-            if (!existing.contains(row.id())) {
-                edgeProfileApplier.applyRowToProfileEdgesAsync(tenantId, saved, row);
-            }
-        }
-        if (saved.getRootRuleChainId() != null && !saved.getRootRuleChainId().equals(stored.getRootRuleChainId())) {
-            edgeProfileApplier.setRootAsync(tenantId, saved, stored.getRootRuleChainId());
-        }
-    }
-
     @Override
     public void delete(EdgeProfile edgeProfile, User user) {
         TenantId tenantId = edgeProfile.getTenantId();
         try {
+            if (edgeProfileJobService.hasActiveJobs(tenantId, edgeProfile.getId())) {
+                throw new DataValidationException("Edge profile [" + edgeProfile.getName() + "] has apply jobs in progress. " +
+                        "Wait for them to finish or cancel them in the Task manager!");
+            }
             edgeProfileService.deleteEdgeProfile(tenantId, edgeProfile.getId());
             logEntityActionService.logEntityAction(tenantId, edgeProfile.getId(), edgeProfile, ActionType.DELETED, user, edgeProfile.getId().toString());
         } catch (Exception e) {
@@ -104,15 +100,35 @@ public class DefaultTbEdgeProfileService extends AbstractTbEntityService impleme
     }
 
     @Override
+    public EdgeProfile addRows(EdgeProfile edgeProfile, EdgeProfileData rows, User user) {
+        EdgeProfile added = new EdgeProfile();
+        added.setProfileData(rows);
+        List<EdgeAssignmentRowRef> rowRefs = EdgeProfileRows.rowsOf(added);
+        if (rowRefs.isEmpty()) {
+            return edgeProfile;
+        }
+        TenantId tenantId = edgeProfile.getTenantId();
+        try {
+            EdgeProfile saved = edgeProfileService.addRows(tenantId, edgeProfile.getId(), rows);
+            edgeProfileJobService.submitRows(tenantId, saved, EdgeProfileApplyOp.ADD_ROWS, rowRefs, null, null);
+            logEntityActionService.logEntityAction(tenantId, saved.getId(), saved, ActionType.UPDATED, user);
+            return saved;
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.EDGE_PROFILE), edgeProfile, ActionType.UPDATED, user, e);
+            throw e;
+        }
+    }
+
+    @Override
     public EdgeProfile addRuleChain(EdgeProfile edgeProfile, RuleChainId ruleChainId, User user) {
         return added(edgeProfile, user, p -> edgeProfileService.addRuleChain(p.getTenantId(), p.getId(), ruleChainId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.ruleChain(ruleChainId));
+                EdgeAssignmentRowRef.ruleChain(ruleChainId));
     }
 
     @Override
     public EdgeProfile removeRuleChain(EdgeProfile edgeProfile, RuleChainId ruleChainId, User user) {
         return removed(edgeProfile, user, p -> edgeProfileService.removeRuleChain(p.getTenantId(), p.getId(), ruleChainId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.ruleChain(ruleChainId));
+                EdgeAssignmentRowRef.ruleChain(ruleChainId));
     }
 
     @Override
@@ -120,8 +136,8 @@ public class DefaultTbEdgeProfileService extends AbstractTbEntityService impleme
         TenantId tenantId = edgeProfile.getTenantId();
         try {
             EdgeProfile saved = edgeProfileService.setRootRuleChain(tenantId, edgeProfile.getId(), ruleChainId);
-            edgeProfileApplier.applyRowToProfileEdgesAsync(tenantId, saved, EdgeProfileApplier.EdgeAssignmentRowRef.ruleChain(ruleChainId));
-            edgeProfileApplier.setRootAsync(tenantId, saved, edgeProfile.getRootRuleChainId());
+            edgeProfileJobService.submitRows(tenantId, saved, EdgeProfileApplyOp.SET_ROOT, List.of(EdgeAssignmentRowRef.ruleChain(ruleChainId)),
+                    ruleChainId, edgeProfile.getRootRuleChainId());
             logEntityActionService.logEntityAction(tenantId, saved.getId(), saved, ActionType.UPDATED, user);
             return saved;
         } catch (Exception e) {
@@ -133,7 +149,7 @@ public class DefaultTbEdgeProfileService extends AbstractTbEntityService impleme
     @Override
     public EdgeProfile addEntityGroup(EdgeProfile edgeProfile, EntityGroupId entityGroupId, EntityType groupType, User user) {
         return added(edgeProfile, user, p -> edgeProfileService.addEntityGroup(p.getTenantId(), p.getId(), entityGroupId, groupType),
-                EdgeProfileApplier.EdgeAssignmentRowRef.entityGroup(entityGroupId, groupType));
+                EdgeAssignmentRowRef.entityGroup(entityGroupId, groupType));
     }
 
     @Override
@@ -144,44 +160,50 @@ public class DefaultTbEdgeProfileService extends AbstractTbEntityService impleme
             return edgeProfile;
         }
         return removed(edgeProfile, user, p -> edgeProfileService.removeEntityGroup(p.getTenantId(), p.getId(), entityGroupId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.entityGroup(entityGroupId, groupType));
+                EdgeAssignmentRowRef.entityGroup(entityGroupId, groupType));
     }
 
     @Override
     public EdgeProfile addIntegration(EdgeProfile edgeProfile, IntegrationId integrationId, User user) {
         return added(edgeProfile, user, p -> edgeProfileService.addIntegration(p.getTenantId(), p.getId(), integrationId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.integration(integrationId));
+                EdgeAssignmentRowRef.integration(integrationId));
     }
 
     @Override
     public EdgeProfile removeIntegration(EdgeProfile edgeProfile, IntegrationId integrationId, User user) {
         return removed(edgeProfile, user, p -> edgeProfileService.removeIntegration(p.getTenantId(), p.getId(), integrationId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.integration(integrationId));
+                EdgeAssignmentRowRef.integration(integrationId));
     }
 
     @Override
     public EdgeProfile addSchedulerEvent(EdgeProfile edgeProfile, SchedulerEventId schedulerEventId, User user) {
         return added(edgeProfile, user, p -> edgeProfileService.addSchedulerEvent(p.getTenantId(), p.getId(), schedulerEventId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.schedulerEvent(schedulerEventId));
+                EdgeAssignmentRowRef.schedulerEvent(schedulerEventId));
     }
 
     @Override
     public EdgeProfile removeSchedulerEvent(EdgeProfile edgeProfile, SchedulerEventId schedulerEventId, User user) {
         return removed(edgeProfile, user, p -> edgeProfileService.removeSchedulerEvent(p.getTenantId(), p.getId(), schedulerEventId),
-                EdgeProfileApplier.EdgeAssignmentRowRef.schedulerEvent(schedulerEventId));
+                EdgeAssignmentRowRef.schedulerEvent(schedulerEventId));
     }
 
     @Override
-    public void reapply(EdgeProfile edgeProfile, User user) {
-        edgeProfileApplier.reapplyAsync(edgeProfile.getTenantId(), edgeProfile);
+    public Job reapply(EdgeProfile edgeProfile, User user) {
+        Job job = edgeProfileJobService.submitApply(edgeProfile.getTenantId(), edgeProfile);
         logEntityActionService.logEntityAction(edgeProfile.getTenantId(), edgeProfile.getId(), edgeProfile, ActionType.UPDATED, user);
+        return job;
     }
 
-    private EdgeProfile added(EdgeProfile profile, User user, Function<EdgeProfile, EdgeProfile> change, EdgeProfileApplier.EdgeAssignmentRowRef row) {
+    @Override
+    public Job getLatestJob(EdgeProfile edgeProfile) {
+        return edgeProfileJobService.findLatestJob(edgeProfile.getTenantId(), edgeProfile.getId());
+    }
+
+    private EdgeProfile added(EdgeProfile profile, User user, Function<EdgeProfile, EdgeProfile> change, EdgeAssignmentRowRef row) {
         TenantId tenantId = profile.getTenantId();
         try {
             EdgeProfile saved = change.apply(profile);
-            edgeProfileApplier.applyRowToProfileEdgesAsync(tenantId, saved, row);
+            edgeProfileJobService.submitRows(tenantId, saved, EdgeProfileApplyOp.ADD_ROWS, List.of(row), null, null);
             logEntityActionService.logEntityAction(tenantId, saved.getId(), saved, ActionType.UPDATED, user);
             return saved;
         } catch (Exception e) {
@@ -190,11 +212,11 @@ public class DefaultTbEdgeProfileService extends AbstractTbEntityService impleme
         }
     }
 
-    private EdgeProfile removed(EdgeProfile profile, User user, Function<EdgeProfile, EdgeProfile> change, EdgeProfileApplier.EdgeAssignmentRowRef row) {
+    private EdgeProfile removed(EdgeProfile profile, User user, Function<EdgeProfile, EdgeProfile> change, EdgeAssignmentRowRef row) {
         TenantId tenantId = profile.getTenantId();
         try {
             EdgeProfile saved = change.apply(profile);
-            edgeProfileApplier.unassignRowFromProfileEdgesAsync(tenantId, saved, row);
+            edgeProfileJobService.submitRows(tenantId, saved, EdgeProfileApplyOp.REMOVE_ROW, List.of(row), null, null);
             logEntityActionService.logEntityAction(tenantId, saved.getId(), saved, ActionType.UPDATED, user);
             return saved;
         } catch (Exception e) {

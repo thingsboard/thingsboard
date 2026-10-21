@@ -3,6 +3,7 @@
 package org.thingsboard.server.dao.edge;
 
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -15,9 +16,13 @@ public interface EdgeProfileDao extends Dao<EdgeProfile> {
 
     PageData<EdgeProfile> findByTenantId(UUID tenantId, PageLink pageLink);
 
+    PageData<EdgeProfileInfo> findInfosByTenantId(UUID tenantId, PageLink pageLink);
+
     EdgeProfile findByTenantIdAndName(UUID tenantId, String name);
 
     void lockNameForCreate(UUID tenantId, String name);
+
+    void lockEdgeForApply(UUID edgeId, long timeoutMs);
 
     EdgeProfile findDefaultEdgeProfile(UUID tenantId);
 

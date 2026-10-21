@@ -1,0 +1,23 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+
+  .tb-edge-profile-job-status {
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    background-color: rgba(0, 0, 0, 0.04);
+
+    &.failed {
+      background-color: rgba(209, 39, 48, 0.06);
+    }
+
+    .mat-mdc-button {
+      --mdc-text-button-label-text-size: 13px;
+      --mdc-text-button-container-height: 24px;
+      height: 24px;
+      padding: 0 8px;
+    }
+  }
+}

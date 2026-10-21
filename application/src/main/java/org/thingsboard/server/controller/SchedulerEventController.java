@@ -45,7 +45,8 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.subscription.PlatformFeature;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileEligibility;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows;
 import org.thingsboard.server.service.entitiy.scheduler.TbSchedulerService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -96,7 +97,7 @@ public class SchedulerEventController extends BaseController {
     public static final String SCHEDULER_EVENT_ID = "schedulerEventId";
 
     private final TbSchedulerService tbSchedulerService;
-    private final EdgeProfileApplier edgeProfileApplier;
+    private final EdgeProfileEligibility edgeProfileEligibility;
 
     @ApiOperation(value = "Get Scheduler Event With Customer Info (getSchedulerEventInfoById)",
             notes = "Fetch the SchedulerEventWithCustomerInfo object based on the provided scheduler event Id. " +
@@ -421,7 +422,7 @@ public class SchedulerEventController extends BaseController {
         EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
         Edge edge = checkEdgeId(edgeId, Operation.WRITE);
         // the edge holds only its owner's customer, so another customer's event would be assigned here but never arrive there
-        if (!edgeProfileApplier.isEligible(edge.getTenantId(), EdgeProfileApplier.ownerOf(edge.getTenantId(), schedulerEvent.getCustomerId()), edge.getOwnerId(), true)) {
+        if (!edgeProfileEligibility.isEligible(edge.getTenantId(), EdgeProfileRows.ownerOf(edge.getTenantId(), schedulerEvent.getCustomerId()), edge.getOwnerId(), true)) {
             throw new ThingsboardException("Scheduler event '" + schedulerEvent.getName() + "' belongs to a customer other than the owner of edge '"
                     + edge.getName() + "'", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }

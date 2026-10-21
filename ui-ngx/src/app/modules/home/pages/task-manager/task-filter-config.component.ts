@@ -55,7 +55,8 @@ export class TaskFilterConfigComponent implements ControlValueAccessor, OnDestro
 
   buttonDisplayValue = this.translate.instant('task.task-filter');
 
-  filteredEntityType = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+  filteredEntityType = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE,
+    EntityType.EDGE_PROFILE, EntityType.CUSTOMER];
 
   tasksFilterConfigForm = this.fb.group({
     statuses: [],

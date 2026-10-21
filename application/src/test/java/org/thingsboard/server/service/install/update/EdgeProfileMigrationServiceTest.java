@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.edge.EdgeProfileService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows;
 
 import java.util.List;
 import java.util.Set;
@@ -195,7 +195,7 @@ public class EdgeProfileMigrationServiceTest extends AbstractControllerTest {
         EntityRelation before = relationService.getRelation(tenantId, edge.getId(), autoAssign.getId(),
                 EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         Assert.assertNotNull(before);
-        Assert.assertFalse("precondition: the cached copy is unstamped", EdgeProfileApplier.isStamped(before));
+        Assert.assertFalse("precondition: the cached copy is unstamped", EdgeProfileRows.isStamped(before));
 
         migrationService.ensureEdgeProfiles(tenantId);
 
@@ -206,7 +206,7 @@ public class EdgeProfileMigrationServiceTest extends AbstractControllerTest {
                 EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
         Assert.assertNotNull(after);
         Assert.assertTrue("the relation cache must not keep serving the pre-migration copy",
-                EdgeProfileApplier.isStampedBy(after, migratedDefault.getId()));
+                EdgeProfileRows.isStampedBy(after, migratedDefault.getId()));
     }
 
     @Test

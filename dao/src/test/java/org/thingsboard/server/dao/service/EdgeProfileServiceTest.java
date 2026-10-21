@@ -91,6 +91,34 @@ public class EdgeProfileServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testRenameUpdatesEveryEdgeOfTheProfileAndBumpsTheirVersion() {
+        RuleChain root = saveEdgeRuleChain("Bulk Rename RC");
+        EdgeProfile profile = newProfile("Bulk Before");
+        profile.getProfileData().getRuleChainIds().add(root.getId());
+        profile.setRootRuleChainId(root.getId());
+        profile = edgeProfileService.saveEdgeProfile(profile);
+        List<Edge> edges = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Edge edge = constructEdge(tenantId, "Bulk rename edge " + i, "Bulk Before");
+            edge.setEdgeProfileId(profile.getId());
+            edges.add(edgeService.saveEdge(edge));
+        }
+        Assert.assertEquals("Bulk Before", edgeService.findEdgeByTenantIdAndName(tenantId, edges.get(0).getName()).getType());
+
+        profile.setName("Bulk After");
+        edgeProfileService.saveEdgeProfile(profile);
+
+        for (Edge edge : edges) {
+            Edge renamed = edgeService.findEdgeById(tenantId, edge.getId());
+            Assert.assertEquals("Bulk After", renamed.getType());
+            Assert.assertEquals(Long.valueOf(edge.getVersion() + 1), renamed.getVersion());
+            Assert.assertEquals("Bulk After", edgeService.findEdgeByTenantIdAndName(tenantId, edge.getName()).getType());
+        }
+
+        edges.forEach(edge -> edgeService.deleteEdge(tenantId, edge.getId()));
+    }
+
+    @Test
     public void testNameUniquePerTenant() {
         edgeProfileService.saveEdgeProfile(newProfile("Dup"));
         Assertions.assertThrows(DataValidationException.class, () -> edgeProfileService.saveEdgeProfile(newProfile("Dup")));

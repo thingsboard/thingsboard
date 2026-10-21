@@ -135,6 +135,48 @@ public class EdgeServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testUpdateWithSameTypeAndNoProfileKeepsTheCurrentProfileAndRoot() {
+        Edge saved = edgeService.saveEdge(constructEdge("Edge resent with its type", "typeResent"));
+        EdgeProfileId profileId = saved.getEdgeProfileId();
+
+        saved.setEdgeProfileId(null);
+        saved.setName("Edge resent and renamed");
+        Edge updated = edgeService.saveEdge(saved);
+
+        Assert.assertEquals(profileId, updated.getEdgeProfileId());
+        Assert.assertEquals(saved.getRootRuleChainId(), updated.getRootRuleChainId());
+        edgeService.deleteEdge(tenantId, updated.getId());
+    }
+
+    @Test
+    public void testUpdateWithUnknownTypeIsRejectedAndCreatesNoProfile() {
+        Edge saved = edgeService.saveEdge(constructEdge("Edge with a typo in its type", "typeBeforeTypo"));
+        EdgeProfileId profileId = saved.getEdgeProfileId();
+
+        saved.setEdgeProfileId(null);
+        saved.setType("typeWithTypo");
+        Assertions.assertThrows(DataValidationException.class, () -> edgeService.saveEdge(saved));
+
+        Assert.assertNull(edgeProfileService.findEdgeProfileByName(tenantId, "typeWithTypo"));
+        Assert.assertEquals(profileId, edgeService.findEdgeById(tenantId, saved.getId()).getEdgeProfileId());
+        edgeService.deleteEdge(tenantId, saved.getId());
+    }
+
+    @Test
+    public void testUpdateWithAnotherExistingTypeSwitchesToThatProfile() {
+        EdgeProfileId targetProfileId = edgeService.saveEdge(constructEdge("Edge on the target profile", "typeTarget")).getEdgeProfileId();
+        Edge saved = edgeService.saveEdge(constructEdge("Edge that switches by type", "typeSource"));
+
+        saved.setEdgeProfileId(null);
+        saved.setType("typeTarget");
+        Edge updated = edgeService.saveEdge(saved);
+
+        Assert.assertEquals(targetProfileId, updated.getEdgeProfileId());
+        Assert.assertEquals("typeTarget", updated.getType());
+        edgeService.deleteEdge(tenantId, updated.getId());
+    }
+
+    @Test
     public void testSaveEdgeWithEmptyName() {
         Edge edge = new Edge();
         edge.setType("default");

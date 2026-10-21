@@ -7,9 +7,9 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 
 import java.util.List;
-import org.thingsboard.server.common.data.id.RuleChainId;
 
 public interface TbEdgeService {
 

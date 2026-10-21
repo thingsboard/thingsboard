@@ -8,12 +8,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeProfileDao;
 import org.thingsboard.server.dao.model.sql.EdgeProfileEntity;
+import org.thingsboard.server.dao.model.sql.EdgeProfileInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -24,6 +26,8 @@ import java.util.UUID;
 @SqlDao
 @RequiredArgsConstructor
 public class JpaEdgeProfileDao extends JpaAbstractDao<EdgeProfileEntity, EdgeProfile> implements EdgeProfileDao {
+
+    private static final String EDGE_APPLY_LOCK_NAMESPACE = "edge-profile-apply:";
 
     private final EdgeProfileRepository repository;
 
@@ -43,6 +47,12 @@ public class JpaEdgeProfileDao extends JpaAbstractDao<EdgeProfileEntity, EdgePro
     }
 
     @Override
+    public PageData<EdgeProfileInfo> findInfosByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(repository.findInfosByTenantId(tenantId, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink))
+                .map(EdgeProfileInfoEntity::toData));
+    }
+
+    @Override
     public EdgeProfile findByTenantIdAndName(UUID tenantId, String name) {
         return DaoUtil.getData(repository.findByTenantIdAndName(tenantId, name));
     }
@@ -51,6 +61,15 @@ public class JpaEdgeProfileDao extends JpaAbstractDao<EdgeProfileEntity, EdgePro
     public void lockNameForCreate(UUID tenantId, String name) {
         long key = Hashing.murmur3_128().hashUnencodedChars(tenantId.toString() + name).asLong();
         jdbcTemplate.queryForList("SELECT pg_advisory_xact_lock(?)", key);
+    }
+
+    @Override
+    public void lockEdgeForApply(UUID edgeId, long timeoutMs) {
+        long key = Hashing.murmur3_128().hashUnencodedChars(EDGE_APPLY_LOCK_NAMESPACE + edgeId).asLong();
+        String previousTimeout = jdbcTemplate.queryForObject("SELECT current_setting('lock_timeout')", String.class);
+        jdbcTemplate.queryForObject("SELECT set_config('lock_timeout', ?, true)", String.class, timeoutMs + "ms");
+        jdbcTemplate.queryForList("SELECT pg_advisory_xact_lock(?)", key);
+        jdbcTemplate.queryForObject("SELECT set_config('lock_timeout', ?, true)", String.class, previousTimeout);
     }
 
     @Override

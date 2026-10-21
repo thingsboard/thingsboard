@@ -1,0 +1,43 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (job) {
+  <div class="tb-edge-profile-job-status flex flex-row items-center gap-2"
+       [class.failed]="job.status === JobStatus.FAILED">
+    @switch (job.status) {
+      @case (JobStatus.QUEUED) {
+        <mat-icon>schedule</mat-icon>
+        <span class="flex-1">{{ 'edge-profile.job.queued' | translate: {op: opLabel} }}</span>
+      }
+      @case (JobStatus.FAILED) {
+        <mat-icon class="tb-error">warning</mat-icon>
+        <span class="flex-1">{{ 'edge-profile.job.failed' | translate: {op: opLabel, count: job.result.failedCount} }}</span>
+      }
+      @case (JobStatus.CANCELLED) {
+        <mat-icon>cancel</mat-icon>
+        <span class="flex-1">{{ 'edge-profile.job.cancelled' | translate: {op: opLabel, processed: processed, total: total} }}</span>
+      }
+      @case (JobStatus.COMPLETED) {
+        <mat-icon color="primary">check_circle_outline</mat-icon>
+        <span class="flex-1">{{ 'edge-profile.job.completed' | translate: {op: opLabel, total: total} }}</span>
+      }
+      @default {
+        <mat-icon color="primary">hourglass_top</mat-icon>
+        <div class="flex flex-1 flex-col gap-1">
+          <span>{{ 'edge-profile.job.applying' | translate: {op: opLabel, processed: processed, total: total} }}</span>
+          <mat-progress-bar [mode]="total ? 'determinate' : 'indeterminate'" [value]="progress"></mat-progress-bar>
+        </div>
+      }
+    }
+    @if (hasWritePermission && working) {
+      <button mat-button color="primary" type="button" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    }
+    @if (hasWritePermission && job.status === JobStatus.FAILED && job.result.failedCount <= 100) {
+      <button mat-button color="primary" type="button" (click)="retry()">{{ 'edge-profile.job.retry' | translate }}</button>
+    }
+    <button mat-button color="primary" type="button" (click)="openDetails()">{{ 'edge-profile.job.details' | translate }}</button>
+  </div>
+}

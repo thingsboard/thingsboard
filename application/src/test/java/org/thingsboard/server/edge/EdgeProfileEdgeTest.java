@@ -17,6 +17,9 @@ import org.thingsboard.server.common.data.edge.EdgeProfileEntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -195,6 +198,25 @@ public class EdgeProfileEdgeTest extends AbstractEdgeTest {
         // customer B cannot see customer A's group, so the profile stamp alone must not keep it on the edge
         doPost("/api/owner/CUSTOMER/" + customerB.getId().getId() + "/EDGE/" + edge.getId().getId()).andExpect(status().isOk());
         Awaitility.await().atMost(25, TimeUnit.SECONDS).until(() -> !groupOnEdge(savedGroup.getId()));
+
+        // the owner-change cleanup has finished once customer B reaches the edge, the profile re-apply once both edge jobs are done;
+        // only the profile job unassigns the group, so the edge gets exactly one unassign for it
+        UUID customerBUuid = customerB.getId().getId();
+        Awaitility.await().atMost(25, TimeUnit.SECONDS).until(() -> indexOfCustomerUpsert(customerBUuid) >= 0 && edgeOwnerChangeJobsCompleted(2));
+        Assert.assertEquals(1, countGroupDeletes(savedGroup.getUuidId()));
+    }
+
+    private boolean edgeOwnerChangeJobsCompleted(int expected) throws Exception {
+        List<Job> jobs = findJobs(List.of(JobType.EDGE_PROFILE_APPLY), List.of(edge.getId().getId()));
+        return jobs.size() >= expected && jobs.stream().allMatch(job -> job.getStatus() == JobStatus.COMPLETED);
+    }
+
+    private long countGroupDeletes(UUID groupId) {
+        return edgeImitator.getDownlinkMsgs().stream()
+                .filter(msg -> msg instanceof EntityGroupUpdateMsg groupMsg
+                        && UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE.equals(groupMsg.getMsgType())
+                        && groupId.equals(new UUID(groupMsg.getIdMSB(), groupMsg.getIdLSB())))
+                .count();
     }
 
     @Test

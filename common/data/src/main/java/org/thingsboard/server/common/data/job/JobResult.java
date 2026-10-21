@@ -25,7 +25,8 @@ import java.util.List;
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "DUMMY", schema = DummyJobResult.class),
                 @DiscriminatorMapping(value = "CF_REPROCESSING", schema = CfReprocessingJobResult.class),
-                @DiscriminatorMapping(value = "REPORT", schema = ReportJobResult.class)
+                @DiscriminatorMapping(value = "REPORT", schema = ReportJobResult.class),
+                @DiscriminatorMapping(value = "EDGE_PROFILE_APPLY", schema = EdgeProfileApplyJobResult.class)
         }
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -33,6 +34,7 @@ import java.util.List;
 @JsonSubTypes({
         @Type(name = "CF_REPROCESSING", value = CfReprocessingJobResult.class),
         @Type(name = "REPORT", value = ReportJobResult.class),
+        @Type(name = "EDGE_PROFILE_APPLY", value = EdgeProfileApplyJobResult.class),
         @Type(name = "DUMMY", value = DummyJobResult.class)
 })
 @Data

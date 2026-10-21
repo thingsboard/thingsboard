@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.job.JobType;
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "CF_REPROCESSING", schema = CfReprocessingTaskResult.class),
                 @DiscriminatorMapping(value = "REPORT", schema = ReportTaskResult.class),
+                @DiscriminatorMapping(value = "EDGE_PROFILE_APPLY", schema = EdgeProfileApplyTaskResult.class),
                 @DiscriminatorMapping(value = "DUMMY", schema = DummyTaskResult.class)
         }
 )
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.job.JobType;
 @JsonSubTypes({
         @Type(name = "CF_REPROCESSING", value = CfReprocessingTaskResult.class),
         @Type(name = "REPORT", value = ReportTaskResult.class),
+        @Type(name = "EDGE_PROFILE_APPLY", value = EdgeProfileApplyTaskResult.class),
         @Type(name = "DUMMY", value = DummyTaskResult.class)
 })
 public abstract class TaskResult {

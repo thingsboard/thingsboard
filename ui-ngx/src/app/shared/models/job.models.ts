@@ -11,15 +11,35 @@ import { Report } from '@shared/models/report.models';
 
 export enum JobType {
   CF_REPROCESSING = 'CF_REPROCESSING',
-  REPORT = 'REPORT'
+  REPORT = 'REPORT',
+  EDGE_PROFILE_APPLY = 'EDGE_PROFILE_APPLY'
 }
 
 export const jobTypeTranslations = new Map<JobType, string>(
   [
     [JobType.CF_REPROCESSING, 'task.task-type.calculated-field-reprocessing'],
-    [JobType.REPORT, 'task.task-type.report']
+    [JobType.REPORT, 'task.task-type.report'],
+    [JobType.EDGE_PROFILE_APPLY, 'task.task-type.edge-profile-apply']
   ]
 )
+
+export enum EdgeProfileApplyOp {
+  ADD_ROWS = 'ADD_ROWS',
+  REMOVE_ROW = 'REMOVE_ROW',
+  SET_ROOT = 'SET_ROOT',
+  APPLY = 'APPLY',
+  OWNER_CHANGE = 'OWNER_CHANGE'
+}
+
+export const edgeProfileApplyOpTranslations = new Map<EdgeProfileApplyOp, string>(
+  [
+    [EdgeProfileApplyOp.ADD_ROWS, 'edge-profile.job.op.add-rows'],
+    [EdgeProfileApplyOp.REMOVE_ROW, 'edge-profile.job.op.remove-row'],
+    [EdgeProfileApplyOp.SET_ROOT, 'edge-profile.job.op.set-root'],
+    [EdgeProfileApplyOp.APPLY, 'edge-profile.job.op.apply'],
+    [EdgeProfileApplyOp.OWNER_CHANGE, 'edge-profile.job.op.owner-change']
+  ]
+);
 
 export enum JobStatus {
   COMPLETED = 'COMPLETED',
@@ -76,7 +96,13 @@ export interface CfReprocessingJobConfiguration extends BasicJobConfiguration {
   endTs: number;
 }
 
-export type JobConfiguration = CfReprocessingJobConfiguration;
+export interface EdgeProfileApplyJobConfiguration extends BasicJobConfiguration {
+  op: EdgeProfileApplyOp;
+  edgeProfileId?: EntityId;
+  edgeProfileName?: string;
+}
+
+export type JobConfiguration = CfReprocessingJobConfiguration & Partial<EdgeProfileApplyJobConfiguration>;
 
 export interface BasicJobResult {
   successfulCount: number;

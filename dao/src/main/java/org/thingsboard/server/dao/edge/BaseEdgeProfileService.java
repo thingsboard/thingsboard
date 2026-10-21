@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.thingsboard.server.cache.edge.EdgeProfileCacheEvictEvent;
 import org.thingsboard.server.cache.edge.EdgeProfileCacheKey;
 import org.thingsboard.server.common.data.EntityType;
@@ -18,6 +19,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
 import org.thingsboard.server.common.data.edge.EdgeProfileData;
 import org.thingsboard.server.common.data.edge.EdgeProfileEntityGroup;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -126,7 +129,7 @@ public class BaseEdgeProfileService extends AbstractCachedEntityService<EdgeProf
             EdgeProfile saved = edgeProfileDao.save(profile.getTenantId(), profile);
             publishEvictEvent(evictEvent);
             if (oldName != null && !oldName.equals(saved.getName())) {
-                edgeService.updateTypeByEdgeProfileId(saved.getTenantId(), saved.getId(), saved.getName());
+                edgeService.updateTypeByEdgeProfileId(saved.getTenantId(), saved.getId(), saved.getName(), oldName);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
                     .entityId(saved.getId()).entity(saved).oldEntity(oldProfile).created(profile.getId() == null).build());
@@ -207,6 +210,9 @@ public class BaseEdgeProfileService extends AbstractCachedEntityService<EdgeProf
             return existing;
         }
         // held until the caller's transaction ends, so two creators of one name serialize instead of racing the unique constraint
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            throw new IllegalStateException("Edge profile name lock requires an active transaction");
+        }
         edgeProfileDao.lockNameForCreate(tenantId.getId(), name);
         // read the table, not the cache: the winner's cache evict only runs after its commit, so a cached null can still be stale
         existing = edgeProfileDao.findByTenantIdAndName(tenantId.getId(), name);
@@ -288,6 +294,28 @@ public class BaseEdgeProfileService extends AbstractCachedEntityService<EdgeProf
     }
 
     @Override
+    public EdgeProfileInfo findEdgeProfileInfoById(TenantId tenantId, EdgeProfileId edgeProfileId) {
+        log.trace("Executing findEdgeProfileInfoById [{}]", edgeProfileId);
+        EdgeProfile profile = findEdgeProfileById(tenantId, edgeProfileId);
+        return profile != null ? new EdgeProfileInfo(profile) : null;
+    }
+
+    @Override
+    public EdgeProfileInfo findDefaultEdgeProfileInfo(TenantId tenantId) {
+        log.trace("Executing findDefaultEdgeProfileInfo tenantId [{}]", tenantId);
+        EdgeProfile profile = findDefaultEdgeProfile(tenantId);
+        return profile != null ? new EdgeProfileInfo(profile) : null;
+    }
+
+    @Override
+    public PageData<EdgeProfileInfo> findEdgeProfileInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findEdgeProfileInfosByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return edgeProfileDao.findInfosByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     @Transactional
     public void deleteEdgeProfile(TenantId tenantId, EdgeProfileId edgeProfileId) {
         log.trace("Executing deleteEdgeProfile [{}]", edgeProfileId);
@@ -338,6 +366,16 @@ public class BaseEdgeProfileService extends AbstractCachedEntityService<EdgeProf
     @Transactional
     public void deleteByTenantId(TenantId tenantId) {
         deleteEdgeProfilesByTenantId(tenantId);
+    }
+
+    @Override
+    public EdgeProfile addRows(TenantId tenantId, EdgeProfileId edgeProfileId, EdgeProfileData rows) {
+        return mutate(tenantId, edgeProfileId, p -> {
+            p.getProfileData().getRuleChainIds().addAll(rows.getRuleChainIds());
+            p.getProfileData().getEntityGroups().addAll(rows.getEntityGroups());
+            p.getProfileData().getIntegrationIds().addAll(rows.getIntegrationIds());
+            p.getProfileData().getSchedulerEventIds().addAll(rows.getSchedulerEventIds());
+        });
     }
 
     @Override
@@ -410,6 +448,15 @@ public class BaseEdgeProfileService extends AbstractCachedEntityService<EdgeProf
     @Override
     public EdgeProfile removeSchedulerEvent(TenantId tenantId, EdgeProfileId edgeProfileId, SchedulerEventId schedulerEventId) {
         return mutate(tenantId, edgeProfileId, p -> p.getProfileData().getSchedulerEventIds().remove(schedulerEventId));
+    }
+
+    @Override
+    public void lockEdgeForApply(TenantId tenantId, EdgeId edgeId, long timeoutMs) {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            throw new IllegalStateException("Edge apply lock requires an active transaction");
+        }
+        validateId(edgeId, id -> "Incorrect edgeId " + id);
+        edgeProfileDao.lockEdgeForApply(edgeId.getId(), timeoutMs);
     }
 
     private EdgeProfile mutate(TenantId tenantId, EdgeProfileId edgeProfileId, Consumer<EdgeProfile> change) {

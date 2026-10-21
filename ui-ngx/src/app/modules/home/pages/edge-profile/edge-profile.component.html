@@ -51,6 +51,9 @@
 </div>
 }
 <div [class.mat-padding]="!standalone" class="flex flex-col">
+  @if (!isEdit && entity?.id && isTenantAdmin()) {
+    <tb-edge-profile-job-status class="mb-4" [edgeProfileId]="entity.id.id"></tb-edge-profile-job-status>
+  }
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async)" style="min-width: 0;" class="flex flex-col gap-2">
       <mat-form-field class="mat-block" appearance="outline">

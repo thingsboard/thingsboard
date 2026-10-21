@@ -83,6 +83,7 @@ import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
 import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -1426,6 +1427,15 @@ public abstract class BaseController {
 
     EdgeProfile checkEdgeProfileId(EdgeProfileId edgeProfileId, Operation operation) throws ThingsboardException {
         return checkEntityId(edgeProfileId, edgeProfileService::findEdgeProfileById, operation);
+    }
+
+    EdgeProfileInfo checkEdgeProfileInfoId(EdgeProfileId edgeProfileId) throws ThingsboardException {
+        validateId(edgeProfileId, id -> "Incorrect edgeProfileId " + id);
+        EdgeProfileInfo profileInfo = checkNotNull(edgeProfileService.findEdgeProfileInfoById(getTenantId(), edgeProfileId));
+        if (!getTenantId().equals(profileInfo.getTenantId())) {
+            throw permissionDenied();
+        }
+        return profileInfo;
     }
 
     /**

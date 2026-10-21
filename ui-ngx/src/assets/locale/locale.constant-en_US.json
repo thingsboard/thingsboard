@@ -3626,10 +3626,10 @@
         "assignments": "Assignments",
         "from-profile": "From profile",
         "this-edge": "This edge",
-        "from-profile-count": "{{count}} from profile",
-        "this-edge-count": "{{count}} this edge",
+        "from-profile-count": "{ count, plural, =1 {1 row from profile} other {# rows from profile} }",
+        "this-edge-count": "{ count, plural, =1 {1 row set on this edge} other {# rows set on this edge} }",
         "all-sources": "All",
-        "comes-from-profile": "Comes from profile {{profileName}}. Removing it there affects every edge on that profile",
+        "comes-from-profile": "Comes from profile '{{profileName}}'. Removing it there affects every edge on that profile.",
         "change-edge-profile-title": "Move edge '{{edgeName}}' to edge profile '{{toProfile}}'?",
         "change-edge-profile-text": "Assignments of profile '{{fromProfile}}' that '{{toProfile}}' does not have are unassigned, and the edge deletes those entity groups' entities and their local telemetry. The edge then receives the assignments of '{{toProfile}}'; if '{{toProfile}}' has a root rule chain, it replaces the edge's root. Assignments made directly on this edge are kept.",
         "unassign-from-this-edge": "Unassign from this edge",
@@ -3638,8 +3638,8 @@
         "already-root": "Already the root of this edge",
         "set-root-title": "Set '{{ruleChainName}}' as the root rule chain of this edge?",
         "set-root-text": "Only this edge changes. Profile {{profileName}} keeps its root for the other edges, and a later change of the profile root will not touch this edge.",
-        "root-overridden": "Root rule chain is {{ruleChainName}}, set on this edge. It is used instead of the root {{profileRootName}} of profile {{profileName}}.",
-        "root-set-on-edge": "Root rule chain is {{ruleChainName}}, set on this edge. Profile {{profileName}} has no root rule chain of its own.",
+        "root-overridden": "Root rule chain is '{{ruleChainName}}', set on this edge. It is used instead of the root '{{profileRootName}}' of profile '{{profileName}}'.",
+        "root-set-on-edge": "Root rule chain is '{{ruleChainName}}', set on this edge. Profile '{{profileName}}' has no root rule chain of its own.",
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
         "assign-device-group-to-this-edge": "Assign device group to this edge",
@@ -3683,7 +3683,23 @@
         "reapply": "Re-apply to all edges",
         "reapply-title": "Re-apply edge profile '{{profileName}}' to all edges?",
         "reapply-text": "Every edge on this profile receives all of its assignments again, including any it is missing. Assignments an edge can no longer receive are removed. Assignments made directly on an edge, and an edge's own root rule chain, stay as they are.",
-        "reapply-started": "Re-apply started. Edges receive the changes within a few seconds.",
+        "reapply-started": "Re-apply started. Its progress is shown on the edge profile and in the Task manager.",
+        "job": {
+            "queued": "{{op}} is waiting for earlier edge profile changes to finish.",
+            "applying": "{{op}}: {{processed}} of {{total}} edges done.",
+            "failed": "{op} failed on { count, plural, =1 {1 edge} other {# edges} }.",
+            "cancelled": "{{op}} was cancelled after {{processed}} of {{total}} edges.",
+            "completed": "{op} reached { total, plural, =0 {no edges} =1 {1 edge} other {# edges} }.",
+            "retry": "Retry failed edges",
+            "details": "Details",
+            "op": {
+                "add-rows": "Adding rows",
+                "remove-row": "Removing a row",
+                "set-root": "Changing the root rule chain",
+                "apply": "Re-apply",
+                "owner-change": "Owner change"
+            }
+        },
         "edge-profile-required": "Edge profile is required.",
         "no-edge-profiles-found": "No edge profiles found",
         "no-edge-profiles-matching": "No edge profiles matching '{{entity}}' found",
@@ -3728,7 +3744,7 @@
         "add-assignment-text": "Select what every edge on this profile should receive",
         "range": "{{start}} – {{end}} of {{total}}",
         "range-empty": "0 of 0",
-        "root-from-profile": "Root rule chain is {{ruleChainName}}, set by profile {{profileName}}.",
+        "root-from-profile": "Root rule chain is '{{ruleChainName}}', set by profile '{{profileName}}'.",
         "assignments-from-profile": "Assignments from profile {{profileName}} can only be changed there. Anything added here applies to this edge only.",
         "open-profile": "Open profile"
     },
@@ -8898,7 +8914,7 @@
                 "AGENT_APPLICATION": "Agent Application",
                 "AGENT_APP_PROFILE": "Agent Application Profile",
                 "AGENT_APP_UNIT": "Agent Application Unit",
-                "EDGE_PROFILE": "Edge profile"
+                "EDGE_PROFILE": "Edge Profile"
             }
         },
         "operation": {
@@ -10723,6 +10739,8 @@
         "cancel-task-calculated-field-reprocessing-title": "Are you sure you want to cancel reprocessing?",
         "cancel-task-report-text": "Report generation will be canceled, report file will not be created",
         "cancel-task-report-title": "Are you sure you want to cancel report generation?",
+        "cancel-task-edge-profile-apply-text": "Edges processed so far keep their changes; the remaining edges are skipped. Re-apply the edge profile to bring them in step later.",
+        "cancel-task-edge-profile-apply-title": "Are you sure you want to cancel this edge profile change?",
         "cancel-tasks-text": "Are you sure you want to cancel the selected tasks?",
         "cancel-tasks-title": "Cancel { count, plural, =1 {1 task} other {# tasks} }",
         "delete-task-text": "This action will remove the task from the list, but your data will remain intact",
@@ -10758,6 +10776,7 @@
         "task-type": {
             "any": "Any type",
             "calculated-field-reprocessing": "Calculated field reprocessing",
+            "edge-profile-apply": "Edge profile apply",
             "report": "Report generation"
         },
         "task-filter": "Task filter",

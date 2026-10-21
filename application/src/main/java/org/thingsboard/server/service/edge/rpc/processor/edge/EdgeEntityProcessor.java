@@ -7,9 +7,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,9 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.role.Role;
@@ -39,7 +40,7 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 import java.util.ArrayList;
@@ -50,11 +51,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
 @TbCoreComponent
 public class EdgeEntityProcessor extends BaseEdgeProcessor {
+
+    private static final int PAGE_SIZE = 1000;
+    private static final int OWNER_CHANGE_THREADS = 4;
+
+    private ExecutorService ownerChangeExecutor;
+
+    @PostConstruct
+    public void init() {
+        ownerChangeExecutor = Executors.newFixedThreadPool(OWNER_CHANGE_THREADS, ThingsBoardThreadFactory.forName("edge-owner-change"));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (ownerChangeExecutor != null) {
+            ownerChangeExecutor.shutdownNow();
+        }
+    }
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
@@ -151,12 +171,16 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
         }
     }
 
-    // what the edge holds for the customers it is losing: the rows to unassign, and the rows keptByProfile leaves assigned
+    // what the edge holds for the customers it is losing: the rows to unassign, and the rows rowFate leaves assigned
     private record RemovedCustomerRows(Map<EntityType, List<EntityGroup>> groupsToRemove,
                                        List<SchedulerEventInfo> schedulerEventsToRemove,
                                        List<KeptRow> kept) {}
 
     private record KeptRow(EdgeEventType type, EntityId entityId) {}
+
+    private enum RowFate {
+        KEEP, UNASSIGN, LEAVE_TO_PROFILE
+    }
 
     // deletes go first, parent-first, then the kept rows the edge's cascade took with them, then the unassigns;
     // rows are read only once the deletes are persisted, so a row the profile applier assigns meanwhile is queued behind them either way
@@ -172,8 +196,8 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
             return Futures.transform(resendRowsKeptByProfile(edge, rows.kept()), _ -> {
                 unassignRows(tenantId, edge, rows);
                 return null;
-            }, dbCallbackExecutorService);
-        }, dbCallbackExecutorService);
+            }, ownerChangeExecutor);
+        }, ownerChangeExecutor);
     }
 
     private RemovedCustomerRows collectRowsOfRemovedCustomers(TenantId tenantId, Edge edge, List<CustomerId> removedCustomerIds) {
@@ -188,21 +212,15 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
             List<EntityGroup> toRemove = new ArrayList<>();
             String relationType = BaseEntityGroupService.EDGE_ENTITY_GROUP_RELATION_PREFIX + groupType.name();
             for (EntityId ownerId : ownerIds) {
-                PageLink pageLink = new PageLink(1000, 0);
-                while (true) {
-                    PageData<EntityGroup> page = edgeCtx.getEntityGroupService()
-                            .findEdgeEntityGroupsByOwnerIdAndType(tenantId, edge.getId(), ownerId, groupType, pageLink);
-                    for (EntityGroup entityGroup : page.getData()) {
-                        if (keptByProfile(tenantId, edge, entityGroup.getId(), relationType, entityGroup.getOwnerId(), EntityType.USER.equals(groupType))) {
-                            kept.add(new KeptRow(EdgeEventType.ENTITY_GROUP, entityGroup.getId()));
-                        } else {
-                            toRemove.add(entityGroup);
+                for (EntityGroup entityGroup : new PageDataIterable<>(link -> edgeCtx.getEntityGroupService()
+                        .findEdgeEntityGroupsByOwnerIdAndType(tenantId, edge.getId(), ownerId, groupType, link), PAGE_SIZE)) {
+                    switch (rowFate(tenantId, edge, entityGroup.getId(), relationType, entityGroup.getOwnerId(), EntityType.USER.equals(groupType))) {
+                        case KEEP -> kept.add(new KeptRow(EdgeEventType.ENTITY_GROUP, entityGroup.getId()));
+                        case UNASSIGN -> toRemove.add(entityGroup);
+                        case LEAVE_TO_PROFILE -> {
+                            // the edge's EDGE_OWNER_CHANGE job unassigns it; unassigning here too would send the edge a duplicate
                         }
                     }
-                    if (!page.hasNext()) {
-                        break;
-                    }
-                    pageLink = pageLink.nextPageLink();
                 }
             }
             groupsToRemove.put(groupType, toRemove);
@@ -210,22 +228,16 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
         // Same rule for scheduler events: one the edge's own profile stamped stays when the new owner can still see it.
         List<SchedulerEventInfo> schedulerEventsToRemove = new ArrayList<>();
         for (EntityId ownerId : ownerIds) {
-            PageLink pageLink = new PageLink(1000, 0);
-            while (true) {
-                PageData<SchedulerEventInfo> page = edgeCtx.getSchedulerEventService()
-                        .findSchedulerEventInfosByTenantIdAndEdgeIdAndCustomerId(tenantId, edge.getId(), new CustomerId(ownerId.getId()), pageLink);
-                for (SchedulerEventInfo schedulerEventInfo : page.getData()) {
-                    EntityId eventOwnerId = EdgeProfileApplier.ownerOf(tenantId, schedulerEventInfo.getCustomerId());
-                    if (keptByProfile(tenantId, edge, schedulerEventInfo.getId(), EntityRelation.CONTAINS_TYPE, eventOwnerId, true)) {
-                        kept.add(new KeptRow(EdgeEventType.SCHEDULER_EVENT, schedulerEventInfo.getId()));
-                    } else {
-                        schedulerEventsToRemove.add(schedulerEventInfo);
+            for (SchedulerEventInfo schedulerEventInfo : new PageDataIterable<>(link -> edgeCtx.getSchedulerEventService()
+                    .findSchedulerEventInfosByTenantIdAndEdgeIdAndCustomerId(tenantId, edge.getId(), new CustomerId(ownerId.getId()), link), PAGE_SIZE)) {
+                EntityId eventOwnerId = EdgeProfileRows.ownerOf(tenantId, schedulerEventInfo.getCustomerId());
+                switch (rowFate(tenantId, edge, schedulerEventInfo.getId(), EntityRelation.CONTAINS_TYPE, eventOwnerId, true)) {
+                    case KEEP -> kept.add(new KeptRow(EdgeEventType.SCHEDULER_EVENT, schedulerEventInfo.getId()));
+                    case UNASSIGN -> schedulerEventsToRemove.add(schedulerEventInfo);
+                    case LEAVE_TO_PROFILE -> {
+                        // the edge's EDGE_OWNER_CHANGE job unassigns it; unassigning here too would send the edge a duplicate
                     }
                 }
-                if (!page.hasNext()) {
-                    break;
-                }
-                pageLink = pageLink.nextPageLink();
             }
         }
         return new RemovedCustomerRows(groupsToRemove, schedulerEventsToRemove, kept);
@@ -247,7 +259,7 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
         if (keptRows.isEmpty()) {
             return Futures.immediateFuture(null);
         }
-        JsonNode body = EdgeProfileApplier.stamp(edge.getEdgeProfileId());
+        JsonNode body = EdgeProfileRows.stamp(edge.getEdgeProfileId());
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         for (KeptRow row : keptRows) {
             futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), row.type(), EdgeEventActionType.ASSIGNED_TO_EDGE, row.entityId(), body));
@@ -255,15 +267,17 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
-    // only a row stamped by the edge's own profile survives the owner change, and only while the new owner can still see it
-    private boolean keptByProfile(TenantId tenantId, Edge edge, EntityId entityId, String relationType, EntityId entityOwnerId, boolean customerBound) {
+    // a row stamped by the edge's own profile is the EDGE_OWNER_CHANGE job's to unassign; here it is only re-sent while the new owner can still see it
+    private RowFate rowFate(TenantId tenantId, Edge edge, EntityId entityId, String relationType, EntityId entityOwnerId, boolean customerBound) {
         if (edge.getEdgeProfileId() == null) {
-            return false;
+            return RowFate.UNASSIGN;
         }
         EntityRelation relation = edgeCtx.getRelationService().getRelation(tenantId, edge.getId(), entityId, relationType, RelationTypeGroup.EDGE);
-        return relation != null
-                && EdgeProfileApplier.isStampedBy(relation, edge.getEdgeProfileId())
-                && edgeCtx.getEdgeProfileApplier().isEligible(tenantId, entityOwnerId, edge.getOwnerId(), customerBound);
+        if (relation == null || !EdgeProfileRows.isStampedBy(relation, edge.getEdgeProfileId())) {
+            return RowFate.UNASSIGN;
+        }
+        return edgeCtx.getEdgeProfileEligibility().isEligible(tenantId, entityOwnerId, edge.getOwnerId(), customerBound)
+                ? RowFate.KEEP : RowFate.LEAVE_TO_PROFILE;
     }
 
     private ListenableFuture<Void> syncCustomersSequentially(TenantId tenantId, EdgeId edgeId, List<Customer> customers) {

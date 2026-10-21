@@ -16,8 +16,8 @@ export function confirmEdgeProfileChange(edge: Edge, originalEdge: Edge, edgePro
     return of(true);
   }
   return forkJoin([
-    edgeProfileService.getEdgeProfile(fromProfileId),
-    edgeProfileService.getEdgeProfile(toProfileId)
+    edgeProfileService.getEdgeProfileInfo(fromProfileId),
+    edgeProfileService.getEdgeProfileInfo(toProfileId)
   ]).pipe(
     mergeMap(([fromProfile, toProfile]) => dialogService.confirm(
       translate.instant('edge.change-edge-profile-title', {edgeName: edge.name, toProfile: toProfile.name}),

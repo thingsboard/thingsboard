@@ -14,17 +14,27 @@ import org.thingsboard.server.common.data.edge.EdgeAssignmentRow;
 import org.thingsboard.server.common.data.edge.EdgeAssignmentSource;
 import org.thingsboard.server.common.data.edge.EdgeAssignments;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileData;
 import org.thingsboard.server.common.data.edge.EdgeProfileEntityGroup;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.job.EdgeProfileApplyJobConfiguration;
+import org.thingsboard.server.common.data.job.EdgeProfileApplyOp;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
@@ -85,10 +95,22 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
 
     @Test
     public void testCustomerUserReadOnly() throws Exception {
-        EdgeProfile saved = createProfile("Customer RO");
+        EdgeProfile saved = createRootedProfile("Customer RO");
         loginCustomerAdminUser(); // plain loginCustomerUser() carries no generic permissions to satisfy profilePermissionChecker
-        doGet("/api/edgeProfile/" + saved.getId().getId()).andExpect(status().isOk());
-        doGet("/api/edgeProfile/default").andExpect(status().isOk());
+        doGet("/api/edgeProfile/" + saved.getId().getId()).andExpect(status().isForbidden());
+        doGet("/api/edgeProfile/default").andExpect(status().isForbidden());
+        doGet("/api/edgeProfiles?pageSize=10&page=0").andExpect(status().isForbidden());
+
+        EdgeProfileInfo info = doGet("/api/edgeProfile/info/" + saved.getId().getId(), EdgeProfileInfo.class);
+        Assert.assertEquals(saved.getName(), info.getName());
+        Assert.assertNull(info.getRootRuleChainId());
+        Assert.assertTrue(info.getProfileData().getRuleChainIds().isEmpty());
+        Assert.assertNotNull(doGet("/api/edgeProfile/info/default", EdgeProfileInfo.class).getId());
+        PageData<EdgeProfileInfo> infos = doGetTypedWithPageLink("/api/edgeProfileInfos?", new TypeReference<>() {}, new PageLink(10, 0, "Customer RO"));
+        Assert.assertEquals(1, infos.getData().size());
+        Assert.assertEquals(saved.getId(), infos.getData().get(0).getId());
+        Assert.assertTrue(infos.getData().get(0).getProfileData().getRuleChainIds().isEmpty());
+
         EdgeProfile fresh = new EdgeProfile();
         fresh.setName("Customer Denied");
         doPost("/api/edgeProfile", fresh).andExpect(status().isForbidden());
@@ -174,6 +196,44 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         Assert.assertTrue("a hand-made row must stay edge-owned once its entity joins the profile",
                 view.getRuleChains().stream()
                         .anyMatch(r -> r.getId().equals(chain.getId()) && r.getSource() == EdgeAssignmentSource.EDGE));
+    }
+
+    @Test
+    public void testUpdateIgnoresProfileDataAndRoot() throws Exception {
+        EdgeProfile saved = createRootedProfile("Update Ignores Rows");
+        RuleChainId root = saved.getRootRuleChainId();
+        RuleChain other = createEdgeRuleChain("Update Ignores Rows other RC");
+
+        saved.setName("Update Ignores Rows renamed");
+        saved.getProfileData().getRuleChainIds().clear();
+        saved.getProfileData().getRuleChainIds().add(other.getId());
+        saved.setRootRuleChainId(other.getId());
+        EdgeProfile updated = doPost("/api/edgeProfile", saved, EdgeProfile.class);
+
+        Assert.assertEquals("Update Ignores Rows renamed", updated.getName());
+        Assert.assertEquals(root, updated.getRootRuleChainId());
+        Assert.assertEquals(List.of(root), updated.getProfileData().getRuleChainIds());
+        EdgeProfile found = doGet("/api/edgeProfile/" + saved.getId().getId(), EdgeProfile.class);
+        Assert.assertEquals(root, found.getRootRuleChainId());
+        Assert.assertEquals(List.of(root), found.getProfileData().getRuleChainIds());
+    }
+
+    @Test
+    public void testCreateWithUnreadableEntityGroupIsForbidden() throws Exception {
+        loginDifferentTenant();
+        EntityGroup group = new EntityGroup();
+        group.setName("Other tenant device group");
+        group.setType(EntityType.DEVICE);
+        EntityGroup otherTenantGroup = doPost("/api/entityGroup", group, EntityGroup.class);
+        loginTenantAdmin();
+
+        EdgeProfile profile = new EdgeProfile();
+        profile.setName("Unreadable group profile");
+        profile.getProfileData().getEntityGroups().add(new EdgeProfileEntityGroup(EntityType.DEVICE, otherTenantGroup.getId()));
+        doPost("/api/edgeProfile", profile).andExpect(status().isForbidden());
+
+        PageData<EdgeProfile> page = doGetTypedWithPageLink("/api/edgeProfiles?", new TypeReference<>() {}, new PageLink(10, 0, "Unreadable group profile"));
+        Assert.assertTrue(page.getData().isEmpty());
     }
 
     @Test
@@ -266,6 +326,9 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         Assert.assertTrue(profileView.getRuleChains().stream().anyMatch(r -> r.isRoot() && r.getId().equals(profile.getRootRuleChainId())));
 
         doDelete("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + extra.getId().getId()).andExpect(status().isOk());
+        Job removal = awaitLatestJob(profile, JobStatus.COMPLETED);
+        Assert.assertEquals(EdgeProfileApplyOp.REMOVE_ROW, ((EdgeProfileApplyJobConfiguration) removal.getConfiguration()).getOp());
+        Assert.assertEquals(Integer.valueOf(2), removal.getResult().getTotalCount());
         awaitAssigned(e1, extra.getId(), false);
         awaitAssigned(e2, extra.getId(), true);
     }
@@ -288,6 +351,7 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         awaitGroupAssigned(e2, savedGroup.getId(), true);
 
         doDelete("/api/edgeProfile/" + profile.getId().getId() + "/entityGroup/" + savedGroup.getId().getId() + "/DEVICE").andExpect(status().isOk());
+        awaitLatestJob(profile, JobStatus.COMPLETED);
         awaitGroupAssigned(e1, savedGroup.getId(), false);
         // hand-made assignment on e2 must survive the profile's removal
         awaitGroupAssigned(e2, savedGroup.getId(), true);
@@ -303,9 +367,10 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
 
         RuleChain newRoot = createEdgeRuleChain("Root prop new");
         doPost("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + newRoot.getId().getId(), EdgeProfile.class);
-        EdgeProfile updated = doPost("/api/edgeProfile/" + profile.getId().getId() + "/" + newRoot.getId().getId() + "/root", "", EdgeProfile.class);
+        EdgeProfile updated = doPost("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + newRoot.getId().getId() + "/root", "", EdgeProfile.class);
         Assert.assertEquals(newRoot.getId(), updated.getRootRuleChainId());
         awaitRoot(follower, newRoot.getId());
+        awaitLatestJob(profile, JobStatus.COMPLETED);
         // the new root still reaches the overridden edge as a profile row; only the root flag stays where the edge put it
         awaitAssigned(overridden, newRoot.getId(), true);
         Assert.assertEquals(ownRoot.getId(), doGet("/api/edge/" + overridden.getId().getId(), Edge.class).getRootRuleChainId());
@@ -366,8 +431,58 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         awaitAssigned(edge, extra.getId(), true);
         doDelete("/api/edge/" + edge.getId().getId() + "/ruleChain/" + extra.getId().getId(), RuleChain.class);
         awaitAssigned(edge, extra.getId(), false);
-        doPost("/api/edgeProfile/" + profile.getId().getId() + "/apply").andExpect(status().isOk());
+        Job apply = doPost("/api/edgeProfile/" + profile.getId().getId() + "/apply", Job.class);
+        Assert.assertEquals(JobType.EDGE_PROFILE_APPLY, apply.getType());
+        Assert.assertEquals(profile.getId(), apply.getEntityId());
+        Assert.assertEquals(EdgeProfileApplyOp.APPLY, ((EdgeProfileApplyJobConfiguration) apply.getConfiguration()).getOp());
+        Job completed = awaitLatestJob(profile, JobStatus.COMPLETED);
+        Assert.assertEquals(apply.getId(), completed.getId());
+        Assert.assertEquals(1, completed.getResult().getSuccessfulCount());
         awaitAssigned(edge, extra.getId(), true);
+
+        List<Job> listed = findJobs(List.of(JobType.EDGE_PROFILE_APPLY), List.of(profile.getId().getId()));
+        Assert.assertTrue(listed.stream().allMatch(job -> profile.getName().equals(job.getEntityName())));
+    }
+
+    @Test
+    public void testRowChangesOfATenantRunAsJobsInSubmissionOrder() throws Exception {
+        EdgeProfile profile = createRootedProfile("Ordered");
+        Edge edge = saveEdgeOnProfile("Ordered edge", profile);
+        RuleChain first = createEdgeRuleChain("Ordered first");
+        RuleChain second = createEdgeRuleChain("Ordered second");
+
+        doPost("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + first.getId().getId(), EdgeProfile.class);
+        doPost("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + second.getId().getId(), EdgeProfile.class);
+        doDelete("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + first.getId().getId()).andExpect(status().isOk());
+
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() ->
+                findJobs(List.of(JobType.EDGE_PROFILE_APPLY), List.of(profile.getId().getId())).stream()
+                        .filter(job -> job.getCreatedTime() >= edge.getCreatedTime())
+                        .allMatch(job -> job.getStatus() == JobStatus.COMPLETED));
+        List<Job> jobs = findJobs(List.of(JobType.EDGE_PROFILE_APPLY), List.of(profile.getId().getId())).stream()
+                .filter(job -> job.getCreatedTime() >= edge.getCreatedTime())
+                .sorted(Comparator.comparingLong(Job::getCreatedTime)).toList();
+        Assert.assertEquals(List.of(EdgeProfileApplyOp.ADD_ROWS, EdgeProfileApplyOp.ADD_ROWS, EdgeProfileApplyOp.REMOVE_ROW),
+                jobs.stream().map(job -> ((EdgeProfileApplyJobConfiguration) job.getConfiguration()).getOp()).toList());
+        for (int i = 1; i < jobs.size(); i++) {
+            Assert.assertTrue(jobs.get(i).getResult().getStartTs() >= jobs.get(i - 1).getResult().getFinishTs());
+        }
+        awaitAssigned(edge, first.getId(), false);
+        awaitAssigned(edge, second.getId(), true);
+    }
+
+    @Test
+    public void testCustomerOwnerChangeRunsAsJobOnTheMovedCustomer() throws Exception {
+        Customer parent = doPost("/api/customer", customer("Owner job parent"), Customer.class);
+        Customer moved = doPost("/api/customer", customer("Owner job moved"), Customer.class);
+
+        doPost("/api/owner/CUSTOMER/" + parent.getId().getId() + "/CUSTOMER/" + moved.getId().getId()).andExpect(status().isOk());
+
+        Job job = Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() ->
+                findJobs(List.of(JobType.EDGE_PROFILE_APPLY), List.of(moved.getId().getId())).stream().findFirst().orElse(null),
+                found -> found != null && found.getStatus() == JobStatus.COMPLETED);
+        Assert.assertEquals(EdgeProfileApplyOp.OWNER_CHANGE, ((EdgeProfileApplyJobConfiguration) job.getConfiguration()).getOp());
+        Assert.assertEquals(moved.getId(), job.getEntityId());
     }
 
     @Test
@@ -376,6 +491,101 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         EntityGroup all = doGet("/api/entityGroup/TENANT/" + tenantId.getId() + "/DEVICE/All", EntityGroup.class);
         doPost("/api/edgeProfile/" + profile.getId().getId() + "/entityGroup/" + all.getId().getId() + "/DEVICE")
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testAddRowsSavesOnceAndFansOutInOneJob() throws Exception {
+        EdgeProfile profile = createRootedProfile("Bulk rows");
+        Edge edge = saveEdgeOnProfile("Bulk rows edge", profile);
+        RuleChain rc1 = createEdgeRuleChain("Bulk rows RC 1");
+        RuleChain rc2 = createEdgeRuleChain("Bulk rows RC 2");
+        EdgeProfileData rows = new EdgeProfileData();
+        rows.getRuleChainIds().addAll(List.of(rc1.getId(), rc2.getId()));
+        for (String name : List.of("Bulk rows group 1", "Bulk rows group 2")) {
+            EntityGroup group = new EntityGroup();
+            group.setName(name);
+            group.setType(EntityType.DEVICE);
+            group = doPost("/api/entityGroup", group, EntityGroup.class);
+            rows.getEntityGroups().add(new EdgeProfileEntityGroup(EntityType.DEVICE, group.getId()));
+        }
+
+        EdgeProfile updated = doPost("/api/edgeProfile/" + profile.getId().getId() + "/rows", rows, EdgeProfile.class);
+
+        Assert.assertTrue(updated.getProfileData().getRuleChainIds().containsAll(rows.getRuleChainIds()));
+        Assert.assertTrue(updated.getProfileData().getEntityGroups().containsAll(rows.getEntityGroups()));
+        Job job = awaitLatestJob(profile, JobStatus.COMPLETED);
+        EdgeProfileApplyJobConfiguration configuration = (EdgeProfileApplyJobConfiguration) job.getConfiguration();
+        Assert.assertEquals(EdgeProfileApplyOp.ADD_ROWS, configuration.getOp());
+        Assert.assertEquals(4, configuration.getRows().size());
+        awaitAssigned(edge, rc1.getId(), true);
+        awaitAssigned(edge, rc2.getId(), true);
+        for (EdgeProfileEntityGroup group : rows.getEntityGroups()) {
+            Assert.assertTrue(groupAssignedToEdge(edge, group.getEntityGroupId()));
+        }
+    }
+
+    @Test
+    public void testAddRowsWithUnreadableRowAddsNothing() throws Exception {
+        loginDifferentTenant();
+        EntityGroup group = new EntityGroup();
+        group.setName("Bulk rows other tenant group");
+        group.setType(EntityType.DEVICE);
+        EntityGroup otherTenantGroup = doPost("/api/entityGroup", group, EntityGroup.class);
+        loginTenantAdmin();
+        EdgeProfile profile = createRootedProfile("Bulk rows forbidden");
+        RuleChain rc = createEdgeRuleChain("Bulk rows forbidden RC");
+        EdgeProfileData rows = new EdgeProfileData();
+        rows.getRuleChainIds().add(rc.getId());
+        rows.getEntityGroups().add(new EdgeProfileEntityGroup(EntityType.DEVICE, otherTenantGroup.getId()));
+
+        doPost("/api/edgeProfile/" + profile.getId().getId() + "/rows", rows).andExpect(status().isForbidden());
+
+        EdgeProfile found = doGet("/api/edgeProfile/" + profile.getId().getId(), EdgeProfile.class);
+        Assert.assertFalse(found.getProfileData().getRuleChainIds().contains(rc.getId()));
+    }
+
+    @Test
+    public void testProfileAssignmentsListRowsInProfileOrder() throws Exception {
+        EdgeProfile profile = createRootedProfile("Assignments order");
+        RuleChain second = createEdgeRuleChain("Assignments order RC 2");
+        RuleChain third = createEdgeRuleChain("Assignments order RC 3");
+        doPost("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + second.getId().getId(), EdgeProfile.class);
+        doPost("/api/edgeProfile/" + profile.getId().getId() + "/ruleChain/" + third.getId().getId(), EdgeProfile.class);
+        List<EntityGroup> groups = new ArrayList<>();
+        for (String name : List.of("Assignments order group B", "Assignments order group A")) {
+            EntityGroup group = new EntityGroup();
+            group.setName(name);
+            group.setType(EntityType.DEVICE);
+            group = doPost("/api/entityGroup", group, EntityGroup.class);
+            doPost("/api/edgeProfile/" + profile.getId().getId() + "/entityGroup/" + group.getId().getId() + "/DEVICE", EdgeProfile.class);
+            groups.add(group);
+        }
+
+        EdgeAssignments view = doGet("/api/edgeProfile/" + profile.getId().getId() + "/assignments", EdgeAssignments.class);
+
+        Assert.assertEquals(List.of(profile.getRootRuleChainId(), second.getId(), third.getId()),
+                view.getRuleChains().stream().map(EdgeAssignmentRow::getId).toList());
+        Assert.assertTrue(view.getRuleChains().get(0).isRoot());
+        Assert.assertEquals(List.of(groups.get(0).getId(), groups.get(1).getId()),
+                view.getEntityGroups().stream().map(EdgeAssignmentRow::getId).toList());
+        Assert.assertEquals(List.of("Assignments order group B", "Assignments order group A"),
+                view.getEntityGroups().stream().map(EdgeAssignmentRow::getName).toList());
+    }
+
+    @Test
+    public void testRemoveEntityGroupRowRejectsMismatchedGroupType() throws Exception {
+        EdgeProfile profile = createRootedProfile("Group type on remove");
+        EntityGroup group = new EntityGroup();
+        group.setName("Group type on remove devices");
+        group.setType(EntityType.DEVICE);
+        EntityGroup savedGroup = doPost("/api/entityGroup", group, EntityGroup.class);
+        doPost("/api/edgeProfile/" + profile.getId().getId() + "/entityGroup/" + savedGroup.getId().getId() + "/DEVICE", EdgeProfile.class);
+
+        doDelete("/api/edgeProfile/" + profile.getId().getId() + "/entityGroup/" + savedGroup.getId().getId() + "/ASSET")
+                .andExpect(status().isBadRequest());
+
+        EdgeProfile found = doGet("/api/edgeProfile/" + profile.getId().getId(), EdgeProfile.class);
+        Assert.assertTrue(found.getProfileData().getEntityGroups().stream().anyMatch(row -> savedGroup.getId().equals(row.getEntityGroupId())));
     }
 
     @Test
@@ -423,6 +633,7 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
 
         // move the edge to customer A: the owner-change hook must re-apply and pick up the now-eligible group
         doPost("/api/owner/CUSTOMER/" + customerA.getId().getId() + "/EDGE/" + edge.getId().getId()).andExpect(status().isOk());
+        awaitEdgeOwnerChangeJob(edge);
         Assert.assertTrue(groupAssignedToEdge(edge, savedGroup.getId()));
     }
 
@@ -454,6 +665,7 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
 
         // move the edge to customer B: customer A's group is no longer eligible and must not stay assigned
         doPost("/api/owner/CUSTOMER/" + customerB.getId().getId() + "/EDGE/" + edge.getId().getId()).andExpect(status().isOk());
+        awaitEdgeOwnerChangeJob(edge);
         Assert.assertFalse(groupAssignedToEdge(edge, savedGroup.getId()));
     }
 
@@ -480,6 +692,7 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         awaitGroupAssigned(edge, savedGroup.getId(), true);
 
         doPost("/api/owner/CUSTOMER/" + customerB.getId().getId() + "/EDGE/" + edge.getId().getId()).andExpect(status().isOk());
+        awaitEdgeOwnerChangeJob(edge);
         Assert.assertTrue(groupAssignedToEdge(edge, savedGroup.getId()));
     }
 
@@ -503,6 +716,19 @@ public class EdgeProfileControllerTest extends AbstractControllerTest {
         Edge edge = constructEdge(name, null);
         edge.setEdgeProfileId(profile.getId());
         return doPost("/api/edge", edge, Edge.class);
+    }
+
+    private Job awaitLatestJob(EdgeProfile profile, JobStatus expected) {
+        return Awaitility.await().atMost(10, TimeUnit.SECONDS).until(
+                () -> doGet("/api/edgeProfile/" + profile.getId().getId() + "/job", Job.class),
+                job -> job != null && job.getStatus() == expected);
+    }
+
+    private void awaitEdgeOwnerChangeJob(Edge edge) {
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            List<Job> jobs = findJobs(List.of(JobType.EDGE_PROFILE_APPLY), List.of(edge.getId().getId()));
+            return !jobs.isEmpty() && jobs.stream().allMatch(job -> job.getStatus() == JobStatus.COMPLETED);
+        });
     }
 
     private void awaitRoot(Edge edge, RuleChainId ruleChainId) {

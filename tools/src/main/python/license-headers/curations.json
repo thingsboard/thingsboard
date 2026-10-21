@@ -428,6 +428,12 @@
       "contentHash": "sha256:721cdcc847b081d0b06ce949f8431ffc7e6ab0fb7e3eca3d0e11f4420aa2d354"
     },
     {
+      "path": "common/data/src/main/java/org/thingsboard/server/common/data/job/EdgeProfileApplyJobResult.java",
+      "header": "busl",
+      "reason": "PE-only file: the result type of the new EDGE_PROFILE_APPLY job (edge profile fan-out as jobs). Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/job/DummyJobResult.java at 5954190c32f (51%): the only shared content is the JobResult subclass skeleton and a getJobType() override, which is template use. Maintainer rule (2026-09-09): a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
+      "contentHash": "sha256:ab35cfa230fb5e843e26542244faaad71adbf76660994337e7df1a7d967add60"
+    },
+    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/menu/CustomMenuConfig.java",
       "header": "busl",
       "reason": "PE-specific data/configuration type CustomMenuConfig.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/mobile/layout/MobileLayoutConfig.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 8cf0bfb6182c8d094f765109db4e901222cb6448).",

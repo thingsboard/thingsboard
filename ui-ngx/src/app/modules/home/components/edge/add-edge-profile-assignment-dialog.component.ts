@@ -8,10 +8,12 @@ import { Router } from '@angular/router';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { FormGroupDirective, NgForm, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { from, Observable } from 'rxjs';
-import { concatMap, tap, toArray } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
-import { EdgeAssignmentSection } from '@shared/models/edge-profile.models';
+import { EdgeAssignmentSection, EdgeProfileData } from '@shared/models/edge-profile.models';
+import { RuleChainId } from '@shared/models/id/rule-chain-id';
+import { IntegrationId } from '@shared/models/id/integration-id';
+import { SchedulerEventId } from '@shared/models/id/scheduler-event-id';
+import { EntityGroupId } from '@shared/models/id/entity-group-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EdgeProfileService } from '@core/http/edge-profile.service';
 import { RuleChainType } from '@shared/models/rule-chain.models';
@@ -93,26 +95,30 @@ export class AddEdgeProfileAssignmentDialogComponent extends DialogComponent<Add
       this.dialogRef.close(false);
       return;
     }
-    // Posted one by one: parallel writes race the profile row's optimistic lock and can half-apply.
-    let anyApplied = false;
-    from(ids).pipe(
-      concatMap(id => this.request(id).pipe(tap(() => anyApplied = true))),
-      toArray()
-    ).subscribe({
+    this.edgeProfileService.addRows(this.data.edgeProfileId, this.rows(ids)).subscribe({
       next: () => this.dialogRef.close(true),
-      // A mid-sequence failure still leaves earlier ids applied; reload instead of claiming full success.
-      error: () => this.dialogRef.close(anyApplied)
+      error: () => {}
     });
   }
 
-  private request(id: string): Observable<any> {
-    const profileId = this.data.edgeProfileId;
+  private rows(ids: string[]): EdgeProfileData {
+    const rows: EdgeProfileData = {ruleChainIds: [], entityGroups: [], integrationIds: [], schedulerEventIds: []};
     switch (this.section.entityType) {
-      case EntityType.RULE_CHAIN: return this.edgeProfileService.addRuleChain(profileId, id);
-      case EntityType.INTEGRATION: return this.edgeProfileService.addIntegration(profileId, id);
-      case EntityType.SCHEDULER_EVENT: return this.edgeProfileService.addSchedulerEvent(profileId, id);
-      case EntityType.ENTITY_GROUP: return this.edgeProfileService.addEntityGroup(profileId, id, this.section.groupType);
-      default: throw new Error(`Unsupported edge assignment section ${this.section.key}`);
+      case EntityType.RULE_CHAIN:
+        rows.ruleChainIds = ids.map(id => new RuleChainId(id));
+        break;
+      case EntityType.INTEGRATION:
+        rows.integrationIds = ids.map(id => new IntegrationId(id));
+        break;
+      case EntityType.SCHEDULER_EVENT:
+        rows.schedulerEventIds = ids.map(id => new SchedulerEventId(id));
+        break;
+      case EntityType.ENTITY_GROUP:
+        rows.entityGroups = ids.map(id => ({groupType: this.section.groupType, entityGroupId: new EntityGroupId(id)}));
+        break;
+      default:
+        throw new Error(`Unsupported edge assignment section ${this.section.key}`);
     }
+    return rows;
   }
 }

@@ -64,7 +64,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileEligibility;
 import org.thingsboard.server.service.edge.rpc.CustomersHierarchyEdgeService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -289,7 +289,7 @@ public class EdgeContextComponent {
     private ReportTemplateService reportTemplateService;
 
     @Autowired
-    private EdgeProfileApplier edgeProfileApplier;
+    private EdgeProfileEligibility edgeProfileEligibility;
 
     // processors
     @Autowired

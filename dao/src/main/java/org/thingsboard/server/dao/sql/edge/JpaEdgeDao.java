@@ -149,12 +149,15 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
-    public PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId, PageLink pageLink) {
-        return DaoUtil.pageToPageData(
-                edgeRepository.findIdsByTenantIdAndEdgeProfileId(
-                        tenantId,
-                        edgeProfileId,
-                        DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
+    public List<UUID> updateTypeByEdgeProfileId(UUID tenantId, UUID edgeProfileId, String type) {
+        return jdbcTemplate.queryForList("UPDATE edge SET type = ?, version = version + 1 " +
+                        "WHERE tenant_id = ? AND edge_profile_id = ? AND type IS DISTINCT FROM ? RETURNING id",
+                UUID.class, type, tenantId, edgeProfileId, type);
+    }
+
+    @Override
+    public List<Edge> findEdgesByTenantIdAndIds(UUID tenantId, List<UUID> edgeIds) {
+        return DaoUtil.convertDataList(edgeRepository.findEdgesByTenantIdAndIdIn(tenantId, edgeIds));
     }
 
     @Override

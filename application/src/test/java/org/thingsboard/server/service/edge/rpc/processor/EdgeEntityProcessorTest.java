@@ -34,7 +34,8 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.role.RoleService;
 import org.thingsboard.server.dao.scheduler.SchedulerEventService;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
-import org.thingsboard.server.service.edge.profile.EdgeProfileApplier;
+import org.thingsboard.server.service.edge.profile.EdgeProfileEligibility;
+import org.thingsboard.server.service.edge.profile.EdgeProfileRows;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeEntityProcessor;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.permission.OwnersCacheService;
@@ -159,8 +160,8 @@ public class EdgeEntityProcessorTest {
         when(edgeCtx.getRelationService()).thenReturn(relationService);
         when(relationService.getRelation(eq(tenantId), eq(edgeId), any(), any(), eq(RelationTypeGroup.EDGE)))
                 .thenAnswer(inv -> new EntityRelation(edgeId, inv.getArgument(2), inv.getArgument(3), RelationTypeGroup.EDGE,
-                        EdgeProfileApplier.stamp(edge.getEdgeProfileId())));
-        when(edgeCtx.getEdgeProfileApplier()).thenReturn(new EdgeProfileApplier(null, null, null, null, null, null, null, null, null, null));
+                        EdgeProfileRows.stamp(edge.getEdgeProfileId())));
+        when(edgeCtx.getEdgeProfileEligibility()).thenReturn(new EdgeProfileEligibility(null));
         when(ownersCacheService.getChildOwners(tenantId, customerA)).thenReturn(Set.of(customerA));
 
         Object rows = ReflectionTestUtils.invokeMethod(processor, "collectRowsOfRemovedCustomers", tenantId, edge, List.of(customerA));
@@ -209,9 +210,9 @@ public class EdgeEntityProcessorTest {
         when(edgeCtx.getRelationService()).thenReturn(relationService);
         when(relationService.getRelation(eq(tenantId), eq(edgeId), any(), any(), eq(RelationTypeGroup.EDGE)))
                 .thenAnswer(inv -> profileDevices.getId().equals(inv.getArgument(2))
-                        ? new EntityRelation(edgeId, inv.getArgument(2), inv.getArgument(3), RelationTypeGroup.EDGE, EdgeProfileApplier.stamp(edge.getEdgeProfileId()))
+                        ? new EntityRelation(edgeId, inv.getArgument(2), inv.getArgument(3), RelationTypeGroup.EDGE, EdgeProfileRows.stamp(edge.getEdgeProfileId()))
                         : new EntityRelation(edgeId, inv.getArgument(2), inv.getArgument(3), RelationTypeGroup.EDGE));
-        lenient().when(edgeCtx.getEdgeProfileApplier()).thenReturn(new EdgeProfileApplier(null, null, null, null, null, null, null, null, null, null));
+        lenient().when(edgeCtx.getEdgeProfileEligibility()).thenReturn(new EdgeProfileEligibility(null));
         when(ownersCacheService.getChildOwners(tenantId, customerA)).thenReturn(new LinkedHashSet<>(List.of(customerA, subA1)));
 
         Object rows = ReflectionTestUtils.invokeMethod(processor, "collectRowsOfRemovedCustomers", tenantId, edge, List.of(customerA));

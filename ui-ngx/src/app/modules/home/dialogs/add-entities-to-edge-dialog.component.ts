@@ -8,8 +8,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
-import { forkJoin, Observable } from 'rxjs';
-import { map, mergeMap, shareReplay } from 'rxjs/operators';
+import { forkJoin, Observable, of } from 'rxjs';
+import { PageLink } from '@shared/models/page/page-link';
+import { mergeMap, shareReplay } from 'rxjs/operators';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -18,7 +19,6 @@ import { SchedulerEventService } from '@core/http/scheduler-event.service';
 import { IntegrationService } from '@core/http/integration.service';
 import { IntegrationSubType } from '@shared/models/integration.models';
 import { EdgeService } from '@core/http/edge.service';
-import { EntityService } from '@core/http/entity.service';
 import { Edge } from '@shared/models/edge.models';
 import { SchedulerEventInfo } from '@shared/models/scheduler-event.models';
 import { BaseData } from '@shared/models/base-data';
@@ -59,7 +59,6 @@ export class AddEntitiesToEdgeDialogComponent extends
               private schedulerEventService: SchedulerEventService,
               private integrationService: IntegrationService,
               private edgeService: EdgeService,
-              private entityService: EntityService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddEntitiesToEdgeDialogComponent, Array<string>>,
               public fb: UntypedFormBuilder) {
@@ -119,9 +118,18 @@ export class AddEntitiesToEdgeDialogComponent extends
   private schedulerEventsReachingEdge(): (searchText?: string) => Observable<Array<BaseData<EntityId>>> {
     const edge$ = this.edgeService.getEdge(this.data.edgeId, {ignoreLoading: true}).pipe(shareReplay(1));
     return (searchText) => edge$.pipe(
-      mergeMap(edge => this.entityService.getEntitiesByNameFilter(EntityType.SCHEDULER_EVENT, searchText, 50, '', {ignoreLoading: true}).pipe(
-        map(events => (events ?? []).filter(event => this.reachesEdge(event as SchedulerEventInfo, edge)))
-      ))
+      mergeMap(edge => this.collectEventsReachingEdge(edge, new PageLink(100, 0, searchText), []))
+    );
+  }
+
+  private collectEventsReachingEdge(edge: Edge, pageLink: PageLink, found: Array<SchedulerEventInfo>): Observable<Array<SchedulerEventInfo>> {
+    return this.schedulerEventService.getSchedulerEventsByPageLink('', pageLink, null, {ignoreLoading: true}).pipe(
+      mergeMap(page => {
+        const matched = found.concat(page.data.filter(event => this.reachesEdge(event, edge)));
+        return matched.length >= 50 || !page.hasNext
+          ? of(matched.slice(0, 50))
+          : this.collectEventsReachingEdge(edge, pageLink.nextPageLink(), matched);
+      })
     );
   }
 
