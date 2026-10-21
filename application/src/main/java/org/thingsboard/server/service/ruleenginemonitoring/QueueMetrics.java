@@ -30,16 +30,43 @@
  */
 package org.thingsboard.server.service.ruleenginemonitoring;
 
-import java.util.concurrent.atomic.AtomicLong;
-
+/**
+ * Per-key outcome counter that lives in the accumulator across flushes; same drain/retire contract as
+ * {@link RuleNodeExecMetrics}.
+ */
 public class QueueMetrics {
-    private final AtomicLong count = new AtomicLong();
+    private long count;
+    private int idleFlushes;
+    private boolean retired;
 
-    public void increment(long delta) {
-        count.addAndGet(delta);
+    /**
+     * @return false if the entry has retired; the caller must re-fetch the entry from the accumulator and retry
+     */
+    public synchronized boolean add(long delta) {
+        if (retired) {
+            return false;
+        }
+        count += delta;
+        return true;
     }
 
-    public long getAndReset() {
-        return count.getAndSet(0);
+    /**
+     * Returns the count since the previous drain and resets it.
+     */
+    public synchronized long drain(int maxIdleFlushes) {
+        long drained = count;
+        count = 0;
+        if (drained == 0) {
+            if (++idleFlushes >= maxIdleFlushes) {
+                retired = true;
+            }
+        } else {
+            idleFlushes = 0;
+        }
+        return drained;
+    }
+
+    public synchronized boolean isRetired() {
+        return retired;
     }
 }

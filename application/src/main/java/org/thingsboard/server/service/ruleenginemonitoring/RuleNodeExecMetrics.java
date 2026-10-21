@@ -30,40 +30,58 @@
  */
 package org.thingsboard.server.service.ruleenginemonitoring;
 
-import java.util.concurrent.atomic.AtomicLong;
-
+/**
+ * Per-key execution metrics that live in the accumulator across flushes. Recording and draining share the entry's
+ * lock, so a flush never loses a concurrent update or reads a half-applied one. An entry left idle for
+ * {@code maxIdleFlushes} drains retires: it accepts no more records and is removed from the accumulator.
+ */
 public class RuleNodeExecMetrics {
-    private final AtomicLong execCount = new AtomicLong();
-    private final AtomicLong errorCount = new AtomicLong();
-    private final AtomicLong totalDurationMs = new AtomicLong();
-    private final AtomicLong maxDurationMs = new AtomicLong();
+    private long execCount;
+    private long errorCount;
+    private long totalDurationMs;
+    private long maxDurationMs;
+    private int idleFlushes;
+    private boolean retired;
 
-    public void recordSuccess(long durationMs) {
-        execCount.incrementAndGet();
-        totalDurationMs.addAndGet(durationMs);
-        maxDurationMs.updateAndGet(prev -> Math.max(prev, durationMs));
+    /**
+     * @return false if the entry has retired; the caller must re-fetch the entry from the accumulator and retry
+     */
+    public synchronized boolean record(long durationMs, boolean failure) {
+        if (retired) {
+            return false;
+        }
+        execCount++;
+        if (failure) {
+            errorCount++;
+        }
+        totalDurationMs += durationMs;
+        maxDurationMs = Math.max(maxDurationMs, durationMs);
+        return true;
     }
 
-    public void recordFailure(long durationMs) {
-        execCount.incrementAndGet();
-        errorCount.incrementAndGet();
-        totalDurationMs.addAndGet(durationMs);
-        maxDurationMs.updateAndGet(prev -> Math.max(prev, durationMs));
+    /**
+     * Returns what was recorded since the previous drain and resets it, or null if nothing was.
+     */
+    public synchronized Snapshot drain(int maxIdleFlushes) {
+        if (execCount == 0) {
+            if (++idleFlushes >= maxIdleFlushes) {
+                retired = true;
+            }
+            return null;
+        }
+        Snapshot snapshot = new Snapshot(execCount, errorCount, totalDurationMs, maxDurationMs);
+        execCount = 0;
+        errorCount = 0;
+        totalDurationMs = 0;
+        maxDurationMs = 0;
+        idleFlushes = 0;
+        return snapshot;
     }
 
-    public long getExecCount() {
-        return execCount.get();
+    public synchronized boolean isRetired() {
+        return retired;
     }
 
-    public long getErrorCount() {
-        return errorCount.get();
-    }
-
-    public long getTotalDurationMs() {
-        return totalDurationMs.get();
-    }
-
-    public long getMaxDurationMs() {
-        return maxDurationMs.get();
+    public record Snapshot(long execCount, long errorCount, long totalDurationMs, long maxDurationMs) {
     }
 }

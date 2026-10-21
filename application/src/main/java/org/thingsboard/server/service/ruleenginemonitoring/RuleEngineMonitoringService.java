@@ -74,7 +74,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.*;
@@ -90,6 +89,8 @@ public class RuleEngineMonitoringService {
     public static final UUID OTHERS_QUEUE_UUID = UUID.fromString("00000000-0000-0000-0000-000000000004");
 
     private static final String NULL_QUEUE_NAME_KEY = " :null-queue";
+    // An accumulator entry with nothing recorded for this many flushes in a row is removed.
+    private static final int MAX_IDLE_FLUSHES = 3;
 
     private final RuleEngineMonitoringDao dao;
     private final TbTenantProfileCache tenantProfileCache;
@@ -103,10 +104,10 @@ public class RuleEngineMonitoringService {
     private final boolean queueTimeoutLastVisitedRuleNodeEnabled;
     private final int ruleNodeMaxKeys;
     private final int queueMaxKeys;
-    private final AtomicReference<ConcurrentHashMap<RuleNodeExecKey, RuleNodeExecMetrics>> ruleNodeAccumulatorRef =
-            new AtomicReference<>(new ConcurrentHashMap<>());
-    private final AtomicReference<ConcurrentHashMap<QueueKey, QueueMetrics>> queueAccumulatorRef =
-            new AtomicReference<>(new ConcurrentHashMap<>());
+    // Long-lived: each flush drains every entry in place (see RuleNodeExecMetrics) rather than swapping the map out,
+    // which lost updates landing in the old map after it was read.
+    private final ConcurrentHashMap<RuleNodeExecKey, RuleNodeExecMetrics> ruleNodeAccumulator = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<QueueKey, QueueMetrics> queueAccumulator = new ConcurrentHashMap<>();
     private final Timer flushRuleNodeStatsTimer;
     private final Timer flushQueueStatsTimer;
     private final Timer flushQueueLagStatsTimer;
@@ -153,8 +154,8 @@ public class RuleEngineMonitoringService {
         this.ruleNodeFlushRowsCounter = statsFactory.createDefaultCounter("ruleNodeExecStatsFlushRows", "statsName", "ruleNode");
         this.queueFlushRowsCounter = statsFactory.createDefaultCounter("ruleNodeExecStatsFlushRows", "statsName", "queue");
         this.queueLagFlushRowsCounter = statsFactory.createDefaultCounter("ruleNodeExecStatsFlushRows", "statsName", "queueLag");
-        statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "ruleNode", ruleNodeAccumulatorRef, ref -> ref.get().size());
-        statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "queue", queueAccumulatorRef, ref -> ref.get().size());
+        statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "ruleNode", ruleNodeAccumulator, Map::size);
+        statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "queue", queueAccumulator, Map::size);
         statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "execKey", execKeyCache, Cache::estimatedSize);
     }
 
@@ -174,19 +175,20 @@ public class RuleEngineMonitoringService {
         long startTs = System.currentTimeMillis();
         try {
             RuleNodeExecKey key = resolveExecKey(tenantId, self, queueName, serviceId);
-            ConcurrentHashMap<RuleNodeExecKey, RuleNodeExecMetrics> accumulator = ruleNodeAccumulatorRef.get();
-            RuleNodeExecMetrics metrics = accumulator.get(key);
-            if (metrics == null) {
-                if (accumulator.size() >= ruleNodeMaxKeys) {
-                    log.debug("Rule node exec accumulator reached max keys {}, dropping key {}", ruleNodeMaxKeys, key);
+            while (true) {
+                RuleNodeExecMetrics metrics = ruleNodeAccumulator.get(key);
+                if (metrics == null) {
+                    if (ruleNodeAccumulator.size() >= ruleNodeMaxKeys) {
+                        log.debug("Rule node exec accumulator reached max keys {}, dropping key {}", ruleNodeMaxKeys, key);
+                        return;
+                    }
+                    metrics = ruleNodeAccumulator.computeIfAbsent(key, k -> new RuleNodeExecMetrics());
+                }
+                if (metrics.record(durationMs, isFailure)) {
                     return;
                 }
-                metrics = accumulator.computeIfAbsent(key, k -> new RuleNodeExecMetrics());
-            }
-            if (isFailure) {
-                metrics.recordFailure(durationMs);
-            } else {
-                metrics.recordSuccess(durationMs);
+                // Retired by a flush in the meantime: drop it (if the flush hasn't yet) and start a fresh entry.
+                ruleNodeAccumulator.remove(key, metrics);
             }
         } catch (Exception e) {
             log.error("Failed to record rule node exec", e);
@@ -226,7 +228,15 @@ public class RuleEngineMonitoringService {
 
     @Scheduled(fixedDelayString = "${rule-node-exec-stats.exec-flush-interval-ms:60000}")
     public void flushRuleNodeStats() {
-        ConcurrentHashMap<RuleNodeExecKey, RuleNodeExecMetrics> snapshot = ruleNodeAccumulatorRef.getAndSet(new ConcurrentHashMap<>());
+        Map<RuleNodeExecKey, RuleNodeExecMetrics.Snapshot> snapshot = new HashMap<>();
+        ruleNodeAccumulator.forEach((key, metrics) -> {
+            RuleNodeExecMetrics.Snapshot drained = metrics.drain(MAX_IDLE_FLUSHES);
+            if (drained != null) {
+                snapshot.put(key, drained);
+            } else if (metrics.isRetired()) {
+                ruleNodeAccumulator.remove(key, metrics);
+            }
+        });
         log.debug("Rule node exec snapshot has {} keys going to flush", snapshot.size());
 
         if (snapshot.isEmpty()) {
@@ -255,7 +265,15 @@ public class RuleEngineMonitoringService {
 
     @Scheduled(fixedDelayString = "${rule-node-exec-stats.queue-flush-interval-ms:60000}")
     public void flushQueueStats() {
-        ConcurrentHashMap<QueueKey, QueueMetrics> snapshot = queueAccumulatorRef.getAndSet(new ConcurrentHashMap<>());
+        Map<QueueKey, Long> snapshot = new HashMap<>();
+        queueAccumulator.forEach((key, metrics) -> {
+            long count = metrics.drain(MAX_IDLE_FLUSHES);
+            if (count != 0) {
+                snapshot.put(key, count);
+            } else if (metrics.isRetired()) {
+                queueAccumulator.remove(key, metrics);
+            }
+        });
 
         log.debug("Queue snapshot has {} keys", snapshot.size());
 
@@ -277,12 +295,9 @@ public class RuleEngineMonitoringService {
 
         long bucketTime = System.currentTimeMillis();
         Map<QueueRowKey, QueueRowMetrics> merged = new LinkedHashMap<>();
-        for (Map.Entry<QueueKey, QueueMetrics> entry : snapshot.entrySet()) {
+        for (Map.Entry<QueueKey, Long> entry : snapshot.entrySet()) {
             QueueKey key = entry.getKey();
-            long count = entry.getValue().getAndReset();
-            if (count == 0) {
-                continue;
-            }
+            long count = entry.getValue();
             UUID ruleChainId = NULL_RULE_NODE_UUID.equals(key.lastVisitedRuleNodeId())
                     ? NULL_RULE_CHAIN_UUID
                     : ruleChainByRuleNode.getOrDefault(key.lastVisitedRuleNodeId(), NULL_RULE_CHAIN_UUID);
@@ -409,7 +424,7 @@ public class RuleEngineMonitoringService {
             recordQueueOutcome(queueTenantId, queueTenantId, queueId, NULL_RULE_NODE_UUID, serviceId, metricType, map.size());
             return;
         }
-        Map<UUID, Map<UUID, QueueMetrics>> grouped = new HashMap<>();
+        Map<UUID, Map<UUID, Long>> grouped = new HashMap<>();
         for (Map.Entry<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> entry : map.entrySet()) {
             UUID msgId = entry.getKey();
             ToRuleEngineMsg proto = entry.getValue().getValue();
@@ -421,27 +436,29 @@ public class RuleEngineMonitoringService {
                     nodeId = ruleNodeInfo.getRuleNodeId().getId();
                 }
             }
-            grouped.computeIfAbsent(tenantId, k -> new HashMap<>())
-                    .computeIfAbsent(nodeId, k -> new QueueMetrics())
-                    .increment(1);
+            grouped.computeIfAbsent(tenantId, k -> new HashMap<>()).merge(nodeId, 1L, Long::sum);
         }
-        grouped.forEach((tenantId, byNode) -> byNode.forEach((nodeId, metrics) ->
-                recordQueueOutcome(queueTenantId, tenantId, queueId, nodeId, serviceId, metricType, metrics.getAndReset())));
+        grouped.forEach((tenantId, byNode) -> byNode.forEach((nodeId, count) ->
+                recordQueueOutcome(queueTenantId, tenantId, queueId, nodeId, serviceId, metricType, count)));
     }
 
     private void recordQueueOutcome(UUID queueTenantId, UUID tenantId, UUID queueId, UUID nodeId, String serviceId, MetricType metricType, long count) {
         try {
             QueueKey key = new QueueKey(queueTenantId, tenantId, queueId, nodeId, serviceId, metricType);
-            ConcurrentHashMap<QueueKey, QueueMetrics> accumulator = queueAccumulatorRef.get();
-            QueueMetrics metrics = accumulator.get(key);
-            if (metrics == null) {
-                if (accumulator.size() >= queueMaxKeys) {
-                    log.debug("Queue accumulator reached max keys {}, dropping key {}", queueMaxKeys, key);
+            while (true) {
+                QueueMetrics metrics = queueAccumulator.get(key);
+                if (metrics == null) {
+                    if (queueAccumulator.size() >= queueMaxKeys) {
+                        log.debug("Queue accumulator reached max keys {}, dropping key {}", queueMaxKeys, key);
+                        return;
+                    }
+                    metrics = queueAccumulator.computeIfAbsent(key, k -> new QueueMetrics());
+                }
+                if (metrics.add(count)) {
                     return;
                 }
-                metrics = accumulator.computeIfAbsent(key, k -> new QueueMetrics());
+                queueAccumulator.remove(key, metrics);
             }
-            metrics.increment(count);
         } catch (Exception e) {
             log.error("Failed to record queue outcome", e);
         }
@@ -503,21 +520,21 @@ public class RuleEngineMonitoringService {
         return result;
     }
 
-    private List<RuleNodeExecStatsRow> buildRuleNodeExecRows(ConcurrentHashMap<RuleNodeExecKey, RuleNodeExecMetrics> snapshot,
+    private List<RuleNodeExecStatsRow> buildRuleNodeExecRows(Map<RuleNodeExecKey, RuleNodeExecMetrics.Snapshot> snapshot,
                                                              Map<UUID, Map<String, UUID>> queueNameToIdByTenant,
                                                              long bucketTime) {
         List<RuleNodeExecStatsRow> rows = new ArrayList<>();
         Map<RuleNodeExecKey, RuleNodeExecStatsRow> metricsFromOthersQueue = new HashMap<>();
 
-        for (Map.Entry<RuleNodeExecKey, RuleNodeExecMetrics> entry : snapshot.entrySet()) {
+        for (Map.Entry<RuleNodeExecKey, RuleNodeExecMetrics.Snapshot> entry : snapshot.entrySet()) {
             RuleNodeExecKey key = entry.getKey();
-            RuleNodeExecMetrics metrics = entry.getValue();
+            RuleNodeExecMetrics.Snapshot metrics = entry.getValue();
             UUID queueId = resolveQueueId(key, queueNameToIdByTenant);
 
             if (OTHERS_QUEUE_UUID.equals(queueId)) {
                 mergeIntoOthers(key, metrics, bucketTime, metricsFromOthersQueue);
             } else {
-                rows.add(RuleNodeExecStatsRow.toRow(key.tenantId(), queueId, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.getExecCount(), metrics.getErrorCount(), metrics.getTotalDurationMs(), metrics.getMaxDurationMs()));
+                rows.add(RuleNodeExecStatsRow.toRow(key.tenantId(), queueId, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.execCount(), metrics.errorCount(), metrics.totalDurationMs(), metrics.maxDurationMs()));
             }
         }
 
@@ -540,10 +557,10 @@ public class RuleEngineMonitoringService {
         return queueId;
     }
 
-    private void mergeIntoOthers(RuleNodeExecKey key, RuleNodeExecMetrics metrics, long bucketTime,
+    private void mergeIntoOthers(RuleNodeExecKey key, RuleNodeExecMetrics.Snapshot metrics, long bucketTime,
                                  Map<RuleNodeExecKey, RuleNodeExecStatsRow> otherQueuesMetrics) {
         RuleNodeExecKey mergeKey = new RuleNodeExecKey(key.tenantId(), OTHERS_QUEUE_UUID, null, key.ruleChainId(), key.ruleNodeId(), key.serviceId());
-        RuleNodeExecStatsRow row = RuleNodeExecStatsRow.toRow(key.tenantId(), OTHERS_QUEUE_UUID, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.getExecCount(), metrics.getErrorCount(), metrics.getTotalDurationMs(), metrics.getMaxDurationMs());
+        RuleNodeExecStatsRow row = RuleNodeExecStatsRow.toRow(key.tenantId(), OTHERS_QUEUE_UUID, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.execCount(), metrics.errorCount(), metrics.totalDurationMs(), metrics.maxDurationMs());
         otherQueuesMetrics.merge(mergeKey, row, (oldValue, newValue) -> new RuleNodeExecStatsRow(
                 oldValue.tenantId(), OTHERS_QUEUE_UUID, oldValue.ruleChainId(), oldValue.ruleNodeId(), oldValue.serviceId(),
                 bucketTime,

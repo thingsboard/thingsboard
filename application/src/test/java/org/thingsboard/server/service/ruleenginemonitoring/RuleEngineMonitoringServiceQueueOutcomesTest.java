@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,11 +83,11 @@ class RuleEngineMonitoringServiceQueueOutcomesTest {
 
     @SuppressWarnings("unchecked")
     private Map<MetricType, Long> outcomes() {
-        var accumulator = ((AtomicReference<ConcurrentHashMap<QueueKey, QueueMetrics>>) ReflectionTestUtils.getField(service, "queueAccumulatorRef")).get();
+        var accumulator = (ConcurrentHashMap<QueueKey, QueueMetrics>) ReflectionTestUtils.getField(service, "queueAccumulator");
         Map<MetricType, Long> byType = new EnumMap<>(MetricType.class);
         accumulator.forEach((key, metrics) -> {
             assertThat(key.tenantId()).isEqualTo(tenantId);
-            byType.merge(key.metricType(), metrics.getAndReset(), Long::sum);
+            byType.merge(key.metricType(), metrics.drain(Integer.MAX_VALUE), Long::sum);
         });
         accumulator.clear();
         byType.values().removeIf(count -> count == 0);
