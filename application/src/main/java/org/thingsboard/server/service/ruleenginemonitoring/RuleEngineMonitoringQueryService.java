@@ -150,7 +150,7 @@ public class RuleEngineMonitoringQueryService {
             Set<RuleNodeDimension> dims,
             List<UUID> queueIds) {
         return dao.findQueueLagTable(
-                new QueueLagTableQuery(tenantId, startTs, endTs, dims, queueIds));
+                new QueueLagTableQuery(resolveQueueTenantId(tenantId), startTs, endTs, dims, queueIds));
     }
 
     public long getCurrentQueueLag(UUID tenantId, List<UUID> queueIds) {

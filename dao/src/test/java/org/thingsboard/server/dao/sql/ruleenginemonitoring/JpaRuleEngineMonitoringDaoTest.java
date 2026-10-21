@@ -135,6 +135,17 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void givenSystemQueueLag_whenFindIsolatedTenantsLagTable_thenSystemRowsAreExcluded() {
+        dao.saveQueueLagStats(List.of(new QueueLagStatsRow(T0, tenantId, queueId, 5),
+                new QueueLagStatsRow(T0, TenantId.SYS_TENANT_ID.getId(), UUID.randomUUID(), 1000)));
+
+        List<QueueLagTableEntry> table = dao.findQueueLagTable(new QueueLagTableQuery(tenantId, T0, T0 + MINUTE, Set.of(), null));
+
+        assertEquals(1, table.size());
+        assertEquals(Long.valueOf(5), table.get(0).lag());
+    }
+
+    @Test
     public void givenLeaderRow_whenTryAcquireQueueLagLeader_thenOnlyOneServiceHoldsTheLease() {
         assertTrue(dao.tryAcquireQueueLagLeader("node-a", 1_000, 10_000));
         assertFalse(dao.tryAcquireQueueLagLeader("node-b", 2_000, 10_000));

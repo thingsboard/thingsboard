@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTimeseriesEntry;
@@ -231,14 +230,12 @@ public class RuleEngineStatsQueryRepository {
                 FROM rule_node_queue_lag_stats
                 WHERE bucket_time >= :startTs
                   AND bucket_time < :endTs
-                  AND queue_tenant_id IN (:systemTenantId, :tenantId)
+                  AND queue_tenant_id = :tenantId
                 """.formatted(
                 groupBy.contains(RuleNodeDimension.QUEUE_TENANT_ID) ? "queue_tenant_id" : "CAST(NULL AS uuid)",
                 groupBy.contains(RuleNodeDimension.QUEUE_ID) ? "queue_id" : "CAST(NULL AS uuid)"
         ));
-        MapSqlParameterSource params = timeRangeParams(query.startTs(), query.endTs())
-                .addValue("systemTenantId", TenantId.SYS_TENANT_ID.getId())
-                .addValue("tenantId", query.tenantId());
+        MapSqlParameterSource params = timeRangeParams(query.startTs(), query.endTs()).addValue("tenantId", query.tenantId());
         appendIn(sql, params, "queue_id", "queueIds", query.queueIds());
         appendTableGroupBy(sql, groupBy);
         return jdbcTemplate.query(sql.toString(), params, QUEUE_LAG_TABLE_MAPPER);
