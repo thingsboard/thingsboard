@@ -104,6 +104,7 @@ import {
 } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { AuthState } from '@app/core/auth/auth.models';
+import { IStateControllerComponent } from '@home/components/dashboard-page/states/state-controller.models';
 import { DashboardReportService } from '@core/http/dashboard-report.service';
 import { EntityGroupInfo, resolveGroupParams } from '@shared/models/entity-group.models';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
@@ -1198,11 +1199,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private updateStates(states: {[id: string]: DashboardState }) {
     this.dashboard.configuration.states = states;
     this.dashboardUtils.removeUnusedWidgets(this.dashboard);
-    let targetState = this.dashboardCtx.state;
-    if (!this.dashboard.configuration.states[targetState]) {
-      targetState = this.dashboardUtils.getRootStateId(this.dashboardConfiguration.states);
+    if (states[this.dashboardCtx.state]) {
+      this.openDashboardState(this.dashboardCtx.state);
     }
-    this.openDashboardState(targetState);
+    (this.dashboardCtx.stateController as IStateControllerComponent).states = states;
   }
 
   public importWidget($event: Event) {
