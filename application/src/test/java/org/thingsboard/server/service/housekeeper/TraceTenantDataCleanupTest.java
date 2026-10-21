@@ -67,7 +67,7 @@ public class TraceTenantDataCleanupTest extends AbstractControllerTest {
                 List.of(), List.of(), List.of("POST_TELEMETRY_REQUEST"), List.of(), false, false)));
         UUID queueId = UUID.randomUUID();
         ruleEngineMonitoringDao.saveRuleNodeStats(List.of(new RuleNodeExecStatsRow(id, queueId, UUID.randomUUID(),
-                UUID.randomUUID(), "svc", 0, 1, 0, 10, 10, 0)));
+                UUID.randomUUID(), "svc", 0, 1, 0, 10, 10)));
         ruleEngineMonitoringDao.saveQueueLagStats(List.of(new QueueLagStatsRow(0, id, queueId, 5)));
 
         deleteTenant(tenant.getId());

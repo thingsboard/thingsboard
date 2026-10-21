@@ -42,14 +42,12 @@ public record RuleNodeExecStatsRow(
         long execCount,
         long errorCount,
         long totalDurationMs,
-        long maxDurationMs,
-        long p95DurationMs
+        long maxDurationMs
 ) {
     public static RuleNodeExecStatsRow toRow(UUID tenantId, UUID queueId, UUID ruleChainId, UUID ruleNodeId,
                                              String serviceId, long bucketTime,
-                                             long execCount, long errorCount, long totalDurationMs, long maxDurationMs,
-                                             long p95DurationMs) {
+                                             long execCount, long errorCount, long totalDurationMs, long maxDurationMs) {
         return new RuleNodeExecStatsRow(tenantId, queueId, ruleChainId, ruleNodeId, serviceId,
-                bucketTime, execCount, errorCount, totalDurationMs, maxDurationMs, p95DurationMs);
+                bucketTime, execCount, errorCount, totalDurationMs, maxDurationMs);
     }
 }

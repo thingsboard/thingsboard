@@ -66,8 +66,4 @@ public class RuleNodeExecMetrics {
     public long getMaxDurationMs() {
         return maxDurationMs.get();
     }
-
-    public long computeP95() {
-        return 0;
-    }
 }

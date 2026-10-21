@@ -517,7 +517,7 @@ public class RuleEngineMonitoringService {
             if (OTHERS_QUEUE_UUID.equals(queueId)) {
                 mergeIntoOthers(key, metrics, bucketTime, metricsFromOthersQueue);
             } else {
-                rows.add(RuleNodeExecStatsRow.toRow(key.tenantId(), queueId, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.getExecCount(), metrics.getErrorCount(), metrics.getTotalDurationMs(), metrics.getMaxDurationMs(), metrics.computeP95()));
+                rows.add(RuleNodeExecStatsRow.toRow(key.tenantId(), queueId, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.getExecCount(), metrics.getErrorCount(), metrics.getTotalDurationMs(), metrics.getMaxDurationMs()));
             }
         }
 
@@ -543,15 +543,14 @@ public class RuleEngineMonitoringService {
     private void mergeIntoOthers(RuleNodeExecKey key, RuleNodeExecMetrics metrics, long bucketTime,
                                  Map<RuleNodeExecKey, RuleNodeExecStatsRow> otherQueuesMetrics) {
         RuleNodeExecKey mergeKey = new RuleNodeExecKey(key.tenantId(), OTHERS_QUEUE_UUID, null, key.ruleChainId(), key.ruleNodeId(), key.serviceId());
-        RuleNodeExecStatsRow row = RuleNodeExecStatsRow.toRow(key.tenantId(), OTHERS_QUEUE_UUID, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.getExecCount(), metrics.getErrorCount(), metrics.getTotalDurationMs(), metrics.getMaxDurationMs(), metrics.computeP95());
+        RuleNodeExecStatsRow row = RuleNodeExecStatsRow.toRow(key.tenantId(), OTHERS_QUEUE_UUID, key.ruleChainId(), key.ruleNodeId(), key.serviceId(), bucketTime, metrics.getExecCount(), metrics.getErrorCount(), metrics.getTotalDurationMs(), metrics.getMaxDurationMs());
         otherQueuesMetrics.merge(mergeKey, row, (oldValue, newValue) -> new RuleNodeExecStatsRow(
                 oldValue.tenantId(), OTHERS_QUEUE_UUID, oldValue.ruleChainId(), oldValue.ruleNodeId(), oldValue.serviceId(),
                 bucketTime,
                 oldValue.execCount() + newValue.execCount(),
                 oldValue.errorCount() + newValue.errorCount(),
                 oldValue.totalDurationMs() + newValue.totalDurationMs(),
-                Math.max(oldValue.maxDurationMs(), newValue.maxDurationMs()),
-                0
+                Math.max(oldValue.maxDurationMs(), newValue.maxDurationMs())
         ));
     }
 }

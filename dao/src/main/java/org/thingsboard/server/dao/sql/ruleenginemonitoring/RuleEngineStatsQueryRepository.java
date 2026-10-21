@@ -35,12 +35,12 @@ public class RuleEngineStatsQueryRepository {
     private static final RowMapper<RuleNodeTsKvEntry> RULE_NODE_TS_MAPPER = (rs, rowNum) -> new RuleNodeTsKvEntry(
             getLong(rs, "bucket_time"), getLong(rs, "exec_count"), getLong(rs, "error_count"),
             getLong(rs, "total_duration_ms"), getLong(rs, "avg_duration_ms"), getLong(rs, "max_duration_ms"),
-            getLong(rs, "p95_duration_ms"), getUuid(rs, "tenant_id"), rs.getString("service_id"),
+            getUuid(rs, "tenant_id"), rs.getString("service_id"),
             getUuid(rs, "queue_id"), getUuid(rs, "rule_chain_id"), getUuid(rs, "rule_node_id"));
 
     private static final RowMapper<RuleNodeTableRow> RULE_NODE_TABLE_MAPPER = (rs, rowNum) -> new RuleNodeTableRow(
             getLong(rs, "exec_count"), getLong(rs, "error_count"), getLong(rs, "total_duration_ms"),
-            getLong(rs, "avg_duration_ms"), getLong(rs, "max_duration_ms"), getLong(rs, "p95_duration_ms"),
+            getLong(rs, "avg_duration_ms"), getLong(rs, "max_duration_ms"),
             getUuid(rs, "tenant_id"), rs.getString("service_id"), getUuid(rs, "queue_id"),
             getUuid(rs, "rule_chain_id"), getUuid(rs, "rule_node_id"));
 
@@ -74,7 +74,6 @@ public class RuleEngineStatsQueryRepository {
                        SUM(total_duration_ms)                               AS total_duration_ms,
                        SUM(total_duration_ms) / NULLIF(SUM(exec_count), 0)  AS avg_duration_ms,
                        MAX(max_duration_ms)                                 AS max_duration_ms,
-                       MAX(p95_duration_ms)                                 AS p95_duration_ms,
                        %s                                                   AS tenant_id,
                        %s                                                   AS service_id,
                        %s                                                   AS queue_id,
@@ -107,7 +106,6 @@ public class RuleEngineStatsQueryRepository {
                        SUM(total_duration_ms)                               AS total_duration_ms,
                        SUM(total_duration_ms) / NULLIF(SUM(exec_count), 0)  AS avg_duration_ms,
                        MAX(max_duration_ms)                                 AS max_duration_ms,
-                       MAX(p95_duration_ms)                                 AS p95_duration_ms,
                        %s                                                   AS tenant_id,
                        %s                                                   AS service_id,
                        %s                                                   AS queue_id,

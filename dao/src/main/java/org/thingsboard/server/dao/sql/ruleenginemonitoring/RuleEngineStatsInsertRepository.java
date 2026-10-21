@@ -23,8 +23,8 @@ public class RuleEngineStatsInsertRepository {
     private static final String INSERT_RULE_NODE_STATS_SQL = """
             INSERT INTO rule_node_exec_stats
                 (bucket_time, tenant_id, queue_id, rule_chain_id, rule_node_id, service_id,
-                 exec_count, error_count, total_duration_ms, max_duration_ms, p95_duration_ms)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                 exec_count, error_count, total_duration_ms, max_duration_ms)
+            VALUES (?,?,?,?,?,?,?,?,?,?)
             """;
 
     private static final String INSERT_QUEUE_STATS_SQL = """
@@ -67,7 +67,6 @@ public class RuleEngineStatsInsertRepository {
             ps.setLong(8, row.errorCount());
             ps.setLong(9, row.totalDurationMs());
             ps.setLong(10, row.maxDurationMs());
-            ps.setLong(11, row.p95DurationMs());
         });
     }
 

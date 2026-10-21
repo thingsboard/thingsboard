@@ -43,7 +43,6 @@ public record MergedStatsTableRow(
         Long totalDurationMs,
         Long avgDurationMs,
         Long maxDurationMs,
-        Long p95DurationMs,
 
         Long timeoutCount
 ) {}

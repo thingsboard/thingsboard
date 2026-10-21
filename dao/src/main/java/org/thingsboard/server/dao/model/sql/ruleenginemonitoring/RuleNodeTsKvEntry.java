@@ -33,6 +33,6 @@ package org.thingsboard.server.dao.model.sql.ruleenginemonitoring;
 import java.util.UUID;
 
 public record RuleNodeTsKvEntry(Long bucketTime, Long execCount, Long errorCount, Long totalDurationMs,
-                                Long avgDurationMs, Long maxDurationMs, Long p95DurationMs, UUID tenantId, String serviceId,
+                                Long avgDurationMs, Long maxDurationMs, UUID tenantId, String serviceId,
                                 UUID queueId, UUID ruleChainId, UUID ruleNodeId) {
 }

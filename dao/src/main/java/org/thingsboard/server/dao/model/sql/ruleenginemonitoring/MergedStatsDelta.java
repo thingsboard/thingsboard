@@ -42,6 +42,5 @@ public record MergedStatsDelta(
         MetricDelta totalDurationMs,
         MetricDelta avgDurationMs,
         MetricDelta maxDurationMs,
-        MetricDelta p95DurationMs,
         MetricDelta timeoutCount
 ) {}

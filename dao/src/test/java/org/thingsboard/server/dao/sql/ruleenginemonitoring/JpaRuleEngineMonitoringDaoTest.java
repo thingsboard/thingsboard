@@ -191,7 +191,7 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     public void givenStatsOfTwoTenants_whenDeleteByTenantId_thenOnlyThatTenantsStatsAreRemoved() {
         UUID otherTenantId = UUID.randomUUID();
         dao.saveRuleNodeStats(List.of(ruleNodeRow(T0, "svc-1", 1, 0, 10, 10),
-                new RuleNodeExecStatsRow(otherTenantId, queueId, ruleChainId, ruleNodeId, "svc-1", T0, 1, 0, 10, 10, 0)));
+                new RuleNodeExecStatsRow(otherTenantId, queueId, ruleChainId, ruleNodeId, "svc-1", T0, 1, 0, 10, 10)));
         dao.saveQueueStats(List.of(
                 // the tenant's message on a system queue, and another tenant's message on the tenant's isolated queue
                 new QueueStatsRow(T0, UUID.randomUUID(), tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0),
@@ -217,6 +217,6 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     private RuleNodeExecStatsRow ruleNodeRow(long bucketTime, String serviceId, long execCount, long errorCount,
                                              long totalDurationMs, long maxDurationMs) {
         return new RuleNodeExecStatsRow(tenantId, queueId, ruleChainId, ruleNodeId, serviceId, bucketTime,
-                execCount, errorCount, totalDurationMs, maxDurationMs, 0);
+                execCount, errorCount, totalDurationMs, maxDurationMs);
     }
 }

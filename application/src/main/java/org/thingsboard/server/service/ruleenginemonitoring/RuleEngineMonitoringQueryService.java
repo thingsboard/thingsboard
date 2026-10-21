@@ -218,7 +218,6 @@ public class RuleEngineMonitoringQueryService {
                     metricDelta(b == null ? null : b.totalDurationMs(), c == null ? null : c.totalDurationMs()),
                     metricDelta(b == null ? null : b.avgDurationMs(),   c == null ? null : c.avgDurationMs()),
                     metricDelta(b == null ? null : b.maxDurationMs(),   c == null ? null : c.maxDurationMs()),
-                    metricDelta(b == null ? null : b.p95DurationMs(),   c == null ? null : c.p95DurationMs()),
                     metricDelta(b == null ? null : b.timeoutCount(),    c == null ? null : c.timeoutCount())
             ));
         }
@@ -265,7 +264,7 @@ public class RuleEngineMonitoringQueryService {
             DimKey k = dimKey(n.queueId(), n.ruleChainId(), n.ruleNodeId(), n.serviceId(), dims);
             merged.put(k, new MergedStatsTableRow(
                     k.queueId(), k.ruleChainId(), k.ruleNodeId(), k.serviceId(),
-                    n.execCount(), n.errorCount(), n.totalDurationMs(), n.avgDurationMs(), n.maxDurationMs(), n.p95DurationMs(),
+                    n.execCount(), n.errorCount(), n.totalDurationMs(), n.avgDurationMs(), n.maxDurationMs(),
                     null
             ));
         }
@@ -277,13 +276,13 @@ public class RuleEngineMonitoringQueryService {
                 merged.put(k, new MergedStatsTableRow(
                         existing.queueId(), existing.ruleChainId(), existing.ruleNodeId(), existing.serviceId(),
                         existing.execCount(), existing.errorCount(), existing.totalDurationMs(),
-                        existing.avgDurationMs(), existing.maxDurationMs(), existing.p95DurationMs(),
+                        existing.avgDurationMs(), existing.maxDurationMs(),
                         q.timeoutCount()
                 ));
             } else {
                 merged.put(k, new MergedStatsTableRow(
                         k.queueId(), k.ruleChainId(), k.ruleNodeId(), k.serviceId(),
-                        null, null, null, null, null, null,
+                        null, null, null, null, null,
                         q.timeoutCount()
                 ));
             }

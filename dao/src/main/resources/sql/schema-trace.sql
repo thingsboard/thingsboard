@@ -119,7 +119,6 @@ CREATE TABLE IF NOT EXISTS rule_node_exec_stats
     error_count       bigint       NOT NULL DEFAULT 0,
     total_duration_ms bigint       NOT NULL DEFAULT 0,
     max_duration_ms   bigint       NOT NULL DEFAULT 0,
-    p95_duration_ms   bigint       NOT NULL DEFAULT 0,
     CONSTRAINT rule_node_exec_stats_pkey
         PRIMARY KEY (bucket_time, queue_id, tenant_id, service_id, rule_chain_id, rule_node_id)
 );
