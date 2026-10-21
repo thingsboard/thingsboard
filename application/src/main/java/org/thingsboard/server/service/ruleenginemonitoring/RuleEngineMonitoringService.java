@@ -40,7 +40,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -481,9 +480,7 @@ public class RuleEngineMonitoringService {
         Map<UUID, Map<String, UUID>> result = new HashMap<>();
 
         for (UUID tenantId : tenantIds) {
-            TenantProfile profile = tenantProfileCache.get(TenantId.fromUUID(tenantId));
-            boolean usesSystemQueues = profile != null && !profile.isIsolatedTbRuleEngine();
-            if (usesSystemQueues) {
+            if (TenantId.SYS_TENANT_ID.getId().equals(QueueOwners.resolveQueueTenantId(tenantProfileCache, tenantId))) {
                 result.put(tenantId, systemQueueNameToId);
             } else {
                 Map<String, UUID> tenantQueues = allQueues.stream()

@@ -33,8 +33,6 @@ package org.thingsboard.server.service.ruleenginemonitoring;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.MergedStatsDelta;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.MergedStatsTableRow;
@@ -151,9 +149,7 @@ public class RuleEngineMonitoringQueryService {
     }
 
     private UUID resolveQueueTenantId(UUID tenantId) {
-        TenantProfile profile = tenantProfileCache.get(TenantId.fromUUID(tenantId));
-        boolean usesSystemQueues = profile == null || !profile.isIsolatedTbRuleEngine();
-        return usesSystemQueues ? TenantId.SYS_TENANT_ID.getId() : tenantId;
+        return QueueOwners.resolveQueueTenantId(tenantProfileCache, tenantId);
     }
 
     public List<QueueLagTableEntry> getQueueLagTable(

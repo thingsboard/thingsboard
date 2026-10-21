@@ -33,8 +33,6 @@ package org.thingsboard.server.service.ruleenginemonitoring;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueShortInfo;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -73,10 +71,8 @@ public class QueueCacheService {
         if (tenantId == null || queueName == null) {
             return null;
         }
-        TenantProfile profile = tenantProfileCache.get(TenantId.fromUUID(tenantId));
-        boolean usesSystemQueues = profile != null && !profile.isIsolatedTbRuleEngine();
-        UUID lookupTenantId = usesSystemQueues ? TenantId.SYS_TENANT_ID.getId() : tenantId;
-        return getSnapshot().queueIds().get(new QueueNameKey(lookupTenantId, queueName));
+        UUID queueTenantId = QueueOwners.resolveQueueTenantId(tenantProfileCache, tenantId);
+        return getSnapshot().queueIds().get(new QueueNameKey(queueTenantId, queueName));
     }
 
     public Collection<QueueShortInfo> getAllQueues() {

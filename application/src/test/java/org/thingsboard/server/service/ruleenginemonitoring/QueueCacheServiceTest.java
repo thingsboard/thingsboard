@@ -48,6 +48,13 @@ class QueueCacheServiceTest {
     }
 
     @Test
+    void givenTenantWithoutProfile_whenGetQueueId_thenSystemQueuesAreUsed() {
+        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
+
+        assertThat(service.getQueueId(UUID.randomUUID(), "Main")).isEqualTo(systemMain.id());
+    }
+
+    @Test
     void givenLoadedQueues_whenLookedUpRepeatedly_thenLoadedOnceUntilInvalidated() {
         QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
 
