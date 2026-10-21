@@ -306,7 +306,7 @@ public class AuthControllerTest extends AbstractControllerTest {
 
         // verify the link works end-to-end (use the freshest one)
         String resetToken = StringUtils.substringAfterLast(resetLinkInfo.value(), "resetToken=");
-        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
         doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
                 .put("resetToken", resetToken)
                 .put("password", "newPassword1"))
@@ -332,7 +332,7 @@ public class AuthControllerTest extends AbstractControllerTest {
 
         // the reused link still works end-to-end
         String resetToken = StringUtils.substringAfterLast(first.value(), "resetToken=");
-        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(anyString(), anyString());
+        Mockito.doNothing().when(mailService).sendPasswordWasResetEmail(any(), anyString(), anyString());
         doPost("/api/noauth/resetPassword", JacksonUtil.newObjectNode()
                 .put("resetToken", resetToken)
                 .put("password", "newPassword1"))
