@@ -1562,6 +1562,18 @@
       "contentHash": "sha256:c97d917157cdbed82ac411d7e6a69a1c8590ac8dedace15ad8b1959f917cb6bf"
     },
     {
+      "path": "ui-ngx/src/app/modules/home/pages/user/password-reset-link-dialog.component.html",
+      "header": "busl",
+      "reason": "New password reset link dialog, not in CE history. Similarity to the CE candidate is the shared dialog shape of the activation link dialog it mirrors, not a relocation of the CE implementation. Reviewed candidate ui-ngx/src/app/modules/home/pages/user/activation-link-dialog.component.html at 3de6e81c0fc8f03897a234a659fc5ca0d6ac71d3 (blob f7f9178506d224ab85063b9e5f4d76e09246bf7d).",
+      "contentHash": "sha256:0bcc5b8f7a9af773c3a5923f5a68dbb53767e12e60e894cf1dff63e0fe3a7177"
+    },
+    {
+      "path": "ui-ngx/src/app/modules/home/pages/user/password-reset-link-dialog.component.ts",
+      "header": "busl",
+      "reason": "New password reset link dialog, not in CE history. Similarity to the CE candidate is the shared dialog shape of the activation link dialog it mirrors, not a relocation of the CE implementation. Reviewed candidate ui-ngx/src/app/modules/home/pages/user/activation-link-dialog.component.ts at 3de6e81c0fc8f03897a234a659fc5ca0d6ac71d3 (blob 488a9b9a60fcdd6796f2288cd851deb0a4dd1715).",
+      "contentHash": "sha256:6f83e4666d5d8ee8197c8a4c857df571fe403661766a5cccb078e80fba2544ea"
+    },
+    {
       "path": "ui-ngx/src/app/modules/signup/pages/signup/signup-dialog.component.scss",
       "header": "busl",
       "reason": "PE component stylesheet signup-dialog.component.scss. Reviewed overlap consists of shared Material fieldset/panel/button typography, sizing, spacing or host-layout conventions; it does not identify a relocated CE component implementation. Curated as PE-specific UI template use. Reviewed CE candidate ui-ngx/src/app/shared/components/dialog/alert-dialog.component.scss at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 47d8bacd5a1553261a5270fdbe20483feaefe019).",
