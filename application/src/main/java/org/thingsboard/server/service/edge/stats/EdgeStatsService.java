@@ -12,12 +12,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -51,11 +56,17 @@ public class EdgeStatsService {
     private final EdgeStatsCounterService statsCounterService;
     private final TopicService topicService;
     private final Optional<KafkaAdmin> kafkaAdmin;
+    private final AttributesService attributesService;
+    private final EdgeEventService edgeEventService;
 
     @Value("${edges.stats.ttl:30}")
     private int edgesStatsTtlDays;
     @Value("${edges.stats.report-interval-millis:600000}")
     private long reportIntervalMillis;
+    @Value("${edges.stats.max-lag-count:100000}")
+    private int maxLagCount;
+    @Value("${edges.storage.misordering_compensation_millis:60000}")
+    private long misorderingCompensationMillis;
 
     @Scheduled(
             fixedDelayString = "${edges.stats.report-interval-millis:600000}",
@@ -74,6 +85,9 @@ public class EdgeStatsService {
 
             if (isKafkaStats) {
                 counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
+            } else if (!counters.getMsgsLagMeasured().get()) {
+                // no live session measured the lag in this interval (e.g. edge is offline), so count the backlog in the db
+                getPendingEdgeEventsCount(tenantId, edgeId).ifPresent(lag -> counters.getMsgsLag().set(lag));
             }
             List<TsKvEntry> statsEntries = List.of(
                     entry(ts, DOWNLINK_MSGS_ADDED.getKey(), counters.getMsgsAdded().get()),
@@ -102,6 +116,30 @@ public class EdgeStatsService {
                         Map.Entry::getKey,
                         e -> lagByTopic.getOrDefault(e.getValue(), 0L)
                 ));
+    }
+
+    // Counts events after the queue offset saved by PostgresGeneralEdgeEventsDispatcher, with the same bounds as GeneralEdgeEventFetcher.
+    // Right after seq_id starts a new cycle, newer events have lower seq ids and are not counted until the session catches up.
+    private Optional<Long> getPendingEdgeEventsCount(TenantId tenantId, EdgeId edgeId) {
+        try {
+            List<AttributeKvEntry> offset = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE,
+                    List.of(DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY, DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY)).get();
+            long queueStartTs = 0L;
+            long queueStartSeqId = 0L;
+            for (AttributeKvEntry entry : offset) {
+                long value = entry.getLongValue().orElse(0L);
+                if (DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY.equals(entry.getKey())) {
+                    queueStartTs = value;
+                } else if (DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY.equals(entry.getKey())) {
+                    queueStartSeqId = value;
+                }
+            }
+            long startTime = queueStartTs > 0 ? queueStartTs - misorderingCompensationMillis : 0L;
+            return Optional.of(edgeEventService.countEdgeEvents(tenantId, edgeId, queueStartSeqId, startTime, maxLagCount));
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to count pending edge events", tenantId, edgeId, e);
+            return Optional.empty();
+        }
     }
 
     private void saveTs(TenantId tenantId, EdgeId edgeId, List<TsKvEntry> statsEntries) {

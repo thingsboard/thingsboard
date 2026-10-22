@@ -15,6 +15,8 @@ public interface EdgeEventService {
 
     PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink);
 
+    long countEdgeEvents(TenantId tenantId, EdgeId edgeId, long seqIdStart, long startTime, int limit);
+
     void cleanupEvents(long ttl);
 
 }

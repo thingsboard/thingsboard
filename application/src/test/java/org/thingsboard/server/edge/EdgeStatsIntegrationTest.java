@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
@@ -64,6 +65,8 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
             assertEquals(EXPECTED_MSGS_PUSHED, counters.getMsgsPushed().get());
             assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, counters.getMsgsPermanentlyFailed().get());
             assertEquals(EXPECTED_MSGS_TMP_FAILED, counters.getMsgsTmpFailed().get());
+            // all events are delivered, so the lag measured by the session is reset to 0 after the last page
+            assertEquals(0L, counters.getMsgsLag().get());
         });
 
         // WHEN
@@ -76,6 +79,7 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
             assertEquals(EXPECTED_MSGS_PUSHED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PUSHED));
             assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PERMANENTLY_FAILED));
             assertEquals(EXPECTED_MSGS_TMP_FAILED, getStatsLongValue(actualStats, DOWNLINK_MSGS_TMP_FAILED));
+            assertEquals(0L, getStatsLongValue(actualStats, DOWNLINK_MSGS_LAG));
         });
     }
 
