@@ -74,7 +74,7 @@ class RedisTraceBufferImplTest extends AbstractTraceBufferTest {
             buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one")));
         }
 
-        List<String> traceKeys = buffer.findExpiredTraceKeys(farFuture());
+        List<String> traceKeys = traceHashKeys();
         assertThat(traceKeys).hasSize(traceCount);
         for (String traceKey : traceKeys) {
             String hashTag = traceKey.substring(traceKey.indexOf('{'), traceKey.indexOf('}') + 1);
@@ -115,7 +115,7 @@ class RedisTraceBufferImplTest extends AbstractTraceBufferTest {
         TraceBuffer buffer = createBuffer(10, TTL_MS);
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one")));
 
-        List<String> keys = buffer.findExpiredTraceKeys(farFuture());
+        List<String> keys = traceHashKeys();
         assertThat(keys).hasSize(1);
         assertThat(pttl(keys.get(0)))
                 .as("a new trace hash must carry the configured expiry")
@@ -129,7 +129,7 @@ class RedisTraceBufferImplTest extends AbstractTraceBufferTest {
         String traceId = randomTraceId();
 
         buffer.append(List.of(span(tenantId, traceId, "span-1", null, "one")));
-        String traceKey = buffer.findExpiredTraceKeys(farFuture()).get(0);
+        String traceKey = traceHashKeys().get(0);
         long afterCreate = pttl(traceKey);
 
         Thread.sleep(1200);
@@ -139,6 +139,15 @@ class RedisTraceBufferImplTest extends AbstractTraceBufferTest {
         assertThat(afterSecondAppend)
                 .as("expiry must keep counting down, not restart at %d ms", KEY_TTL_MS)
                 .isLessThan(afterCreate - 1000);
+    }
+
+    // The trace hashes ("trace:{trace-pN}:<tenant>:<trace>"), read straight from Redis.
+    private static List<String> traceHashKeys() {
+        try (RedisConnection connection = connectionFactory.getConnection()) {
+            return connection.keyCommands().keys("trace:{*}:*".getBytes(StandardCharsets.UTF_8)).stream()
+                    .map(key -> new String(key, StandardCharsets.UTF_8))
+                    .toList();
+        }
     }
 
     private static long pttl(String key) {

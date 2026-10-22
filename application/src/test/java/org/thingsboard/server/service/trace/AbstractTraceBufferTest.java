@@ -103,10 +103,6 @@ public abstract class AbstractTraceBufferTest {
                 .mapToObj(i -> span(tenantId, traceId, "span-" + i, null, "n" + i))
                 .collect(Collectors.toList()));
 
-        BufferedTrace trace = onlyTrace(buffer);
-        assertThat(trace.spans()).hasSize(cap);
-        assertThat(trace.truncated()).isTrue();
-
         buffer.append(List.of(span(tenantId, traceId, "late-span", null, "late")));
 
         BufferedTrace afterLateAppend = onlyTrace(buffer);
@@ -120,17 +116,21 @@ public abstract class AbstractTraceBufferTest {
         int cap = 4;
         TraceBuffer buffer = createBuffer(cap, TTL_MS);
         UUID tenantId = UUID.randomUUID();
-        String traceId = randomTraceId();
+        String belowCapTraceId = randomTraceId();
+        String atCapTraceId = randomTraceId();
 
         buffer.append(IntStream.range(0, cap - 1)
-                .mapToObj(i -> span(tenantId, traceId, "span-" + i, null, "n" + i))
+                .mapToObj(i -> span(tenantId, belowCapTraceId, "span-" + i, null, "n" + i))
                 .collect(Collectors.toList()));
-        assertThat(onlyTrace(buffer).truncated()).isFalse();
+        buffer.append(IntStream.range(0, cap)
+                .mapToObj(i -> span(tenantId, atCapTraceId, "span-" + i, null, "n" + i))
+                .collect(Collectors.toList()));
 
-        buffer.append(List.of(span(tenantId, traceId, "span-last", null, "last")));
-        BufferedTrace atCap = onlyTrace(buffer);
-        assertThat(atCap.spans()).hasSize(cap);
-        assertThat(atCap.truncated()).isTrue();
+        Map<String, BufferedTrace> byTraceId = drain(buffer).stream()
+                .collect(Collectors.toMap(t -> t.trace().traceId(), LoadedTrace::trace));
+        assertThat(byTraceId.get(belowCapTraceId).truncated()).isFalse();
+        assertThat(byTraceId.get(atCapTraceId).spans()).hasSize(cap);
+        assertThat(byTraceId.get(atCapTraceId).truncated()).isTrue();
     }
 
     @Test
@@ -139,8 +139,8 @@ public abstract class AbstractTraceBufferTest {
         long beforeAppend = System.currentTimeMillis();
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one")));
 
-        assertThat(buffer.findExpiredTraceKeys(beforeAppend)).isEmpty();
-        assertThat(buffer.findExpiredTraceKeys(System.currentTimeMillis() + TTL_MS * 2)).hasSize(1);
+        assertThat(buffer.drainExpired(beforeAppend, Integer.MAX_VALUE)).isEmpty();
+        assertThat(buffer.drainExpired(System.currentTimeMillis() + TTL_MS * 2, Integer.MAX_VALUE)).hasSize(1);
     }
 
     @Test
@@ -156,37 +156,17 @@ public abstract class AbstractTraceBufferTest {
         Thread.sleep(50);
         buffer.append(List.of(span(tenantId, traceId, "span-2", "span-1", "two")));
 
-        assertThat(buffer.findExpiredTraceKeys(deadlineAfterFirstSpan)).isEmpty();
-        assertThat(buffer.findExpiredTraceKeys(System.currentTimeMillis() + ttlMs * 2)).hasSize(1);
+        assertThat(buffer.drainExpired(deadlineAfterFirstSpan, Integer.MAX_VALUE)).isEmpty();
+        assertThat(buffer.drainExpired(System.currentTimeMillis() + ttlMs * 2, Integer.MAX_VALUE)).hasSize(1);
     }
 
     @Test
-    void removedTraceIsNeitherLoadableNorExpired() {
+    void drainedTraceIsNotDrainedAgain() {
         TraceBuffer buffer = createBuffer(10, TTL_MS);
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one")));
-        List<String> keys = buffer.findExpiredTraceKeys(farFuture());
-        assertThat(keys).hasSize(1);
 
-        buffer.remove(keys);
-
-        assertThat(buffer.load(keys)).isEmpty();
-        assertThat(buffer.findExpiredTraceKeys(farFuture())).isEmpty();
-    }
-
-    @Test
-    void loadSkipsVanishedKeysAndStillReturnsTheRest() {
-        TraceBuffer buffer = createBuffer(10, TTL_MS);
-        buffer.append(List.of(
-                span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one"),
-                span(UUID.randomUUID(), randomTraceId(), "span-2", null, "two")));
-        List<String> keys = buffer.findExpiredTraceKeys(farFuture());
-        assertThat(keys).hasSize(2);
-
-        buffer.remove(List.of(keys.get(0)));
-
-        List<LoadedTrace> loaded = buffer.load(keys);
-        assertThat(loaded).hasSize(1);
-        assertThat(loaded.get(0).bufferKey()).isEqualTo(keys.get(1));
+        assertThat(drain(buffer)).hasSize(1);
+        assertThat(drain(buffer)).isEmpty();
     }
 
     @Test
@@ -223,7 +203,6 @@ public abstract class AbstractTraceBufferTest {
         assertThat(drained).allSatisfy(t -> assertThat(spanIds(t.trace())).containsExactlyInAnyOrder("span-1", "span-2"));
 
         assertThat(buffer.drainExpired(farFuture(), 1000)).isEmpty();
-        assertThat(buffer.findExpiredTraceKeys(farFuture())).isEmpty();
     }
 
     @Test
@@ -234,7 +213,6 @@ public abstract class AbstractTraceBufferTest {
 
         assertThat(buffer.drainExpired(beforeAppend, 1000)).isEmpty();
 
-        assertThat(buffer.findExpiredTraceKeys(farFuture())).hasSize(1);
         assertThat(buffer.drainExpired(farFuture(), 1000)).hasSize(1);
     }
 
@@ -290,18 +268,22 @@ public abstract class AbstractTraceBufferTest {
         TraceBuffer buffer = createBuffer(10, TTL_MS);
 
         buffer.append(List.of());
-        buffer.remove(List.of());
 
-        assertThat(buffer.load(List.of())).isEmpty();
-        assertThat(buffer.findExpiredTraceKeys(farFuture())).isEmpty();
+        assertThat(drain(buffer)).isEmpty();
     }
 
     protected static long farFuture() {
         return System.currentTimeMillis() + TTL_MS * 10;
     }
 
+    // As the aggregation job does: one call returns one batch (for Redis, one partition), so call until nothing is left.
     protected static List<LoadedTrace> drain(TraceBuffer buffer) {
-        return buffer.load(buffer.findExpiredTraceKeys(farFuture()));
+        List<LoadedTrace> drained = new ArrayList<>();
+        List<LoadedTrace> batch;
+        while (!(batch = buffer.drainExpired(farFuture(), Integer.MAX_VALUE)).isEmpty()) {
+            drained.addAll(batch);
+        }
+        return drained;
     }
 
     protected static BufferedTrace onlyTrace(TraceBuffer buffer) {

@@ -10,11 +10,5 @@ public interface TraceBuffer {
 
     List<LoadedTrace> drainExpired(long now, int maxSpans);
 
-    List<String> findExpiredTraceKeys(long now);
-
-    List<LoadedTrace> load(Collection<String> traceKeys);
-
-    void remove(Collection<String> traceKeys);
-
     boolean isShared();
 }

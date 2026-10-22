@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -309,69 +308,6 @@ public class RedisTraceBufferImpl implements TraceBuffer {
     }
 
     @Override
-    public List<String> findExpiredTraceKeys(long now) {
-        List<String> expired = new ArrayList<>();
-        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            for (int partition = 0; partition < TRACE_PARTITION_COUNT; partition++) {
-                String deadlineKey = deadlinesKey(partition);
-                expired.addAll(getDeadlinedTraceKeys(connection, partition, deadlineKey, now));
-            }
-        }
-        return expired;
-    }
-
-    @Override
-    public List<LoadedTrace> load(Collection<String> traceKeys) {
-        List<LoadedTrace> loaded = new ArrayList<>();
-        if (CollectionUtils.isEmpty(traceKeys)) {
-            return loaded;
-        }
-        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            for (String traceKey : traceKeys) {
-                try {
-                    Map<byte[], byte[]> hash = connection.hashCommands().hGetAll(raw(traceKey));
-                    if (hash == null || hash.isEmpty()) {
-                        continue;
-                    }
-                    Map<String, String> fields = new HashMap<>(hash.size());
-                    hash.forEach((field, value) -> fields.put(
-                            new String(field, StandardCharsets.UTF_8), new String(value, StandardCharsets.UTF_8)));
-                    loaded.add(toLoadedTrace(traceKey, fields));
-                } catch (Exception e) {
-                    log.warn("Failed to read trace hash [{}]", traceKey, e);
-                }
-            }
-        }
-        return loaded;
-    }
-
-    @Override
-    public void remove(Collection<String> traceKeys) {
-        if (CollectionUtils.isEmpty(traceKeys)) {
-            return;
-        }
-        Map<Integer, List<String>> tracesByPartition = traceKeys.stream()
-                .collect(Collectors.groupingBy(RedisTraceBufferImpl::traceKeyPartition));
-        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            tracesByPartition.forEach((partition, keys) -> {
-                try {
-                    byte[][] hashKeys = keys.stream()
-                            .map(RedisTraceBufferImpl::raw)
-                            .toArray(byte[][]::new);
-                    connection.keyCommands().del(hashKeys);
-
-                    byte[][] members = keys.stream()
-                            .map(key -> raw(key.substring(traceKeyPrefix(partition).length())))
-                            .toArray(byte[][]::new);
-                    connection.zSetCommands().zRem(raw(deadlinesKey(partition)), members);
-                } catch (Exception e) {
-                    log.warn("Failed to remove {} traces for partition [{}]", keys.size(), partition, e);
-                }
-            });
-        }
-    }
-
-    @Override
     public boolean isShared() {
         return true;
     }
@@ -404,24 +340,6 @@ public class RedisTraceBufferImpl implements TraceBuffer {
 
     private static String str(Object value) {
         return value instanceof byte[] bytes ? new String(bytes, StandardCharsets.UTF_8) : String.valueOf(value);
-    }
-
-    private Set<String> getDeadlinedTraceKeys(RedisConnection connection, int partition, String deadlineKey, long now) {
-        try {
-            Set<byte[]> members = connection.zSetCommands()
-                    .zRangeByScore(raw(deadlineKey), Double.NEGATIVE_INFINITY, now);
-            if (CollectionUtils.isEmpty(members)) {
-                return Set.of();
-            }
-            Set<String> result = new HashSet<>(members.size());
-            for (byte[] member : members) {
-                result.add(traceKeyPrefix(partition) + new String(member, StandardCharsets.UTF_8));
-            }
-            return result;
-        } catch (Exception e) {
-            log.warn("Failed to read deadlined traces from [{}]", deadlineKey, e);
-            return Set.of();
-        }
     }
 
     private Long executeTraceScript(RedisConnection connection, byte[][] keysAndArgs) {
@@ -490,12 +408,6 @@ public class RedisTraceBufferImpl implements TraceBuffer {
         UUID tenantId = UUID.fromString(identity.substring(0, sep));
         String traceId = identity.substring(sep + 1);
         return new RedisTraceKey(tenantId, traceId);
-    }
-
-    // Inverse of traceKeyPrefix(partition): the N in "trace:{trace-pN}:<member>".
-    private static int traceKeyPartition(String traceKey) {
-        int start = traceKey.indexOf(PARTITION_TAG) + PARTITION_TAG.length();
-        return Integer.parseInt(traceKey.substring(start, traceKey.indexOf('}', start)));
     }
 
     private static byte[] raw(String value) {

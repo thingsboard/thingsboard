@@ -122,7 +122,7 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
 
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isEqualTo(500);
 
-        List<BufferedSpan> buffered = buffer.load(buffer.findExpiredTraceKeys(farFuture())).stream()
+        List<BufferedSpan> buffered = drain(buffer).stream()
                 .flatMap(loaded -> loaded.trace().spans().stream())
                 .collect(Collectors.toList());
         assertThat(buffered).hasSize(maxBufferedSpans);
@@ -141,32 +141,30 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "rejected", null, "n2")));
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isEqualTo(1);
 
-        buffer.remove(buffer.findExpiredTraceKeys(farFuture()));
+        drain(buffer);
 
         UUID tenantId = UUID.randomUUID();
         String traceId = randomTraceId();
         buffer.append(List.of(span(tenantId, traceId, "fresh", null, "fresh")));
-        assertThat(buffer.load(buffer.findExpiredTraceKeys(farFuture())).stream()
+        assertThat(drain(buffer).stream()
                 .flatMap(loaded -> loaded.trace().spans().stream())
                 .map(BufferedSpan::getSpanId)).containsExactly("fresh");
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isEqualTo(1);
     }
 
     @Test
-    void aRejectedAppendDoesNotPushTheTraceDeadlineOut() {
+    void aRejectedAppendDoesNotPushTheTraceDeadlineOut() throws InterruptedException {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
         TraceBuffer buffer = new CaffeineTraceBuffer(10, 1L, 1L, statsFactory(registry));
         UUID tenantId = UUID.randomUUID();
         String traceId = randomTraceId();
         buffer.append(List.of(span(tenantId, traceId, "span-0", null, "n0")));
-
-        await().pollDelay(50, TimeUnit.MILLISECONDS).timeout(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(buffer.findExpiredTraceKeys(System.currentTimeMillis())).hasSize(1));
+        Thread.sleep(50); // well past the 1 ms deadline
 
         buffer.append(List.of(span(tenantId, traceId, "span-1", null, "n1")));
 
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isEqualTo(1);
-        assertThat(buffer.findExpiredTraceKeys(System.currentTimeMillis())).hasSize(1);
+        assertThat(buffer.drainExpired(System.currentTimeMillis(), Integer.MAX_VALUE)).hasSize(1);
     }
 
     @Test
@@ -177,22 +175,19 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
 
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "never-admitted", null, "n1")));
 
-        assertThat(buffer.findExpiredTraceKeys(farFuture())).hasSize(1);
         assertThat(onlyTrace(buffer).spans()).extracting(BufferedSpan::getSpanId).containsExactly("span-0");
     }
 
     @Test
-    void traceNothingDrainsIsKeptUntilItIsDrained() {
+    void traceNothingDrainsIsKeptUntilItIsDrained() throws InterruptedException {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
 
         TraceBuffer buffer = new CaffeineTraceBuffer(10, 1L, UNLIMITED_SPANS, statsFactory(registry));
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one")));
 
-        await().pollDelay(200, TimeUnit.MILLISECONDS).timeout(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertThat(buffer.findExpiredTraceKeys(farFuture())).hasSize(1));
+        Thread.sleep(200); // well past the 1 ms deadline: nothing but a drain may take the trace out
 
-        List<String> keys = buffer.findExpiredTraceKeys(farFuture());
-        assertThat(buffer.load(keys)).hasSize(1);
+        assertThat(drain(buffer)).hasSize(1);
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isZero();
     }
 
@@ -217,9 +212,7 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
         TraceBuffer buffer = new CaffeineTraceBuffer(10, TTL_MS, UNLIMITED_SPANS, statsFactory(registry));
         buffer.append(List.of(span(UUID.randomUUID(), randomTraceId(), "span-1", null, "one")));
 
-        List<String> keys = buffer.findExpiredTraceKeys(farFuture());
-        buffer.load(keys);
-        buffer.remove(keys);
+        assertThat(drain(buffer)).hasSize(1);
 
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isZero();
     }

@@ -120,49 +120,6 @@ public class CaffeineTraceBuffer implements TraceBuffer {
     }
 
     @Override
-    public List<String> findExpiredTraceKeys(long now) {
-        List<String> expired = new ArrayList<>();
-        traces.asMap().forEach((key, entry) -> {
-            if (entry.deadline() <= now) {
-                expired.add(key);
-            }
-        });
-        return expired;
-    }
-
-    @Override
-    public List<LoadedTrace> load(Collection<String> traceKeys) {
-        List<LoadedTrace> loaded = new ArrayList<>();
-        if (CollectionUtils.isEmpty(traceKeys)) {
-            return loaded;
-        }
-        for (String traceKey : traceKeys) {
-            try {
-                BufferedTraceEntry entry = traces.getIfPresent(traceKey);
-                if (entry == null) {
-                    continue;
-                }
-
-                TraceSnapshot snapshot = entry.snapshot();
-                TraceIdentity identity = parseTraceIdentity(traceKey);
-                loaded.add(new LoadedTrace(traceKey, new BufferedTrace(identity.tenantId(), identity.traceId(),
-                        snapshot.truncated(), snapshot.spans())));
-            } catch (Exception e) {
-                log.warn("Failed to read buffered trace [{}]", traceKey, e);
-            }
-        }
-        return loaded;
-    }
-
-    @Override
-    public void remove(Collection<String> traceKeys) {
-        if (CollectionUtils.isEmpty(traceKeys)) {
-            return;
-        }
-        traces.invalidateAll(traceKeys);
-    }
-
-    @Override
     public boolean isShared() {
         return false;
     }
