@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -79,7 +80,7 @@ public class TbResourceApiClientTest extends AbstractApiClientTest {
         PageDataTbResourceInfo jsResources = client.getResources(GetResourcesArgs.builder()
                 .pageSize(100)
                 .page(0)
-                .resourceType(ResourceType.JS_MODULE.getValue())
+                .resourceType(Set.of(ResourceType.JS_MODULE))
                 .textSearch(TEST_PREFIX + "Resource_" + timestamp)
                 .build());
         assertEquals(5, jsResources.getData().size());
