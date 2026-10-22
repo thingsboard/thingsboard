@@ -110,12 +110,15 @@ const isLoopbackHost = (host: string): boolean => {
   return h === 'localhost' || h === '::1' || h === '0.0.0.0' || /^127(\.\d{1,3}){3}$/.test(h);
 };
 
+// Host name, IPv4 or IPv6 characters only: the value goes into C string literals and JSON templates.
+const HOST_PATTERN = /^[a-z\d._:-]+$/i;
+
 const transportHostValidator = (control: AbstractControl): ValidationErrors | null => {
   if (!control.value) {
     return null;
   }
   const host = toBareHost(control.value);
-  return !host || /\s/.test(host) || isLoopbackHost(host) ? { pattern: true } : null;
+  return !HOST_PATTERN.test(host) || isLoopbackHost(host) ? { pattern: true } : null;
 };
 
 const isValidPort = (port: number): boolean => Number.isInteger(port) && port >= 1 && port <= 65535;
@@ -396,6 +399,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
       const ws = this.wizardSteps[i];
       if (ws.type === 'form') {
+        // Keep the bare host, so the stored state and the form after Back show what the device gets
+        const hostControl = ws.formGroup.get(TRANSPORT_HOST_FIELD_KEY);
+        if (hostControl?.enabled && hostControl.value) {
+          hostControl.setValue(toBareHost(hostControl.value), { emitEvent: false });
+        }
         Object.assign(this.formValues, ws.formGroup.getRawValue());
         formValuesChanged = true;
       }
@@ -847,7 +855,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   private initFormStep(ws: WizardStep): void {
     const formJson = (ws.rawSteps[0] && this.zipFiles.get(ws.rawSteps[0].file)) || '[]';
-    ws.formFields = [...JSON.parse(formJson) as FormFieldDefinition[], ...(ws.extraFormFields ?? [])];
+    // readOnly, helpPopupId and row are for the fields the dialog adds; a package can't set them
+    const packageFields = (JSON.parse(formJson) as FormFieldDefinition[])
+      .map(({ readOnly, helpPopupId, row, ...field }) => field);
+    ws.formFields = [...packageFields, ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
     // In review mode, use stored values; otherwise use defaults
     const storedValues = this.reviewMode && this.data.installState?.[ws.stateKey ?? ws.label]?.formValues;

@@ -198,7 +198,7 @@
 
         @for (ws of wizardSteps; track ws.label) {
           <mat-step [editable]="true"
-                    [completed]="ws.completed"
+                    [completed]="ws.completed && !ws.formGroup?.invalid"
                     [stepControl]="ws.type === 'form' ? ws.formGroup : null">
             <ng-template matStepLabel>{{ ws.label }}</ng-template>
             <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>

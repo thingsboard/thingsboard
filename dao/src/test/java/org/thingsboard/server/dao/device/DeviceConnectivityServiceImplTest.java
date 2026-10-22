@@ -33,11 +33,11 @@ class DeviceConnectivityServiceImplTest {
     @Test
     void configuredHostIsReportedAsDeviceConnectivity() throws Exception {
         givenConnectivity("""
-                {"mqtt": {"enabled": true, "host": "mqtt.example.com", "port": "1884"}}""");
+                {"mqtt": {"enabled": true, "host": "10.0.0.5", "port": "1884"}}""");
 
         JsonNode mqtt = service.getConnectivityInfo(BASE_URL, DeviceConnectivityHostSource.REQUEST).get("mqtt");
 
-        assertThat(mqtt.get("host").asText()).isEqualTo("mqtt.example.com");
+        assertThat(mqtt.get("host").asText()).isEqualTo("10.0.0.5");
         assertThat(mqtt.get("port").asText()).isEqualTo("1884");
         assertThat(mqtt.get("hostSource").asText()).isEqualTo("DEVICE_CONNECTIVITY");
     }
