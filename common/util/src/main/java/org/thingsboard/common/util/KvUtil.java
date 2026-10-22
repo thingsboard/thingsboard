@@ -2,12 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.common.util;
 
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class KvUtil {
 
@@ -107,111 +102,6 @@ public class KvUtil {
             default:
                 return null;
         }
-    }
-
-    public static String getStringValue(Map<String, ? extends KvEntry> entries, String key, String defaultValue) {
-        KvEntry entry = entries.get(key);
-        if (entry == null) {
-            return defaultValue;
-        }
-        return entry.getStrValue()
-                .orElseGet(() -> entry.getJsonValue().orElse(entry.getValueAsString()));
-    }
-
-    public static Boolean getBoolValue(Map<String, ? extends KvEntry> entries, String key, Boolean defaultValue) {
-        KvEntry entry = entries.get(key);
-        if (entry == null) {
-            return defaultValue;
-        }
-        return entry.getBooleanValue()
-                .orElseGet(() -> {
-                    String strValue = entry.getStrValue().orElse(null);
-                    if (strValue != null) {
-                        return Boolean.parseBoolean(strValue);
-                    }
-                    return defaultValue;
-                });
-    }
-
-    public static Integer getIntValue(Map<String, ? extends KvEntry> entries, String key, Integer defaultValue) {
-        KvEntry entry = entries.get(key);
-        if (entry == null) {
-            return defaultValue;
-        }
-        Long longValue = entry.getLongValue().orElse(null);
-        if (longValue != null) {
-            return longValue.intValue();
-        }
-        Double doubleValue = entry.getDoubleValue().orElse(null);
-        if (doubleValue != null) {
-            return doubleValue.intValue();
-        }
-        String strValue = entry.getStrValue().orElse(null);
-        if (strValue != null) {
-            try {
-                return Integer.parseInt(strValue);
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
-    }
-
-    public static Double getDoubleValue(Map<String, ? extends KvEntry> entries, String key, Double defaultValue) {
-        KvEntry entry = entries.get(key);
-        if (entry == null) {
-            return defaultValue;
-        }
-        Double doubleValue = entry.getDoubleValue().orElse(null);
-        if (doubleValue != null) {
-            return doubleValue;
-        }
-        Long longValue = entry.getLongValue().orElse(null);
-        if (longValue != null) {
-            return longValue.doubleValue();
-        }
-        String strValue = entry.getStrValue().orElse(null);
-        if (strValue != null) {
-            try {
-                return Double.parseDouble(strValue);
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
-    }
-
-    public static Long getLongValue(Map<String, ? extends KvEntry> entries, String key, Long defaultValue) {
-        KvEntry entry = entries.get(key);
-        if (entry == null) {
-            return defaultValue;
-        }
-        Long longValue = entry.getLongValue().orElse(null);
-        if (longValue != null) {
-            return longValue;
-        }
-        Double doubleValue = entry.getDoubleValue().orElse(null);
-        if (doubleValue != null) {
-            return doubleValue.longValue();
-        }
-        String strValue = entry.getStrValue().orElse(null);
-        if (strValue != null) {
-            try {
-                return Long.parseLong(strValue);
-            } catch (NumberFormatException e) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
-    }
-
-    public static Map<String, AttributeKvEntry> toAttrMap(List<AttributeKvEntry> attributes) {
-        return attributes.stream()
-                .collect(Collectors.toMap(
-                        AttributeKvEntry::getKey,
-                        entry -> entry,
-                        (existing, replacement) -> existing
-                ));
     }
 
 }
