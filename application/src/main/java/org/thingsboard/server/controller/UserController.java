@@ -102,7 +102,6 @@ import static org.thingsboard.server.controller.ControllerConstants.RBAC_WRITE_C
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
@@ -334,8 +333,9 @@ public class UserController extends BaseController {
             notes = "Generate and return a password reset link for the specified user. " +
                     "Reuses the currently valid reset token, regenerating it only when it is about to expire. " +
                     "Available only for users that are already activated and whose account is enabled. " +
-                    "The base url for the link is configurable in the general settings of system administrator. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    "The base url for the link is taken from the login white labeling settings of the user's customer or tenant, " +
+                    "or from the general settings of system administrator. " + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/{userId}/passwordResetLink", produces = "text/plain")
     public String getPasswordResetLink(@Parameter(description = USER_ID_PARAM_DESCRIPTION)
                                        @PathVariable(USER_ID) String strUserId,
@@ -347,17 +347,20 @@ public class UserController extends BaseController {
             notes = "Generate and return a password reset link info for the specified user. " +
                     "Reuses the currently valid reset token, regenerating it only when it is about to expire. " +
                     "Available only for users that are already activated and whose account is enabled. " +
-                    "The base url for the link is configurable in the general settings of system administrator. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+                    "The base url for the link is taken from the login white labeling settings of the user's customer or tenant, " +
+                    "or from the general settings of system administrator. " + SYSTEM_OR_TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/user/{userId}/passwordResetLinkInfo")
     public UserPasswordResetLink getPasswordResetLinkInfo(@Parameter(description = USER_ID_PARAM_DESCRIPTION)
                                                           @PathVariable(USER_ID) String strUserId,
                                                           HttpServletRequest request) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         UserId userId = new UserId(toUUID(strUserId));
-        checkUserId(userId, Operation.WRITE_CREDENTIALS);
-        SecurityUser securityUser = getCurrentUser();
-        return tbUserService.getPasswordResetLink(securityUser.getTenantId(), securityUser.getCustomerId(), userId, request, securityUser);
+        User user = checkUserId(userId, Operation.WRITE);
+        if (getCurrentUser().getId().equals(userId)) {
+            throw new ThingsboardException("Use change password to update your own password", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
+        return tbUserService.getPasswordResetLink(user, request);
     }
 
     @ApiOperation(value = "Delete User (deleteUser)",
