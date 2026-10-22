@@ -8,3 +8,5 @@ The device connects to ThingsBoard over MQTT. Enter an address the device can re
 * **MQTT on a separate host:** enter that host. It can differ from the web UI address.
 
 Don't use `localhost` or `127.0.0.1`: on the device they mean the device itself.
+
+**Port.** MQTT usually listens on port `1883`. If the transport uses another port, or the port is forwarded (Docker, load balancer), enter the port the device connects to.
