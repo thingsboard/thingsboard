@@ -35,7 +35,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +61,13 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public static final String DEFAULT_DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
     public static final String HTTP_DEFAULT_PORT = "80";
     public static final String HTTPS_DEFAULT_PORT = "443";
+    private static final Map<String, String> STANDARD_PORTS = Map.of(
+            HTTP, HTTP_DEFAULT_PORT,
+            HTTPS, HTTPS_DEFAULT_PORT,
+            MQTT, "1883",
+            MQTTS, "8883",
+            COAP, "5683",
+            COAPS, "5684");
 
     private final Map<String, Resource> certs = new ConcurrentHashMap<>();
 
@@ -171,20 +177,22 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     }
 
     @Override
-    public JsonNode getConnectivityInfo(String baseUrl) throws URISyntaxException {
+    public JsonNode getConnectivityInfo(String baseUrl, DeviceConnectivityHostSource baseUrlSource) throws URISyntaxException {
         String[] protocols = {HTTP, HTTPS, MQTT, MQTTS, COAP, COAPS};
-        Map<String, DeviceConnectivityInfo> result = new LinkedHashMap<>();
+        ObjectNode result = JacksonUtil.newObjectNode();
         for (String protocol : protocols) {
             DeviceConnectivityInfo info = getConnectivity(protocol);
             if (info != null && info.isEnabled()) {
-                DeviceConnectivityInfo resolved = new DeviceConnectivityInfo();
-                resolved.setEnabled(true);
-                resolved.setHost(getHost(baseUrl, info, protocol));
-                resolved.setPort(getPort(info));
-                result.put(protocol, resolved);
+                // hostSource is part of the response only; DeviceConnectivityInfo models the stored settings
+                ObjectNode resolved = result.putObject(protocol);
+                resolved.put("enabled", true);
+                resolved.put("host", getHost(baseUrl, info, protocol));
+                resolved.put("port", StringUtils.isBlank(info.getPort()) ? STANDARD_PORTS.get(protocol) : info.getPort());
+                resolved.put("hostSource", (StringUtils.isNotBlank(info.getHost())
+                        ? DeviceConnectivityHostSource.DEVICE_CONNECTIVITY : baseUrlSource).name());
             }
         }
-        return JacksonUtil.valueToTree(result);
+        return result;
     }
 
     private Resource getCert(String path) {
