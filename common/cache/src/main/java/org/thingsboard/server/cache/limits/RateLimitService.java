@@ -15,8 +15,6 @@ public interface RateLimitService {
 
     boolean checkRateLimit(LimitedApi api, Object level, String rateLimitConfig);
 
-    boolean checkRateLimitAvailability(LimitedApi api, TenantId tenantId);
-
     void cleanUp(LimitedApi api, Object level);
 
 }
