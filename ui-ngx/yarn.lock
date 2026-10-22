@@ -8041,10 +8041,10 @@ mlly@^1.7.4, mlly@^1.8.0:
     pkg-types "^1.3.1"
     ufo "^1.6.3"
 
-moment-timezone@^0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.6.0.tgz#c5a6519171f31a64739ea75d33f5c136c08ff608"
-  integrity sha512-ldA5lRNm3iJCWZcBCab4pnNL3HSZYXVb/3TYr75/1WCTWYuTqYUb5f/S384pncYjJ88lbO8Z4uPDvmoluHJc8Q==
+moment-timezone@^0.6.5:
+  version "0.6.5"
+  resolved "https://registry.yarnpkg.com/moment-timezone/-/moment-timezone-0.6.5.tgz#a8153ebe88199bd76f2d2ce329eb1d568eafbdee"
+  integrity sha512-KKzZAxGv2Qx4cnk6eSlvf4C+DLFW52vmMY5MN7UARY7GONbozkutylQG3DrrtmLCTXdQ5XZrqao9cI16bLFzXA==
   dependencies:
     moment "^2.29.4"
 

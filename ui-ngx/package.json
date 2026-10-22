@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "4.2.2.6",
+  "version": "4.2.2.7",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
@@ -68,7 +68,7 @@
     "maplibre-gl": "6.11.2",
     "marked": "~16.4.2",
     "moment": "^2.31.0",
-    "moment-timezone": "^0.6.0",
+    "moment-timezone": "^0.6.5",
     "ngx-clipboard": "^16.0.0",
     "ngx-daterangepicker-material": "^6.0.4",
     "ngx-drag-drop": "^20.0.1",

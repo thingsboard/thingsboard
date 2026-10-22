@@ -220,36 +220,14 @@
     0 114px 46px 0 rgba(0, 0, 0, 0.01),
     0 178px 50px 0 rgba(0, 0, 0, 0);
 
-  // Section group — 12px gap between groups
-  .mat-mdc-optgroup + .mat-mdc-optgroup .mat-mdc-optgroup-label {
-    margin-top: 12px;
-  }
-
-  // Section title — Design: 14px Medium, 0.25 tracking, black-tertiary, 4px V / 16px H
-  .mat-mdc-optgroup .mat-mdc-optgroup-label {
-    padding: 4px 16px;
-    min-height: 28px;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
-    letter-spacing: 0.25px;
-    color: rgba(0, 0, 0, 0.54);
-    white-space: nowrap;
-
+  // Shared by every row; each row kind below is selected by its own class.
+  .mat-mdc-option {
     .mdc-list-item__primary-text {
-      font-size: 14px;
-      font-weight: 500;
-      line-height: 20px;
-      letter-spacing: 0.25px;
-      color: rgba(0, 0, 0, 0.54);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
     }
-  }
-
-  // Item row — Design: 8px V / 16px H, 16px gap, centered
-  .mat-mdc-optgroup .mat-mdc-option:not(.mat-mdc-option-multiple) {
-    padding: 8px 16px;
-    min-height: auto;
-    height: auto;
 
     &:hover:not(.mdc-list-item--disabled),
     &.mat-mdc-option-active:not(.mdc-list-item--disabled) {
@@ -259,13 +237,13 @@
     .mat-icon, tb-icon {
       margin-right: 0;
     }
+  }
 
-    .mdc-list-item__primary-text {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-    }
+  // Item row — Design: 8px V / 16px H, 16px gap, centered
+  .mat-mdc-option.tb-search-popup-item {
+    padding: 8px 16px;
+    min-height: auto;
+    height: auto;
   }
 
   // Thumbnail — Design: 99px x 56px, 4px radius, 1px border, 4% bg
@@ -295,11 +273,11 @@
     color: rgba(0, 0, 0, 0.38);
   }
 
-  // Icon square — Design: 56x56, 4.667px radius, colored bg
+  // Icon tile for an item with no screenshot, centred in the thumbnail frame: 36x36, colored bg
   .tb-search-popup-icon-square {
-    width: 56px;
-    height: 56px;
-    border-radius: 4.667px;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -307,9 +285,9 @@
   }
 
   .tb-search-popup-icon-inner {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
     color: white !important;
     --tb-icon-color: white;
   }
@@ -346,12 +324,62 @@
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.54);
     white-space: nowrap;
+    min-width: 0;
 
     mat-icon {
+      flex-shrink: 0;
       font-size: 16px;
       width: 16px;
       height: 16px;
       margin-right: 0;
+      color: rgba(0, 0, 0, 0.54);
+
+      // Same teal the IoT Hub item cards give a verified creator.
+      &.tb-search-popup-verified {
+        color: #00695c;
+      }
+    }
+  }
+
+  // Shares the meta row with the item type, so a long name is cut rather than overflowing.
+  .tb-search-popup-author-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Meta row: the item type, a middle dot, then the author - "Widget · pinkevych.d".
+  .tb-search-popup-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  // Item type in its colour, darkened so the paler ones stay legible.
+  .tb-search-popup-type {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    color: color-mix(in srgb, var(--tb-search-popup-type-color) 75%, #000);
+    white-space: nowrap;
+
+    tb-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      line-height: 14px;
+      color: inherit;
+    }
+
+    // No author, nothing to separate from.
+    &:not(:last-child)::after {
+      content: '·';
+      font-weight: 700;
       color: rgba(0, 0, 0, 0.54);
     }
   }
@@ -370,6 +398,7 @@
   .tb-search-popup-no-results {
     pointer-events: none;
     opacity: 1 !important;
+    padding: 8px 16px;
   }
 
   .tb-search-popup-no-results-content {
@@ -391,26 +420,31 @@
   }
 
   // Footer — Design: 40px h, 8px V / 16px H, 1px top border, tb-primary text
-  .tb-search-popup-footer {
+  .mat-mdc-option.tb-search-popup-footer {
     position: sticky;
     bottom: 0;
+    z-index: 1;
     border-top: 1px solid rgba(0, 0, 0, 0.12);
     height: 40px;
     min-height: 40px;
     padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
     font-size: 14px;
     font-weight: 500;
     line-height: 20px;
     letter-spacing: 0.25px;
     color: $tb-primary-color;
-    cursor: pointer;
     background: white;
     white-space: nowrap;
 
-    &:hover {
+    .mdc-list-item__primary-text {
+      justify-content: flex-start;
+      font: inherit;
+      letter-spacing: inherit;
+      color: inherit;
+    }
+
+    &:hover:not(.mdc-list-item--disabled),
+    &.mat-mdc-option-active:not(.mdc-list-item--disabled) {
       background: #f5f5f5;
     }
   }
