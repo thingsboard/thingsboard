@@ -141,6 +141,7 @@
     "esbuild": "0.28.1",
     "rollup": "4.59.0",
     "less": ">=4.9.0",
-    "js-beautify/**/minimatch": "^9.0.7"
+    "js-beautify/**/minimatch": "^9.0.7",
+    "@angular/cli/@modelcontextprotocol/sdk": "1.32.1"
   }
 }
