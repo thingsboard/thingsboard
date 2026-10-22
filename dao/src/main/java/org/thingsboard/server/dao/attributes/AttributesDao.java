@@ -28,8 +28,6 @@ public interface AttributesDao {
 
     List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, AttributeScope attributeScope);
 
-    List<AttributeKvEntity> findAll(TenantId tenantId, List<? extends EntityId> entityIds, AttributeScope attributeScope);
-
     ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, AttributeKvEntry attribute);
 
     List<ListenableFuture<String>> removeAll(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, List<String> keys);

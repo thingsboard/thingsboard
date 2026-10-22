@@ -263,17 +263,6 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public List<AttributeKvEntity> findAll(TenantId tenantId, List<? extends EntityId> entityIds, AttributeScope attributeScope) {
-        if (entityIds == null || entityIds.isEmpty()) {
-            return List.of();
-        }
-        List<UUID> uuids = entityIds.stream().map(EntityId::getId).collect(Collectors.toList());
-        List<AttributeKvEntity> attributes = attributeKvRepository.findAllByEntityIdsAndAttributeType(uuids, attributeScope.getId());
-        attributes.forEach(attributeKvEntity -> attributeKvEntity.setStrKey(keyDictionaryDao.getKey(attributeKvEntity.getId().getAttributeKey())));
-        return attributes;
-    }
-
-    @Override
     public List<AttributeKvEntity> findNextBatch(UUID entityId, int attributeType, int attributeKey, int batchSize) {
         return attributeKvRepository.findNextBatch(entityId, attributeType, attributeKey, batchSize);
     }

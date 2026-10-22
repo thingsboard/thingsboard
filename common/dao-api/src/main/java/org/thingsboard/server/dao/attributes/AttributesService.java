@@ -12,9 +12,7 @@ import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface AttributesService {
 
@@ -23,8 +21,6 @@ public interface AttributesService {
     ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, Collection<String> attributeKeys);
 
     ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope);
-
-    ListenableFuture<Map<UUID, List<AttributeKvEntry>>> findAll(TenantId tenantId, List<? extends EntityId> entityIds, AttributeScope scope);
 
     ListenableFuture<AttributesSaveResult> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes);
 

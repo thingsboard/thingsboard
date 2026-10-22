@@ -34,10 +34,8 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.cache.CacheExecutorService;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.citus.CitusSettings;
-import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +47,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.attributes.AttributeUtils.validate;
 
@@ -201,38 +198,6 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         // We can`t watch on cache because the keys are unknown.
         return jpaExecutorService.submit(() -> attributesDao.findAll(tenantId, entityId, scope));
-    }
-
-    @Override
-    public ListenableFuture<Map<UUID, List<AttributeKvEntry>>> findAll(TenantId tenantId, List<? extends EntityId> entityIds, AttributeScope scope) {
-        if (entityIds == null || entityIds.isEmpty()) {
-            return Futures.immediateFuture(Map.of());
-        }
-        entityIds.forEach(entityId -> validate(entityId, scope));
-
-        return jpaExecutorService.submit(() -> {
-            Map<UUID, EntityId> entityIdByUuid = new HashMap<>(entityIds.size());
-            Map<UUID, List<AttributeKvEntry>> result = new HashMap<>(entityIds.size());
-            entityIds.forEach(entityId -> {
-                entityIdByUuid.put(entityId.getId(), entityId);
-                result.put(entityId.getId(), new ArrayList<>());
-            });
-
-            List<AttributeKvEntity> attributes = attributesDao.findAll(tenantId, entityIds, scope);
-            for (AttributeKvEntity attributeEntity : attributes) {
-                AttributeKvEntry attribute = DaoUtil.getData(attributeEntity);
-                if (attribute == null) {
-                    continue;
-                }
-                UUID entityUuid = attributeEntity.getId().getEntityId();
-                result.computeIfAbsent(entityUuid, ignored -> new ArrayList<>()).add(attribute);
-                EntityId entityId = entityIdByUuid.get(entityUuid);
-                if (entityId != null) {
-                    put(entityId, scope, attribute);
-                }
-            }
-            return result;
-        });
     }
 
     @Override

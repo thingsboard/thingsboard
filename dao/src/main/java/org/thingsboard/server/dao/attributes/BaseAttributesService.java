@@ -23,16 +23,12 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.attributes.AttributeUtils.validate;
 
@@ -67,23 +63,6 @@ public class BaseAttributesService implements AttributesService {
     public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope) {
         validate(entityId, scope);
         return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId, scope));
-    }
-
-    @Override
-    public ListenableFuture<Map<UUID, List<AttributeKvEntry>>> findAll(TenantId tenantId, List<? extends EntityId> entityIds, AttributeScope scope) {
-        if (entityIds == null || entityIds.isEmpty()) {
-            return Futures.immediateFuture(Map.of());
-        }
-        entityIds.forEach(entityId -> validate(entityId, scope));
-        Map<UUID, List<AttributeKvEntry>> result = new HashMap<>();
-        entityIds.forEach(entityId -> result.put(entityId.getId(), new ArrayList<>()));
-        attributesDao.findAll(tenantId, entityIds, scope).forEach(attribute -> {
-            AttributeKvEntry data = DaoUtil.getData(attribute);
-            if (data != null) {
-                result.computeIfAbsent(attribute.getId().getEntityId(), ignored -> new ArrayList<>()).add(data);
-            }
-        });
-        return Futures.immediateFuture(result);
     }
 
     @Override
