@@ -139,6 +139,9 @@ CREATE INDEX IF NOT EXISTS idx_notification_request_tenant_id ON notification_re
 CREATE INDEX IF NOT EXISTS idx_notification_request_rule_id_originator_entity_id ON notification_request(rule_id, originator_entity_id)
     WHERE originator_entity_type = 'ALARM';
 
+CREATE INDEX IF NOT EXISTS idx_notification_request_edge_originator_created_time ON notification_request(originator_entity_id, created_time DESC)
+    WHERE originator_entity_type = 'EDGE';
+
 CREATE INDEX IF NOT EXISTS idx_notification_request_status ON notification_request(status)
     WHERE status = 'SCHEDULED';
 

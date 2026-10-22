@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -21,6 +22,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -66,6 +68,11 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public PageData<NotificationRequestInfo> findNotificationRequestsInfosByTenantIdAndOriginatorType(TenantId tenantId, EntityType originatorType, PageLink pageLink) {
         return notificationRequestDao.findInfosByTenantIdAndOriginatorTypeAndPageLink(tenantId, originatorType, pageLink);
+    }
+
+    @Override
+    public PageData<NotificationRequestInfo> findNotificationRequestInfosByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink) {
+        return notificationRequestDao.findInfosByTenantIdAndEdgeIdAndPageLink(tenantId, edgeId, pageLink);
     }
 
     @Override
