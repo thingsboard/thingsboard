@@ -15,19 +15,6 @@
         </encoder>
     </appender>
 
-    <appender name="TRACE_SPANS" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${TB_TRACE_SPANS_LOG:-logs/trace-spans.log}</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${TB_TRACE_SPANS_LOG:-logs/trace-spans.log}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{ISO8601} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients" level="WARN"/>
@@ -69,10 +56,6 @@
     <!--    <logger name="org.thingsboard.server.controller.AiChatController" level="TRACE"/>-->
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF"/>
-
-    <logger name="org.thingsboard.server.service.trace.RedisBufferedPostgresTraceExporter" level="INFO" additivity="false">
-        <appender-ref ref="TRACE_SPANS"/>
-    </logger>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
