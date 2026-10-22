@@ -446,6 +446,11 @@ public class EdgeGrpcSession implements EdgeSession {
                             if (state.isConnected() && pageData.hasNext()) {
                                 fetchAndSendEdgeEvents(fetcher, pageLink.nextPageLink(), result);
                             } else {
+                                if (!pageData.hasNext() && fetcher instanceof GeneralEdgeEventFetcher) {
+                                    // last page is delivered, so nothing is left in the queue until new events arrive
+                                    ctx.getStatsCounterService().ifPresent(statsCounterService ->
+                                            statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_LAG, tenantId, edge.getId(), 0));
+                                }
                                 EdgeEvent latestEdgeEvent = pageData.getData().get(pageData.getData().size() - 1);
                                 UUID idOffset = latestEdgeEvent.getUuidId();
                                 if (idOffset != null) {

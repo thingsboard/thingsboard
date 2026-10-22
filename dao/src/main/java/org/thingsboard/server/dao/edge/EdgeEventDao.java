@@ -39,6 +39,18 @@ public interface EdgeEventDao extends Dao<EdgeEvent> {
     PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink);
 
     /**
+     * Count edge events with seq id greater than seqIdStart, created not earlier than startTime.
+     *
+     * @param tenantId   the tenantId
+     * @param edgeId     the edgeId
+     * @param seqIdStart the seq id start, exclusive; 0 counts from the beginning
+     * @param startTime  the created time start, inclusive
+     * @param limit      the maximum value to count up to
+     * @return the number of events, at most limit
+     */
+    long countEdgeEvents(UUID tenantId, EdgeId edgeId, long seqIdStart, long startTime, int limit);
+
+    /**
      * Executes stored procedure to cleanup old edge events.
      * @param ttl the ttl for edge events in seconds
      */

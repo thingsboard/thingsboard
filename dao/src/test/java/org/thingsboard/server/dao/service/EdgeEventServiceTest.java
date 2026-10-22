@@ -24,6 +24,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.List;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_FORMAT;
 
@@ -113,6 +114,36 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, edgeEvents.getData().size());
         Assert.assertEquals(Uuids.startOf(eventTime + 1), edgeEvents.getData().get(0).getUuidId());
         Assert.assertFalse(edgeEvents.hasNext());
+
+        edgeEventDao.cleanupEvents(1);
+    }
+
+    @Test
+    public void countEdgeEvents() throws Exception {
+        EdgeId edgeId = new EdgeId(Uuids.timeBased());
+        EdgeId otherEdgeId = new EdgeId(Uuids.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+
+        saveEdgeEventWithProvidedTime(timeBeforeStartTime, edgeId, deviceId, tenantId).get();
+        for (int i = 0; i < 5; i++) {
+            saveEdgeEventWithProvidedTime(eventTime + i, edgeId, deviceId, tenantId).get();
+        }
+        saveEdgeEventWithProvidedTime(eventTime, otherEdgeId, deviceId, tenantId).get();
+
+        // events created before startTime are not counted
+        Assert.assertEquals(5, edgeEventService.countEdgeEvents(tenantId, edgeId, 0L, startTime, 100));
+        Assert.assertEquals(6, edgeEventService.countEdgeEvents(tenantId, edgeId, 0L, 0L, 100));
+
+        // only events after seqIdStart are counted
+        List<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edgeId, 0L, null,
+                new TimePageLink(10, 0, null, null, startTime, endTime)).getData();
+        Assert.assertEquals(5, edgeEvents.size());
+        long secondSeqId = edgeEvents.get(1).getSeqId();
+        Assert.assertEquals(3, edgeEventService.countEdgeEvents(tenantId, edgeId, secondSeqId, startTime, 100));
+
+        // count stops at limit
+        Assert.assertEquals(2, edgeEventService.countEdgeEvents(tenantId, edgeId, 0L, startTime, 2));
+        Assert.assertEquals(1, edgeEventService.countEdgeEvents(tenantId, otherEdgeId, 0L, startTime, 100));
 
         edgeEventDao.cleanupEvents(1);
     }
