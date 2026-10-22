@@ -289,9 +289,13 @@ export interface FormFieldDefinition {
   randomGenerator?: boolean;
   randomSize?: number;
   randomByDefault?: boolean;
-  // Set by the install dialog for the fields it adds, not by packages
+  // Fields with the same group get one header above the first of them
+  group?: string;
+  // Set by the install dialog for the fields it adds, not by packages.
+  // Consecutive fields with the same row are shown on one line.
   readOnly?: boolean;
   helpPopupId?: string;
+  row?: string;
 }
 
 export interface EntityStepOutput {

@@ -790,12 +790,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     } else if (this.reviewMode) {
       hostHint = 'iot-hub.device-install-mqtt-host-hint';
     } else if (loopback) {
-      hostHint = 'iot-hub.device-install-mqtt-host-loopback-hint';
+      hostHint = hostSource === 'REQUEST'
+        ? 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint' : 'iot-hub.device-install-mqtt-host-loopback-hint';
     } else {
       hostHint = hostSource === 'BASE_URL'
         ? 'iot-hub.device-install-mqtt-host-base-url-hint' : 'iot-hub.device-install-mqtt-host-request-hint';
     }
     const helpPopupId = readOnly ? undefined : 'iot-hub/device-connection-host';
+    const group = this.translate.instant('iot-hub.device-install-thingsboard-connection');
     formStep.extraFormFields = [{
       key: TRANSPORT_HOST_FIELD_KEY,
       label: this.translate.instant('iot-hub.device-install-mqtt-host'),
@@ -806,7 +808,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       helpText: this.translate.instant(hostHint, { host: resolvedHost }),
       // transportHostValidator does the check; the entry carries the message the renderer shows
       validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-host-error') }],
-      helpPopupId
+      helpPopupId,
+      group,
+      row: TRANSPORT_HOST_FIELD_KEY
     }];
     if (steps.some(ws => this.usesVariable(ws, `${protocol}.port`))) {
       const resolvedPort = Number(this.transportVars[`${protocol}.port`]);
@@ -817,9 +821,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         defaultValue: isValidPort(resolvedPort) ? resolvedPort : '',
         required: true,
         readOnly,
-        helpText: this.translate.instant(readOnly
-          ? 'iot-hub.device-install-transport-configured-hint' : 'iot-hub.device-install-mqtt-port-hint'),
-        validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-port-error') }]
+        validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-port-error') }],
+        group,
+        row: TRANSPORT_HOST_FIELD_KEY
       });
     }
     this.hostFieldProtocol = protocol;

@@ -5,9 +5,25 @@
 
 -->
 @if (formGroup) {
-  <form [formGroup]="formGroup" class="tb-install-form flex flex-col gap-4">
-    @for (field of fields; track field.key; let i = $index) {
+  <form [formGroup]="formGroup" class="tb-install-form flex flex-col gap-2">
+    @for (row of rows; track row[0].field.key) {
+      @if (shouldRenderGroupHeader(row[0].field, row[0].index)) {
+        <h4 class="tb-install-form-group-header">{{ row[0].field.group }}</h4>
+      }
+      @if (row.length > 1) {
+        <div class="tb-install-form-row flex gap-4">
+          @for (cell of row; track cell.field.key) {
+            <div class="tb-install-form-cell flex flex-col">
+              <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: cell.field }"></ng-container>
+            </div>
+          }
+        </div>
+      } @else {
+        <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: row[0].field }"></ng-container>
+      }
+    }
 
+    <ng-template #fieldTemplate let-field>
       <!-- typed widget -->
       @switch (field.type) {
         @case (FormFieldType.BOOLEAN) {
@@ -63,14 +79,6 @@
             <mat-label>{{ field.label }}</mat-label>
             <input matInput type="number" [formControlName]="field.key"
                    autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
-            @if (field.readOnly) {
-              <tb-copy-button matSuffix
-                              [copyText]="formGroup.controls[field.key]?.value"
-                              tooltipText="{{ 'iot-hub.device-install-copy-value' | translate }}"
-                              tooltipPosition="above"
-                              icon="content_copy">
-              </tb-copy-button>
-            }
             @if (field.helpText) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
@@ -87,14 +95,6 @@
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [formControlName]="field.key"
                    autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
-            @if (field.readOnly) {
-              <tb-copy-button matSuffix
-                              [copyText]="formGroup.controls[field.key]?.value"
-                              tooltipText="{{ 'iot-hub.device-install-copy-value' | translate }}"
-                              tooltipPosition="above"
-                              icon="content_copy">
-              </tb-copy-button>
-            }
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"
                       [matTooltip]="'iot-hub.generate-random-value' | translate"
@@ -131,6 +131,6 @@
       @if (field.helpImage) {
         <img class="tb-install-form-field-help-image" [src]="imagePath(field.helpImage)" [alt]="field.label">
       }
-    }
+    </ng-template>
   </form>
 }

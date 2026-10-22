@@ -1,12 +1,10 @@
 ##### Which host should I use?
 
-The device connects to the ThingsBoard **MQTT transport**, so enter the address at which the device can reach it.
+The device connects to ThingsBoard over MQTT. Enter an address the device can reach from its own network:
 
-* **Not `localhost` or `127.0.0.1`.** On the device, these mean the device itself.
-* **ThingsBoard on your computer.** Use the computer's IP address in the local network, for example `192.168.1.10`. The device and the computer must be in the same network.
-* **ThingsBoard on a server.** Use the server's hostname or public IP address. With a separate MQTT host or load balancer, use that address instead of the web UI address.
-* **Enter only the host,** without `http://`, a port or a path.
+* **ThingsBoard on your computer, device on the same Wi-Fi:** your computer's IP in that network, e.g. `192.168.1.10`. Allow the MQTT port (`1883` by default) in its firewall.
+* **ThingsBoard reachable from the internet** (it has a public IP or a public domain): use that address, e.g. `tb.mycompany.com` or `203.0.113.15`. The device needs internet access through its Wi-Fi.
+* **Device on a local network, ThingsBoard elsewhere:** the server's local IP isn't reachable from there. Use its public domain or IP.
+* **MQTT on a separate host:** enter that host. It can differ from the web UI address.
 
-<b>Port.</b> MQTT usually listens on `1883`. If the transport uses another port, or the port is forwarded (Docker, a load balancer), enter the port the device connects to.
-
-To set the host and port for all users, ask the system administrator to fill them in **Settings → General → Device connectivity**.
+Don't use `localhost` or `127.0.0.1`: on the device they mean the device itself.
