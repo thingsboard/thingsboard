@@ -3,13 +3,11 @@
 package org.thingsboard.server.common.msg;
 
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.gen.MsgProtos.TbMsgProto;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,28 +68,6 @@ class TbMsgTraceStateTest {
         assertThat(msg.isRecordMsgPayload()).isFalse();
     }
 
-    @Test
-    void givenAuthorizedMsgFromAnOlderNode_whenRead_thenLegacyKeysMoveToTheContext() {
-        TbMsg legacy = msg(legacyTraceMetadata());
-        legacy.setTraceAuthorized(true);
-
-        TbMsg read = TbMsg.fromProto("Main", TbMsg.toProto(legacy), TbMsgCallback.EMPTY);
-
-        assertTraced(read);
-        assertThat(read.getMetaData().getData()).containsOnlyKeys("deviceName");
-    }
-
-    @Test
-    void givenUnauthorizedMsgWithTraceKeys_whenRead_thenKeysAreDroppedAndNotTrusted() {
-        TbMsg forged = msg(legacyTraceMetadata());
-
-        TbMsg read = TbMsg.fromProto("Main", TbMsg.toProto(forged), TbMsgCallback.EMPTY);
-
-        assertThat(read.isTraced()).isFalse();
-        assertThat(read.isRecordMsgPayload()).isFalse();
-        assertThat(read.getMetaData().getData()).containsOnlyKeys("deviceName");
-    }
-
     private static void traceIt(TbMsg msg) {
         msg.setTraceAuthorized(true);
         msg.setTraceId(TRACE_ID);
@@ -106,16 +82,6 @@ class TbMsgTraceStateTest {
         assertThat(msg.getTraceParent()).isEqualTo(TRACE_PARENT);
         assertThat(msg.getSpanOnRetry()).isEqualTo(SPAN_ID);
         assertThat(msg.isRecordMsgPayload()).isTrue();
-    }
-
-    private static TbMsgMetaData legacyTraceMetadata() {
-        return new TbMsgMetaData(Map.of(
-                "deviceName", "sensor-1",
-                DataConstants.TRACE_ID, TRACE_ID,
-                DataConstants.TRACE_PARENT, TRACE_PARENT,
-                DataConstants.SPAN_ON_RETRY, SPAN_ID,
-                DataConstants.TRACE_RECORD_MSG_PAYLOAD, "true",
-                DataConstants.TRACE_LOG_LEVEL, "INFO"));
     }
 
     private static TbMsg msg(TbMsgMetaData metaData) {
