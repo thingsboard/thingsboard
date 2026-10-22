@@ -34,6 +34,8 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
 
     private static final String UPGRADE_DIR = "upgrade";
 
+    private static final String MIN_UPGRADABLE_EDGE_VERSION = "3.6.0";
+
     private final AttributesService attributesService;
 
     public DefaultEdgeUpgradeInstructionsService(AttributesService attributesService, InstallScripts installScripts) {
@@ -65,15 +67,21 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
     }
 
     @Override
+    public String getLatestEdgeVersion() {
+        return TbVersionUtils.extractStartingDigits(platformEdgeVersion);
+    }
+
+    @Override
     public boolean isUpgradeAvailable(TenantId tenantId, EdgeId edgeId) throws Exception {
         Optional<AttributeKvEntry> attributeKvEntryOpt = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DataConstants.EDGE_VERSION_ATTR_KEY).get();
-        if (attributeKvEntryOpt.isPresent()) {
-            String edgeVersionFormatted = convertEdgeVersionToDocsFormat(attributeKvEntryOpt.get().getValueAsString());
-            String platformEdgeVersionFormatted = TbVersionUtils.extractStartingDigits(platformEdgeVersion);
-            return TbVersionUtils.compare(edgeVersionFormatted, "3.6.0") >= 0
-                    && TbVersionUtils.compare(edgeVersionFormatted, platformEdgeVersionFormatted) < 0;
-        }
-        return false;
+        return attributeKvEntryOpt.isPresent() && isUpgradeAvailable(attributeKvEntryOpt.get().getValueAsString());
+    }
+
+    @Override
+    public boolean isUpgradeAvailable(String edgeVersion) {
+        String edgeVersionFormatted = convertEdgeVersionToDocsFormat(edgeVersion);
+        return TbVersionUtils.compare(edgeVersionFormatted, MIN_UPGRADABLE_EDGE_VERSION) >= 0
+                && TbVersionUtils.compare(edgeVersionFormatted, getLatestEdgeVersion()) < 0;
     }
 
     private EdgeInstructions getDockerUpgradeInstructions(String platformEdgeVersion, String currentEdgeVersion) {

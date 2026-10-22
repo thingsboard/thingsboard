@@ -1897,6 +1897,21 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
     }
 
+    @Test
+    public void testGetLatestEdgeVersion() throws Exception {
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.4");
+        Assert.assertEquals("3.6.4", doGet("/api/edge/upgrade/latest", String.class));
+
+        // non-numeric suffix is dropped the same way as in the per-edge upgrade check
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.2.7-SNAPSHOT");
+        Assert.assertEquals("3.6.2.7", doGet("/api/edge/upgrade/latest", String.class));
+        Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable("V_3_6_2"));
+        Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable("V_3_5_0"));
+
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.2");
+        Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable("V_3_6_2"));
+    }
+
     private void createCustomTranslation(String localeCode) throws Exception {
         JsonNode esCustomTranslation = JacksonUtil.toJsonNode("{\"save\":\"" + StringUtils.randomAlphabetic(10) + "\"}");
         doPost("/api/translation/custom/" + localeCode, esCustomTranslation);
