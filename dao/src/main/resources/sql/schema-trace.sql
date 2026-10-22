@@ -54,7 +54,6 @@ CREATE TABLE IF NOT EXISTS span
 -- trace TTL cleanup. start_time never changes for a span, so a re-saved span still lands on its existing row.
 
 -- Indexes for span table
-CREATE INDEX IF NOT EXISTS idx_span_tenant_trace ON span (tenant_id, trace_id);
 CREATE INDEX IF NOT EXISTS idx_span_tenant_end_time
     ON span (tenant_id, end_time DESC);
 
