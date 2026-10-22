@@ -46,30 +46,6 @@ public final class TraceUtils {
     private TraceUtils() {
     }
 
-    public static String extractTraceIdFromTraceparent(String traceparent) {
-        return traceparent.split("-", 4)[1];
-    }
-
-    public static boolean isValidTraceparent(String traceparent) {
-        SpanContext spanContext = parseRemoteParentSpanContext(traceparent);
-        return spanContext != null && spanContext.isValid();
-    }
-
-    public static boolean isUnsampledTraceparent(String traceparent) {
-        if (traceparent == null) {
-            return false;
-        }
-        String[] parts = traceparent.split("-", 4);
-        if (parts.length < 4) {
-            return false;
-        }
-        try {
-            return !TraceFlags.fromHex(parts[3], 0).isSampled();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     public static String buildTraceparent(SpanContext ctx) {
         return buildTraceparent(ctx.getTraceId(), ctx.getSpanId(), ctx.getTraceFlags().asHex());
     }

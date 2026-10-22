@@ -102,8 +102,7 @@ public class TraceMessageService {
     private enum TraceIngressType {
         UNTRACED,
         RETRY_RESTORED,
-        INTERNAL_AUTHORIZED,
-        TRACED_RATE_LIMIT_PENDING
+        INTERNAL_AUTHORIZED
     }
 
     private final RateLimitService rateLimitService;
@@ -146,9 +145,6 @@ public class TraceMessageService {
                     break;
                 case INTERNAL_AUTHORIZED:
                     registerRetryMetadata(tenantId, packCtx, tbMsg);
-                    break;
-                case TRACED_RATE_LIMIT_PENDING:
-
                     break;
             }
         } catch (Exception e) {
@@ -430,26 +426,6 @@ public class TraceMessageService {
 
     private boolean hasRetryMetadata(TbMsgPackProcessingContext packCtx, UUID msgId) {
         return packCtx != null && packCtx.getTraceMetadata(msgId) != null;
-    }
-
-    private void handlePendingTraceAuthorization(TenantId tenantId, TbMsgPackProcessingContext packCtx, TbMsg tbMsg) {
-        authorizeTraceInjection(tenantId, packCtx, tbMsg, "Trace injection");
-    }
-
-    private boolean authorizeTraceInjection(TenantId tenantId, TbMsgPackProcessingContext packCtx, TbMsg tbMsg, String reason) {
-        String traceparent = tbMsg.getTraceParent();
-        if (!TraceUtils.isValidTraceparent(traceparent) || TraceUtils.isUnsampledTraceparent(traceparent)) {
-            log.debug("[{}] {} missing or invalid traceparent, stripping trace metadata", tenantId, reason);
-            stripTraceState(tbMsg);
-            return false;
-        }
-        tbMsg.setTraceId(TraceUtils.extractTraceIdFromTraceparent(traceparent));
-        tbMsg.setSpanOnRetry(TraceUtils.extractSpanIdFromTraceparent(traceparent));
-
-        tbMsg.setTraceAuthorized(true);
-
-        registerRetryMetadata(tenantId, packCtx, tbMsg);
-        return true;
     }
 
     private void handleUntracedMessage(TenantId tenantId, TbMsgPackProcessingContext packCtx, TbMsg tbMsg) {
