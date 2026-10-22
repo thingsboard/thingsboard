@@ -36,6 +36,7 @@ import {
   FormFieldType,
   installMethodIcons as INSTALL_METHOD_ICONS,
   installMethodLabels as INSTALL_METHOD_LABELS,
+  InstallMethod,
   InstallStepType,
   peOnlyInstallMethods,
   stepTypeAliasMap
@@ -71,20 +72,45 @@ export interface WizardStep {
 
 const ENTITY_STEP_MIN_DELAY = 2000;
 const DEFAULT_RANDOM_SIZE = 20;
-const SERVER_HOST_FIELD_KEY = 'tbServerHost';
-const TRANSPORT_HOST_VARIABLE = /\$\{([a-z]+)\.host}/g;
+const TRANSPORT_HOST_FIELD_KEY = 'tbTransportHost';
 
-const normalizeHost = (host: string): string =>
-  host.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+// Install methods whose packages get a transport host field, and the transport whose
+// ${<protocol>.host} it fills. Other methods use the host differently (a ChirpStack package
+// builds the ThingsBoard URL from it, a gateway puts it into docker-compose) and keep the
+// resolved value until they are handled separately.
+const HOST_FIELD_TRANSPORTS = new Map<string, string>([
+  [InstallMethod.DIRECT_MQTT, 'mqtt']
+]);
 
-// Mirrors DeviceConnectivityUtil.isLocalhost: a device can't reach the server at such an address.
+/**
+ * Reduces what a user may paste (a URL, host:port, [IPv6]:port) to the bare host: the port is
+ * a separate setting, and the scheme or path would end up in the firmware as part of the host.
+ */
+const toBareHost = (value: string): string => {
+  const hostPort = value.trim().replace(/^[a-z][a-z\d+.-]*:\/\//i, '').replace(/[/?#].*$/, '');
+  const bracketed = hostPort.match(/^\[([^\]]*)](:\d*)?$/);
+  if (bracketed) {
+    return bracketed[1];
+  }
+  // A bare IPv6 address has several colons; a single one separates the port.
+  return hostPort.split(':').length === 2 ? hostPort.split(':')[0] : hostPort;
+};
+
+// localhost, 127.0.0.0/8, ::1 and 0.0.0.0: a device can't reach the server at any of them.
+// Unlike DeviceConnectivityUtil.isLocalhost this doesn't resolve hostnames, and it also
+// rejects 0.0.0.0, which isn't a loopback address but is just as unreachable.
 const isLoopbackHost = (host: string): boolean => {
-  const h = normalizeHost(host).toLowerCase().replace(/^\[(.*)]$/, '$1');
+  const h = toBareHost(host).toLowerCase();
   return h === 'localhost' || h === '::1' || h === '0.0.0.0' || /^127(\.\d{1,3}){3}$/.test(h);
 };
 
-const serverHostValidator = (control: AbstractControl): ValidationErrors | null =>
-  control.value && isLoopbackHost(control.value) ? { pattern: true } : null;
+const transportHostValidator = (control: AbstractControl): ValidationErrors | null => {
+  if (!control.value) {
+    return null;
+  }
+  const host = toBareHost(control.value);
+  return !host || /\s/.test(host) || isLoopbackHost(host) ? { pattern: true } : null;
+};
 
 @Component({
   selector: 'tb-device-install-dialog',
@@ -126,8 +152,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
   private fieldTypes = new Map<string, FormFieldType>();
-  // Transports whose ${<protocol>.host} the server host field overrides
-  private serverHostProtocols: string[] = [];
+  // Transport whose ${<protocol>.host} the transport host field overrides
+  private hostFieldProtocol: string | null = null;
   gatewayDockerComposeContent: string | null = null;
 
   resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
@@ -507,10 +533,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (key in this.formValues) {
       return String(this.formValues[key]);
     }
-    if (this.serverHostProtocols.some(p => key === `${p}.host`)) {
-      const serverHost = normalizeHost(String(this.formValues[SERVER_HOST_FIELD_KEY] ?? ''));
-      if (serverHost) {
-        return serverHost;
+    if (this.hostFieldProtocol && key === `${this.hostFieldProtocol}.host`) {
+      const host = toBareHost(String(this.formValues[TRANSPORT_HOST_FIELD_KEY] ?? ''));
+      if (host) {
+        return host;
       }
     }
     if (key in this.transportVars) {
@@ -695,7 +721,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         i++;
       }
     }
-    this.addServerHostField(firstInstallStep);
+    this.addTransportHostField(firstInstallStep);
     // Initialize form groups
     for (const ws of this.wizardSteps) {
       if (ws.type === 'form' && !ws.formGroup) {
@@ -705,66 +731,54 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * Packages write ${<protocol>.host} into sketches and templates. Ask for that address in the
-   * last form before its first use, so the user can correct it — and must, when the server
-   * resolved it to localhost, which on the device is the device itself.
+   * Packages write ${<protocol>.host} into sketches and templates. Ask for that host in the last
+   * form before its first use, so the user can correct it — and must, when the server resolved it
+   * to localhost, which on the device is the device itself.
    */
-  private addServerHostField(fromIndex: number): void {
-    this.serverHostProtocols = [];
+  private addTransportHostField(fromIndex: number): void {
+    this.hostFieldProtocol = null;
+    const protocol = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
+    const resolvedHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
+    if (resolvedHost === undefined) {
+      return;
+    }
     const steps = this.wizardSteps.slice(fromIndex);
-    const firstUse = steps.findIndex(ws => this.hostProtocols(ws).length > 0);
+    const firstUse = steps.findIndex(ws => this.usesHost(ws, protocol));
     if (firstUse < 0) {
       return;
     }
-    const protocols = [...new Set(steps.flatMap(ws => this.hostProtocols(ws)))];
-    const reachableHosts = new Set(protocols.map(p => this.transportVars[`${p}.host`])
-      .filter(host => host && !isLoopbackHost(host)));
-    if (reachableHosts.size > 1) {
-      // Transports are configured with different hosts; one field can't stand for all of them.
-      return;
-    }
-    const resolvedHost = this.transportVars[`${protocols[0]}.host`];
-    const defaultHost: string = reachableHosts.values().next().value ?? '';
+    const defaultHost = resolvedHost && !isLoopbackHost(resolvedHost) ? resolvedHost : '';
     let formStep = steps.slice(0, firstUse).reverse().find(ws => ws.type === 'form');
     if (!formStep) {
       formStep = {
         type: 'form',
-        label: this.translate.instant('iot-hub.device-install-server-host-step'),
+        label: this.translate.instant('iot-hub.device-install-transport-host-step'),
         rawSteps: [],
         completed: this.reviewMode
       };
       this.wizardSteps.splice(fromIndex + firstUse, 0, formStep);
     }
-    const errorMessage = this.translate.instant('iot-hub.device-install-server-host-error');
+    const errorMessage = this.translate.instant('iot-hub.device-install-transport-host-error');
     formStep.extraFormFields = [{
-      key: SERVER_HOST_FIELD_KEY,
-      label: this.translate.instant('iot-hub.device-install-server-host'),
+      key: TRANSPORT_HOST_FIELD_KEY,
+      label: this.translate.instant('iot-hub.device-install-mqtt-host'),
       type: FormFieldType.STRING,
       defaultValue: defaultHost,
       required: true,
       helpText: defaultHost || this.reviewMode
-        ? this.translate.instant('iot-hub.device-install-server-host-hint')
-        : this.translate.instant('iot-hub.device-install-server-host-loopback-hint', { host: resolvedHost }),
-      validators: [{ pattern: '\\S+', message: errorMessage }]
+        ? this.translate.instant('iot-hub.device-install-mqtt-host-hint')
+        : this.translate.instant('iot-hub.device-install-mqtt-host-loopback-hint', { host: resolvedHost }),
+      // transportHostValidator does the check; the entry carries the message the renderer shows
+      validators: [{ pattern: '.*', message: errorMessage }]
     }];
-    this.serverHostProtocols = protocols;
+    this.hostFieldProtocol = protocol;
   }
 
-  private hostProtocols(ws: WizardStep): string[] {
-    const protocols: string[] = [];
-    for (const step of ws.rawSteps) {
-      const files = [step.file, step.template, step.serverAttributes, step.sharedAttributes,
-        step.credentials, step.dockerCompose];
-      for (const file of files) {
-        const content = file ? this.zipFiles.get(file) : undefined;
-        for (const [, protocol] of content?.matchAll(TRANSPORT_HOST_VARIABLE) ?? []) {
-          if (`${protocol}.host` in this.transportVars) {
-            protocols.push(protocol);
-          }
-        }
-      }
-    }
-    return protocols;
+  private usesHost(ws: WizardStep, protocol: string): boolean {
+    const placeholder = `\${${protocol}.host}`;
+    return ws.rawSteps.some(step =>
+      [step.file, step.template, step.serverAttributes, step.sharedAttributes, step.credentials, step.dockerCompose]
+        .some(file => file && this.zipFiles.get(file)?.includes(placeholder)));
   }
 
   private initFormStep(ws: WizardStep): void {
@@ -782,8 +796,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (field.validators?.length > 0) {
         validators.push(Validators.pattern(field.validators[0].pattern));
       }
-      if (field.key === SERVER_HOST_FIELD_KEY) {
-        validators.push(serverHostValidator);
+      if (field.key === TRANSPORT_HOST_FIELD_KEY) {
+        validators.push(transportHostValidator);
       }
       const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
       controls[field.key] = new UntypedFormControl(initialValue, validators);
