@@ -3,8 +3,8 @@
 package org.thingsboard.server.common.data.trace;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TracePathDetailsDTOTest {
 
     @Test
-    void givenPathDetails_whenSerialized_thenPathFieldsStayAtTheTopLevel() {
+    void givenPathDetails_whenSerialized_thenPathFieldsStayAtTheTopLevel() throws Exception {
         TracePathDetailsDTO details = TracePathDetailsDTO.builder()
                 .pathId("path-1")
                 .rootMessageType("POST_TELEMETRY_REQUEST")
@@ -22,14 +22,15 @@ class TracePathDetailsDTOTest {
                 .ruleNodeTree(List.of())
                 .build();
 
-        JsonNode json = JacksonUtil.valueToTree(details);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.valueToTree(details);
 
         assertThat(json.get("pathId").asText()).isEqualTo("path-1");
         assertThat(json.get("rootMessageType").asText()).isEqualTo("POST_TELEMETRY_REQUEST");
         assertThat(json.get("processedTraces").asLong()).isEqualTo(10);
         assertThat(json.get("errorCount").asLong()).isEqualTo(2);
         assertThat(json.get("ruleNodeTree").isArray()).isTrue();
-        assertThat(JacksonUtil.treeToValue(json, TracePathDetailsDTO.class)).isEqualTo(details);
+        assertThat(mapper.treeToValue(json, TracePathDetailsDTO.class)).isEqualTo(details);
     }
 
 }
