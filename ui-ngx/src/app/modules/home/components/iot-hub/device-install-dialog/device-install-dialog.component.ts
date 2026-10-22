@@ -807,8 +807,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     } else if (this.reviewMode) {
       hostHint = 'iot-hub.device-install-mqtt-host-hint';
     } else if (loopback) {
-      hostHint = hostSource === 'REQUEST'
-        ? 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint' : 'iot-hub.device-install-mqtt-host-loopback-hint';
+      if (hostSource === 'REQUEST') {
+        hostHint = 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint';
+      } else if (hostSource === 'BASE_URL') {
+        hostHint = 'iot-hub.device-install-mqtt-host-base-url-loopback-hint';
+      } else {
+        hostHint = 'iot-hub.device-install-mqtt-host-loopback-hint';
+      }
     } else {
       hostHint = hostSource === 'BASE_URL'
         ? 'iot-hub.device-install-mqtt-host-base-url-hint' : 'iot-hub.device-install-mqtt-host-request-hint';
