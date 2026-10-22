@@ -10,7 +10,7 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { firstValueFrom } from 'rxjs';
@@ -60,6 +60,8 @@ export interface WizardStep {
   markdown?: string;
   // Form
   formFields?: FormFieldDefinition[];
+  // Fields the dialog adds on top of the package's form file
+  extraFormFields?: FormFieldDefinition[];
   formGroup?: UntypedFormGroup;
   // Progress
   entitySteps?: EntityStepProgress[];
@@ -69,6 +71,20 @@ export interface WizardStep {
 
 const ENTITY_STEP_MIN_DELAY = 2000;
 const DEFAULT_RANDOM_SIZE = 20;
+const SERVER_HOST_FIELD_KEY = 'tbServerHost';
+const TRANSPORT_HOST_VARIABLE = /\$\{([a-z]+)\.host}/g;
+
+const normalizeHost = (host: string): string =>
+  host.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+
+// Mirrors DeviceConnectivityUtil.isLocalhost: a device can't reach the server at such an address.
+const isLoopbackHost = (host: string): boolean => {
+  const h = normalizeHost(host).toLowerCase().replace(/^\[(.*)]$/, '$1');
+  return h === 'localhost' || h === '::1' || h === '0.0.0.0' || /^127(\.\d{1,3}){3}$/.test(h);
+};
+
+const serverHostValidator = (control: AbstractControl): ValidationErrors | null =>
+  control.value && isLoopbackHost(control.value) ? { pattern: true } : null;
 
 @Component({
   selector: 'tb-device-install-dialog',
@@ -110,6 +126,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
   private fieldTypes = new Map<string, FormFieldType>();
+  // Transports whose ${<protocol>.host} the server host field overrides
+  private serverHostProtocols: string[] = [];
   gatewayDockerComposeContent: string | null = null;
 
   resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
@@ -489,6 +507,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (key in this.formValues) {
       return String(this.formValues[key]);
     }
+    if (this.serverHostProtocols.some(p => key === `${p}.host`)) {
+      const serverHost = normalizeHost(String(this.formValues[SERVER_HOST_FIELD_KEY] ?? ''));
+      if (serverHost) {
+        return serverHost;
+      }
+    }
     if (key in this.transportVars) {
       return this.transportVars[key];
     }
@@ -633,6 +657,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   private appendInstallSteps(): void {
     const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
+    const firstInstallStep = this.wizardSteps.length;
     let i = 0;
     while (i < rawSteps.length) {
       const step = rawSteps[i];
@@ -670,6 +695,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         i++;
       }
     }
+    this.addServerHostField(firstInstallStep);
     // Initialize form groups
     for (const ws of this.wizardSteps) {
       if (ws.type === 'form' && !ws.formGroup) {
@@ -678,9 +704,72 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
+  /**
+   * Packages write ${<protocol>.host} into sketches and templates. Ask for that address in the
+   * last form before its first use, so the user can correct it — and must, when the server
+   * resolved it to localhost, which on the device is the device itself.
+   */
+  private addServerHostField(fromIndex: number): void {
+    this.serverHostProtocols = [];
+    const steps = this.wizardSteps.slice(fromIndex);
+    const firstUse = steps.findIndex(ws => this.hostProtocols(ws).length > 0);
+    if (firstUse < 0) {
+      return;
+    }
+    const protocols = [...new Set(steps.flatMap(ws => this.hostProtocols(ws)))];
+    const reachableHosts = new Set(protocols.map(p => this.transportVars[`${p}.host`])
+      .filter(host => host && !isLoopbackHost(host)));
+    if (reachableHosts.size > 1) {
+      // Transports are configured with different hosts; one field can't stand for all of them.
+      return;
+    }
+    const resolvedHost = this.transportVars[`${protocols[0]}.host`];
+    const defaultHost: string = reachableHosts.values().next().value ?? '';
+    let formStep = steps.slice(0, firstUse).reverse().find(ws => ws.type === 'form');
+    if (!formStep) {
+      formStep = {
+        type: 'form',
+        label: this.translate.instant('iot-hub.device-install-server-host-step'),
+        rawSteps: [],
+        completed: this.reviewMode
+      };
+      this.wizardSteps.splice(fromIndex + firstUse, 0, formStep);
+    }
+    const errorMessage = this.translate.instant('iot-hub.device-install-server-host-error');
+    formStep.extraFormFields = [{
+      key: SERVER_HOST_FIELD_KEY,
+      label: this.translate.instant('iot-hub.device-install-server-host'),
+      type: FormFieldType.STRING,
+      defaultValue: defaultHost,
+      required: true,
+      helpText: defaultHost || this.reviewMode
+        ? this.translate.instant('iot-hub.device-install-server-host-hint')
+        : this.translate.instant('iot-hub.device-install-server-host-loopback-hint', { host: resolvedHost }),
+      validators: [{ pattern: '\\S+', message: errorMessage }]
+    }];
+    this.serverHostProtocols = protocols;
+  }
+
+  private hostProtocols(ws: WizardStep): string[] {
+    const protocols: string[] = [];
+    for (const step of ws.rawSteps) {
+      const files = [step.file, step.template, step.serverAttributes, step.sharedAttributes,
+        step.credentials, step.dockerCompose];
+      for (const file of files) {
+        const content = file ? this.zipFiles.get(file) : undefined;
+        for (const [, protocol] of content?.matchAll(TRANSPORT_HOST_VARIABLE) ?? []) {
+          if (`${protocol}.host` in this.transportVars) {
+            protocols.push(protocol);
+          }
+        }
+      }
+    }
+    return protocols;
+  }
+
   private initFormStep(ws: WizardStep): void {
-    const formJson = this.zipFiles.get(ws.rawSteps[0].file) || '[]';
-    ws.formFields = JSON.parse(formJson) as FormFieldDefinition[];
+    const formJson = (ws.rawSteps[0] && this.zipFiles.get(ws.rawSteps[0].file)) || '[]';
+    ws.formFields = [...JSON.parse(formJson) as FormFieldDefinition[], ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
     // In review mode, use stored values; otherwise use defaults
     const storedValues = this.reviewMode && this.data.installState?.[ws.label]?.formValues;
@@ -692,6 +781,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       if (field.validators?.length > 0) {
         validators.push(Validators.pattern(field.validators[0].pattern));
+      }
+      if (field.key === SERVER_HOST_FIELD_KEY) {
+        validators.push(serverHostValidator);
       }
       const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
       controls[field.key] = new UntypedFormControl(initialValue, validators);
