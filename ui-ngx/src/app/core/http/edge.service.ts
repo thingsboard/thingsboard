@@ -161,4 +161,8 @@ export class EdgeService {
   public isEdgeUpgradeAvailable(edgeId: string, config?: RequestConfig): Observable<boolean> {
     return this.http.get<boolean>(`/api/edge/${edgeId}/upgrade/available`, defaultHttpOptionsFromConfig(config));
   }
+
+  public getLatestEdgeVersion(config?: RequestConfig): Observable<string> {
+    return this.http.get(`/api/edge/upgrade/latest`, {...{responseType: 'text'}, ...defaultHttpOptionsFromConfig(config)});
+  }
 }

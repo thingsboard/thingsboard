@@ -762,4 +762,18 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get latest edge version (getLatestEdgeVersion)",
+            notes = "Returns the newest edge version supported by the platform, e.g. '4.4.0'. " +
+                    "An edge is upgradable when its 'edgeVersion' is 3.6.0 or newer and older than this version. " +
+                    "Lets a list of edges decide locally which rows are upgradable without asking per row." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/edge/upgrade/latest")
+    public String getLatestEdgeVersion() throws Exception {
+        if (isEdgesEnabled() && edgeUpgradeServiceOpt.isPresent()) {
+            return edgeUpgradeServiceOpt.get().getLatestEdgeVersion();
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
+        }
+    }
+
 }
