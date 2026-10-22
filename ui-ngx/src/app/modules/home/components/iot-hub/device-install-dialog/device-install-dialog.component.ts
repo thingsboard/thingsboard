@@ -42,6 +42,7 @@ import {
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
+import { DeviceConnectivityHostSource } from '@shared/models/settings.models';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
@@ -73,6 +74,7 @@ export interface WizardStep {
 const ENTITY_STEP_MIN_DELAY = 2000;
 const DEFAULT_RANDOM_SIZE = 20;
 const TRANSPORT_HOST_FIELD_KEY = 'tbTransportHost';
+const TRANSPORT_PORT_FIELD_KEY = 'tbTransportPort';
 
 // Install methods whose packages get a transport host field, and the transport whose
 // ${<protocol>.host} it fills. Other methods use the host differently (a ChirpStack package
@@ -112,6 +114,11 @@ const transportHostValidator = (control: AbstractControl): ValidationErrors | nu
   return !host || /\s/.test(host) || isLoopbackHost(host) ? { pattern: true } : null;
 };
 
+const isValidPort = (port: number): boolean => Number.isInteger(port) && port >= 1 && port <= 65535;
+
+const transportPortValidator = (control: AbstractControl): ValidationErrors | null =>
+  control.value === null || control.value === '' || isValidPort(Number(control.value)) ? null : { pattern: true };
+
 @Component({
   selector: 'tb-device-install-dialog',
   standalone: false,
@@ -149,6 +156,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   formValues: Record<string, any> = {};
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
+  // protocol → where the server took its host from
+  private transportHostSources: Record<string, DeviceConnectivityHostSource> = {};
   // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
   private fieldTypes = new Map<string, FormFieldType>();
@@ -212,6 +221,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           if (info) {
             this.transportVars[`${protocol}.host`] = info.host || '';
             this.transportVars[`${protocol}.port`] = String(info.port || '');
+            this.transportHostSources[protocol] = info.hostSource;
           }
         }
       }
@@ -546,6 +556,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return host;
       }
     }
+    if (this.hostFieldProtocol && key === `${this.hostFieldProtocol}.port`) {
+      const port = this.formValues[TRANSPORT_PORT_FIELD_KEY];
+      if (port !== undefined && port !== null && port !== '') {
+        return String(port);
+      }
+    }
     if (key in this.transportVars) {
       return this.transportVars[key];
     }
@@ -728,7 +744,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         i++;
       }
     }
-    this.addTransportHostField(firstInstallStep);
+    this.addTransportFields(firstInstallStep);
     // Initialize form groups
     for (const ws of this.wizardSteps) {
       if (ws.type === 'form' && !ws.formGroup) {
@@ -738,11 +754,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * Packages write ${<protocol>.host} into sketches and templates. Ask for that host in the last
-   * form before its first use, so the user can correct it — and must, when the server resolved it
-   * to localhost, which on the device is the device itself.
+   * Packages write ${<protocol>.host} and ${<protocol>.port} into sketches and templates. Show them
+   * in the last form before the host is first used. When the system administrator set the host in
+   * Device connectivity, they are read-only. Otherwise the user can correct them — and must, when
+   * the host resolved to localhost, which on the device is the device itself.
    */
-  private addTransportHostField(fromIndex: number): void {
+  private addTransportFields(fromIndex: number): void {
     this.hostFieldProtocol = null;
     const protocol = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
     const resolvedHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
@@ -750,11 +767,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return;
     }
     const steps = this.wizardSteps.slice(fromIndex);
-    const firstUse = steps.findIndex(ws => this.usesHost(ws, protocol));
+    const firstUse = steps.findIndex(ws => this.usesVariable(ws, `${protocol}.host`));
     if (firstUse < 0) {
       return;
     }
-    const defaultHost = resolvedHost && !isLoopbackHost(resolvedHost) ? resolvedHost : '';
+    const loopback = !resolvedHost || isLoopbackHost(resolvedHost);
+    const hostSource = this.transportHostSources[protocol];
+    const readOnly = hostSource === 'DEVICE_CONNECTIVITY' && !loopback;
     let formStep = steps.slice(0, firstUse).reverse().find(ws => ws.type === 'form');
     if (!formStep) {
       formStep = {
@@ -765,24 +784,49 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       };
       this.wizardSteps.splice(fromIndex + firstUse, 0, formStep);
     }
-    const errorMessage = this.translate.instant('iot-hub.device-install-transport-host-error');
+    let hostHint: string;
+    if (readOnly) {
+      hostHint = 'iot-hub.device-install-transport-configured-hint';
+    } else if (this.reviewMode) {
+      hostHint = 'iot-hub.device-install-mqtt-host-hint';
+    } else if (loopback) {
+      hostHint = 'iot-hub.device-install-mqtt-host-loopback-hint';
+    } else {
+      hostHint = hostSource === 'BASE_URL'
+        ? 'iot-hub.device-install-mqtt-host-base-url-hint' : 'iot-hub.device-install-mqtt-host-request-hint';
+    }
+    const helpPopupId = readOnly ? undefined : 'iot-hub/device-connection-host';
     formStep.extraFormFields = [{
       key: TRANSPORT_HOST_FIELD_KEY,
       label: this.translate.instant('iot-hub.device-install-mqtt-host'),
       type: FormFieldType.STRING,
-      defaultValue: defaultHost,
+      defaultValue: loopback ? '' : resolvedHost,
       required: true,
-      helpText: defaultHost || this.reviewMode
-        ? this.translate.instant('iot-hub.device-install-mqtt-host-hint')
-        : this.translate.instant('iot-hub.device-install-mqtt-host-loopback-hint', { host: resolvedHost }),
+      readOnly,
+      helpText: this.translate.instant(hostHint, { host: resolvedHost }),
       // transportHostValidator does the check; the entry carries the message the renderer shows
-      validators: [{ pattern: '.*', message: errorMessage }]
+      validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-host-error') }],
+      helpPopupId
     }];
+    if (steps.some(ws => this.usesVariable(ws, `${protocol}.port`))) {
+      const resolvedPort = Number(this.transportVars[`${protocol}.port`]);
+      formStep.extraFormFields.push({
+        key: TRANSPORT_PORT_FIELD_KEY,
+        label: this.translate.instant('iot-hub.device-install-mqtt-port'),
+        type: FormFieldType.INTEGER,
+        defaultValue: isValidPort(resolvedPort) ? resolvedPort : '',
+        required: true,
+        readOnly,
+        helpText: this.translate.instant(readOnly
+          ? 'iot-hub.device-install-transport-configured-hint' : 'iot-hub.device-install-mqtt-port-hint'),
+        validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-port-error') }]
+      });
+    }
     this.hostFieldProtocol = protocol;
   }
 
-  private usesHost(ws: WizardStep, protocol: string): boolean {
-    const placeholder = `\${${protocol}.host}`;
+  private usesVariable(ws: WizardStep, key: string): boolean {
+    const placeholder = `\${${key}}`;
     return ws.rawSteps.some(step =>
       [step.file, step.template, step.serverAttributes, step.sharedAttributes, step.credentials, step.dockerCompose]
         .some(file => file && this.zipFiles.get(file)?.includes(placeholder)));
@@ -805,9 +849,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       if (field.key === TRANSPORT_HOST_FIELD_KEY) {
         validators.push(transportHostValidator);
+      } else if (field.key === TRANSPORT_PORT_FIELD_KEY) {
+        validators.push(transportPortValidator);
       }
       const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
-      controls[field.key] = new UntypedFormControl(initialValue, validators);
+      controls[field.key] = new UntypedFormControl({ value: initialValue, disabled: !!field.readOnly }, validators);
     }
     ws.formGroup = new UntypedFormGroup(controls);
     if (this.reviewMode) {

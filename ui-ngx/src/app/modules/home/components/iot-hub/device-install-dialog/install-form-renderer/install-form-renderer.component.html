@@ -63,6 +63,14 @@
             <mat-label>{{ field.label }}</mat-label>
             <input matInput type="number" [formControlName]="field.key"
                    autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
+            @if (field.readOnly) {
+              <tb-copy-button matSuffix
+                              [copyText]="formGroup.controls[field.key]?.value"
+                              tooltipText="{{ 'iot-hub.device-install-copy-value' | translate }}"
+                              tooltipPosition="above"
+                              icon="content_copy">
+              </tb-copy-button>
+            }
             @if (field.helpText) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
@@ -79,6 +87,14 @@
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [formControlName]="field.key"
                    autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
+            @if (field.readOnly) {
+              <tb-copy-button matSuffix
+                              [copyText]="formGroup.controls[field.key]?.value"
+                              tooltipText="{{ 'iot-hub.device-install-copy-value' | translate }}"
+                              tooltipPosition="above"
+                              icon="content_copy">
+              </tb-copy-button>
+            }
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"
                       [matTooltip]="'iot-hub.generate-random-value' | translate"
@@ -100,6 +116,15 @@
         }
       }
 
+      @if (field.helpPopupId && !reviewMode) {
+        <div class="tb-install-form-field-help">
+          <span [tb-help-popup]="field.helpPopupId"
+                hintMode
+                tb-help-popup-placement="top"
+                [tb-help-popup-style]="{maxWidth: '640px'}"
+                trigger-text="{{ 'iot-hub.device-install-which-host' | translate }}"></span>
+        </div>
+      }
       @if (field.type === FormFieldType.BOOLEAN && field.helpText) {
         <div class="tb-install-form-field-help">{{ field.helpText }}</div>
       }

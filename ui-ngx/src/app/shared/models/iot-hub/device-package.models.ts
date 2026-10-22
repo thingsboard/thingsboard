@@ -289,6 +289,9 @@ export interface FormFieldDefinition {
   randomGenerator?: boolean;
   randomSize?: number;
   randomByDefault?: boolean;
+  // Set by the install dialog for the fields it adds, not by packages
+  readOnly?: boolean;
+  helpPopupId?: string;
 }
 
 export interface EntityStepOutput {
