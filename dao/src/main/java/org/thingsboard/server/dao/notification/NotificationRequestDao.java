@@ -3,6 +3,7 @@
 package org.thingsboard.server.dao.notification;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -15,6 +16,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -24,6 +26,8 @@ public interface NotificationRequestDao extends Dao<NotificationRequest> {
     PageData<NotificationRequest> findByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink);
 
     PageData<NotificationRequestInfo> findInfosByTenantIdAndOriginatorTypeAndPageLink(TenantId tenantId, EntityType originatorType, PageLink pageLink);
+
+    PageData<NotificationRequestInfo> findInfosByTenantIdAndEdgeIdAndPageLink(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink);
 
     List<NotificationRequestId> findIdsByRuleId(TenantId tenantId, NotificationRequestStatus requestStatus, NotificationRuleId ruleId);
 
