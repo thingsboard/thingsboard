@@ -64,6 +64,8 @@ export interface WizardStep {
   formFields?: FormFieldDefinition[];
   // Fields the dialog adds on top of the package's form file
   extraFormFields?: FormFieldDefinition[];
+  // Key of the step's form values in the install state; the label when not set
+  stateKey?: string;
   formGroup?: UntypedFormGroup;
   // Progress
   entitySteps?: EntityStepProgress[];
@@ -75,6 +77,8 @@ const ENTITY_STEP_MIN_DELAY = 2000;
 const DEFAULT_RANDOM_SIZE = 20;
 const TRANSPORT_HOST_FIELD_KEY = 'tbTransportHost';
 const TRANSPORT_PORT_FIELD_KEY = 'tbTransportPort';
+// Not the translated label, so review mode finds the values in any UI language
+const TRANSPORT_STEP_STATE_KEY = 'tbTransportConnection';
 
 // Install methods whose packages get a transport host field, and the transport whose
 // ${<protocol>.host} it fills. Other methods use the host differently (a ChirpStack package
@@ -234,6 +238,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.selectedInstallMethod = this.data.selectedInstallMethod;
       this.restoreInstallState(this.data.installState);
       this.startWizard();
+      // After startWizard: the transport fields it adds take part in resolving the file
+      this.resolveGatewayDockerCompose();
     } else if (this.availableInstallMethods.length === 1
         && !peOnlyInstallMethods.has(this.availableInstallMethods[0])) {
       // Single non-PE method: skip the selector and start the wizard.
@@ -640,7 +646,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
       }
     }
-    // Resolve gateway docker-compose if available
+  }
+
+  private resolveGatewayDockerCompose(): void {
     const gatewayStep = (this.packageInfo.installSteps[this.selectedInstallMethod] || []).find(s => s.type === 'GATEWAY');
     if (gatewayStep?.dockerCompose) {
       const raw = this.zipFiles.get(gatewayStep.dockerCompose);
@@ -779,6 +787,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       formStep = {
         type: 'form',
         label: this.translate.instant('iot-hub.device-install-transport-host-step'),
+        stateKey: TRANSPORT_STEP_STATE_KEY,
         rawSteps: [],
         completed: this.reviewMode
       };
@@ -841,7 +850,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.formFields = [...JSON.parse(formJson) as FormFieldDefinition[], ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
     // In review mode, use stored values; otherwise use defaults
-    const storedValues = this.reviewMode && this.data.installState?.[ws.label]?.formValues;
+    const storedValues = this.reviewMode && this.data.installState?.[ws.stateKey ?? ws.label]?.formValues;
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
       const validators = [];
@@ -1243,7 +1252,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const state: Record<string, any> = {};
     for (const ws of this.wizardSteps) {
       if (ws.type === 'form' && ws.formGroup) {
-        state[ws.label] = { formValues: ws.formGroup.getRawValue() };
+        state[ws.stateKey ?? ws.label] = { formValues: ws.formGroup.getRawValue() };
       } else if (ws.type === 'progress' && ws.entitySteps) {
         for (const ep of ws.entitySteps) {
           if (ep.status === 'success' && ep.entityOutput) {

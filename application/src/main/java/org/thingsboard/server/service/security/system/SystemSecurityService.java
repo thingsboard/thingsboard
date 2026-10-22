@@ -26,6 +26,8 @@ public interface SystemSecurityService {
 
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
 
+    ResolvedBaseUrl resolveBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
+
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e);
 
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, String provider, Exception e);
