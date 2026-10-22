@@ -376,12 +376,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     // Forward moves can come from the stepper header, which bypasses nextStep(),
     // so commit every step being passed over here.
+    let formValuesChanged = false;
     for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
       const ws = this.wizardSteps[i];
       if (ws.type === 'form') {
         Object.assign(this.formValues, ws.formGroup.getRawValue());
+        formValuesChanged = true;
       }
       ws.completed = true;
+    }
+    if (formValuesChanged) {
+      // Instruction steps stay rendered, and their markdown only changes when the resolver does:
+      // after Back and a corrected value, they would otherwise keep showing the old one.
+      this.resolveMarkdownVariable = this._resolveMarkdownVariable.bind(this);
     }
     this.onStepActivated(this.wizardSteps[event.selectedIndex]);
   }

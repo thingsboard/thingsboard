@@ -86,11 +86,11 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (propName === 'data' && change.currentValue !== change.previousValue) {
-        this.parsedData = this.parseData(this.data);
-      }
+    // A new resolver means the variable values changed, so the same data has to be resolved again.
+    const changed = ['data', 'onResolveVariable']
+      .some(propName => changes[propName] && changes[propName].currentValue !== changes[propName].previousValue);
+    if (changed) {
+      this.parsedData = this.parseData(this.data);
     }
   }
 
