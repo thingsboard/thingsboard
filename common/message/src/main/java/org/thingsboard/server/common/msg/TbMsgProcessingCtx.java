@@ -22,6 +22,19 @@ public final class TbMsgProcessingCtx implements Serializable {
     @Setter
     @Getter
     private volatile boolean traceAuthorized;
+    // Trace state lives here rather than in the user-visible metadata, so rule nodes can't change or leak it.
+    @Setter
+    @Getter
+    private volatile String traceId;
+    @Setter
+    @Getter
+    private volatile String traceParent;
+    @Setter
+    @Getter
+    private volatile String spanOnRetry;
+    @Setter
+    @Getter
+    private volatile boolean recordMsgPayload;
 
     public TbMsgProcessingCtx() {
         this(0);
@@ -42,11 +55,25 @@ public final class TbMsgProcessingCtx implements Serializable {
     }
 
     public TbMsgProcessingCtx copy() {
+        TbMsgProcessingCtx copy;
         if (stack == null || stack.isEmpty()) {
-            return new TbMsgProcessingCtx(ruleNodeExecCounter.get(), null, traceAuthorized);
+            copy = new TbMsgProcessingCtx(ruleNodeExecCounter.get(), null, traceAuthorized);
         } else {
-            return new TbMsgProcessingCtx(ruleNodeExecCounter.get(), new LinkedList<>(stack), traceAuthorized);
+            copy = new TbMsgProcessingCtx(ruleNodeExecCounter.get(), new LinkedList<>(stack), traceAuthorized);
         }
+        copy.traceId = traceId;
+        copy.traceParent = traceParent;
+        copy.spanOnRetry = spanOnRetry;
+        copy.recordMsgPayload = recordMsgPayload;
+        return copy;
+    }
+
+    public void clearTrace() {
+        traceAuthorized = false;
+        traceId = null;
+        traceParent = null;
+        spanOnRetry = null;
+        recordMsgPayload = false;
     }
 
     public void push(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
@@ -78,26 +105,46 @@ public final class TbMsgProcessingCtx implements Serializable {
     public static TbMsgProcessingCtx fromProto(MsgProtos.TbMsgProcessingCtxProto ctx) {
         int ruleNodeExecCounter = ctx.getRuleNodeExecCounter();
         boolean traceAuthorized = ctx.getTraceAuthorized();
+        TbMsgProcessingCtx result;
         if (ctx.getStackCount() > 0) {
             LinkedList<TbMsgProcessingStackItem> stack = new LinkedList<>();
             for (MsgProtos.TbMsgProcessingStackItemProto item : ctx.getStackList()) {
                 stack.add(TbMsgProcessingStackItem.fromProto(item));
             }
-            return new TbMsgProcessingCtx(ruleNodeExecCounter, stack, traceAuthorized);
+            result = new TbMsgProcessingCtx(ruleNodeExecCounter, stack, traceAuthorized);
         } else {
-            return new TbMsgProcessingCtx(ruleNodeExecCounter, null, traceAuthorized);
+            result = new TbMsgProcessingCtx(ruleNodeExecCounter, null, traceAuthorized);
         }
+        result.traceId = emptyToNull(ctx.getTraceId());
+        result.traceParent = emptyToNull(ctx.getTraceparent());
+        result.spanOnRetry = emptyToNull(ctx.getSpanOnRetry());
+        result.recordMsgPayload = ctx.getTraceRecordMsgPayload();
+        return result;
     }
 
     public MsgProtos.TbMsgProcessingCtxProto toProto() {
         var ctxBuilder = MsgProtos.TbMsgProcessingCtxProto.newBuilder();
         ctxBuilder.setRuleNodeExecCounter(ruleNodeExecCounter.get());
         ctxBuilder.setTraceAuthorized(traceAuthorized);
+        if (traceId != null) {
+            ctxBuilder.setTraceId(traceId);
+        }
+        if (traceParent != null) {
+            ctxBuilder.setTraceparent(traceParent);
+        }
+        if (spanOnRetry != null) {
+            ctxBuilder.setSpanOnRetry(spanOnRetry);
+        }
+        ctxBuilder.setTraceRecordMsgPayload(recordMsgPayload);
         if (stack != null) {
             for (TbMsgProcessingStackItem item : stack) {
                 ctxBuilder.addStack(item.toProto());
             }
         }
         return ctxBuilder.build();
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isEmpty() ? null : value;
     }
 }

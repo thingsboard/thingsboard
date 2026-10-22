@@ -23,6 +23,11 @@ message TbMsgProcessingCtxProto {
     int32 ruleNodeExecCounter = 1;
     repeated TbMsgProcessingStackItemProto stack = 2;
     bool traceAuthorized = 3;
+    // Trace state of a traced message; empty when the message is not traced.
+    string traceId = 4;
+    string traceparent = 5;
+    string spanOnRetry = 6;
+    bool traceRecordMsgPayload = 7;
 }
 
 message TbMsgProto {

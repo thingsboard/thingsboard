@@ -49,7 +49,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
 import org.thingsboard.server.cache.limits.RateLimitService;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -165,7 +164,7 @@ public class TraceMessageService {
                 return;
             }
             String newTraceParent = TraceUtils.buildTraceparent(span.getSpanContext());
-            tbMsg.getMetaData().putValue(DataConstants.TRACE_PARENT, newTraceParent);
+            tbMsg.setTraceParent(newTraceParent);
             tbContext.setProcessingMsg(tbMsg);
             tbContext.setProcessingMsgSpan(span);
         } catch (Exception e) {
@@ -227,7 +226,7 @@ public class TraceMessageService {
             return null;
         }
         try {
-            addSpanAttributes(span, tbMsg, ruleChainName, ruleNode, tenantId, TraceUtils.shouldRecordMsgPayload(tbMsg.getMetaData()));
+            addSpanAttributes(span, tbMsg, ruleChainName, ruleNode, tenantId, tbMsg.isRecordMsgPayload());
         } catch (RuntimeException e) {
             endWithError(span, e);
             throw e;
@@ -287,7 +286,7 @@ public class TraceMessageService {
             if (isProcessingMsg(tbContext, msg)) {
                 Span span = tbContext.getProcessingMsgSpan();
                 if (span != null) {
-                    addOutputMsgAttributes(span, msg, TraceUtils.shouldRecordMsgPayload(msg.getMetaData()));
+                    addOutputMsgAttributes(span, msg, msg.isRecordMsgPayload());
                     span.setStatus(StatusCode.OK);
                     span.end();
                 }
@@ -307,7 +306,7 @@ public class TraceMessageService {
             if (isProcessingMsg(tbContext, msg)) {
                 Span span = tbContext.getProcessingMsgSpan();
                 if (span != null) {
-                    addOutputMsgAttributes(span, msg, TraceUtils.shouldRecordMsgPayload(msg.getMetaData()));
+                    addOutputMsgAttributes(span, msg, msg.isRecordMsgPayload());
                     span.setStatus(StatusCode.ERROR, errorStatusMessage(th));
                     span.end();
                 }
@@ -329,7 +328,7 @@ public class TraceMessageService {
             }
             Span span = tbContext.getProcessingMsgSpan();
             if (span != null) {
-                addOutputMsgAttributes(span, tbMsg, TraceUtils.shouldRecordMsgPayload(tbMsg.getMetaData()));
+                addOutputMsgAttributes(span, tbMsg, tbMsg.isRecordMsgPayload());
                 span.setStatus(StatusCode.OK);
                 span.end();
             }
@@ -386,7 +385,7 @@ public class TraceMessageService {
             if (!tbMsg.isTraced()) return;
             Span span = tbContext.getProcessingMsgSpan();
             if (span != null && isProcessingMsg(tbContext, tbMsg)) {
-                addOutputMsgAttributes(span, tbMsg, TraceUtils.shouldRecordMsgPayload(tbMsg.getMetaData()));
+                addOutputMsgAttributes(span, tbMsg, tbMsg.isRecordMsgPayload());
                 span.setStatus(StatusCode.OK);
                 span.end();
             }
@@ -438,14 +437,14 @@ public class TraceMessageService {
     }
 
     private boolean authorizeTraceInjection(TenantId tenantId, TbMsgPackProcessingContext packCtx, TbMsg tbMsg, String reason) {
-        String traceparent = TraceUtils.getTraceParent(tbMsg.getMetaData());
+        String traceparent = tbMsg.getTraceParent();
         if (!TraceUtils.isValidTraceparent(traceparent) || TraceUtils.isUnsampledTraceparent(traceparent)) {
             log.debug("[{}] {} missing or invalid traceparent, stripping trace metadata", tenantId, reason);
             stripTraceState(tbMsg);
             return false;
         }
-        tbMsg.getMetaData().putValue(DataConstants.TRACE_ID, TraceUtils.extractTraceIdFromTraceparent(traceparent));
-        tbMsg.getMetaData().putValue(DataConstants.SPAN_ON_RETRY, TraceUtils.extractSpanIdFromTraceparent(traceparent));
+        tbMsg.setTraceId(TraceUtils.extractTraceIdFromTraceparent(traceparent));
+        tbMsg.setSpanOnRetry(TraceUtils.extractSpanIdFromTraceparent(traceparent));
 
         tbMsg.setTraceAuthorized(true);
 
@@ -464,12 +463,11 @@ public class TraceMessageService {
         String traceId = IdGenerator.random().generateTraceId();
         String rootSpanId = IdGenerator.random().generateSpanId();
 
-        TbMsgMetaData metaData = tbMsg.getMetaData();
-        // Trace keys left by an earlier trace (e.g. a stale payload flag) must not leak into the new one.
-        TraceUtils.stripTraceMetadata(metaData);
-        metaData.putValue(DataConstants.TRACE_ID, traceId);
-        metaData.putValue(DataConstants.TRACE_PARENT, TraceUtils.buildTraceparent(traceId, rootSpanId, TraceFlags.getSampled().asHex()));
-        metaData.putValue(DataConstants.SPAN_ON_RETRY, rootSpanId);
+        // State left by an earlier trace (e.g. a stale payload flag) must not leak into the new one.
+        tbMsg.clearTrace();
+        tbMsg.setTraceId(traceId);
+        tbMsg.setTraceParent(TraceUtils.buildTraceparent(traceId, rootSpanId, TraceFlags.getSampled().asHex()));
+        tbMsg.setSpanOnRetry(rootSpanId);
 
         tbMsg.setTraceAuthorized(true);
 
@@ -478,7 +476,7 @@ public class TraceMessageService {
                 ? coverageSetting.getMessagePayloadRecording()
                 : TraceCoverageSetting.DEFAULT_MESSAGE_PAYLOAD_RECORDING;
         if (payloadRecording == TraceCoverageSetting.MessagePayloadRecording.ALL_SPANS) {
-            metaData.putValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD, Boolean.TRUE.toString());
+            tbMsg.setRecordMsgPayload(true);
         }
         if (payloadRecording == TraceCoverageSetting.MessagePayloadRecording.FIRST_SPAN) {
             recordMessageSnapshotSpan(tenantId, packCtx, tbMsg);
@@ -488,7 +486,7 @@ public class TraceMessageService {
     }
 
     private void recordMessageSnapshotSpan(TenantId tenantId, TbMsgPackProcessingContext packCtx, TbMsg tbMsg) {
-        SpanContext parentSpanContext = TraceUtils.parseRemoteParentSpanContext(TraceUtils.getTraceParent(tbMsg.getMetaData()));
+        SpanContext parentSpanContext = TraceUtils.parseRemoteParentSpanContext(tbMsg.getTraceParent());
         if (parentSpanContext == null || !parentSpanContext.isValid() || !parentSpanContext.isSampled()) {
             return;
         }
@@ -516,21 +514,22 @@ public class TraceMessageService {
         if (retryMetadata == null) {
             return;
         }
-        TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.TRACE_ID, retryMetadata.getTraceId());
-        TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.TRACE_PARENT, retryMetadata.getTraceparent());
-        TraceUtils.putTraceMetaIfMissing(tbMsg.getMetaData(), DataConstants.SPAN_ON_RETRY, retryMetadata.getSpanOnRetry());
-        // The flag decided when the trace started wins over whatever the redelivered message carries.
-        if (retryMetadata.getTraceRecordMsgPayload() != null) {
-            tbMsg.getMetaData().putValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD, retryMetadata.getTraceRecordMsgPayload());
-        } else {
-            tbMsg.getMetaData().getData().remove(DataConstants.TRACE_RECORD_MSG_PAYLOAD);
+        if (tbMsg.getTraceId() == null) {
+            tbMsg.setTraceId(retryMetadata.getTraceId());
         }
+        if (tbMsg.getTraceParent() == null) {
+            tbMsg.setTraceParent(retryMetadata.getTraceparent());
+        }
+        if (tbMsg.getSpanOnRetry() == null) {
+            tbMsg.setSpanOnRetry(retryMetadata.getSpanOnRetry());
+        }
+        // The flag decided when the trace started wins over whatever the redelivered message carries.
+        tbMsg.setRecordMsgPayload(Boolean.parseBoolean(retryMetadata.getTraceRecordMsgPayload()));
         tbMsg.setTraceAuthorized(true);
     }
 
     private static void stripTraceState(TbMsg tbMsg) {
-        TraceUtils.stripTraceMetadata(tbMsg.getMetaData());
-        tbMsg.setTraceAuthorized(false);
+        tbMsg.clearTrace();
     }
 
     private void registerRetryMetadata(TenantId tenantId, TbMsgPackProcessingContext packCtx, TbMsg tbMsg) {
@@ -540,9 +539,9 @@ public class TraceMessageService {
         packCtx.registerTraceMetadata(tbMsg.getId(), TraceRetryMetadata.builder()
                 .tenantId(tenantId.getId().toString())
                 .traceId(tbMsg.getTraceId())
-                .traceparent(TraceUtils.getTraceParent(tbMsg.getMetaData()))
-                .spanOnRetry(TraceUtils.getSpanOnRetry(tbMsg.getMetaData()))
-                .traceRecordMsgPayload(tbMsg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD))
+                .traceparent(tbMsg.getTraceParent())
+                .spanOnRetry(tbMsg.getSpanOnRetry())
+                .traceRecordMsgPayload(tbMsg.isRecordMsgPayload() ? Boolean.TRUE.toString() : null)
                 .build());
     }
 
@@ -740,29 +739,28 @@ public class TraceMessageService {
         }
         if (sourceMsg.isTraceAuthorized()) {
             targetMsg.setTraceAuthorized(true);
-            targetMsg.getMetaData().putValue(DataConstants.TRACE_ID, sourceMsg.getTraceId());
+            targetMsg.setTraceId(sourceMsg.getTraceId());
         }
         String traceparent;
         if (parentSpan != null) {
             traceparent = TraceUtils.buildTraceparent(parentSpan.getSpanContext());
         } else {
-            traceparent = TraceUtils.getTraceParent(sourceMsg.getMetaData());
+            traceparent = sourceMsg.getTraceParent();
         }
 
         if (traceparent != null) {
-            targetMsg.getMetaData().putValue(DataConstants.TRACE_PARENT, traceparent);
+            targetMsg.setTraceParent(traceparent);
         }
-        String recordMsgPayload = sourceMsg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD);
-        if (recordMsgPayload != null) {
-            targetMsg.getMetaData().putValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD, recordMsgPayload);
+        if (sourceMsg.isRecordMsgPayload()) {
+            targetMsg.setRecordMsgPayload(true);
         }
 
-        if (TraceUtils.getSpanOnRetry(targetMsg.getMetaData()) == null) {
+        if (targetMsg.getSpanOnRetry() == null) {
             String retrySpanId = parentSpan != null
                     ? parentSpan.getSpanContext().getSpanId()
                     : TraceUtils.extractSpanIdFromTraceparent(traceparent);
             if (retrySpanId != null) {
-                targetMsg.getMetaData().putValue(DataConstants.SPAN_ON_RETRY, retrySpanId);
+                targetMsg.setSpanOnRetry(retrySpanId);
             }
         }
     }
@@ -773,7 +771,7 @@ public class TraceMessageService {
             return null;
         }
 
-        String traceparent = TraceUtils.getTraceParent(tbMsg.getMetaData());
+        String traceparent = tbMsg.getTraceParent();
         if (traceparent == null) {
             return null;
         }

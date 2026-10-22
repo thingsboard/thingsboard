@@ -35,9 +35,7 @@ import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.TraceFlags;
 import io.opentelemetry.api.trace.TraceState;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 
 public final class TraceUtils {
@@ -70,37 +68,6 @@ public final class TraceUtils {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    public static void stripTraceMetadata(TbMsgMetaData metaData) {
-        metaData.getData().remove(DataConstants.TRACE_ID);
-        metaData.getData().remove(DataConstants.TRACE_PARENT);
-        metaData.getData().remove(DataConstants.SPAN_ON_RETRY);
-        metaData.getData().remove(DataConstants.TRACE_LOG_LEVEL);
-        metaData.getData().remove(DataConstants.TRACE_CREATED_AT);
-        metaData.getData().remove(DataConstants.TRACE_RECORD_MSG_PAYLOAD);
-    }
-
-    public static void putTraceMetaIfMissing(TbMsgMetaData metaData, String key, String value) {
-        if (value != null && metaData.getValue(key) == null) {
-            metaData.putValue(key, value);
-        }
-    }
-
-    public static String getTraceId(TbMsgMetaData metaData) {
-        return metaData.getValue(DataConstants.TRACE_ID);
-    }
-
-    public static String getTraceParent(TbMsgMetaData metaData) {
-        return metaData.getValue(DataConstants.TRACE_PARENT);
-    }
-
-    public static String getSpanOnRetry(TbMsgMetaData metaData) {
-        return metaData.getValue(DataConstants.SPAN_ON_RETRY);
-    }
-
-    public static boolean shouldRecordMsgPayload(TbMsgMetaData metaData) {
-        return Boolean.parseBoolean(metaData.getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD));
     }
 
     public static String buildTraceparent(SpanContext ctx) {

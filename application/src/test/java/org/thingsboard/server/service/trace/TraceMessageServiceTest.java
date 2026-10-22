@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
 import org.thingsboard.server.cache.limits.RateLimitService;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -35,7 +34,6 @@ import org.thingsboard.server.service.queue.TraceRetryMetadata;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,7 +99,7 @@ class TraceMessageServiceTest {
         service.onForwardToRuleEngineActor(tenantId, selectedPack(msg), msg);
 
         assertThat(msg.isTraced()).isTrue();
-        assertThat(msg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD)).isNull();
+        assertThat(msg.isRecordMsgPayload()).isFalse();
         assertThat(endedSpans).isEmpty();
     }
 
@@ -112,7 +110,7 @@ class TraceMessageServiceTest {
 
         service.onForwardToRuleEngineActor(tenantId, selectedPack(msg), msg);
 
-        assertThat(msg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD)).isNull();
+        assertThat(msg.isRecordMsgPayload()).isFalse();
         assertThat(endedSpans).hasSize(1);
         assertThat(endedSpans.get(0).getName()).isEqualTo("Trace Message Snapshot");
     }
@@ -124,7 +122,7 @@ class TraceMessageServiceTest {
 
         service.onForwardToRuleEngineActor(tenantId, selectedPack(msg), msg);
 
-        assertThat(msg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD)).isEqualTo("true");
+        assertThat(msg.isRecordMsgPayload()).isTrue();
     }
 
     @Test
@@ -141,7 +139,7 @@ class TraceMessageServiceTest {
         service.onForwardToRuleEngineActor(tenantId, packCtx, msg);
 
         assertThat(msg.isTraceAuthorized()).isTrue();
-        assertThat(msg.getMetaData().getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD)).isNull();
+        assertThat(msg.isRecordMsgPayload()).isFalse();
     }
 
     @Test
@@ -189,8 +187,8 @@ class TraceMessageServiceTest {
 
     private TbMsg tracedMsg() {
         TbMsg msg = msgWithStaleFlag();
-        msg.getMetaData().putValue(DataConstants.TRACE_ID, TRACE_ID);
-        msg.getMetaData().putValue(DataConstants.TRACE_PARENT, TRACE_PARENT);
+        msg.setTraceId(TRACE_ID);
+        msg.setTraceParent(TRACE_PARENT);
         msg.setTraceAuthorized(true);
         return msg;
     }
@@ -217,12 +215,14 @@ class TraceMessageServiceTest {
     }
 
     private TbMsg msgWithStaleFlag() {
-        return TbMsg.newMsg()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(new DeviceId(UUID.randomUUID()))
-                .copyMetaData(new TbMsgMetaData(Map.of(DataConstants.TRACE_RECORD_MSG_PAYLOAD, "true")))
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data("{\"temperature\":42}")
                 .build();
+        msg.setRecordMsgPayload(true);
+        return msg;
     }
 
     private TbMsgPackProcessingContext selectedPack(TbMsg msg) {

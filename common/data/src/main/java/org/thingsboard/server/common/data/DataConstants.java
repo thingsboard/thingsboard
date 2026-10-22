@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
+import java.util.List;
+
 public class DataConstants {
 
     public static final String TENANT = "TENANT";
@@ -168,5 +170,8 @@ public class DataConstants {
     public static final String TRACE_LOG_LEVEL = "ss_traceLogLevel";
     public static final String TRACE_CREATED_AT = "ss_traceCreatedAt";
     public static final String TRACE_RECORD_MSG_PAYLOAD = "ss_traceRecordMsgPayload";
+    // The trace state moved to TbMsgProcessingCtx; these keys are only read from messages of older nodes, then removed.
+    public static final List<String> LEGACY_TRACE_METADATA_KEYS = List.of(TRACE_ID, TRACE_PARENT, SPAN_ON_RETRY,
+            TRACE_LOG_LEVEL, TRACE_CREATED_AT, TRACE_RECORD_MSG_PAYLOAD);
 
 }

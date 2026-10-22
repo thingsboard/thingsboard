@@ -225,6 +225,7 @@ public final class TbMsg implements Serializable {
             calculatedFieldIds.add(calculatedFieldId);
         }
         TbMsgProcessingCtx ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
+        migrateLegacyTraceMetadata(ctx, metaData);
         TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
         return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
                 metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, correlationId, partition, calculatedFieldIds, ctx, callback);
@@ -282,11 +283,49 @@ public final class TbMsg implements Serializable {
     }
 
     public String getTraceId() {
-        return metaData.getValue(DataConstants.TRACE_ID);
+        return ctx.getTraceId();
+    }
+
+    @JsonIgnore
+    public void setTraceId(String traceId) {
+        ctx.setTraceId(traceId);
     }
 
     public String getTraceParent() {
-        return metaData.getValue(DataConstants.TRACE_PARENT);
+        return ctx.getTraceParent();
+    }
+
+    @JsonIgnore
+    public void setTraceParent(String traceParent) {
+        ctx.setTraceParent(traceParent);
+    }
+
+    @JsonIgnore
+    public String getSpanOnRetry() {
+        return ctx.getSpanOnRetry();
+    }
+
+    @JsonIgnore
+    public void setSpanOnRetry(String spanOnRetry) {
+        ctx.setSpanOnRetry(spanOnRetry);
+    }
+
+    @JsonIgnore
+    public boolean isRecordMsgPayload() {
+        return ctx.isRecordMsgPayload();
+    }
+
+    @JsonIgnore
+    public void setRecordMsgPayload(boolean recordMsgPayload) {
+        ctx.setRecordMsgPayload(recordMsgPayload);
+    }
+
+    /**
+     * Ends tracing of this message: drops its trace state and authorization.
+     */
+    @JsonIgnore
+    public void clearTrace() {
+        ctx.clearTrace();
     }
 
     public boolean isTraced() {
@@ -301,6 +340,21 @@ public final class TbMsg implements Serializable {
     @JsonIgnore
     public void setTraceAuthorized(boolean traceAuthorized) {
         ctx.setTraceAuthorized(traceAuthorized);
+    }
+
+    // Nodes of an older version kept the trace state in the metadata; take it over once (only if they had authorized
+    // it) and drop the keys, so the state is never read from user-visible metadata.
+    private static void migrateLegacyTraceMetadata(TbMsgProcessingCtx ctx, TbMsgMetaData metaData) {
+        String legacyTraceId = metaData.getValue(DataConstants.TRACE_ID);
+        if (legacyTraceId != null && ctx.getTraceId() == null && ctx.isTraceAuthorized()) {
+            ctx.setTraceId(legacyTraceId);
+            ctx.setTraceParent(metaData.getValue(DataConstants.TRACE_PARENT));
+            ctx.setSpanOnRetry(metaData.getValue(DataConstants.SPAN_ON_RETRY));
+            ctx.setRecordMsgPayload(Boolean.parseBoolean(metaData.getValue(DataConstants.TRACE_RECORD_MSG_PAYLOAD)));
+        }
+        for (String key : DataConstants.LEGACY_TRACE_METADATA_KEYS) {
+            metaData.getData().remove(key);
+        }
     }
 
     public boolean isTypeOf(TbMsgType tbMsgType) {
