@@ -21,6 +21,7 @@ import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.edge.stats.EdgeStatsAggregationService;
 import org.thingsboard.server.service.edge.stats.EdgeStatsService;
 
 import java.time.Duration;
@@ -52,6 +53,8 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
     private EdgeStatsService edgeStatsService;
     @Autowired
     private EdgeStatsCounterService statsCounterService;
+    @Autowired
+    private EdgeStatsAggregationService edgeStatsAggregationService;
 
     @Test
     public void testReportStats() throws Exception {
@@ -73,7 +76,9 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
         edgeStatsService.reportStats();
 
         // THEN
+        // stats are sent to the edge partition owner (this node) through the core queue and saved on its flush
         await().atMost(10, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            edgeStatsAggregationService.flush();
             List<TsKvEntry> actualStats = fetchLatestStats();
             assertEquals(EXPECTED_MSGS_ADDED, getStatsLongValue(actualStats, DOWNLINK_MSGS_ADDED));
             assertEquals(EXPECTED_MSGS_PUSHED, getStatsLongValue(actualStats, DOWNLINK_MSGS_PUSHED));

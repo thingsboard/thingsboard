@@ -86,6 +86,7 @@ import org.thingsboard.server.queue.util.TbPackCallback;
 import org.thingsboard.server.queue.util.TbPackProcessingContext;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.custommenu.TbCustomMenuService;
+import org.thingsboard.server.service.edge.stats.EdgeStatsAggregationService;
 import org.thingsboard.server.service.integration.IntegrationManagerService;
 import org.thingsboard.server.service.integration.TbCoreIntegrationApiService;
 import org.thingsboard.server.service.integration.TbIntegrationDownlinkService;
@@ -111,6 +112,7 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -160,6 +162,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final EdqsService edqsService;
     private final LogStreamDispatcher logStreamDispatcher;
     private final SystemUpdateMsgHandler systemUpdateMsgHandler;
+    private final Optional<EdgeStatsAggregationService> edgeStatsAggregationService;
     private final TbCoreConsumerStats stats;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, QueueConfig> mainConsumer;
@@ -192,7 +195,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         TbCustomMenuService customMenuService,
                                         EdqsService edqsService,
                                         LogStreamDispatcher logStreamDispatcher,
-                                        SystemUpdateMsgHandler systemUpdateMsgHandler) {
+                                        SystemUpdateMsgHandler systemUpdateMsgHandler,
+                                        Optional<EdgeStatsAggregationService> edgeStatsAggregationService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
@@ -216,6 +220,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.edqsService = edqsService;
         this.logStreamDispatcher = logStreamDispatcher;
         this.systemUpdateMsgHandler = systemUpdateMsgHandler;
+        this.edgeStatsAggregationService = edgeStatsAggregationService;
     }
 
     @PostConstruct
@@ -351,6 +356,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToEventService(toCoreMsg.getErrorEventMsg(), callback);
                     } else if (toCoreMsg.hasLifecycleEventMsg()) {
                         forwardToEventService(toCoreMsg.getLifecycleEventMsg(), callback);
+                    } else if (toCoreMsg.hasEdgeStatsMsg()) {
+                        forwardToEdgeStatsAggregationService(toCoreMsg.getEdgeStatsMsg(), callback);
                     } else {
                         log.warn("[{}] No rule how to forward message from main consumer for message: {}", id, toCoreMsg);
                     }
@@ -800,6 +807,16 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             stats.log(toDeviceActorMsg);
         }
         actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback));
+    }
+
+    private void forwardToEdgeStatsAggregationService(TransportProtos.EdgeStatsMsgProto edgeStatsMsg, TbCallback callback) {
+        if (statsEnabled) {
+            stats.log(edgeStatsMsg);
+        }
+        edgeStatsAggregationService.ifPresentOrElse(
+                statsAggregationService -> statsAggregationService.onEdgeStatsMsg(edgeStatsMsg, callback),
+                callback::onSuccess
+        );
     }
 
     private void forwardToEventService(ErrorEventProto eventProto, TbCallback callback) {
