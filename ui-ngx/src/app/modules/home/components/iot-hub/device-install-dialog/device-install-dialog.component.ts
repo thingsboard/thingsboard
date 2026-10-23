@@ -13,7 +13,7 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -209,6 +209,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   // Variable resolution state
   formValues: Record<string, any> = {};
+  private formTemplateSubscriptions: Subscription[] = [];
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
   // protocol → where the server took its host from
@@ -308,6 +309,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   ngOnDestroy() {
+    this.formTemplateSubscriptions.forEach(subscription => subscription.unsubscribe());
     for (const url of this.zipImages.values()) {
       URL.revokeObjectURL(url);
     }
@@ -907,7 +909,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const formJson = (ws.rawSteps[0] && this.zipFiles.get(ws.rawSteps[0].file)) || '[]';
     // These are for the fields the dialog adds; a package can't set them
     const packageFields = (JSON.parse(formJson) as FormFieldDefinition[])
-      .map(({ readOnly, helpPopupId, helpPopupText, errorMessage, row, width, ...field }) => field);
+      .map(({ helpPopupId, helpPopupText, errorMessage, ...field }) => field);
     ws.formFields = [...packageFields, ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
     // In review mode, use stored values; otherwise use defaults
@@ -933,7 +935,43 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (this.reviewMode) {
       ws.formGroup.disable();
       ws.completed = true;
+    } else {
+      this.applyDefaultValueTemplates(ws, storedValues);
     }
+  }
+
+  /**
+   * Keeps each field with a defaultValueTemplate filled from the other fields until the user edits it.
+   * A template with an empty field gives an empty value, so the placeholder shows instead.
+   */
+  private applyDefaultValueTemplates(ws: WizardStep, storedValues: Record<string, any> | undefined): void {
+    const templated = ws.formFields.filter(field => field.defaultValueTemplate && storedValues?.[field.key] === undefined);
+    if (!templated.length) {
+      return;
+    }
+    const update = () => {
+      for (const field of templated) {
+        const control = ws.formGroup.controls[field.key];
+        if (!control.dirty) {
+          control.setValue(this.renderFormTemplate(field.defaultValueTemplate, ws.formGroup.getRawValue()), { emitEvent: false });
+        }
+      }
+    };
+    update();
+    this.formTemplateSubscriptions.push(ws.formGroup.valueChanges.subscribe(update));
+  }
+
+  private renderFormTemplate(template: string, values: Record<string, any>): string {
+    let missing = false;
+    const result = template.replace(/\$\{([^}]+)}/g, (_, key: string) => {
+      const value = values[key];
+      if (value === undefined || value === null || value === '') {
+        missing = true;
+        return '';
+      }
+      return String(value);
+    });
+    return missing ? '' : result;
   }
 
   private resolveInitialFieldValue(field: FormFieldDefinition, storedValue: any): any {

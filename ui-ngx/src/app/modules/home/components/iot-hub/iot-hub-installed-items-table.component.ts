@@ -26,10 +26,12 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import {
   DeviceInstalledItemDescriptor,
+  getInstalledItemTarget,
   getInstalledItemUrl,
   IotHubInstalledItem,
   ItemPublishedVersionInfo
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/iot-hub/iot-hub-item.models';
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
@@ -191,6 +193,27 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     this.iotHubApiService.getVersionInfo(item.itemVersionId, {ignoreLoading: true, ignoreErrors: true}).subscribe(versionView => {
       this.iotHubActions.reviewDevice(versionView, descriptor).subscribe();
     });
+  }
+
+  canOpen(item: IotHubInstalledItem): boolean {
+    return !!getInstalledItemTarget(item?.descriptor);
+  }
+
+  /** Names what Open opens: for a device package, its dashboard, device or integration. */
+  openLabel(item: IotHubInstalledItem): string {
+    if (!this.canOpen(item)) {
+      return this.translate.instant('iot-hub.nothing-to-open');
+    }
+    if (item.itemType === 'SOLUTION_TEMPLATE') {
+      return this.translate.instant('iot-hub.goto-main-dashboard');
+    }
+    let type = this.getItemTypeLabel(item.itemType);
+    const target = item.itemType === 'DEVICE' ? getInstalledItemTarget(item.descriptor) : null;
+    const typeKey = target && entityTypeTranslations.get(target.entityType)?.type;
+    if (typeKey) {
+      type = this.translate.instant(typeKey);
+    }
+    return this.translate.instant('iot-hub.open-item-type', { type });
   }
 
   openEntity(item: IotHubInstalledItem): void {

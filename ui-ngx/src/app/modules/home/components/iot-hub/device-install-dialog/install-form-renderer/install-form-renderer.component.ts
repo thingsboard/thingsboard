@@ -45,29 +45,18 @@ export class InstallFormRendererComponent implements OnChanges {
   // Fields in render order: consecutive fields of a group form a section, and consecutive fields
   // with the same `row` share one line
   sections: FormSection[] = [];
+  // The same for the fields of the collapsed Advanced settings panel
+  advancedSections: FormSection[] = [];
   private rowOf = new Map<string, FormRow>();
 
   readonly FormFieldType = FormFieldType;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.fields) {
-      this.sections = [];
       this.rowOf.clear();
-      let previous: FormFieldDefinition | undefined;
-      for (const field of this.fields ?? []) {
-        if (!previous || field.group !== previous.group) {
-          this.sections.push({ title: field.group, rows: [] });
-        }
-        const rows = this.sections[this.sections.length - 1].rows;
-        const last = rows[rows.length - 1];
-        if (field.row && last?.fields[0].row === field.row) {
-          last.fields.push(field);
-        } else {
-          rows.push({ fields: [field] });
-        }
-        this.rowOf.set(field.key, rows[rows.length - 1]);
-        previous = field;
-      }
+      const fields = this.fields ?? [];
+      this.sections = this.buildSections(fields.filter(field => field.section !== 'advanced'));
+      this.advancedSections = this.buildSections(fields.filter(field => field.section === 'advanced'));
     }
     if (changes.fields || changes.reviewMode) {
       this.passwordVisible = {};
@@ -79,6 +68,31 @@ export class InstallFormRendererComponent implements OnChanges {
         }
       }
     }
+  }
+
+  private buildSections(fields: FormFieldDefinition[]): FormSection[] {
+    const sections: FormSection[] = [];
+    let previous: FormFieldDefinition | undefined;
+    for (const field of fields) {
+      if (!previous || field.group !== previous.group) {
+        sections.push({ title: field.group, rows: [] });
+      }
+      const rows = sections[sections.length - 1].rows;
+      const last = rows[rows.length - 1];
+      if (field.row && last?.fields[0].row === field.row) {
+        last.fields.push(field);
+      } else {
+        rows.push({ fields: [field] });
+      }
+      this.rowOf.set(field.key, rows[rows.length - 1]);
+      previous = field;
+    }
+    return sections;
+  }
+
+  /** The hint of a field that a defaultValueTemplate fills describes the filled value. */
+  helpTextOf(field: FormFieldDefinition): string | undefined {
+    return field.defaultValueTemplate && field.defaultValueTemplateHelpText ? field.defaultValueTemplateHelpText : field.helpText;
   }
 
   togglePasswordVisible(key: string): void {

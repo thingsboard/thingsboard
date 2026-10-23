@@ -101,6 +101,16 @@ export interface ItemPublishedVersionInfo {
   publishedVersion: string;
 }
 
+/** An entity that deleting an installed item kept, because other installed items use it too. */
+export interface IotHubKeptEntity {
+  entityId: { id: string; entityType: string };
+  usedBy: string[];
+}
+
+export interface DeleteInstalledItemResult {
+  keptEntities?: IotHubKeptEntity[];
+}
+
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
   tenantId: { id: string };
   itemId: string;
@@ -111,7 +121,8 @@ export interface IotHubInstalledItem extends BaseData<{id: string}> {
   descriptor: IotHubInstalledItemDescriptor;
 }
 
-export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null => {
+/** The entity the Open action of an installed item opens, and its URL. */
+export const getInstalledItemTarget = (descriptor?: IotHubInstalledItemDescriptor): { url: string; entityType: EntityType } | null => {
   if (!descriptor) {
     return null;
   }
@@ -155,7 +166,10 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     } else {
       url = getEntityDetailsPageURL(entityId, entityType);
     }
-    return url;
+    return url ? { url, entityType } : null;
   }
   return null;
 }
+
+export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null =>
+  getInstalledItemTarget(descriptor)?.url ?? null;

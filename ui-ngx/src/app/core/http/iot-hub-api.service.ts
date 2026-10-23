@@ -12,7 +12,7 @@ import {
   MpItemVersionView
 } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { IotHubInstalledItem, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DeleteInstalledItemResult, IotHubInstalledItem, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
@@ -261,8 +261,8 @@ export class IotHubApiService {
     return this.http.get<number>(url, { params: this.buildParams(config) });
   }
 
-  public deleteInstalledItem(installedItemId: string, config?: IotHubRequestConfig): Observable<void> {
-    return this.http.delete<void>(
+  public deleteInstalledItem(installedItemId: string, config?: IotHubRequestConfig): Observable<DeleteInstalledItemResult | null> {
+    return this.http.delete<DeleteInstalledItemResult | null>(
       `/api/iot-hub/installedItems/${installedItemId}`,
       { params: this.buildParams(config) }
     );

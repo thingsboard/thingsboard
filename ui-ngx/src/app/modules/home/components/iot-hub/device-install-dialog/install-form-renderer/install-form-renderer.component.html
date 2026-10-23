@@ -6,16 +6,32 @@
 -->
 @if (formGroup) {
   <form [formGroup]="formGroup" class="tb-install-form flex flex-col gap-4">
-    @for (section of sections; track $index) {
-      @if (section.title) {
-        <section class="tb-form-panel stroked">
-          <h3 class="tb-form-panel-title m-0">{{ section.title }}</h3>
-          <ng-container *ngTemplateOutlet="rowsTemplate; context: { $implicit: section.rows }"></ng-container>
-        </section>
-      } @else {
-        <ng-container *ngTemplateOutlet="rowsTemplate; context: { $implicit: section.rows }"></ng-container>
-      }
+    <ng-container *ngTemplateOutlet="sectionsTemplate; context: { $implicit: sections }"></ng-container>
+    @if (advancedSections.length) {
+      <section class="tb-form-panel stroked no-padding">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header style="padding: 16px">
+            <mat-panel-title>{{ 'iot-hub.advanced-settings' | translate }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="tb-form-panel no-border no-padding-top">
+            <ng-container *ngTemplateOutlet="sectionsTemplate; context: { $implicit: advancedSections }"></ng-container>
+          </div>
+        </mat-expansion-panel>
+      </section>
     }
+
+    <ng-template #sectionsTemplate let-sections>
+      @for (section of sections; track $index) {
+        @if (section.title) {
+          <section class="tb-form-panel stroked">
+            <h3 class="tb-form-panel-title m-0">{{ section.title }}</h3>
+            <ng-container *ngTemplateOutlet="rowsTemplate; context: { $implicit: section.rows }"></ng-container>
+          </section>
+        } @else {
+          <ng-container *ngTemplateOutlet="rowsTemplate; context: { $implicit: section.rows }"></ng-container>
+        }
+      }
+    </ng-template>
 
     <ng-template #rowsTemplate let-rows>
       @for (row of rows; track row.fields[0].key) {
@@ -36,7 +52,7 @@
           @for (field of row.fields; track field.key) {
             @if (hasHintBox(field)) {
               <div class="tb-form-hint tb-primary-fill flex items-center justify-between gap-5">
-                <div class="w-full">{{ field.helpText }}</div>
+                <div class="w-full">{{ helpTextOf(field) }}</div>
                 <div class="flex shrink-0"
                      [tb-help-popup]="field.helpPopupId"
                      hintMode
@@ -58,15 +74,16 @@
           <mat-checkbox [formControlName]="field.key">{{ field.label }}</mat-checkbox>
         }
         @case (FormFieldType.SELECT) {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'"
+                          [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
             <mat-select [formControlName]="field.key">
               @for (opt of field.options; track opt.value) {
                 <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
               }
             </mat-select>
-            @if (field.helpText && !hasHintBox(field)) {
-              <mat-hint>{{ field.helpText }}</mat-hint>
+            @if (helpTextOf(field) && !hasHintBox(field)) {
+              <mat-hint>{{ helpTextOf(field) }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
               <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -74,10 +91,11 @@
           </mat-form-field>
         }
         @case (FormFieldType.PASSWORD) {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'"
+                          [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
-                   [formControlName]="field.key"
+                   [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                    autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore>
             <button mat-icon-button matSuffix type="button"
                     (click)="togglePasswordVisible(field.key)">
@@ -91,8 +109,8 @@
                 <mat-icon>autorenew</mat-icon>
               </button>
             }
-            @if (field.helpText && !hasHintBox(field)) {
-              <mat-hint>{{ field.helpText }}</mat-hint>
+            @if (helpTextOf(field) && !hasHintBox(field)) {
+              <mat-hint>{{ helpTextOf(field) }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
               <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -106,12 +124,13 @@
           </mat-form-field>
         }
         @case (FormFieldType.INTEGER) {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'"
+                          [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
-            <input matInput type="number" [formControlName]="field.key"
+            <input matInput type="number" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                    data-lpignore="true" data-1p-ignore data-bwignore>
-            @if (field.helpText && !hasHintBox(field)) {
-              <mat-hint>{{ field.helpText }}</mat-hint>
+            @if (helpTextOf(field) && !hasHintBox(field)) {
+              <mat-hint>{{ helpTextOf(field) }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
               <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -125,9 +144,10 @@
           </mat-form-field>
         }
         @default {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'"
+                          [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
-            <input matInput [formControlName]="field.key"
+            <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                    autocomplete="new-username" data-lpignore="true" data-1p-ignore data-bwignore>
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"
@@ -137,8 +157,8 @@
                 <mat-icon>autorenew</mat-icon>
               </button>
             }
-            @if (field.helpText && !hasHintBox(field)) {
-              <mat-hint>{{ field.helpText }}</mat-hint>
+            @if (helpTextOf(field) && !hasHintBox(field)) {
+              <mat-hint>{{ helpTextOf(field) }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
               <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -153,8 +173,8 @@
         }
       }
 
-      @if (field.type === FormFieldType.BOOLEAN && field.helpText) {
-        <div class="tb-install-form-field-help">{{ field.helpText }}</div>
+      @if (field.type === FormFieldType.BOOLEAN && helpTextOf(field)) {
+        <div class="tb-install-form-field-help">{{ helpTextOf(field) }}</div>
       }
       @if (field.helpImage) {
         <img class="tb-install-form-field-help-image" [src]="imagePath(field.helpImage)" [alt]="field.label">

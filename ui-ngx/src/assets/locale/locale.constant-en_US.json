@@ -4311,6 +4311,9 @@
         "type-device-plural": "Devices"
     },
     "iot-hub": {
+        "advanced-settings": "Advanced settings",
+        "delete-kept-entities": "Some entities were kept, because other installed items use them: {{entities}}",
+        "delete-kept-entity": "{{type}} (used by {{usedBy}}).",
         "iot-hub": "IoT Hub",
         "generate-random-value": "Generate random value",
         "home-title": "ThingsBoard IoT Hub",
@@ -4509,6 +4512,7 @@
         "view-item-details": "View item details",
         "review-device-instructions": "Review device instructions",
         "open-item-type": "Open {{type}}",
+        "nothing-to-open": "Nothing to open",
         "back-to-marketplace": "Back to Marketplace",
         "device-install-select-connectivity": "Choose a connection method for your device",
         "pe-only": "PE Only",
