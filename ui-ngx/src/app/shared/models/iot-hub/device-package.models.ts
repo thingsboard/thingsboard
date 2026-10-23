@@ -292,10 +292,16 @@ export interface FormFieldDefinition {
   // Fields with the same group get one header above the first of them
   group?: string;
   // Set by the install dialog for the fields it adds, not by packages.
-  // Consecutive fields with the same row are shown on one line.
   readOnly?: boolean;
+  // Help popup shown under the field, and the text of its trigger
   helpPopupId?: string;
+  helpPopupText?: string;
+  // Shown when the field fails a validator the dialog adds (not on required)
+  errorMessage?: string;
+  // Consecutive fields with the same row are shown on one line. A field with a width (px) keeps it;
+  // the other fields of the row share the remaining space.
   row?: string;
+  width?: number;
 }
 
 export interface EntityStepOutput {

@@ -90,6 +90,8 @@ export interface ResolvedDeviceConnectivityInfo extends DeviceConnectivityInfo {
   hostSource?: DeviceConnectivityHostSource;
 }
 
+export type ResolvedDeviceConnectivitySettings = Partial<Record<DeviceConnectivityProtocol, ResolvedDeviceConnectivityInfo>>;
+
 export interface UserPasswordPolicy {
   minimumLength: number;
   maximumLength: number;

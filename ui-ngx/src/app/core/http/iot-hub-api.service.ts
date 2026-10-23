@@ -18,7 +18,7 @@ import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-param
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { DeviceConnectivityProtocol, ResolvedDeviceConnectivityInfo } from '@shared/models/settings.models';
+import { ResolvedDeviceConnectivitySettings } from '@shared/models/settings.models';
 import { environment as env } from '@env/environment';
 
 export function tbVersionToInt(version: string): number {
@@ -169,10 +169,8 @@ export class IotHubApiService {
     });
   }
 
-  public getConnectivitySettings(
-    config?: IotHubRequestConfig
-  ): Observable<Partial<Record<DeviceConnectivityProtocol, ResolvedDeviceConnectivityInfo>>> {
-    return this.http.get<Partial<Record<DeviceConnectivityProtocol, ResolvedDeviceConnectivityInfo>>>(
+  public getConnectivitySettings(config?: IotHubRequestConfig): Observable<ResolvedDeviceConnectivitySettings> {
+    return this.http.get<ResolvedDeviceConnectivitySettings>(
       `/api/iot-hub/connectivity`,
       { params: this.buildParams(config) }
     );
