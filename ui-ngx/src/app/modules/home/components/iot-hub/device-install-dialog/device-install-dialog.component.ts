@@ -131,9 +131,11 @@ const GATEWAY_MQTT_TRANSPORT: HostFieldTransport = {
   helpPopupText: 'iot-hub.device-install-which-host'
 };
 
-// Install methods whose packages get the transport fields. Other methods use the host differently
-// (a ChirpStack package builds the ThingsBoard URL from it) and keep the resolved value until they
-// are handled separately. Of the gateway methods, only these have packages that use ${mqtt.host}.
+// Install methods whose packages get the transport fields, when a step of the package uses the
+// host (see addTransportFields). Other methods use the host differently (a ChirpStack package builds
+// the ThingsBoard URL from it) and keep the resolved value until they are handled separately.
+// Every gateway method is listed: packages are published apart from UI releases, so one that starts
+// using ${mqtt.host} in its docker-compose gets the fields without a UI change.
 const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
   [InstallMethod.DIRECT_MQTT, {
     protocol: 'mqtt',
@@ -155,9 +157,9 @@ const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
     helpPopupId: 'iot-hub/device-connection-host',
     helpPopupText: 'iot-hub.device-install-which-host'
   }],
-  [InstallMethod.GATEWAY_MODBUS, GATEWAY_MQTT_TRANSPORT],
-  [InstallMethod.GATEWAY_BACNET, GATEWAY_MQTT_TRANSPORT],
-  [InstallMethod.GATEWAY_KNX, GATEWAY_MQTT_TRANSPORT]
+  ...Object.values(InstallMethod)
+    .filter(method => method.startsWith('GATEWAY_'))
+    .map((method): [string, HostFieldTransport] => [method, GATEWAY_MQTT_TRANSPORT])
 ]);
 
 /**
