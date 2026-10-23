@@ -33,6 +33,9 @@ public enum Operation {
     READ_CALCULATED_FIELD(true),
     WRITE_CALCULATED_FIELD(true);
 
+    public static final Set<Operation> TS_AND_ATTRIBUTES_OPERATIONS =
+            Set.of(READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY);
+
     public static Set<Operation> defaultEntityOperations = new HashSet<>(Arrays.asList(ALL, READ, WRITE,
             CREATE, DELETE, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CHANGE_OWNER));
 
