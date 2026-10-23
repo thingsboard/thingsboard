@@ -3113,7 +3113,7 @@
         "type-relation": "Relacija",
         "type-widgets-bundle": "Paket gradnikov",
         "type-widgets-type": "Vrsta gradnika",
-        "type-admin-settings": "Skrbniške nastavitve",
+        "type-admin-settings": "Administratorske nastavitve",
         "type-ota-package": "Paket OTA",
         "type-queue": "Čakalna vrsta",
         "action-type-added": "Dodano",
@@ -3323,12 +3323,12 @@
         "type-mobile-app-bundles": "Paketi mobilnih aplikacij",
         "list-of-mobile-app-bundles": "{ count, plural, =1 {En paket mobilnih aplikacij} one {Seznam # paketa mobilnih aplikacij} two {Seznam # paketov mobilnih aplikacij} few {Seznam # paketov mobilnih aplikacij} other {Seznam # paketov mobilnih aplikacij} }",
         "limit-reached": "Dosežena omejitev",
-        "limit-reached-text": "Dosegli ste omejitev: <b>{{ entities }}</b>. Če želite dodati več, prosite sistemskega skrbnika, naj poveča omejitev za vrsto entitete »{{ entity }}«.",
+        "limit-reached-text": "Dosegli ste omejitev: <b>{{ entities }}</b>. Če želite dodati več, prosite sistemskega administratorja, naj poveča omejitev za vrsto entitete »{{ entity }}«.",
         "request-limit-increase": "Zahtevaj povečanje omejitve",
-        "request-sysadmin-text": "Ali ste sistemski skrbnik?",
+        "request-sysadmin-text": "Ali ste sistemski administrator?",
         "login-here": "Prijavite se tukaj",
         "to-increase-limit": "za povečanje omejitve.",
-        "increase-limit-request-sent-title": "Vašemu sistemskemu skrbniku je bila poslana samodejna zahteva za povečanje omejitve",
+        "increase-limit-request-sent-title": "Vašemu sistemskemu administratorju je bila poslana samodejna zahteva za povečanje omejitve",
         "increase-limit-request-sent-text": "Počakajte nekaj časa, da zahtevo pregledajo in posodobijo nastavitve. Morda boste morali osvežiti to stran, da bodo spremembe vidne."
     },
     "entity-field": {
@@ -4444,7 +4444,7 @@
         "built-in-lookup-failed-title": "Komponente ni bilo mogoče preveriti",
         "built-in-lookup-failed-text": "Ni bilo mogoče preveriti, ali komponenta »{{name}}« v tej namestitvi že obstaja. Nič ni bilo nameščeno — poskusite znova.",
         "built-in-missing-title": "Ni na voljo v tej namestitvi",
-        "built-in-missing-text": "Komponenta »{{name}}« je običajno del platforme ThingsBoard, vendar je v tej namestitvi ni — morda jo je izbrisal sistemski skrbnik. Namesto tega jo lahko namestite iz IoT Huba.",
+        "built-in-missing-text": "Komponenta »{{name}}« je običajno del platforme ThingsBoard, vendar je v tej namestitvi ni — morda jo je izbrisal sistemski administrator. Namesto tega jo lahko namestite iz IoT Huba.",
         "connect": "Poveži",
         "connect-device": "Poveži napravo",
         "installing": "Nameščanje...",
@@ -4970,7 +4970,7 @@
             "mobile-app-preview": "Predogled obvestila za mobilno aplikacijo"
         },
         "delivery-method-not-configure-click": "Način dostave ni konfiguriran. Kliknite, če ga želite nastaviti.",
-        "delivery-method-not-configure-contact": "Način dostave ni konfiguriran. Obrnite se na sistemskega skrbnika.",
+        "delivery-method-not-configure-contact": "Način dostave ni konfiguriran. Obrnite se na sistemskega administratorja.",
         "delivery-methods": "Načini dostave",
         "description": "Opis",
         "device-activity-trigger-settings": "Nastavitve sprožilca aktivnosti naprave",
@@ -5056,12 +5056,12 @@
         "recipient": "Prejemnik",
         "recipient-group": "Skupina prejemnikov",
         "recipient-type": {
-            "affected-tenant-administrators": "Prizadeti skrbniki najemnikov",
+            "affected-tenant-administrators": "Prizadeti skrbniki",
             "affected-user": "Prizadeti uporabnik",
             "all-users": "Vsi uporabniki",
             "customer-users": "Uporabniki stranke",
-            "system-administrators": "Sistemski skrbniki",
-            "tenant-administrators": "Skrbniki najemnika",
+            "system-administrators": "Sistemski administratorji",
+            "tenant-administrators": "Skrbniki",
             "user-filters": "Filter uporabnikov",
             "user-list": "Seznam uporabnikov",
             "users-entity-owner": "Uporabniki lastnika entitete"
@@ -6568,7 +6568,7 @@
         "management": "Upravljanje najemnikov",
         "add": "Dodaj najemnika",
         "admins": "Skrbniki",
-        "manage-tenant-admins": "Upravljaj skrbnike najemnika",
+        "manage-tenant-admins": "Upravljaj skrbnike",
         "delete": "Izbriši najemnika",
         "add-tenant-text": "Dodaj novega najemnika",
         "no-tenants-text": "Ni najdenih najemnikov",
@@ -7554,9 +7554,9 @@
         "user": "Uporabnik",
         "users": "Uporabniki",
         "customer-users": "Uporabniki stranke",
-        "tenant-admins": "Skrbniki najemnikov",
-        "sys-admin": "Sistemski skrbnik",
-        "tenant-admin": "Skrbnik najemnika",
+        "tenant-admins": "Skrbniki",
+        "sys-admin": "Sistemski administrator",
+        "tenant-admin": "Skrbnik",
         "customer": "Stranka",
         "anonymous": "Anonimni uporabnik",
         "add": "Dodaj uporabnika",
@@ -7590,7 +7590,7 @@
         "copy-activation-link": "Kopiraj aktivacijsko povezavo",
         "activation-link-copied-message": "Povezava za aktivacijo uporabnika je kopirana v odložišče",
         "details": "Podrobnosti",
-        "login-as-tenant-admin": "Prijavi se kot skrbnik najemnika",
+        "login-as-tenant-admin": "Prijavi se kot skrbnik",
         "login-as-customer-user": "Prijavi se kot uporabnik stranke",
         "search": "Iskanje uporabnikov",
         "selected-users": "Izbrano: { count, plural, one {# uporabnik} two {# uporabnika} few {# uporabniki} other {# uporabnikov} }",
@@ -10474,9 +10474,9 @@
             "done-welcome-text": "Odlično vam je uspelo!",
             "sys-admin": {
                 "step1": {
-                    "title": "Ustvarite najemnika in skrbnika najemnika",
-                    "content": "<p>Najemnik je posameznik ali organizacija, ki je lastnik naprav in sredstev ali jih proizvaja. Najemnik ima lahko več skrbnikov najemnika, strank, naprav in sredstev.</p><p>Skrbnik najemnika lahko v okviru najemnika ustvarja in upravlja naprave, sredstva, stranke in nadzorne plošče.</p><p>Sledite dokumentaciji, ki opisuje postopek:</p>",
-                    "how-to-create-tenant": "Kako ustvariti najemnika in skrbnika najemnika"
+                    "title": "Ustvarite najemnika in skrbnika",
+                    "content": "<p>Najemnik je posameznik ali organizacija, ki je lastnik naprav in sredstev ali jih proizvaja. Najemnik ima lahko več skrbnikov, strank, naprav in sredstev.</p><p>Skrbnik lahko v okviru najemnika ustvarja in upravlja naprave, sredstva, stranke in nadzorne plošče.</p><p>Sledite dokumentaciji, ki opisuje postopek:</p>",
+                    "how-to-create-tenant": "Kako ustvariti najemnika in skrbnika"
                 },
                 "step2": {
                     "title": "Konfigurirajte funkcijo: poštni strežnik",
@@ -10495,12 +10495,12 @@
                 },
                 "step5": {
                     "title": "Konfigurirajte funkcijo: OAuth 2.0",
-                    "content": "<p>Poenostavite prijavo za uporabnike najemnika in strank s funkcionalnostjo enotne prijave prek OAuth 2.0.</p><p>Sledite dokumentaciji, ki opisuje postopek:</p>",
+                    "content": "<p>Poenostavite prijavo za uporabnike strank in skrbnike s funkcionalnostjo enotne prijave prek OAuth 2.0.</p><p>Sledite dokumentaciji, ki opisuje postopek:</p>",
                     "how-to-configure-oauth2": "Kako konfigurirati OAuth 2.0"
                 },
                 "step6": {
                     "title": "Konfigurirajte funkcijo: Slack",
-                    "content": "<p>Pošiljajte obvestila uporabnikom najemnika in strank prek Slacka v skladu s pravili za obvestila, ki jih nastavite.</p><p>Sledite dokumentaciji, ki opisuje postopek:</p>",
+                    "content": "<p>Pošiljajte obvestila uporabnikom strank in skrbnikom prek Slacka v skladu s pravili za obvestila, ki jih nastavite.</p><p>Sledite dokumentaciji, ki opisuje postopek:</p>",
                     "how-to-configure-notifications": "Kako konfigurirati Slack"
                 }
             },
