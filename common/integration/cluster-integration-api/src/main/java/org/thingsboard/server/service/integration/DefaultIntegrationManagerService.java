@@ -632,6 +632,8 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                     }
                     break;
                 case STOPPED:
+                    processStopUnlessMine(state);
+                    break;
                 case SUSPENDED:
                 case DELETED:
                     persistCurrentStatistics(state);
@@ -639,6 +641,42 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                     break;
             }
             log.debug("[{}] Going to process new event: {}", state.getId(), pendingEvent);
+        }
+    }
+
+    // A STOPPED scheduled because the partition moved away can be stale: the partition may come back before the event
+    // runs, and refresh() skips integrations that are still running. Ownership is checked again when the stop runs, and
+    // once more after it, because the partition may also come back while the integration is being stopped.
+    private void processStopUnlessMine(IntegrationState state) {
+        Integration configuration;
+        try {
+            configuration = configurationService.getIntegration(state.getTenantId(), state.getId());
+        } catch (Exception e) {
+            // Without the configuration the ownership can't be checked: stop it, as before the check existed.
+            log.warn("[{}][{}] Failed to fetch the integration before stopping it: {}", state.getTenantId(), state.getId(), e.getMessage());
+            configuration = null;
+        }
+        if (state.getIntegration() != null && shouldRunHere(configuration)) {
+            log.info("[{}][{}] Skipping STOPPED: the integration is mine again.", state.getTenantId(), state.getId());
+            return;
+        }
+        persistCurrentStatistics(state);
+        processStop(state, STOPPED);
+        if (shouldRunHere(configuration)) {
+            log.info("[{}][{}] The integration is mine again after the stop, starting it.", state.getTenantId(), state.getId());
+            scheduleIntegrationEvent(state.getTenantId(), state.getId(), ComponentLifecycleEvent.CREATED);
+        }
+    }
+
+    private boolean shouldRunHere(Integration configuration) {
+        if (configuration == null || !configuration.isEnabled() || configuration.isRemote()) {
+            return false;
+        }
+        try {
+            return isMine(configuration);
+        } catch (Exception e) {
+            log.debug("[{}][{}] Failed to resolve integration ownership", configuration.getTenantId(), configuration.getId(), e);
+            return false;
         }
     }
 

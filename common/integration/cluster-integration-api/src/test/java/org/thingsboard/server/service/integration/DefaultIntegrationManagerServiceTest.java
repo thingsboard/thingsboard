@@ -222,6 +222,89 @@ class DefaultIntegrationManagerServiceTest {
     }
 
     @Test
+    void givenStopQueuedForLostPartition_whenPartitionComesBackBeforeItRuns_thenIntegrationKeepsRunning() throws Exception {
+        Integration integration = mqttIntegration(2);
+        ThingsboardPlatformIntegration<?> platformIntegration = platformIntegrations.get(integration.getId());
+        when(configurationService.getActiveIntegrationList(IntegrationType.MQTT, false)).thenReturn(List.of(integration));
+        ownPartitions(2);
+        service.refresh(IntegrationType.MQTT, tpis(2));
+        runLifecycleTasks();
+        verify(platformIntegration).init(any());
+
+        // A neighbour restarts: [1] queues STOPPED, [2] arrives before the lifecycle executor runs it.
+        // refresh([2]) skips the integration because it is still running.
+        ownPartitions(1);
+        service.refresh(IntegrationType.MQTT, tpis(1));
+        ownPartitions(2);
+        service.refresh(IntegrationType.MQTT, tpis(2));
+        runLifecycleTasks();
+
+        verify(platformIntegration, never()).destroy();
+        assertThat(integrationStates().get(integration.getId()).getCurrentState()).isEqualTo(ComponentLifecycleEvent.STARTED);
+    }
+
+    @Test
+    void givenSingletonBeingStopped_whenPartitionComesBackDuringStop_thenIntegrationIsCreatedAgain() throws Exception {
+        Integration integration = mqttIntegration(2);
+        ThingsboardPlatformIntegration<?> platformIntegration = platformIntegrations.get(integration.getId());
+        when(configurationService.getActiveIntegrationList(IntegrationType.MQTT, false)).thenReturn(List.of(integration));
+        ownPartitions(2);
+        service.refresh(IntegrationType.MQTT, tpis(2));
+        runLifecycleTasks();
+
+        ownPartitions(1);
+        service.refresh(IntegrationType.MQTT, tpis(1));
+        // The partition comes back while the stop is in progress, after its ownership check.
+        doAnswer(inv -> {
+            ownPartitions(2);
+            return null;
+        }).when(platformIntegration).destroy();
+        runLifecycleTasks();
+
+        verify(platformIntegration).destroy();
+        verify(platformIntegration, times(2)).init(any());
+        assertThat(integrationStates().get(integration.getId()).getCurrentState()).isEqualTo(ComponentLifecycleEvent.STARTED);
+    }
+
+    @Test
+    void givenStopQueued_whenConfigurationFetchFails_thenIntegrationIsStopped() throws Exception {
+        Integration integration = mqttIntegration(2);
+        ThingsboardPlatformIntegration<?> platformIntegration = platformIntegrations.get(integration.getId());
+        when(configurationService.getActiveIntegrationList(IntegrationType.MQTT, false)).thenReturn(List.of(integration));
+        ownPartitions(2);
+        service.refresh(IntegrationType.MQTT, tpis(2));
+        runLifecycleTasks();
+
+        ownPartitions(1);
+        service.refresh(IntegrationType.MQTT, tpis(1));
+        ownPartitions(2);
+        when(configurationService.getIntegration(any(TenantId.class), any(IntegrationId.class))).thenThrow(new RuntimeException("timeout"));
+        runLifecycleTasks();
+
+        verify(platformIntegration).destroy();
+        assertThat(integrationStates()).doesNotContainKey(integration.getId());
+    }
+
+    @Test
+    void givenRunningSingletonSwitchedToRemote_whenStopRuns_thenItIsStoppedAlthoughPartitionIsMine() throws Exception {
+        Integration integration = mqttIntegration(2);
+        ThingsboardPlatformIntegration<?> platformIntegration = platformIntegrations.get(integration.getId());
+        when(configurationService.getActiveIntegrationList(IntegrationType.MQTT, false)).thenReturn(List.of(integration));
+        ownPartitions(2);
+        service.refresh(IntegrationType.MQTT, tpis(2));
+        runLifecycleTasks();
+
+        integration.setRemote(true);
+        ReflectionTestUtils.invokeMethod(service, "scheduleIntegrationEvent", TENANT_ID, integration.getId(),
+                ComponentLifecycleEvent.STOPPED);
+        runLifecycleTasks();
+
+        verify(platformIntegration).destroy();
+        verify(platformIntegration).init(any());
+        assertThat(integrationStates()).doesNotContainKey(integration.getId());
+    }
+
+    @Test
     void givenLongRunningSingleton_whenPartitionMovesAway_thenRefreshStopsIt() throws Exception {
         Integration integration = mqttIntegration(1);
         ThingsboardPlatformIntegration<?> platformIntegration = platformIntegrations.get(integration.getId());
