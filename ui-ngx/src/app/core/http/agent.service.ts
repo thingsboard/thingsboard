@@ -213,6 +213,12 @@ export class AgentService {
       defaultHttpOptionsFromConfig(config));
   }
 
+  public getAgentApplicationInfosByRelatedEntities(entityType: string, entityIds: Array<string>,
+                                                   config?: RequestConfig): Observable<Array<AgentApplicationInfo>> {
+    return this.http.get<Array<AgentApplicationInfo>>(`/api/agent/appInfos/${entityType}?entityIds=${entityIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public updateAgentApplication(application: AgentApplication, config?: RequestConfig): Observable<AgentApplication> {
     return this.http.put<AgentApplication>('/api/agent/app', application, defaultHttpOptionsFromConfig(config));
   }

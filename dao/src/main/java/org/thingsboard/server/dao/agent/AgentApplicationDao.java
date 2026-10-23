@@ -45,6 +45,8 @@ public interface AgentApplicationDao extends Dao<AgentApplication>, TenantEntity
 
     List<UUID> findManagedRelatedEntityIds(TenantId tenantId, String relatedEntityType);
 
+    List<AgentApplicationInfo> findInfosByRelatedEntityIds(TenantId tenantId, String relatedEntityType, List<UUID> relatedEntityIds);
+
     PageData<EntityInfo> findRelatedEntityCandidates(TenantId tenantId, EntityType relatedEntityType, UUID currentEntityId, PageLink pageLink);
 
     int promoteDesiredTemplate(TenantId tenantId, AgentApplicationId applicationId, String templateVersion);
