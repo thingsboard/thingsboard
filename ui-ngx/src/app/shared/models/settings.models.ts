@@ -83,6 +83,15 @@ export interface DeviceConnectivityInfo {
 
 export type DeviceConnectivitySettings = Record<DeviceConnectivityProtocol, DeviceConnectivityInfo>;
 
+export type DeviceConnectivityHostSource = 'DEVICE_CONNECTIVITY' | 'BASE_URL' | 'REQUEST';
+
+// Connectivity of a transport as resolved for devices, not as stored in the settings
+export interface ResolvedDeviceConnectivityInfo extends DeviceConnectivityInfo {
+  hostSource?: DeviceConnectivityHostSource;
+}
+
+export type ResolvedDeviceConnectivitySettings = Partial<Record<DeviceConnectivityProtocol, ResolvedDeviceConnectivityInfo>>;
+
 export interface UserPasswordPolicy {
   minimumLength: number;
   maximumLength: number;

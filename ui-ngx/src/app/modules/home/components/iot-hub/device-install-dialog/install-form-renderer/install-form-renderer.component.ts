@@ -7,6 +7,17 @@ import { generateSecret } from '@core/utils';
 
 const DEFAULT_RANDOM_SIZE = 20;
 
+/** Fields shown on one line. */
+interface FormRow {
+  fields: FormFieldDefinition[];
+}
+
+/** Consecutive rows of one group, shown in a panel with the group as its title; no title for ungrouped fields. */
+interface FormSection {
+  title?: string;
+  rows: FormRow[];
+}
+
 /**
  * Reusable form renderer for the device install dialog's SHOW_FORM step. Consumes
  * the FormFieldDefinition[] parsed from the package's form.json directly.
@@ -31,10 +42,33 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() reviewMode = false;
 
   passwordVisible: Record<string, boolean> = {};
+  // Fields in render order: consecutive fields of a group form a section, and consecutive fields
+  // with the same `row` share one line
+  sections: FormSection[] = [];
+  private rowOf = new Map<string, FormRow>();
 
   readonly FormFieldType = FormFieldType;
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes.fields) {
+      this.sections = [];
+      this.rowOf.clear();
+      let previous: FormFieldDefinition | undefined;
+      for (const field of this.fields ?? []) {
+        if (!previous || field.group !== previous.group) {
+          this.sections.push({ title: field.group, rows: [] });
+        }
+        const rows = this.sections[this.sections.length - 1].rows;
+        const last = rows[rows.length - 1];
+        if (field.row && last?.fields[0].row === field.row) {
+          last.fields.push(field);
+        } else {
+          rows.push({ fields: [field] });
+        }
+        this.rowOf.set(field.key, rows[rows.length - 1]);
+        previous = field;
+      }
+    }
     if (changes.fields || changes.reviewMode) {
       this.passwordVisible = {};
       if (this.reviewMode) {
@@ -60,6 +94,25 @@ export class InstallFormRendererComponent implements OnChanges {
 
   getPatternErrorMessage(field: FormFieldDefinition): string {
     return field.validators?.[0]?.message || 'Invalid format';
+  }
+
+  /** Fields with a help popup show their hint in a box under the row, with the popup trigger. */
+  hasHintBox(field: FormFieldDefinition): boolean {
+    return !!field.helpPopupId && !this.reviewMode;
+  }
+
+  /**
+   * True for the fields of a row that has a hint box. They don't reserve space for a hint or an
+   * error, so the box sits right under them.
+   */
+  isInHintBoxRow(field: FormFieldDefinition): boolean {
+    return !!this.rowOf.get(field.key)?.fields.some(f => this.hasHintBox(f));
+  }
+
+  /** True when the field fails a validator other than required and pattern (one the dialog added). */
+  hasFieldError(field: FormFieldDefinition): boolean {
+    const errors = this.formGroup.controls[field.key]?.errors;
+    return !!errors && Object.keys(errors).some(key => key !== 'required' && key !== 'pattern');
   }
 
   imagePath(path: string): string {
