@@ -240,6 +240,11 @@ export class ReportTemplatePageComponent extends PageComponent
   ngOnInit() {
     this.homeService.setHideMainToolbar(true);
     this.reportComponentContext = {
+      reportComponents: () => [
+        ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.header),
+        ...(this.reportTemplate?.configuration?.components ?? []),
+        ...this.renderedHeaderFooterComponents(this.pdfConfiguration?.footer)
+      ],
       translate: this.translate,
       utils: this.utils,
       entityService: this.entityService,
@@ -343,6 +348,16 @@ export class ReportTemplatePageComponent extends PageComponent
   public enabledHeaderFooterChanged() {
     this.updatePageLayout();
     this.isDirty = true;
+  }
+
+  private renderedHeaderFooterComponents(headerFooter: HeaderFooter): ReportComponentConfig[] {
+    if (!headerFooter) {
+      return [];
+    }
+    return [
+      ...(headerFooter.enabled ? headerFooter.components ?? [] : []),
+      ...(headerFooter.firstPage?.enabled ? headerFooter.firstPage.components ?? [] : [])
+    ];
   }
 
   public headerFooterExpandAnimationStart() {
