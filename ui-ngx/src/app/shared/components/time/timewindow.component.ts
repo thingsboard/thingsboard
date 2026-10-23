@@ -24,6 +24,7 @@ import {
   getTimezoneInfo,
   HistoryWindowType,
   initModelFromDefaultTimewindow,
+  largestDurationUnit,
   QuickTimeIntervalTranslationMap,
   RealtimeWindowType,
   Timewindow,
@@ -328,6 +329,11 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.displayTimewindowValue ? this.innerValue?.displayValue : this.translate.instant('timewindow.timewindow');
   }
 
+  private lastIntervalLabel(ms: number): string {
+    return this.translate.instant('timewindow.last-prefix', largestDurationUnit(ms)) + ' ' +
+      this.millisecondsToTimeStringPipe.transform(ms);
+  }
+
   updateDisplayValue() {
     if (!this.panelMode) {
       return
@@ -337,15 +343,13 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       if (this.innerValue.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
         this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.realtime.quickInterval));
       } else {
-        this.innerValue.displayValue +=  this.translate.instant('timewindow.last-prefix') + ' ' +
-          this.millisecondsToTimeStringPipe.transform(this.innerValue.realtime.timewindowMs);
+        this.innerValue.displayValue += this.lastIntervalLabel(this.innerValue.realtime.timewindowMs);
       }
     } else {
       this.innerValue.displayValue = this.displayTypePrefix && (!this.historyOnly || this.alwaysDisplayTypePrefix) ?
         (this.translate.instant('timewindow.history') + ' - ') : '';
       if (this.innerValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
-        this.innerValue.displayValue += this.translate.instant('timewindow.last-prefix') + ' ' +
-          this.millisecondsToTimeStringPipe.transform(this.innerValue.history.timewindowMs);
+        this.innerValue.displayValue += this.lastIntervalLabel(this.innerValue.history.timewindowMs);
       } else if (this.innerValue.history.historyType === HistoryWindowType.INTERVAL) {
         this.innerValue.displayValue += this.translate.instant(QuickTimeIntervalTranslationMap.get(this.innerValue.history.quickInterval));
       } else if (this.innerValue.history.historyType === HistoryWindowType.FOR_ALL_TIME) {
