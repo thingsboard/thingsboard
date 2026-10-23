@@ -4,6 +4,26 @@
   display: block;
 }
 
+.tb-install-form-group-header {
+  margin: 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.tb-install-form-row {
+  .tb-install-form-cell {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .tb-install-form-cell + .tb-install-form-cell {
+    flex: 0 1 200px;
+  }
+}
+
 .tb-install-form-field-help {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.6);

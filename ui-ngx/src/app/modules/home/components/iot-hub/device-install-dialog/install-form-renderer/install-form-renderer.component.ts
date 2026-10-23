@@ -31,10 +31,23 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() reviewMode = false;
 
   passwordVisible: Record<string, boolean> = {};
+  // Fields in render order; consecutive fields with the same `row` share one line
+  rows: { field: FormFieldDefinition; index: number }[][] = [];
 
   readonly FormFieldType = FormFieldType;
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes.fields) {
+      this.rows = [];
+      (this.fields ?? []).forEach((field, index) => {
+        const last = this.rows[this.rows.length - 1];
+        if (field.row && last?.[0].field.row === field.row) {
+          last.push({ field, index });
+        } else {
+          this.rows.push([{ field, index }]);
+        }
+      });
+    }
     if (changes.fields || changes.reviewMode) {
       this.passwordVisible = {};
       if (this.reviewMode) {
@@ -45,6 +58,13 @@ export class InstallFormRendererComponent implements OnChanges {
         }
       }
     }
+  }
+
+  /** True when the previous field belonged to a different group (for header rendering). */
+  shouldRenderGroupHeader(field: FormFieldDefinition, index: number): boolean {
+    if (!field.group) return false;
+    if (index === 0) return true;
+    return this.fields[index - 1].group !== field.group;
   }
 
   togglePasswordVisible(key: string): void {

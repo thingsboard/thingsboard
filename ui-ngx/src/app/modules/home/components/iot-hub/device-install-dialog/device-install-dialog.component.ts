@@ -10,7 +10,7 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { firstValueFrom } from 'rxjs';
@@ -36,11 +36,13 @@ import {
   FormFieldType,
   installMethodIcons as INSTALL_METHOD_ICONS,
   installMethodLabels as INSTALL_METHOD_LABELS,
+  InstallMethod,
   InstallStepType,
   peOnlyInstallMethods,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
+import { DeviceConnectivityHostSource } from '@shared/models/settings.models';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
@@ -60,6 +62,10 @@ export interface WizardStep {
   markdown?: string;
   // Form
   formFields?: FormFieldDefinition[];
+  // Fields the dialog adds on top of the package's form file
+  extraFormFields?: FormFieldDefinition[];
+  // Key of the step's form values in the install state; the label when not set
+  stateKey?: string;
   formGroup?: UntypedFormGroup;
   // Progress
   entitySteps?: EntityStepProgress[];
@@ -69,6 +75,87 @@ export interface WizardStep {
 
 const ENTITY_STEP_MIN_DELAY = 2000;
 const DEFAULT_RANDOM_SIZE = 20;
+const TRANSPORT_HOST_FIELD_KEY = 'tbTransportHost';
+const TRANSPORT_PORT_FIELD_KEY = 'tbTransportPort';
+// Not the translated label, so review mode finds the values in any UI language
+const TRANSPORT_STEP_STATE_KEY = 'tbTransportConnection';
+
+/**
+ * A transport whose ${<protocol>.host} / ${<protocol>.port} the install form lets the user check,
+ * with the translation keys of its fields. The wording is per transport (the label, the hints and
+ * the help popup name the protocol and its default port), so each entry brings its own keys.
+ */
+interface HostFieldTransport {
+  protocol: string;
+  hostLabel: string;
+  portLabel: string;
+  // Host taken from the address ThingsBoard was opened with / from the Base URL in General settings
+  requestHostHint: string;
+  baseUrlHostHint: string;
+  // Host resolved to a loopback address: via the request, via the Base URL, or from an unknown source
+  requestLoopbackHint: string;
+  baseUrlLoopbackHint: string;
+  loopbackHint: string;
+  // Review mode: the stored value is shown without its source
+  reviewHostHint: string;
+  helpPopupId: string;
+}
+
+// Install methods whose packages get the transport fields. Other methods use the host differently
+// (a ChirpStack package builds the ThingsBoard URL from it, a gateway puts it into docker-compose)
+// and keep the resolved value until they are handled separately.
+const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
+  [InstallMethod.DIRECT_MQTT, {
+    protocol: 'mqtt',
+    hostLabel: 'iot-hub.device-install-mqtt-host',
+    portLabel: 'iot-hub.device-install-mqtt-port',
+    requestHostHint: 'iot-hub.device-install-mqtt-host-request-hint',
+    baseUrlHostHint: 'iot-hub.device-install-mqtt-host-base-url-hint',
+    requestLoopbackHint: 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint',
+    baseUrlLoopbackHint: 'iot-hub.device-install-mqtt-host-base-url-loopback-hint',
+    loopbackHint: 'iot-hub.device-install-mqtt-host-loopback-hint',
+    reviewHostHint: 'iot-hub.device-install-mqtt-host-hint',
+    helpPopupId: 'iot-hub/device-connection-host'
+  }]
+]);
+
+/**
+ * Reduces what a user may paste (a URL, host:port, [IPv6]:port) to the bare host: the port is
+ * a separate setting, and the scheme or path would end up in the firmware as part of the host.
+ */
+const toBareHost = (value: string): string => {
+  const hostPort = value.trim().replace(/^[a-z][a-z\d+.-]*:\/\//i, '').replace(/[/?#].*$/, '');
+  const bracketed = hostPort.match(/^\[([^\]]*)](:\d*)?$/);
+  if (bracketed) {
+    return bracketed[1];
+  }
+  // A bare IPv6 address has several colons; a single one separates the port.
+  return hostPort.split(':').length === 2 ? hostPort.split(':')[0] : hostPort;
+};
+
+// localhost, 127.0.0.0/8, ::1 and 0.0.0.0: a device can't reach the server at any of them.
+// Unlike DeviceConnectivityUtil.isLocalhost this doesn't resolve hostnames, and it also
+// rejects 0.0.0.0, which isn't a loopback address but is just as unreachable.
+const isLoopbackHost = (host: string): boolean => {
+  const h = toBareHost(host).toLowerCase();
+  return h === 'localhost' || h === '::1' || h === '0.0.0.0' || /^127(\.\d{1,3}){3}$/.test(h);
+};
+
+// Host name, IPv4 or IPv6 characters only: the value goes into C string literals and JSON templates.
+const HOST_PATTERN = /^[a-z\d._:-]+$/i;
+
+const transportHostValidator = (control: AbstractControl): ValidationErrors | null => {
+  if (!control.value) {
+    return null;
+  }
+  const host = toBareHost(control.value);
+  return !HOST_PATTERN.test(host) || isLoopbackHost(host) ? { pattern: true } : null;
+};
+
+const isValidPort = (port: number): boolean => Number.isInteger(port) && port >= 1 && port <= 65535;
+
+const transportPortValidator = (control: AbstractControl): ValidationErrors | null =>
+  control.value === null || control.value === '' || isValidPort(Number(control.value)) ? null : { pattern: true };
 
 @Component({
   selector: 'tb-device-install-dialog',
@@ -107,9 +194,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   formValues: Record<string, any> = {};
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
+  // protocol → where the server took its host from
+  private transportHostSources: Record<string, DeviceConnectivityHostSource> = {};
   // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
   private fieldTypes = new Map<string, FormFieldType>();
+  // Transport whose ${<protocol>.host} the transport host field overrides
+  private hostFieldProtocol: string | null = null;
   gatewayDockerComposeContent: string | null = null;
 
   resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
@@ -168,6 +259,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           if (info) {
             this.transportVars[`${protocol}.host`] = info.host || '';
             this.transportVars[`${protocol}.port`] = String(info.port || '');
+            this.transportHostSources[protocol] = info.hostSource;
           }
         }
       }
@@ -180,6 +272,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.selectedInstallMethod = this.data.selectedInstallMethod;
       this.restoreInstallState(this.data.installState);
       this.startWizard();
+      // After startWizard: the transport fields it adds take part in resolving the file
+      this.resolveGatewayDockerCompose();
     } else if (this.availableInstallMethods.length === 1
         && !peOnlyInstallMethods.has(this.availableInstallMethods[0])) {
       // Single non-PE method: skip the selector and start the wizard.
@@ -332,12 +426,24 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     // Forward moves can come from the stepper header, which bypasses nextStep(),
     // so commit every step being passed over here.
+    let formValuesChanged = false;
     for (let i = event.previouslySelectedIndex; i < event.selectedIndex; i++) {
       const ws = this.wizardSteps[i];
       if (ws.type === 'form') {
+        // Keep the bare host, so the stored state and the form after Back show what the device gets
+        const hostControl = ws.formGroup.get(TRANSPORT_HOST_FIELD_KEY);
+        if (hostControl?.enabled && hostControl.value) {
+          hostControl.setValue(toBareHost(hostControl.value), { emitEvent: false });
+        }
         Object.assign(this.formValues, ws.formGroup.getRawValue());
+        formValuesChanged = true;
       }
       ws.completed = true;
+    }
+    if (formValuesChanged) {
+      // Instruction steps stay rendered, and their markdown only changes when the resolver does:
+      // after Back and a corrected value, they would otherwise keep showing the old one.
+      this.resolveMarkdownVariable = this._resolveMarkdownVariable.bind(this);
     }
     this.onStepActivated(this.wizardSteps[event.selectedIndex]);
   }
@@ -489,6 +595,18 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (key in this.formValues) {
       return String(this.formValues[key]);
     }
+    if (this.hostFieldProtocol && key === `${this.hostFieldProtocol}.host`) {
+      const host = toBareHost(String(this.formValues[TRANSPORT_HOST_FIELD_KEY] ?? ''));
+      if (host) {
+        return host;
+      }
+    }
+    if (this.hostFieldProtocol && key === `${this.hostFieldProtocol}.port`) {
+      const port = this.formValues[TRANSPORT_PORT_FIELD_KEY];
+      if (port !== undefined && port !== null && port !== '') {
+        return String(port);
+      }
+    }
     if (key in this.transportVars) {
       return this.transportVars[key];
     }
@@ -567,7 +685,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         }
       }
     }
-    // Resolve gateway docker-compose if available
+  }
+
+  private resolveGatewayDockerCompose(): void {
     const gatewayStep = (this.packageInfo.installSteps[this.selectedInstallMethod] || []).find(s => s.type === 'GATEWAY');
     if (gatewayStep?.dockerCompose) {
       const raw = this.zipFiles.get(gatewayStep.dockerCompose);
@@ -633,6 +753,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   private appendInstallSteps(): void {
     const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
+    const firstInstallStep = this.wizardSteps.length;
     let i = 0;
     while (i < rawSteps.length) {
       const step = rawSteps[i];
@@ -670,6 +791,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         i++;
       }
     }
+    this.addTransportFields(firstInstallStep);
     // Initialize form groups
     for (const ws of this.wizardSteps) {
       if (ws.type === 'form' && !ws.formGroup) {
@@ -678,12 +800,104 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
+  /**
+   * Packages write ${<protocol>.host} and ${<protocol>.port} into sketches and templates. Show them
+   * in the last form before the host is first used. When the system administrator set the host in
+   * Device connectivity, they are read-only. Otherwise the user can correct them — and must, when
+   * the host resolved to localhost, which on the device is the device itself.
+   */
+  private addTransportFields(fromIndex: number): void {
+    this.hostFieldProtocol = null;
+    const transport = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
+    const protocol = transport?.protocol;
+    const resolvedHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
+    if (resolvedHost === undefined) {
+      return;
+    }
+    const steps = this.wizardSteps.slice(fromIndex);
+    const firstUse = steps.findIndex(ws => this.usesVariable(ws, `${protocol}.host`));
+    if (firstUse < 0) {
+      return;
+    }
+    const loopback = !resolvedHost || isLoopbackHost(resolvedHost);
+    const hostSource = this.transportHostSources[protocol];
+    const readOnly = hostSource === 'DEVICE_CONNECTIVITY' && !loopback;
+    let formStep = steps.slice(0, firstUse).reverse().find(ws => ws.type === 'form');
+    if (!formStep) {
+      formStep = {
+        type: 'form',
+        label: this.translate.instant('iot-hub.device-install-transport-host-step'),
+        stateKey: TRANSPORT_STEP_STATE_KEY,
+        rawSteps: [],
+        completed: this.reviewMode
+      };
+      this.wizardSteps.splice(fromIndex + firstUse, 0, formStep);
+    }
+    let hostHint: string;
+    if (readOnly) {
+      hostHint = 'iot-hub.device-install-transport-configured-hint';
+    } else if (this.reviewMode) {
+      hostHint = transport.reviewHostHint;
+    } else if (loopback) {
+      if (hostSource === 'REQUEST') {
+        hostHint = transport.requestLoopbackHint;
+      } else if (hostSource === 'BASE_URL') {
+        hostHint = transport.baseUrlLoopbackHint;
+      } else {
+        hostHint = transport.loopbackHint;
+      }
+    } else {
+      hostHint = hostSource === 'BASE_URL' ? transport.baseUrlHostHint : transport.requestHostHint;
+    }
+    const helpPopupId = readOnly ? undefined : transport.helpPopupId;
+    const group = this.translate.instant('iot-hub.device-install-thingsboard-connection');
+    formStep.extraFormFields = [{
+      key: TRANSPORT_HOST_FIELD_KEY,
+      label: this.translate.instant(transport.hostLabel),
+      type: FormFieldType.STRING,
+      defaultValue: loopback ? '' : resolvedHost,
+      required: true,
+      readOnly,
+      helpText: this.translate.instant(hostHint, { host: resolvedHost }),
+      // transportHostValidator does the check; the entry carries the message the renderer shows
+      validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-host-error') }],
+      helpPopupId,
+      group,
+      row: TRANSPORT_HOST_FIELD_KEY
+    }];
+    if (steps.some(ws => this.usesVariable(ws, `${protocol}.port`))) {
+      const resolvedPort = Number(this.transportVars[`${protocol}.port`]);
+      formStep.extraFormFields.push({
+        key: TRANSPORT_PORT_FIELD_KEY,
+        label: this.translate.instant(transport.portLabel),
+        type: FormFieldType.INTEGER,
+        defaultValue: isValidPort(resolvedPort) ? resolvedPort : '',
+        required: true,
+        readOnly,
+        validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-port-error') }],
+        group,
+        row: TRANSPORT_HOST_FIELD_KEY
+      });
+    }
+    this.hostFieldProtocol = protocol;
+  }
+
+  private usesVariable(ws: WizardStep, key: string): boolean {
+    const placeholder = `\${${key}}`;
+    return ws.rawSteps.some(step =>
+      [step.file, step.template, step.serverAttributes, step.sharedAttributes, step.credentials, step.dockerCompose]
+        .some(file => file && this.zipFiles.get(file)?.includes(placeholder)));
+  }
+
   private initFormStep(ws: WizardStep): void {
-    const formJson = this.zipFiles.get(ws.rawSteps[0].file) || '[]';
-    ws.formFields = JSON.parse(formJson) as FormFieldDefinition[];
+    const formJson = (ws.rawSteps[0] && this.zipFiles.get(ws.rawSteps[0].file)) || '[]';
+    // readOnly, helpPopupId and row are for the fields the dialog adds; a package can't set them
+    const packageFields = (JSON.parse(formJson) as FormFieldDefinition[])
+      .map(({ readOnly, helpPopupId, row, ...field }) => field);
+    ws.formFields = [...packageFields, ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
     // In review mode, use stored values; otherwise use defaults
-    const storedValues = this.reviewMode && this.data.installState?.[ws.label]?.formValues;
+    const storedValues = this.reviewMode && this.data.installState?.[ws.stateKey ?? ws.label]?.formValues;
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
       const validators = [];
@@ -693,8 +907,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (field.validators?.length > 0) {
         validators.push(Validators.pattern(field.validators[0].pattern));
       }
+      if (field.key === TRANSPORT_HOST_FIELD_KEY) {
+        validators.push(transportHostValidator);
+      } else if (field.key === TRANSPORT_PORT_FIELD_KEY) {
+        validators.push(transportPortValidator);
+      }
       const initialValue = this.resolveInitialFieldValue(field, storedValues?.[field.key]);
-      controls[field.key] = new UntypedFormControl(initialValue, validators);
+      controls[field.key] = new UntypedFormControl({ value: initialValue, disabled: !!field.readOnly }, validators);
     }
     ws.formGroup = new UntypedFormGroup(controls);
     if (this.reviewMode) {
@@ -1080,7 +1299,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const state: Record<string, any> = {};
     for (const ws of this.wizardSteps) {
       if (ws.type === 'form' && ws.formGroup) {
-        state[ws.label] = { formValues: ws.formGroup.getRawValue() };
+        state[ws.stateKey ?? ws.label] = { formValues: ws.formGroup.getRawValue() };
       } else if (ws.type === 'progress' && ws.entitySteps) {
         for (const ep of ws.entitySteps) {
           if (ep.status === 'success' && ep.entityOutput) {

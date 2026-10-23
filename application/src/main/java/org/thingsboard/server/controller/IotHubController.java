@@ -28,9 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
+import org.thingsboard.server.dao.device.DeviceConnectivityHostSource;
 import org.thingsboard.server.dao.device.DeviceConnectivityService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.system.ResolvedBaseUrl;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
 import org.thingsboard.server.service.iot_hub.InstallPlan;
@@ -143,7 +145,8 @@ public class IotHubController extends BaseController {
     @GetMapping("/connectivity")
     @ResponseBody
     public JsonNode getConnectivitySettings(HttpServletRequest request) throws Exception {
-        String baseUrl = systemSecurityService.getBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
-        return deviceConnectivityService.getConnectivityInfo(baseUrl);
+        ResolvedBaseUrl baseUrl = systemSecurityService.resolveBaseUrl(getTenantId(), getCurrentUser().getCustomerId(), request);
+        return deviceConnectivityService.getConnectivityInfo(baseUrl.url(),
+                baseUrl.fromRequest() ? DeviceConnectivityHostSource.REQUEST : DeviceConnectivityHostSource.BASE_URL);
     }
 }
