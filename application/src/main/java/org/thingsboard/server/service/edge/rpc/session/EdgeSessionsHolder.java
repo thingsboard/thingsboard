@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -86,6 +87,22 @@ public class EdgeSessionsHolder {
             return null;
         });
         return removed.get();
+    }
+
+    /**
+     * Runs the action only if no session is registered for the edge, as one atomic step with {@link #put}.
+     * Returns whether it ran. The action holds the bin lock of {@link #sessions}, so it must be cheap and non-blocking.
+     */
+    public boolean runIfNoSession(EdgeId id, Runnable action) {
+        AtomicBoolean ran = new AtomicBoolean();
+        sessions.compute(id, (edgeId, current) -> {
+            if (current == null) {
+                action.run();
+                ran.set(true);
+            }
+            return current;
+        });
+        return ran.get();
     }
 
     public EdgeGrpcSessionManager removeBySessionId(UUID sessionId) {
