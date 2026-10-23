@@ -108,9 +108,34 @@ interface HostFieldTransport {
   helpPopupText: string;
 }
 
-// Install methods whose packages get the transport fields. Other methods use the host differently
-// (a ChirpStack package builds the ThingsBoard URL from it, a gateway puts it into docker-compose)
-// and keep the resolved value until they are handled separately.
+// A gateway runs in Docker and puts ${mqtt.host} / ${mqtt.port} into docker-compose: the host must be
+// reachable from the machine the gateway runs on, so the wording names the gateway, not the device.
+const GATEWAY_MQTT_TRANSPORT: HostFieldTransport = {
+  protocol: 'mqtt',
+  hostLabel: 'iot-hub.device-install-mqtt-host',
+  portLabel: 'iot-hub.device-install-mqtt-port',
+  hostHints: {
+    REQUEST: 'iot-hub.device-install-gateway-mqtt-host-request-hint',
+    BASE_URL: 'iot-hub.device-install-gateway-mqtt-host-base-url-hint'
+  },
+  loopbackHints: {
+    REQUEST: 'iot-hub.device-install-gateway-mqtt-host-opened-via-loopback-hint',
+    BASE_URL: 'iot-hub.device-install-gateway-mqtt-host-base-url-loopback-hint'
+  },
+  loopbackHint: 'iot-hub.device-install-gateway-mqtt-host-loopback-hint',
+  reviewHostHint: 'iot-hub.device-install-gateway-mqtt-host-hint',
+  configuredHint: 'iot-hub.device-install-gateway-mqtt-host-configured-hint',
+  hostError: 'iot-hub.device-install-gateway-transport-host-error',
+  portError: 'iot-hub.device-install-transport-port-error',
+  helpPopupId: 'iot-hub/gateway-connection-host',
+  helpPopupText: 'iot-hub.device-install-which-host'
+};
+
+// Install methods whose packages get the transport fields, when a step of the package uses the
+// host (see addTransportFields). Other methods use the host differently (a ChirpStack package builds
+// the ThingsBoard URL from it) and keep the resolved value until they are handled separately.
+// Every gateway method is listed: packages are published apart from UI releases, so one that starts
+// using ${mqtt.host} in its docker-compose gets the fields without a UI change.
 const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
   [InstallMethod.DIRECT_MQTT, {
     protocol: 'mqtt',
@@ -131,7 +156,10 @@ const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
     portError: 'iot-hub.device-install-transport-port-error',
     helpPopupId: 'iot-hub/device-connection-host',
     helpPopupText: 'iot-hub.device-install-which-host'
-  }]
+  }],
+  ...Object.values(InstallMethod)
+    .filter(method => method.startsWith('GATEWAY_'))
+    .map((method): [string, HostFieldTransport] => [method, GATEWAY_MQTT_TRANSPORT])
 ]);
 
 /**
@@ -827,10 +855,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.hostFieldProtocol = null;
     const transport = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
     const protocol = transport?.protocol;
-    const resolvedHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
-    if (resolvedHost === undefined) {
+    const serverHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
+    if (serverHost === undefined) {
       return;
     }
+    // The Device connectivity host isn't validated, so it can come with a port or a scheme (localhost:1883)
+    const resolvedHost = toBareHost(serverHost);
     const steps = this.wizardSteps.slice(fromIndex);
     const firstUse = steps.findIndex(ws => this.usesVariable(ws, `${protocol}.host`));
     if (firstUse < 0) {
