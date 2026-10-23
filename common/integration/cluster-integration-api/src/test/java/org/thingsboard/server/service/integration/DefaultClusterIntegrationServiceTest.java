@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,16 +57,19 @@ class DefaultClusterIntegrationServiceTest {
     private IntegrationManagerService integrationManagerService;
     @Mock
     private TbQueueConsumer<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> mqttConsumer;
+    @Mock
+    private TbQueueConsumer<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> httpConsumer;
 
     private DefaultClusterIntegrationService service;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        when(serviceInfoProvider.getSupportedIntegrationTypes()).thenReturn(List.of(IntegrationType.MQTT));
+        when(serviceInfoProvider.getSupportedIntegrationTypes()).thenReturn(List.of(IntegrationType.MQTT, IntegrationType.HTTP));
         when(queueFactory.createToIntegrationExecutorNotificationsMsgConsumer())
                 .thenReturn(mock(TbQueueConsumer.class));
         when(queueFactory.createToIntegrationExecutorDownlinkMsgConsumer(IntegrationType.MQTT)).thenReturn(mqttConsumer);
+        when(queueFactory.createToIntegrationExecutorDownlinkMsgConsumer(IntegrationType.HTTP)).thenReturn(httpConsumer);
         service = new DefaultClusterIntegrationService(serviceInfoProvider, settings, queueFactory, integrationManagerService) {
             @Override
             protected void launchMainConsumers() {
@@ -128,10 +132,29 @@ class DefaultClusterIntegrationServiceTest {
         verify(integrationManagerService, timeout(TIMEOUT_MS)).refresh(eq(IntegrationType.MQTT), eq(Collections.emptySet()));
     }
 
+    @Test
+    void givenEventsForDifferentTypesPendingAtStartup_whenStarted_thenEveryTypeGetsItsLatestPartitions() {
+        // An event carries only the queue keys whose partitions changed: a later MQTT-only event must not hide HTTP.
+        service.onApplicationEvent(partitionChangeEvent(Map.of(IntegrationType.MQTT, tpis(0), IntegrationType.HTTP, tpis(1))));
+        service.onApplicationEvent(partitionChangeEvent(Map.of(IntegrationType.MQTT, tpis(2))));
+        service.onApplicationEvent((ApplicationReadyEvent) null);
+
+        verify(integrationManagerService, timeout(TIMEOUT_MS)).refresh(IntegrationType.HTTP, tpis(1));
+        verify(httpConsumer, timeout(TIMEOUT_MS)).subscribe(tpis(1));
+        verify(integrationManagerService, timeout(TIMEOUT_MS)).refresh(IntegrationType.MQTT, tpis(2));
+        verify(mqttConsumer, timeout(TIMEOUT_MS)).subscribe(tpis(2));
+        verify(integrationManagerService, never()).refresh(IntegrationType.MQTT, tpis(0));
+    }
+
     private static PartitionChangeEvent partitionChangeEvent(Integer... partitions) {
-        QueueKey queueKey = new QueueKey(ServiceType.TB_INTEGRATION_EXECUTOR, IntegrationType.MQTT.name());
+        return partitionChangeEvent(Map.of(IntegrationType.MQTT, tpis(partitions)));
+    }
+
+    private static PartitionChangeEvent partitionChangeEvent(Map<IntegrationType, Set<TopicPartitionInfo>> partitionsByType) {
+        Map<QueueKey, Set<TopicPartitionInfo>> newPartitions = partitionsByType.entrySet().stream().collect(Collectors.toMap(
+                e -> new QueueKey(ServiceType.TB_INTEGRATION_EXECUTOR, e.getKey().name()), Map.Entry::getValue));
         return new PartitionChangeEvent(DefaultClusterIntegrationServiceTest.class, ServiceType.TB_INTEGRATION_EXECUTOR,
-                Map.of(queueKey, tpis(partitions)), Collections.emptyMap());
+                newPartitions, Collections.emptyMap());
     }
 
     private static Set<TopicPartitionInfo> tpis(Integer... partitions) {
