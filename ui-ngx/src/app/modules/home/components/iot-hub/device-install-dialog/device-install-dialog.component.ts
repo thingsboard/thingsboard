@@ -108,9 +108,32 @@ interface HostFieldTransport {
   helpPopupText: string;
 }
 
+// A gateway runs in Docker and puts ${mqtt.host} / ${mqtt.port} into docker-compose: the host must be
+// reachable from the machine the gateway runs on, so the wording names the gateway, not the device.
+const GATEWAY_MQTT_TRANSPORT: HostFieldTransport = {
+  protocol: 'mqtt',
+  hostLabel: 'iot-hub.device-install-mqtt-host',
+  portLabel: 'iot-hub.device-install-mqtt-port',
+  hostHints: {
+    REQUEST: 'iot-hub.device-install-gateway-mqtt-host-request-hint',
+    BASE_URL: 'iot-hub.device-install-gateway-mqtt-host-base-url-hint'
+  },
+  loopbackHints: {
+    REQUEST: 'iot-hub.device-install-gateway-mqtt-host-opened-via-loopback-hint',
+    BASE_URL: 'iot-hub.device-install-gateway-mqtt-host-base-url-loopback-hint'
+  },
+  loopbackHint: 'iot-hub.device-install-gateway-mqtt-host-loopback-hint',
+  reviewHostHint: 'iot-hub.device-install-gateway-mqtt-host-hint',
+  configuredHint: 'iot-hub.device-install-gateway-mqtt-host-configured-hint',
+  hostError: 'iot-hub.device-install-gateway-transport-host-error',
+  portError: 'iot-hub.device-install-transport-port-error',
+  helpPopupId: 'iot-hub/gateway-connection-host',
+  helpPopupText: 'iot-hub.device-install-which-host'
+};
+
 // Install methods whose packages get the transport fields. Other methods use the host differently
-// (a ChirpStack package builds the ThingsBoard URL from it, a gateway puts it into docker-compose)
-// and keep the resolved value until they are handled separately.
+// (a ChirpStack package builds the ThingsBoard URL from it) and keep the resolved value until they
+// are handled separately. Of the gateway methods, only these have packages that use ${mqtt.host}.
 const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
   [InstallMethod.DIRECT_MQTT, {
     protocol: 'mqtt',
@@ -131,7 +154,10 @@ const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
     portError: 'iot-hub.device-install-transport-port-error',
     helpPopupId: 'iot-hub/device-connection-host',
     helpPopupText: 'iot-hub.device-install-which-host'
-  }]
+  }],
+  [InstallMethod.GATEWAY_MODBUS, GATEWAY_MQTT_TRANSPORT],
+  [InstallMethod.GATEWAY_BACNET, GATEWAY_MQTT_TRANSPORT],
+  [InstallMethod.GATEWAY_KNX, GATEWAY_MQTT_TRANSPORT]
 ]);
 
 /**
