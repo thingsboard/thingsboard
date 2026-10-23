@@ -11,6 +11,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
@@ -58,6 +60,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -73,8 +76,12 @@ import org.thingsboard.server.service.integration.state.IntegrationState;
 import org.thingsboard.server.service.integration.state.ValidationTask;
 import org.thingsboard.server.service.integration.state.ValidationTaskType;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -141,10 +148,27 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
     @Value("${integrations.init.connection_check_api_request_timeout_sec:20}")
     private int integrationConnectionCheckApiRequestTimeoutSec;
 
+    @Value("${integrations.ownership_stats.enabled:true}")
+    private boolean ownershipStatsEnabled;
+
+    @Value("${integrations.ownership_stats.check_interval_ms:60000}")
+    private long ownershipStatsCheckIntervalMs;
+
+    @Value("${integrations.ownership_stats.print_interval_ms:600000}")
+    private long ownershipStatsPrintIntervalMs;
+
+    @Autowired(required = false)
+    private StatsFactory statsFactory;
+
+    // The partition snapshot that refresh() last applied, per integration type.
+    private final ConcurrentMap<IntegrationType, Set<Integer>> appliedPartitions = new ConcurrentHashMap<>();
+
     private ExecutorService commandExecutorService;
     private ScheduledExecutorService statisticsExecutorService;
     private ScheduledExecutorService reInitExecutorService;
     private ScheduledExecutorService lifecycleExecutorService;
+    private ScheduledExecutorService ownershipStatsExecutorService;
+    private IntegrationOwnershipMonitor ownershipMonitor;
 
     @PostConstruct
     public void init() {
@@ -160,6 +184,11 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             statisticsExecutorService.scheduleAtFixedRate(this::persistStatistics, statisticsPersistFrequency, statisticsPersistFrequency, TimeUnit.MILLISECONDS);
         }
         supportedIntegrationTypes.addAll(serviceInfoProvider.getSupportedIntegrationTypes());
+        if (ownershipStatsEnabled && !supportedIntegrationTypes.isEmpty() && ownershipStatsCheckIntervalMs > 0) {
+            ownershipMonitor = new IntegrationOwnershipMonitor(statsFactory, partitionService.getIntegrationExecutorPartitionsCount(), ownershipStatsPrintIntervalMs);
+            ownershipStatsExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("ie-ownership-stats");
+            ownershipStatsExecutorService.scheduleWithFixedDelay(this::checkOwnership, ownershipStatsCheckIntervalMs, ownershipStatsCheckIntervalMs, TimeUnit.MILLISECONDS);
+        }
     }
 
     @PreDestroy
@@ -175,6 +204,9 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
         }
         if (reInitEnabled) {
             reInitExecutorService.shutdownNow();
+        }
+        if (ownershipStatsExecutorService != null) {
+            ownershipStatsExecutorService.shutdownNow();
         }
     }
 
@@ -453,6 +485,7 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                 .map(tpi -> tpi.getPartition().orElse(-1))
                 .filter(p -> p >= 0)
                 .collect(Collectors.toSet());
+        appliedPartitions.put(integrationType, Set.copyOf(ownedPartitions));
 
         Set<IntegrationId> currentIntegrationIds = new HashSet<>(integrations.keySet());
         for (IntegrationId integrationId : currentIntegrationIds) {
@@ -786,6 +819,49 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                 }
             }
         });
+    }
+
+    private void checkOwnership() {
+        try {
+            ownershipMonitor.check(collectOwnership(), System.currentTimeMillis());
+        } catch (Throwable e) {
+            log.warn("Failed to check integrations ownership", e);
+        }
+    }
+
+    List<IntegrationOwnershipMonitor.TypeOwnership> collectOwnership() {
+        Map<IntegrationType, int[]> counts = new HashMap<>();
+        Map<IntegrationType, List<IntegrationId>> notMineRunning = new HashMap<>();
+        for (IntegrationState state : integrations.values()) {
+            ThingsboardPlatformIntegration<?> platformIntegration = state.getIntegration();
+            Integration configuration = platformIntegration != null ? platformIntegration.getConfiguration() : state.getConfiguration();
+            if (configuration == null || configuration.getType() == null) {
+                continue; // CREATED, not processed yet: the type is not known locally
+            }
+            ComponentLifecycleEvent currentState = state.getCurrentState();
+            int[] typeCounts = counts.computeIfAbsent(configuration.getType(), t -> new int[3]);
+            typeCounts[STARTED.equals(currentState) ? 0 : FAILED.equals(currentState) ? 1 : 2]++;
+            if (platformIntegration != null && configuration.getType().isSingleton()) {
+                try {
+                    if (!isMine(configuration)) {
+                        notMineRunning.computeIfAbsent(configuration.getType(), t -> new ArrayList<>()).add(state.getId());
+                    }
+                } catch (Exception e) {
+                    log.debug("[{}][{}] Failed to resolve integration ownership", state.getTenantId(), state.getId(), e);
+                }
+            }
+        }
+        List<IntegrationOwnershipMonitor.TypeOwnership> result = new ArrayList<>();
+        supportedIntegrationTypes.stream().sorted(Comparator.comparing(Enum::name)).forEach(type -> {
+            List<Integer> owned = partitionService.getMyPartitions(new QueueKey(ServiceType.TB_INTEGRATION_EXECUTOR, type.name()));
+            int[] typeCounts = counts.getOrDefault(type, new int[3]);
+            result.add(new IntegrationOwnershipMonitor.TypeOwnership(type,
+                    owned != null ? Set.copyOf(owned) : Set.of(),
+                    appliedPartitions.getOrDefault(type, Set.of()),
+                    typeCounts[0], typeCounts[1], typeCounts[2],
+                    notMineRunning.getOrDefault(type, List.of())));
+        });
+        return result;
     }
 
     private void persistStatistics() {

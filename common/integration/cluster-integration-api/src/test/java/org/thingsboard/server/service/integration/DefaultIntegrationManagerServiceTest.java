@@ -29,6 +29,7 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -133,6 +134,7 @@ class DefaultIntegrationManagerServiceTest {
             int partition = partitionByEntity.get(entityId.getId());
             return new TopicPartitionInfo("tb_ie.downlink.mqtt", null, partition, livePartitions.contains(partition));
         });
+        when(partitionService.getMyPartitions(any(QueueKey.class))).thenAnswer(inv -> List.copyOf(livePartitions));
         when(configurationService.getIntegration(any(TenantId.class), any(IntegrationId.class)))
                 .thenAnswer(inv -> configurations.get((IntegrationId) inv.getArgument(1)));
         when(integrationContextProvider.buildIntegrationContext(any())).thenReturn(mock(IntegrationContext.class));
@@ -305,6 +307,45 @@ class DefaultIntegrationManagerServiceTest {
 
         verify(platformIntegration, times(1)).init(any());
         assertThat(integrationStates()).doesNotContainKey(integration.getId());
+    }
+
+    @Test
+    void givenSingletonRunning_whenOwnershipMovesWithoutRefresh_thenOwnershipReportsMismatchAndNotMine() throws Exception {
+        Integration mine = mqttIntegration(1);
+        Integration stray = mqttIntegration(0);
+        doThrow(new RuntimeException("Failed to connect to MQTT broker")).when(platformIntegrations.get(mine.getId())).init(any());
+        when(configurationService.getActiveIntegrationList(IntegrationType.MQTT, false)).thenReturn(List.of(mine, stray));
+
+        // The bug we fixed: [0, 1] is applied, then PartitionService moves to [1] but no refresh() follows.
+        ownPartitions(0, 1);
+        service.refresh(IntegrationType.MQTT, tpis(0, 1));
+        runLifecycleTasks();
+        ownPartitions(1);
+
+        IntegrationOwnershipMonitor.TypeOwnership mqtt = ownershipOf(IntegrationType.MQTT);
+        assertThat(mqtt.owned()).containsExactly(1);
+        assertThat(mqtt.applied()).containsExactlyInAnyOrder(0, 1);
+        assertThat(mqtt.isMismatch()).isTrue();
+        assertThat(mqtt.notMineRunning()).containsExactly(stray.getId());
+        assertThat(mqtt.started()).isEqualTo(1);
+        assertThat(mqtt.failed()).isEqualTo(1);
+        IntegrationOwnershipMonitor.TypeOwnership http = ownershipOf(IntegrationType.HTTP);
+        assertThat(http.started() + http.failed() + http.other()).isZero();
+        assertThat(http.notMineRunning()).isEmpty();
+        assertThat(http.applied()).isEmpty();
+
+        // Once the refresh runs, the stray is stopped and the picture is consistent again.
+        service.refresh(IntegrationType.MQTT, tpis(1));
+        runLifecycleTasks();
+
+        mqtt = ownershipOf(IntegrationType.MQTT);
+        assertThat(mqtt.isMismatch()).isFalse();
+        assertThat(mqtt.notMineRunning()).isEmpty();
+        assertThat(mqtt.started()).isZero();
+    }
+
+    private IntegrationOwnershipMonitor.TypeOwnership ownershipOf(IntegrationType type) {
+        return service.collectOwnership().stream().filter(t -> t.type() == type).findFirst().orElseThrow();
     }
 
     private Integration mqttIntegration(int partition) {
