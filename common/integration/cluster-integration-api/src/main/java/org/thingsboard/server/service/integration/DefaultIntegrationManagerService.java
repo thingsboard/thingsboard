@@ -447,9 +447,8 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
         if (!supportedIntegrationTypes.contains(integrationType)) {
             return;
         }
-        if (newPartitions.isEmpty()) {
-            return;
-        }
+        // An empty set is a real snapshot (the node lost every partition of this type), not a no-op:
+        // the singleton integrations of this type must be stopped.
         Set<Integer> ownedPartitions = newPartitions.stream()
                 .map(tpi -> tpi.getPartition().orElse(-1))
                 .filter(p -> p >= 0)
@@ -470,9 +469,14 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                         ? state.getConfiguration()
                         : configurationService.getIntegration(state.getTenantId(), state.getId());
             }
-            if (integration != null && !isMineForPartitions(integration, ownedPartitions)) {
+            // ownedPartitions belong to integrationType only; other types are handled by their own refresh.
+            if (integration != null && integrationType.equals(integration.getType()) && !isMineForPartitions(integration, ownedPartitions)) {
                 scheduleIntegrationEvent(integration.getTenantId(), integration.getId(), ComponentLifecycleEvent.STOPPED);
             }
+        }
+        if (newPartitions.isEmpty()) {
+            // Nothing new to start; keep the previous behaviour for non-singleton integrations on an empty snapshot.
+            return;
         }
         createIntegrations(configurationService.getActiveIntegrationList(integrationType, false), ownedPartitions);
     }
@@ -583,7 +587,13 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                 case UPDATED:
                 case ACTIVATED:
                     Integration configuration = configurationService.getIntegration(state.getTenantId(), state.getId());
-                    if (configuration != null) {
+                    if (configuration != null && !isMine(configuration)) {
+                        // The event was scheduled while this node owned the partition. Ownership may have moved
+                        // since then, and the refresh that would stop it may already have run or not run yet.
+                        log.info("[{}][{}] Skipping {}: the integration is not mine anymore, stopping it.", state.getTenantId(), state.getId(), pendingEvent);
+                        persistCurrentStatistics(state);
+                        processStop(state, STOPPED);
+                    } else if (configuration != null) {
                         processUpdateEvent(state, configuration);
                     } else {
                         processStop(state, DELETED);
@@ -762,6 +772,11 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             if (state.getConfiguration() != null && state.getCurrentState() != null && state.getCurrentState().equals(ComponentLifecycleEvent.FAILED)) {
                 if (state.getUpdateLock().tryLock()) {
                     try {
+                        if (!isMine(state.getConfiguration())) {
+                            log.info("[{}][{}] Skipping re-init: the integration is not mine anymore, stopping it.", state.getTenantId(), state.getId());
+                            processStop(state, STOPPED);
+                            return;
+                        }
                         processUpdateEvent(state, state.getConfiguration());
                     } catch (Exception e) {
                         log.trace("[{}][{}] Failed to re-initialize the integration:", state.getTenantId(), state.getId(), e);

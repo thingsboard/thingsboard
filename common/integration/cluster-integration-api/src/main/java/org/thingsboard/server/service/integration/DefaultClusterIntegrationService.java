@@ -124,20 +124,21 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.debug("Received partition change event: {}", event);
+        // Always enqueue first, then drain: the drain below must see this event. Enqueueing only while
+        // !started dropped every partition change that arrived after startup, so a node kept the snapshot
+        // it drained at startup forever and singleton integrations ran twice (or nowhere) after a rollout.
+        pendingEvents.add(event);
         if (!started) {
-            // Add to queue FIRST, then check again
-            pendingEvents.add(event);
-            if (!started) {
-                log.debug("Integration Executor not started yet, event queued for later: {}", event);
-                return; // doStartup() will drain the queue
-            }
-            // started became true after we added - fall through to drain
+            log.debug("Integration Executor not started yet, event queued for later: {}", event);
+            return; // doStartup() will drain the queue
         }
         // Either already started or just became started - drain and process the latest pending
         drainPendingEvents();
     }
 
-    private void drainPendingEvents() {
+    // Synchronized so that the startup thread and an event thread cannot process two snapshots concurrently
+    // and push them to subscribeEventsMap in reverse order, which would leave the older snapshot applied.
+    private synchronized void drainPendingEvents() {
         // Each PartitionChangeEvent carries a full partition snapshot for TB_INTEGRATION_EXECUTOR,
         // so earlier pending events are superseded — discard them and process only the latest.
         PartitionChangeEvent latest = null;
@@ -198,7 +199,7 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
         } finally {
             // Mark as started and drain pending events even on failure, so that partition change events are not stuck in the queue forever.
             // After started=true, any new events will drain themselves in onTbApplicationEvent().
-            // ConcurrentLinkedQueue.poll() is atomic, so each event is processed exactly once.
+            // drainPendingEvents() is synchronized, so snapshots are applied in the order they were queued.
             started = true;
             drainPendingEvents();
         }
