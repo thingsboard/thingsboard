@@ -2598,10 +2598,10 @@ accepts@^2.0.0:
     mime-types "^3.0.0"
     negotiator "^1.0.0"
 
-ace-builds@1.45.2:
-  version "1.45.2"
-  resolved "https://registry.yarnpkg.com/ace-builds/-/ace-builds-1.45.2.tgz#3c1721d1b6a5e8253d91a0c12b682dd0db5fb015"
-  integrity sha512-a0IADaETGBnBW5CIkniUJn7F+NyTuHWKqlv1A8FXaMmFflJsMGnU3TzkiyslInqIZ3odfcVKOdXBGIKBefzFDA==
+ace-builds@1.43.6:
+  version "1.43.6"
+  resolved "https://registry.yarnpkg.com/ace-builds/-/ace-builds-1.43.6.tgz#6feffd0283da5bbf45a2052470fe0fc3c442831a"
+  integrity sha512-L1ddibQ7F3vyXR2k2fg+I8TQTPWVA6CKeDQr/h2+8CeyTp3W6EQL8xNFZRTztuP8xNOAqL3IYPqdzs31GCjDvg==
 
 ace-diff@^3.3.0:
   version "3.3.0"
