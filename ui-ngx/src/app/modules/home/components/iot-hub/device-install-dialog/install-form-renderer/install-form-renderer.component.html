@@ -94,7 +94,7 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [formControlName]="field.key"
-                   autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore>
+                   autocomplete="new-username" data-lpignore="true" data-1p-ignore data-bwignore>
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"
                       [matTooltip]="'iot-hub.generate-random-value' | translate"
