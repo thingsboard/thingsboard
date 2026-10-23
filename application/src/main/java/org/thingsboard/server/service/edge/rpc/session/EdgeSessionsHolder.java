@@ -37,11 +37,14 @@ public class EdgeSessionsHolder {
         unique.forEach(consumer);
     }
 
-    public void put(EdgeGrpcSessionManager session) {
+    /**
+     * Registers the session as the current one for its edge and returns the session it replaced, or null.
+     */
+    public EdgeGrpcSessionManager put(EdgeGrpcSessionManager session) {
         UUID sessionId = session.getState().getSessionId();
         EdgeId edgeId = session.getState().getEdgeId();
         sessionsById.put(sessionId, session);
-        sessions.put(edgeId, session);
+        return sessions.put(edgeId, session);
     }
 
     public EdgeGrpcSessionManager getByEdgeId(EdgeId id) {

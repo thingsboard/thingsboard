@@ -83,6 +83,16 @@ class EdgeSessionsHolderTest {
     }
 
     @Test
+    void putReturnsTheSessionItReplaced() {
+        EdgeGrpcSessionManager first = newSession();
+        EdgeGrpcSessionManager second = newSession();
+
+        assertThat(holder.put(first)).isNull();
+        assertThat(holder.put(second)).isSameAs(first);
+        assertThat(holder.getByEdgeId(edgeId)).isSameAs(second);
+    }
+
+    @Test
     void runIfNoSessionRunsTheActionWhenTheEdgeHasNoSession() {
         AtomicBoolean ran = new AtomicBoolean();
 

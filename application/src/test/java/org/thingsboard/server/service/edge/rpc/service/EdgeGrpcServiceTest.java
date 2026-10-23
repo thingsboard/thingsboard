@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeConnectionTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -164,6 +166,29 @@ class EdgeGrpcServiceTest {
 
         assertThat(reconnectBlockedDuringWrite).isTrue();
         assertThat(sessions.getByEdgeId(edgeId)).isSameAs(replacement);
+    }
+
+    @Test
+    void givenReplacedSessionDisconnectsDuringItsTeardown_whenConnect_thenNoDisconnectSideEffects() {
+        // the edge reconnects before its old stream is noticed dead; the old session's close fires while it is destroyed
+        EdgeGrpcSessionManager old = registerSession();
+        doAnswer(invocation -> {
+            onEdgeDisconnect(old);
+            return null;
+        }).when(old).destroyAndMarkAsZombieIfFailed();
+        EdgeGrpcSessionManager replacement = newSession();
+        when(serviceInfoProvider.getServiceId()).thenReturn(THIS_NODE);
+
+        ReflectionTestUtils.invokeMethod(edgeGrpcService, "onEdgeConnect", edgeId, replacement);
+
+        verify(tsSubService, never()).saveAttributes(argThat(activeStateWrite(false)));
+        verify(tsSubService, never()).saveAttributes(argThat(lastDisconnectTimeWrite()));
+        verify(clusterService, never()).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class),
+                argThat(msg -> TbMsgType.DISCONNECT_EVENT.equals(msg.getInternalType())), isNull());
+        verify(ruleProcessor, never()).process(argThat(disconnectTrigger()));
+        verify(edgeIdServiceIdCache, never()).evict(edgeId);
+        assertThat(sessions.getByEdgeId(edgeId)).isSameAs(replacement);
+        assertThat(sessions.getSessionsById()).doesNotContainKey(old.getState().getSessionId());
     }
 
     @Test

@@ -201,16 +201,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = state.getEdge();
         TenantId tenantId = state.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, state.getSessionId(), edgeId);
-        if (sessions.hasByEdgeId(edgeId)) {
-            EdgeGrpcSessionManager existingSession = sessions.getByEdgeId(edgeId);
-            if (existingSession != null) {
-                UUID sessionId = existingSession.getState().getSessionId();
-                log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, state.getSessionId(), sessionId, edgeId);
-                existingSession.destroyAndMarkAsZombieIfFailed();
-                sessions.removeBySessionId(sessionId);
-            }
+        // Swap first, destroy after: while the slow teardown runs, the replaced session is no longer current, so its own
+        // late disconnect takes the stale-session path instead of clearing the state of this connect.
+        EdgeGrpcSessionManager replaced = sessions.put(edgeSession);
+        if (replaced != null) {
+            UUID replacedSessionId = replaced.getState().getSessionId();
+            log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, state.getSessionId(), replacedSessionId, edgeId);
+            sessions.removeBySessionId(replacedSessionId);
+            replaced.destroyAndMarkAsZombieIfFailed();
         }
-        sessions.put(edgeSession);
         // Claim ownership before active=true: the previous node reads this entry on disconnect to decide
         // whether to clear the flag.
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
