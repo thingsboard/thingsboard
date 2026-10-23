@@ -13,11 +13,21 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
@@ -29,7 +39,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -48,6 +57,14 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private DeviceService deviceService;
+    @Mock
+    private TbDeviceService tbDeviceService;
+    @Mock
+    private DashboardService dashboardService;
+    @Mock
+    private TbDashboardService tbDashboardService;
 
     @Spy
     @InjectMocks
@@ -317,7 +334,7 @@ class DefaultIotHubServiceTest {
         doReturn(dep1Item).when(service).doInstallVersion(eq(user), eq(dep1VersionId), any(), any());
         doReturn(dep2Item).when(service).doInstallVersion(eq(user), eq(dep2VersionId), any(), any());
         doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
-        doNothing().when(service).deleteInstalledItem(eq(user), any());
+        doReturn(new DeleteInstalledItemResult(List.of())).when(service).deleteInstalledItem(eq(user), any());
 
         InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep1, dep2, root)), null, request);
 
@@ -411,4 +428,39 @@ class DefaultIotHubServiceTest {
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
     }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsEntitiesAnotherDevicePackageUses() {
+        mockTenant();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(deviceId, sharedDashboardId);
+        IotHubInstalledItem other = devicePackage(sharedDashboardId);
+        other.setItemName("Other package");
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted, other), 1, 2, false));
+        Device device = new Device(deviceId);
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+
+        DeleteInstalledItemResult result = service.deleteInstalledItem(user, deleted.getId());
+
+        assertThat(result.getKeptEntities()).singleElement().satisfies(kept -> {
+            assertThat(kept.getEntityId()).isEqualTo(sharedDashboardId);
+            assertThat(kept.getUsedBy()).containsExactly("Other package");
+        });
+        verify(tbDeviceService).delete(device, user);
+        verify(dashboardService, never()).findDashboardById(any(), any());
+        verify(tbDashboardService, never()).delete(any(), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
+    }
+
+    private IotHubInstalledItem devicePackage(EntityId... createdEntityIds) {
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.of(createdEntityIds));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        return item;
+    }
+
 }

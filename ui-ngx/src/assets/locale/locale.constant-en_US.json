@@ -3698,6 +3698,8 @@
     },
     "iot-hub": {
         "advanced-settings": "Advanced settings",
+        "delete-kept-entities": "Some entities were kept, because other installed items use them: {{entities}}",
+        "delete-kept-entity": "{{type}} (used by {{usedBy}}).",
         "iot-hub": "IoT Hub",
         "generate-random-value": "Generate random value",
         "home-title": "ThingsBoard IoT Hub",

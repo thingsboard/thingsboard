@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.SolutionTemplateInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.WidgetInstalledItemDescriptor;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.service.solutions.SolutionService;
 import org.thingsboard.server.service.solutions.data.solution.SolutionInstallResponse;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -58,10 +60,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -389,7 +393,7 @@ public class DefaultIotHubService implements IotHubService {
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
                 case "DEVICE" -> {
                     DeviceInstalledItemDescriptor dd = (DeviceInstalledItemDescriptor) descriptor;
-                    deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
+                    deleteDevicePackageEntities(tenantId, installedItemId, dd.getCreatedEntityIds(), user);
                     dd.setCreatedEntityIds(null);
                     dd.setDashboardId(null);
                 }
@@ -614,19 +618,51 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
-    private void deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
+    /**
+     * Deletes what a device package created, except the entities another installed device package
+     * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package.
+     * Returns the kept ones.
+     */
+    private List<DeleteInstalledItemResult.KeptEntity> deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
+                                                                               List<EntityId> createdEntityIds, SecurityUser user) {
+        List<DeleteInstalledItemResult.KeptEntity> kept = new ArrayList<>();
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
-            return;
+            return kept;
         }
+        Map<UUID, List<String>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId);
         List<EntityId> reversed = new ArrayList<>(createdEntityIds);
         Collections.reverse(reversed);
         for (EntityId entityId : reversed) {
+            List<String> usedBy = usedByOtherPackages.get(entityId.getId());
+            if (usedBy != null) {
+                log.info("[{}] Kept {} {}: installed device packages {} use it", tenantId, entityId.getEntityType(), entityId.getId(), usedBy);
+                kept.add(new DeleteInstalledItemResult.KeptEntity(entityId, usedBy));
+                continue;
+            }
             try {
                 deleteDevicePackageEntity(tenantId, entityId, user);
             } catch (Exception e) {
                 log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
             }
         }
+        return kept;
+    }
+
+    private Map<UUID, List<String>> findEntitiesOfOtherDevicePackages(TenantId tenantId, IotHubInstalledItemId installedItemId) {
+        Map<UUID, List<String>> usedBy = new HashMap<>();
+        PageLink pageLink = new PageLink(100);
+        PageData<IotHubInstalledItem> page;
+        do {
+            page = iotHubInstalledItemService.findByTenantId(tenantId, List.of("DEVICE"), null, pageLink);
+            for (IotHubInstalledItem item : page.getData()) {
+                if (!item.getId().equals(installedItemId)
+                        && item.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
+                    dd.getCreatedEntityIds().forEach(id -> usedBy.computeIfAbsent(id.getId(), k -> new ArrayList<>()).add(item.getItemName()));
+                }
+            }
+            pageLink = pageLink.nextPageLink();
+        } while (page.hasNext());
+        return usedBy;
     }
 
     private void deleteDevicePackageEntity(TenantId tenantId, EntityId entityId, SecurityUser user) {
@@ -652,17 +688,19 @@ public class DefaultIotHubService implements IotHubService {
     }
 
     @Override
-    public void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId) {
+    public DeleteInstalledItemResult deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId) {
         TenantId tenantId = user.getTenantId();
         IotHubInstalledItem installedItem = iotHubInstalledItemService.findById(tenantId, installedItemId);
         if (installedItem == null) {
             throw new IllegalArgumentException("Installed item not found");
         }
 
-        deleteEntityForDescriptor(user, tenantId, installedItem.getDescriptor(), installedItemId);
+        List<DeleteInstalledItemResult.KeptEntity> keptEntities =
+                deleteEntityForDescriptor(user, tenantId, installedItem.getDescriptor(), installedItemId);
 
         iotHubInstalledItemService.deleteById(tenantId, installedItemId);
         log.info("[{}] Deleted installed IoT Hub item: {}", tenantId, installedItem.getItemName());
+        return new DeleteInstalledItemResult(keptEntities);
     }
 
     /**
@@ -670,9 +708,9 @@ public class DefaultIotHubService implements IotHubService {
      * {@link #deleteInstalledItem} and by the tracking-row compensation path in
      * {@link #doInstallVersion} so a failed tracking save does not leave the entity orphaned.
      */
-    private void deleteEntityForDescriptor(SecurityUser user, TenantId tenantId,
-                                           IotHubInstalledItemDescriptor descriptor,
-                                           IotHubInstalledItemId installedItemId) {
+    private List<DeleteInstalledItemResult.KeptEntity> deleteEntityForDescriptor(SecurityUser user, TenantId tenantId,
+                                                                             IotHubInstalledItemDescriptor descriptor,
+                                                                             IotHubInstalledItemId installedItemId) {
         if (descriptor instanceof WidgetInstalledItemDescriptor wd) {
             WidgetTypeDetails widgetType = widgetTypeService.findWidgetTypeDetailsById(tenantId, wd.getWidgetTypeId());
             if (widgetType != null) {
@@ -691,7 +729,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
             }
         } else if (descriptor instanceof DeviceInstalledItemDescriptor dd) {
-            deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
+            return deleteDevicePackageEntities(tenantId, installedItemId, dd.getCreatedEntityIds(), user);
         } else if (descriptor instanceof SolutionTemplateInstalledItemDescriptor st) {
             try {
                 solutionService.deleteSolution(tenantId, st, user);
@@ -699,6 +737,7 @@ public class DefaultIotHubService implements IotHubService {
                 log.error("[{}] Failed to delete solution for installed item {}", tenantId, installedItemId, e);
             }
         }
+        return List.of();
     }
 
     @Override
