@@ -42,7 +42,11 @@ import {
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
-import { DeviceConnectivityHostSource } from '@shared/models/settings.models';
+import {
+  DeviceConnectivityHostSource,
+  DeviceConnectivityProtocol,
+  ResolvedDeviceConnectivityInfo
+} from '@shared/models/settings.models';
 
 export interface DeviceInstallDialogData {
   item: MpItemVersionView;
@@ -86,19 +90,22 @@ const TRANSPORT_STEP_STATE_KEY = 'tbTransportConnection';
  * the help popup name the protocol and its default port), so each entry brings its own keys.
  */
 interface HostFieldTransport {
-  protocol: string;
+  protocol: DeviceConnectivityProtocol;
   hostLabel: string;
   portLabel: string;
-  // Host taken from the address ThingsBoard was opened with / from the Base URL in General settings
-  requestHostHint: string;
-  baseUrlHostHint: string;
-  // Host resolved to a loopback address: via the request, via the Base URL, or from an unknown source
-  requestLoopbackHint: string;
-  baseUrlLoopbackHint: string;
+  // Hint by the source of the host; REQUEST is used when the source is unknown
+  hostHints: Partial<Record<DeviceConnectivityHostSource, string>> & { REQUEST: string };
+  // Hint by the source of a host that resolved to a loopback address; loopbackHint when there is none
+  loopbackHints: Partial<Record<DeviceConnectivityHostSource, string>>;
   loopbackHint: string;
   // Review mode: the stored value is shown without its source
   reviewHostHint: string;
+  // Host set in Device connectivity: the fields are read-only
+  configuredHint: string;
+  hostError: string;
+  portError: string;
   helpPopupId: string;
+  helpPopupText: string;
 }
 
 // Install methods whose packages get the transport fields. Other methods use the host differently
@@ -109,13 +116,21 @@ const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
     protocol: 'mqtt',
     hostLabel: 'iot-hub.device-install-mqtt-host',
     portLabel: 'iot-hub.device-install-mqtt-port',
-    requestHostHint: 'iot-hub.device-install-mqtt-host-request-hint',
-    baseUrlHostHint: 'iot-hub.device-install-mqtt-host-base-url-hint',
-    requestLoopbackHint: 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint',
-    baseUrlLoopbackHint: 'iot-hub.device-install-mqtt-host-base-url-loopback-hint',
+    hostHints: {
+      REQUEST: 'iot-hub.device-install-mqtt-host-request-hint',
+      BASE_URL: 'iot-hub.device-install-mqtt-host-base-url-hint'
+    },
+    loopbackHints: {
+      REQUEST: 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint',
+      BASE_URL: 'iot-hub.device-install-mqtt-host-base-url-loopback-hint'
+    },
     loopbackHint: 'iot-hub.device-install-mqtt-host-loopback-hint',
     reviewHostHint: 'iot-hub.device-install-mqtt-host-hint',
-    helpPopupId: 'iot-hub/device-connection-host'
+    configuredHint: 'iot-hub.device-install-mqtt-host-configured-hint',
+    hostError: 'iot-hub.device-install-transport-host-error',
+    portError: 'iot-hub.device-install-transport-port-error',
+    helpPopupId: 'iot-hub/device-connection-host',
+    helpPopupText: 'iot-hub.device-install-which-host'
   }]
 ]);
 
@@ -130,14 +145,16 @@ const toBareHost = (value: string): string => {
     return bracketed[1];
   }
   // A bare IPv6 address has several colons; a single one separates the port.
-  return hostPort.split(':').length === 2 ? hostPort.split(':')[0] : hostPort;
+  const parts = hostPort.split(':');
+  return parts.length === 2 ? parts[0] : hostPort;
 };
 
 // localhost, 127.0.0.0/8, ::1 and 0.0.0.0: a device can't reach the server at any of them.
 // Unlike DeviceConnectivityUtil.isLocalhost this doesn't resolve hostnames, and it also
 // rejects 0.0.0.0, which isn't a loopback address but is just as unreachable.
+// Takes a bare host (see toBareHost).
 const isLoopbackHost = (host: string): boolean => {
-  const h = toBareHost(host).toLowerCase();
+  const h = host.toLowerCase();
   return h === 'localhost' || h === '::1' || h === '0.0.0.0' || /^127(\.\d{1,3}){3}$/.test(h);
 };
 
@@ -149,13 +166,13 @@ const transportHostValidator = (control: AbstractControl): ValidationErrors | nu
     return null;
   }
   const host = toBareHost(control.value);
-  return !HOST_PATTERN.test(host) || isLoopbackHost(host) ? { pattern: true } : null;
+  return !HOST_PATTERN.test(host) || isLoopbackHost(host) ? { transportHost: true } : null;
 };
 
 const isValidPort = (port: number): boolean => Number.isInteger(port) && port >= 1 && port <= 65535;
 
 const transportPortValidator = (control: AbstractControl): ValidationErrors | null =>
-  control.value === null || control.value === '' || isValidPort(Number(control.value)) ? null : { pattern: true };
+  control.value === null || control.value === '' || isValidPort(Number(control.value)) ? null : { transportPort: true };
 
 @Component({
   selector: 'tb-device-install-dialog',
@@ -195,12 +212,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   entityOutputs = new Map<string, EntityStepOutput>();
   transportVars: Record<string, string> = {};
   // protocol → where the server took its host from
-  private transportHostSources: Record<string, DeviceConnectivityHostSource> = {};
+  private transportHostSources: Partial<Record<DeviceConnectivityProtocol, DeviceConnectivityHostSource>> = {};
   // form-field key → declared type. Used by resolveTemplateJson() to emit BOOLEAN/INTEGER
   // placeholders as raw JSON values instead of quoted strings.
   private fieldTypes = new Map<string, FormFieldType>();
   // Transport whose ${<protocol>.host} the transport host field overrides
-  private hostFieldProtocol: string | null = null;
+  private hostFieldProtocol: DeviceConnectivityProtocol | null = null;
   gatewayDockerComposeContent: string | null = null;
 
   resolveMarkdownVariable: (key: string) => string | undefined = this._resolveMarkdownVariable.bind(this);
@@ -255,7 +272,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     try {
       const connectivity = await firstValueFrom(this.iotHubApiService.getConnectivitySettings({ ignoreErrors: true }));
       if (connectivity) {
-        for (const [protocol, info] of Object.entries(connectivity)) {
+        for (const [protocol, info] of Object.entries(connectivity) as [DeviceConnectivityProtocol, ResolvedDeviceConnectivityInfo][]) {
           if (info) {
             this.transportVars[`${protocol}.host`] = info.host || '';
             this.transportVars[`${protocol}.port`] = String(info.port || '');
@@ -835,19 +852,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     let hostHint: string;
     if (readOnly) {
-      hostHint = 'iot-hub.device-install-transport-configured-hint';
+      hostHint = transport.configuredHint;
     } else if (this.reviewMode) {
       hostHint = transport.reviewHostHint;
     } else if (loopback) {
-      if (hostSource === 'REQUEST') {
-        hostHint = transport.requestLoopbackHint;
-      } else if (hostSource === 'BASE_URL') {
-        hostHint = transport.baseUrlLoopbackHint;
-      } else {
-        hostHint = transport.loopbackHint;
-      }
+      hostHint = (hostSource && transport.loopbackHints[hostSource]) || transport.loopbackHint;
     } else {
-      hostHint = hostSource === 'BASE_URL' ? transport.baseUrlHostHint : transport.requestHostHint;
+      hostHint = (hostSource && transport.hostHints[hostSource]) || transport.hostHints.REQUEST;
     }
     const helpPopupId = readOnly ? undefined : transport.helpPopupId;
     const group = this.translate.instant('iot-hub.device-install-thingsboard-connection');
@@ -859,9 +870,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       required: true,
       readOnly,
       helpText: this.translate.instant(hostHint, { host: resolvedHost }),
-      // transportHostValidator does the check; the entry carries the message the renderer shows
-      validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-host-error') }],
+      // Shown on the transportHost error of transportHostValidator
+      errorMessage: this.translate.instant(transport.hostError),
       helpPopupId,
+      helpPopupText: helpPopupId ? this.translate.instant(transport.helpPopupText) : undefined,
       group,
       row: TRANSPORT_HOST_FIELD_KEY
     }];
@@ -874,9 +886,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         defaultValue: isValidPort(resolvedPort) ? resolvedPort : '',
         required: true,
         readOnly,
-        validators: [{ pattern: '.*', message: this.translate.instant('iot-hub.device-install-transport-port-error') }],
+        // Shown on the transportPort error of transportPortValidator
+        errorMessage: this.translate.instant(transport.portError),
         group,
-        row: TRANSPORT_HOST_FIELD_KEY
+        row: TRANSPORT_HOST_FIELD_KEY,
+        width: 200
       });
     }
     this.hostFieldProtocol = protocol;
@@ -891,9 +905,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   private initFormStep(ws: WizardStep): void {
     const formJson = (ws.rawSteps[0] && this.zipFiles.get(ws.rawSteps[0].file)) || '[]';
-    // readOnly, helpPopupId and row are for the fields the dialog adds; a package can't set them
+    // These are for the fields the dialog adds; a package can't set them
     const packageFields = (JSON.parse(formJson) as FormFieldDefinition[])
-      .map(({ readOnly, helpPopupId, row, ...field }) => field);
+      .map(({ readOnly, helpPopupId, helpPopupText, errorMessage, row, width, ...field }) => field);
     ws.formFields = [...packageFields, ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
     // In review mode, use stored values; otherwise use defaults
