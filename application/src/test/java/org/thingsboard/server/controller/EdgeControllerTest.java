@@ -56,7 +56,9 @@ import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -65,6 +67,10 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.menu.CustomMenu;
 import org.thingsboard.server.common.data.menu.CustomMenuConfig;
 import org.thingsboard.server.common.data.menu.CustomMenuItem;
+import org.thingsboard.server.common.data.notification.NotificationRequest;
+import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
+import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
+import org.thingsboard.server.common.data.notification.info.EdgeConnectionNotificationInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -83,6 +89,7 @@ import org.thingsboard.server.common.data.wl.WhiteLabeling;
 import org.thingsboard.server.common.data.wl.WhiteLabelingType;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
 import org.thingsboard.server.exception.DataValidationException;
@@ -168,6 +175,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
     @Autowired
     private EdgeUpgradeInstructionsService edgeUpgradeInstructionsService;
+
+    @Autowired
+    private NotificationRequestService notificationRequestService;
 
     static class Config {
         @Bean
@@ -1895,6 +1905,61 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.2.6");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
+    }
+
+    @Test
+    public void testGetEdgeNotificationRequests() throws Exception {
+        Edge edgeA = doPost("/api/edge", constructEdge("Edge A notifications", "default"), Edge.class);
+        Edge edgeB = doPost("/api/edge", constructEdge("Edge B notifications", "default"), Edge.class);
+        long now = System.currentTimeMillis();
+        NotificationRequest olderA = saveEdgeNotificationRequest(edgeA.getId(), now - TimeUnit.HOURS.toMillis(2));
+        NotificationRequest newerA = saveEdgeNotificationRequest(edgeA.getId(), now - TimeUnit.MINUTES.toMillis(5));
+        NotificationRequest requestB = saveEdgeNotificationRequest(edgeB.getId(), now - TimeUnit.MINUTES.toMillis(5));
+        saveEdgeNotificationRequest(tenantAdminUserId, now - TimeUnit.MINUTES.toMillis(5));
+
+        PageData<NotificationRequestInfo> pageA = doGetTypedWithPageLink("/api/edge/" + edgeA.getUuidId() + "/notificationRequests?",
+                new TypeReference<>() {}, new PageLink(10));
+        assertThat(pageA.getData()).extracting(NotificationRequestInfo::getId).containsExactly(newerA.getId(), olderA.getId());
+        assertThat(pageA.getData().get(0).getInfo()).isInstanceOf(EdgeConnectionNotificationInfo.class);
+
+        PageData<NotificationRequestInfo> lastHourA = doGetTypedWithTimePageLink("/api/edge/" + edgeA.getUuidId() + "/notificationRequests?",
+                new TypeReference<>() {}, new TimePageLink(10, 0, null, null, now - TimeUnit.HOURS.toMillis(1), now));
+        assertThat(lastHourA.getData()).extracting(NotificationRequestInfo::getId).containsExactly(newerA.getId());
+
+        PageData<NotificationRequestInfo> pageB = doGetTypedWithPageLink("/api/edge/" + edgeB.getUuidId() + "/notificationRequests?",
+                new TypeReference<>() {}, new PageLink(10));
+        assertThat(pageB.getData()).extracting(NotificationRequestInfo::getId).containsExactly(requestB.getId());
+
+        loginCustomerUser();
+        doGet("/api/edge/" + edgeA.getUuidId() + "/notificationRequests?pageSize=10&page=0").andExpect(status().isForbidden());
+    }
+
+    private NotificationRequest saveEdgeNotificationRequest(EntityId originatorId, long createdTime) {
+        NotificationRequest request = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .targets(List.of(UUID.randomUUID()))
+                .originatorEntityId(originatorId)
+                .info(EdgeConnectionNotificationInfo.builder().eventType("connected").edgeName("edge").build())
+                .status(NotificationRequestStatus.SENT)
+                .build();
+        request.setId(new NotificationRequestId(UUID.randomUUID()));
+        request.setCreatedTime(createdTime);
+        return notificationRequestService.saveNotificationRequest(tenantId, request);
+    }
+
+    @Test
+    public void testGetLatestEdgeVersion() throws Exception {
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.4");
+        Assert.assertEquals("3.6.4", doGet("/api/edge/upgrade/latest", String.class));
+
+        // non-numeric suffix is dropped the same way as in the per-edge upgrade check
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.2.7-SNAPSHOT");
+        Assert.assertEquals("3.6.2.7", doGet("/api/edge/upgrade/latest", String.class));
+        Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable("V_3_6_2"));
+        Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable("V_3_5_0"));
+
+        edgeUpgradeInstructionsService.setPlatformEdgeVersion("3.6.2");
+        Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable("V_3_6_2"));
     }
 
     private void createCustomTranslation(String localeCode) throws Exception {

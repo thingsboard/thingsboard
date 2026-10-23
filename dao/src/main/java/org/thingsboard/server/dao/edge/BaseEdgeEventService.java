@@ -29,6 +29,11 @@ public abstract class BaseEdgeEventService implements EdgeEventService {
     }
 
     @Override
+    public long countEdgeEvents(TenantId tenantId, EdgeId edgeId, long seqIdStart, long startTime, int limit) {
+        return edgeEventDao.countEdgeEvents(tenantId.getId(), edgeId, seqIdStart, startTime, limit);
+    }
+
+    @Override
     public void cleanupEvents(long ttl) {
         edgeEventDao.cleanupEvents(ttl);
     }

@@ -940,6 +940,22 @@ message DeviceInactivityTimeoutUpdateProto {
   int64 inactivityTimeout = 5;
 }
 
+/* Partial edge downlink stats of one node for one report interval, aggregated by the edge's TB_CORE partition owner */
+message EdgeStatsMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 edgeIdMSB = 3;
+  int64 edgeIdLSB = 4;
+  int64 ts = 5;
+  int64 msgsAdded = 6;
+  int64 msgsPushed = 7;
+  int64 msgsPermanentlyFailed = 8;
+  int64 msgsTmpFailed = 9;
+  int64 msgsLag = 10;
+  bool msgsLagMeasured = 11;
+  int64 msgsLagTs = 12;
+}
+
 message CalculatedFieldTelemetryMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -1870,6 +1886,7 @@ message ToCoreMsg {
   LifecycleEventProto lifecycleEventMsg = 10;
   ErrorEventProto errorEventMsg = 11;
   ToDeviceActorNotificationMsgProto toDeviceActorNotification = 12;
+  EdgeStatsMsgProto edgeStatsMsg = 13;
   DeviceConnectProto deviceConnectMsg = 50;
   DeviceDisconnectProto deviceDisconnectMsg = 51;
   DeviceInactivityProto deviceInactivityMsg = 52;

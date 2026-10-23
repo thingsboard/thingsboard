@@ -137,6 +137,8 @@ public class DataConstants {
     public static final String MSG_SOURCE_KEY = "source";
     public static final String EDGE_VERSION_ATTR_KEY = "edgeVersion";
     public static final String EDGE_SYNC_IN_PROGRESS_ATTR_KEY = "syncInProgress";
+    public static final String EDGE_QUEUE_START_TS_ATTR_KEY = "queueStartTs";
+    public static final String EDGE_QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
 
     public static final String UPDATE_FIRMWARE = "updateFirmware";
     public static final String UPDATE_SOFTWARE = "updateSoftware";

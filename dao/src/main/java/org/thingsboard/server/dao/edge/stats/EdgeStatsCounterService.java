@@ -26,12 +26,23 @@ public class EdgeStatsCounterService {
             case DOWNLINK_MSGS_PUSHED -> counters.getMsgsPushed().addAndGet(value);
             case DOWNLINK_MSGS_PERMANENTLY_FAILED -> counters.getMsgsPermanentlyFailed().addAndGet(value);
             case DOWNLINK_MSGS_TMP_FAILED -> counters.getMsgsTmpFailed().addAndGet(value);
-            case DOWNLINK_MSGS_LAG -> counters.getMsgsLag().set(value);
+            case DOWNLINK_MSGS_LAG -> {
+                counters.getMsgsLag().set(value);
+                counters.getMsgsLagMeasured().set(true);
+                counters.getMsgsLagTs().set(System.currentTimeMillis());
+            }
         }
     }
 
     public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {
         return msgCountersByEdge.computeIfAbsent(edgeId, id -> new MsgCounters(tenantId));
+    }
+
+    public void resetLagMeasured(EdgeId edgeId) {
+        MsgCounters counters = msgCountersByEdge.get(edgeId);
+        if (counters != null) {
+            counters.getMsgsLagMeasured().set(false);
+        }
     }
 
     public void clear(EdgeId edgeId) {

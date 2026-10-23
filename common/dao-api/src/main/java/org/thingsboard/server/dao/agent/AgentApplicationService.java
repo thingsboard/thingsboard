@@ -34,6 +34,8 @@ public interface AgentApplicationService extends EntityDaoService {
     AgentApplication findByRelatedEntity(TenantId tenantId, EntityId entityId);
     List<EntityId> findManagedRelatedEntityIds(TenantId tenantId, EntityType relatedEntityType);
 
+    List<AgentApplicationInfo> findInfosByRelatedEntityIds(TenantId tenantId, EntityType relatedEntityType, List<EntityId> relatedEntityIds);
+
     PageData<EntityInfo> findRelatedEntityCandidates(TenantId tenantId, EntityType relatedEntityType, EntityId currentEntityId, PageLink pageLink);
     void delete(TenantId tenantId, AgentApplicationId agentApplicationId);
     void deleteByAgentId(TenantId tenantId, AgentId agentId);
