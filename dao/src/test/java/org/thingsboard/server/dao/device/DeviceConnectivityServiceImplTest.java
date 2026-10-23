@@ -87,6 +87,29 @@ class DeviceConnectivityServiceImplTest {
         assertThat(info.has("coap")).isFalse();
     }
 
+    @Test
+    void responseHasTheFieldsTheUiReads() throws Exception {
+        givenConnectivity("""
+                {"mqtt": {"enabled": true, "host": "10.0.0.5", "port": "1884"}}""");
+
+        JsonNode mqtt = service.getConnectivityInfo(BASE_URL, DeviceConnectivityHostSource.REQUEST).get("mqtt");
+
+        assertThat(mqtt.fieldNames()).toIterable()
+                .containsExactlyInAnyOrder("enabled", "host", "port", "hostSource");
+        assertThat(mqtt.get("enabled").asBoolean()).isTrue();
+    }
+
+    @Test
+    void overloadWithoutSourceReportsRequest() throws Exception {
+        givenConnectivity("""
+                {"mqtt": {"enabled": true, "host": "", "port": "1883"}}""");
+
+        JsonNode mqtt = service.getConnectivityInfo(BASE_URL).get("mqtt");
+
+        assertThat(mqtt.get("host").asText()).isEqualTo("192.168.1.10");
+        assertThat(mqtt.get("hostSource").asText()).isEqualTo("REQUEST");
+    }
+
     private void givenConnectivity(String json) {
         AdminSettings settings = new AdminSettings();
         settings.setJsonValue(JacksonUtil.toJsonNode(json));

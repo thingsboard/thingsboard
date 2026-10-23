@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -179,20 +180,17 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     @Override
     public JsonNode getConnectivityInfo(String baseUrl, DeviceConnectivityHostSource baseUrlSource) throws URISyntaxException {
         String[] protocols = {HTTP, HTTPS, MQTT, MQTTS, COAP, COAPS};
-        ObjectNode result = JacksonUtil.newObjectNode();
+        Map<String, ResolvedDeviceConnectivityInfo> result = new LinkedHashMap<>();
         for (String protocol : protocols) {
             DeviceConnectivityInfo info = getConnectivity(protocol);
             if (info != null && info.isEnabled()) {
-                // hostSource is part of the response only; DeviceConnectivityInfo models the stored settings
-                ObjectNode resolved = result.putObject(protocol);
-                resolved.put("enabled", true);
-                resolved.put("host", getHost(baseUrl, info, protocol));
-                resolved.put("port", StringUtils.isBlank(info.getPort()) ? STANDARD_PORTS.get(protocol) : info.getPort());
-                resolved.put("hostSource", (StringUtils.isNotBlank(info.getHost())
-                        ? DeviceConnectivityHostSource.DEVICE_CONNECTIVITY : baseUrlSource).name());
+                result.put(protocol, new ResolvedDeviceConnectivityInfo(true,
+                        getHost(baseUrl, info, protocol),
+                        StringUtils.isBlank(info.getPort()) ? STANDARD_PORTS.get(protocol) : info.getPort(),
+                        StringUtils.isNotBlank(info.getHost()) ? DeviceConnectivityHostSource.DEVICE_CONNECTIVITY : baseUrlSource));
             }
         }
-        return result;
+        return JacksonUtil.valueToTree(result);
     }
 
     private Resource getCert(String path) {

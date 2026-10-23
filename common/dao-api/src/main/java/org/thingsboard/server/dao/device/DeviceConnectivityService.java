@@ -18,6 +18,14 @@ public interface DeviceConnectivityService {
      */
     JsonNode getConnectivityInfo(String baseUrl, DeviceConnectivityHostSource baseUrlSource) throws URISyntaxException;
 
+    /**
+     * Same as {@link #getConnectivityInfo(String, DeviceConnectivityHostSource)}, with a base URL
+     * built from the request.
+     */
+    default JsonNode getConnectivityInfo(String baseUrl) throws URISyntaxException {
+        return getConnectivityInfo(baseUrl, DeviceConnectivityHostSource.REQUEST);
+    }
+
     Resource getPemCertFile(String protocol);
 
     Resource createGatewayDockerComposeFile(String baseUrl, Device device) throws URISyntaxException;
