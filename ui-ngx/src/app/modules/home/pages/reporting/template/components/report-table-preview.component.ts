@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { Directive } from '@angular/core';
 import { AbstractReportComponentPreview } from '@home/pages/reporting/template/components/report-component.component';
-import { TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
+import { BorderType, TableReportCellSettings, TableReportColumnSettings, TableReportComponentConfig } from '@shared/models/report-component.models';
 import { ComponentStyle, Font, textStyle } from '@shared/models/widget-settings.models';
 import { deepClone } from '@core/utils';
 import { DataKey } from '@shared/models/widget.models';
 import { Direction } from '@shared/models/page/sort-order';
+
+const DEFAULT_TABLE_BORDER_WIDTH_PX = 1;
+const DOUBLE_BORDER_MIN_WIDTH_PX = 3;
 
 @Directive()
 export abstract class AbstractReportTablePreviewComponent<C extends TableReportComponentConfig> extends AbstractReportComponentPreview<C> {
@@ -56,12 +59,12 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
   }
 
 
-  headerStyle(column: DataKey): ComponentStyle {
-    return this.styleFromColumnSettings(column, true);
+  headerStyle(column: DataKey, firstColumn: boolean): ComponentStyle {
+    return this.styleFromColumnSettings(column, true, firstColumn);
   }
 
-  cellStyle(column: DataKey): ComponentStyle {
-    return this.styleFromColumnSettings(column);
+  cellStyle(column: DataKey, firstColumn: boolean): ComponentStyle {
+    return this.styleFromColumnSettings(column, false, firstColumn);
   }
 
   columnWidth(column: DataKey): string {
@@ -86,7 +89,7 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
     return '${' + column.label + '}';
   }
 
-  protected styleFromColumnSettings(column: DataKey, header = false): ComponentStyle {
+  protected styleFromColumnSettings(column: DataKey, header = false, firstColumn = false): ComponentStyle {
     let style: ComponentStyle = {};
     if (!this.isPlainFormat && column?.settings) {
       const columnSettings: TableReportColumnSettings =  column.settings;
@@ -101,9 +104,39 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
           style.verticalAlign = cellSettings.verticalAlignment;
           style.color = cellSettings.color;
           style.backgroundColor = cellSettings.backgroundColor;
+          this.applyBorderStyle(style, cellSettings, header, firstColumn);
         }
       }
     }
     return style;
+  }
+
+  // The base stylesheet (report-component-style.scss) only ever draws border-right/border-bottom
+  // on every cell, border-left on the first column, and border-top on header cells. With
+  // border-collapse: separate, a custom border on any other side would sit right next to the
+  // neighboring cell's own border and look doubled, so custom borders are restricted to those
+  // same sides, matching the Thymeleaf table template this preview mirrors.
+  private applyBorderStyle(style: ComponentStyle, cellSettings: TableReportCellSettings, header: boolean, firstColumn: boolean): void {
+    if (cellSettings.borderWidth == null && cellSettings.borderColor == null && cellSettings.borderType == null) {
+      return;
+    }
+    const defaultWidth = cellSettings.borderType === BorderType.double ? DOUBLE_BORDER_MIN_WIDTH_PX : DEFAULT_TABLE_BORDER_WIDTH_PX;
+    const width = (cellSettings.borderWidth ?? defaultWidth) + 'px';
+    const sides = ['Right', 'Bottom'];
+    if (firstColumn) {
+      sides.push('Left');
+    }
+    if (header) {
+      sides.push('Top');
+    }
+    for (const side of sides) {
+      style['border' + side + 'Width'] = width;
+      if (cellSettings.borderType != null) {
+        style['border' + side + 'Style'] = cellSettings.borderType;
+      }
+      if (cellSettings.borderColor != null) {
+        style['border' + side + 'Color'] = cellSettings.borderColor;
+      }
+    }
   }
 }

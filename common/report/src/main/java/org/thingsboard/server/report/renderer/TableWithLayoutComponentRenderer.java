@@ -15,6 +15,7 @@ import org.thingsboard.server.common.data.report.configuration.DataKeySettings;
 import org.thingsboard.server.common.data.report.configuration.DataSource;
 import org.thingsboard.server.common.data.report.configuration.TableSortOrder;
 import org.thingsboard.server.common.data.report.configuration.components.TableWithLayoutReportComponent;
+import org.thingsboard.server.common.data.report.configuration.style.BorderType;
 import org.thingsboard.server.common.data.report.configuration.style.Font;
 import org.thingsboard.server.common.data.report.configuration.style.FontStyle;
 import org.thingsboard.server.common.data.report.configuration.style.FontWeight;
@@ -180,22 +181,24 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
 
     protected HashMap<String, CellVariables> buildCellVariables(List<DataKey> columns, boolean isHeader) {
         HashMap<String, CellVariables> result = new LinkedHashMap<>();
+        boolean firstColumn = true;
         for (DataKey dataKey : columns) {
-            result.put(dataKey.getLabel(), toCellVariables(dataKey, isHeader));
+            result.put(dataKey.getLabel(), toCellVariables(dataKey, isHeader, firstColumn));
+            firstColumn = false;
         }
         return result;
     }
 
-    protected CellVariables toCellVariables(DataKey dataKey, boolean isHeader) {
+    protected CellVariables toCellVariables(DataKey dataKey, boolean isHeader, boolean isFirstColumn) {
         DataKeySettings settings = dataKey.getSettings();
         ColumnSettings columnSettings = null;
         if (settings instanceof ColumnSettings) {
             columnSettings = (ColumnSettings) settings;
         }
-        return toCellVariables(dataKey.getName(), columnSettings, isHeader);
+        return toCellVariables(dataKey.getName(), columnSettings, isHeader, isFirstColumn);
     }
 
-    protected CellVariables toCellVariables(String key, ColumnSettings columnSettings, boolean isHeader) {
+    protected CellVariables toCellVariables(String key, ColumnSettings columnSettings, boolean isHeader, boolean isFirstColumn) {
         if (columnSettings != null) {
             CellVariables cellVariables;
             CellSettings cellSettings = isHeader ? columnSettings.getHeader() : columnSettings.getCell();
@@ -203,6 +206,8 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
                 Font font = cellSettings.getFont();
                 cellVariables = CellVariables.builder()
                         .key(key)
+                        .header(isHeader)
+                        .firstColumn(isFirstColumn)
                         .color(cellSettings.getColor() != null ? ColorUtils.normalizeCssColor(cellSettings.getColor()) : null)
                         .backgroundColor(cellSettings.getBackgroundColor() != null ? ColorUtils.normalizeCssColor(cellSettings.getBackgroundColor()) : null)
                         .fontSize(font != null && font.getSize() != null && font.getSize() > 0 ? font.getSize() : null)
@@ -211,16 +216,19 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
                         .fontFamily(font != null && font.getFamily() != null && !font.getFamily().isEmpty() ? font.getFamily() : null)
                         .textAlignment(cellSettings.getTextAlignment() != null ? cellSettings.getTextAlignment().name() : null)
                         .verticalAlignment(cellSettings.getVerticalAlignment() != null ? cellSettings.getVerticalAlignment().name() : null)
+                        .borderType(cellSettings.getBorderType())
+                        .borderWidth(cellSettings.getBorderWidth())
+                        .borderColor(cellSettings.getBorderColor() != null ? ColorUtils.normalizeCssColor(cellSettings.getBorderColor()) : null)
                         .build();
             } else {
-                cellVariables = new CellVariables(key);
+                cellVariables = new CellVariables(key, isHeader, isFirstColumn);
             }
             if (isHeader && !StringUtils.isBlank(columnSettings.getColumnWidth())) {
                 cellVariables.setWidth(columnSettings.getColumnWidth());
             }
             return cellVariables;
         }
-        return new CellVariables(key);
+        return new CellVariables(key, isHeader, isFirstColumn);
     }
 
     private Font getHeadingFont(Heading tableHeading) {
@@ -240,6 +248,11 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
     @NoArgsConstructor
     @Builder(toBuilder = true)
     static class CellVariables {
+        // matches the 1px baseline set on th/td in main.css / report-component-style.scss
+        private static final int DEFAULT_BORDER_WIDTH_PX = 1;
+        // double border needs at least 3px to render two visible lines
+        private static final int DOUBLE_BORDER_MIN_WIDTH_PX = 3;
+
         private String key;
         private String value;
         private String width;
@@ -251,9 +264,81 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
         private String fontFamily;
         private String textAlignment;
         private String verticalAlignment;
+        private BorderType borderType;
+        private Integer borderWidth;
+        private String borderColor;
+        private boolean header;
+        private boolean firstColumn;
 
         public CellVariables(String key) {
             this.key = key;
+        }
+
+        public CellVariables(String key, boolean header, boolean firstColumn) {
+            this.key = key;
+            this.header = header;
+            this.firstColumn = firstColumn;
+        }
+
+        public String getStyle() {
+            StringBuilder style = new StringBuilder("display: table-cell;");
+            if (textAlignment != null) {
+                style.append("text-align:").append(textAlignment).append(";");
+            }
+            if (verticalAlignment != null) {
+                style.append("vertical-align:").append(verticalAlignment).append(";");
+            }
+            if (color != null) {
+                style.append("color:").append(color).append(";");
+            }
+            if (backgroundColor != null) {
+                style.append("background-color:").append(backgroundColor).append(";");
+            }
+            if (fontSize != null) {
+                style.append("font-size:").append(fontSize).append("pt;");
+            }
+            if (fontFamily != null) {
+                style.append("font-family:").append(fontFamily).append(";");
+            }
+            if (fontStyle != null) {
+                style.append("font-style:").append(fontStyle).append(";");
+            }
+            if (fontWeight != null) {
+                style.append("font-weight:").append(fontWeight).append(";");
+            }
+            appendBorderStyle(style);
+            return style.toString();
+        }
+
+        // The base stylesheet (main.css / report-component-style.scss) only ever draws
+        // border-right/border-bottom on every cell, border-left on the first column, and
+        // border-top on header cells. With border-collapse: separate, painting a custom
+        // border on any other side would sit right next to the neighboring cell's own
+        // border and look doubled, so custom borders are restricted to those same sides.
+        private void appendBorderStyle(StringBuilder style) {
+            if (borderWidth == null && borderType == null && borderColor == null) {
+                return;
+            }
+            int defaultWidth = borderType == BorderType.DOUBLE ? DOUBLE_BORDER_MIN_WIDTH_PX : DEFAULT_BORDER_WIDTH_PX;
+            int width = borderWidth != null ? borderWidth : defaultWidth;
+            List<String> sides = new ArrayList<>();
+            sides.add("right");
+            sides.add("bottom");
+            if (firstColumn) {
+                sides.add("left");
+            }
+            if (header) {
+                sides.add("top");
+            }
+            for (String side : sides) {
+                style.append("border-").append(side).append("-width:").append(width).append("px;");
+                if (borderType != null) {
+                    style.append("border-").append(side).append("-style:").append(borderType.getValue()).append(";");
+                }
+                if (borderColor != null) {
+                    style.append("border-").append(side).append("-color:").append(borderColor).append(";");
+                }
+            }
         }
     }
 

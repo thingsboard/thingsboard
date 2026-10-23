@@ -8,7 +8,7 @@ import lombok.Getter;
 
 public enum BorderType {
 
-    SOLID("solid"), DASHED("dashed"), DOTTED("dotted");
+    SOLID("solid"), DASHED("dashed"), DOTTED("dotted"), DOUBLE("double");
 
     @Getter
     private final String value;
