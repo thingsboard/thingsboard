@@ -100,6 +100,8 @@ interface HostFieldTransport {
   loopbackHint: string;
   // Review mode: the stored value is shown without its source
   reviewHostHint: string;
+  // Host set in Device connectivity: the fields are read-only
+  configuredHint: string;
   hostError: string;
   portError: string;
   helpPopupId: string;
@@ -124,6 +126,7 @@ const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
     },
     loopbackHint: 'iot-hub.device-install-mqtt-host-loopback-hint',
     reviewHostHint: 'iot-hub.device-install-mqtt-host-hint',
+    configuredHint: 'iot-hub.device-install-mqtt-host-configured-hint',
     hostError: 'iot-hub.device-install-transport-host-error',
     portError: 'iot-hub.device-install-transport-port-error',
     helpPopupId: 'iot-hub/device-connection-host',
@@ -849,7 +852,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     let hostHint: string;
     if (readOnly) {
-      hostHint = 'iot-hub.device-install-transport-configured-hint';
+      hostHint = transport.configuredHint;
     } else if (this.reviewMode) {
       hostHint = transport.reviewHostHint;
     } else if (loopback) {
