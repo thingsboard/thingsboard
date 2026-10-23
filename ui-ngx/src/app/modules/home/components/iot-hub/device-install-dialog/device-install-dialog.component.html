@@ -190,7 +190,8 @@
     <div mat-dialog-content>
       <mat-stepper #installStepper
                               [linear]="true"
-                              labelPosition="bottom">
+                              labelPosition="bottom"
+                              (selectionChange)="onStepSelectionChange($event)">
         <ng-template matStepperIcon="edit">
           <mat-icon>done</mat-icon>
         </ng-template>
