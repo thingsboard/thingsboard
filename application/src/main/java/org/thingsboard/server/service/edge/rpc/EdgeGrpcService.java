@@ -550,22 +550,16 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
         EdgeGrpcSession toRemove = detachSession(edgeId, current -> current.getSessionId().equals(sessionId));
         if (toRemove != null) {
-            // sessionNewEvents is deliberately left as is: clearing it here could wipe the flag a
-            // reconnecting session has just set, and updateSessionEventsFlag only lifts FALSE, not a
-            // missing entry, which would leave the check loop idle forever. deleteEdge still clears it
             sessionsById.remove(sessionId);
             TenantId tenantId = toRemove.getEdge().getTenantId();
-            // A newer session on another node may have already claimed this edge and set active=true.
-            // Clearing the flag here would leave the edge marked inactive while it is in fact connected,
-            // which silently drops every downlink event that is not queued for offline edges.
-            // When ownership is unknown (no cache entry) fall through and persist the inactive state.
-            if (!isOwnedByAnotherNode(edgeId)) {
-                save(tenantId, edgeId, ACTIVITY_STATE, false);
+            // Skip all disconnect side effects if a newer session already owns the edge, on this or another node.
+            // The local check and the inactive write are atomic with attachSession.
+            if (!isOwnedByAnotherNode(edgeId) && markInactiveIfNoSession(tenantId, edgeId)) {
+                long lastDisconnectTs = System.currentTimeMillis();
+                save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
+                pushStateEventToRuleEngine(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+                scheduleDisconnectNotification(edge);
             }
-            long lastDisconnectTs = System.currentTimeMillis();
-            save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushStateEventToRuleEngine(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
-            scheduleDisconnectNotification(edge);
             destroySession(toRemove);
         } else {
             log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
@@ -607,6 +601,18 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             return session;
         });
         return replaced.get();
+    }
+
+    private boolean markInactiveIfNoSession(TenantId tenantId, EdgeId edgeId) {
+        AtomicBoolean marked = new AtomicBoolean();
+        sessions.compute(edgeId, (id, current) -> {
+            if (current == null) {
+                save(tenantId, edgeId, ACTIVITY_STATE, false);
+                marked.set(true);
+            }
+            return current;
+        });
+        return marked.get();
     }
 
     private EdgeGrpcSession detachSession(EdgeId edgeId) {
