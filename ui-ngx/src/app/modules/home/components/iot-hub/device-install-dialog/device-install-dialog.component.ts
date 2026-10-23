@@ -827,10 +827,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.hostFieldProtocol = null;
     const transport = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
     const protocol = transport?.protocol;
-    const resolvedHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
-    if (resolvedHost === undefined) {
+    const serverHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
+    if (serverHost === undefined) {
       return;
     }
+    // The Device connectivity host isn't validated, so it can come with a port or a scheme (localhost:1883)
+    const resolvedHost = toBareHost(serverHost);
     const steps = this.wizardSteps.slice(fromIndex);
     const firstUse = steps.findIndex(ws => this.usesVariable(ws, `${protocol}.host`));
     if (firstUse < 0) {
