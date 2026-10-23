@@ -43,7 +43,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 certificate.getPublicKey().getEncoded(),
                 privateKey.getEncoded(),
                 serverX509Cert.getPublicKey().getEncoded());
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(RPK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK, false);
         this.basicTestConnection(security, null,
                 deviceCredentials,
@@ -64,7 +64,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         RPKClientCredential clientCredentials = new RPKClientCredential();
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setKey(Hex.encodeHexString(certificate.getPublicKey().getEncoded()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
 
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK, false);
@@ -82,7 +82,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         RPKClientCredential clientCredentials = new RPKClientCredential();
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setKey(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK, true);
         MvcResult result = createDeviceWithMvcResult(deviceCredentials, clientEndpoint, deviceProfile.getId());
@@ -104,7 +104,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 certificate.getPublicKey().getEncoded(),
                 privateKey.getEncoded(),
                 serverX509CertBs.getPublicKey().getEncoded());
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, BOTH));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(RPK, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, clientPrivateKeyFromCertTrust, certificate, RPK, false);
         this.basicTestConnection(null, securityRpkBs,
                 deviceCredentials,

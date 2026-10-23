@@ -5,6 +5,7 @@ package org.thingsboard.server.service.install.lts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -23,11 +24,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class LtsMigrationServiceTest {
+
+    private static final Runnable NO_POST_SCHEMA_WORK = () -> {
+    };
 
     private JdbcTemplate jdbcTemplate;
     private InstallScripts installScripts;
@@ -61,6 +67,11 @@ class LtsMigrationServiceTest {
         };
     }
 
+    private void recordVersionsInto(List<String> events) {
+        doAnswer(invocation -> events.add("record:" + invocation.getArgument(0)))
+                .when(schemaSettingsService).updateSchemaVersion(anyString());
+    }
+
     private LtsMigrationService service(List<LtsMigration> migrations) {
         return new LtsMigrationService(jdbcTemplate, installScripts, schemaSettingsService, txManager, migrations);
     }
@@ -76,7 +87,7 @@ class LtsMigrationServiceTest {
                 migration("4.2.2.2", applied),
                 migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.3");
+        service.applyMigrations("4.2.2.2", "4.2.2.3", NO_POST_SCHEMA_WORK);
 
         // only 4.2.2.3 is in (4.2.2.2, 4.2.2.3]
         assertEquals(List.of("4.2.2.3"), applied);
@@ -93,7 +104,7 @@ class LtsMigrationServiceTest {
         LtsMigrationService service = service(List.of(
                 migration("4.2.2.3", applied), migration("4.2.2.4", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.4");
+        service.applyMigrations("4.2.2.2", "4.2.2.4", NO_POST_SCHEMA_WORK);
 
         assertEquals(List.of("4.2.2.3", "4.2.2.4"), applied);
         verify(jdbcTemplate).execute("SELECT 1;");
@@ -126,7 +137,7 @@ class LtsMigrationServiceTest {
                 migration("4.3.1.2", applied),
                 migration("4.3.1.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.3.1.3");
+        service.applyMigrations("4.2.2.2", "4.3.1.3", NO_POST_SCHEMA_WORK);
 
         assertEquals(List.of("4.3.1.2", "4.3.1.3"), applied);
         verify(schemaSettingsService, never()).updateSchemaVersion("4.2.2.3");
@@ -172,13 +183,56 @@ class LtsMigrationServiceTest {
     @Test
     void reRunAtCurrentVersionIsNoOp() throws Exception {
         List<String> applied = new ArrayList<>();
+        List<String> events = new ArrayList<>();
         writeSql("4.2.2.3", "SELECT 1;");
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.3", "4.2.2.3");
+        service.applyMigrations("4.2.2.3", "4.2.2.3", () -> events.add("afterSchemaPhase"));
 
         assertEquals(List.of(), applied);
         verify(jdbcTemplate, never()).execute(anyString());
+        verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
+        assertEquals(List.of("afterSchemaPhase"), events);
+    }
+
+    @Test
+    void recordsNoVersionUntilTheAfterSchemaPhaseHasRun() throws Exception {
+        List<String> events = new ArrayList<>();
+        recordVersionsInto(events);
+        writeSql("4.2.2.3", "SELECT 1;");
+        writeSql("4.2.2.4", "SELECT 2;");
+        LtsMigrationService service = service(List.of(
+                migration("4.2.2.3", events), migration("4.2.2.4", events)));
+
+        service.applyMigrations("4.2.2.2", "4.2.2.4", () -> events.add("afterSchemaPhase"));
+
+        assertEquals(List.of("4.2.2.3", "4.2.2.4", "afterSchemaPhase", "record:4.2.2.3", "record:4.2.2.4"), events);
+    }
+
+    @Test
+    void recordsVersionOutsideTheMigrationTransaction() throws Exception {
+        List<String> applied = new ArrayList<>();
+        writeSql("4.2.2.3", "SELECT 1;");
+        LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
+
+        service.applyMigrations("4.2.2.2", "4.2.2.3", NO_POST_SCHEMA_WORK);
+
+        InOrder inOrder = inOrder(txManager, schemaSettingsService);
+        inOrder.verify(txManager).commit(any());
+        inOrder.verify(schemaSettingsService).updateSchemaVersion("4.2.2.3");
+    }
+
+    @Test
+    void afterSchemaPhaseFailureLeavesEveryVersionUnrecorded() throws Exception {
+        List<String> applied = new ArrayList<>();
+        writeSql("4.2.2.3", "SELECT 1;");
+        LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
+
+        assertThrows(IllegalStateException.class, () -> service.applyMigrations("4.2.2.2", "4.2.2.3", () -> {
+            throw new IllegalStateException("post-schema work failed");
+        }));
+
+        assertEquals(List.of("4.2.2.3"), applied);
         verify(schemaSettingsService, never()).updateSchemaVersion(anyString());
     }
 
@@ -213,7 +267,7 @@ class LtsMigrationServiceTest {
         List<String> applied = new ArrayList<>();
         LtsMigrationService service = service(List.of(migration("4.2.2.3", applied)));
 
-        service.applyMigrations("4.2.2.2", "4.2.2.3");
+        service.applyMigrations("4.2.2.2", "4.2.2.3", NO_POST_SCHEMA_WORK);
 
         assertEquals(List.of("4.2.2.3"), applied);
         verify(jdbcTemplate, never()).execute(anyString());

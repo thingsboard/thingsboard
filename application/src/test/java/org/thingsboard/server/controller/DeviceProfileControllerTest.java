@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -1165,6 +1166,29 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         deviceProfile = saveDeviceProfile(deviceProfile);
         assertThat(deviceProfile.getName()).isEqualTo("Device profile v1.1");
         assertThat(deviceProfile.getVersion()).isEqualTo(3);
+    }
+
+    @Test
+    public void testGetLwm2mBootstrapSecurityInfo_BootstrapServer_Returns_ShortServerId_Null() throws Exception {
+        LwM2MServerSecurityConfigDefault result = doGet(
+                "/api/lwm2m/deviceProfile/bootstrap/true",
+                LwM2MServerSecurityConfigDefault.class
+        );
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isBootstrapServerIs());
+        Assert.assertNull(result.getShortServerId());
+    }
+
+    @Test
+    public void testGetLwm2mBootstrapSecurityInfo_BootstrapServer_Returns_ShortServerId_1() throws Exception {
+        LwM2MServerSecurityConfigDefault result = doGet(
+                "/api/lwm2m/deviceProfile/bootstrap/false",
+                LwM2MServerSecurityConfigDefault.class
+        );
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.isBootstrapServerIs());
+        Assert.assertNotNull(result.getShortServerId());
+        Assert.assertEquals(Integer.valueOf(123), result.getShortServerId());
     }
 
     private DeviceProfile saveDeviceProfile(String name) {

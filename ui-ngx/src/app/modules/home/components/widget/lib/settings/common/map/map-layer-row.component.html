@@ -23,6 +23,14 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
+  <mat-form-field *ngIf="MapProvider.carto === layerFormGroup.get('provider').value"
+                  class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="layerType" required>
+      <mat-option *ngFor="let layerType of cartoLayerTypes" [value]="layerType">
+        {{ cartoLayerTranslationMap.get(layerType) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
   <mat-form-field *ngIf="MapProvider.google === layerFormGroup.get('provider').value"
                   class="tb-inline-field tb-layer-field" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="layerType" required>

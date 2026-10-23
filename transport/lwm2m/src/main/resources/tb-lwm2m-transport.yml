@@ -174,7 +174,7 @@ transport:
       # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used </li> </ul>
       connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
-      # LwM2M Server ID
+      # LwM2M Server Short Server ID. Valid range [1 - 65534]; 0 and 65535 are reserved. Default: 123.
       id: "${LWM2M_SERVER_ID:123}"
       # LwM2M server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BIND_ADDRESS:0.0.0.0}"
@@ -216,8 +216,8 @@ transport:
     bootstrap:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
-      # Default value in Lwm2mClient after start in mode Bootstrap for the object : name "LWM2M Security" field: "Short Server ID" (deviceProfile: Bootstrap.BOOTSTRAP SERVER.Short ID)
-      id: "${LWM2M_SERVER_ID_BS:111}"
+      # Deprecated: Short Server ID is not applicable for Bootstrap Server per OMA spec (Object 0 Resource 10) and is forced to null.
+      id: "${LWM2M_SERVER_ID_BS:}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       # LwM2M bootstrap server bind port

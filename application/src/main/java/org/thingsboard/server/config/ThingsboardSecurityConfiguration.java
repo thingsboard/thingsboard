@@ -75,8 +75,11 @@ public class ThingsboardSecurityConfiguration {
     public static final String WS_ENTRY_POINT = "/api/ws/**";
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     public static final String DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT = "/api/device-connectivity/*/certificate/download";
+    public static final String COMMUNITY_GRANT_OFFLINE_RUN_ENTRY_POINT = "/api/communityGrant/offline/run";
+    public static final String COMMUNITY_GRANT_OFFLINE_RUN_PAYLOAD_LIMIT = COMMUNITY_GRANT_OFFLINE_RUN_ENTRY_POINT + "=35651584";
 
-    @Value("${server.http.max_payload_size:/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}")
+    // First match wins, so the community grant entry must stay ahead of /api/**.
+    @Value("${server.http.max_payload_size:/api/communityGrant/offline/run=35651584;/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}")
     private String maxPayloadSizeConfig;
 
     @Autowired
@@ -133,9 +136,13 @@ public class ThingsboardSecurityConfiguration {
     @Autowired
     private HttpSecurityHeadersCustomizer httpSecurityHeadersCustomizer;
 
+    // An override replaces the whole list, so the offline upload's entry is re-added unless it names that path.
     @Bean
     protected PayloadSizeFilter payloadSizeFilter() {
-        return new PayloadSizeFilter(maxPayloadSizeConfig);
+        String config = maxPayloadSizeConfig.contains(COMMUNITY_GRANT_OFFLINE_RUN_ENTRY_POINT + "=")
+                ? maxPayloadSizeConfig
+                : COMMUNITY_GRANT_OFFLINE_RUN_PAYLOAD_LIMIT + ";" + maxPayloadSizeConfig;
+        return new PayloadSizeFilter(config);
     }
 
     @Bean

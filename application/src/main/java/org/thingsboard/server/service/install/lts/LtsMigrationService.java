@@ -67,17 +67,28 @@ public class LtsMigrationService {
                 .toList();
     }
 
-    /** No-downtime path: per migration in (from, to] run SQL, then apply(), then record the version. */
-    public void applyMigrations(String fromVersion, String toVersion) {
-        for (VersionedMigration vm : select(fromVersion, toVersion)) {
-            LtsMigration migration = vm.migration();
+    /**
+     * No version in (from, to] is recorded until every migration and {@code afterSchemaPhase} succeed, so a
+     * failure re-runs them all: each {@link LtsMigration} and its SQL must be idempotent.
+     */
+    public void applyMigrations(String fromVersion, String toVersion, Runnable afterSchemaPhase) {
+        List<VersionedMigration> selected = select(fromVersion, toVersion);
+        for (VersionedMigration versionedMigration : selected) {
+            LtsMigration migration = versionedMigration.migration();
             String version = migration.getVersion();
             transactionTemplate.executeWithoutResult(status -> {
                 runSchemaUpdate(version);
                 migration.apply();
-                schemaSettingsService.updateSchemaVersion(version);
             });
             log.info("Applied LTS migration {}", version);
+        }
+
+        afterSchemaPhase.run();
+
+        for (VersionedMigration versionedMigration : selected) {
+            String version = versionedMigration.migration().getVersion();
+            schemaSettingsService.updateSchemaVersion(version);
+            log.info("Recorded LTS migration version {}", version);
         }
     }
 
