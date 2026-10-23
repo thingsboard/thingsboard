@@ -18,6 +18,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
@@ -25,6 +26,8 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public final class EdgeUtils {
+
+    public static final List<EntityType> EDGE_SUPPORTED_GROUP_TYPES = List.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.USER);
 
     public static final String DEFAULT_EDGE_LICENSE_KEY = "6qcGys6gz4M2ZuIqZ6hRDjWT";
 
