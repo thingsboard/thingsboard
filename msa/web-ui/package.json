@@ -8,8 +8,8 @@
   "scripts": {
     "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-ui-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-ui-win.exe ./target/src && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web ts-node server.ts'",
-    "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web NODE_ENV=production ts-node server.ts'",
+    "start": "WEB_FOLDER=./target/web node --watch --watch-preserve-output -r ts-node/register server.ts",
+    "start-prod": "WEB_FOLDER=./target/web NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",
     "build": "tsc"
   },
   "dependencies": {
@@ -40,7 +40,6 @@
     "@types/node": "~22.17.2",
     "@yao-pkg/pkg": "^6.6.0",
     "fs-extra": "^11.3.1",
-    "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"
   },
