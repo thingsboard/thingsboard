@@ -6281,8 +6281,7 @@
     "type-rule-chain": "Regelketen",
     "type-rule-chain-plural": "Regelketens",
     "type-device": "Apparaat",
-    "type-device-plural": "Apparaten",
-    "selected": "Geselecteerd"
+    "type-device-plural": "Apparaten"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7993,7 +7992,6 @@
     "endpoint-url-pattern": "Endpoint-URL-patroon",
     "endpoint-url-pattern-required": "Endpoint-URL-patroon is verplicht",
     "request-method": "Aanvraagmethode",
-    "use-simple-client-http-factory": "Gebruik eenvoudige HTTP-clientfactory",
     "ignore-request-body": "Zonder request body",
     "request-body-template": "Sjabloon voor aanvraagbody",
     "request-body-template-hint": "Gebruik <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> voor metadata en <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> voor berichtwaarden. Als dit leeg is, wordt de payload van het bericht als aanvraagbody gebruikt. Schakel voor niet-JSON-payloads 'Omzetten naar platte tekst' in. <br/><br/> Je kunt een geheim injecteren met de placeholder <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, waarbij 'name' de identificatie van het geheim is en 'type' TEXT of TEXT_FILE is. Dit is handig in configuratievelden van regelnodes die 'Gebruik geheim' niet direct ondersteunen. Voorbeeld: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8169,7 +8167,6 @@
     "proxy-port-range": "Proxypoort moet tussen 1 en 65535 liggen.",
     "proxy-user": "Proxygebruiker",
     "proxy-password": "Proxywachtwoord",
-    "proxy-scheme": "Proxyschema",
     "numbers-to-template": "Telefoonnummers naar sjabloon",
     "numbers-to-template-required": "Telefoonnummers naar sjabloon is verplicht",
     "numbers-to-template-hint": "Kommagescheiden telefoonnummers, gebruik <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> voor de waarde uit de metadata, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> voor de waarde uit de berichtinhoud",
@@ -8954,8 +8951,6 @@
     "single-entity": "Enkelvoudige entiteit",
     "group-entities": "Groep entiteiten",
     "entities-group-owner": "Eigenaar van entiteitengroep",
-    "single-device": "Enkelvoudig apparaat",
-    "group-of-devices": "Groep apparaten",
     "devices-group-owner": "Eigenaar van apparaatgroep",
     "message-body": "Berichtinhoud",
     "target": "Doel",
@@ -11367,22 +11362,6 @@
     "ai-credits-usage": "AI-credits: {{ used }} van {{ max }} gebruikt",
     "ai-credits-description": "Je hebt deze maand <strong>{{ used }}</strong> van je <strong>{{ max }}</strong> AI-credits gebruikt. De limiet wordt gereset op {{ date }}. Neem contact op met je systeembeheerder om je AI-credittegoed te verhogen."
   },
-  "solution-template": {
-    "solution-template": "Oplossingssjabloon",
-    "solution-templates": "Oplossingssjablonen",
-    "management": "Beheer oplossingssjablonen",
-    "details": "Details",
-    "install": "Installeren",
-    "level": "Niveau",
-    "install-title": "Oplossingssjabloon succesvol geïnstalleerd",
-    "install-failed-title": "Installatie van oplossingssjabloon mislukt",
-    "instructions": "Instructies",
-    "goto-main-dashboard": "Ga naar hoofd-dashboard",
-    "delete": "Verwijderen",
-    "delete-solution-title": "Weet je zeker dat je de oplossing '{{solutionTitle}}' wilt verwijderen?",
-    "delete-solution-text": "Wees voorzichtig, na bevestiging wordt de oplossing en alle gerelateerde gegevens onherstelbaar verwijderd.",
-    "installing": "Bezig met installeren van oplossingssjabloon..."
-  },
   "markdown": {
     "edit": "Bewerken",
     "preview": "Voorbeeld",
@@ -11399,20 +11378,8 @@
     "app-title": "Applicatietitel",
     "favicon": "Website-icoon",
     "favicon-desc": "Pictogram in het browsertabblad en in bladwijzers. PNG of ICO, 32×32 px aanbevolen",
-    "favicon-description": "*.ico, *.gif of *.png afbeelding met een maximale grootte van {{kbSize}} KB.",
-    "favicon-size-error": "Website-afbeelding is te groot. Maximale toegestane grootte is {{kbSize}} KB.",
-    "favicon-type-error": "Ongeldig afbeeldingsformaat voor website. Alleen ICO, GIF of PNG zijn toegestaan.",
-    "drop-favicon-image": "Sleep een website-icoon of klik om een bestand te selecteren om te uploaden.",
-    "drop-favicon-image-or": "Sleep een website-icoon of",
-    "no-favicon-image": "Geen icoon geselecteerd",
     "logo": "Logo",
     "logo-desc": "SVG of PNG, hoogte minimaal 96px, maximaal 200 KB",
-    "logo-description": "Elke afbeelding met een maximale grootte van {{kbSize}} KB.",
-    "logo-size-error": "Logo-afbeelding is te groot. Maximale toegestane grootte is {{kbSize}} KB.",
-    "logo-type-error": "Ongeldig afbeeldingsformaat voor logo. Alleen afbeeldingen zijn toegestaan.",
-    "drop-logo-image": "Sleep een logo of klik om een bestand te selecteren om te uploaden.",
-    "drop-logo-image-or": "Sleep een logo of",
-    "no-logo-image": "Geen logo geselecteerd",
     "logo-height": "Loghoogte, px",
     "logo-height-desc": "Schaalt het logo proportioneel en centreert het. Verhoog de hoogte (tot 200px) voor hoge logo's",
     "collapsed-logo": "Logo van ingeklapte zijbalk",
@@ -11456,11 +11423,9 @@
     "error-verification-url": "Een domeinnaam mag geen '/' of ':' bevatten. Voorbeeld: thingsboard.io",
     "show-connectivity-dialog": "Connectiviteitsdialoogvenster weergeven",
     "show-connectivity-dialog-desc": "Toont het connectiviteitsdialoogvenster met verbindingsinstructies nadat een apparaat is aangemaakt",
-    "hide-connectivity-dialog": "Connectiviteitsdialoog verbergen",
     "override-trendz-add-on-name": "Naam van Trendz Analytics-add-on overschrijven",
     "override-trendz-add-on-name-desc": "Wijzigt in het hele platform de naam van de add-on \"Trendz\" in \"Advanced analytics\"",
     "show-platform-name-version-bottom-left-corner": "Platformnaam en versie linksonder weergeven",
-    "override-trendz-add-on-name-hint": "Wanneer ingeschakeld, wordt 'Trendz analytics' in het hele platform weergegeven als 'Geavanceerde analyse'.",
     "show-platform-name-version": "Platformnaam en versie weergeven",
     "platform-name": "Platformnaam",
     "platform-version": "Platformversie",
@@ -12686,9 +12651,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13025,10 +12988,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Inloggegevens",
-      "here-app-id": "HERE app ID",
-      "here-app-code": "HERE app-code",
       "here-api-key": "HERE API-sleutel",
-      "here-use-new-version-api-3": "Gebruik API-versie 3",
       "tencent-maps-api-key": "Tencent Maps API-sleutel",
       "tencent-map-type-roadmap": "Wegenkaart",
       "tencent-map-type-satelite": "Satelliet",
@@ -13925,7 +13885,6 @@
       "roles-and-permissions": "Rollen & Rechten",
       "groups": "Groepen",
       "integrations": "Integraties",
-      "solution-templates": "Oplossingssjablonen",
       "scheduler": "Planner",
       "white-labeling": "White-labeling"
     },
@@ -13939,11 +13898,6 @@
       "critical": "Kritiek",
       "assigned-to-me": "Aan mij toegewezen",
       "total": "Totaal"
-    },
-    "solution-templates": {
-      "title": "Oplossingssjablonen",
-      "prototype-plan": "Prototypeplan",
-      "startup-plan": "Startupprogramma"
     },
     "getting-started": {
       "get-started": "Aan de slag",
