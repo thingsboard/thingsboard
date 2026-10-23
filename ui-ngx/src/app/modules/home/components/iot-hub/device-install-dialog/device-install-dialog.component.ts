@@ -80,12 +80,43 @@ const TRANSPORT_PORT_FIELD_KEY = 'tbTransportPort';
 // Not the translated label, so review mode finds the values in any UI language
 const TRANSPORT_STEP_STATE_KEY = 'tbTransportConnection';
 
-// Install methods whose packages get a transport host field, and the transport whose
-// ${<protocol>.host} it fills. Other methods use the host differently (a ChirpStack package
-// builds the ThingsBoard URL from it, a gateway puts it into docker-compose) and keep the
-// resolved value until they are handled separately.
-const HOST_FIELD_TRANSPORTS = new Map<string, string>([
-  [InstallMethod.DIRECT_MQTT, 'mqtt']
+/**
+ * A transport whose ${<protocol>.host} / ${<protocol>.port} the install form lets the user check,
+ * with the translation keys of its fields. The wording is per transport (the label, the hints and
+ * the help popup name the protocol and its default port), so each entry brings its own keys.
+ */
+interface HostFieldTransport {
+  protocol: string;
+  hostLabel: string;
+  portLabel: string;
+  // Host taken from the address ThingsBoard was opened with / from the Base URL in General settings
+  requestHostHint: string;
+  baseUrlHostHint: string;
+  // Host resolved to a loopback address: via the request, via the Base URL, or from an unknown source
+  requestLoopbackHint: string;
+  baseUrlLoopbackHint: string;
+  loopbackHint: string;
+  // Review mode: the stored value is shown without its source
+  reviewHostHint: string;
+  helpPopupId: string;
+}
+
+// Install methods whose packages get the transport fields. Other methods use the host differently
+// (a ChirpStack package builds the ThingsBoard URL from it, a gateway puts it into docker-compose)
+// and keep the resolved value until they are handled separately.
+const HOST_FIELD_TRANSPORTS = new Map<string, HostFieldTransport>([
+  [InstallMethod.DIRECT_MQTT, {
+    protocol: 'mqtt',
+    hostLabel: 'iot-hub.device-install-mqtt-host',
+    portLabel: 'iot-hub.device-install-mqtt-port',
+    requestHostHint: 'iot-hub.device-install-mqtt-host-request-hint',
+    baseUrlHostHint: 'iot-hub.device-install-mqtt-host-base-url-hint',
+    requestLoopbackHint: 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint',
+    baseUrlLoopbackHint: 'iot-hub.device-install-mqtt-host-base-url-loopback-hint',
+    loopbackHint: 'iot-hub.device-install-mqtt-host-loopback-hint',
+    reviewHostHint: 'iot-hub.device-install-mqtt-host-hint',
+    helpPopupId: 'iot-hub/device-connection-host'
+  }]
 ]);
 
 /**
@@ -777,7 +808,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   private addTransportFields(fromIndex: number): void {
     this.hostFieldProtocol = null;
-    const protocol = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
+    const transport = HOST_FIELD_TRANSPORTS.get(this.selectedInstallMethod);
+    const protocol = transport?.protocol;
     const resolvedHost = protocol ? this.transportVars[`${protocol}.host`] : undefined;
     if (resolvedHost === undefined) {
       return;
@@ -805,24 +837,23 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (readOnly) {
       hostHint = 'iot-hub.device-install-transport-configured-hint';
     } else if (this.reviewMode) {
-      hostHint = 'iot-hub.device-install-mqtt-host-hint';
+      hostHint = transport.reviewHostHint;
     } else if (loopback) {
       if (hostSource === 'REQUEST') {
-        hostHint = 'iot-hub.device-install-mqtt-host-opened-via-loopback-hint';
+        hostHint = transport.requestLoopbackHint;
       } else if (hostSource === 'BASE_URL') {
-        hostHint = 'iot-hub.device-install-mqtt-host-base-url-loopback-hint';
+        hostHint = transport.baseUrlLoopbackHint;
       } else {
-        hostHint = 'iot-hub.device-install-mqtt-host-loopback-hint';
+        hostHint = transport.loopbackHint;
       }
     } else {
-      hostHint = hostSource === 'BASE_URL'
-        ? 'iot-hub.device-install-mqtt-host-base-url-hint' : 'iot-hub.device-install-mqtt-host-request-hint';
+      hostHint = hostSource === 'BASE_URL' ? transport.baseUrlHostHint : transport.requestHostHint;
     }
-    const helpPopupId = readOnly ? undefined : 'iot-hub/device-connection-host';
+    const helpPopupId = readOnly ? undefined : transport.helpPopupId;
     const group = this.translate.instant('iot-hub.device-install-thingsboard-connection');
     formStep.extraFormFields = [{
       key: TRANSPORT_HOST_FIELD_KEY,
-      label: this.translate.instant('iot-hub.device-install-mqtt-host'),
+      label: this.translate.instant(transport.hostLabel),
       type: FormFieldType.STRING,
       defaultValue: loopback ? '' : resolvedHost,
       required: true,
@@ -838,7 +869,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       const resolvedPort = Number(this.transportVars[`${protocol}.port`]);
       formStep.extraFormFields.push({
         key: TRANSPORT_PORT_FIELD_KEY,
-        label: this.translate.instant('iot-hub.device-install-mqtt-port'),
+        label: this.translate.instant(transport.portLabel),
         type: FormFieldType.INTEGER,
         defaultValue: isValidPort(resolvedPort) ? resolvedPort : '',
         required: true,
