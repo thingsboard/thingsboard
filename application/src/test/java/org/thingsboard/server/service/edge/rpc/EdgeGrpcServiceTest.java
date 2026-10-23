@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
@@ -250,6 +251,30 @@ public class EdgeGrpcServiceTest {
         verify(tsSubService, never()).saveAttributes(argThat(lastDisconnectTimeWrite()));
         verify(clusterService, never()).pushMsgToRuleEngine(any(TenantId.class), any(EntityId.class), any(TbMsg.class), isNull());
         verify(edgeIdServiceIdCache, never()).evict(edgeId);
+    }
+
+    @Test
+    public void givenReconnectDuringInactiveWrite_whenDisconnect_thenAttachWaitsForTheWrite() throws Exception {
+        // a same-node reconnect racing the guard must be ordered after the inactive write, so its active=true wins
+        UUID sessionId = UUID.randomUUID();
+        sessions().put(edgeId, sessionFor(sessionId));
+        when(edgeIdServiceIdCache.get(edgeId)).thenReturn(null);
+        EdgeGrpcSession replacement = mock(EdgeGrpcSession.class);
+        Thread attach = new Thread(() -> ReflectionTestUtils.invokeMethod(edgeGrpcService, "attachSession", edgeId, replacement));
+        AtomicBoolean attachBlockedDuringWrite = new AtomicBoolean();
+        lenient().doAnswer(invocation -> {
+            attach.start();
+            attach.join(200);
+            attachBlockedDuringWrite.set(attach.isAlive());
+            return null;
+        }).when(tsSubService).saveAttributes(argThat(inactiveStateWrite()));
+
+        onEdgeDisconnect(sessionId);
+        attach.join(5000);
+
+        assertThat(attachBlockedDuringWrite).isTrue();
+        assertThat(sessions()).containsEntry(edgeId, replacement);
+        verify(tsSubService, times(1)).saveAttributes(argThat(lastDisconnectTimeWrite()));
     }
 
     @Test
