@@ -18,10 +18,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -457,6 +459,29 @@ public class HashPartitionServiceTest {
         assertThat(partitionService.isManagedByCurrentService(tenantId)).isTrue();
         verifyPartitionChangeEvent(event -> event.getServiceType() == ServiceType.TB_RULE_ENGINE &&
                 Set.of(tenantId).equals(event.getAffectedTenants()));
+    }
+
+    // The integration ownership check relies on this: integration executor queues are never isolated, so the partition of
+    // an integration is resolvePartitionIndex(integrationId) and can be computed without loading the tenant routing info.
+    @Test
+    public void testResolvePartitionIndex_matchesResolveForIntegrationExecutorQueues() {
+        TenantId isolatedTenantId = TenantId.fromUUID(UUID.randomUUID());
+        TenantId commonTenantId = TenantId.fromUUID(UUID.randomUUID());
+        mockRoutingInfo(isolatedTenantId, new TenantProfileId(UUID.randomUUID()), true);
+        mockRoutingInfo(commonTenantId, new TenantProfileId(UUID.randomUUID()), false);
+        int partitions = partitionService.getIntegrationExecutorPartitionsCount();
+
+        for (IntegrationType type : IntegrationType.values()) {
+            for (int i = 0; i < 100; i++) {
+                IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+                int expectedPartition = partitionService.resolvePartitionIndex(integrationId.getId(), partitions);
+                for (TenantId tenantId : List.of(isolatedTenantId, commonTenantId)) {
+                    TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_INTEGRATION_EXECUTOR, type.name(), tenantId, integrationId);
+                    assertThat(tpi.getPartition()).hasValue(expectedPartition);
+                    assertThat(tpi.getFullTopicName()).doesNotContain(".isolated.");
+                }
+            }
+        }
     }
 
     @Test

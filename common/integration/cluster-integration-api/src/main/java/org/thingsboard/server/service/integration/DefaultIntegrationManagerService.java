@@ -167,7 +167,6 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
     private ScheduledExecutorService statisticsExecutorService;
     private ScheduledExecutorService reInitExecutorService;
     private ScheduledExecutorService lifecycleExecutorService;
-    private ScheduledExecutorService ownershipStatsExecutorService;
     private IntegrationOwnershipMonitor ownershipMonitor;
 
     @PostConstruct
@@ -179,15 +178,18 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             reInitExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("ie-reinit");
             reInitExecutorService.scheduleAtFixedRate(this::reInitIntegrations, reInitFrequency, reInitFrequency, TimeUnit.MILLISECONDS);
         }
-        if (statisticsEnabled) {
+        supportedIntegrationTypes.addAll(serviceInfoProvider.getSupportedIntegrationTypes());
+        boolean ownershipStats = ownershipStatsEnabled && !supportedIntegrationTypes.isEmpty() && ownershipStatsCheckIntervalMs > 0;
+        if (statisticsEnabled || ownershipStats) {
             statisticsExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("ie-stats");
+        }
+        if (statisticsEnabled) {
             statisticsExecutorService.scheduleAtFixedRate(this::persistStatistics, statisticsPersistFrequency, statisticsPersistFrequency, TimeUnit.MILLISECONDS);
         }
-        supportedIntegrationTypes.addAll(serviceInfoProvider.getSupportedIntegrationTypes());
-        if (ownershipStatsEnabled && !supportedIntegrationTypes.isEmpty() && ownershipStatsCheckIntervalMs > 0) {
+        if (ownershipStats) {
+            // shares the stats thread: persistStatistics() only enqueues async sends, and the ownership check takes milliseconds
             ownershipMonitor = new IntegrationOwnershipMonitor(statsFactory, partitionService.getIntegrationExecutorPartitionsCount(), ownershipStatsPrintIntervalMs);
-            ownershipStatsExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("ie-ownership-stats");
-            ownershipStatsExecutorService.scheduleWithFixedDelay(this::checkOwnership, ownershipStatsCheckIntervalMs, ownershipStatsCheckIntervalMs, TimeUnit.MILLISECONDS);
+            statisticsExecutorService.scheduleWithFixedDelay(this::checkOwnership, ownershipStatsCheckIntervalMs, ownershipStatsCheckIntervalMs, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -199,14 +201,11 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
         if (commandExecutorService != null) {
             commandExecutorService.shutdownNow();
         }
-        if (statisticsEnabled) {
+        if (statisticsExecutorService != null) {
             statisticsExecutorService.shutdownNow();
         }
         if (reInitEnabled) {
             reInitExecutorService.shutdownNow();
-        }
-        if (ownershipStatsExecutorService != null) {
-            ownershipStatsExecutorService.shutdownNow();
         }
     }
 
@@ -830,6 +829,12 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
     }
 
     List<IntegrationOwnershipMonitor.TypeOwnership> collectOwnership() {
+        Map<IntegrationType, Set<Integer>> ownedPartitions = new HashMap<>();
+        for (IntegrationType type : supportedIntegrationTypes) {
+            List<Integer> owned = partitionService.getMyPartitions(new QueueKey(ServiceType.TB_INTEGRATION_EXECUTOR, type.name()));
+            ownedPartitions.put(type, owned != null ? Set.copyOf(owned) : Set.of());
+        }
+        int partitionsCount = partitionService.getIntegrationExecutorPartitionsCount();
         Map<IntegrationType, int[]> counts = new HashMap<>();
         Map<IntegrationType, List<IntegrationId>> notMineRunning = new HashMap<>();
         for (IntegrationState state : integrations.values()) {
@@ -838,25 +843,25 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             if (configuration == null || configuration.getType() == null) {
                 continue; // CREATED, not processed yet: the type is not known locally
             }
+            IntegrationType type = configuration.getType();
             ComponentLifecycleEvent currentState = state.getCurrentState();
-            int[] typeCounts = counts.computeIfAbsent(configuration.getType(), t -> new int[3]);
+            int[] typeCounts = counts.computeIfAbsent(type, t -> new int[3]);
             typeCounts[STARTED.equals(currentState) ? 0 : FAILED.equals(currentState) ? 1 : 2]++;
-            if (platformIntegration != null && configuration.getType().isSingleton()) {
-                try {
-                    if (!isMine(configuration)) {
-                        notMineRunning.computeIfAbsent(configuration.getType(), t -> new ArrayList<>()).add(state.getId());
-                    }
-                } catch (Exception e) {
-                    log.debug("[{}][{}] Failed to resolve integration ownership", state.getTenantId(), state.getId(), e);
+            if (platformIntegration != null && type.isSingleton()) {
+                // Unlike isMine(), this does not call partitionService.resolve(): that loads the tenant routing info, i.e. the
+                // tenant profile, for every integration. Integration executor queues are never isolated, so the partition
+                // depends on the integration id only.
+                Set<Integer> owned = ownedPartitions.get(type);
+                if (owned == null || !owned.contains(partitionService.resolvePartitionIndex(state.getId().getId(), partitionsCount))) {
+                    notMineRunning.computeIfAbsent(type, t -> new ArrayList<>()).add(state.getId());
                 }
             }
         }
         List<IntegrationOwnershipMonitor.TypeOwnership> result = new ArrayList<>();
         supportedIntegrationTypes.stream().sorted(Comparator.comparing(Enum::name)).forEach(type -> {
-            List<Integer> owned = partitionService.getMyPartitions(new QueueKey(ServiceType.TB_INTEGRATION_EXECUTOR, type.name()));
             int[] typeCounts = counts.getOrDefault(type, new int[3]);
             result.add(new IntegrationOwnershipMonitor.TypeOwnership(type,
-                    owned != null ? Set.copyOf(owned) : Set.of(),
+                    ownedPartitions.get(type),
                     appliedPartitions.getOrDefault(type, Set.of()),
                     typeCounts[0], typeCounts[1], typeCounts[2],
                     notMineRunning.getOrDefault(type, List.of())));

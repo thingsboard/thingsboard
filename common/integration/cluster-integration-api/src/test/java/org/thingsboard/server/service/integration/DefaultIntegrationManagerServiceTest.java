@@ -58,6 +58,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -72,6 +73,7 @@ import static org.mockito.Mockito.when;
 class DefaultIntegrationManagerServiceTest {
 
     private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
+    private static final int PARTITIONS = 3;
 
     @Mock
     private TbServiceInfoProvider serviceInfoProvider;
@@ -135,6 +137,8 @@ class DefaultIntegrationManagerServiceTest {
             return new TopicPartitionInfo("tb_ie.downlink.mqtt", null, partition, livePartitions.contains(partition));
         });
         when(partitionService.getMyPartitions(any(QueueKey.class))).thenAnswer(inv -> List.copyOf(livePartitions));
+        when(partitionService.getIntegrationExecutorPartitionsCount()).thenReturn(PARTITIONS);
+        when(partitionService.resolvePartitionIndex(any(UUID.class), eq(PARTITIONS))).thenAnswer(inv -> partitionByEntity.get((UUID) inv.getArgument(0)));
         when(configurationService.getIntegration(any(TenantId.class), any(IntegrationId.class)))
                 .thenAnswer(inv -> configurations.get((IntegrationId) inv.getArgument(1)));
         when(integrationContextProvider.buildIntegrationContext(any())).thenReturn(mock(IntegrationContext.class));
@@ -342,6 +346,24 @@ class DefaultIntegrationManagerServiceTest {
         assertThat(mqtt.isMismatch()).isFalse();
         assertThat(mqtt.notMineRunning()).isEmpty();
         assertThat(mqtt.started()).isZero();
+    }
+
+    @Test
+    void givenSingletonsRunning_whenOwnershipCollected_thenTenantRoutingIsNotResolved() throws Exception {
+        Integration mine = mqttIntegration(1);
+        Integration stray = mqttIntegration(0);
+        when(configurationService.getActiveIntegrationList(IntegrationType.MQTT, false)).thenReturn(List.of(mine, stray));
+        ownPartitions(0, 1);
+        service.refresh(IntegrationType.MQTT, tpis(0, 1));
+        runLifecycleTasks();
+        ownPartitions(1);
+        clearInvocations(partitionService);
+
+        IntegrationOwnershipMonitor.TypeOwnership mqtt = ownershipOf(IntegrationType.MQTT);
+
+        // resolve() loads the tenant routing info, i.e. the tenant profile, for each integration: the periodic check must not
+        verify(partitionService, never()).resolve(any(ServiceType.class), anyString(), any(TenantId.class), any(EntityId.class));
+        assertThat(mqtt.notMineRunning()).containsExactly(stray.getId());
     }
 
     private IntegrationOwnershipMonitor.TypeOwnership ownershipOf(IntegrationType type) {
