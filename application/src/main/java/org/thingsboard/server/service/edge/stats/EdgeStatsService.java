@@ -2,71 +2,39 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.stats;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.KafkaAdmin;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.gen.transport.TransportProtos.EdgeStatsMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
-import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
-import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
-import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
-import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
-
-@TbCoreComponent
+/**
+ * Runs on every node that counts edge downlink stats (core and rule engine). Each node holds only a part of an edge's
+ * counters, so instead of saving them it sends them to the edge's TB_CORE partition owner, which sums the parts
+ * of all nodes and is the only writer of the edge's stats (see {@link EdgeStatsAggregationService}).
+ */
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j
 public class EdgeStatsService {
 
-    private final TimeseriesService tsService;
     private final EdgeStatsCounterService statsCounterService;
-    private final TopicService topicService;
-    private final Optional<KafkaAdmin> kafkaAdmin;
-    private final AttributesService attributesService;
-    private final EdgeEventService edgeEventService;
+    private final TbClusterService clusterService;
 
-    @Value("${edges.stats.ttl:30}")
-    private int edgesStatsTtlDays;
     @Value("${edges.stats.report-interval-millis:600000}")
     private long reportIntervalMillis;
-    @Value("${edges.stats.max-lag-count:100000}")
-    private int maxLagCount;
-    @Value("${edges.storage.misordering_compensation_millis:60000}")
-    private long misorderingCompensationMillis;
 
     @Scheduled(
             fixedDelayString = "${edges.stats.report-interval-millis:600000}",
@@ -78,97 +46,31 @@ public class EdgeStatsService {
         long ts = now - (now % reportIntervalMillis);
 
         Map<EdgeId, MsgCounters> countersByEdgeSnapshot = new HashMap<>(statsCounterService.getMsgCountersByEdge());
-        boolean isKafkaStats = kafkaAdmin.isPresent();
-        Map<EdgeId, Long> lagByEdgeId = isKafkaStats ? getLagByEdgeId(countersByEdgeSnapshot) : Collections.emptyMap();
         countersByEdgeSnapshot.forEach((edgeId, counters) -> {
-            TenantId tenantId = counters.getTenantId();
-
-            if (isKafkaStats) {
-                counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
-            } else if (!counters.getMsgsLagMeasured().get()) {
-                // no live session measured the lag in this interval (e.g. edge is offline), so count the backlog in the db
-                getPendingEdgeEventsCount(tenantId, edgeId).ifPresent(lag -> counters.getMsgsLag().set(lag));
+            try {
+                TenantId tenantId = counters.getTenantId();
+                EdgeStatsMsgProto statsMsg = EdgeStatsMsgProto.newBuilder()
+                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                        .setEdgeIdMSB(edgeId.getId().getMostSignificantBits())
+                        .setEdgeIdLSB(edgeId.getId().getLeastSignificantBits())
+                        .setTs(ts)
+                        .setMsgsAdded(counters.getMsgsAdded().get())
+                        .setMsgsPushed(counters.getMsgsPushed().get())
+                        .setMsgsPermanentlyFailed(counters.getMsgsPermanentlyFailed().get())
+                        .setMsgsTmpFailed(counters.getMsgsTmpFailed().get())
+                        .setMsgsLag(counters.getMsgsLag().get())
+                        .setMsgsLagMeasured(counters.getMsgsLagMeasured().get())
+                        .setMsgsLagTs(counters.getMsgsLagTs().get())
+                        .build();
+                log.trace("Reporting Edge communication stats: {} tenantId - {}, edgeId - {}", statsMsg, tenantId, edgeId);
+                clusterService.pushMsgToCore(tenantId, edgeId, ToCoreMsg.newBuilder().setEdgeStatsMsg(statsMsg).build(), null);
+            } catch (Exception e) {
+                log.warn("Failed to report edge communication stats for edge: {}", edgeId, e);
+            } finally {
+                statsCounterService.clear(edgeId);
             }
-            List<TsKvEntry> statsEntries = List.of(
-                    entry(ts, DOWNLINK_MSGS_ADDED.getKey(), counters.getMsgsAdded().get()),
-                    entry(ts, DOWNLINK_MSGS_PUSHED.getKey(), counters.getMsgsPushed().get()),
-                    entry(ts, DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey(), counters.getMsgsPermanentlyFailed().get()),
-                    entry(ts, DOWNLINK_MSGS_TMP_FAILED.getKey(), counters.getMsgsTmpFailed().get()),
-                    entry(ts, DOWNLINK_MSGS_LAG.getKey(), counters.getMsgsLag().get())
-            );
-
-            log.trace("Reported Edge communication stats: {} tenantId - {}, edgeId - {}", statsEntries, tenantId, edgeId);
-            saveTs(tenantId, edgeId, statsEntries);
         });
-    }
-
-    private Map<EdgeId, Long> getLagByEdgeId(Map<EdgeId, MsgCounters> countersByEdge) {
-        Map<EdgeId, String> edgeToTopicMap = countersByEdge.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> topicService.buildEdgeEventNotificationsTopicPartitionInfo(e.getValue().getTenantId(), e.getKey()).getTopic()
-                ));
-
-        Map<String, Long> lagByTopic = kafkaAdmin.get().getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));
-
-        return edgeToTopicMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> lagByTopic.getOrDefault(e.getValue(), 0L)
-                ));
-    }
-
-    // Counts events after the queue offset saved by PostgresGeneralEdgeEventsDispatcher, with the same bounds as GeneralEdgeEventFetcher.
-    // Right after seq_id starts a new cycle, newer events have lower seq ids and are not counted until the session catches up.
-    private Optional<Long> getPendingEdgeEventsCount(TenantId tenantId, EdgeId edgeId) {
-        try {
-            List<AttributeKvEntry> offset = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE,
-                    List.of(DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY, DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY)).get();
-            long queueStartTs = 0L;
-            long queueStartSeqId = 0L;
-            for (AttributeKvEntry entry : offset) {
-                long value = entry.getLongValue().orElse(0L);
-                if (DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY.equals(entry.getKey())) {
-                    queueStartTs = value;
-                } else if (DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY.equals(entry.getKey())) {
-                    queueStartSeqId = value;
-                }
-            }
-            long startTime = queueStartTs > 0 ? queueStartTs - misorderingCompensationMillis : 0L;
-            return Optional.of(edgeEventService.countEdgeEvents(tenantId, edgeId, queueStartSeqId, startTime, maxLagCount));
-        } catch (Exception e) {
-            log.warn("[{}][{}] Failed to count pending edge events", tenantId, edgeId, e);
-            return Optional.empty();
-        }
-    }
-
-    private void saveTs(TenantId tenantId, EdgeId edgeId, List<TsKvEntry> statsEntries) {
-        try {
-            ListenableFuture<TimeseriesSaveResult> future = tsService.save(
-                    tenantId,
-                    edgeId,
-                    statsEntries,
-                    TimeUnit.DAYS.toSeconds(edgesStatsTtlDays)
-            );
-
-            Futures.addCallback(future, new FutureCallback<>() {
-                @Override
-                public void onSuccess(TimeseriesSaveResult result) {
-                    log.debug("Successfully saved edge time-series stats: {} for edge: {}", statsEntries, edgeId);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    log.warn("Failed to save edge time-series stats for edge: {}", edgeId, t);
-                }
-            }, MoreExecutors.directExecutor());
-        } finally {
-            statsCounterService.clear(edgeId);
-        }
-    }
-
-    private BasicTsKvEntry entry(long ts, String key, long value) {
-        return new BasicTsKvEntry(ts, new LongDataEntry(key, value));
     }
 
 }

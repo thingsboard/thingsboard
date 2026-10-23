@@ -29,6 +29,7 @@ public class EdgeStatsCounterService {
             case DOWNLINK_MSGS_LAG -> {
                 counters.getMsgsLag().set(value);
                 counters.getMsgsLagMeasured().set(true);
+                counters.getMsgsLagTs().set(System.currentTimeMillis());
             }
         }
     }

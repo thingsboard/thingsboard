@@ -19,6 +19,8 @@ public class MsgCounters {
     private final AtomicLong msgsLag = new AtomicLong();
     // true once a live session measured the lag in the current report interval
     private final AtomicBoolean msgsLagMeasured = new AtomicBoolean();
+    // when the lag was measured, so the newest measurement wins when several nodes report it
+    private final AtomicLong msgsLagTs = new AtomicLong();
 
     public void clear() {
         msgsAdded.set(0);
@@ -27,6 +29,7 @@ public class MsgCounters {
         msgsTmpFailed.set(0);
         msgsLag.set(0);
         msgsLagMeasured.set(false);
+        msgsLagTs.set(0);
     }
 
 }
