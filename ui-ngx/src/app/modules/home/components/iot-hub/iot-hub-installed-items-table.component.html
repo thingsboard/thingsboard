@@ -88,7 +88,7 @@
                 <mat-icon>info_outline</mat-icon>
               </button>
             }
-            <button mat-icon-button (click)="openEntity(item)" matTooltip="{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}">
+            <button mat-icon-button (click)="openEntity(item)" [disabled]="!canOpen(item)" matTooltip="{{ openLabel(item) }}">
               <mat-icon>open_in_new</mat-icon>
             </button>
             <button mat-icon-button (click)="deleteItem(item)" matTooltip="{{ 'iot-hub.remove' | translate }}">
@@ -107,9 +107,9 @@
                   <span>{{ (item.itemType === 'DEVICE' ? 'iot-hub.review-device-instructions' : 'iot-hub.view-item-details') | translate }}</span>
                 </button>
               }
-              <button mat-menu-item (click)="openEntity(item)">
+              <button mat-menu-item (click)="openEntity(item)" [disabled]="!canOpen(item)">
                 <mat-icon>open_in_new</mat-icon>
-                <span>{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}</span>
+                <span>{{ openLabel(item) }}</span>
               </button>
               <button mat-menu-item (click)="deleteItem(item)">
                 <tb-icon>mdi:trash-can-outline</tb-icon>

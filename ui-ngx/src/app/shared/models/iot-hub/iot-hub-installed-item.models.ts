@@ -111,7 +111,8 @@ export interface IotHubInstalledItem extends BaseData<{id: string}> {
   descriptor: IotHubInstalledItemDescriptor;
 }
 
-export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null => {
+/** The entity the Open action of an installed item opens, and its URL. */
+export const getInstalledItemTarget = (descriptor?: IotHubInstalledItemDescriptor): { url: string; entityType: EntityType } | null => {
   if (!descriptor) {
     return null;
   }
@@ -158,10 +159,13 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
       if (query) {
         url = `${url}?${query}`;
       }
-      return url;
+      return { url, entityType };
     } else {
       return null;
     }
   }
   return null;
 }
+
+export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null =>
+  getInstalledItemTarget(descriptor)?.url ?? null;
