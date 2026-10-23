@@ -58,6 +58,13 @@ integrations:
     enabled: "${INTEGRATIONS_REINIT_ENABLED:true}"
     # Checking interval for reinit integrations
     frequency: "${INTEGRATIONS_REINIT_FREQUENCY:300000}"
+  ownership_stats:
+    # Enable/Disable the periodic ownership check: per-type gauges (exported when metrics are enabled) and the "Integration Ownership Stats" log line
+    enabled: "${INTEGRATIONS_OWNERSHIP_STATS_ENABLED:true}"
+    # Interval in milliseconds between ownership checks. Gauges are refreshed, and anomalies (applied partitions differ from owned, or a singleton that is not mine is running) are logged, at this rate
+    check_interval_ms: "${INTEGRATIONS_OWNERSHIP_STATS_CHECK_INTERVAL_MS:60000}"
+    # Interval in milliseconds for logging the stats line when nothing is wrong and the partitions did not change
+    print_interval_ms: "${INTEGRATIONS_OWNERSHIP_STATS_PRINT_INTERVAL_MS:600000}"
   # Enable/Disable integrations local network hosts
   allow_Local_network_hosts: "${INTEGRATIONS_ALLOW_LOCAL_NETWORK_HOSTS:true}"
   back_pressure:
