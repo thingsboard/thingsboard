@@ -291,9 +291,18 @@ export interface FormFieldDefinition {
   randomByDefault?: boolean;
   // Fields with the same group get one header above the first of them
   group?: string;
-  // Set by the install dialog for the fields it adds, not by packages.
   readOnly?: boolean;
-  // Help popup shown under the field, and the text of its trigger
+  // Shown inside the empty field; the label then always stays above it
+  placeholder?: string;
+  // Fills the field from other fields of the form, e.g. "TTN – ${appId}", until the user edits it.
+  // defaultValue stays the value for ThingsBoard versions that don't know this attribute.
+  defaultValueTemplate?: string;
+  // Replaces helpText when defaultValueTemplate fills the field
+  defaultValueTemplateHelpText?: string;
+  // 'advanced' puts the field into the collapsed Advanced settings panel below the form
+  section?: FormFieldSection;
+  // Set by the install dialog for the fields it adds, not by packages:
+  // help popup shown under the field, and the text of its trigger
   helpPopupId?: string;
   helpPopupText?: string;
   // Shown when the field fails a validator the dialog adds (not on required)
@@ -303,6 +312,8 @@ export interface FormFieldDefinition {
   row?: string;
   width?: number;
 }
+
+export type FormFieldSection = 'advanced';
 
 export interface EntityStepOutput {
   id: string;

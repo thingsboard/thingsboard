@@ -3697,6 +3697,7 @@
         "type-device-plural": "Devices"
     },
     "iot-hub": {
+        "advanced-settings": "Advanced settings",
         "iot-hub": "IoT Hub",
         "generate-random-value": "Generate random value",
         "home-title": "ThingsBoard IoT Hub",
