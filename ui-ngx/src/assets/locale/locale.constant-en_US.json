@@ -3900,6 +3900,7 @@
         "view-item-details": "View item details",
         "review-device-instructions": "Review device instructions",
         "open-item-type": "Open {{type}}",
+        "nothing-to-open": "Nothing to open",
         "back-to-marketplace": "Back to Marketplace",
         "device-install-select-connectivity": "Choose a connection method for your device",
         "pe-only": "PE Only",

@@ -199,8 +199,11 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     return !!getInstalledItemTarget(item?.descriptor);
   }
 
-  /** A device package names what Open opens: its dashboard, device or integration. */
+  /** Names what Open opens: for a device package, its dashboard, device or integration. */
   openLabel(item: IotHubInstalledItem): string {
+    if (!this.canOpen(item)) {
+      return this.translate.instant('iot-hub.nothing-to-open');
+    }
     if (item.itemType === 'SOLUTION_TEMPLATE') {
       return this.translate.instant('iot-hub.goto-main-dashboard');
     }

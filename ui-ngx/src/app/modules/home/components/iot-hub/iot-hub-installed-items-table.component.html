@@ -88,9 +88,12 @@
                 <mat-icon>info_outline</mat-icon>
               </button>
             }
-            <button mat-icon-button (click)="openEntity(item)" [disabled]="!canOpen(item)" matTooltip="{{ openLabel(item) }}">
-              <mat-icon>open_in_new</mat-icon>
-            </button>
+            <!-- The tooltip sits on a wrapper: a disabled button shows none -->
+            <span matTooltip="{{ openLabel(item) }}">
+              <button mat-icon-button (click)="openEntity(item)" [disabled]="!canOpen(item)">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            </span>
             <button mat-icon-button (click)="deleteItem(item)" matTooltip="{{ 'iot-hub.remove' | translate }}">
               <tb-icon>mdi:trash-can-outline</tb-icon>
             </button>
