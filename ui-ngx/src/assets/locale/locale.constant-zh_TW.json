@@ -8617,6 +8617,8 @@
         "model": "模型",
         "name": "名稱",
         "ai-provider": "AI 提供者",
+        "available-via-api": "可透過 API 使用",
+        "available-via-api-hint": "允許擁有 AI 模型「呼叫」權限的使用者透過 REST API（例如從 Trendz Analytics）向此模型傳送聊天請求。授予所有操作的角色（例如預設的「Customer Administrator」角色）包含「呼叫」，因此擁有此類角色的每位使用者都能呼叫此模型。模型的設定與憑證永遠不會被公開。客戶使用者只能被授予 AI 模型的「呼叫」操作。",
         "no-found": "找不到 AI 模型",
         "list": "{ count, plural, =1 {1 個模型} other {模型清單（# 個）} }",
         "selected-fields": "已選擇 { count, plural, =1 {1 個模型} other {# 個模型} }",
@@ -14020,7 +14022,8 @@
                 "SHARE_GROUP": "共用群組",
                 "ASSIGN_TO_TENANT": "指派給租戶",
                 "READ_CALCULATED_FIELD": "讀取計算欄位與警報規則",
-                "WRITE_CALCULATED_FIELD": "寫入計算欄位與警報規則"
+                "WRITE_CALCULATED_FIELD": "寫入計算欄位與警報規則",
+                "INVOKE": "呼叫"
             }
         }
     },

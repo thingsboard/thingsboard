@@ -1767,6 +1767,8 @@
     "model": "Model",
     "name": "Ad",
     "ai-provider": "Yapay Zeka Sağlayıcısı",
+    "available-via-api": "API üzerinden kullanılabilir",
+    "available-via-api-hint": "Yapay zeka modelleri için 'Çağır' iznine sahip kullanıcıların REST API üzerinden, örneğin Trendz Analytics'ten, bu modele sohbet istekleri göndermesine olanak tanır. Varsayılan 'Customer Administrator' rolü gibi tüm işlemleri veren roller 'Çağır' iznini içerir; bu nedenle böyle bir role sahip her kullanıcı bu modeli çağırabilir. Modelin yapılandırması ve kimlik bilgileri asla açığa çıkarılmaz. Müşteri kullanıcılarına yapay zeka modelleri için yalnızca 'Çağır' işlemi verilebilir.",
     "no-found": "Yapay zeka modeli bulunamadı",
     "list": "{ count, plural, =1 {Bir model} other {# model listesi} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# model seçildi} }",
@@ -7679,7 +7681,8 @@
         "SHARE_GROUP": "Grubu paylaş",
         "ASSIGN_TO_TENANT": "Kiracıya ata",
         "READ_CALCULATED_FIELD": "Hesaplanan alanı oku",
-        "WRITE_CALCULATED_FIELD": "Hesaplanan alanı yaz"
+        "WRITE_CALCULATED_FIELD": "Hesaplanan alanı yaz",
+        "INVOKE": "Çağır"
       }
     }
   },

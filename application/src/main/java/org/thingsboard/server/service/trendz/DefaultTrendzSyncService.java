@@ -385,6 +385,7 @@ public class DefaultTrendzSyncService implements TrendzSyncService {
         tenantCustomerPermissions.put(Resource.WHITE_LABELING, Set.of(Operation.READ));
         tenantCustomerPermissions.put(Resource.DEVICE_PROFILE, Set.of(Operation.READ, Operation.READ_CALCULATED_FIELD));
         tenantCustomerPermissions.put(Resource.ASSET_PROFILE, Set.of(Operation.READ, Operation.READ_CALCULATED_FIELD));
+        tenantCustomerPermissions.put(Resource.AI_MODEL, Set.of(Operation.READ, Operation.INVOKE));
 
         permissions.put(Authority.TENANT_ADMIN, tenantCustomerPermissions);
         permissions.put(Authority.CUSTOMER_USER, tenantCustomerPermissions);

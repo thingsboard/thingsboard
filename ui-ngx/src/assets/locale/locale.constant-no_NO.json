@@ -1767,6 +1767,8 @@
     "model": "Modell",
     "name": "Navn",
     "ai-provider": "AI-leverandør",
+    "available-via-api": "Tilgjengelig via API",
+    "available-via-api-hint": "Lar brukere med tillatelsen 'Kall' for AI-modeller sende chatforespørsler til denne modellen via REST API, f.eks. fra Trendz Analytics. Roller som gir alle operasjoner, som standardrollen 'Customer Administrator', inkluderer 'Kall', så alle brukere med en slik rolle kan kalle denne modellen. Modellens konfigurasjon og legitimasjon blir aldri eksponert. Kundebrukere kan bare få operasjonen 'Kall' for AI-modeller.",
     "no-found": "Fant ingen AI-modeller",
     "list": "{ count, plural, =1 {Én modell} other {Liste over # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 modell} other {# modeller} } valgt",
@@ -7679,7 +7681,8 @@
         "SHARE_GROUP": "Del gruppe",
         "ASSIGN_TO_TENANT": "Tildel til leietaker",
         "READ_CALCULATED_FIELD": "Les kalkulert felt",
-        "WRITE_CALCULATED_FIELD": "Skriv kalkulert felt"
+        "WRITE_CALCULATED_FIELD": "Skriv kalkulert felt",
+        "INVOKE": "Kall"
       }
     }
   },

@@ -1880,6 +1880,8 @@
     "model": "Modelo",
     "name": "Nome",
     "ai-provider": "Provedor de IA",
+    "available-via-api": "Disponível via API",
+    "available-via-api-hint": "Permite que usuários com a permissão 'Invocar' para modelos de IA enviem solicitações de chat a este modelo via API REST, por exemplo, a partir do Trendz Analytics. Funções que concedem todas as operações, como a função padrão 'Customer Administrator', incluem 'Invocar', portanto qualquer usuário com essa função pode chamar este modelo. A configuração e as credenciais do modelo nunca são expostas. Usuários de cliente só podem receber a operação 'Invocar' para modelos de IA.",
     "no-found": "Nenhum modelo de IA encontrado",
     "list": "{ count, plural, =1 {Um modelo} other {Lista de # modelos} }",
     "selected-fields": "{ count, plural, =1 {1 modelo} other {# modelos} } selecionado(s)",
@@ -8848,7 +8850,8 @@
         "SHARE_GROUP": "Compartilhar grupo",
         "ASSIGN_TO_TENANT": "Atribuir ao locatário",
         "READ_CALCULATED_FIELD": "Ler campo calculado e regras de alarme",
-        "WRITE_CALCULATED_FIELD": "Escrever campo calculado e regras de alarme"
+        "WRITE_CALCULATED_FIELD": "Escrever campo calculado e regras de alarme",
+        "INVOKE": "Invocar"
       }
     }
   },

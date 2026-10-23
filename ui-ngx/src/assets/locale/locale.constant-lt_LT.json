@@ -1301,6 +1301,8 @@
     "model": "Modelis",
     "name": "Pavadinimas",
     "ai-provider": "AI tiekėjas",
+    "available-via-api": "Pasiekiama per API",
+    "available-via-api-hint": "Leidžia naudotojams, turintiems AI modelių leidimą „Iškviesti“, siųsti pokalbių užklausas šiam modeliui per REST API, pvz., iš Trendz Analytics. Rolės, suteikiančios visas operacijas, pvz., numatytoji rolė „Customer Administrator“, apima „Iškviesti“, todėl kiekvienas naudotojas, turintis tokią rolę, gali iškviesti šį modelį. Modelio konfigūracija ir prisijungimo duomenys niekada neatskleidžiami. Kliento naudotojams AI modeliams gali būti suteikta tik operacija „Iškviesti“.",
     "no-found": "AI modelių nerasta",
     "list": "{ count, plural, =1 {Vienas modelis} other {# modelių sąrašas} }",
     "selected-fields": "{ count, plural, =1 {1 modelis} other {# modeliai} } pasirinkta",
@@ -7097,7 +7099,8 @@
         "SHARE_GROUP": "Bendrinti grupę",
         "ASSIGN_TO_TENANT": "Priskirti valdytojui",
         "READ_CALCULATED_FIELD": "Skaityti apskaičiuotą lauką",
-        "WRITE_CALCULATED_FIELD": "Rašyti į apskaičiuotą lauką"
+        "WRITE_CALCULATED_FIELD": "Rašyti į apskaičiuotą lauką",
+        "INVOKE": "Iškviesti"
       }
     }
   },

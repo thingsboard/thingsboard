@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -91,8 +92,13 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
 
     @Override
     public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findAiModelsByTenantId(tenantId, null, pageLink);
+    }
+
+    @Override
+    public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink) {
         validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
-        return aiModelDao.findAllByTenantId(tenantId, pageLink);
+        return aiModelDao.findByTenantId(tenantId, availableViaApi, pageLink);
     }
 
     @Override

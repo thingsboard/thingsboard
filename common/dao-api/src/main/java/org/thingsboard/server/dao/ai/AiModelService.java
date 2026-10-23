@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -21,6 +22,8 @@ public interface AiModelService extends EntityDaoService {
     Optional<AiModel> findAiModelById(TenantId tenantId, AiModelId modelId);
 
     PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink);
+
+    PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink);
 
     Optional<AiModel> findAiModelByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 

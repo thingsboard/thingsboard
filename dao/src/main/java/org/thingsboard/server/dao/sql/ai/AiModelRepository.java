@@ -30,6 +30,7 @@ interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, Exportab
                     SELECT *
                     FROM ai_model model
                     WHERE model.tenant_id = :tenantId
+                      AND (CAST(:availableViaApi AS BOOLEAN) IS NULL OR model.available_via_api = CAST(:availableViaApi AS BOOLEAN))
                       AND (:textSearch IS NULL
                         OR model.name ILIKE '%' || :textSearch || '%'
                         OR REPLACE(model.configuration ->> 'provider', '_', ' ') ILIKE '%' || :textSearch || '%'
@@ -39,6 +40,7 @@ interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, Exportab
                     SELECT COUNT(*)
                     FROM ai_model model
                     WHERE model.tenant_id = :tenantId
+                      AND (CAST(:availableViaApi AS BOOLEAN) IS NULL OR model.available_via_api = CAST(:availableViaApi AS BOOLEAN))
                       AND (:textSearch IS NULL
                         OR model.name ILIKE '%' || :textSearch || '%'
                         OR REPLACE(model.configuration ->> 'provider', '_', ' ') ILIKE '%' || :textSearch || '%'
@@ -46,7 +48,10 @@ interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, Exportab
                     """,
             nativeQuery = true
     )
-    Page<AiModelEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
+    Page<AiModelEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+                                       @Param("availableViaApi") Boolean availableViaApi,
+                                       @Param("textSearch") String textSearch,
+                                       Pageable pageable);
 
     @Query("SELECT ai_model.id FROM AiModelEntity ai_model WHERE ai_model.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);

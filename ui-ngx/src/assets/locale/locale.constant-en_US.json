@@ -1880,6 +1880,8 @@
         "model": "Model",
         "name": "Name",
         "ai-provider": "AI provider",
+        "available-via-api": "Available via API",
+        "available-via-api-hint": "Allows users with the 'Invoke' permission for AI models to send chat requests to this model via REST API, e.g. from Trendz Analytics. Roles that grant all operations, such as the default 'Customer Administrator' role, include 'Invoke', so every user with such a role can call this model. The model configuration and credentials are never exposed. Customer users can only be granted the 'Invoke' operation for AI models.",
         "no-found": "No AI models found",
         "list": "{ count, plural, =1 {One model} other {List of # models} }",
         "selected-fields": "{ count, plural, =1 {1 model} other {# models} } selected",
@@ -8848,7 +8850,8 @@
                 "SHARE_GROUP": "Share Group",
                 "ASSIGN_TO_TENANT": "Assign to Tenant",
                 "READ_CALCULATED_FIELD": "Read Calculated Field and Alarm Rules",
-                "WRITE_CALCULATED_FIELD": "Write Calculated Field and Alarm Rules"
+                "WRITE_CALCULATED_FIELD": "Write Calculated Field and Alarm Rules",
+                "INVOKE": "Invoke"
             }
         }
     },
