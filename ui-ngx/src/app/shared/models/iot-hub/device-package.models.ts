@@ -109,8 +109,8 @@ export const installMethodLabels = new Map<string, string>(
     [InstallMethod.INTEGRATION_TCP, 'TCP Integration'],
     [InstallMethod.INTEGRATION_THINGPARK, 'ThingPark Wireless'],
     [InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE, 'ThingPark Enterprise'],
-    [InstallMethod.INTEGRATION_TTI, 'The Things Industries'],
-    [InstallMethod.INTEGRATION_TTN, 'The Things Stack'],
+    [InstallMethod.INTEGRATION_TTI, 'The Things Stack Cloud'],
+    [InstallMethod.INTEGRATION_TTN, 'The Things Network'],
     [InstallMethod.INTEGRATION_TUYA, 'Tuya'],
     [InstallMethod.INTEGRATION_UDP, 'UDP Integration']
   ]
