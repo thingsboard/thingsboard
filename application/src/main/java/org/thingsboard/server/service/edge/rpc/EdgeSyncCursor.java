@@ -10,6 +10,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.edge.rpc.fetch.AdminSettingsEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AiModelEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.AssetProfilesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.CustomMenuEdgeEventFetcher;
@@ -60,8 +61,8 @@ public class EdgeSyncCursor {
         if (fullSync) {
             fetchers.add(new TenantEdgeEventFetcher(ctx.getTenantService()));
             fetchers.add(new QueuesEdgeEventFetcher(ctx.getQueueService()));
-            // Admin settings are not synced to the edge: 'general'/'connectivity' are system-scoped and the edge
-            // auto-generates its own on install, while 'mail'/'sms'/'notifications' are delegated to the cloud.
+            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), TenantId.SYS_TENANT_ID));
+            fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), edge.getTenantId()));
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
             fetchers.add(new SysAdminRolesEdgeEventFetcher(ctx.getRoleService()));
             fetchers.add(new TenantRolesEdgeEventFetcher(ctx.getRoleService()));

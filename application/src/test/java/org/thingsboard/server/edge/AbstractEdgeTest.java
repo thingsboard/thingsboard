@@ -141,7 +141,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         registry.add("edges.rpc.port", () -> EDGE_PORT);
     }
 
-    public static final Integer CONNECT_MESSAGE_COUNT = 27;
+    public static final Integer CONNECT_MESSAGE_COUNT = 29;
     public static final Integer INSTALLATION_MESSAGE_COUNT = 6;
     public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
     protected static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
@@ -311,9 +311,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // No admin settings are synced to the edge: 'general'/'connectivity' are system-scoped and the edge
-        // auto-generates its own, while 'mail'/'sms'/'notifications' are delegated to the cloud.
-        validateMsgsCnt(AdminSettingsUpdateMsg.class, 0);
+        // 2 messages ('general', 'connectivity')
+        validateMsgsCnt(AdminSettingsUpdateMsg.class, 2);
+        validateAdminSettings(2);
 
         // 5 messages
         // - 1 from default profile fetcher
