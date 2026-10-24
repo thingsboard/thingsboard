@@ -5,8 +5,7 @@ import path from 'path';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
 import { LogEntry, logLevel } from 'kafkajs';
-import { createLogger, format, transports } from 'winston';
-import * as Transport from 'winston-transport';
+import { createLogger, format, transport as Transport, transports } from 'winston';
 
 const { combine, timestamp, label, printf, splat } = format;
 

@@ -24,6 +24,14 @@ import {
 import { DevicePackageInfo } from '@shared/models/iot-hub/device-package.models';
 import { isNotEmptyStr } from '@core/utils';
 
+// Every image the readme itself renders opens in the lightbox. Excluded is the chrome that happens
+// to be an <img>: the ${images.gallery(...)} block (it runs its own gallery), the code block
+// clipboard icon and an item link card's thumbnail. Images inside a link are excluded too: the
+// lightbox preventDefaults the click, which would swallow the navigation.
+const README_GALLERY_SELECTOR =
+  'img:not(.tb-gallery-images img):not(.clipboard-btn img):not(tb-iot-hub-item-link-card img):not(a img)';
+const README_GALLERY_IMAGE_CLASS = 'tb-readme-gallery-image';
+
 @Component({
   selector: 'tb-iot-hub-markdown',
   standalone: false,
@@ -61,6 +69,8 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   readonly itemLinkCompileModules: Type<any>[] = [IotHubItemLinkModule];
 
+  readonly readmeGallerySelector = README_GALLERY_SELECTOR;
+
   constructor(
     private iotHubApiService: IotHubApiService,
     private elementRef: ElementRef<HTMLElement>
@@ -86,6 +96,8 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
 
   onReady() {
     const container = this.elementRef.nativeElement;
+    container.querySelectorAll(README_GALLERY_SELECTOR)
+      .forEach(image => image.classList.add(README_GALLERY_IMAGE_CLASS));
     this.ready.emit(container);
   }
 

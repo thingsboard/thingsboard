@@ -20,7 +20,8 @@ import {
   MapLayerSettings,
   mapLayerValid,
   mapLayerValidator,
-  MapProvider
+  MapProvider,
+  normalizeMapLayerSettings
 } from '@shared/models/widget/maps/map.models';
 
 @Component({
@@ -93,7 +94,7 @@ export class MapLayersComponent implements ControlValueAccessor, OnInit, Validat
   }
 
   writeValue(value: MapLayerSettings[] | undefined): void {
-    const layers: MapLayerSettings[] = value || [];
+    const layers: MapLayerSettings[] = (value || []).map(layer => normalizeMapLayerSettings(layer));
     this.layersFormGroup.setControl('layers', this.prepareLayersFormArray(layers), {emitEvent: false});
   }
 
