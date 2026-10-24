@@ -10,7 +10,6 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
@@ -39,8 +38,7 @@ public class AdminSettingsEdgeProcessor extends BaseEdgeProcessor {
         if (adminSettings == null) {
             return null;
         }
-        if (TenantId.SYS_TENANT_ID.equals(adminSettings.getTenantId())
-                || !EDGE_SYNCED_SETTINGS_KEYS.contains(adminSettings.getKey())) {
+        if (!EDGE_SYNCED_SETTINGS_KEYS.contains(adminSettings.getKey())) {
             log.trace("Skipping admin settings [{}] sync to edge [{}] - not in the edge allow-list",
                     adminSettings.getKey(), edgeEvent.getEdgeId());
             return null;

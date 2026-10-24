@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -69,9 +71,21 @@ public class AdminSettingsEdgeProcessorTest {
     }
 
     @Test
-    public void testSystemScopedAllowListedKeyIsNotSyncedToEdge() {
-        AdminSettings general = adminSettings(TenantId.SYS_TENANT_ID, "general");
-        when(adminSettingsService.findAdminSettingsById(any(), any())).thenReturn(general);
+    public void testSystemScopedAllowListedKeyIsSyncedToEdge() {
+        AdminSettings connectivity = adminSettings(TenantId.SYS_TENANT_ID, "connectivity");
+        when(adminSettingsService.findAdminSettingsById(any(), any())).thenReturn(connectivity);
+
+        DownlinkMsg downlink = processor.convertEdgeEventToDownlink(edgeEvent(TenantId.SYS_TENANT_ID), EdgeVersion.V_4_2_2_4);
+
+        Assertions.assertNotNull(downlink);
+        Assertions.assertEquals(1, downlink.getAdminSettingsUpdateMsgCount());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mail", "jwt", "sms", "notifications"})
+    public void testSystemScopedNonAllowListedKeyIsNotSyncedToEdge(String key) {
+        AdminSettings settings = adminSettings(TenantId.SYS_TENANT_ID, key);
+        when(adminSettingsService.findAdminSettingsById(any(), any())).thenReturn(settings);
 
         DownlinkMsg downlink = processor.convertEdgeEventToDownlink(edgeEvent(TenantId.SYS_TENANT_ID), EdgeVersion.V_4_2_2_4);
 
