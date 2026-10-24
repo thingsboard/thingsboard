@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import org.junit.Test;
@@ -56,7 +57,7 @@ public class SendSmsEdgeTest extends AbstractEdgeTest {
 
         sendSmsUplink(request);
 
-        verify(smsService, timeout(30000)).sendTestSms(any(TestSmsRequest.class));
+        verify(smsService, timeout(30000)).sendTestSms(eq(tenantId), any(TestSmsRequest.class));
     }
 
     private void sendSmsUplink(EdgeSmsRequest request) throws Exception {

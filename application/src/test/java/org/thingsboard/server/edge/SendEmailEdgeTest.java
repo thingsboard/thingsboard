@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -79,7 +80,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendActivationEmail(eq("http://localhost/activate?token=abc"), eq(60000L), eq("recipient@thingsboard.io"));
+                .sendActivationEmail(eq(tenantId), eq("http://localhost/activate?token=abc"), eq(60000L), eq("recipient@thingsboard.io"));
     }
 
     @Test
@@ -93,7 +94,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendAccountActivatedEmail(eq("http://localhost/login"), eq("recipient@thingsboard.io"));
+                .sendAccountActivatedEmail(eq(tenantId), eq("http://localhost/login"), eq("recipient@thingsboard.io"));
     }
 
     @Test
@@ -108,7 +109,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendResetPasswordEmail(eq("http://localhost/reset?token=abc"), eq(60000L), eq("recipient@thingsboard.io"));
+                .sendResetPasswordEmail(eq(tenantId), eq("http://localhost/reset?token=abc"), eq(60000L), eq("recipient@thingsboard.io"));
     }
 
     @Test
@@ -122,7 +123,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendPasswordWasResetEmail(eq("http://localhost/login"), eq("recipient@thingsboard.io"));
+                .sendPasswordWasResetEmail(eq(tenantId), eq("http://localhost/login"), eq("recipient@thingsboard.io"));
     }
 
     @Test
@@ -137,7 +138,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendTwoFaVerificationEmail(eq("recipient@thingsboard.io"), eq("123456"), eq(120));
+                .sendTwoFaVerificationEmail(eq(tenantId), eq("recipient@thingsboard.io"), eq("123456"), eq(120));
     }
 
     @Test
@@ -152,7 +153,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendAccountLockoutEmail(eq("locked@thingsboard.io"), eq("recipient@thingsboard.io"), eq(5));
+                .sendAccountLockoutEmail(eq(tenantId), eq("locked@thingsboard.io"), eq("recipient@thingsboard.io"), eq(5));
     }
 
     @Test
@@ -167,7 +168,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendApiFeatureStateEmail(eq(ApiFeature.EMAIL), eq(ApiUsageStateValue.DISABLED), eq("recipient@thingsboard.io"), isNull());
+                .sendApiFeatureStateEmail(eq(tenantId), eq(ApiFeature.EMAIL), eq(ApiUsageStateValue.DISABLED), eq("recipient@thingsboard.io"), isNull());
     }
 
     @Test
@@ -182,7 +183,7 @@ public class SendEmailEdgeTest extends AbstractEdgeTest {
         sendEmailUplink(request);
 
         verify(mailService, timeout(30000))
-                .sendTestMail(any(JsonNode.class), eq("recipient@thingsboard.io"));
+                .sendTestMail(eq(tenantId), any(JsonNode.class), eq("recipient@thingsboard.io"));
     }
 
     private void sendEmailUplink(EdgeMailRequest request) throws Exception {

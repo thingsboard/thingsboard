@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.edge;
 
 import org.junit.Test;
@@ -8,7 +9,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
@@ -48,23 +48,18 @@ public class SendNotificationEdgeTest extends AbstractEdgeTest {
     private NotificationSettingsService notificationSettingsService;
 
     private void prepareNotificationSettings() {
-        // Slack is configured at tenant level.
         SlackNotificationDeliveryMethodConfig slack = new SlackNotificationDeliveryMethodConfig();
         slack.setBotToken("xoxb-edge-test-token");
-        NotificationSettings tenantSettings = new NotificationSettings();
-        Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> tenantConfigs = new HashMap<>();
-        tenantConfigs.put(NotificationDeliveryMethod.SLACK, slack);
-        tenantSettings.setDeliveryMethodsConfigs(tenantConfigs);
-        notificationSettingsService.saveNotificationSettings(tenantId, tenantSettings);
-
-        // Mobile app credentials can only be configured at system level.
         MobileAppNotificationDeliveryMethodConfig mobile = new MobileAppNotificationDeliveryMethodConfig();
+        mobile.setUseSystemSettings(false);
         mobile.setFirebaseServiceAccountCredentials("{\"type\":\"service_account\"}");
-        NotificationSettings systemSettings = new NotificationSettings();
-        Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> systemConfigs = new HashMap<>();
-        systemConfigs.put(NotificationDeliveryMethod.MOBILE_APP, mobile);
-        systemSettings.setDeliveryMethodsConfigs(systemConfigs);
-        notificationSettingsService.saveNotificationSettings(TenantId.SYS_TENANT_ID, systemSettings);
+
+        NotificationSettings settings = new NotificationSettings();
+        Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> configs = new HashMap<>();
+        configs.put(NotificationDeliveryMethod.SLACK, slack);
+        configs.put(NotificationDeliveryMethod.MOBILE_APP, mobile);
+        settings.setDeliveryMethodsConfigs(configs);
+        notificationSettingsService.saveNotificationSettings(tenantId, settings);
     }
 
     @Test
@@ -79,7 +74,7 @@ public class SendNotificationEdgeTest extends AbstractEdgeTest {
         sendNotificationUplink(request);
 
         verify(slackService, timeout(30000))
-                .sendMessage(eq(tenantId), anyString(), eq("C0123456789"), eq("Edge Slack notification"));
+                .sendMessage(eq(tenantId), anyString(), eq("C0123456789"), eq("Edge Slack notification"), any());
     }
 
     @Test
@@ -105,7 +100,6 @@ public class SendNotificationEdgeTest extends AbstractEdgeTest {
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setRequest(JacksonUtil.toString(request))
                 .build();
-
         sendUplinkMsgAndWaitForResponse(builder -> builder.addSendNotificationUplinkMsg(sendNotificationUplinkMsg));
     }
 
