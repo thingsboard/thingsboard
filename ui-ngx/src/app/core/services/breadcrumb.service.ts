@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, merge, shareReplay, Subject, Subscription } from 'rxjs';
 import { BreadCrumb, BreadCrumbConfig } from '@shared/components/breadcrumb';
@@ -10,6 +11,7 @@ import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operat
 import { MenuSection, menuSectionMap } from '@core/services/menu.models';
 import { guid } from '@core/utils';
 import { ActiveComponentService } from '@core/services/active-component.service';
+import { UtilsService } from '@core/services/utils.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -38,7 +40,8 @@ export class BreadcrumbService {
               private activatedRoute: ActivatedRoute,
               private translate: TranslateService,
               private menuService: MenuService,
-              private activeComponentService: ActiveComponentService) {
+              private activeComponentService: ActiveComponentService,
+              private utils: UtilsService) {
 
     merge(this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd ),
@@ -78,42 +81,58 @@ export class BreadcrumbService {
     if (route.routeConfig && route.routeConfig.data) {
       const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig<any>;
       if (breadcrumbConfig && !breadcrumbConfig.skip) {
+        let label: string;
+        let customTranslate: boolean;
         let labelFunction: () => string;
-        let section: MenuSection = null;
-        let menuId = breadcrumbConfig.menuId;
-        if (!menuId && breadcrumbConfig.menuIdByAuthority) {
-          const authority = getCurrentAuthUser(this.store).authority;
-          menuId = breadcrumbConfig.menuIdByAuthority[authority];
+        let link: any[] | string;
+        let queryParams: {[k: string]: any};
+        let customSection: MenuSection = null;
+        if (breadcrumbConfig.custom || breadcrumbConfig.customChild) {
+          customSection = breadcrumbConfig.customChild ? this.menuService.getCurrentCustomChildSection()
+            : this.menuService.getCurrentCustomSection();
         }
-        if (menuId) {
-          section = availableMenuSections.find(menu => menu.id === menuId);
-          if (!section) {
-            section = menuSectionMap.get(menuId);
+        if (customSection) {
+          label = customSection.name;
+          customTranslate = true;
+          link = customSection.path;
+          queryParams = customSection.queryParams;
+        } else {
+          let section: MenuSection = null;
+          let menuId = breadcrumbConfig.menuId;
+          if (!menuId && breadcrumbConfig.menuIdByAuthority) {
+            const authority = getCurrentAuthUser(this.store).authority;
+            menuId = breadcrumbConfig.menuIdByAuthority[authority];
           }
-        }
-        const label = section?.name || breadcrumbConfig.label || 'home.home';
-        const customTranslate = section?.customTranslate || false;
-        if (breadcrumbConfig.labelFunction) {
-          labelFunction = () => {
-            if (this.activeComponent) {
-              try {
-                return breadcrumbConfig.labelFunction(route, this.translate, this.activeComponent, lastChild.data);
-              } catch {
-                return label;
-              }
-            } else {
-              return label;
+          if (menuId) {
+            section = availableMenuSections.find(menu => menu.id === menuId);
+            if (!section) {
+              section = menuSectionMap.get(menuId);
             }
           }
+          label = section?.name || breadcrumbConfig.label || 'home.home';
+          customTranslate = section?.customTranslate || false;
+          if (breadcrumbConfig.labelFunction) {
+            labelFunction = () => {
+              if (this.activeComponent) {
+                try {
+                  return breadcrumbConfig.labelFunction(route, this.translate, this.activeComponent, lastChild.data, this.utils);
+                } catch {
+                  return label;
+                }
+              } else {
+                return label;
+              }
+            }
+          }
+          link = [route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/')];
         }
-        const link = [ route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/') ];
         const breadcrumb = {
           id: guid(),
           label,
           customTranslate,
           labelFunction,
           link,
-          queryParams: null
+          queryParams
         };
         newBreadcrumbs = [...breadcrumbs, breadcrumb];
       }

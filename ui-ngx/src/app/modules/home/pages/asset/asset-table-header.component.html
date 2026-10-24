@@ -1,15 +1,24 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<tb-asset-profile-autocomplete
-  class="min-w-0 flex-1"
-  subscriptSizing="dynamic"
-  [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
-  (ngModelChange)="assetProfileChanged($event)"
-  [addNewProfile]="false"
-  [displayAllOnEmpty]="true"
-  [editProfileEnabled]="false">
-</tb-asset-profile-autocomplete>
+<div class="flex flex-row items-center justify-start">
+  <tb-asset-profile-autocomplete
+    class="min-w-0 flex-1"
+    subscriptSizing="dynamic"
+    [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
+    (ngModelChange)="assetProfileChanged($event)"
+    [addNewProfile]="false"
+    [displayAllOnEmpty]="true"
+    [editProfileEnabled]="false">
+  </tb-asset-profile-autocomplete>
+  <mat-slide-toggle
+    style="margin-left: 32px;"
+    [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
+    (ngModelChange)="includeCustomersChanged($event)">
+    {{ includeCustomersLabel | translate }}
+  </mat-slide-toggle>
+</div>

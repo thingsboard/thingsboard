@@ -1,12 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import config from 'config';
 import path from 'path';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
 import { LogEntry, logLevel } from 'kafkajs';
-import { createLogger, format, transports } from 'winston';
-import * as Transport from 'winston-transport';
+import { createLogger, format, transport as Transport, transports } from 'winston';
 
 const { combine, timestamp, label, printf, splat } = format;
 

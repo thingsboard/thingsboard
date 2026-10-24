@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <h2 mat-dialog-title translate>{{configuration.title}}</h2>
@@ -13,14 +14,14 @@
         <ng-container matColumnDef="select" sticky>
           <mat-header-cell *matHeaderCellDef style="width: 30px;">
             <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
-                          [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
-                          [indeterminate]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async) === false">
+              [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+              [indeterminate]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async) === false">
             </mat-checkbox>
           </mat-header-cell>
           <mat-cell *matCellDef="let resource">
             <mat-checkbox (click)="$event.stopPropagation()"
-                          (change)="$event ? dataSource.selection.toggle(resource) : null"
-                          [checked]="dataSource.selection.isSelected(resource)">
+              (change)="$event ? dataSource.selection.toggle(resource) : null"
+              [checked]="dataSource.selection.isSelected(resource)">
             </mat-checkbox>
           </mat-cell>
         </ng-container>
@@ -32,30 +33,46 @@
             </mat-cell>
           </ng-container>
         }
-        <ng-container matColumnDef="title">
-          <mat-header-cell *matHeaderCellDef style="width: 100%;">
-            @if (dataSource.selection.isEmpty()) {
-              {{ 'resource.title' | translate }}
-            } @else {
-              {{ translate.get(configuration.selectedText, {count: dataSource.selection.selected.length}) | async }}
-            }
-          </mat-header-cell>
-          <mat-cell *matCellDef="let resource">
-            {{ resource.title }}
-          </mat-cell>
-        </ng-container>
+        @if (displayTitle) {
+          <ng-container matColumnDef="title">
+            <mat-header-cell *matHeaderCellDef style="width: 100%;">
+              @if (dataSource.selection.isEmpty()) {
+                {{ 'resource.title' | translate }}
+              } @else {
+                {{ translate.get(configuration.selectedText, {count: dataSource.selection.selected.length}) | async }}
+              }
+            </mat-header-cell>
+            <mat-cell *matCellDef="let resource">
+              {{ resource.title }}
+            </mat-cell>
+          </ng-container>
+        }
+        @if (displayName) {
+          <ng-container matColumnDef="name">
+            <mat-header-cell *matHeaderCellDef style="width: 100%;">
+              @if (dataSource.selection.isEmpty()) {
+                {{ 'secret-storage.name' | translate }}
+              } @else {
+                {{ translate.get(configuration.selectedText, {count: dataSource.selection.selected.length}) | async }}
+              }
+            </mat-header-cell>
+            <mat-cell *matCellDef="let resource">
+              {{ resource.name }}
+            </mat-cell>
+          </ng-container>
+        }
         <ng-container matColumnDef="references">
           <mat-header-cell *matHeaderCellDef></mat-header-cell>
           <mat-cell *matCellDef="let resource">
             <button #showReferencesButton
-                    mat-stroked-button
-                    color="primary"
+              mat-stroked-button
+              color="primary"
             (click)="toggleShowReferences($event, resource, showReferencesButton)">{{ 'image.references' | translate }}</button>
           </mat-cell>
         </ng-container>
         <mat-header-row class="mat-row-select" *matHeaderRowDef="configuration.columns; sticky: true"></mat-header-row>
         <mat-row class="mat-row-select"
-                 [class.mat-selected]="dataSource.selection.isSelected(resource)"
+          [class.mat-selected]="dataSource.selection.isSelected(resource)"
         *matRowDef="let resource; columns: configuration.columns;"></mat-row>
       </table>
     </div>
@@ -66,6 +83,11 @@
 </div>
 <div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" (click)="cancel()">{{'action.cancel' | translate}}</button>
-  <button mat-raised-button color="accent" (click)="delete()" [disabled]="data.multiple && dataSource.selection.isEmpty()"
-  cdkFocusInitial>{{ (data.multiple ? 'action.delete-selected' : 'action.delete-anyway') | translate}}</button>
+  @if (allowForceDelete) {
+    <button mat-raised-button color="accent"
+      (click)="delete()"
+      [disabled]="data.multiple && dataSource.selection.isEmpty()">
+      {{ (data.multiple ? 'action.delete-selected' : 'action.delete-anyway') | translate}}
+    </button>
+  }
 </div>

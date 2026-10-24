@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -17,9 +18,10 @@ import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { getCurrentAuthUser } from '@app/core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
 import { TranslateService } from '@ngx-translate/core';
+import { Operation } from '@shared/models/security.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -59,13 +61,16 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   placeholder: string;
 
   @Input()
-  dashboardsScope: 'customer' | 'tenant';
+  userId: string;
 
   @Input()
   tenantId: string;
 
   @Input()
   customerId: string;
+
+  @Input()
+  operation: Operation;
 
   @Input()
   floatLabel: FloatLabelType = 'auto';
@@ -89,6 +94,14 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  showHint: boolean;
+
+  @Input()
+  @coerceBoolean()
+  showError: boolean;
 
   @ViewChild('dashboardInput', {static: true}) dashboardInput: ElementRef;
   @ViewChild('dashboardInput', {read: MatAutocompleteTrigger, static: true}) dashboardAutocomplete: MatAutocompleteTrigger;
@@ -230,25 +243,20 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
 
   getDashboards(pageLink: PageLink): Observable<PageData<DashboardInfo>> {
     let dashboardsObservable: Observable<PageData<DashboardInfo>>;
-    if (this.dashboardsScope === 'customer' || this.authUser.authority === Authority.CUSTOMER_USER) {
-      if (this.customerId) {
-        dashboardsObservable = this.dashboardService.getCustomerDashboards(this.customerId, pageLink,
-          {ignoreLoading: true});
-      } else {
-        dashboardsObservable = of(emptyPageData());
-      }
+    const authUser = getCurrentAuthUser(this.store);
+    if (authUser.authority === Authority.SYS_ADMIN && this.tenantId) {
+      dashboardsObservable = this.dashboardService.getTenantDashboardsByTenantId(this.tenantId, pageLink,
+        {ignoreLoading: true});
+    } else if (authUser.authority === Authority.TENANT_ADMIN && this.customerId) {
+      dashboardsObservable = this.dashboardService.getCustomerDashboards(true, this.customerId, pageLink,
+        {ignoreLoading: true});
     } else {
-      if (this.authUser.authority === Authority.SYS_ADMIN) {
-        if (this.tenantId) {
-          dashboardsObservable = this.dashboardService.getTenantDashboardsByTenantId(this.tenantId, pageLink,
-            {ignoreLoading: true});
-        } else {
-          dashboardsObservable = of(emptyPageData());
-        }
-      } else {
-        dashboardsObservable = this.dashboardService.getTenantDashboards(pageLink,
-          {ignoreLoading: true});
+      let userId = this.userId;
+      if (!userId) {
+        userId = authUser.userId;
       }
+      dashboardsObservable = this.dashboardService.getUserDashboards(userId, this.operation, pageLink,
+        {ignoreLoading: true});
     }
     return dashboardsObservable;
   }

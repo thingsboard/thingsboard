@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import '../../../scss/mixins';
 
 $popover-arrow-width: 6;
@@ -217,15 +218,17 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
       box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.08), 0 1px 8px 1px rgba(0, 0, 0, 0.08);
     }
     .tb-popover-inner-content {
-      padding: 8px 0;
+      padding: 0;
     }
     .tb-menu-content {
       --mat-button-text-label-text-size: 14px;
       --mat-button-text-label-text-weight: 400;
       --mat-button-text-container-height: 40px;
+      --mat-button-text-touch-target-size: 40px;
+      --mat-button-text-container-shape: 0;
+      --mat-button-text-with-icon-horizontal-padding: 16px;
       .mat-mdc-button:not(.mat-mdc-icon-button) {
         justify-content: start;
-        padding: 8px 16px;
         & > .mat-icon {
           width: 18px;
           height: 18px;

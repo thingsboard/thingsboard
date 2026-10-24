@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -122,7 +123,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
      * @throws Exception
      */
     @Test
-    public void  testObserveComposite_IfLeastOneResourceIsAlreadyRegistered_return_BadRequest() throws Exception {
+    public void testObserveComposite_IfLeastOneResourceIsAlreadyRegistered_return_BadRequest() throws Exception {
         // Verify after start
         String actualResultReadAll = sendCompositeRPCByKeys("ObserveReadAll", null);
         ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
@@ -146,6 +147,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         actualValues = rpcActualResultReadAll.get("value").asText();
         assertTrue(actualValues.contains("SingleObservation:" + fromVersionedIdToObjectId(idVer_3_0_9)));
     }
+
     /**
      *  Previous -> ["5/0/7", "5/0/5", "5/0/3"], CompositeObservation     *
      *  if the resource SingleObservation is already registered in CompositeObservation - return BAD REQUEST
@@ -362,7 +364,6 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         String actualValues = rpcActualResultReadAll.get("value").asText();
         assertTrue(actualValues.contains("CompositeObservation:"));
     }
-
 
     @Test
     public void testObserveCompositeResource_Update_After_Registration_UpdateRegistration() throws Exception {

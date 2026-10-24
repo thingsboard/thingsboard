@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import lombok.Data;
@@ -57,6 +58,16 @@ public abstract class TBRedisCacheConfiguration {
     @Value("${redis.evictTtlInMs:60000}")
     private int evictTtlInMs;
 
+    /**
+     * Optional prefix prepended to every Redis cache key. Empty by default, so production keyspaces are
+     * unchanged. It lets several application contexts that point at different databases but share one Redis
+     * (notably the DAO test suites, where plain-Postgres and Citus {@code *ServiceSqlTest} classes run in one
+     * JVM against one Redis) keep their cache keyspaces separate. Unlike {@code redis.db}, a key prefix also
+     * works in Redis Cluster mode, where only logical database 0 exists.
+     */
+    @Value("${cache.key_prefix:}")
+    private String keyPrefix;
+
     @Value("${redis.pool_config.maxTotal:128}")
     private int maxTotal;
 
@@ -112,7 +123,11 @@ public abstract class TBRedisCacheConfiguration {
         DefaultFormattingConversionService redisConversionService = new DefaultFormattingConversionService();
         RedisCacheConfiguration.registerDefaultConverters(redisConversionService);
         registerDefaultConverters(redisConversionService);
-        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig().withConversionService(redisConversionService);
+        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig().withConversionService(redisConversionService)
+                // Spring-managed @Cacheable caches must honor the configured key prefix too, otherwise fixed-key
+                // caches (e.g. security settings) collide across environments sharing one Redis. With the empty
+                // default this yields exactly the standard 'cacheName::key' layout.
+                .prefixCacheNameWith(keyPrefix);
         return RedisCacheManager.builder(cf).cacheDefaults(configuration)
                 .transactionAware()
                 .build();

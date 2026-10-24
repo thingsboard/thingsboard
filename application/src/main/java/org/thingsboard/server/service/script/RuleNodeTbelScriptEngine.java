@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.script;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -9,9 +10,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.RuleNodeScriptFactory;
 import org.thingsboard.script.api.TbScriptException;
+import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -30,7 +33,11 @@ import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 public class RuleNodeTbelScriptEngine extends RuleNodeScriptEngine<TbelInvokeService, Object> {
 
     public RuleNodeTbelScriptEngine(TenantId tenantId, TbelInvokeService scriptInvokeService, String script, String... argNames) {
-        super(tenantId, scriptInvokeService, script, argNames);
+        this(tenantId, scriptInvokeService, ScriptType.RULE_NODE_SCRIPT, script, argNames);
+    }
+
+    public RuleNodeTbelScriptEngine(TenantId tenantId, TbelInvokeService scriptInvokeService, ScriptType scriptType, String script, String... argNames) {
+        super(tenantId, scriptInvokeService, scriptType, script, argNames);
     }
 
     @Override
@@ -44,6 +51,33 @@ public class RuleNodeTbelScriptEngine extends RuleNodeScriptEngine<TbelInvokeSer
         args[1] = new HashMap<>(msg.getMetaData().getData());
         args[2] = msg.getType();
         return args;
+    }
+
+    @Override
+    protected Object prepareAttributes(Map<String, KvEntry> attributes) {
+        var result = new HashMap<>();
+        if (attributes != null) {
+            attributes.forEach((k, v) -> {
+                switch (v.getDataType()) {
+                    case STRING:
+                        v.getStrValue().ifPresent(val -> result.put(k, val));
+                        break;
+                    case BOOLEAN:
+                        v.getBooleanValue().ifPresent(val -> result.put(k, val));
+                        break;
+                    case DOUBLE:
+                        v.getDoubleValue().ifPresent(val -> result.put(k, val));
+                        break;
+                    case LONG:
+                        v.getLongValue().ifPresent(val -> result.put(k, val));
+                        break;
+                    case JSON:
+                        v.getJsonValue().ifPresent(val -> result.put(k, JacksonUtil.toJsonNode(val)));
+                        break;
+                }
+            });
+        }
+        return result;
     }
 
     @Override

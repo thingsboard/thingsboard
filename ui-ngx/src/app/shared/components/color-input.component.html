@@ -1,39 +1,63 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (!asBoxInput) {
-  <mat-form-field [formGroup]="colorFormGroup" [appearance]="appearance">
-    @if (icon || label) {
-      <mat-label>
-        @if (icon) {
-          <mat-icon>{{icon}}</mat-icon>
-        }
-        @if (label) {
-          <span>{{label}}</span>
-        }
-      </mat-label>
-    }
-    <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
-      <div class="tb-color-result" [style.background]="colorFormGroup.get('color').value"></div>
-    </div>
-    <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
-    @if (colorClearButton && !disabled) {
-      <button
-        type="button"
-        matSuffix mat-icon-button aria-label="Clear"
-        (click)="clear()">
-        <mat-icon class="material-icons">close</mat-icon>
+  <div class="flex flex-1 flex-row items-center gap-2">
+    <mat-form-field [formGroup]="colorFormGroup"
+                    [floatLabel]="!!defaultColor ? 'always' : 'auto'"
+                    [class.tb-default-color]="!!defaultColor"
+                    [appearance]="appearance" [subscriptSizing]="subscriptSizing">
+      @if (icon || label) {
+        <mat-label>
+          @if (icon) {
+            <mat-icon>{{icon}}</mat-icon>
+          }
+          @if (label) {
+            <span>{{label}}</span>
+          }
+        </mat-label>
+      }
+      @if (palettePreview) {
+        <div matPrefix class="tb-palette-preview"
+             (click)="!disabled && showColorPicker($event)"
+             [style.background]="colorFormGroup.get('color').value || defaultColor">
+        </div>
+      } @else {
+        <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
+          <div class="tb-color-result" [style.background]="colorFormGroup.get('color').value || defaultColor"></div>
+        </div>
+      }
+      <input matInput formControlName="color"
+             [placeholder]="!!defaultColor ? ('color.default' | translate) : null"
+             (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
+      @if (colorClearButton && !disabled) {
+        <button
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      }
+      @if (colorFormGroup.get('color').hasError('required')) {
+        <mat-error>
+          {{ requiredText }}
+        </mat-error>
+      }
+    </mat-form-field>
+    @if (!disabled && pickerButtonIcon) {
+      <button type="button"
+              mat-icon-button
+              matTooltip="{{ label }}"
+              matTooltipPosition="above"
+              (click)="showColorPicker($event)">
+        <tb-icon class="tb-mat-20">{{ pickerButtonIcon }}</tb-icon>
       </button>
     }
-    @if (colorFormGroup.get('color').hasError('required')) {
-      <mat-error>
-        {{ requiredText }}
-      </mat-error>
-    }
-  </mat-form-field>
+  </div>
 } @else {
   <button type="button"
           mat-stroked-button

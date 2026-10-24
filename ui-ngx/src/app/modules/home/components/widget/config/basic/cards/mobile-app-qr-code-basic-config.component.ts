@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -15,6 +16,10 @@ import {
   MobileAppQrCodeWidgetSettings
 } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
 import { badgePositionTranslationsMap } from '@app/shared/models/mobile-app.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Component({
     selector: 'tb-mobile-app-qr-code-basic-config',
@@ -26,11 +31,16 @@ export class MobileAppQrCodeBasicConfigComponent extends BasicWidgetConfigCompon
 
   mobileAppQrCodeWidgetConfigForm: UntypedFormGroup;
   badgePositionTranslationsMap = badgePositionTranslationsMap;
+  displayConfigurationHint = false;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private userPermissionsService: UserPermissionsService) {
     super(store, widgetConfigComponent);
+    this.displayConfigurationHint = getCurrentAuthUser(this.store).authority !== Authority.CUSTOMER_USER &&
+      (this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.WRITE) ||
+        this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.READ));
   }
 
   protected configForm(): UntypedFormGroup {
@@ -164,6 +174,13 @@ export class MobileAppQrCodeBasicConfigComponent extends BasicWidgetConfigCompon
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
     config.enableFullscreen = buttons.includes('fullscreen');
+  }
+
+  navigateToMobileAppSettings($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    window.open(window.location.origin + '/settings/mobile-app', '_blank');
   }
 
 }

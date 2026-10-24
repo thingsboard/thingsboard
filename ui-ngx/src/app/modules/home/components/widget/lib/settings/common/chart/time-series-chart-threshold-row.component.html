@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div [formGroup]="thresholdFormGroup" class="tb-form-table-row tb-time-series-threshold-row">
@@ -85,6 +86,7 @@
   }
   <div class="tb-color-field">
     <tb-color-input asBoxInput
+                    [useThemePalette]="!reportMode"
                     colorClearButton
                     formControlName="lineColor">
     </tb-color-input>
@@ -104,8 +106,10 @@
       [widgetConfig]="widgetConfig"
       [yAxisIds]="yAxisIds"
       [hideYAxis]="hideYAxis"
-      icon="settings"
-      [formControl]="thresholdSettingsFormControl">
+      [supportsUnitConversion]="supportsUnitConversion"
+        [reportMode]="reportMode"
+        icon="settings"
+        [formControl]="thresholdSettingsFormControl">
     </tb-time-series-chart-threshold-settings>
     <button type="button"
             mat-icon-button

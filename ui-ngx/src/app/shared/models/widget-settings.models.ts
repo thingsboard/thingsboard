@@ -1,6 +1,8 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
+  deepClone,
   isDefinedAndNotNull,
   isNotEmptyStr,
   isNumber,
@@ -29,7 +31,17 @@ import { EMPTY, Observable, of } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
-import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
+import {
+  AVG_MONTH,
+  calculateTsOffset,
+  DAY,
+  HOUR,
+  Interval,
+  IntervalMath,
+  MINUTE,
+  SECOND,
+  YEAR
+} from '@shared/models/time/time.models';
 import moment from 'moment';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -44,11 +56,11 @@ import { TbUnit, TbUnitConverter } from '@shared/models/unit.models';
 
 export type ComponentStyle = {[klass: string]: any};
 
-export const cssUnits = ['px', 'em', '%', 'rem', 'pt', 'pc', 'in', 'cm', 'mm', 'ex', 'ch', 'vw', 'vh', 'vmin', 'vmax'] as const;
+export const cssUnits = ['px', 'em', '%', 'rem', 'pt', 'pc', 'in', 'cm', 'mm', 'ex', 'ch', 'vw', 'vh', 'vmin', 'vmax'];
 type cssUnitTuple = typeof cssUnits;
 export type cssUnit = cssUnitTuple[number];
 
-export const fontWeights = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900'] as const;
+export const fontWeights = ['normal', 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
 type fontWeightTuple = typeof fontWeights;
 export type fontWeight = fontWeightTuple[number];
 
@@ -61,7 +73,7 @@ export const fontWeightTranslations = new Map<fontWeight, string>(
   ]
 );
 
-export const fontStyles = ['normal', 'italic', 'oblique'] as const;
+export const fontStyles = ['normal', 'italic', 'oblique'];
 type fontStyleTuple = typeof fontStyles;
 export type fontStyle = fontStyleTuple[number];
 
@@ -74,6 +86,37 @@ export const fontStyleTranslations = new Map<fontStyle, string>(
 );
 
 export const commonFonts = ['Roboto', 'monospace', 'sans-serif', 'serif'];
+
+export const alignments = ['left', 'center', 'right', 'justify', 'top', 'middle', 'bottom'];
+type alignmentTuple = typeof alignments;
+export type alignment = alignmentTuple[number];
+
+export const alignmentTranslations = new Map<alignment, string>(
+  [
+    ['left', 'widgets.alignment.align-left'],
+    ['center', 'widgets.alignment.align-center'],
+    ['right', 'widgets.alignment.align-right'],
+    ['justify', 'widgets.alignment.justify'],
+    ['top', 'widgets.alignment.align-top'],
+    ['middle', 'widgets.alignment.align-middle'],
+    ['bottom', 'widgets.alignment.align-bottom']
+  ]
+);
+
+export const alignmentIcons = new Map<alignment, string>(
+  [
+    ['left', 'format_align_left'],
+    ['center', 'format_align_center'],
+    ['right', 'format_align_right'],
+    ['justify', 'format_align_justify'],
+    ['top', 'mdi:format-align-top'],
+    ['middle', 'mdi:format-align-middle'],
+    ['bottom', 'mdi:format-align-bottom']
+  ]
+);
+
+export const horizontalAlignments: alignment[] = ['left', 'center', 'right', 'justify'];
+export const verticalAlignments: alignment[] = ['top', 'middle', 'bottom'];
 
 export interface Font {
   size: number;
@@ -146,6 +189,28 @@ export interface ColorRangeSettings extends AdvancedColorMode {
   range?: ColorRange[];
   rangeAdvanced?: AdvancedColorRange[];
 }
+
+/**
+ * Converts any stored rangeList shape to ColorRangeSettings. Always returns a new deep copy (null/undefined pass through),
+ * so callers may mutate the result freely.
+ */
+export const normalizeColorRangeSettings = (rangeList: ColorRangeSettings | ColorRange[]): ColorRangeSettings => {
+  if (!isDefinedAndNotNull(rangeList)) {
+    return rangeList as ColorRangeSettings;
+  }
+  if (Array.isArray(rangeList)) {
+    return {advancedMode: false, range: deepClone(rangeList)};
+  }
+  const result: ColorRangeSettings = deepClone(rangeList);
+  result.advancedMode = result.advancedMode ?? false;
+  // Unwraps the legacy corrupted shape {range: {advancedMode, range: [...]}} (possibly nested several levels deep)
+  let range: any = result.range;
+  while (isDefinedAndNotNull(range) && !Array.isArray(range)) {
+    range = range.range;
+  }
+  result.range = range;
+  return result;
+};
 
 export interface ColorGradientSettings extends AdvancedColorMode {
   gradient?: string[];
@@ -473,9 +538,9 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
 
 class RangeColorProcessor extends AdvancedModeColorProcessor {
 
-  constructor(protected settings: ColorSettings,
-              protected ctx: WidgetContext) {
-    super(settings, ctx);
+  constructor(settings: ColorSettings,
+              ctx: WidgetContext) {
+    super({...settings, rangeList: normalizeColorRangeSettings(settings.rangeList)}, ctx);
   }
 
   update(value: any): void {
@@ -519,15 +584,8 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
   }
 
   private computeFromRange(value: any): string {
-    let rangeList: any = this.settings.rangeList as Array<ColorRange>;
-    let advancedMode = false;
-
-    if (isDefinedAndNotNull(this.settings.rangeList?.advancedMode)) {
-      advancedMode = this.settings.rangeList.advancedMode;
-      rangeList = advancedMode ?
-        this.settings.rangeList.rangeAdvanced as Array<AdvancedColorRange> :
-        this.settings.rangeList.range as Array<ColorRange>;
-    }
+    const advancedMode = this.settings.rangeList?.advancedMode ?? false;
+    const rangeList: any = advancedMode ? this.settings.rangeList?.rangeAdvanced : this.settings.rangeList?.range;
 
     if (rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
@@ -705,6 +763,19 @@ export const customDateFormat = (format: string): DateFormatSettings => ({
   auto: false
 });
 
+export const toDateFormatSettings = (strFormat: string): DateFormatSettings => {
+  if (strFormat === 'milliseconds') {
+    return millisecondsDateFormat();
+  }
+  const found = dateFormats.filter(format => !!format.format && !format.custom)
+                                              .find(format => format.format === strFormat);
+  if (found) {
+    return found;
+  } else {
+    return customDateFormat(strFormat);
+  }
+}
+
 export const defaultAutoDateFormatSettings: AutoDateFormatSettings = {
   millisecond: 'MMM dd yyyy HH:mm:ss.SSS',
   second: 'MMM dd yyyy HH:mm:ss',
@@ -722,6 +793,8 @@ export const autoDateFormat = (): DateFormatSettings => ({
   auto: true,
   autoDateFormatSettings: {}
 });
+
+export const millisecondsDateFormat = (): DateFormatSettings => simpleDateFormat('milliseconds');
 
 export const dateFormats = ['MMM yyyy', 'MMM dd yyyy', 'MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'dd MMM yyyy HH:mm:ss',
   'yyyy MMM dd HH:mm', 'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'MMM dd yyyy HH:mm:ss', 'yyyy/MM/dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss',
@@ -746,6 +819,13 @@ export const compareDateFormats = (df1: DateFormatSettings, df2: DateFormatSetti
   }
   return false;
 };
+
+export const dateFormatPreview = (date: DatePipe, format: string, timezone?: string): string => {
+  if (timezone) {
+    timezone = moment.tz(timezone).zoneAbbr();
+  }
+  return format === 'milliseconds' ? `${Date.now()}` : date.transform(Date.now(), format, timezone);
+}
 
 export abstract class DateFormatProcessor {
 

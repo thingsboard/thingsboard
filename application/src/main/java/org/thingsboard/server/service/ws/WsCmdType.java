@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ws;
 
 public enum WsCmdType {
@@ -24,5 +25,7 @@ public enum WsCmdType {
     ENTITY_DATA_UNSUBSCRIBE,
     ENTITY_COUNT_UNSUBSCRIBE,
     NOTIFICATIONS_UNSUBSCRIBE,
-    ALARM_STATUS_UNSUBSCRIBE
+    ALARM_STATUS_UNSUBSCRIBE,
+    LOGS,
+    LOGS_UNSUBSCRIBE
 }

@@ -1,0 +1,60 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<fieldset class="fields-group">
+  <legend class="group-title" translate>integration.topic-filters</legend>
+  <div class="container">
+    @for (topicFilter of mqttFiltersFromArray.controls; track topicFilter; let i = $index) {
+      <div class="flex flex-1 flex-row items-center justify-start gap-2"
+           [formGroup]="topicFilter">
+        <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker class="mat-block flex-1">
+          @if (i === 0) {
+            <mat-label>{{"integration.topic" | translate }}</mat-label>
+          }
+          <input matInput required name="topicFilterTopic" formControlName="filter">
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always" hideRequiredMarker class="mat-block flex-1">
+          @if (i === 0) {
+            <mat-label>{{"integration.mqtt-qos" | translate }}</mat-label>
+          }
+          <mat-select required formControlName="qos">
+            @for (mqttQoS of mqttQosTypes; track mqttQoS) {
+              <mat-option [value]="mqttQoS">
+                {{ mqttQoS }} - {{ getMqttQosTranslation(mqttQoS) | translate}}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button color="primary" [class.!hidden]="mqttFiltersFromArray.disabled"
+                type="button"
+                [class.invisibility]="mqttFiltersFromArray.length === 1"
+                (click)="mqttFiltersFromArray.removeAt(i)"
+                [matTooltip]="'integration.remove-topic-filter' | translate" matTooltipPosition="above">
+          <mat-icon class="material-icons">close</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+  @if (!mqttFiltersFromArray.disabled) {
+    <section style="margin-top: 8px">
+      <div class="tb-hint" innerHTML="{{ 'device-profile.support-level-wildcards' | translate }}"></div>
+      <div class="tb-hint" innerHTML="{{ 'device-profile.single-level-wildcards-hint' | translate }}"></div>
+      <div class="tb-hint" innerHTML="{{ 'device-profile.multi-level-wildcards-hint' | translate }}"></div>
+    </section>
+  }
+  @if (!mqttFiltersFromArray.length) {
+    <span class="no-data-found flex items-center justify-center" translate>integration.add-topic-filter-prompt</span>
+  }
+  @if (!mqttFiltersFromArray.disabled) {
+    <button mat-stroked-button color="primary"
+            type="button"
+            class="add-button"
+            (click)="addTopicFilter()"
+            [matTooltip]="'integration.add-topic-filter' | translate" matTooltipPosition="above">
+      <span translate>integration.add-topic-filter</span>
+    </button>
+  }
+</fieldset>

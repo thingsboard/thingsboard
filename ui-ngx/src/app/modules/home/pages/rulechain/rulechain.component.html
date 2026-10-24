@@ -1,64 +1,83 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-details-buttons">
   <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'open')"
-          [class.!hidden]="isEdit">
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit">
     {{'rulechain.open-rulechain' | translate }}
   </button>
   <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'export')"
-          [class.!hidden]="isEdit">
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'export')"
+    [class.!hidden]="isEdit">
     {{'rulechain.export' | translate }}
   </button>
+  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'setRoot')"
+      [class.!hidden]="isEdit || entity?.root || ruleChainScope !== 'tenant'">
+      {{'rulechain.set-root' | translate }}
+    </button>
+  }
+  @if (resource.EDGE | hasGenericPermission: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'setEdgeRoot')"
+      [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edge'">
+      {{'rulechain.set-root' | translate }}
+    </button>
+  }
+  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'setEdgeTemplateRoot')"
+      [class.!hidden]="isEdit || entity?.root || ruleChainScope !== 'edges'">
+      {{'rulechain.set-edge-template-root-rulechain' | translate }}
+    </button>
+  }
+  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'setAutoAssignToEdge')"
+      [class.!hidden]="isEdit || !isNotAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
+      {{'rulechain.set-auto-assign-to-edge' | translate }}
+    </button>
+  }
+  @if (resource.RULE_CHAIN | hasGenericPermission: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'unsetAutoAssignToEdge')"
+      [class.!hidden]="isEdit || !isAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
+      {{'rulechain.unset-auto-assign-to-edge' | translate }}
+    </button>
+  }
+  @if (resource.EDGE | hasGenericPermission: operation.WRITE) {
+    <button mat-stroked-button color="primary"
+      [disabled]="(isLoading$ | async)"
+      (click)="onEntityAction($event, 'unassignFromEdge')"
+      [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edges'">
+      {{'edge.unassign-from-edge' | translate }}
+    </button>
+  }
   <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'setRoot')"
-          [class.!hidden]="isEdit || !((!entity?.root && ruleChainScope === 'tenant') || (!isEdgeRootRuleChain() && ruleChainScope === 'edge'))">
-    {{'rulechain.set-root' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'setEdgeTemplateRoot')"
-          [class.!hidden]="isEdit || entity?.root || ruleChainScope !== 'edges'">
-    {{'rulechain.set-edge-template-root-rulechain' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'setAutoAssignToEdge')"
-          [class.!hidden]="isEdit || !isNotAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
-    {{'rulechain.set-auto-assign-to-edge' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'unsetAutoAssignToEdge')"
-          [class.!hidden]="isEdit || !isAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
-    {{'rulechain.unset-auto-assign-to-edge' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'unassignFromEdge')"
-          [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edges'">
-    {{'edge.unassign-from-edge' | translate }}
-  </button>
-  <button mat-stroked-button color="primary"
-          [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
-          [class.!hidden]="hideDelete() || isEdit || ruleChainScope === 'edge'">
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'delete')"
+    [class.!hidden]="hideDelete() || isEdit || ruleChainScope === 'edge'">
     {{'rulechain.delete' | translate }}
   </button>
   <div class="flex flex-row">
     <button mat-stroked-button
-            ngxClipboard
-            (cbOnSuccess)="onRuleChainIdCopied($event)"
-            [cbContent]="entity?.id?.id"
-            [class.!hidden]="isEdit">
+      ngxClipboard
+      (cbOnSuccess)="onRuleChainIdCopied($event)"
+      [cbContent]="entity?.id?.id"
+      [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>rulechain.copyId</span>
     </button>
@@ -66,7 +85,7 @@
 </div>
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
+    <fieldset [disabled]="(isLoading$ | async)" style="min-width: 0;">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>rulechain.name</mat-label>
         <input matInput formControlName="name" required>

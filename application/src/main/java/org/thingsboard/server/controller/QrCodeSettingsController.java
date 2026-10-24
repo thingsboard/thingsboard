@@ -1,11 +1,13 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +24,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.app.StoreInfo;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.wl.WhiteLabeling;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.mobile.QrCodeSettingService;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.mobile.secret.MobileAppSecretService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.net.URI;
@@ -37,17 +41,19 @@ import java.net.URISyntaxException;
 
 import static org.thingsboard.server.common.data.oauth2.PlatformType.ANDROID;
 import static org.thingsboard.server.common.data.oauth2.PlatformType.IOS;
+import static org.thingsboard.server.common.data.wl.WhiteLabelingType.LOGIN;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 
 @RequiredArgsConstructor
 @RestController
 @TbCoreComponent
+@Slf4j
 public class QrCodeSettingsController extends BaseController {
 
     @Value("${cache.specs.mobileSecretKey.timeToLiveInMinutes:2}")
     private int mobileSecretKeyTtl;
-    @Value("${mobileApp.domain:demo.thingsboard.io}")
+    @Value("${mobileApp.domain:thingsboard.cloud}")
     private String defaultAppDomain;
 
     public static final String ASSET_LINKS_PATTERN = "[{\n" +
@@ -79,11 +85,14 @@ public class QrCodeSettingsController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final MobileAppSecretService mobileAppSecretService;
     private final QrCodeSettingService qrCodeSettingService;
+    private final WhiteLabelingService whiteLabelingService;
 
     @ApiOperation(value = "Get associated android applications (getAssetLinks)")
     @GetMapping(value = "/.well-known/assetlinks.json")
-    public ResponseEntity<JsonNode> getAssetLinks() {
-        MobileApp mobileApp = qrCodeSettingService.findAppFromQrCodeSettings(TenantId.SYS_TENANT_ID, ANDROID);
+    public ResponseEntity<JsonNode> getAssetLinks(HttpServletRequest request) {
+        String domainName = request.getServerName();
+        WhiteLabeling loginWL = whiteLabelingService.findWhiteLabelingByDomainAndType(domainName, LOGIN);
+        MobileApp mobileApp = qrCodeSettingService.findAppFromQrCodeSettings(loginWL != null ? loginWL.getTenantId() : TenantId.SYS_TENANT_ID, ANDROID);
         StoreInfo storeInfo = mobileApp != null ? mobileApp.getStoreInfo() : null;
         if (storeInfo != null && storeInfo.getSha256CertFingerprints() != null) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(ASSET_LINKS_PATTERN, mobileApp.getPkgName(), storeInfo.getSha256CertFingerprints())));
@@ -94,8 +103,10 @@ public class QrCodeSettingsController extends BaseController {
 
     @ApiOperation(value = "Get associated ios applications (getAppleAppSiteAssociation)")
     @GetMapping(value = "/.well-known/apple-app-site-association")
-    public ResponseEntity<JsonNode> getAppleAppSiteAssociation() {
-        MobileApp mobileApp = qrCodeSettingService.findAppFromQrCodeSettings(TenantId.SYS_TENANT_ID, IOS);
+    public ResponseEntity<JsonNode> getAppleAppSiteAssociation(HttpServletRequest request) {
+        String domainName = request.getServerName();
+        WhiteLabeling loginWL = whiteLabelingService.findWhiteLabelingByDomainAndType(domainName, LOGIN);
+        MobileApp mobileApp = qrCodeSettingService.findAppFromQrCodeSettings(loginWL != null ? loginWL.getTenantId() : TenantId.SYS_TENANT_ID, IOS);
         StoreInfo storeInfo = mobileApp != null ? mobileApp.getStoreInfo() : null;
         if (storeInfo != null && storeInfo.getAppId() != null) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, storeInfo.getAppId())));
@@ -104,15 +115,18 @@ public class QrCodeSettingsController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Create Or Update the Mobile application settings (saveMobileAppSettings)",
-            notes = "The request payload contains configuration for android/iOS applications and platform qr code widget settings." + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @ApiOperation(value = "Create Or Update the Mobile application settings (saveQrCodeSettings)",
+            notes = "The request payload contains configuration for android/iOS applications and platform qr code widget settings." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping(value = "/api/mobile/qr/settings")
     public QrCodeSettings saveQrCodeSettings(@Parameter(description = "A JSON value representing the mobile apps configuration")
                                              @RequestBody QrCodeSettings qrCodeSettings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.WRITE);
         qrCodeSettings.setTenantId(getTenantId());
+        if (qrCodeSettings.getMobileAppBundleId() != null) {
+            checkEntityId(qrCodeSettings.getMobileAppBundleId(), Operation.READ);
+        }
         return qrCodeSettingService.saveQrCodeSettings(currentUser.getTenantId(), qrCodeSettings);
     }
 
@@ -123,7 +137,17 @@ public class QrCodeSettingsController extends BaseController {
     public QrCodeSettings getQrCodeSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
-        return qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
+        return qrCodeSettingService.findQrCodeSettings(currentUser.getTenantId());
+    }
+
+    @ApiOperation(value = "Get QR code configuration for home page (getMergedMobileAppSettings)",
+            notes = "The response payload contains ui configuration of qr code" + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/api/mobile/qr/merged")
+    public QrCodeSettings getMergedMobileAppSettings() throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
+        return qrCodeSettingService.getMergedQrCodeSettings(currentUser.getTenantId());
     }
 
     @ApiOperation(value = "Get the deep link to the associated mobile application (getMobileAppDeepLink)",
@@ -131,10 +155,17 @@ public class QrCodeSettingsController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/api/mobile/qr/deepLink", produces = "text/plain")
     public String getMobileAppDeepLink(HttpServletRequest request) throws ThingsboardException, URISyntaxException {
+        SecurityUser currentUser = getCurrentUser();
         String secret = mobileAppSecretService.generateMobileAppSecret(getCurrentUser());
-        String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, null, request);
-        String platformDomain = new URI(baseUrl).getHost();
-        QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
+        String baseUrl = systemSecurityService.getBaseUrl(currentUser.getAuthority(), currentUser.getTenantId(), currentUser.getCustomerId(), request);
+        String platformDomain;
+        try {
+            platformDomain = new URI(baseUrl).getHost();
+        } catch (URISyntaxException e) {
+            log.debug("Failed to get host from base url: {}", baseUrl, e);
+            platformDomain = defaultAppDomain;
+        }
+        QrCodeSettings qrCodeSettings = qrCodeSettingService.getMergedQrCodeSettings(currentUser.getTenantId());
         String appDomain = qrCodeSettings.isUseDefaultApp() ? defaultAppDomain : platformDomain;
         String deepLink = String.format(DEEP_LINK_PATTERN, appDomain, secret, mobileSecretKeyTtl);
         if (!appDomain.equals(platformDomain)) {
@@ -153,17 +184,21 @@ public class QrCodeSettingsController extends BaseController {
     }
 
     @GetMapping(value = "/api/noauth/qr")
-    public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
-        QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
+    public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent, HttpServletRequest request) {
+        WhiteLabeling loginWL = whiteLabelingService.findWhiteLabelingByDomainAndType(request.getServerName(), LOGIN);
+        QrCodeSettings qrCodeSettings;
+        if (loginWL != null) {
+            qrCodeSettings = qrCodeSettingService.getMergedQrCodeSettings(loginWL.getTenantId());
+        } else {
+            qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
+        }
         if (userAgent.contains("Android") && qrCodeSettings.isAndroidEnabled()) {
-            String googlePlayLink = qrCodeSettings.getGooglePlayLink();
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", googlePlayLink)
+                    .header("Location", qrCodeSettings.getGooglePlayLink())
                     .build();
         } else if ((userAgent.contains("iPhone") || userAgent.contains("iPad")) && qrCodeSettings.isIosEnabled()) {
-            String appStoreLink = qrCodeSettings.getAppStoreLink();
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", appStoreLink)
+                    .header("Location", qrCodeSettings.getAppStoreLink())
                     .build();
         } else {
             return response(HttpStatus.NOT_FOUND);

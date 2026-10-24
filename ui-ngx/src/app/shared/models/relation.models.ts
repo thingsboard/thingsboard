@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 
@@ -17,6 +18,7 @@ export enum RelationTypeGroup {
   DASHBOARD = 'DASHBOARD',
   RULE_CHAIN = 'RULE_CHAIN',
   RULE_NODE = 'RULE_NODE',
+  FROM_ENTITY_GROUP = 'FROM_ENTITY_GROUP'
 }
 
 export enum EntitySearchDirection {

@@ -1,12 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
@@ -14,9 +14,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 public class DeviceInfoFilter {
 
     private TenantId tenantId;
+    private boolean includeCustomers;
     private CustomerId customerId;
-    private EdgeId edgeId;
-    private String type;
     private DeviceProfileId deviceProfileId;
     private Boolean active;
 

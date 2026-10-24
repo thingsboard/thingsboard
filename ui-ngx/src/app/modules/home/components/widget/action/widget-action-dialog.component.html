@@ -1,11 +1,12 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="width: 900px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ (isAdd ? 'widget-config.add-action' : 'widget-config.edit-action' ) | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
@@ -25,7 +26,7 @@
     <fieldset [disabled]="isLoading$ | async">
       <div class="tb-form-panel no-padding no-border">
         <div class="tb-form-row">
-          <div class="fixed-title-width">{{'widget-config.action-source' | translate}}*</div>
+          <div class="fixed-title-width" [tb-hint-tooltip-icon]="entityGroupRowClickHint()">{{'widget-config.action-source' | translate}}*</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="actionSourceId" placeholder="{{ 'widget-config.select-action-source' | translate }}">
               @for (actionSourceItem of data.actionsData.actionSources | keyvalue; track actionSourceItem) {
@@ -119,17 +120,17 @@
               <div class="fixed-title-width">{{ 'widget-config.header-button.colors' | translate }}</div>
               <div class="flex flex-row items-center justify-start gap-2">
                 <div class="tb-small-label" translate>widget-config.header-button.color</div>
-                <tb-color-input asBoxInput
+                <tb-color-input asBoxInput useThemePalette
                                 formControlName="buttonColor">
                 </tb-color-input>
                 <mat-divider vertical></mat-divider>
                 <div class="tb-small-label" translate>widget-config.header-button.background</div>
-                <tb-color-input asBoxInput
+                <tb-color-input asBoxInput useThemePalette
                                 formControlName="buttonFillColor">
                 </tb-color-input>
                 <mat-divider vertical></mat-divider>
                 <div class="tb-small-label" translate>widget-config.header-button.border</div>
-                <tb-color-input asBoxInput
+                <tb-color-input asBoxInput useThemePalette
                                 formControlName="buttonBorderColor">
                 </tb-color-input>
               </div>
@@ -190,7 +191,10 @@
           formControlName="widgetAction"
           [callbacks]="data.callbacks"
           [widgetType]="data.widgetType"
-          [additionalWidgetActionTypes]="data.additionalWidgetActionTypes">
+          [additionalWidgetActionTypes]="data.additionalWidgetActionTypes"
+            [widgetActionTypes]="widgetActionTypes"
+            [customFunctionArgs]="customFunctionArgs"
+            [customFunctionHelpId]="customFunctionHelpId()">
         </tb-widget-action>
       </div>
     </fieldset>

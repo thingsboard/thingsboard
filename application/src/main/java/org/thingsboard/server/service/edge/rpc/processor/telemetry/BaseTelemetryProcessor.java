@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,11 +31,13 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -187,6 +190,13 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                     customerId = edge.getCustomerId();
                     metaData.putValue("edgeName", edge.getName());
                     metaData.putValue("edgeType", edge.getType());
+                }
+            }
+            case ENTITY_GROUP -> {
+                EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, new EntityGroupId(entityId.getId()));
+                if (entityGroup != null) {
+                    metaData.putValue("entityGroupName", entityGroup.getName());
+                    metaData.putValue("entityGroupType", entityGroup.getType().name());
                 }
             }
             default -> log.debug("[{}] Using empty metadata for entityId [{}]", tenantId, entityId);
@@ -407,6 +417,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             case CUSTOMER -> entityId = new CustomerId(entityUUID);
             case USER -> entityId = new UserId(entityUUID);
             case EDGE -> entityId = new EdgeId(entityUUID);
+            case ENTITY_GROUP -> entityId = new EntityGroupId(entityUUID);
             default -> {
                 log.warn("[{}] Unsupported edge event type [{}]", tenantId, entityType);
                 return null;

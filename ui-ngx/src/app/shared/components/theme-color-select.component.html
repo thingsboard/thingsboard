@@ -1,0 +1,39 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="flex h-full flex-col">
+  <div class="tb-hue-container flex flex-col">
+    @for (hue of hues; track hue) {
+      <div class="tb-hue-row flex flex-row"
+        (click)="selectColor(hue)">
+        <div class="flex flex-1 flex-row" [style]="hueStyle(hue)" style="padding: 10px;">
+          <div class="flex flex-row items-center justify-start" style="width: 100px;">
+            <span>{{hue}}</span>
+          </div>
+          <div class="flex flex-1 flex-col items-center justify-center">
+            <span>{{colors[hue]}}</span>
+          </div>
+          <div class="flex flex-row items-center justify-end" style="width: 100px;">
+            @if (hue === selectedHue) {
+              <mat-icon>check</mat-icon>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+  <div class="tb-selected-hue">
+    <div class="tb-color-preview">
+      <div class="tb-color-result" [style]="selectedColorStyle()"></div>
+    </div>
+    @if (selectedHue) {
+      <span>{{selectedHue}} ({{colors[selectedHue]}})</span>
+    }
+    @if (!selectedHue) {
+      <span translate>color.no-color-selected</span>
+    }
+  </div>
+</div>

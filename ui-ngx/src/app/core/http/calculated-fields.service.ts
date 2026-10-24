@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, defaultHttpOptionsFromParams, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
@@ -8,6 +9,7 @@ import { PageData } from '@shared/models/page/page-data';
 import {
   CalculatedField,
   CalculatedFieldInfo,
+  CalculatedFieldReprocessingValidation,
   CalculatedFieldsQuery,
   CalculatedFieldTestScriptInputParams,
   CalculatedFieldType
@@ -16,6 +18,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityTestScriptResult } from '@shared/models/entity.models';
 import { CalculatedFieldEventBody } from '@shared/models/event.models';
+import { Job } from '@app/shared/models/job.models';
 
 @Injectable({
   providedIn: 'root'
@@ -56,5 +59,17 @@ export class CalculatedFieldsService {
 
   public getCalculatedFieldNames(pageLink: PageLink, type: CalculatedFieldType, config?: RequestConfig): Observable<PageData<string>> {
     return this.http.get<PageData<string>>(`/api/calculatedFields/names${pageLink.toQuery()}`, defaultHttpOptionsFromParams({type}, config));
+  }
+
+  public reprocessCalculatedField(id: string, startTs: number, endTs: number, config?: RequestConfig): Observable<void > {
+    return this.http.get<void>(`/api/calculatedField/${id}/reprocess?startTs=${startTs}&endTs=${endTs}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLastCalculatedFieldReprocessingJob(id: string, config?: RequestConfig): Observable<Job> {
+    return this.http.get<Job>(`/api/calculatedField/${id}/reprocess/job`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public validateCalculatedFieldReprocessing(id: string, config?: RequestConfig): Observable<CalculatedFieldReprocessingValidation> {
+    return this.http.get<CalculatedFieldReprocessingValidation>(`/api/calculatedField/${id}/reprocess/validate`, defaultHttpOptionsFromConfig(config));
   }
 }

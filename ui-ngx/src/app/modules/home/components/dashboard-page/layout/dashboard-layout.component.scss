@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   display: block;
   height: 100%;
-  button.tb-add-new-widget {
+  button.tb-add-new-widget,
+  button.tb-configure-with-ai {
     height: auto;
-    padding-right: 12px;
     font-size: 20px;
     border-style: dashed;
     border-width: 2px;
@@ -13,5 +14,14 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+  }
+  button.tb-add-new-widget:not(.tb-compact) {
+    padding-right: 12px;
+  }
+  button.tb-add-new-widget.tb-compact,
+  button.tb-configure-with-ai {
+    min-height: 64px;
+    --mat-button-text-with-icon-horizontal-padding: 28px;
+    gap: 4px;
   }
 }

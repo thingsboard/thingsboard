@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
@@ -20,7 +22,9 @@ import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -79,8 +83,11 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
 
     @Override
     public List<RuleNode> findAllRuleNodeByIds(List<RuleNodeId> ruleNodeIds) {
-        return DaoUtil.convertDataList(ruleNodeRepository.findAllById(
-                ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList())));
+        if (ruleNodeIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByIds(
+                ruleNodeIds.stream().map(RuleNodeId::getId).toArray(UUID[]::new)));
     }
 
     @Override
@@ -92,6 +99,11 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
     @Override
     public void deleteByIdIn(List<RuleNodeId> ruleNodeIds) {
         ruleNodeRepository.deleteAllById(ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+    public Map<String, Long> countRuleNodesPerType() {
+        return ruleNodeRepository.countRuleNodesPerType().stream().collect(Collectors.toMap(TbPair::getFirst, TbPair::getSecond));
     }
 
     @Override

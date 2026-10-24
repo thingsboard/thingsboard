@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.sms;
 
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -22,6 +23,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDetails = "Will send SMS message by populating target phone numbers and sms message fields using values derived from message metadata.",
         configDirective = "tbExternalNodeSendSmsConfig",
         icon = "sms",
+        hasSecrets = true,
         docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-sms/"
 )
 public class TbSendSmsNode extends TbAbstractExternalNode {

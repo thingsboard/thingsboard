@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   DataToValueType,
   GetValueAction,
@@ -167,19 +168,19 @@ export const sliderWidgetDefaultSettings: SliderWidgetSettings = {
   ticksColor: 'rgba(0,0,0,0.54)',
   showTickMarks: true,
   tickMarksCount: 11,
-  tickMarksColor: '#5469FF',
-  mainColor: '#5469FF',
-  backgroundColor: '#CCD2FF',
+  tickMarksColor: 'var(--tb-primary-500)',
+  mainColor: 'var(--tb-primary-500)',
+  backgroundColor: 'var(--tb-primary-100)',
   mainColorDisabled: '#9BA2B0',
   backgroundColorDisabled: '#D5D7E5',
   leftIcon: 'lightbulb',
   leftIconSize: 24,
   leftIconSizeUnit: 'px',
-  leftIconColor: '#5469FF',
+  leftIconColor: 'var(--tb-primary-500)',
   rightIcon: 'mdi:lightbulb-on',
   rightIconSize: 24,
   rightIconSizeUnit: 'px',
-  rightIconColor: '#5469FF',
+  rightIconColor: 'var(--tb-primary-500)',
   background: {
     type: BackgroundType.color,
     color: '#fff',

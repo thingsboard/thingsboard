@@ -1,0 +1,100 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="kpnIntegrationConfigForm">
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.base-url</mat-label>
+    <input matInput formControlName="baseUrl" required>
+    @if (kpnIntegrationConfigForm.get('baseUrl').hasError('required')) {
+      <mat-error translate>
+        integration.base-url-required
+      </mat-error>
+    }
+    @if (kpnIntegrationConfigForm.get('baseUrl').hasError('privateNetwork')) {
+      <mat-error translate>
+        integration.url-private
+      </mat-error>
+    }
+  </mat-form-field>
+  <tb-secret-key-input formControlName="destinationSharedSecret" class="mat-block flex-1" appearance="outline"
+                       label="{{ 'integration.destination-shared-secret' | translate }}">
+  </tb-secret-key-input>
+  <div class="flex flex-row items-center justify-start gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.http-endpoint</mat-label>
+      <input matInput formControlName="httpEndpoint">
+    </mat-form-field>
+    <button mat-icon-button ngxClipboard type="button" color="primary"
+            (cbOnSuccess)="onHttpEndpointCopied()"
+            [cbContent]="kpnIntegrationConfigForm.get('httpEndpoint').value"
+            matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
+      <mat-icon class="tb-mat-20">content_copy</mat-icon>
+    </button>
+  </div>
+
+  <mat-expansion-panel class="expansion-panel-setting" [expanded]="kpnIntegrationConfigForm.get('allowDownlink').value">
+    <mat-expansion-panel-header>
+      <mat-panel-title class="flex flex-col items-start justify-start gap-2">
+        <mat-slide-toggle formControlName="allowDownlink" (click)="$event.stopPropagation()">
+          {{ 'integration.allow-downlink' | translate }}
+        </mat-slide-toggle>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <section class="expansion-panel-setting-content">
+        <fieldset class="fields-group">
+          <legend class="group-title" translate>integration.credentials</legend>
+          <div class="flex flex-col gt-xs:gap-2">
+            <tb-secret-key-input formControlName="apiId" class="mat-block flex-1" appearance="outline"
+                                 label="{{ 'integration.api-id' | translate }}">
+            </tb-secret-key-input>
+            <tb-secret-key-input formControlName="apiKey" class="mat-block flex-1" appearance="outline"
+                                 label="{{ 'integration.api-key' | translate }}">
+            </tb-secret-key-input>
+          </div>
+        </fieldset>
+      </section>
+    </ng-template>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel class="expansion-panel-setting"
+                       [expanded]="kpnIntegrationConfigForm.get('enableSecurity').value">
+
+    <mat-expansion-panel-header class="flex flex-row">
+      <mat-panel-title>
+        <mat-slide-toggle [aria-label]="'integration.enable-security' | translate"
+                          formControlName="enableSecurity"
+                          (click)="$event.stopPropagation()">
+          {{ 'integration.enable-security' | translate }} ({{ 'integration.headers-filter' | translate }})
+        </mat-slide-toggle>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <tb-key-val-map
+        class="expansion-panel-setting-content"
+        noDataText="integration.no-headers-filter"
+        keyPlaceholderText="integration.header"
+        isStrokedButton="true"
+        appearance="outline"
+        formControlName="headersFilter">
+      </tb-key-val-map>
+    </ng-template>
+  </mat-expansion-panel>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

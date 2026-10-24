@@ -1,10 +1,11 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-toolbar class="tb-dialog-header justify-between">
+<mat-toolbar color="tb-primary" class="tb-bottom-border justify-between">
   <h2 translate>mobile.configuration-dialog</h2>
   <button mat-icon-button
           (click)="close()"
@@ -12,7 +13,7 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<div mat-dialog-content class="flex flex-col gap-4 xs:gap-2 gt-xs:max-h-[80vh]">
+<div mat-dialog-content class="flex flex-col gap-4 xs:gap-2 gt-xs:max-h-80vh">
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>mobile.configuration-step.prepare-environment-title</div>
     <div class="flex gap-4">

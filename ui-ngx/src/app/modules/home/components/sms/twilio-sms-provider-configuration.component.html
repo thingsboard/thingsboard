@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="twilioSmsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
@@ -29,14 +30,11 @@
       </mat-error>
     }
   </mat-form-field>
-  <mat-form-field class="mat-block" appearance="outline">
-    <mat-label translate>admin.twilio-account-token</mat-label>
-    <input required type="password" autocomplete="new-password" matInput formControlName="accountToken">
-    <tb-toggle-password matSuffix></tb-toggle-password>
-    @if (twilioSmsProviderConfigurationFormGroup.get('accountToken').hasError('required')) {
-      <mat-error>
-        {{ 'admin.twilio-account-token-required' | translate }}
-      </mat-error>
-    }
-  </mat-form-field>
+  <tb-secret-key-input formControlName="accountToken"
+                       required
+                       class="mat-block flex-1"
+                       appearance="outline"
+                       label="{{ 'admin.twilio-account-token' | translate }}"
+                       requiredText="{{ 'admin.twilio-account-token-required' | translate }}">
+  </tb-secret-key-input>
 </form>

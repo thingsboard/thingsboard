@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -12,7 +13,8 @@ import {
   GetValueAction,
   getValueActionsByWidgetType,
   getValueActionTranslations,
-  GetValueSettings
+  GetValueSettings,
+  RpcParamsType
 } from '@shared/models/action-widget-settings.models';
 import { ValueType } from '@shared/models/constants';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
@@ -80,6 +82,8 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
   dataToValueType = DataToValueType;
 
+  rpcParamsType = RpcParamsType;
+
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   ValueType = ValueType;
@@ -109,7 +113,12 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
           requestTimeout: [this.getValueSettings?.executeRpc?.requestTimeout, [Validators.required, Validators.min(5000)]],
           requestPersistent: [this.getValueSettings?.executeRpc?.requestPersistent, []],
           persistentPollingInterval:
-            [this.getValueSettings?.executeRpc?.persistentPollingInterval, [Validators.required, Validators.min(1000)]]
+            [this.getValueSettings?.executeRpc?.persistentPollingInterval, [Validators.required, Validators.min(1000)]],
+          params: this.fb.group({
+            type: [this.getValueSettings?.executeRpc?.params?.type ?? RpcParamsType.NONE, [Validators.required]],
+            constantValue: [this.getValueSettings?.executeRpc?.params?.constantValue, [Validators.required]],
+            paramsFunction: [this.getValueSettings?.executeRpc?.params?.paramsFunction, [Validators.required]]
+          })
         }),
         getAttribute: this.fb.group({
           scope: [this.getValueSettings?.getAttribute?.scope, []],
@@ -136,7 +145,8 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
     merge(this.getValueSettingsFormGroup.get('action').valueChanges,
           this.getValueSettingsFormGroup.get('dataToValue').get('type').valueChanges,
-          this.getValueSettingsFormGroup.get('executeRpc').get('requestPersistent').valueChanges
+          this.getValueSettingsFormGroup.get('executeRpc').get('requestPersistent').valueChanges,
+          this.getValueSettingsFormGroup.get('executeRpc').get('params').get('type').valueChanges
     ).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -184,6 +194,17 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
           this.getValueSettingsFormGroup.get('executeRpc').get('persistentPollingInterval').enable({emitEvent: false});
         } else {
           this.getValueSettingsFormGroup.get('executeRpc').get('persistentPollingInterval').disable({emitEvent: false});
+        }
+        const paramsType: RpcParamsType = this.getValueSettingsFormGroup.get('executeRpc').get('params').get('type').value;
+        if (paramsType === RpcParamsType.CONSTANT) {
+          this.getValueSettingsFormGroup.get('executeRpc').get('params').get('constantValue').enable({emitEvent: false});
+        } else {
+          this.getValueSettingsFormGroup.get('executeRpc').get('params').get('constantValue').disable({emitEvent: false});
+        }
+        if (paramsType === RpcParamsType.FUNCTION) {
+          this.getValueSettingsFormGroup.get('executeRpc').get('params').get('paramsFunction').enable({emitEvent: false});
+        } else {
+          this.getValueSettingsFormGroup.get('executeRpc').get('params').get('paramsFunction').disable({emitEvent: false});
         }
         break;
       case GetValueAction.GET_ATTRIBUTE:

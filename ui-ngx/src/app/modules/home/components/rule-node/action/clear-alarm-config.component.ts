@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, EventEmitter, ViewChild } from '@angular/core';
 import { AppState, getCurrentAuthState, NodeScriptTestService } from '@core/public-api';

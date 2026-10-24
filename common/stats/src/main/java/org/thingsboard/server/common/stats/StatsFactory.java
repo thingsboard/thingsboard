@@ -1,7 +1,10 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.stats;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Timer;
 
 import java.util.function.ToDoubleFunction;
@@ -23,5 +26,7 @@ public interface StatsFactory {
     Timer createTimer(String key, String... tags);
 
     StatsTimer createStatsTimer(String type, String name, String... tags);
+
+    Meter remove(Counter counter);
 
 }

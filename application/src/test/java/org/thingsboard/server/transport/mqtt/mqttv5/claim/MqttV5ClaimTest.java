@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.mqtt.mqttv5.claim;
 
 import org.junit.Before;
@@ -21,5 +22,10 @@ public class MqttV5ClaimTest extends AbstractMqttV5ClaimTest {
     @Test
     public void testClaimingDevice() throws Exception {
         processTestClaimingDevice();
+    }
+
+    @Test
+    public void testClaimingDeviceOnShortTopic() throws Exception {
+        processTestClaimingDeviceOnShortTopic();
     }
 }

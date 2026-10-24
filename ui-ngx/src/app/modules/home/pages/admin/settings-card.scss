@@ -1,10 +1,16 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-@import "../../../../../scss/constants";
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+@import "constants";
 
 :host {
  .mat-mdc-card.settings-card {
    margin: 8px;
+
+   @media #{$mat-gt-sm} {
+     width: 700px;
+     margin: 8px auto;
+   }
 
    mat-card-header.mat-mdc-card-header {
      align-items: center;
@@ -28,14 +34,6 @@
          border-color: inherit;
        }
      }
-   }
-
-   @media #{$mat-md} {
-     width: 80%;
-   }
-
-   @media #{$mat-gt-md} {
-     width: 60%;
    }
   }
 }

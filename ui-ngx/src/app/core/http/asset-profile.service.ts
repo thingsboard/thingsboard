@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -7,6 +8,9 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
+import { DeviceProfileInfo } from '@shared/models/device.models';
+import { map } from 'rxjs/operators';
+import { sortEntitiesByIds } from '@shared/models/base-data';
 import { EntityInfoData } from '@shared/models/entity.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
@@ -22,11 +26,6 @@ export class AssetProfileService {
 
   public getAssetProfiles(pageLink: PageLink, config?: RequestConfig): Observable<PageData<AssetProfile>> {
     return this.http.get<PageData<AssetProfile>>(`/api/assetProfiles${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public getAssetProfilesByIds(assetProfileIds: Array<string>, config?: RequestConfig): Observable<Array<AssetProfileInfo>> {
-    return this.http.get<Array<AssetProfileInfo>>(`/api/assetProfileInfos?assetProfileIds=${assetProfileIds.join(',')}`,
-      defaultHttpOptionsFromConfig(config));
   }
 
   public getAssetProfile(assetProfileId: string, config?: RequestConfig): Observable<AssetProfile> {
@@ -59,6 +58,13 @@ export class AssetProfileService {
 
   public getAssetProfileInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<AssetProfileInfo>> {
     return this.http.get<PageData<AssetProfileInfo>>(`/api/assetProfileInfos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAssetProfilesByIds(assetProfileIds: Array<string>, config?: RequestConfig): Observable<Array<AssetProfileInfo>> {
+    return this.http.get<Array<AssetProfileInfo>>(`/api/assetProfileInfos?assetProfileIds=${assetProfileIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map((assetProfiles) => sortEntitiesByIds(assetProfiles, assetProfileIds))
+    );
   }
 
   public getAssetProfileNames(activeOnly: boolean = false, config?: RequestConfig): Observable<Array<EntityInfoData>> {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.msg;
 
 import lombok.Getter;
@@ -86,6 +87,8 @@ public enum MsgType {
     DEVICE_EDGE_UPDATE_TO_DEVICE_ACTOR_MSG,
 
     DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG,
+
+    DEVICE_RPC_PERSIST_RESULT_TO_DEVICE_ACTOR_MSG,
 
     DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG,
 

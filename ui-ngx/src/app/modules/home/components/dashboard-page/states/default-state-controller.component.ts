@@ -1,6 +1,7 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
-import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardState } from '@shared/models/dashboard.models';
@@ -12,9 +13,11 @@ import { UtilsService } from '@core/services/utils.service';
 import { base64toObj, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { WINDOW } from '@core/services/window.service';
 import { MobileService } from '@core/services/mobile.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
+// @dynamic
 @Component({
     selector: 'tb-default-state-controller',
     templateUrl: './default-state-controller.component.html',
@@ -26,15 +29,16 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   breadcrumbs$ = this.breadcrumbService.breadcrumbs$;
 
   constructor(protected router: Router,
+              @Inject(WINDOW) protected window: Window,
               protected route: ActivatedRoute,
               protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
-              private utils: UtilsService,
+              protected utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService,
+              dashboardUtils: DashboardUtilsService,
               private breadcrumbService: BreadcrumbService) {
-    super(router, route, ngZone, statesControllerService);
+    super(router, route, utils, window, ngZone, statesControllerService, dashboardUtils);
   }
 
   ngOnInit(): void {
@@ -47,7 +51,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.preservedState;
+      this.stateObject = this.normalizeStateObject(this.preservedState);
       setTimeout(() => {
         this.gotoState(this.stateObject[0].id, true);
       }, 1);
@@ -67,6 +71,13 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   }
 
   protected onStatesChanged() {
+    const prevStateId = this.getStateId();
+    this.stateObject = this.normalizeStateObject(this.stateObject);
+    const newStateId = this.getStateId();
+    if (newStateId !== prevStateId) {
+      this.gotoState(newStateId, false);
+      this.updateStateParam(objToBase64(this.stateObject), true);
+    }
   }
 
   protected onStateChanged() {
@@ -200,33 +211,13 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
       try {
         result = base64toObj(stateBase64);
       } catch (e) {
-        result = [ { id: null, params: {} } ];
+        result = [];
       }
     }
-    if (!result) {
-      result = [];
+    if (result && result.length > 1) {
+      result = [ result[result.length - 1] ];
     }
-    if (!result.length) {
-      result[0] = { id: null, params: {} };
-    } else if (result.length > 1) {
-      const newResult = [];
-      newResult.push(result[result.length - 1]);
-      result = newResult;
-    }
-    const rootStateId = this.dashboardUtils.getRootStateId(this.states);
-    if (!result[0].id) {
-      result[0].id = rootStateId;
-    }
-    if (!this.states[result[0].id]) {
-      result[0].id = rootStateId;
-    }
-    let i = result.length;
-    while (i--) {
-      if (!result[i].id || !this.states[result[i].id]) {
-        result.splice(i, 1);
-      }
-    }
-    return result;
+    return this.normalizeStateObject(result);
   }
 
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {

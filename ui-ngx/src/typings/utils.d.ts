@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 type NestedKeyOf<ObjectType extends object> =
   {[Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
     ? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]> extends infer U extends string ? U : never}`
@@ -7,6 +8,7 @@ type NestedKeyOf<ObjectType extends object> =
   }[keyof ObjectType & (string | number)];
 
 type AllKeyOf<T> = T extends never ? never : keyof T;
+type $Values<T extends object> = T[keyof T];
 
 type Optional<T, K> = { [P in Extract<keyof T, K>]?: T[P] };
 

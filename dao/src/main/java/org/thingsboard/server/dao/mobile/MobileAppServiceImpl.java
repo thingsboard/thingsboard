@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.mobile;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -21,11 +22,11 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.service.Validator;
 
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.service.Validator.checkNotNull;
 
 @Slf4j
 @Service
@@ -97,7 +98,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     @Override
     public MobileApp findMobileAppByPkgNameAndPlatformType(String pkgName, PlatformType platformType) {
         log.trace("Executing findMobileAppByPkgNameAndPlatformType, pkgName [{}], platform [{}]", pkgName, platformType);
-        Validator.checkNotNull(platformType, PLATFORM_TYPE_IS_REQUIRED);
+        checkNotNull(platformType, PLATFORM_TYPE_IS_REQUIRED);
         return mobileAppDao.findByPkgNameAndPlatformType(TenantId.SYS_TENANT_ID, pkgName, platformType);
     }
 

@@ -1,0 +1,58 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-drop-list tb-report-components"
+  [style.background]="background"
+  [style.min-height.px]="reportsComponentHeight"
+  cdkDropList
+  cdkDropListOrientation="vertical"
+  cdkDropListAutoScrollStep="20"
+  [cdkDropListDisabled]="readonly"
+  [cdkDropListData]="reportComponents"
+  [cdkDropListConnectedTo]="context.dragDropCtx.dropLists"
+  [cdkDropListEnterPredicate]="allowDropPredicate"
+  (cdkDropListDropped)="componentDrop($event)"
+  (cdkDropListEntered)="dropListEnter($event)"
+  (cdkDropListExited)="dropListExit($event)">
+  @if (showNoReportComponents && !readonly) {
+    <div class="tb-no-reports-components">
+      <div translate class="p-4 text-center">
+        report-template.drop-report-components
+      </div>
+    </div>
+  }
+  @for (item of reportComponents; track item) {
+    <div cdkDrag class="tb-draggable tb-report-component-draggable"
+      #reportComponentDrag
+      [cdkDragDisabled]="readonly"
+      [cdkDragData]="item"
+      (cdkDragMoved)="dragMoved($event)"
+      (cdkDragReleased)="dragReleased($event)"
+      (cdkDragStarted)="componentDragStarted($event)"
+      (cdkDragEnded)="componentDragEnded()">
+      <tb-report-component #reportComponentComponent
+        [reportComponent]="item"
+        [context]="context"
+        [format]="format"
+        [readonly]="readonly"
+        [last]="$last"
+        [scale]="scale"
+        [pageMarginLeft]="marginLeft"
+        [pageMarginRight]="marginRight"
+        [width]="reportComponentDrag.offsetWidth"
+        (edit)="onComponentEdit($event)"
+        (childEdit)="onComponentEdit($event)"
+        (makeCopy)="duplicateComponent(item)"
+        (remove)="componentRemove(item)"
+        (childRemove)="childComponentRemove($event)"
+        (childrenChanged)="childrenComponentsChanged()">
+      </tb-report-component>
+      @if (reportComponentComponent.reportComponentsContainer && !readonly) {
+        <tb-icon cdkDragHandle #dragHandle class="tb-report-component-drag-handle">mdi:arrow-all</tb-icon>
+      }
+    </div>
+  }
+</div>

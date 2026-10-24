@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (!standalone) {
@@ -140,6 +141,11 @@
             <div class="tb-form-row">
               <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwner">
                 {{ 'alarm-rule.propagate-alarm-to-owner' | translate }}
+              </mat-slide-toggle>
+            </div>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwnerHierarchy">
+                {{ 'alarm-rule.propagate-alarm-to-owner-hierarchy' | translate }}
               </mat-slide-toggle>
             </div>
             <div class="tb-form-row">

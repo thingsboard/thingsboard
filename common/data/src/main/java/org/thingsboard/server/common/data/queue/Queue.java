@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.queue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -7,8 +8,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
@@ -19,7 +21,7 @@ import java.util.Optional;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, HasTenantId, QueueConfig {
+public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, TenantEntity, QueueConfig {
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
@@ -67,6 +69,12 @@ public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasNam
         return Optional.ofNullable(getAdditionalInfo())
                 .map(info -> info.get("duplicateMsgToAllPartitions"))
                 .filter(JsonNode::isBoolean).map(JsonNode::asBoolean).orElse(false);
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.QUEUE;
     }
 
 }

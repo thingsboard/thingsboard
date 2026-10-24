@@ -1,0 +1,33 @@
+{
+  "name": "Temperature Sensor",
+  "description": "",
+  "type": "DEFAULT",
+  "transportType": "MQTT",
+  "provisionType": "DISABLED",
+  "defaultRuleChainId": null,
+  "defaultEdgeRuleChainId": {
+    "entityType": "RULE_CHAIN",
+    "id": "93df11df-2fef-4177-8cda-1571e94f5d18"
+  },
+  "defaultQueueName": null,
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "type": "MQTT",
+      "deviceTelemetryTopic": "esp/telemetry",
+      "deviceAttributesTopic": "esp/attributes",
+      "transportPayloadTypeConfiguration": {
+        "transportPayloadType": "JSON"
+      }
+    },
+    "provisionConfiguration": {
+      "type": "DISABLED",
+      "provisionDeviceSecret": null
+    }
+  },
+  "provisionDeviceKey": null,
+  "default": false,
+  "jsonId": "f127d253-5668-42e6-9a30-d4d102f4af78"
+}

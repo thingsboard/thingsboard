@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -159,6 +159,4 @@ export class JsResourceComponent extends EntityComponent<Resource> implements On
       this.entityForm.get('content').enable({ emitEvent: false });
     }
   }
-
-  protected readonly resourceType = ResourceType;
 }

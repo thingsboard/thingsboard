@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Injector, Input, OnInit, StaticProvider, ViewContainerRef } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
@@ -43,6 +44,10 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
   @coerceBoolean()
   @Input()
   userMode = false;
+
+  @coerceBoolean()
+  @Input()
+  disableAssignedToCurrentUserOption = false;
 
   assigneeFormGroup: UntypedFormGroup;
   assignee?: User | UserEmailInfo;
@@ -193,7 +198,8 @@ export class AlarmAssigneeSelectComponent implements OnInit, ControlValueAccesso
           useValue: {
             assigneeId: this.assignee?.id?.id,
             assigneeOption: this.assigneeOption,
-            userMode: this.userMode
+            userMode: this.userMode,
+            disableAssignedToCurrentUserOption: this.disableAssignedToCurrentUserOption
           } as AlarmAssigneeSelectPanelData
         },
         {

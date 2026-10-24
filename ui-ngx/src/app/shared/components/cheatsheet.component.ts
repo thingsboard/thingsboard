@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.actors;
 
 import org.thingsboard.server.common.data.EntityType;
@@ -28,6 +29,8 @@ public interface TbActorCtx extends TbActorRef {
     void broadcastToChildrenByType(TbActorMsg msg, EntityType entityType);
 
     void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter);
+
+    void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter, boolean highPriority);
 
     List<TbActorId> filterChildren(Predicate<TbActorId> childFilter);
 }

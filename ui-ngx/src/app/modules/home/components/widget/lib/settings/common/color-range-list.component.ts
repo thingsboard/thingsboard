@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -16,12 +17,13 @@ import {
   AdvancedColorRange,
   ColorRange,
   ColorRangeSettings,
+  normalizeColorRangeSettings,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -78,6 +80,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   @coerceBoolean()
+  useThemePalette = false;
+
+  @Input()
+  @coerceBoolean()
   advancedMode = false;
 
   modelValue: any;
@@ -121,11 +127,11 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   writeValue(value: any): void {
     if (value) {
       let rangeList: ColorRangeSettings = {};
-      if (this.simpleRange || (isUndefined(value?.advancedMode) && value?.length)) {
+      if (this.simpleRange) {
         rangeList.advancedMode = false;
-        rangeList.range = value;
+        rangeList.range = normalizeColorRangeSettings(value).range;
       } else {
-        rangeList = deepClone(value);
+        rangeList = normalizeColorRangeSettings(value);
       }
       this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode || false, {emitEvent: false});
       if (isDefinedAndNotNull(rangeList?.range)) {

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.model.token;
 
 import io.jsonwebtoken.Claims;
@@ -30,6 +31,7 @@ import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsServ
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -49,6 +51,7 @@ public class JwtTokenFactory {
     public static int KEY_LENGTH = Jwts.SIG.HS512.getKeyBitLength();
 
     private static final String SCOPES = "scopes";
+    private static final String USER_GROUP_IDS = "userGroupIds";
     private static final String USER_ID = "userId";
     private static final String FIRST_NAME = "firstName";
     private static final String LAST_NAME = "lastName";
@@ -60,6 +63,7 @@ public class JwtTokenFactory {
 
     @Lazy
     private final JwtSettingsService jwtSettingsService;
+    private final UserPermissionsService userPermissionsService;
 
     private volatile JwtParser jwtParser;
     private volatile SecretKey secretKey;
@@ -74,8 +78,9 @@ public class JwtTokenFactory {
 
         UserPrincipal principal = securityUser.getUserPrincipal();
 
+        ClaimsBuilder claimsBuilder = Jwts.claims().subject(principal.getValue());
         JwtBuilder jwtBuilder = setUpToken(securityUser, securityUser.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority).collect(Collectors.toList()), jwtSettingsService.getJwtSettings().getTokenExpirationTime());
+                .map(GrantedAuthority::getAuthority).collect(Collectors.toList()), jwtSettingsService.getJwtSettings().getTokenExpirationTime(), claimsBuilder);
         jwtBuilder.claim(FIRST_NAME, securityUser.getFirstName())
                 .claim(LAST_NAME, securityUser.getLastName())
                 .claim(ENABLED, securityUser.isEnabled())
@@ -89,7 +94,7 @@ public class JwtTokenFactory {
 
         String token = jwtBuilder.compact();
 
-        return new AccessJwtToken(token);
+        return new AccessJwtToken(token, claimsBuilder.build());
     }
 
     public SecurityUser parseAccessJwtToken(String token) {
@@ -123,11 +128,18 @@ public class JwtTokenFactory {
         }
 
         boolean isPublic = false;
-        if (authority != Authority.PRE_VERIFICATION_TOKEN && authority != Authority.MFA_CONFIGURATION_TOKEN) {
-            securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
-            securityUser.setLastName(claims.get(LAST_NAME, String.class));
-            securityUser.setEnabled(claims.get(ENABLED, Boolean.class));
-            isPublic = claims.get(IS_PUBLIC, Boolean.class);
+        if (authority != Authority.PRE_VERIFICATION_TOKEN) {
+            if (authority != Authority.MFA_CONFIGURATION_TOKEN) {
+                securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
+                securityUser.setLastName(claims.get(LAST_NAME, String.class));
+                securityUser.setEnabled(claims.get(ENABLED, Boolean.class));
+                isPublic = claims.get(IS_PUBLIC, Boolean.class);
+            }
+            try {
+                securityUser.setUserPermissions(userPermissionsService.getMergedPermissions(securityUser, isPublic));
+            } catch (Exception e) {
+                throw new BadCredentialsException("Failed to get user permissions", e);
+            }
         }
         UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
         securityUser.setUserPrincipal(principal);
@@ -137,11 +149,12 @@ public class JwtTokenFactory {
     public JwtToken createRefreshToken(SecurityUser securityUser) {
         UserPrincipal principal = securityUser.getUserPrincipal();
 
-        String token = setUpToken(securityUser, Collections.singletonList(Authority.REFRESH_TOKEN.name()), jwtSettingsService.getJwtSettings().getRefreshTokenExpTime())
+        ClaimsBuilder claimsBuilder = Jwts.claims().subject(principal.getValue());
+        String token = setUpToken(securityUser, Collections.singletonList(Authority.REFRESH_TOKEN.name()), jwtSettingsService.getJwtSettings().getRefreshTokenExpTime(), claimsBuilder)
                 .claim(IS_PUBLIC, principal.getType() == UserPrincipal.Type.PUBLIC_ID)
                 .id(UUID.randomUUID().toString()).compact();
 
-        return new AccessJwtToken(token);
+        return new AccessJwtToken(token, claimsBuilder.build());
     }
 
     public SecurityUser parseRefreshToken(String token) {
@@ -167,12 +180,13 @@ public class JwtTokenFactory {
     }
 
     public JwtToken createMfaToken(SecurityUser user, Authority scope, Integer expirationTime) {
-        JwtBuilder jwtBuilder = setUpToken(user, Collections.singletonList(scope.name()), expirationTime)
+        ClaimsBuilder claimsBuilder = Jwts.claims().subject(user.getEmail());
+        JwtBuilder jwtBuilder = setUpToken(user, Collections.singletonList(scope.name()), expirationTime, claimsBuilder)
                 .claim(TENANT_ID, user.getTenantId().toString());
         if (user.getCustomerId() != null) {
             jwtBuilder.claim(CUSTOMER_ID, user.getCustomerId().toString());
         }
-        return new AccessJwtToken(jwtBuilder.compact());
+        return new AccessJwtToken(jwtBuilder.compact(), claimsBuilder.build());
     }
 
     public void reload() {
@@ -180,15 +194,12 @@ public class JwtTokenFactory {
         getJwtParser(true);
     }
 
-    private JwtBuilder setUpToken(SecurityUser securityUser, List<String> scopes, long expirationTime) {
+    private JwtBuilder setUpToken(SecurityUser securityUser, List<String> scopes, long expirationTime, ClaimsBuilder claimsBuilder) {
         if (StringUtils.isBlank(securityUser.getEmail())) {
             throw new IllegalArgumentException("Cannot create JWT Token without username/email");
         }
 
-        UserPrincipal principal = securityUser.getUserPrincipal();
-
-        ClaimsBuilder claimsBuilder = Jwts.claims()
-                .subject(principal.getValue())
+        claimsBuilder
                 .add(USER_ID, securityUser.getId().getId().toString())
                 .add(SCOPES, scopes);
         if (securityUser.getSessionId() != null) {
@@ -197,7 +208,7 @@ public class JwtTokenFactory {
 
         ZonedDateTime currentTime = ZonedDateTime.now();
 
-        claimsBuilder.expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()));
+        claimsBuilder.expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant())); // need for getting exp time in generate report
 
         return Jwts.builder()
                 .claims(claimsBuilder.build())

@@ -1,9 +1,11 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import {
   DateEntityTableColumn,
+  defaultEntityTablePermissions,
   EntityActionTableColumn,
   EntityChipsEntityTableColumn,
   EntityTableColumn,
@@ -20,6 +22,7 @@ import { DomainTableHeaderComponent } from '@home/pages/admin/oauth2/domains/dom
 import { Direction } from '@app/shared/models/page/sort-order';
 import { map, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 
 @Injectable()
 export class DomainTableConfigResolver  {
@@ -28,7 +31,9 @@ export class DomainTableConfigResolver  {
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
-              private domainService: DomainService) {
+              private domainService: DomainService,
+              private userPermissionsService: UserPermissionsService,
+              ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.DOMAIN;
     this.config.rowPointer = true;
@@ -67,7 +72,7 @@ export class DomainTableConfigResolver  {
 
     this.config.deleteEntityTitle = (domain) => this.translate.instant('admin.oauth2.delete-domain-title', {domainName: domain.name});
     this.config.deleteEntityContent = () => this.translate.instant('admin.oauth2.delete-domain-text');
-    this.config.entitiesFetchFunction = pageLink => this.domainService.getTenantDomainInfos(pageLink);
+    this.config.entitiesFetchFunction = pageLink => this.domainService.getDomainInfos(pageLink);
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
     this.config.saveEntity = (domain, originalDomain) => {
       const clientsIds = domain.oauth2ClientInfos as Array<string> || [];
@@ -90,6 +95,7 @@ export class DomainTableConfigResolver  {
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<DomainInfo> {
+    defaultEntityTablePermissions(this.userPermissionsService, this.config);
     return this.config;
   }
 

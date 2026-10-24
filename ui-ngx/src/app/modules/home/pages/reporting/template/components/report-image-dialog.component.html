@@ -1,0 +1,75 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form (ngSubmit)="save()" class="tb-report-image-dialog">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2 translate>report-template.insert-update-image</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content style="position: relative;">
+    <div [formGroup]="reportImageFormGroup" class="tb-form-panel no-border">
+      <div class="tb-form-panel stroked">
+        <div class="flex flex-row items-center justify-between">
+          <div class="tb-form-panel-title">
+            {{ 'report-template.component.image.image-source' | translate }}
+          </div>
+          <tb-toggle-select formControlName="sourceType">
+            <tb-toggle-option value="image">{{ 'report-template.component.image.source-image' | translate }}</tb-toggle-option>
+            <tb-toggle-option value="entityKey">{{ 'report-template.component.image.source-entity-key' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <tb-gallery-image-input [class.!hidden]="reportImageFormGroup.get('sourceType').value !== 'image'"
+                                detectImageSize
+                                (imageSize)="imageSizeUpdated($event)"
+                                formControlName="imageUrl">
+        </tb-gallery-image-input>
+        <div class="tb-form-row tb-standard-fields column-xs" [class.!hidden]="reportImageFormGroup.get('sourceType').value !== 'entityKey'">
+          <div class="fixed-title-width" translate>report-template.component.image.image-url-key</div>
+          <tb-string-autocomplete class="flex-1" [fetchOptionsFn]="fetchKeyOptionsFn" formControlName="imageKey"></tb-string-autocomplete>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'report-template.image-size' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-2">
+          <div class="tb-small-label" translate>report-template.width</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="width" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+          <div class="tb-small-label" translate>report-template.height</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="height" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+          <button mat-icon-button
+                  type="button"
+                  (click)="togglePreserveAspect()"
+                  matTooltip="{{ 'report-template.preserve-image-proportions' | translate }}"
+                  matTooltipPosition="above">
+            <tb-icon matButtonIcon>{{ preserveAspect ? 'mdi:lock' : 'mdi:lock-open'}}</tb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="!reportImageFormGroup.dirty || reportImageFormGroup.invalid">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</form>

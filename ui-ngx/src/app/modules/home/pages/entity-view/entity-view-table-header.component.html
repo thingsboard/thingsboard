@@ -1,14 +1,23 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<tb-entity-subtype-select
-  class="min-w-0 flex-1"
-  subscriptSizing="dynamic"
-  [showLabel]="true"
-  [entityType]="entityType.ENTITY_VIEW"
-  [ngModel]="entitiesTableConfig.componentsData.entityViewType"
-  (ngModelChange)="entityViewTypeChanged($event)">
-</tb-entity-subtype-select>
+<div class="flex flex-row items-center justify-start">
+  <tb-entity-subtype-select
+    class="min-w-0 flex-1"
+    subscriptSizing="dynamic"
+    [showLabel]="true"
+    [entityType]="entityType.ENTITY_VIEW"
+    [ngModel]="entitiesTableConfig.componentsData.entityViewType"
+    (ngModelChange)="entityViewTypeChanged($event)">
+  </tb-entity-subtype-select>
+  <mat-slide-toggle
+    style="margin-left: 32px;"
+    [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
+    (ngModelChange)="includeCustomersChanged($event)">
+    {{ includeCustomersLabel | translate }}
+  </mat-slide-toggle>
+</div>

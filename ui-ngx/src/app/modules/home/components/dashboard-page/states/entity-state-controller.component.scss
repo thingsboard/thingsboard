@@ -1,11 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   display: block;
   overflow: hidden;
 
   .entity-state-controller {
-    color: rgba(0,0,0,0.76);
+    color: var(--tb-menu-text-color);
     .state-divider {
       padding: 0;
       width: 20px;
@@ -59,7 +60,7 @@
     --mat-select-trigger-text-size: 24px;
     --mat-select-trigger-text-line-height: 32px;
     --mat-select-trigger-text-weight: 400;
-    --mat-select-enabled-trigger-text-color: rgba(0,0,0,0.76);
+    --mat-select-enabled-trigger-text-color: var(--tb-menu-text-color);
     .mat-mdc-select-arrow {
       width: 24px;
     }

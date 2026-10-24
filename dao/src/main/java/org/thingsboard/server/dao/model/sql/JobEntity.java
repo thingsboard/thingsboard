@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,6 +14,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.JobId;
 import org.thingsboard.server.common.data.job.Job;
@@ -35,6 +38,9 @@ public class JobEntity extends BaseSqlEntity<Job> {
 
     @Column(name = ModelConstants.TENANT_ID_PROPERTY, nullable = false)
     private UUID tenantId;
+
+    @Column(name = ModelConstants.CUSTOMER_ID_PROPERTY)
+    private UUID customerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.JOB_TYPE_PROPERTY, nullable = false)
@@ -65,6 +71,9 @@ public class JobEntity extends BaseSqlEntity<Job> {
     public JobEntity(Job job) {
         super(job);
         this.tenantId = getTenantUuid(job.getTenantId());
+        if (job.getCustomerId() != null) {
+            this.customerId = job.getCustomerId().getId();
+        }
         this.type = job.getType();
         this.key = job.getKey();
         this.entityId = job.getEntityId().getId();
@@ -80,6 +89,7 @@ public class JobEntity extends BaseSqlEntity<Job> {
         job.setId(new JobId(id));
         job.setCreatedTime(createdTime);
         job.setTenantId(getTenantId(tenantId));
+        job.setCustomerId(customerId != null ? new CustomerId(customerId) : null);
         job.setType(type);
         job.setKey(key);
         job.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));

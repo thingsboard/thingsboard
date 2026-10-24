@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   CellActionDescriptor,
   DateEntityTableColumn,
@@ -11,9 +12,14 @@ import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
 import {
   Notification,
+  notificationAiAssistantConfig,
   NotificationStatus,
   NotificationTemplateTypeTranslateMap
 } from '@shared/models/notification.models';
+import { AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { NotificationService } from '@core/http/notification.service';
 import { InboxTableHeaderComponent } from '@home/pages/notification/inbox/inbox-table-header.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,12 +39,14 @@ export class InboxTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Notification> = new EntityTableConfig<Notification>();
 
-  constructor(private notificationService: NotificationService,
+  constructor(private store: Store<AppState>,
+              private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
               private datePipe: DatePipe,
               private utilsService: UtilsService,
-              private sanitizer: DomSanitizer) {
+              private sanitizer: DomSanitizer,
+              private userPermissionsService: UserPermissionsService) {
 
     this.config.entityType = EntityType.NOTIFICATION;
     this.config.detailsPanelEnabled = false;
@@ -87,6 +95,9 @@ export class InboxTableConfigResolver  {
       new EntityTableColumn<Notification>('text', 'notification.message', '60%',
         (entity) => this.sanitizer.sanitize(SecurityContext.HTML, this.utilsService.customTranslation(entity.text, entity.text)))
     );
+
+    this.config.aiAssistantConfig = notificationAiAssistantConfig(
+      this.store, this.userPermissionsService, this.translate, AiAssistantViewType.NOTIFICATION_INBOX);
 
   }
 

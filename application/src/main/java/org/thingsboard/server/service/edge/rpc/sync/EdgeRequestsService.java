@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.sync;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -8,6 +9,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsRequestMsg;
+import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
@@ -40,10 +42,13 @@ public interface EdgeRequestsService {
     @Deprecated(since = "3.9.1", forRemoval = true)
     ListenableFuture<Void> processEntityViewsRequestMsg(TenantId tenantId, Edge edge, EntityViewsRequestMsg entityViewsRequestMsg);
 
+    ListenableFuture<Void> processEntityGroupEntitiesRequest(TenantId tenantId, Edge edge, EntityGroupRequestMsg entityGroupEntitiesRequestMsg);
+
+    ListenableFuture<Void> processEntityGroupPermissionsRequest(TenantId tenantId, Edge edge, EntityGroupRequestMsg userGroupEntitiesRequestMsg);
+
     ListenableFuture<Void> processSendEmailMsg(TenantId tenantId, Edge edge, SendEmailUplinkMsg sendEmailUplinkMsg);
 
     ListenableFuture<Void> processSendSmsMsg(TenantId tenantId, Edge edge, SendSmsUplinkMsg sendSmsUplinkMsg);
 
     ListenableFuture<Void> processSendNotificationMsg(TenantId tenantId, Edge edge, SendNotificationUplinkMsg sendNotificationUplinkMsg);
-
 }

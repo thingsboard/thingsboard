@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+.tb-originator-select {
+  tb-entity-select {
+    tb-entity-type-select {
+      width: 100%;
+    }
+
+    tb-entity-autocomplete {
+      min-width: 50%;
+    }
+  }
+
+  tb-owner-autocomplete {
+    width: 100%;
+  }
+
+  tb-entity-group-select {
+    tb-entity-type-select {
+      width: 100%;
+    }
+
+    tb-entity-group-autocomplete {
+      min-width: 50%;
+    }
+  }
+}

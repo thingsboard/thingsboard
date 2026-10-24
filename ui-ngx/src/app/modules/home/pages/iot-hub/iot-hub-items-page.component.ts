@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -28,13 +28,6 @@ const PAGE_CONFIGS: Record<string, ItemTypePageConfig> = {
     descriptionKey: 'iot-hub.items-page-desc-widgets',
     image: 'assets/iot-hub/items-page-widgets-hero.svg',
     routeSegment: 'widgets'
-  },
-  DASHBOARD: {
-    type: ItemType.DASHBOARD,
-    titleKey: 'item.type-dashboard-plural',
-    descriptionKey: 'iot-hub.items-page-desc-dashboards',
-    image: 'assets/iot-hub/items-page-dashboards-hero.svg',
-    routeSegment: 'dashboards'
   },
   SOLUTION_TEMPLATE: {
     type: ItemType.SOLUTION_TEMPLATE,

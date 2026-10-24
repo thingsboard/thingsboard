@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import "../../../scss/constants";
 
 :host {
@@ -85,6 +86,7 @@
       flex: 1;
       color: rgba(0, 0, 0, 0.38);
       background: transparent;
+      position: relative;
 
       .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
         border-radius: 20px;
@@ -103,11 +105,23 @@
       }
       &.mat-button-toggle-checked {
         .mat-button-toggle-button {
-          background: #F3F6FA;
-          color: $tb-primary-color;
-          border: 1px solid $tb-primary-color;
+          position: relative;
+          background: #fff;
+          color: var(--tb-primary-500);
+          border: 1px solid var(--tb-primary-500);
           border-radius: 20px;
-
+          &:before {
+            content: "";
+            display: block;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-radius: 20px;
+            background: var(--tb-primary-500);
+            opacity: 0.04;
+          }
           .mat-button-toggle-label-content {
             font-weight: 500;
             line-height: 24px;
@@ -119,17 +133,21 @@
       .mat-button-toggle.mat-button-toggle-appearance-standard {
         &.mat-button-toggle-checked {
           .mat-button-toggle-button {
-            background: $tb-primary-color;
+            background: var(--tb-primary-500);
             color: #FFFFFF;
+            &:before {
+              content: none;
+            }
           }
         }
       }
       &.tb-invert {
         .mat-button-toggle.mat-button-toggle-appearance-standard {
+          color: color-mix(in srgb, currentColor 80%, transparent);
           &.mat-button-toggle-checked {
             .mat-button-toggle-button {
               background: #FFFFFF;
-              color: $tb-primary-color;
+              color: var(--tb-primary-500);
             }
           }
         }

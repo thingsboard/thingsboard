@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-action-settings-panel" [formGroup]="getValueSettingsFormGroup">
@@ -46,6 +47,39 @@
             }
           </mat-form-field>
         </div>
+        <ng-container formGroupName="executeRpc">
+          <div class="tb-form-panel stroked" formGroupName="params">
+            <div class="tb-form-row no-padding no-border column-xs">
+              <div class="fixed-title-width" translate>widgets.value-action.parameters</div>
+              <tb-toggle-select class="flex-1" formControlName="type">
+                <tb-toggle-option [value]="rpcParamsType.CONSTANT">{{ 'widgets.value-action.converter-constant' | translate }}</tb-toggle-option>
+                <tb-toggle-option [value]="rpcParamsType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
+                <tb-toggle-option [value]="rpcParamsType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>
+              </tb-toggle-select>
+            </div>
+            @if (getValueSettingsFormGroup.get('executeRpc').get('params').get('type').value === rpcParamsType.CONSTANT) {
+              <tb-value-input
+                class="flex-1"
+                [layout]="{
+                            layout: 'row',
+                            breakpoints: {xs: 'column'}
+                        }"
+                formControlName="constantValue">
+              </tb-value-input>
+            }
+            @if (getValueSettingsFormGroup.get('executeRpc').get('params').get('type').value === rpcParamsType.FUNCTION) {
+              <tb-js-func
+                formControlName="paramsFunction"
+                withModules
+                required
+                [globalVariables]="functionScopeVariables"
+                [functionArgs]="[]"
+                functionTitle="{{ 'widgets.value-action.rpc-params-function' | translate }}"
+                helpId="widget/lib/rpc/rpc_params_fn">
+              </tb-js-func>
+            }
+          </div>
+        </ng-container>
       }
       @case (getValueAction.GET_ATTRIBUTE) {
         <ng-container formGroupName="getAttribute">

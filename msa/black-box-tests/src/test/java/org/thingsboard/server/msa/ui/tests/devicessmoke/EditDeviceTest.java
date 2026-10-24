@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.tests.devicessmoke;
 
 import io.qameta.allure.Description;
@@ -22,7 +23,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
         String newDeviceName = "Changed" + getRandomNumber();
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.setHeaderName();
         String nameBefore = devicePage.getHeaderName();
@@ -42,7 +43,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void deleteName() {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.changeNameEditMenu("");
@@ -55,7 +56,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void saveOnlyWithSpace() {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.changeNameEditMenu(" ");
@@ -70,7 +71,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void editDescription(String description, String newDescription, String finalDescription) {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME, description)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.descriptionEntityView().sendKeys(newDescription);
@@ -85,7 +86,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void isGateway(boolean isGateway) {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME, isGateway)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.checkboxGatewayEdit().click();
@@ -106,7 +107,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
         deviceName = testRestClient.postDevice("",
                 EntityPrototypes.defaultDevicePrototype(ENTITY_NAME, true, isOverwriteActivityTimeForConnected)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.checkboxOverwriteActivityTimeEdit().click();
@@ -126,7 +127,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void changeDeviceProfile() {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.changeDeviceProfile("DEFAULT");
@@ -141,7 +142,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void saveWithoutDeviceProfile() {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.clearProfileFieldBtn().click();
@@ -154,7 +155,7 @@ public class EditDeviceTest extends AbstractDeviceTest {
     public void editLabel(String label, String newLabel, String finalLabel) {
         deviceName = testRestClient.postDevice("", EntityPrototypes.defaultDevicePrototype(ENTITY_NAME, "", label)).getName();
 
-        sideBarMenuView.goToDevicesPage();
+        sideBarMenuView.goToAllDevices();
         devicePage.entity(deviceName).click();
         devicePage.editPencilBtn().click();
         devicePage.deviceLabelEditField().sendKeys(newLabel);

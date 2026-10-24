@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.query;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -71,8 +72,11 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 @TbCoreComponent
 public class DefaultEntityQueryService implements EntityQueryService {
 
-    @Autowired
-    private EntityService entityService;
+    private final EntityService entityService;
+
+    public DefaultEntityQueryService(EntityService entityService) {
+        this.entityService = entityService;
+    }
 
     @Autowired
     private AlarmService alarmService;
@@ -91,7 +95,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public long countEntitiesByQuery(SecurityUser securityUser, EntityCountQuery query) {
-        return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
+        return entityService.countEntitiesByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getUserPermissions(), query);
     }
 
     @Override
@@ -104,7 +108,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
                     securityUser
             );
         }
-        return entityService.findEntityDataByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
+        return entityService.findEntityDataByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getUserPermissions(), query);
     }
 
     private void resolveDynamicValuesInPredicates(List<KeyFilterPredicate> predicates, SecurityUser user) {
@@ -167,13 +171,14 @@ public class DefaultEntityQueryService implements EntityQueryService {
     public PageData<AlarmData> findAlarmDataByQuery(SecurityUser securityUser, AlarmDataQuery query) {
         EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
         PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
-                securityUser.getCustomerId(), entityDataQuery);
+                securityUser.getCustomerId(), securityUser.getUserPermissions(), entityDataQuery);
         if (entities.getTotalElements() > 0) {
             LinkedHashMap<EntityId, EntityData> entitiesMap = new LinkedHashMap<>();
             for (EntityData entityData : entities.getData()) {
                 entitiesMap.put(entityData.getEntityId(), entityData);
             }
-            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(securityUser.getTenantId(), query, entitiesMap.keySet());
+            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(securityUser.getTenantId(),
+                    securityUser.getUserPermissions(), query, entitiesMap.keySet());
             for (AlarmData alarmData : alarms.getData()) {
                 EntityId entityId = alarmData.getEntityId();
                 if (entityId != null) {
@@ -194,15 +199,15 @@ public class DefaultEntityQueryService implements EntityQueryService {
         if (query.getEntityFilter() != null) {
             EntityDataQuery entityDataQuery = this.buildEntityDataQuery(query);
             PageData<EntityData> entities = entityService.findEntityDataByQuery(securityUser.getTenantId(),
-                    securityUser.getCustomerId(), entityDataQuery);
+                    securityUser.getCustomerId(), securityUser.getUserPermissions(), entityDataQuery);
             if (entities.getTotalElements() > 0) {
                 List<EntityId> entityIds = entities.getData().stream().map(EntityData::getEntityId).toList();
-                return alarmService.countAlarmsByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query, entityIds);
+                return alarmService.countAlarmsByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getUserPermissions(), query, entityIds);
             } else {
                 return 0;
             }
         }
-        return alarmService.countAlarmsByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
+        return alarmService.countAlarmsByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getUserPermissions(), query);
     }
 
     private EntityDataQuery buildEntityDataQuery(AlarmCountQuery query) {
@@ -283,6 +288,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
         return Futures.transformAsync(findEntityIdsByQueryAsync(securityUser, query), ids -> {
             if (ids.isEmpty()) {
                 return immediateFuture(new AvailableEntityKeysV2(
+                        0,
                         Collections.emptySet(),
                         includeTimeseries ? Collections.emptyList() : null,
                         includeAttributes ? Collections.emptyMap() : null));
@@ -299,12 +305,12 @@ public class DefaultEntityQueryService implements EntityQueryService {
                     .map(scope -> fetchAttributeKeys(tenantId, ids, scope, includeSamples))
                     .toList();
 
-            return assembleResult(entityTypes, tsFuture, attrFutures);
+            return assembleResult(ids.size(), entityTypes, tsFuture, attrFutures);
         }, dbCallbackExecutor);
     }
 
     private ListenableFuture<List<EntityId>> findEntityIdsByQueryAsync(SecurityUser securityUser, EntityDataQuery query) {
-        return Futures.transform(entityService.findEntityDataByQueryAsync(securityUser.getTenantId(), securityUser.getCustomerId(), query),
+        return Futures.transform(entityService.findEntityDataByQueryAsync(securityUser.getTenantId(), securityUser.getCustomerId(), securityUser.getUserPermissions(), query),
                 page -> page.getData().stream()
                         .map(EntityData::getEntityId)
                         .toList(),
@@ -358,6 +364,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
     }
 
     private ListenableFuture<AvailableEntityKeysV2> assembleResult(
+            int totalEntities,
             Set<EntityType> entityTypes,
             ListenableFuture<List<KeyInfo>> tsFuture,
             List<ListenableFuture<Map.Entry<AttributeScope, List<KeyInfo>>>> attrFutures) {
@@ -381,7 +388,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
                             attrMap.put(entry.getKey(), entry.getValue());
                         }
                     }
-                    return new AvailableEntityKeysV2(entityTypes, tsKeys, attrMap);
+                    return new AvailableEntityKeysV2(totalEntities, entityTypes, tsKeys, attrMap);
                 }, dbCallbackExecutor);
     }
 

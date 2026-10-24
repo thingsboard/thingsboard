@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -46,6 +47,9 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   debugEventTypes: Array<DebugEventType>;
+
+  @Input()
+  isReadOnly: boolean = false;
 
   @Input()
   hideClearEventAction: boolean = false;
@@ -153,6 +157,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.viewContainerRef,
       this.cd,
       this.store,
+      this.isReadOnly,
       this.functionTestButtonLabel,
       this.debugEventSelected,
       this.hideClearEventAction,

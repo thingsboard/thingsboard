@@ -1,14 +1,17 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.widget;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -16,7 +19,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, HasTenantId, HasVersion {
+public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, TenantEntity, HasVersion {
 
     private static final long serialVersionUID = 8388684344603660756L;
 
@@ -55,6 +58,12 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
         this.deprecated = widgetType.isDeprecated();
         this.scada = widgetType.isScada();
         this.version = widgetType.getVersion();
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.WIDGET_TYPE;
     }
 
     @Schema(description = "JSON object with the Widget Type Id. " +

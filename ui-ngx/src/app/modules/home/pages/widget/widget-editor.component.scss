@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import '../../../../../scss/constants';
 
 tb-widget-editor {
@@ -160,7 +161,6 @@ mat-toolbar.tb-edit-toolbar {
 
   height: 56px;
   min-height: 56px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 
   & > div {
     height: 56px;
@@ -177,7 +177,7 @@ mat-toolbar.tb-edit-toolbar {
     line-height: 20px;
     font-weight: 400;
     overflow: hidden;
-    color: rgba(0, 0, 0, 0.76);
+    color: currentColor;
     @media #{$mat-lt-md} {
       display: none;
     }
@@ -204,7 +204,7 @@ mat-toolbar.tb-edit-toolbar {
   }
 
   .mat-mdc-form-field {
-    --mat-form-field-filled-input-text-color: rgba(0,0,0,0.76);
+    --mat-form-field-filled-input-text-color: currentColor;
     input, .mat-mdc-select {
       font-size: 16px;
       font-weight: 400;

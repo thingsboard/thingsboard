@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { PageComponent } from '@shared/components/page.component';
@@ -35,6 +36,8 @@ import { authenticationDialogMap } from '@home/pages/security/authentication-dia
 import { takeUntil, tap } from 'rxjs/operators';
 import { Observable, of, Subject } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
+import { Operation, Resource } from '@shared/models/security.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { AuthService } from '@core/auth/auth.service';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
@@ -75,11 +78,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     return localStorage.getItem('jwt_token_expiration');
   }
 
-  get expirationJwtData(): string {
-    const expirationData = this.datePipe.transform(this.jwtTokenExpiration, 'yyyy-MM-dd HH:mm:ss');
-    return this.translate.instant('profile.valid-till', { expirationData });
-  }
-
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private translate: TranslateService,
@@ -88,6 +86,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
               public dialogService: DialogService,
               public fb: UntypedFormBuilder,
               private datePipe: DatePipe,
+              private userPermissionsService: UserPermissionsService,
               private authService: AuthService,
               private clipboardService: ClipboardService) {
     super(store);
@@ -128,7 +127,7 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   }
 
   private twoFactorLoad(providers: TwoFactorAuthProviderType[]) {
-    if (providers.length) {
+    if (providers.length && this.userPermissionsService.hasGenericPermission(Resource.PROFILE, Operation.WRITE)) {
       this.twoFaService.getAccountTwoFaSettings().subscribe(data => this.processTwoFactorAuthConfig(data));
       Object.values(TwoFactorAuthProviderType).forEach(type => {
         if (providers.includes(type)) {

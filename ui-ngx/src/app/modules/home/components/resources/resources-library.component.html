@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (!standalone) {
@@ -38,7 +39,7 @@
 }
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset [disabled]="(isLoading$ | async)">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>resource.resource-type</mat-label>
         <mat-select formControlName="resourceType" required>

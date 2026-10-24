@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -18,6 +20,7 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRuleReci
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.IntegrationLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -59,6 +62,14 @@ public class NotificationRuleExportService<I extends EntityId, E extends Exporta
                 Set<UUID> ruleChains = triggerConfig.getRuleChains();
                 if (ruleChains != null) {
                     triggerConfig.setRuleChains(toExternalIds(ruleChains, RuleChainId::new, ctx).collect(Collectors.toSet()));
+                }
+                break;
+            }
+            case INTEGRATION_LIFECYCLE_EVENT: {
+                IntegrationLifecycleEventNotificationRuleTriggerConfig triggerConfig = (IntegrationLifecycleEventNotificationRuleTriggerConfig) ruleTriggerConfig;
+                Set<UUID> integrations = triggerConfig.getIntegrations();
+                if (integrations != null) {
+                    triggerConfig.setIntegrations(toExternalIds(integrations, IntegrationId::new, ctx).collect(Collectors.toSet()));
                 }
                 break;
             }

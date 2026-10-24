@@ -1,41 +1,46 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <mat-card appearance="outlined" class="settings-card">
   <mat-toolbar class="details-toolbar">
     <div class="mat-toolbar-tools flex flex-row items-center justify-start gap-2">
       <button mat-icon-button
-              matTooltip="{{ 'action.back' | translate }}"
-              matTooltipPosition="above"
-              (click)="goBack()">
+        matTooltip="{{ 'action.back' | translate }}"
+        matTooltipPosition="above"
+        (click)="goBack()">
         <mat-icon>arrow_back</mat-icon>
       </button>
       <div class="tb-details-title-header flex flex-col items-start justify-center">
         <div class="tb-details-title tb-ellipsis">{{ headerTitle }}</div>
         <div class="tb-details-subtitle tb-ellipsis">{{ headerSubtitle }}</div>
       </div>
+      @if (headerExtensionTemplate) {
+        <ng-container
+        [ngTemplateOutlet]="headerExtensionTemplate"></ng-container>
+      }
       <div class="tb-help" [tb-help]="helpLinkId()"></div>
       <span class="flex-1"></span>
       @if (!isReadOnly) {
         <section class="tb-header-button flex flex-row gap-2">
           <button [disabled]="(isLoading$ | async) || detailsForm.invalid || !detailsForm.dirty"
-                  mat-fab
-                  matTooltip="{{ 'action.apply-changes' | translate }}"
-                  matTooltipPosition="above"
-                  color="accent" class="tb-btn-header"
-                  [class.tb-hide]="!isEdit"
-                  (click)="onApplyDetails()">
+            mat-fab
+            matTooltip="{{ 'action.apply-changes' | translate }}"
+            matTooltipPosition="above"
+            color="accent" class="tb-btn-header"
+            [class.tb-hide]="!isEdit"
+            (click)="onApplyDetails()">
             <mat-icon class="material-icons">done</mat-icon>
           </button>
           <button [disabled]="(isLoading$ | async)"
-                  mat-fab
-                  matTooltip="{{ (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
-                  matTooltipPosition="above"
-                  color="accent" class="tb-btn-header"
-                  (click)="onToggleDetailsEditMode()">
+            mat-fab
+            matTooltip="{{ (isEdit ? 'action.decline-changes' : 'details.toggle-edit-mode') | translate }}"
+            matTooltipPosition="above"
+            color="accent" class="tb-btn-header"
+            (click)="onToggleDetailsEditMode()">
             <mat-icon class="material-icons">{{isEdit ? 'close' : 'edit'}}</mat-icon>
           </button>
         </section>

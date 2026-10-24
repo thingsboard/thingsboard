@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.js;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -127,14 +128,22 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
 
     @Override
     protected ListenableFuture<UUID> doEval(UUID scriptId, JsScriptInfo scriptInfo, String jsScript) {
+        // A top-level function declaration creates a non-configurable property on the Nashorn Global
+        // that can never be deleted, so every eval/release cycle would grow the Global's PropertyMap
+        // shape history forever. Declaring the function inside an IIFE and assigning it to a global
+        // property keeps the property configurable, allowing doRelease() to actually delete it.
+        // The prefix stays on the first line to preserve line numbering on the raw engine path;
+        // the sandbox beautifier reformats the wrapper and shifts reported error lines anyway.
+        String wrappedScript = "this['" + scriptInfo.getFunctionName() + "'] = (function() { " + jsScript
+                + "\nreturn " + scriptInfo.getFunctionName() + ";\n})();";
         return jsExecutor.submit(() -> {
             try {
                 evalLock.lock();
                 try {
                     if (useJsSandbox) {
-                        sandbox.eval(jsScript);
+                        sandbox.eval(wrappedScript);
                     } else {
-                        engine.eval(jsScript);
+                        engine.eval(wrappedScript);
                     }
                 } finally {
                     evalLock.unlock();
@@ -169,11 +178,21 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     }
 
     protected void doRelease(UUID scriptId, JsScriptInfo scriptInfo) throws ScriptException {
-        if (useJsSandbox) {
-            sandbox.eval(scriptInfo.getFunctionName() + " = undefined;");
-        } else {
-            engine.eval(scriptInfo.getFunctionName() + " = undefined;");
+        String deleteScript = "delete this['" + scriptInfo.getFunctionName() + "'];";
+        evalLock.lock();
+        try {
+            if (useJsSandbox) {
+                sandbox.eval(deleteScript);
+            } else {
+                engine.eval(deleteScript);
+            }
+        } finally {
+            evalLock.unlock();
         }
     }
 
+    @Override
+    protected boolean isLocal() {
+        return true;
+    }
 }

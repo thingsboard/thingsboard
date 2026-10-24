@@ -1,0 +1,228 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section class="solution-creator flex size-full flex-row gap-2">
+  <tb-solution-side-bar
+    (updatedSolution)="updatedSolution($event)"
+    (installedChanged)="onInstalledChanged($event)"
+  >
+  </tb-solution-side-bar>
+  <div class="solution-content relative flex flex-auto flex-col overflow-hidden rounded-lg">
+    <div class="solution-stepper-header"
+         tb-toast toastTarget="solution-creator"
+         [class.collapsed]="isInitialEmpty()">
+      @for (step of stepperLabels; track step; let i = $index) {
+        @let status = stepStatuses()[i];
+        <div class="stepper-step"
+             [class.ready]="status === 'ready'"
+             [class.active]="status === 'active'"
+             (click)="goToStep(i)">
+          <div class="stepper-icon">
+            @if (status === 'ready') {
+              <mat-icon class="tb-mat-18">check</mat-icon>
+            } @else {
+              {{ i + 1 }}
+            }
+          </div>
+          <span class="stepper-label">{{ step | translate }}</span>
+        </div>
+        @if (i < stepperLabels.length - 1) {
+          <div class="stepper-connector"
+               [class.completed]="stepStatuses()[i + 1] !== 'pending'"></div>
+        }
+      }
+    </div>
+    @switch (creatorStep()) {
+      @case ('chat') {
+        <div class="chat-container flex w-full flex-auto rounded-lg">
+          <div class="chat relative flex size-full flex-col items-center justify-end gap-3"
+               [class.background]="isInitialEmpty()">
+            @if (isInitialEmpty()) {
+              <div class="welcome-content">
+                <svg class="image-main-color" preserveAspectRatio="xMidYMid meet" viewBox="0 0 42 48" width="70px">
+                  <use [attr.xlink:href]="'/assets/solution-creator/iot-assistant.svg#iot-assistant'"></use>
+                </svg>
+                <div class="flex flex-col gap-1">
+                  <div class="whitespace-pre-line text-center text-xl font-semibold" translate>solution-creator.main-title</div>
+                  <div class="whitespace-pre-line text-center leading-6" translate>solution-creator.sub-title</div>
+                </div>
+              </div>
+            }
+            @if (messages().length || (loading() && !isGenerating())) {
+              <div class="chat-messages-container">
+                <div tb-toast toastTarget="solution-creator-chat"></div>
+                <tb-ai-chat-messages
+                  [messages]="messages()"
+                  [loading]="loading()"
+                  [loadingLongTime]="loadingLongTime()">
+                  <div loadingLongTime class="long-wait flex w-full flex-col items-center gap-6 rounded-xl">
+                    <img [src]="loadingImage" alt="Loading">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-xl font-semibold" translate>solution-creator.analyzing-your-request</span>
+                    </div>
+                  </div>
+                </tb-ai-chat-messages>
+              </div>
+            }
+            <section class="action flex w-full flex-col items-center gap-3"
+                     [class.action-centered]="isInitialEmpty()">
+              <tb-ai-prompt-input
+                [placeholder]="activePlaceholder() | translate"
+                [loading]="loading()"
+                (messageSent)="sendMsgFromUser($event)">
+              </tb-ai-prompt-input>
+              @if (isInitialEmpty()) {
+                <div class="example-chips" [class.expanded]="showMoreExamples()">
+                  @for (ex of solutionExamples; track ex.key) {
+                    <button type="button" mat-stroked-button class="example-chip" (click)="startCreateSolution(ex.key)">
+                      <mat-icon color="primary" class="tb-mat-18">{{ ex.icon }}</mat-icon>
+                      {{ ex.labelKey | translate }}
+                    </button>
+                  }
+                </div>
+                @if (solutionExamples.length > 3) {
+                  <button type="button" mat-button disableRipple class="more-toggle" (click)="toggleMoreExamples()">
+                    {{ (showMoreExamples() ? 'solution-creator.hide' : 'solution-creator.more-examples') | translate }}
+                    <mat-icon iconPositionEnd>{{ showMoreExamples() ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+                  </button>
+                }
+              } @else {
+                <div class="flex gap-2">
+                  @if (solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION) {
+                    <button mat-stroked-button
+                            class="tb-dynamic-button"
+                            type="button"
+                            [disabled]="loading()"
+                            (click)="back()">
+                      <span class="whitespace-nowrap">{{ 'action.back' | translate }}</span>
+                    </button>
+                  }
+                  <span class="flex-1"></span>
+                  @if (skipInterviewAllowed()) {
+                    <button mat-button
+                            class="tb-dynamic-button"
+                            type="button"
+                            color="primary"
+                            [disabled]="loading()"
+                            (click)="skipInterview()">
+                      <span class="whitespace-nowrap">{{ 'solution-creator.skip-interview' | translate }}</span>
+                    </button>
+                  }
+                  @if (solutionStep() === SolutionStep.DASHBOARDS_CONFIGURATION) {
+                    <button mat-button
+                            class="tb-dynamic-button"
+                            type="button"
+                            color="primary"
+                            [disabled]="loading() || !messages().length"
+                            (click)="startOver()">
+                      <mat-icon>refresh</mat-icon>
+                      <span class="whitespace-nowrap">{{ 'solution-creator.generate-again' | translate }}</span>
+                    </button>
+                  }
+                  @if (solutionStep() !== SolutionStep.INITIAL_CONFIGURATION || messages().length) {
+                    <button mat-raised-button
+                            class="tb-dynamic-button"
+                            type="button"
+                            color="primary"
+                            [disabled]="!isReadyStep() || loading()"
+                            (click)="nextStep()">
+                      {{ nextButtonLabel | translate }}
+                    </button>
+                  }
+                </div>
+              }
+            </section>
+          </div>
+          @if (isReadyStep()) {
+            @switch (solutionStep()) {
+              @case(SolutionStep.INITIAL_CONFIGURATION) {
+                <tb-solution-creator-overview-entities
+                  class="overview"
+                  [description]="solutionDescriptor"
+                  [solutionName]="solutionName"
+                  (updatedDescription)="updatedSolutionDescriptor($event)"
+                >
+                </tb-solution-creator-overview-entities>
+              }
+              @case(SolutionStep.DASHBOARDS_CONFIGURATION) {
+                <tb-solution-creator-overview-dashboard
+                  class="overview"
+                  [dashboards]="dashboardsOverview"
+                  [solutionName]="solutionName"
+                  (updatedDashboards)="updatedDashboardOverview($event)">
+                </tb-solution-creator-overview-dashboard>
+              }
+            }
+          }
+        </div>
+      }
+      @case ('result') {
+        <div class="solution-result flex flex-auto flex-col items-center justify-center gap-6 overflow-auto">
+          <svg class="image-main-color" preserveAspectRatio="xMidYMid meet" viewBox="0 0 200 200" width="200px" height="200px" >
+            <use [attr.xlink:href]="'assets/solution-creator/success.svg#success'"></use>
+          </svg>
+          <div>
+            <div class="title text-center">
+              {{(solutionMetadata.installed ? 'solution-creator.success-generate-install-title' : 'solution-creator.success-generate-title') | translate }}
+            </div>
+            <div class="sub-title text-center">
+              {{(solutionMetadata.installed ? 'solution-creator.success-generate-install-sub-title' : 'solution-creator.success-generate-sub-title') | translate }}
+            </div>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <div class="flex items-center gap-2">
+              <button mat-stroked-button
+                      type="button"
+                      color="primary"
+                      (click)="back()">
+                <mat-icon class="tb-mat-24">edit</mat-icon>
+                <span class="whitespace-nowrap">{{ 'action.edit' | translate }}</span>
+              </button>
+              @if (solutionMetadata.installResult?.mainDashboardId) {
+                <button mat-stroked-button
+                        type="button"
+                        color="primary"
+                        (click)="gotoMainDashboard()">
+                  <mat-icon class="tb-mat-24">dashboards</mat-icon>
+                  {{ 'solution-creator.main-dashboard' | translate }}
+                </button>
+              }
+              <button mat-stroked-button
+                      type="button"
+                      color="primary"
+                      (click)="openInfo()">
+                <mat-icon class="tb-mat-24">info_outline</mat-icon>
+                <span class="whitespace-nowrap">{{ 'solution-creator.info' | translate }}</span>
+              </button>
+            </div>
+            <div class="flex-1">
+              @if (solutionMetadata.installed) {
+                <button mat-button
+                        type="button"
+                        color="accent"
+                        (click)="uninstallSolution()">
+                  {{ 'solution-creator.uninstall-solution' | translate }}
+                </button>
+              } @else {
+                <button mat-raised-button
+                        type="button"
+                        color="primary"
+                        (click)="installSolution()">
+                  <mat-icon class="tb-mat-24">rocket_launch</mat-icon>
+                  {{ 'solution-creator.install-solution' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      @default {
+        <div class="flex flex-auto rounded-lg">
+        </div>
+      }
+    }
+  </div>
+</section>

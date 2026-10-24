@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import lombok.Getter;
@@ -75,7 +76,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
         if (query.getEntityFilter() != null) {
             entitiesIds = new LinkedHashSet<>();
             log.trace("[{}] Fetching data: {}", cmdId, alarmCountInvocationAttempts);
-            PageData<EntityData> data = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), buildEntityDataQuery());
+            PageData<EntityData> data = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), buildEntityDataQuery());
             entitiesIds.clear();
             tooManyEntities = data.hasNext();
             for (EntityData entityData : data.getData()) {
@@ -99,7 +100,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
         alarmCountInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmCountInvocationAttempts);
         if (alarmCountInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
-            int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entitiesIds);
+            int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query, entitiesIds);
             if (newCount != result) {
                 result = newCount;
                 sendWsMsg(new AlarmCountUpdate(cmdId, result));
@@ -110,7 +111,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
     }
 
     public void doFetchAlarmCount() {
-        result = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entitiesIds);
+        result = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), getMergedUserPermissions(), query, entitiesIds);
         sendWsMsg(new AlarmCountUpdate(cmdId, result));
     }
 

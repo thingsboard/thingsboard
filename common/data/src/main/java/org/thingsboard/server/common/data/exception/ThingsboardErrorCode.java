@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.exception;
 
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -20,7 +21,8 @@ public enum ThingsboardErrorCode {
     SUBSCRIPTION_VIOLATION(40),
     ENTITIES_LIMIT_EXCEEDED(41),
     PASSWORD_VIOLATION(45),
-    DATABASE(46);
+    DATABASE(46),
+    SETUP_INCOMPLETE(47);
 
     private int errorCode;
 

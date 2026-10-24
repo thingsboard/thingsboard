@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Inject, Injectable } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { isDefined } from '@core/utils';
@@ -17,6 +18,8 @@ const dashboardLayoutHandler = 'tbMobileDashboardLayoutHandler';
 const navigationHandler = 'tbMobileNavigationHandler';
 const mobileHandler = 'tbMobileHandler';
 const mobileReadyHandler = 'tbMobileReadyHandler';
+const recaptchaHandler = 'tbMobileRecaptchaHandler';
+const recaptchaLoadedHandler = 'tbMobileRecaptchaLoadedHandler';
 
 // @dynamic
 @Injectable({
@@ -32,6 +35,7 @@ export class MobileService {
   private reloadUserObservable: Observable<boolean>;
   private lastDashboardId: string;
   private toggleLayoutFunction: () => void;
+  private resetRecaptchaFunction: () => void;
 
   constructor(@Inject(WINDOW) private window: Window,
               private router: Router,
@@ -98,6 +102,26 @@ export class MobileService {
     }
   }
 
+  public onRecaptchaLoaded() {
+    if (this.mobileApp) {
+      this.mobileChannel.callHandler(recaptchaLoadedHandler);
+    }
+  }
+
+  public handleReCaptchaResponse(recaptchaResponse: string) {
+    if (this.mobileApp) {
+      this.mobileChannel.callHandler(recaptchaHandler, recaptchaResponse);
+    }
+  }
+
+  public registerResetRecaptchaFunction(resetRecaptchaFunction: () => void) {
+    this.resetRecaptchaFunction = resetRecaptchaFunction;
+  }
+
+  public unregisterResetRecaptchaFunction() {
+    this.resetRecaptchaFunction = null;
+  }
+
   private onWindowMessage(event: MessageEvent) {
     if (event.data) {
       let message: WindowMessage;
@@ -119,6 +143,10 @@ export class MobileService {
               this.toggleLayoutFunction();
             }
             break;
+          case 'resetRecaptcha':
+            if (this.resetRecaptchaFunction) {
+              this.resetRecaptchaFunction();
+            }
         }
       }
     }

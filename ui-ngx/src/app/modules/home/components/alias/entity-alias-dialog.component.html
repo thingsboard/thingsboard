@@ -1,16 +1,17 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <form [formGroup]="entityAliasFormGroup" (ngSubmit)="save()" style="width: 700px;">
-  <mat-toolbar class="tb-dialog-header">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
     <h2>{{ (isAdd ? 'alias.add' : 'alias.edit') | translate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
-            (click)="cancel()"
-            type="button">
+      (click)="cancel()"
+      type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
@@ -35,16 +36,21 @@
             </mat-error>
           }
         </mat-form-field>
-        <div class="tb-resolve-multiple-switch" tb-hint-tooltip-icon="{{ 'alias.resolve-multiple-hint' | translate }}">
-          <mat-slide-toggle class="mat-slide" formControlName="resolveMultiple">
-            {{ 'alias.resolve-multiple' | translate }}
-          </mat-slide-toggle>
-        </div>
+        @if (!disableResolveMultiple) {
+          <div class="tb-resolve-multiple-switch" tb-hint-tooltip-icon="{{ 'alias.resolve-multiple-hint' | translate }}">
+            <mat-slide-toggle class="mat-slide" formControlName="resolveMultiple">
+              {{ 'alias.resolve-multiple' | translate }}
+            </mat-slide-toggle>
+          </div>
+        }
       </div>
       <tb-entity-filter formControlName="filter"
-                        [resolveMultiple]="entityAliasFormGroup.get('resolveMultiple').value"
-                        (resolveMultipleChanged)="entityAliasFormGroup.get('resolveMultiple').patchValue($event)"
-                        [allowedEntityTypes]="allowedEntityTypes">
+        [disableResolveMultiple]="disableResolveMultiple"
+        [resolveMultiple]="!disableResolveMultiple ? entityAliasFormGroup.get('resolveMultiple').value : false"
+        (resolveMultipleChanged)="entityAliasFormGroup.get('resolveMultiple').patchValue($event)"
+        [allowedEntityTypes]="allowedEntityTypes"
+        [reportMode]="reportMode"
+        [subReport]="subReport">
       </tb-entity-filter>
       <tb-error [error]="entityAliasFormGroup.hasError('noEntityMatched')
                 ? translate.instant('alias.entity-filter-no-entity-matched') : ''"></tb-error>
@@ -52,14 +58,14 @@
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || entityAliasFormGroup.invalid || !entityAliasFormGroup.dirty">
+      type="submit"
+      [disabled]="(isLoading$ | async) || entityAliasFormGroup.invalid || !entityAliasFormGroup.dirty">
       {{ (isAdd ? 'action.add' : 'action.save') | translate }}
     </button>
   </div>

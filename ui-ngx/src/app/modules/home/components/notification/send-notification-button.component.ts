@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import {
   RequestNotificationDialogData,
@@ -12,8 +13,12 @@ import { EntitiesTableComponent } from '@home/components/entity/entities-table.c
 import { EntityType } from '@shared/models/entity-type.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { AuthUser } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 
 @Component({
     selector: 'tb-send-notification-button',
@@ -22,11 +27,26 @@ import { Authority } from '@shared/models/authority.enum';
 })
 export class SendNotificationButtonComponent {
 
-  authUser = getCurrentAuthUser(this.store);
+  private authUser: AuthUser = getCurrentAuthUser(this.store);
+
+  private hasAiPermission: boolean = getCurrentAuthState(this.store).aiEnabled &&
+    this.userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL) &&
+    this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
 
   constructor(private dialog: MatDialog,
               private store: Store<AppState>,
-              private activeComponentService: ActiveComponentService) {
+              private activeComponentService: ActiveComponentService,
+              private userPermissionsService: UserPermissionsService,
+              private panelService: AiAssistantPanelService) {
+  }
+
+  showAiAssistant(): boolean {
+    return this.hasAiPermission && !this.panelService.open();
+  }
+
+  toggleAiAssistant($event: Event): void {
+    $event?.stopPropagation();
+    this.panelService.toggle();
   }
 
   sendNotification($event: Event) {
@@ -54,7 +74,11 @@ export class SendNotificationButtonComponent {
   }
 
   public show(): boolean {
-    return this.authUser.authority !== Authority.CUSTOMER_USER;
+    return !this.isCustomer() && this.userPermissionsService.hasGenericPermission(Resource.NOTIFICATION, Operation.WRITE);
+  }
+
+  private isCustomer(): boolean {
+    return this.authUser.authority === Authority.CUSTOMER_USER;
   }
 
 }

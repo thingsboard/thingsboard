@@ -1,10 +1,12 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   Input,
@@ -72,6 +74,8 @@ import {
   AddWidgetToDashboardDialogData
 } from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
 import { deepClone } from '@core/utils';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
+import { Operation, Resource } from '@shared/models/security.models';
 import { Filters } from '@shared/models/query/query.models';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
@@ -79,6 +83,7 @@ import { FormBuilder } from '@angular/forms';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AggregationType, defaultTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
+import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-generation.service';
 
 @Component({
     selector: 'tb-attribute-table',
@@ -101,7 +106,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   attributeScope: TelemetryType;
   toTelemetryTypeFunc = toTelemetryType;
 
-  displayedColumns = ['select', 'lastUpdateTs', 'key', 'value'];
+  displayedColumns = ['lastUpdateTs', 'key', 'value'];
   pageLink: PageLink;
   textSearchMode = false;
   dataSource: AttributeDatasource;
@@ -171,6 +176,16 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   @Input()
   entityName: string;
 
+  private readonlyValue: boolean;
+  get readonly(): boolean {
+    return this.readonlyValue;
+  }
+
+  @Input()
+  set readonly(value: boolean) {
+    this.readonlyValue = coerceBooleanProperty(value);
+  }
+
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -195,11 +210,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
+              private userPermissionsService: UserPermissionsService,
               private zone: NgZone,
               private cd: ChangeDetectorRef,
               private elementRef: ElementRef,
               private fb: FormBuilder,
-              private timeService: TimeService) {
+              private timeService: TimeService,
+              private destroyRef: DestroyRef,
+              private aiDashboardGenerationService: AiDashboardGenerationService) {
     super(store);
     this.isSysAdmin = getCurrentAuthUser(this.store).authority === Authority.SYS_ADMIN;
     this.dirtyValue = !this.activeValue;
@@ -209,6 +227,11 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   ngOnInit() {
+    if (!this.readonly ||
+      this.userPermissionsService.hasResourcesGenericPermission([Resource.WIDGETS_BUNDLE, Resource.WIDGET_TYPE],
+        Operation.READ)) {
+      this.displayedColumns.unshift('select');
+    }
     this.widgetResize$ = new ResizeObserver(() => {
       this.zone.run(() => {
         const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
@@ -349,7 +372,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.isClientSideTelemetryTypeMap.get(this.attributeScope)) {
+    if (this.isClientSideTelemetryTypeMap.get(this.attributeScope) || this.readonly) {
       return;
     }
     const target = $event.target || $event.currentTarget;
@@ -510,6 +533,17 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   enterWidgetMode() {
+    this.dashboardUtils.createSingleEntityFilter(this.entityIdValue).subscribe((filter) => {
+      const entityAlias: EntityAlias = {
+        id: this.utils.guid(),
+        alias: this.entityName,
+        filter
+      };
+      this.configureWidgetMode(entityAlias);
+    });
+  }
+
+  private configureWidgetMode(entityAlias: EntityAlias) {
     this.mode = 'widget';
     this.widgetsList = [];
     this.widgetsListCache = [];
@@ -518,11 +552,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.widgetsCarouselIndex = 0;
     this.selectedWidgetsBundleAlias = 'tables';
 
-    const entityAlias: EntityAlias = {
-      id: this.utils.guid(),
-      alias: this.entityName,
-      filter: this.dashboardUtils.createSingleEntityFilter(this.entityIdValue)
-    };
     const entitiAliases: EntityAliases = {};
     entitiAliases[entityAlias.id] = entityAlias;
 
@@ -646,4 +675,13 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.mode = 'default';
   }
 
+  generateDashboard($event: Event) {
+    $event.stopPropagation();
+    const selectedTimeseries = this.dataSource.selection.selected.map(telemetry => telemetry.key);
+    this.aiDashboardGenerationService.generate(this.entityIdValue.id, this.destroyRef, selectedTimeseries);
+  }
+
+  isAllowedDashboardGenerate(): boolean {
+    return this.aiDashboardGenerationService.isAllowedDashboardGenerate();
+  }
 }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.edqs.ToCoreEdqsMsg;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,15 +43,23 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.menu.CustomMenuCacheKey;
+import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.translation.TranslationCacheKey;
+import org.thingsboard.server.gen.integration.ToCoreIntegrationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ErrorEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
+import org.thingsboard.server.gen.transport.TransportProtos.IntegrationDownlinkMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.IntegrationValidationResponseProto;
 import org.thingsboard.server.gen.transport.TransportProtos.LifecycleEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.RestApiCallResponseMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SchedulerServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
@@ -72,9 +82,15 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.queue.util.TbPackCallback;
+import org.thingsboard.server.queue.util.TbPackProcessingContext;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.custommenu.TbCustomMenuService;
+import org.thingsboard.server.service.integration.IntegrationManagerService;
+import org.thingsboard.server.service.integration.TbCoreIntegrationApiService;
+import org.thingsboard.server.service.integration.TbIntegrationDownlinkService;
+import org.thingsboard.server.service.log.LogStreamDispatcher;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
-import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
@@ -82,12 +98,14 @@ import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
+import org.thingsboard.server.service.scheduler.SchedulerService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
 import org.thingsboard.server.service.subscription.TbLocalSubscriptionService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 import org.thingsboard.server.service.sync.vc.GitVersionControlQueueService;
+import org.thingsboard.server.service.translation.TbCustomTranslationService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
@@ -123,40 +141,46 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private int firmwarePackSize;
 
     private final DeviceStateService stateService;
-    private final TbApiUsageStateService statsService;
+    private final SchedulerService schedulerService;
     private final TbLocalSubscriptionService localSubscriptionService;
     private final SubscriptionManagerService subscriptionManagerService;
     private final TbCoreDeviceRpcService tbCoreDeviceRpcService;
+    private final TbIntegrationDownlinkService downlinkService;
+    private final IntegrationManagerService integrationManagerService;
+    private final RuleEngineCallService ruleEngineCallService;
     private final OtaPackageStateService firmwareStateService;
     private final GitVersionControlQueueService vcQueueService;
+    private final TbCoreIntegrationApiService tbCoreIntegrationApiService;
     private final NotificationSchedulerService notificationSchedulerService;
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final TbCoreQueueFactory queueFactory;
     private final TbImageService imageService;
-    private final RuleEngineCallService ruleEngineCallService;
+    private final TbCustomTranslationService translationService;
+    private final TbCustomMenuService customMenuService;
     private final EdqsService edqsService;
+    private final LogStreamDispatcher logStreamDispatcher;
+    private final SystemUpdateMsgHandler systemUpdateMsgHandler;
     private final TbCoreConsumerStats stats;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, QueueConfig> mainConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
+    private QueueConsumerManager<TbProtoQueueMsg<ToCoreIntegrationMsg>> integrationApiConsumer;
 
     private volatile ListeningExecutorService deviceActivityEventsExecutor;
 
-    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
-                                        ActorSystemContext actorContext,
-                                        DeviceStateService stateService,
-                                        TbLocalSubscriptionService localSubscriptionService,
+    public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
+                                        DeviceStateService stateService, SchedulerService schedulerService, TbLocalSubscriptionService localSubscriptionService,
                                         SubscriptionManagerService subscriptionManagerService,
                                         TbCoreDeviceRpcService tbCoreDeviceRpcService,
-                                        StatsFactory statsFactory,
-                                        TbDeviceProfileCache deviceProfileCache,
+                                        TbIntegrationDownlinkService downlinkService, IntegrationManagerService integrationManagerService,
+                                        RuleEngineCallService ruleEngineCallService, StatsFactory statsFactory, TbDeviceProfileCache deviceProfileCache,
                                         TbAssetProfileCache assetProfileCache,
-                                        TbApiUsageStateService statsService,
-                                        TbTenantProfileCache tenantProfileCache,
                                         TbApiUsageStateService apiUsageStateService,
+                                        TbTenantProfileCache tenantProfileCache,
                                         OtaPackageStateService firmwareStateService,
                                         GitVersionControlQueueService vcQueueService,
+                                        TbCoreIntegrationApiService tbCoreIntegrationApiService,
                                         PartitionService partitionService,
                                         ApplicationEventPublisher eventPublisher,
                                         JwtSettingsService jwtSettingsService,
@@ -164,24 +188,34 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
                                         TbResourceDataCache tbResourceDataCache,
-                                        RuleEngineCallService ruleEngineCallService,
-                                        EdqsService edqsService) {
+                                        TbCustomTranslationService translationService,
+                                        TbCustomMenuService customMenuService,
+                                        EdqsService edqsService,
+                                        LogStreamDispatcher logStreamDispatcher,
+                                        SystemUpdateMsgHandler systemUpdateMsgHandler) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
+        this.schedulerService = schedulerService;
         this.localSubscriptionService = localSubscriptionService;
         this.subscriptionManagerService = subscriptionManagerService;
         this.tbCoreDeviceRpcService = tbCoreDeviceRpcService;
+        this.downlinkService = downlinkService;
+        this.integrationManagerService = integrationManagerService;
+        this.ruleEngineCallService = ruleEngineCallService;
         this.stats = new TbCoreConsumerStats(statsFactory);
-        this.statsService = statsService;
         this.firmwareStateService = firmwareStateService;
         this.vcQueueService = vcQueueService;
+        this.tbCoreIntegrationApiService = tbCoreIntegrationApiService;
         this.notificationSchedulerService = notificationSchedulerService;
         this.notificationRuleProcessor = notificationRuleProcessor;
         this.imageService = imageService;
-        this.ruleEngineCallService = ruleEngineCallService;
+        this.translationService = translationService;
+        this.customMenuService = customMenuService;
         this.queueFactory = tbCoreQueueFactory;
         this.edqsService = edqsService;
+        this.logStreamDispatcher = logStreamDispatcher;
+        this.systemUpdateMsgHandler = systemUpdateMsgHandler;
     }
 
     @PostConstruct
@@ -214,6 +248,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 .consumerExecutor(consumersExecutor)
                 .threadPrefix("firmware")
                 .build();
+        this.integrationApiConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToCoreIntegrationMsg>>builder()
+                .name("TB Integration Api")
+                .msgPackProcessor(this::processIntegrationMsgs)
+                .pollInterval(pollInterval)
+                .consumerCreator(queueFactory::createToCoreIntegrationMsgConsumer)
+                .consumerExecutor(consumersExecutor)
+                .threadPrefix("integration-api")
+                .build();
     }
 
     @PreDestroy
@@ -230,6 +272,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         firmwareStatesConsumer.subscribe();
         firmwareStatesConsumer.launch();
         usageStatsConsumer.launch();
+        integrationApiConsumer.launch();
     }
 
     @Override
@@ -239,6 +282,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         usageStatsConsumer.subscribe(event.getCorePartitions()
                 .stream()
                 .map(tpi -> tpi.withTopic(usageStatsConsumer.getConsumer().getTopic()))
+                .collect(Collectors.toSet()));
+        integrationApiConsumer.subscribe(event.getCorePartitions().stream()
+                .map(tpi -> tpi.withTopic(integrationApiConsumer.getConsumer().getTopic()))
                 .collect(Collectors.toSet()));
     }
 
@@ -268,6 +314,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     } else if (toCoreMsg.hasDeviceStateServiceMsg()) {
                         log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceStateServiceMsg());
                         forwardToStateService(toCoreMsg.getDeviceStateServiceMsg(), callback);
+                    } else if (toCoreMsg.hasSchedulerServiceMsg()) {
+                        log.trace("[{}] Forwarding message to scheduler service {}", id, toCoreMsg.getSchedulerServiceMsg());
+                        forwardToSchedulerService(toCoreMsg.getSchedulerServiceMsg(), callback);
                     } else if (toCoreMsg.hasDeviceConnectMsg()) {
                         log.trace("[{}] Forwarding message to device state service {}", id, toCoreMsg.getDeviceConnectMsg());
                         forwardToStateService(toCoreMsg.getDeviceConnectMsg(), callback);
@@ -302,6 +351,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToEventService(toCoreMsg.getErrorEventMsg(), callback);
                     } else if (toCoreMsg.hasLifecycleEventMsg()) {
                         forwardToEventService(toCoreMsg.getLifecycleEventMsg(), callback);
+                    } else {
+                        log.warn("[{}] No rule how to forward message from main consumer for message: {}", id, toCoreMsg);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -359,6 +410,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasFromDeviceRpcResponse()) {
             log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
+        } else if (toCoreNotification.hasIntegrationDownlinkMsg()) {
+            log.trace("[{}] Forwarding message to Integration service {}", id, toCoreNotification.getIntegrationDownlinkMsg());
+            forwardToDownlinkService(toCoreNotification.getIntegrationDownlinkMsg(), callback);
+        } else if (toCoreNotification.hasIntegrationValidationResponseMsg()) {
+            log.trace("[{}] Forwarding message to Integration service {}", id, toCoreNotification.getIntegrationValidationResponseMsg());
+            forwardToIntegrationManagerService(toCoreNotification.getIntegrationValidationResponseMsg(), callback);
         } else if (toCoreNotification.hasRestApiCallResponseMsg()) {
             log.trace("[{}] Forwarding message to RuleEngineCallService service {}", id, toCoreNotification.getRestApiCallResponseMsg());
             forwardToRuleEngineCallService(toCoreNotification.getRestApiCallResponseMsg(), callback);
@@ -383,8 +440,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
+        } else if (toCoreNotification.hasTranslationCacheInvalidateMsg()) {
+            forwardToTranslationService(toCoreNotification.getTranslationCacheInvalidateMsg(), callback);
+        } else if (toCoreNotification.hasCustomMenuCacheInvalidateMsg()) {
+            forwardToCustomMenuService(toCoreNotification.getCustomMenuCacheInvalidateMsg(), callback);
         } else if (toCoreNotification.hasToEdqsCoreServiceMsg()) {
             edqsService.processSystemMsg(JacksonUtil.fromBytes(toCoreNotification.getToEdqsCoreServiceMsg().getValue().toByteArray(), ToCoreEdqsMsg.class));
+            callback.onSuccess();
+        } else if (toCoreNotification.hasSystemUpdateMsg()) {
+            // Must stay ahead of the trailing else, which would ack the signal and drop it; pinned by SystemUpdateMsgHandlingTest.
+            systemUpdateMsgHandler.handle(toCoreNotification.getSystemUpdateMsg(), callback);
+        } else {
+            // Ack rather than let the pack time out. An unrecognised notification is what a node one version
+            // behind sees, and 2 s of stalled notifications per pack is a real cost to pay for silence.
+            log.trace("Received notification with missing handler");
             callback.onSuccess();
         }
         if (statsEnabled) {
@@ -443,8 +512,18 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         consumer.commit();
     }
 
+    private void processIntegrationMsgs(List<TbProtoQueueMsg<ToCoreIntegrationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCoreIntegrationMsg>> consumer) {
+        try {
+            tbCoreIntegrationApiService.handle(msgs, TbCallback.EMPTY);
+        } catch (Throwable t) {
+            log.warn("Failed to process integration msgs batch", t); // likely never happens but to be sure
+        }
+
+        consumer.commit();
+    }
+
     private void handleUsageStats(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback) {
-        statsService.process(msg, callback);
+        apiUsageStateService.process(msg, callback);
     }
 
     private boolean handleOtaPackageUpdates(TbProtoQueueMsg<ToOtaPackageStateServiceMsg> msg) {
@@ -478,6 +557,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             localSubscriptionService.onAlarmUpdate(msg.getAlarmUpdate(), callback);
         } else if (msg.hasNotificationsUpdate()) {
             localSubscriptionService.onNotificationUpdate(msg.getNotificationsUpdate(), callback);
+        } else if (msg.hasLogUpdate()) {
+            logStreamDispatcher.onWatermark(msg.getLogUpdate(), callback);
         } else if (msg.hasSubUpdate() || msg.hasAlarmSubUpdate() || msg.hasNotificationsSubUpdate()) {
             //OLD CODE -> Do NOTHING.
             callback.onSuccess();
@@ -501,6 +582,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 return ImageCacheKey.forPublicImage(cacheKeyProto.getPublicResourceKey());
             }
         }).forEach(imageService::evictETags);
+        callback.onSuccess();
+    }
+
+    private void forwardToTranslationService(TransportProtos.TranslationCacheInvalidateMsg msg, TbCallback callback) {
+        var tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        translationService.evictETags(TranslationCacheKey.forTenant(tenantId));
+        callback.onSuccess();
+    }
+
+    private void forwardToCustomMenuService(TransportProtos.CustomMenuCacheInvalidateMsg msg, TbCallback callback) {
+        var tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        var customer = msg.getCustomerIdMSB() > 0 ? new CustomerId(new UUID(msg.getCustomerIdMSB(), msg.getCustomerIdLSB())) : null;
+        var userId = msg.getUserIdMSB() > 0 ? new UserId(new UUID(msg.getUserIdMSB(), msg.getUserIdLSB())) : null;
+        customMenuService.evictETags(CustomMenuCacheKey.forUser(tenantId, customer, userId));
         callback.onSuccess();
     }
 
@@ -573,6 +668,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             TenantId tenantId = toTenantId(updateProto.getTenantIdMSB(), updateProto.getTenantIdLSB());
             NotificationRequestUpdate update = JacksonUtil.fromString(updateProto.getUpdate(), NotificationRequestUpdate.class);
             localSubscriptionService.onNotificationRequestUpdate(tenantId, update, callback);
+        } else if (msg.hasLogUpdate()) {
+            TransportProtos.TbLogStreamUpdateProto proto = msg.getLogUpdate();
+            subscriptionManagerService.onLogStreamUpdate(
+                    toTenantId(proto.getTenantIdMSB(), proto.getTenantIdLSB()),
+                    TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
+                    proto.getLatestSeq(), callback);
         } else {
             throwNotHandled(msg, callback);
         }
@@ -663,6 +764,26 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 });
     }
 
+    private void forwardToSchedulerService(SchedulerServiceMsgProto schedulerServiceMsg, TbCallback callback) {
+        if (statsEnabled) {
+            stats.log(schedulerServiceMsg);
+        }
+        schedulerService.onQueueMsg(schedulerServiceMsg, callback);
+    }
+
+    private void forwardToDownlinkService(IntegrationDownlinkMsgProto integrationDownlinkMsg, TbCallback callback) {
+        downlinkService.onDownlinkToRemoteIntegrationMsg(integrationDownlinkMsg, callback);
+    }
+
+    private void forwardToIntegrationManagerService(IntegrationValidationResponseProto integrationDownlinkMsg, TbCallback callback) {
+        integrationManagerService.handleValidationResponse(integrationDownlinkMsg, callback);
+    }
+
+
+    void forwardToRuleEngineCallService(RestApiCallResponseMsgProto restApiCallResponseMsg, TbCallback callback) {
+        ruleEngineCallService.onQueueMsg(restApiCallResponseMsg, callback);
+    }
+
     private void forwardToNotificationSchedulerService(TransportProtos.NotificationSchedulerServiceMsg msg, TbCallback callback) {
         TenantId tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
         NotificationRequestId notificationRequestId = new NotificationRequestId(new UUID(msg.getRequestIdMSB(), msg.getRequestIdLSB()));
@@ -713,10 +834,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 actorContext.getDbCallbackExecutor());
     }
 
-    void forwardToRuleEngineCallService(TransportProtos.RestApiCallResponseMsgProto restApiCallResponseMsg, TbCallback callback) {
-        ruleEngineCallService.onQueueMsg(restApiCallResponseMsg, callback);
-    }
-
     private void throwNotHandled(Object msg, TbCallback callback) {
         log.warn("Message not handled: {}", msg);
         callback.onFailure(new RuntimeException("Message not handled!"));
@@ -733,6 +850,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         mainConsumer.awaitStop();
         usageStatsConsumer.stop();
         firmwareStatesConsumer.stop();
+        integrationApiConsumer.stop();
     }
 
 }

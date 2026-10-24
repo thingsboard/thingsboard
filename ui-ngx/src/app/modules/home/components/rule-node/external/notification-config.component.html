@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="notificationConfigForm" class="flex flex-col">
@@ -20,6 +21,6 @@
     placeholderText="{{ 'notification.recipient' | translate }}"
     requiredText="{{ 'notification.recipients-required' | translate }}"
     entityType="{{ entityType.NOTIFICATION_TARGET }}"
-    subType="{{ notificationType.RULE_NODE }}">
+    entitySubType="{{ notificationType.RULE_NODE }}">
   </tb-entity-list>
 </section>

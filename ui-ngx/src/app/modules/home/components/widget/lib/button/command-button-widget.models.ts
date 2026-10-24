@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { WidgetButtonAppearance, widgetButtonDefaultAppearance } from '@shared/components/button/widget-button.models';
 import {

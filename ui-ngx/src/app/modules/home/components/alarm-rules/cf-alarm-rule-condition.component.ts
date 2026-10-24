@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
@@ -29,7 +29,8 @@ import {
   AlarmRuleExpressionType,
   AlarmRuleSchedule,
   AlarmRuleScheduleType,
-  checkPredicates
+  areAlarmRuleConditionFilterArgumentsValid,
+  isAlarmRuleConditionScheduleArgumentValid
 } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import {
@@ -93,7 +94,6 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   private modelValue: AlarmRuleCondition;
 
   private propagateChange = (v: any) => { };
-  private onValidatorChange = () => { };
 
   constructor(private dialog: MatDialog,
               private fb: FormBuilder,
@@ -106,10 +106,6 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   registerOnTouched(fn: any): void {
-  }
-
-  registerOnValidatorChange(fn: () => void): void {
-    this.onValidatorChange = fn;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -129,46 +125,18 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.arguments && !changes.arguments.firstChange) {
-      if (this.recalculateArgumentValidity()) {
-        this.onValidatorChange();
-      }
+      this.recalculateArgumentValidity();
     }
   }
 
-  private recalculateArgumentValidity(): boolean {
-    const prevFiltersValid = this.filtersArgumentsValid;
-    const prevSchedulerValid = this.schedulerArgumentsValid;
+  private recalculateArgumentValidity(): void {
     if (!this.modelValue || !this.arguments) {
       this.filtersArgumentsValid = true;
       this.schedulerArgumentsValid = true;
     } else {
-      this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
-      this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
+      this.filtersArgumentsValid = areAlarmRuleConditionFilterArgumentsValid(this.modelValue, this.arguments);
+      this.schedulerArgumentsValid = isAlarmRuleConditionScheduleArgumentValid(this.modelValue, this.arguments);
     }
-    return prevFiltersValid !== this.filtersArgumentsValid || prevSchedulerValid !== this.schedulerArgumentsValid;
-  }
-
-  private isScheduleArgumentValid(obj: any, validArguments: string[]): boolean {
-    const arg = obj?.schedule?.dynamicValueArgument;
-    return !arg || validArguments.includes(arg);
-  }
-
-  private areFilterAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
-    const validSet = new Set(Object.keys(args));
-    const filters = obj?.expression?.filters || obj?.filters || [];
-    for (const filter of filters) {
-      if (filter.argument && !validSet.has(filter.argument)) {
-        return false;
-      }
-    }
-    for (const filter of filters) {
-      if (Array.isArray(filter.predicates)) {
-        if (!checkPredicates(filter.predicates, validSet)) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   public conditionSet(): boolean {
@@ -176,9 +144,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   public validate(control: AbstractControl): ValidationErrors | null {
-    const hasCondition = this.conditionSet();
-    const argsValid = this.filtersArgumentsValid && this.schedulerArgumentsValid;
-    return (hasCondition && argsValid) ? null : { alarmRuleCondition: { valid: false } };
+    return this.conditionSet() ? null : { alarmRuleCondition: { valid: false } };
   }
 
   public openFilterDialog($event: Event) {
@@ -266,7 +232,6 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
     this.updateConditionInfo();
     this.recalculateArgumentValidity();
     this.propagateChange(this.modelValue);
-    this.onValidatorChange();
     this.cd.detectChanges();
   }
 
@@ -285,10 +250,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
-        if (!this.modelValue) {
-          this.modelValue = {} as AlarmRuleCondition;
-        }
-        this.modelValue.schedule = result;
+        this.modelValue = {...this.modelValue, schedule: result} as AlarmRuleCondition;
         this.updateModel();
       }
     });

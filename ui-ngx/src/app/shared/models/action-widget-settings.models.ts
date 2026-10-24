@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { widgetType } from '@shared/models/widget.models';
 import { AlarmSeverity } from '@shared/models/alarm.models';
@@ -44,6 +45,22 @@ export interface RpcSettings {
   persistentPollingInterval: number;
 }
 
+export enum RpcParamsType {
+  NONE = 'NONE',
+  CONSTANT = 'CONSTANT',
+  FUNCTION = 'FUNCTION'
+}
+
+export interface RpcParamsSettings {
+  type: RpcParamsType;
+  constantValue?: any;
+  paramsFunction?: TbFunction;
+}
+
+export interface GetValueRpcSettings extends RpcSettings {
+  params?: RpcParamsSettings;
+}
+
 export interface AlarmStatusSettings {
   severityList: Array<AlarmSeverity>;
   typeList: Array<string>;
@@ -79,7 +96,7 @@ export interface ValueActionSettings {
 export interface GetValueSettings<V> extends ValueActionSettings {
   action: GetValueAction;
   defaultValue: V;
-  executeRpc?: RpcSettings;
+  executeRpc?: GetValueRpcSettings;
   getAttribute: GetAttributeValueSettings;
   getTimeSeries: TelemetryValueSettings;
   getAlarmStatus: AlarmStatusSettings;

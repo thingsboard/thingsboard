@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { DataKey, DataSetHolder, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { SubscriptionTimewindow } from '@shared/models/time/time.models';
 import { EntityData, EntityDataPageLink, KeyFilter } from '@shared/models/query/query.models';
@@ -15,6 +16,7 @@ import {
 } from '@core/api/entity-data-subscription';
 import { Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { WidgetDataGenerationOptions } from '@core/api/widget-api.models';
 
 export interface EntityDataListener {
   subscriptionType: widgetType;
@@ -33,6 +35,7 @@ export interface EntityDataListener {
   updateRealtimeSubscription?: () => SubscriptionTimewindow;
   setRealtimeSubscription?: (subscriptionTimewindow: SubscriptionTimewindow) => void;
   subscriptionOptions?: EntityDataSubscriptionOptions;
+  dataGenerationOptions?: WidgetDataGenerationOptions;
   subscription?: EntityDataSubscription;
 }
 
@@ -72,6 +75,7 @@ export class EntityDataService {
       comparisonCustomIntervalValue: dataKey.comparisonCustomIntervalValue,
       comparisonResultType: dataKey.comparisonResultType,
       funcBody: dataKey.funcBody,
+      builtInFunc: dataKey.builtInFunc,
       postFuncBody: dataKey.postFuncBody,
       latest
     };

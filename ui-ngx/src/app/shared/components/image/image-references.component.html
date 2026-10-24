@@ -1,7 +1,8 @@
 <!--
 
-    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 @if (simpleList) {
@@ -18,9 +19,11 @@
         } @else {
           <li class="tb-entities-container tb-primary-fill">
             <div class="tb-entities-title">
-              {{ 'tenant.tenant' | translate }} <a class="tb-reference" [routerLink]="entry[1].tenantDetailsUrl">{{ entry[1].tenantName }}</a> {{ 'image.entities' | translate }}
+              {{ holderName(entry[0]) }} @if (!entry[1].currentHolder && entry[1].name) {
+              <a class="tb-reference" [routerLink]="entry[1].detailsUrl">{{ entry[1].name }}</a>
+              } {{ 'image.entities' | translate }}
             </div>
-            <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: false}"></ng-container>
+            <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: entry[1].currentHolder}"></ng-container>
           </li>
         }
       }
@@ -33,16 +36,31 @@
   <table class="tb-entities-list-table">
     @for (referencedEntity of entriesList; track referencedEntity) {
       <tr>
-        <td class="tb-entity-type">{{ referencedEntity.typeName }}</td>
-        <td class="tb-entity-name">
-          @if (showDetailsLink) {
-            <a class="tb-reference" [routerLink]="referencedEntity.detailsUrl">{{ referencedEntity.entity.name }}</a>
+        @if (!referencedEntity.isWl) {
+          <td class="tb-entity-type">{{ referencedEntity.typeName }}</td>
+          <td class="tb-entity-name">
+            @if (showDetailsLink) {
+              <a  class="tb-reference" [routerLink]="referencedEntity.detailsUrl" [queryParams]="referencedEntity.queryParams">{{ getAdminSettingsName(referencedEntity.entity) }}</a>
+            }
+            @if (!showDetailsLink) {
+              <span>{{ referencedEntity.entity.name }}</span>
+            }</td>
+          } @else {
+            <td class="tb-entity-type">
+              @if (showDetailsLink) {
+                <a class="tb-reference" [routerLink]="referencedEntity.detailsUrl">{{ referencedEntity.typeName }}</a>
+              }
+              @if (!showDetailsLink) {
+                <span>{{ referencedEntity.typeName }}</span>
+              }
+            </td>
+            <td class="tb-entity-name">
+            </td>
           }
-          @if (!showDetailsLink) {
-            <span>{{ referencedEntity.entity.name }}</span>
-          }
-        </td>
-      </tr>
-    }
-  </table>
-</ng-template>
+        </tr>
+      }
+    </table>
+  </ng-template>
+  <ng-template #loading>
+    <mat-spinner [diameter]="32" strokeWidth="2"></mat-spinner>
+  </ng-template>

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.coap.client;
 
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.coapserver.CoapServerContext;
 import org.thingsboard.server.coapserver.TbCoapTransportComponent;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
@@ -72,7 +72,6 @@ import static org.eclipse.californium.core.coap.Message.NONE;
 @TbCoapTransportComponent
 public class DefaultCoapClientContext implements CoapClientContext {
 
-    private final CoapServerContext config;
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
     private final TransportDeviceProfileCache profileCache;
@@ -80,10 +79,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private final ConcurrentMap<DeviceId, TbCoapClientState> clients = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
 
-    public DefaultCoapClientContext(CoapServerContext config, @Lazy CoapTransportContext transportContext,
-                                    TransportService transportService, TransportDeviceProfileCache profileCache,
-                                    PartitionService partitionService) {
-        this.config = config;
+    public DefaultCoapClientContext(@Lazy CoapTransportContext transportContext, TransportService transportService,
+                                    TransportDeviceProfileCache profileCache, PartitionService partitionService) {
         this.transportContext = transportContext;
         this.transportService = transportService;
         this.profileCache = profileCache;

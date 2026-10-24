@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,7 +30,7 @@ import java.io.IOException;
 @ToString(exclude = {"image", "profileDataBytes"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage, HasDefaultOption, HasVersion {
+public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName, TenantEntity, HasOtaPackage, HasRuleEngineProfile, ExportableEntity<DeviceProfileId>, HasImage, HasDefaultOption, HasVersion {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -162,6 +163,12 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize device profile data: ", e);
         }
+    }
+
+    @Override
+    @JsonIgnore
+    public EntityType getEntityType() {
+        return EntityType.DEVICE_PROFILE;
     }
 
 }

@@ -1,12 +1,14 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
-import { docPlatformPrefix, helpBaseUrl as siteBaseUrl } from '@shared/models/constants';
+import { docPlatformPrefix } from '@shared/models/constants';
 import { UiSettingsService } from '@core/http/ui-settings.service';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
 
 const localHelpBaseUrl = '/assets';
 
@@ -20,15 +22,25 @@ const NOT_FOUND_CONTENT: HelpData = {
 })
 export class HelpService {
 
-  private siteBaseUrl = siteBaseUrl;
   private docPlatformPrefix = docPlatformPrefix;
   private helpCache: {[lang: string]: {[key: string]: string}} = {};
+  private wlHelpBaseUrl: string;
 
   constructor(
     private translate: TranslateService,
+    private wl: WhiteLabelingService,
     private http: HttpClient,
     private uiSettingsService: UiSettingsService
-  ) {}
+  ) {
+    this.wl.getUiHelpBaseUrl$().subscribe(
+      (helpBaseUrl) => {
+        if (this.wlHelpBaseUrl !== helpBaseUrl) {
+          this.wlHelpBaseUrl = helpBaseUrl;
+          this.helpCache = {};
+        }
+      }
+    );
+  }
 
   getHelpContent(key: string): Observable<string> {
     const lang = this.translate.currentLang;
@@ -63,8 +75,16 @@ export class HelpService {
     }
   }
 
+  private getHelpBaseUrl(): Observable<string> {
+    if (this.wlHelpBaseUrl) {
+      return of(this.wlHelpBaseUrl);
+    } else {
+      return this.uiSettingsService.getHelpBaseUrl();
+    }
+  }
+
   private loadHelpContent(lang: string, key: string): Observable<HelpData> {
-    return this.uiSettingsService.getHelpBaseUrl().pipe(
+    return this.getHelpBaseUrl().pipe(
       mergeMap((helpBaseUrl) => {
         return this.loadHelpContentFromBaseUrl(helpBaseUrl, lang, key).pipe(
           catchError((e) => {
@@ -92,7 +112,7 @@ export class HelpService {
 
   private processVariables(helpData: HelpData): string {
     const variables = {
-      siteBaseUrl: this.siteBaseUrl,
+      siteBaseUrl: this.wl.getHelpLinkBaseUrl(),
       docPlatformPrefix: this.docPlatformPrefix,
       helpBaseUrl: helpData.helpBaseUrl
     };

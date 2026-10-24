@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -37,6 +38,10 @@ export class TimeSeriesChartAxisSettingsButtonComponent implements OnInit, Contr
   @Input()
   @coerceBoolean()
   advanced = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   private modelValue: TimeSeriesChartAxisSettings;
 
@@ -82,7 +87,8 @@ export class TimeSeriesChartAxisSettingsButtonComponent implements OnInit, Contr
           axisSettings: this.modelValue,
           axisType: this.axisType,
           panelTitle: this.panelTitle,
-          advanced: this.advanced
+          advanced: this.advanced,
+          reportMode: this.reportMode
         },
         isModal: true
       });

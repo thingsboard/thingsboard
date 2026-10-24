@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.ttl;
 
 import lombok.RequiredArgsConstructor;
@@ -9,13 +10,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmRef;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -25,10 +28,13 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @TbCoreComponent
@@ -46,6 +52,7 @@ public class AlarmsCleanUpService {
     private final EntityActionService entityActionService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;
+    private final Optional<HousekeeperClient> housekeeperClient;
 
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.alarms.checking_interval})}", fixedDelayString = "${sql.ttl.alarms.checking_interval}")
     public void cleanUp() {
@@ -76,14 +83,24 @@ public class AlarmsCleanUpService {
         long totalRemoved = 0;
         Set<String> typesToRemove = new HashSet<>();
         while (true) {
-            PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
-            for (AlarmId alarmId : toRemove.getData()) {
-                Alarm alarm = alarmService.delAlarm(tenantId, alarmId, false).getAlarm();
+            PageData<AlarmRef> toRemove = alarmDao.findExpiredAlarmRefsByTenantId(expirationTime, tenantId, removalBatchRequest);
+            List<UUID> removedAlarmIds = new ArrayList<>();
+            for (AlarmRef expired : toRemove.getData()) {
+                // Delete by (originator_id, id) so each removal routes to the single owning shard instead of a
+                // cross-shard lookup-by-id on the originator-sharded alarm table. The scan returns only the
+                // (alarmId, originator) pair; delAlarm loads the full row once on that shard for the delete event.
+                Alarm alarm = alarmService.delAlarm(tenantId, expired.originator(), expired.alarmId(), false).getAlarm();
                 if (alarm != null) {
                     entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
                     totalRemoved++;
                     typesToRemove.add(alarm.getType());
+                    removedAlarmIds.add(alarm.getId().getId());
                 }
+            }
+            // One batched alarm-comment cleanup task per removal batch instead of one per alarm (delAlarm above deletes
+            // with the bulk flag, so it does not enqueue a per-alarm comment task).
+            if (!removedAlarmIds.isEmpty()) {
+                housekeeperClient.ifPresent(client -> client.submitTask(HousekeeperTask.deleteAlarmComments(tenantId, tenantId, removedAlarmIds)));
             }
             if (!toRemove.hasNext()) {
                 break;

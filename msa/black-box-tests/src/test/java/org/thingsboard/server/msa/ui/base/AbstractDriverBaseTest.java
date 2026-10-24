@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.base;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -24,9 +25,13 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -184,6 +189,41 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
+    public EntityGroupInfo getEntityGroupByName(EntityType entityType, String name) {
+        return testRestClient.getEntityGroups(entityType).stream()
+                .filter(x -> x.getName().equals(name))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public Dashboard getDashboardByName(EntityType entityType, String entityGroupName, String name) {
+        try {
+            return testRestClient.getDashboardsByEntityGroupId(pageLink, getEntityGroupByName(entityType, entityGroupName).getId())
+                    .stream().filter(x -> x.getName().equals(name)).collect(Collectors.toList()).get(0);
+        } catch (Exception e) {
+            log.error("No such dashboards with name: " + name + " in " + entityType + " group");
+            return null;
+        }
+    }
+
+    public void assertInvisibilityOfElement(WebElement element) {
+        try {
+            new WebDriverWait(driver, duration).until(ExpectedConditions.invisibilityOf(element));
+        } catch (WebDriverException e) {
+            fail("Element " + element.toString() + " stay visible");
+        }
+    }
+
+    public void refreshPage() {
+        driver.navigate().refresh();
+        new WebDriverWait(driver, duration).until(
+                webDriver -> ((JavascriptExecutor) webDriver).executeScript("return document.readyState").equals("complete"));
+    }
+
+    public void scrollToElement(WebElement element) {
+        getJs().executeScript("arguments[0].scrollIntoView(true);", element);
+    }
+
     public void captureScreen(WebDriver driver, String screenshotName) {
         if (driver instanceof TakesScreenshot) {
             Allure.addAttachment(screenshotName,
@@ -265,6 +305,12 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
+    public EntityGroupInfo getCustomerUserGroupByCustomerTitleAndGroupName(String customerTile, String groupName) {
+        return testRestClient.getEntityGroupsByOwnerAndType(EntityType.CUSTOMER, getCustomerByName(customerTile).getId(), EntityType.USER).stream()
+                .filter(eg -> eg.getName().equals(groupName))
+                .findFirst().orElse(null);
+    }
+
     public void deleteDashboardById(DashboardId dashboardId) {
         if (dashboardId != null) {
             testRestClient.deleteDashboard(dashboardId);
@@ -294,11 +340,10 @@ abstract public class AbstractDriverBaseTest extends AbstractContainerTest {
         }
     }
 
-    public void assertInvisibilityOfElement(WebElement element) {
-        try {
-            new WebDriverWait(driver, duration).until(ExpectedConditions.invisibilityOf(element));
-        } catch (WebDriverException e) {
-            fail("Element " + element.toString() + " stay visible");
+    public void deleteEntityGroupByName(EntityType entityType, String entityGroupName) {
+        EntityGroup entityGroup = getEntityGroupByName(entityType, entityGroupName);
+        if (entityGroup != null) {
+            testRestClient.deleteEntityGroup(entityGroup.getId());
         }
     }
 }

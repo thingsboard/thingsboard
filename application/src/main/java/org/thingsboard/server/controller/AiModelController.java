@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -26,11 +27,11 @@ import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.AiChatModelService;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -150,11 +151,11 @@ class AiModelController extends BaseController {
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/chat")
-    public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) {
+    public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) throws ThingsboardException {
         ChatRequest langChainChatRequest = tbChatRequest.toLangChainChatRequest();
         AiChatModelConfig<?> chatModelConfig = tbChatRequest.chatModelConfig();
 
-        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(chatModelConfig, langChainChatRequest)
+        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(getTenantId(), chatModelConfig, langChainChatRequest)
                 .transform(chatResponse -> (TbChatResponse) new TbChatResponse.Success(chatResponse.aiMessage().text()), directExecutor())
                 .catching(Throwable.class, ex -> new TbChatResponse.Failure(ex.getMessage()), directExecutor());
 
