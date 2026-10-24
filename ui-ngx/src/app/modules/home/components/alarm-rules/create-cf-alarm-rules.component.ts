@@ -63,16 +63,12 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   private usedSeverities: AlarmSeverity[] = [];
 
   private propagateChange = (v: any) => { };
-  private onValidatorChange = () => { };
 
   constructor(private fb: FormBuilder,
               private destroyRef: DestroyRef) {
     this.createAlarmRulesFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.updateModel());
-    this.createAlarmRulesFormGroup.statusChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => this.onValidatorChange());
   }
 
   registerOnChange(fn: any): void {
@@ -80,10 +76,6 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   }
 
   registerOnTouched(fn: any): void {
-  }
-
-  registerOnValidatorChange(fn: () => void): void {
-    this.onValidatorChange = fn;
   }
 
   createAlarmRulesFormArray(): UntypedFormArray {

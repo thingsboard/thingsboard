@@ -4,7 +4,6 @@ package org.thingsboard.server.transport.lwm2m.security.cid.serverDtlsCidLength_
 
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.transport.lwm2m.security.cid.AbstractSecurityLwM2MIntegrationDtlsCidLength0Test;
 import org.thingsboard.server.transport.lwm2m.security.cid.AbstractSecurityLwM2MIntegrationDtlsCidLength1Test;
 
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.PSK;
@@ -14,7 +13,7 @@ public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MI
 
     @Before
     public void createProfileRpc() {
-        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
+        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(PSK, NONE));
         awaitAlias = "await on client state (Psk_Lwm2m) serverDtlsCidLength = 1";
     }
 

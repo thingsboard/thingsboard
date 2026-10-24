@@ -1399,7 +1399,7 @@
         "metadata-required": "Intrările metadata nu pot fi vide",
         "output": "Ieşire",
         "test": "Test",
-        "help": "Ajutor",
+        "help": "Ajutor"
     },
     "tenant": {
         "tenant": "Locatar",

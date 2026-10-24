@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-FROM thingsboard/node:22.22.2-bookworm-slim
+FROM thingsboard/node:22.23.4-bookworm-slim
 
 ENV NODE_ENV production
 ENV DOCKER_MODE true

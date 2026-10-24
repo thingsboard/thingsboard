@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.1.6-SNAPSHOT</version>
+        <version>4.3.1.7-SNAPSHOT</version>
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
@@ -78,6 +78,10 @@
                  referenced explicitly. It transitively pulls wire-runtime-jvm. See CVE-2026-45799 fix. -->
             <groupId>com.squareup.wire</groupId>
             <artifactId>wire-schema-jvm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>

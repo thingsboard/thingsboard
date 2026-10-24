@@ -3,60 +3,79 @@
 @import "../../../../../../../scss/constants";
 
 :host {
+
+  .tb-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    @media #{$mat-md-lg} {
+      gap: 4px;
+    }
+  }
   .tb-card-header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
     @media #{$mat-md-lg} {
       margin-bottom: 4px;
     }
+    .tb-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.87);
+      @media #{$mat-md-lg} {
+        font-size: 12px;
+      }
+    }
   }
 
-  .tb-contact-us {
+  a.tb-contact-us {
+    font-size: 13.5px;
+    border-bottom-color: transparent;
+    &:hover, &:focus {
+      border-bottom-color: #4054b2;
+    }
     @media #{$mat-md-lg} {
-      height: 24px;
       font-size: 12px;
     }
   }
 
   .tb-version-info-container {
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
-    border-radius: 10px;
-    padding: 8px 16px 4px 16px;
-    overflow: hidden;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    padding: 12px 14px;
     white-space: nowrap;
-    @media #{$mat-lt-md} {
-      padding: 16px;
-    }
     @media #{$mat-md-lg} {
       padding: 4px;
     }
     &.up-to-date {
       box-shadow: none;
       border: none;
-      background: #F3F6FA;
       white-space: initial;
       text-align: center;
     }
   }
 
   .tb-version-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-weight: 400;
     font-size: 14px;
-    line-height: 20px;
-    letter-spacing: 0.2px;
-    color: rgba(0, 0, 0, 0.76);
+    line-height: 1.55;
+    letter-spacing: normal;
+    color: rgba(0, 0, 0, 0.6);
     position: relative;
     border-bottom: none;
-    @media #{$mat-md-lg} {
-      font-size: 11px;
-      line-height: 16px;
-    }
     &:hover, &:focus {
       border-bottom: none;
+    }
+    b {
+      color: rgba(0, 0, 0, 0.87);
     }
     &::after {
       content: 'arrow_forward';
@@ -68,36 +87,149 @@
       font-size: 18px;
       color: rgba(0, 0, 0, 0.12);
       vertical-align: bottom;
-      margin-left: 6px;
+      margin-left: -4px;
     }
     &:hover::after {
       color: inherit;
     }
   }
 
-  .tb-version {
-    font-weight: 500;
-    font-size: 18px;
-    line-height: 24px;
-    letter-spacing: 0.15px;
-    color: rgba(0, 0, 0, 0.87);
+  /* Shared geometry, so the widget keeps its height as the registration moves. */
+  .tb-update-available-container,
+  .tb-grant-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 8px;
+    background: var(--tb-brand-tint);
     @media #{$mat-md-lg} {
-      font-size: 12px;
-      line-height: 14px;
+      gap: 4px;
+      padding: 8px 10px;
     }
   }
 
-  .tb-upgrade {
+  .tb-update-available-container p,
+  .tb-grant-card-text {
+    letter-spacing: normal;
+    line-height: 1.55;
+    color: var(--tb-ink-2);
+  }
+
+  .tb-update-available-container {
+    h3 {
+      letter-spacing: normal;
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    p {
+      margin: 0;
+      font-size: 13.5px;
+    }
+    .tb-grant-expired-note {
+      margin-top: 8px;
+      font-size: 12.5px;
+      @media #{$mat-md-lg} {
+        font-size: 11px;
+      }
+    }
+  }
+
+  .tb-grant-card.held {
+    background: var(--tb-note-bg);
+
+    .tb-grant-card-title, .tb-grant-card-icon {
+      color: var(--tb-ink-2);
+    }
+  }
+
+  .tb-grant-card.done {
+    .tb-grant-card-title {
+      color: var(--tb-ink-2);
+    }
+  }
+
+  .tb-grant-card-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    letter-spacing: normal;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--tb-ink);
     @media #{$mat-md-lg} {
-      height: 24px;
       font-size: 12px;
-      padding: 0;
-      overflow: hidden;
+    }
+  }
+
+  .tb-grant-card-icon {
+    flex: none;
+    font-size: 16px;
+    color: var(--tb-brand-ink);
+  }
+
+  .tb-grant-live-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tb-brand);
+    animation: tbCeGrantPulse 1.6s ease-in-out infinite;
+    &.tb-waiting {
+      animation: none;
+      background: none;
+      box-shadow: inset 0 0 0 2px var(--tb-brand);
+    }
+  }
+
+  .tb-grant-card-text {
+    margin: 8px 0 0;
+    font-size: 13px;
+    @media #{$mat-md-lg} {
+      margin-top: 4px;
+      font-size: 11px;
+    }
+  }
+
+  .tb-grant-card-link {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 18px;
+    margin: 12px 0 0;
+    letter-spacing: normal;
+    font-size: 12.5px;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--tb-brand-ink);
+      text-decoration: none;
+      border-bottom: none;
+
+      &:hover, &:focus {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        border-bottom: none;
+      }
+
+      tb-icon {
+        color: inherit;
+      }
     }
   }
 
   .check-icon {
-    color: #198038;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tb-brand-ink);
+    background: var(--tb-brand-tint);
     font-weight: 600;
     @media #{$mat-md-lg} {
       font-size: 16px;
@@ -107,12 +239,17 @@
   .up-to-date-text {
     font-weight: 400;
     font-size: 14px;
-    line-height: 20px;
-    letter-spacing: 0.2px;
-    color: rgba(0, 0, 0, 0.76);
+    line-height: 1.55;
+    letter-spacing: normal;
+    color: rgba(0, 0, 0, 0.6);
     @media #{$mat-md-lg} {
       font-size: 11px;
       line-height: 16px;
     }
   }
+}
+
+@keyframes tbCeGrantPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }

@@ -1,51 +1,37 @@
 {
   "name": "thingsboard-web-ui",
   "private": true,
-  "version": "4.3.1.6",
+  "version": "4.3.1.7",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.ts",
   "bin": "server.js",
   "scripts": {
     "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-ui-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-ui-win.exe ./target/src && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web ts-node server.ts'",
-    "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web NODE_ENV=production ts-node server.ts'",
+    "start": "WEB_FOLDER=./target/web node --watch --watch-preserve-output -r ts-node/register server.ts",
+    "start-prod": "WEB_FOLDER=./target/web NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",
     "build": "tsc"
   },
   "dependencies": {
-    "compression": "^1.8.1",
-    "config": "^3.3.12",
-    "connect-history-api-fallback": "1.6.0",
-    "express": "^5.1.0",
-    "http": "0.0.0",
+    "compression": "^1.8.2",
+    "config": "^4.4.2",
+    "connect-history-api-fallback": "^2.0.0",
+    "express": "^5.3.0",
     "http-proxy": "^1.18.1",
-    "js-yaml": "^4.1.1",
-    "winston": "^3.17.0",
+    "js-yaml": "^4.3.2",
+    "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
-  },
-  "nyc": {
-    "exclude": [
-      "test",
-      "__tests__",
-      "node_modules",
-      "target"
-    ]
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",
-    "@types/config": "^3.3.5",
     "@types/connect-history-api-fallback": "1.5.4",
-    "@types/express": "~5.0.3",
-    "@types/http-proxy": "^1.17.16",
-    "@types/node": "~22.17.2",
-    "@yao-pkg/pkg": "^6.6.0",
-    "fs-extra": "^11.3.1",
-    "nodemon": "^3.1.10",
+    "@types/express": "~5.0.6",
+    "@types/http-proxy": "^1.17.17",
+    "@types/node": "~22.20.5",
+    "@yao-pkg/pkg": "^6.24.0",
+    "fs-extra": "^11.4.1",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"
-  },
-  "resolutions": {
-    "@yao-pkg/pkg/tar": ">=7.5.8"
   },
   "pkg": {
     "assets": [

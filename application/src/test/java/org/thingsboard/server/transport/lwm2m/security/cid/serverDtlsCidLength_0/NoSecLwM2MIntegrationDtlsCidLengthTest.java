@@ -13,7 +13,7 @@ public class NoSecLwM2MIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2
 
     @Before
     public void setUpNoSecDtlsCidLength() {
-        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(NO_SEC, NONE));
+        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapSectionsServerCredentialsSecure(NO_SEC, NONE));
         awaitAlias = "await on client state (NoSec_Lwm2m) serverDtlsCidLength = 0";
     }
 
