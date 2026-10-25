@@ -19,9 +19,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,12 +34,13 @@ public class RuleNodeActorMessageProcessorTest {
 
     private ActorSystemContext systemContext;
     private RuleChainService ruleChainService;
+    private ComponentDiscoveryService componentService;
 
     @Before
     public void setUp() {
         systemContext = mock(ActorSystemContext.class);
         ruleChainService = mock(RuleChainService.class);
-        ComponentDiscoveryService componentService = mock(ComponentDiscoveryService.class);
+        componentService = mock(ComponentDiscoveryService.class);
         when(systemContext.getRuleChainService()).thenReturn(ruleChainService);
         when(systemContext.getComponentService()).thenReturn(componentService);
         when(componentService.getRuleNodeInfo(any())).thenReturn(Optional.empty());
@@ -109,6 +112,32 @@ public class RuleNodeActorMessageProcessorTest {
         // secret substitution edits the configuration in place; the original must not see it
         ((ObjectNode) copy.getConfiguration()).put("password", "resolved-secret");
         assertThat(original.getConfiguration().get("password").asText()).isEqualTo("${secret:pwd}");
+    }
+
+    @Test
+    public void onUpdateSkipsUpdateWhenRuleNodeIsDeleted() throws Exception {
+        // The rule node was deleted between the CREATED and the UPDATED lifecycle messages,
+        // so findRuleNodeById returns null and onUpdate must silently skip instead of failing.
+        when(ruleChainService.findRuleNodeById(tenantId, ruleNodeId)).thenReturn(ruleNode(), (RuleNode) null);
+        RuleNodeActorMessageProcessor processor = new RuleNodeActorMessageProcessor(tenantId, "chain", ruleNodeId,
+                systemContext, mock(TbActorCtx.class));
+
+        assertThatCode(() -> processor.onUpdate(mock(TbActorCtx.class))).doesNotThrowAnyException();
+
+        // The node is looked up a second time by onUpdate, and the update itself is skipped:
+        // the secret usage replacement runs only for the node resolved by the constructor.
+        verify(ruleChainService, times(2)).findRuleNodeById(tenantId, ruleNodeId);
+        verify(componentService, times(1)).getRuleNodeInfo(any());
+    }
+
+    @Test
+    public void constructorDoesNotFailWhenRuleNodeIsAlreadyDeleted() {
+        // The processor is created while the node is already gone: RuleChainActorMessageProcessor reads the node list
+        // and creates the child actor, but ComponentActor.init -> createProcessor runs later on the dispatcher.
+        when(ruleChainService.findRuleNodeById(tenantId, ruleNodeId)).thenReturn(null);
+
+        assertThatCode(() -> new RuleNodeActorMessageProcessor(tenantId, "chain", ruleNodeId,
+                systemContext, mock(TbActorCtx.class))).doesNotThrowAnyException();
     }
 
     private RuleNode ruleNode() {
