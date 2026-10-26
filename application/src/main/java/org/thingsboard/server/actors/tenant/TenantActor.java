@@ -199,8 +199,8 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void forwardToCfActor(TenantAwareMsg msg, boolean priority) {
         if (cfActor == null) {
-            if (msg instanceof CalculatedFieldStateRestoreMsg) {
-                log.warn("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
+            if (msg instanceof CalculatedFieldStateRestoreMsg restoreMsg) {
+                log.warn("[{}] CF Actor is not initialized. Skipping CF state restore: [{}]", tenantId, restoreMsg.getId());
             } else {
                 log.debug("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
             }

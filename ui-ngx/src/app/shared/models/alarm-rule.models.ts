@@ -330,6 +330,23 @@ export function areFiltersAndPredicateArgumentsValid(obj: any, args: Record<stri
   return true;
 }
 
+export function areAlarmRuleConditionFilterArgumentsValid(condition: AlarmRuleCondition,
+                                                          args: Record<string, CalculatedFieldArgument>): boolean {
+  return areFiltersAndPredicateArgumentsValid(condition?.expression?.filters, args);
+}
+
+export function isAlarmRuleConditionScheduleArgumentValid(condition: AlarmRuleCondition,
+                                                          args: Record<string, CalculatedFieldArgument>): boolean {
+  const arg = condition?.schedule?.dynamicValueArgument;
+  return !arg || Object.keys(args).includes(arg);
+}
+
+export function areAlarmRuleArgumentsValid(alarmRule: AlarmRule, args: Record<string, CalculatedFieldArgument>): boolean {
+  const condition = alarmRule?.condition;
+  return !condition || !args ||
+    (areAlarmRuleConditionFilterArgumentsValid(condition, args) && isAlarmRuleConditionScheduleArgumentValid(condition, args));
+}
+
 export function isPredicateArgumentsValid(predicates: any, args: Record<string, CalculatedFieldArgument>): boolean {
   const validSet = new Set(Object.keys(args));
   if (Array.isArray(predicates)) {

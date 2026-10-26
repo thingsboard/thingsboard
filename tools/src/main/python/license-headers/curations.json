@@ -1139,7 +1139,7 @@
       "path": "msa/web-report/config/logger.ts",
       "header": "busl",
       "reason": "New PE module for the PE web-report service. Its body is identical to CE msa/web-ui/config/logger.ts, which PE still carries and which is a week older; the PE file is a copy for a PE-only service, not the CE file. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:aec71ee9557d9b8f0691e46617d923403e73b03cb204c3e8c837200487337398"
+      "contentHash": "sha256:611c34e6267c2f0511b2a830289dbc9effd5225e89d2498c8ac7bf0cfd8b03e8"
     },
     {
       "path": "msa/web-report/config/tb-web-report.conf",
