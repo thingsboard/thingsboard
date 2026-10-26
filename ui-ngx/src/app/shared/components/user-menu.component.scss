@@ -102,17 +102,13 @@ tb-user-menu {
     font-size: 14px;
     font-weight: 600;
     color: rgba(0, 0, 0, 0.87);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
   .tb-user-email {
     font-size: 13px;
     line-height: 16px;
     color: rgba(0,0,0,0.6);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
   .mat-mdc-button {
     &:hover {
