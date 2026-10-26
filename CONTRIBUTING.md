@@ -173,8 +173,9 @@ people who read them — users and customers, not reviewers:
 
 The section an entry appears under (`UI`, `Bug: UI`, `Edge`, …) comes from the pull request's
 labels, not its title, so don't repeat the area or the change type in the title. Changes users
-don't see — CI, build, docs, refactoring, a second backport of the same fix — get the
-`Ignore for release` label and stay out of the release notes.
+don't see — CI, build, a second backport of the same fix — get the `Ignore for release` label
+and stay out of the release notes. For anything else, such as docs or refactoring, decide
+whether users would want to read about it in the release notes, and add the label if not.
 
 | Instead of                                                     | Write                                                                                          |
 |----------------------------------------------------------------|------------------------------------------------------------------------------------------------|
