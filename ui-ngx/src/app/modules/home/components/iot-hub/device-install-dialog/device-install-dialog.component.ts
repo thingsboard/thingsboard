@@ -627,6 +627,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (key in this.transportVars) {
       return this.transportVars[key];
     }
+    // Platform URL for instructions that point a third-party service at the ThingsBoard
+    // HTTP API (e.g. the ChirpStack integration): https if enabled, else http.
+    if (key === 'baseUrl') {
+      return this.platformBaseUrl();
+    }
     const dotIdx = key.indexOf('.');
     if (dotIdx > 0) {
       const alias = key.substring(0, dotIdx);
@@ -635,6 +640,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (output && prop in output) {
         return String((output as any)[prop]);
       }
+    }
+    return undefined;
+  }
+
+  private platformBaseUrl(): string | undefined {
+    const httpsHost = this.transportVars['https.host'];
+    if (httpsHost) {
+      const port = this.transportVars['https.port'];
+      return port && port !== '443' ? `https://${httpsHost}:${port}` : `https://${httpsHost}`;
+    }
+    const httpHost = this.transportVars['http.host'];
+    if (httpHost) {
+      const port = this.transportVars['http.port'];
+      return port && port !== '80' ? `http://${httpHost}:${port}` : `http://${httpHost}`;
     }
     return undefined;
   }
