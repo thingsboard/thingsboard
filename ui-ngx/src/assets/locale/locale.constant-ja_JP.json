@@ -6281,8 +6281,7 @@
     "type-rule-chain": "ルールチェーン",
     "type-rule-chain-plural": "ルールチェーン",
     "type-device": "デバイス",
-    "type-device-plural": "デバイス",
-    "selected": "選択済み"
+    "type-device-plural": "デバイス"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7993,7 +7992,6 @@
     "endpoint-url-pattern": "エンドポイントURLパターン",
     "endpoint-url-pattern-required": "エンドポイントURLパターンは必須です",
     "request-method": "リクエストメソッド",
-    "use-simple-client-http-factory": "シンプルクライアントHTTPファクトリーを使用",
     "ignore-request-body": "リクエスト本文なし",
     "request-body-template": "リクエストボディテンプレート",
     "request-body-template-hint": "メタデータには<code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code>、メッセージの値には<code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code>を使用してください。空の場合は、メッセージペイロードがリクエストボディとして使用されます。JSON以外のペイロードの場合は、「プレーンテキストに解析」を有効にしてください。<br/><br/>プレースホルダー<code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>を使用してシークレットを挿入できます。ここで、'name'はシークレットの識別子、'type'はTEXTまたはTEXT_FILEのいずれかです。これは、「シークレットを使用」を直接サポートしていないルールノード設定フィールドで便利です。例: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>。",
@@ -8169,7 +8167,6 @@
     "proxy-port-range": "プロキシポートは1〜65535の範囲である必要があります。",
     "proxy-user": "プロキシユーザー",
     "proxy-password": "プロキシパスワード",
-    "proxy-scheme": "プロキシスキーム",
     "numbers-to-template": "送信先電話番号テンプレート",
     "numbers-to-template-required": "送信先電話番号テンプレートは必須です",
     "numbers-to-template-hint": "カンマ区切りの電話番号。メタデータの値には <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> を使用し、メッセージ本文の値には <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> を使用します",
@@ -8954,8 +8951,6 @@
     "single-entity": "単一エンティティ",
     "group-entities": "エンティティグループ",
     "entities-group-owner": "エンティティグループ所有者",
-    "single-device": "単一デバイス",
-    "group-of-devices": "デバイスグループ",
     "devices-group-owner": "デバイスグループ所有者",
     "message-body": "メッセージ本文",
     "target": "ターゲット",
@@ -11367,22 +11362,6 @@
     "ai-credits-usage": "AIクレジット: {{ used }}/{{ max }}使用済み",
     "ai-credits-description": "今月はAIクレジット<strong>{{ max }}</strong>のうち<strong>{{ used }}</strong>を使用しました。上限は{{ date }}にリセットされます。AIクレジットの上限を増やすには、システム管理者にお問い合わせください。"
   },
-  "solution-template": {
-    "solution-template": "ソリューションテンプレート",
-    "solution-templates": "ソリューションテンプレート",
-    "management": "ソリューションテンプレートの管理",
-    "details": "詳細",
-    "install": "インストール",
-    "level": "レベル",
-    "install-title": "ソリューションテンプレートが正常にインストールされました",
-    "install-failed-title": "ソリューションテンプレートのインストールに失敗しました",
-    "instructions": "インストラクション",
-    "goto-main-dashboard": "メインダッシュボードに移動",
-    "delete": "削除",
-    "delete-solution-title": "ソリューション '{{solutionTitle}}' を削除してもよろしいですか？",
-    "delete-solution-text": "確認後、ソリューションと関連データは回復できなくなりますのでご注意ください。",
-    "installing": "ソリューションテンプレートをインストール中..."
-  },
   "markdown": {
     "edit": "編集",
     "preview": "プレビュー",
@@ -11399,20 +11378,8 @@
     "app-title": "アプリケーションタイトル",
     "favicon": "ウェブサイトアイコン",
     "favicon-desc": "ブラウザーのタブとブックマークに表示されるアイコンです。PNGまたはICO、32×32 px推奨",
-    "favicon-description": "*.ico, *.gif または *.png 画像、最大サイズ {{kbSize}} Kバイト。",
-    "favicon-size-error": "ウェブサイト画像が大きすぎます。最大許容ウェブサイト画像サイズは {{kbSize}} Kバイトです。",
-    "favicon-type-error": "無効なウェブサイト画像ファイル形式です。ICO, GIF, PNG 画像のみが受け入れられます。",
-    "drop-favicon-image": "ウェブサイトアイコン画像をドラッグ＆ドロップするか、クリックしてファイルを選択してください。",
-    "drop-favicon-image-or": "ウェブサイトアイコン画像をドラッグ＆ドロップするか、",
-    "no-favicon-image": "アイコンが選択されていません",
     "logo": "ロゴ",
     "logo-desc": "SVGまたはPNG、高さ96px以上、200 KBまで",
-    "logo-description": "最大サイズ {{kbSize}} Kバイトの画像。",
-    "logo-size-error": "ロゴ画像が大きすぎます。最大許容ロゴ画像サイズは {{kbSize}} Kバイトです。",
-    "logo-type-error": "無効なロゴファイル形式です。画像のみが受け入れられます。",
-    "drop-logo-image": "ロゴ画像をドラッグ＆ドロップするか、クリックしてファイルを選択してください。",
-    "drop-logo-image-or": "ロゴ画像をドラッグ＆ドロップするか、",
-    "no-logo-image": "ロゴが選択されていません",
     "logo-height": "ロゴの高さ (px)",
     "logo-height-desc": "ロゴの縦横比を保ったまま拡大縮小し、中央に配置します。縦長のロゴの場合は高さを上げてください（最大200px）",
     "collapsed-logo": "折りたたみ時のサイドバーロゴ",
@@ -11456,11 +11423,9 @@
     "error-verification-url": "ドメイン名には '/' や ':' の記号を含めることはできません。例: thingsboard.io",
     "show-connectivity-dialog": "接続ダイアログを表示",
     "show-connectivity-dialog-desc": "デバイスの作成後に、接続手順を含むデバイス接続ダイアログを表示します",
-    "hide-connectivity-dialog": "接続ダイアログを非表示",
     "override-trendz-add-on-name": "Trendz Analytics アドオン名を上書き",
     "override-trendz-add-on-name-desc": "プラットフォーム全体で「Trendz」アドオンの名前を「高度な分析」に変更します",
     "show-platform-name-version-bottom-left-corner": "左下隅にプラットフォーム名とバージョンを表示",
-    "override-trendz-add-on-name-hint": "有効にすると、プラットフォーム全体で 'Trendz analytics' は 'Advanced analytics' として表示されます。",
     "show-platform-name-version": "プラットフォーム名とバージョンを表示",
     "platform-name": "プラットフォーム名",
     "platform-version": "プラットフォームバージョン",
@@ -12686,9 +12651,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13025,10 +12988,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "認証情報",
-      "here-app-id": "HEREアプリID",
-      "here-app-code": "HEREアプリコード",
       "here-api-key": "HERE APIキー",
-      "here-use-new-version-api-3": "APIバージョン3を使用",
       "tencent-maps-api-key": "Tencent Maps APIキー",
       "tencent-map-type-roadmap": "道路地図",
       "tencent-map-type-satelite": "衛星",
@@ -13925,7 +13885,6 @@
       "roles-and-permissions": "ロール & 権限",
       "groups": "グループ",
       "integrations": "統合",
-      "solution-templates": "ソリューションテンプレート",
       "scheduler": "スケジューラー",
       "white-labeling": "ホワイトラベリング"
     },
@@ -13939,11 +13898,6 @@
       "critical": "致命的",
       "assigned-to-me": "自分に割り当て",
       "total": "合計"
-    },
-    "solution-templates": {
-      "title": "ソリューションテンプレート",
-      "prototype-plan": "プロトタイププラン",
-      "startup-plan": "スタートアッププラン"
     },
     "getting-started": {
       "get-started": "始める",
