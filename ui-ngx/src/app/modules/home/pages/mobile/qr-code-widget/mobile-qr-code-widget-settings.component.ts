@@ -31,8 +31,10 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
 
   setBaseURL = true;
 
+  private authUser = getCurrentAuthUser(this.store);
+
   mobileAppSettingsForm = this.fb.group({
-    useSystemSettings: [false],
+    useSystemSettings: [this.isTenantAdmin()],
     useDefaultApp: [true],
     mobileAppBundleId: [{value: null, disabled: true}, Validators.required],
     androidEnabled: [true],
@@ -46,7 +48,6 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     })
   });
 
-  private authUser = getCurrentAuthUser(this.store);
   private mobileAppSettings: QrCodeSettings;
 
   readonly = this.isTenantAdmin() && !this.userPermissionsService.hasGenericPermission(Resource.MOBILE_APP_SETTINGS, Operation.WRITE);

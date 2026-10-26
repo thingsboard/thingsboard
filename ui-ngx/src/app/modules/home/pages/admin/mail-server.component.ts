@@ -66,7 +66,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   private loginProcessingUrl: string;
 
   mailSettings = this.fb.group({
-    useSystemMailSettings: [false],
+    useSystemMailSettings: [this.isTenantAdmin()],
     mailFrom: ['', [Validators.required]],
     smtpProtocol: [SmtpProtocol.SMTP],
     smtpHost: ['localhost', [Validators.required]],

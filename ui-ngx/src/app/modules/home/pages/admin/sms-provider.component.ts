@@ -108,7 +108,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
 
   private buildSmsProviderForm() {
     this.smsProvider = this.fb.group({
-      useSystemSmsSettings: [false],
+      useSystemSmsSettings: [this.isTenantAdmin()],
       configuration: [null, [Validators.required]]
     });
     if (this.readonly) {
@@ -184,7 +184,7 @@ export class SmsProviderComponent extends PageComponent implements HasConfirmFor
           botToken: ['']
         }),
         MOBILE_APP: this.fb.group({
-          useSystemSettings: [false],
+          useSystemSettings: [this.isTenantAdmin()],
           firebaseServiceAccountCredentialsFileName: [''],
           firebaseServiceAccountCredentials: ['', this.isTenantAdmin() ? [Validators.required] : []]
         })
