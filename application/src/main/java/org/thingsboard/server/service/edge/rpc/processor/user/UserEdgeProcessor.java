@@ -29,7 +29,7 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 User user = edgeCtx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
-                if (user != null) {
+                if (user != null && edgeEvent.getTenantId().equals(user.getTenantId())) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
@@ -48,6 +48,9 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                         .build();
             }
             case CREDENTIALS_UPDATED -> {
+                if (!isEntityExists(edgeEvent.getTenantId(), userId)) {
+                    return null;
+                }
                 UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
                 if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
