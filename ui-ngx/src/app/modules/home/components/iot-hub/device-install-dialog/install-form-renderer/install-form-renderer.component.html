@@ -96,6 +96,7 @@
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
                    [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
+                   [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                    autocomplete="new-password" data-lpignore="true" data-1p-ignore data-bwignore>
             <button mat-icon-button matSuffix type="button"
                     (click)="togglePasswordVisible(field.key)">
@@ -128,6 +129,7 @@
                           [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput type="number" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
+                   [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                    data-lpignore="true" data-1p-ignore data-bwignore>
             @if (helpTextOf(field) && !hasHintBox(field)) {
               <mat-hint>{{ helpTextOf(field) }}</mat-hint>
@@ -148,7 +150,7 @@
                           [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
-                   (blur)="cleanUp(field)"
+                   [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                    autocomplete="new-username" data-lpignore="true" data-1p-ignore data-bwignore>
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"

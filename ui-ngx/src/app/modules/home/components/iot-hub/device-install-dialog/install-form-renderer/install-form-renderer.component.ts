@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormGroup } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { cleanFormFieldValue, FormFieldDefinition, FormFieldType } from '@shared/models/iot-hub/device-package.models';
 import { generateSecret } from '@core/utils';
 
@@ -48,6 +49,22 @@ export class InstallFormRendererComponent implements OnChanges {
   // The same for the fields of the collapsed Advanced settings panel
   advancedSections: FormSection[] = [];
   private rowOf = new Map<string, FormRow>();
+  private focusedControl: AbstractControl | null = null;
+  private keepFocusedError = false;
+
+  /**
+   * A new error shows only after the user leaves the field, so a value is not called wrong while it
+   * is typed. An error already shown when the user enters the field stays until the value is valid.
+   */
+  readonly errorStateMatcher: ErrorStateMatcher = {
+    isErrorState: (control, form) => {
+      if (control && control === this.focusedControl) {
+        this.keepFocusedError = this.keepFocusedError && control.invalid;
+        return this.keepFocusedError;
+      }
+      return !!control?.invalid && (control.touched || !!form?.submitted);
+    }
+  };
 
   readonly FormFieldType = FormFieldType;
 
@@ -106,7 +123,14 @@ export class InstallFormRendererComponent implements OnChanges {
     control.markAsDirty();
   }
 
-  cleanUp(field: FormFieldDefinition): void {
+  onFocus(field: FormFieldDefinition): void {
+    const control = this.formGroup.controls[field.key];
+    this.focusedControl = control ?? null;
+    this.keepFocusedError = !!control?.invalid && control.touched;
+  }
+
+  onBlur(field: FormFieldDefinition): void {
+    this.focusedControl = null;
     const control = this.formGroup.controls[field.key];
     const cleaned = cleanFormFieldValue(field, control?.value);
     if (control && cleaned !== control.value) {
