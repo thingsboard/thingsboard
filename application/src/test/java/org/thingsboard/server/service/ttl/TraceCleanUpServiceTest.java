@@ -9,12 +9,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.sql.trace.TraceDao;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -33,8 +32,6 @@ class TraceCleanUpServiceTest {
     private TraceDao traceDao;
     @Mock
     private RuleEngineMonitoringDao ruleEngineMonitoringDao;
-    @Mock
-    private TopicPartitionInfo partitionInfo;
 
     private TraceCleanUpService service;
 
@@ -46,12 +43,11 @@ class TraceCleanUpServiceTest {
         ReflectionTestUtils.setField(service, "ruleEngineStatsTtlInSec", 14 * 86_400L);
         ReflectionTestUtils.setField(service, "removalBatchSize", 500);
         Mockito.doReturn(NOW).when(service).getCurrentTimeMillis();
-        when(partitionService.resolve(any(), any(), any())).thenReturn(partitionInfo);
     }
 
     @Test
     void givenSystemPartitionIsMine_whenCleanUp_thenEachTableUsesItsOwnTtl() {
-        when(partitionInfo.isMyPartition()).thenReturn(true);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
 
         service.cleanUp();
 
@@ -62,7 +58,7 @@ class TraceCleanUpServiceTest {
 
     @Test
     void givenSystemPartitionIsNotMine_whenCleanUp_thenOnlyThePartitionCacheIsCleaned() {
-        when(partitionInfo.isMyPartition()).thenReturn(false);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(false);
 
         service.cleanUp();
 
@@ -74,7 +70,7 @@ class TraceCleanUpServiceTest {
     @Test
     void givenZeroTtl_whenCleanUp_thenThatDataIsKept() {
         ReflectionTestUtils.setField(service, "traceGroupsTtlInSec", 0L);
-        when(partitionInfo.isMyPartition()).thenReturn(true);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
 
         service.cleanUp();
 
