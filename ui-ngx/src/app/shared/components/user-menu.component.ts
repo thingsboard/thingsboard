@@ -1,7 +1,17 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { User } from '@shared/models/user.model';
 import { Authority } from '@shared/models/authority.enum';
 import { select, Store } from '@ngrx/store';
@@ -20,7 +30,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })
-export class UserMenuComponent {
+export class UserMenuComponent implements OnDestroy {
 
   @Input()
   @coerceBoolean()
@@ -28,6 +38,28 @@ export class UserMenuComponent {
 
   @Output()
   menuClicked = new EventEmitter();
+
+  @ViewChild('emailLocal')
+  set emailLocal(emailLocal: ElementRef<HTMLElement>) {
+    this.emailResize$?.disconnect();
+    const el = emailLocal?.nativeElement;
+    const text = el?.firstChild;
+    if (text) {
+      const local = text.nodeValue;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const overflows = () => range.getBoundingClientRect().width > el.getBoundingClientRect().width;
+      this.emailResize$ = new ResizeObserver(() => {
+        text.nodeValue = local;
+        for (let length = local.length - 1; length >= 0 && overflows(); length--) {
+          text.nodeValue = local.substring(0, length) + '…';
+        }
+      });
+      this.emailResize$.observe(el);
+    }
+  }
+
+  private emailResize$: ResizeObserver;
 
   authorities = Authority;
 
@@ -58,7 +90,7 @@ export class UserMenuComponent {
 
   userEmail$ = this.store.pipe(
     select(selectUserDetails),
-    map((user) => user?.email)
+    map((user) => this.splitEmail('tenanttenanttenanttenantnanttenantnanttenant@thingsboard.io'))
   );
 
   constructor(private store: Store<AppState>,
@@ -116,6 +148,21 @@ export class UserMenuComponent {
     } else {
       return '?';
     }
+  }
+
+  private splitEmail(email: string): {full: string; local: string; domain: string} {
+    if (!email) {
+      return null;
+    }
+    const atIndex = email.lastIndexOf('@');
+    if (atIndex <= 0) {
+      return {full: email, local: email, domain: ''};
+    }
+    return {full: email, local: email.substring(0, atIndex), domain: email.substring(atIndex)};
+  }
+
+  ngOnDestroy(): void {
+    this.emailResize$?.disconnect();
   }
 
   openAccount(): void {
