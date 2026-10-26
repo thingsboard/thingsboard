@@ -148,6 +148,7 @@
                           [floatLabel]="field.placeholder ? 'always' : 'auto'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
+                   (blur)="cleanUp(field)"
                    autocomplete="new-username" data-lpignore="true" data-1p-ignore data-bwignore>
             @if (field.randomGenerator) {
               <button mat-icon-button matSuffix type="button"

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
-import { FormFieldDefinition, FormFieldType } from '@shared/models/iot-hub/device-package.models';
+import { cleanFormFieldValue, FormFieldDefinition, FormFieldType } from '@shared/models/iot-hub/device-package.models';
 import { generateSecret } from '@core/utils';
 
 const DEFAULT_RANDOM_SIZE = 20;
@@ -104,6 +104,14 @@ export class InstallFormRendererComponent implements OnChanges {
     if (!control) return;
     control.patchValue(generateSecret(field.randomSize ?? DEFAULT_RANDOM_SIZE));
     control.markAsDirty();
+  }
+
+  cleanUp(field: FormFieldDefinition): void {
+    const control = this.formGroup.controls[field.key];
+    const cleaned = cleanFormFieldValue(field, control?.value);
+    if (control && cleaned !== control.value) {
+      control.setValue(cleaned);
+    }
   }
 
   getPatternErrorMessage(field: FormFieldDefinition): string {
