@@ -511,10 +511,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void loginDifferentCustomer() throws Exception {
-        if (savedDifferentCustomer != null) {
-            login(savedDifferentCustomer.getEmail(), CUSTOMER_USER_PASSWORD);
+        if (differentCustomerUser != null) {
+            login(DIFFERENT_CUSTOMER_USER_EMAIL, DIFFERENT_CUSTOMER_USER_PASSWORD);
         } else {
-            createDifferentCustomer();
+            if (savedDifferentCustomer == null) {
+                createDifferentCustomer();
+            }
 
             loginTenantAdmin();
             differentCustomerUser = new User();
@@ -529,10 +531,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void loginDifferentTenantCustomer() throws Exception {
-        if (savedDifferentTenantCustomer != null) {
-            login(savedDifferentTenantCustomer.getEmail(), CUSTOMER_USER_PASSWORD);
+        if (differentTenantCustomerUser != null) {
+            login(DIFFERENT_TENANT_CUSTOMER_USER_EMAIL, DIFFERENT_CUSTOMER_USER_PASSWORD);
         } else {
-            createDifferentTenantCustomer();
+            if (savedDifferentTenantCustomer == null) {
+                createDifferentTenantCustomer();
+            }
 
             loginDifferentTenant();
             differentTenantCustomerUser = new User();
@@ -575,6 +579,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             loginSysAdmin();
             deleteTenant(savedDifferentTenant.getId());
             savedDifferentTenant = null;
+            savedDifferentTenantCustomer = null;
+            differentTenantCustomerUser = null;
         }
     }
 
