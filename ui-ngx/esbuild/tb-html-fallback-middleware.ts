@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ServerResponse } from 'node:http';
 import type { Connect } from 'vite';
-import type { NextHandleFunction } from 'connect';
 
-const tbHtmlFallbackMiddleware: NextHandleFunction = (
+const tbHtmlFallbackMiddleware: Connect.NextHandleFunction = (
   req: Connect.IncomingMessage,
   _res: ServerResponse,
   next: Connect.NextFunction
