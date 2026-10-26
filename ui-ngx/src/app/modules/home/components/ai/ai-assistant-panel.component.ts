@@ -14,8 +14,8 @@ import {
   ViewChild
 } from '@angular/core';
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
-import { Observable, of, Subject, throwError, timer } from 'rxjs';
-import { concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { EMPTY, Observable, of, Subject, throwError, timer } from 'rxjs';
+import { catchError, concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AiChatService } from '@core/http/ai-chat.service';
 import {
@@ -184,9 +184,12 @@ export class AiAssistantPanelComponent implements OnInit {
 
   ngOnInit() {
     this.loadChat$.pipe(
-      switchMap(id => {
-        return this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true});
-      }),
+      switchMap(id => this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+        catchError(err => {
+          this.showErrorMessage(err);
+          return EMPTY;
+        })
+      )),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(messages => {
       this.showHistory(messages);
