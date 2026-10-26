@@ -27,6 +27,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { generateSecret } from '@core/utils';
 import {
+  cleanFormFieldValue,
   DeviceInstallStep,
   DevicePackageInfo,
   ENTITY_STEP_TYPES,
@@ -454,6 +455,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         if (hostControl?.enabled && hostControl.value) {
           hostControl.setValue(toBareHost(hostControl.value), { emitEvent: false });
         }
+        this.cleanFormStep(ws);
         Object.assign(this.formValues, ws.formGroup.getRawValue());
         formValuesChanged = true;
       }
@@ -921,7 +923,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         validators.push(Validators.required);
       }
       if (field.validators?.length > 0) {
-        validators.push(Validators.pattern(field.validators[0].pattern));
+        const pattern = Validators.pattern(field.validators[0].pattern);
+        validators.push((control: AbstractControl) =>
+          pattern({ value: cleanFormFieldValue(field, control.value) } as AbstractControl));
       }
       if (field.key === TRANSPORT_HOST_FIELD_KEY) {
         validators.push(transportHostValidator);
@@ -953,12 +957,31 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       for (const field of templated) {
         const control = ws.formGroup.controls[field.key];
         if (!control.dirty) {
-          control.setValue(this.renderFormTemplate(field.defaultValueTemplate, ws.formGroup.getRawValue()), { emitEvent: false });
+          control.setValue(this.renderFormTemplate(field.defaultValueTemplate, this.cleanedFormValues(ws)), { emitEvent: false });
         }
       }
     };
     update();
     this.formTemplateSubscriptions.push(ws.formGroup.valueChanges.subscribe(update));
+  }
+
+  /** Applies each field's cleanupPattern to its control, so the stored values are the cleaned ones. */
+  private cleanFormStep(ws: WizardStep): void {
+    for (const field of ws.formFields) {
+      const control = ws.formGroup.controls[field.key];
+      const cleaned = cleanFormFieldValue(field, control?.value);
+      if (control?.enabled && cleaned !== control.value) {
+        control.setValue(cleaned, { emitEvent: false });
+      }
+    }
+  }
+
+  private cleanedFormValues(ws: WizardStep): Record<string, any> {
+    const values = ws.formGroup.getRawValue();
+    for (const field of ws.formFields) {
+      values[field.key] = cleanFormFieldValue(field, values[field.key]);
+    }
+    return values;
   }
 
   private renderFormTemplate(template: string, values: Record<string, any>): string {

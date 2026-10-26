@@ -301,6 +301,10 @@ export interface FormFieldDefinition {
   defaultValueTemplateHelpText?: string;
   // 'advanced' puts the field into the collapsed Advanced settings panel below the form
   section?: FormFieldSection;
+  // A regular expression whose matches are removed from the value when the user leaves the field
+  // and before the step is committed, e.g. "@ttn$" for an ID copied with its suffix.
+  // validators check the cleaned value.
+  cleanupPattern?: string;
   // Set by the install dialog for the fields it adds, not by packages:
   // help popup shown under the field, and the text of its trigger
   helpPopupId?: string;
@@ -314,6 +318,9 @@ export interface FormFieldDefinition {
 }
 
 export type FormFieldSection = 'advanced';
+
+export const cleanFormFieldValue = (field: FormFieldDefinition, value: any): any =>
+  field.cleanupPattern && typeof value === 'string' ? value.replace(new RegExp(field.cleanupPattern, 'g'), '') : value;
 
 export interface EntityStepOutput {
   id: string;
