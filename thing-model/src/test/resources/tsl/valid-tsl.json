@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "profile": {
+    "ProductId": "9HYN9PJNOY",
+    "CategoryId": "1"
+  },
+  "properties": [
+    {
+      "id": "accX",
+      "name": "X 轴加速度",
+      "desc": "三轴加速度计 X 轴",
+      "mode": "r",
+      "required": true,
+      "define": {
+        "type": "float",
+        "min": -4,
+        "max": 4,
+        "step": 0.01,
+        "unit": "g"
+      }
+    },
+    {
+      "id": "gyroX",
+      "name": "X 轴角速度",
+      "mode": "r",
+      "define": {
+        "type": "float",
+        "min": -2000,
+        "max": 2000,
+        "step": 0.1,
+        "unit": "°/s"
+      }
+    },
+    {
+      "id": "rssi",
+      "name": "WiFi 信号强度",
+      "mode": "r",
+      "define": {
+        "type": "int",
+        "min": -100,
+        "max": 0,
+        "unit": "dBm"
+      }
+    },
+    {
+      "id": "bssid",
+      "name": "AP MAC",
+      "mode": "r",
+      "define": {
+        "type": "string"
+      }
+    },
+    {
+      "id": "uptime",
+      "name": "运行时长",
+      "mode": "r",
+      "define": {
+        "type": "int",
+        "min": 0,
+        "unit": "s"
+      }
+    },
+    {
+      "id": "temp",
+      "name": "芯片温度",
+      "mode": "r",
+      "define": {
+        "type": "float",
+        "min": -40,
+        "max": 125,
+        "unit": "℃"
+      }
+    },
+    {
+      "id": "ts",
+      "name": "NTP 时间戳",
+      "mode": "r",
+      "define": {
+        "type": "timestamp",
+        "unit": "s"
+      }
+    }
+  ],
+  "events": [],
+  "actions": []
+}

@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "China Railway TSL v1.5",
+  "type": "object",
+  "required": ["version", "profile", "properties"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "profile": {
+      "type": "object",
+      "anyOf": [
+        { "required": ["ProductId"] },
+        { "required": ["productId"] }
+      ],
+      "properties": {
+        "ProductId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "productId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "CategoryId": { "type": ["string", "number"] },
+        "categoryId": { "type": ["string", "number"] }
+      },
+      "additionalProperties": true
+    },
+    "properties": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/property" }
+    },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/event" }
+    },
+    "actions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/action" }
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,49}$",
+      "maxLength": 50
+    },
+    "define": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["bool", "int", "float", "string", "enum", "enum_string", "timestamp", "struct"]
+        },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "start": { "type": "number" },
+        "step": { "type": "number" },
+        "unit": { "type": "string", "maxLength": 32 },
+        "mapping": { "type": ["object", "array"] },
+        "specs": { "type": ["object", "array"] },
+        "fields": { "type": ["object", "array"] }
+      },
+      "additionalProperties": true
+    },
+    "property": {
+      "type": "object",
+      "required": ["id", "name", "mode", "define"],
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "desc": { "type": "string", "maxLength": 512 },
+        "mode": { "enum": ["r", "rw"] },
+        "required": { "type": "boolean" },
+        "define": { "$ref": "#/definitions/define" },
+        "mapping": { "type": ["object", "array"] }
+      },
+      "additionalProperties": true
+    },
+    "param": {
+      "type": "object",
+      "required": ["id", "name", "define"],
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "desc": { "type": "string", "maxLength": 512 },
+        "define": { "$ref": "#/definitions/define" }
+      },
+      "additionalProperties": true
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "desc": { "type": "string", "maxLength": 512 },
+        "type": { "enum": ["info", "alert", "fault"] },
+        "params": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/param" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/definitions/identifier" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "desc": { "type": "string", "maxLength": 512 },
+        "input": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/param" }
+        },
+        "output": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/param" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

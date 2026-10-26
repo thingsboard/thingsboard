@@ -1,0 +1,48 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: thing-model-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingmodel}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      schema: ${THINGMODEL_DB_SCHEMA:public}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    default-schema: ${THINGMODEL_DB_SCHEMA:public}
+    schemas: ${THINGMODEL_DB_SCHEMA:public}
+    init-sql: SET search_path TO ${THINGMODEL_DB_SCHEMA:public}
+  jooq:
+    sql-dialect: POSTGRES
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+thingmodel:
+  database:
+    expected-name: ${THINGMODEL_DB_NAME:thingmodel}
+    expected-schema: ${THINGMODEL_DB_SCHEMA:}
+  rulechain:
+    enabled: ${THINGMODEL_RULECHAIN_ENABLED:true}
+    name-prefix: ${THINGMODEL_RULECHAIN_PREFIX:auto_}
+    kafka-bootstrap: ${THINGMODEL_KAFKA_BOOTSTRAP:kafka-test1:9095,kafka-test2:9095,kafka-test3:9095}
+    topic-telemetry: ${THINGMODEL_TOPIC_TELEMETRY:iot.telemetry.normalized}
+    topic-event: ${THINGMODEL_TOPIC_EVENT:iot.event.normalized}
+    topic-invalid: ${THINGMODEL_TOPIC_INVALID:iot.telemetry.invalid}
+    key-pattern: ${THINGMODEL_KAFKA_KEY_PATTERN:$[deviceName]}
+  tb:
+    base-url: ${THINGMODEL_TB_URL:http://localhost:8080}
+    client-max-retries: 3
+    client-initial-retry-delay-ms: 1000
+    client-max-retry-delay-ms: 30000
+  auth:
+    cache-seconds: 60
+  security:
+    secret-key: ${THINGMODEL_SECRET_KEY:}
