@@ -13,6 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.FileSystemUtils;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.install.lts.MigrationService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +31,9 @@ import static org.junit.Assert.assertTrue;
  * schema-trace.sql, so it starts in the pre-tracing state; the test runs the real service against it twice, to also
  * pin that a re-run (every later upgrade) is a no-op. The service reads its script from the install data dir, which in
  * a packaged install holds the dao module's sql/ resources, so the test stages the same file in a temp data dir.
+ * <p>
+ * LTS patch updates (e.g. 4.4.0.x -> 4.4.1.0) skip that path: SystemPatchApplier runs only the lts migrations at
+ * startup, so the 4.4.1.0 migration must create the same tables.
  */
 @DaoSqlTest
 public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
@@ -40,6 +44,8 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private MigrationService migrationService;
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -96,6 +102,24 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
         assertEquals(List.of("aggregation", "queue-lag"), findLeaderLockNames());
         assertEquals(Long.valueOf(42), jdbcTemplate.queryForObject(
                 "SELECT leader_until FROM span_stats_leader WHERE lock_name = 'aggregation'", Long.class));
+    }
+
+    @Test
+    public void givenDbWithoutTraceSchema_whenPatchedTo4_4_1_0_thenAllTablesAndLeaderLocksExistAndRerunIsNoOp() {
+        jdbcTemplate.execute("DROP TABLE IF EXISTS trace_coverage_setting");
+        TRACE_TABLES.forEach(table -> assertFalse(table + " must not exist before the patch", tableExists(table)));
+
+        migrationService.applyMigrations("4.4.0.0", "4.4.1.0", false, () -> {});
+
+        assertTrue("trace_coverage_setting must exist after the patch", tableExists("trace_coverage_setting"));
+        TRACE_TABLES.forEach(table -> assertTrue(table + " must exist after the patch", tableExists(table)));
+        assertEquals(List.of("aggregation", "queue-lag"), findLeaderLockNames());
+
+        // A forced re-run (SKIP_PATCH_VERSION_CHECK) selects 4.4.1.0 again; it must not fail on the existing tables.
+        migrationService.applyMigrations("4.4.1.0", "4.4.1.0", true, () -> {});
+
+        assertTrue(tableExists("trace_coverage_setting"));
+        TRACE_TABLES.forEach(table -> assertTrue(table + " must still exist after a re-run", tableExists(table)));
     }
 
     private void dropTraceTables() {
