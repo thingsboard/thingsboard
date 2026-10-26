@@ -54,11 +54,15 @@ export class InstallFormRendererComponent implements OnChanges {
   readonly FormFieldType = FormFieldType;
 
   ngOnChanges(changes: SimpleChanges): void {
-    // The hint boxes depend on reviewMode too
+    // The hint boxes and the unmasked passwords depend on reviewMode too
     if (changes.fields || changes.reviewMode) {
       this.sections = [];
+      this.passwordVisible = {};
       let previous: FormFieldDefinition | undefined;
       for (const field of this.fields ?? []) {
+        if (this.reviewMode && field.type === FormFieldType.PASSWORD) {
+          this.passwordVisible[field.key] = true;
+        }
         if (!previous || field.group !== previous.group) {
           this.sections.push({ title: field.group, rows: [] });
         }
@@ -72,16 +76,6 @@ export class InstallFormRendererComponent implements OnChanges {
           rows.push({ fields: [field], hasHintBox });
         }
         previous = field;
-      }
-    }
-    if (changes.fields || changes.reviewMode) {
-      this.passwordVisible = {};
-      if (this.reviewMode) {
-        for (const f of this.fields) {
-          if (f.type === FormFieldType.PASSWORD) {
-            this.passwordVisible[f.key] = true;
-          }
-        }
       }
     }
   }
