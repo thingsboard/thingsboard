@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.job.JobType;
-import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -105,9 +104,9 @@ public class HashPartitionService implements PartitionService {
 
     private final ConcurrentMap<TenantId, TenantRoutingInfo> tenantRoutingInfoMap = new ConcurrentHashMap<>();
 
-    private List<ServiceInfo> currentOtherServices;
+    private volatile List<ServiceInfo> currentOtherServices;
     private final Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
-    private volatile Map<TenantProfileId, List<ServiceInfo>> responsibleServices = Collections.emptyMap();
+    private volatile Set<TenantProfileId> profilesWithDedicatedServices = Collections.emptySet();
 
     private HashFunction hashFunction;
 
@@ -319,7 +318,7 @@ public class HashPartitionService implements PartitionService {
         TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
         if (isRegular) {
             if (routingInfo.isIsolated()) {
-                isManaged = hasDedicatedService(routingInfo.getProfileId());
+                isManaged = !profilesWithDedicatedServices.contains(routingInfo.getProfileId());
             } else {
                 isManaged = true;
             }
@@ -332,10 +331,6 @@ public class HashPartitionService implements PartitionService {
         }
         log.trace("[{}] Tenant {} managed by this service", tenantId, isManaged ? "is" : "is not");
         return isManaged;
-    }
-
-    private boolean hasDedicatedService(TenantProfileId profileId) {
-        return CollectionsUtil.isEmpty(responsibleServices.get(profileId));
     }
 
     @Override
@@ -447,6 +442,8 @@ public class HashPartitionService implements PartitionService {
         }
         queueServicesMap.values().forEach(list -> list.sort(Comparator.comparing(ServiceInfo::getServiceId)));
         responsibleServices.values().forEach(list -> list.sort(Comparator.comparing(ServiceInfo::getServiceId)));
+        // resolveByPartitionIdx adds the fallback servers for profiles without dedicated services to responsibleServices
+        Set<TenantProfileId> profilesWithDedicatedServices = Set.copyOf(responsibleServices.keySet());
 
         final ConcurrentMap<QueueKey, List<Integer>> newPartitions = new ConcurrentHashMap<>();
         partitionSizesMap.forEach((queueKey, size) -> {
@@ -462,7 +459,7 @@ public class HashPartitionService implements PartitionService {
                 }
             }
         });
-        this.responsibleServices = responsibleServices;
+        this.profilesWithDedicatedServices = profilesWithDedicatedServices;
 
         final ConcurrentMap<QueueKey, List<Integer>> oldPartitions = myPartitions;
         myPartitions = newPartitions;
@@ -558,6 +555,23 @@ public class HashPartitionService implements PartitionService {
     @Override
     public Set<String> getAllServiceIds(ServiceType serviceType) {
         return getAllServices(serviceType).stream().map(ServiceInfo::getServiceId).collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean isKnownServiceId(ServiceType serviceType, String serviceId) {
+        ServiceInfo current = serviceInfoProvider.getServiceInfo();
+        if (serviceId.equals(current.getServiceId()) && current.getServiceTypesList().contains(serviceType.name())) {
+            return true;
+        }
+        List<ServiceInfo> others = currentOtherServices;
+        if (others != null) {
+            for (ServiceInfo serviceInfo : others) {
+                if (serviceId.equals(serviceInfo.getServiceId()) && serviceInfo.getServiceTypesList().contains(serviceType.name())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

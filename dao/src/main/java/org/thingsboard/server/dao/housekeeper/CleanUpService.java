@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -62,9 +63,10 @@ public class CleanUpService {
                 submitTask(HousekeeperTask.deleteAiTenantData(tenantId));
                 submitTask(HousekeeperTask.deleteTraceTenantData(tenantId));
             }
-            if (entityType == EntityType.ALARM && event.getCause() != ActionCause.BULK_DELETION) {
+            if (entityType == EntityType.ALARM && event.getEntity() instanceof Alarm && event.getCause() != ActionCause.BULK_DELETION) {
                 // Single-alarm delete: clean up its comments per alarm. Bulk deletions (BULK_DELETION) batch the
                 // comment cleanup into a single list task at the orchestrator instead, to avoid one task per alarm.
+                // The entity check matters: deleting a single alarm comment publishes the same event with the alarm id.
                 submitTask(HousekeeperTask.deleteAlarmComments(tenantId, new AlarmId(entityId.getId())));
             }
         } catch (Throwable e) {

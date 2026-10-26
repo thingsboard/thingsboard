@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tb_instance_registry (
     last_activity_ts bigint NOT NULL
 );
 
--- Also copied by the upgrade scripts that reach this table; LtsMigrationIntegrationTest keeps them in sync.
+-- Also copied by the upgrade scripts that reach this table; MigrationIntegrationTest keeps them in sync.
 CREATE TABLE IF NOT EXISTS tb_cluster (
     cluster_id uuid NOT NULL,
     license_secret varchar,

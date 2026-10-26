@@ -152,8 +152,47 @@ rm ~/.testcontainers.properties
 Open a pull request against `master`. Fill out the pull request template, and make sure:
 
 - New or changed behavior has test coverage.
-- `mvn license:format` has been run, so new files carry the correct license header.
+- `mvn license:format` has been run, so new files carry the correct license header. Do not add
+  your own copyright or author lines to file headers.
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
+- You have signed the Contributor License Agreement (see below).
 
-By contributing, you agree that your contribution is licensed under this project's license (see
-[LICENSE](./LICENSE)).
+### Pull request titles
+
+The release notes are generated from pull request titles, word for word. Write the title for the
+people who read them — users and customers, not reviewers:
+
+- **Describe the change in behavior, as a user sees it.** Name the feature or screen and what now
+  works differently. Leave out class names, exceptions, library versions and other internals a
+  user can't relate to; they belong in the description.
+- **Use the past tense, starting with a verb** such as `Fixed`, `Added`, `Updated`, `Improved`,
+  `Removed`, `Renamed` or `Made`. Not `Fix`, `Add` or `Update`.
+- **Leave out code-scope prefixes and suffixes** such as `fix(ui):`, ticket keys or branch names
+  (`(lts-4.3)`). A product-area prefix a user recognizes is fine, followed by the verb:
+  `IoT Hub: added filtering of the catalogue by the creator's verification status`.
+
+The section an entry appears under (`UI`, `Bug: UI`, `Edge`, …) comes from the pull request's
+labels, not its title, so don't repeat the area or the change type in the title. Changes users
+don't see — CI, build, a second backport of the same fix — get the `Ignore for release` label
+and stay out of the release notes. For anything else, such as docs or refactoring, decide
+whether users would want to read about it in the release notes, and add the label if not.
+
+| Instead of                                                     | Write                                                                                          |
+|----------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `fix(ui): update moment-timezone to 0.6.5 (tzdata 2026e)`      | `Updated UI time zone data to reflect 2026 daylight saving time changes in Canada, Morocco and Moldova` |
+| `Warn that updating a solution template recreates everything it installed` | `Added a warning that updating a solution template recreates everything it installed` |
+| `Fix empty Provisioning step when navigating the device install wizard via the stepper header` | `Fixed empty Provisioning step when navigating the device install wizard via the stepper header` |
+
+## Contributor License Agreement
+
+Before we can merge your pull request, you need to sign the ThingsBoard
+[Contributor License Agreement](https://cla-assistant.io/thingsboard/thingsboard) (CLA). On your
+first pull request a bot posts a link: sign in with GitHub and accept the agreement. You sign once,
+and it covers all your contributions to this repository, including those made before you signed.
+
+You keep the copyright in your contributions. The CLA grants ThingsBoard, Inc. a license to use and
+distribute them, including under this project's license (see [LICENSE](./LICENSE)) and under
+commercial licenses.
+
+If you contribute on behalf of your employer, your employer may need to sign the Corporate CLA
+instead. Contact info@thingsboard.io.

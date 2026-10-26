@@ -75,6 +75,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "edges.enabled=true",
         "agents.enabled=true",
+        "agents.event.reconnect_resume_max_delay_ms=0",
         "queue.rule-engine.stats.enabled=false"
 })
 @Slf4j

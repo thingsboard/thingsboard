@@ -3,7 +3,7 @@
 ```html
 {:code-style="max-height: 400px;"}
 <form [formGroup]="addEntityFormGroup" (ngSubmit)="save()" style="min-width:480px;">
-  <mat-toolbar class="flex flex-row" color="primary">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
     <h2>Add new User</h2>
     <span class="flex-1"></span>
     <button mat-icon-button (click)="cancel()" type="button">
@@ -17,7 +17,7 @@
   </div>
   <div mat-dialog-content class="flex flex-col">
     <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label>Email</mat-label>
         <input matInput formControlName="email" required
                ng-pattern='/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\_\-0-9]+\.)+[a-zA-Z]{2,}))$/'>
@@ -30,21 +30,21 @@
       </mat-form-field>
     </div>
     <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label>First Name</mat-label>
         <input matInput
                formControlName="firstName">
       </mat-form-field>
     </div>
     <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label>Last Name</mat-label>
         <input matInput
                formControlName="lastName">
       </mat-form-field>
     </div>
     <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
-      <mat-form-field class="mat-block flex-1">
+      <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label>User activation method</mat-label>
         <mat-select matInput formControlName="userActivationMethod">
           <mat-option *ngFor="let activationMethod of activationMethods" [value]="activationMethod.value">

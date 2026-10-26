@@ -164,7 +164,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             return null;
         }
         try {
-            String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
+            String mqttType = resolveGatewayMqttType();
             DeviceConnectivityInfo properties = getConnectivity(mqttType);
             String host = DeviceConnectivityUtil.getHost(baseUrl, properties, mqttType);
             return DeviceConnectivityUtil.isLocalhost(host) ? DeviceConnectivityUtil.HOST_DOCKER_INTERNAL : host;
@@ -172,6 +172,16 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
             log.warn("Failed to resolve gateway host for baseUrl [{}]", baseUrl, e);
             return null;
         }
+    }
+
+    @Override
+    public String resolveGatewayPort() {
+        DeviceConnectivityInfo properties = getConnectivity(resolveGatewayMqttType());
+        return properties == null ? null : StringUtils.trimToNull(getPort(properties));
+    }
+
+    private String resolveGatewayMqttType() {
+        return isEnabled(MQTTS) ? MQTTS : MQTT;
     }
 
     private DeviceConnectivityInfo getConnectivity(String protocol) {

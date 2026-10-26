@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.install;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -133,7 +134,7 @@ class ThingsboardInstallServiceTest {
 
         installService.performInstall();
 
-        // The LTS files the chain applies reference PE-only tables and each of them runs as a single transaction,
+        // The migration files the chain applies reference PE-only tables and each of them runs as a single transaction,
         // so a converted CE database must be given those tables before the chain runs rather than after it.
         InOrder inOrder = inOrder(entityDatabaseSchemaService, databaseEntitiesUpgradeService, dataUpdateService);
         inOrder.verify(entityDatabaseSchemaService).createDatabaseSchema(false);

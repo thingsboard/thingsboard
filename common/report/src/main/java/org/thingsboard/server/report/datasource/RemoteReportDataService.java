@@ -4,6 +4,7 @@ package org.thingsboard.server.report.datasource;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
 import org.thingsboard.common.util.JacksonUtil;
@@ -32,6 +33,7 @@ import org.thingsboard.server.report.context.TbReportCtx;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.thingsboard.server.common.data.report.configuration.timewindow.TimeIntervalCalculator.getIntervalTs;
@@ -125,6 +127,9 @@ public class RemoteReportDataService implements ReportDataService {
         try {
             return getRestClient(ctx).getTimeseries(entityId, keys, getIntervalTs(interval), getIntervalType(interval), timeZone, agg, sortOrder, startTs, endTs, limit, useStrictDataTypes);
         } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == HttpStatus.FORBIDDEN.value()) {
+                return Collections.emptyList();
+            }
             throw handleRestClientException(e);
         }
     }
@@ -134,6 +139,9 @@ public class RemoteReportDataService implements ReportDataService {
         try {
             return getRestClient(ctx).getTimeseriesByQueries(entityId, queries);
         } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == HttpStatus.FORBIDDEN.value()) {
+                return Collections.emptyList();
+            }
             throw handleRestClientException(e);
         }
     }

@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install.lts;
 
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Component
 @TbCoreComponent
 @RequiredArgsConstructor
-public class V4_3_1_6Migration implements LtsMigration {
+public class V4_3_1_6Migration implements Migration {
 
     private final JdbcTemplate jdbcTemplate;
 

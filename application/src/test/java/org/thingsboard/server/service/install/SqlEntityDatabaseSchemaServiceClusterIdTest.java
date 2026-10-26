@@ -1,5 +1,6 @@
-// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.install;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -129,7 +130,7 @@ class SqlEntityDatabaseSchemaServiceClusterIdTest extends AbstractPostgresContai
                 .hasCauseInstanceOf(SQLException.class);
     }
 
-    /** The production DDL, not retyped: LtsMigrationIntegrationTest pins these constants against schema-entities.sql. */
+    /** The production DDL, not retyped: MigrationIntegrationTest pins these constants against schema-entities.sql. */
     private static List<String> productionClusterDdl() {
         return List.of(TbClusterSchema.CREATE_CLUSTER_TABLE_QUERY, TbClusterSchema.CREATE_CLUSTER_SINGLE_ROW_INDEX_QUERY);
     }

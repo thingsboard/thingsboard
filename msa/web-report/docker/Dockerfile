@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
-FROM thingsboard/node:22.22.2-bookworm-slim
+FROM thingsboard/node:22.23.4-bookworm-slim
 
 ARG TARGETPLATFORM
 ARG DEBIAN_FRONTEND=noninteractive
@@ -23,7 +23,7 @@ COPY package/linux/conf ./config
 COPY ${pkg.name}.conf ./conf
 COPY src/api ./api
 COPY src/config ./config
-COPY src/server.js ./
+COPY src/inspectorShim.js src/server.js ./
 
 RUN apt-get update \
     && apt-get install -yq --no-install-recommends fonts-noto-cjk-extra fonts-roboto fonts-noto-color-emoji fonts-unifont libfreetype6 xfonts-scalable fonts-liberation \

@@ -91,7 +91,7 @@ function ActivationLinkDialogController(instance) {
 }
 
 let activationLinkDialogTemplate = `<form style="min-width: 400px; position: relative;">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
     <h2 translate>user.activation-link</h2>
     <span class="flex-1"></span>
     <button mat-icon-button

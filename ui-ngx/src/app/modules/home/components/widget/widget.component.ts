@@ -1561,6 +1561,7 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
           embedded: true,
           syncStateWithQueryParam: false,
           hideToolbar: hideDashboardToolbar,
+          hideMainToolbar: false,
           currentState: objToBase64([stateObject]),
           dashboard,
           parentDashboard: this.widgetContext.parentDashboard ?
