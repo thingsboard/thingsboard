@@ -1071,6 +1071,11 @@
                                         <dependency>io.netty:netty-tcnative*</dependency>
                                     </dependencies>
                                 </requireSameVersions>
+                                <requireUpperBoundDeps>
+                                    <includes>
+                                        <include>com.nimbusds:nimbus-jose-jwt</include>
+                                    </includes>
+                                </requireUpperBoundDeps>
                             </rules>
                         </configuration>
                     </execution>

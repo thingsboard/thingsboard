@@ -24,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.HttpRequestWrapper;
-import org.springframework.http.converter.HttpMessageConverters;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
@@ -381,11 +380,14 @@ public class RestClient implements Closeable {
         return new RestClient(rt, baseURL, AuthType.API_KEY, token);
     }
 
-    // Without an explicit converter, Spring picks Jackson 3 whenever it is on the classpath
+    // Spring 7 defaults to Jackson 3 when it is on the classpath; Spring 6 already uses Jackson 2
     @SuppressWarnings("removal")
     private static RestTemplate newRestTemplate() {
-        return new RestTemplate(HttpMessageConverters.forClient().registerDefaults()
-                .withJsonConverter(new MappingJackson2HttpMessageConverter()).build());
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters().replaceAll(converter ->
+                converter.getClass().getName().equals("org.springframework.http.converter.json.JacksonJsonHttpMessageConverter") ?
+                        new MappingJackson2HttpMessageConverter() : converter);
+        return restTemplate;
     }
 
     public String getToken() {
@@ -4822,9 +4824,10 @@ public class RestClient implements Closeable {
         return listToString(list.stream().map(Enum::name).collect(Collectors.toList()));
     }
 
+    @SuppressWarnings("removal")
     private HttpEntity<MultiValueMap<String, Object>> createMultipartRequest(String fileName, byte[] fileData, String fileContentType, Map<String, Object> otherParts) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
 
         MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
         fileMap.add(HttpHeaders.CONTENT_DISPOSITION, "form-data; name=file; filename=" + fileName);
@@ -5145,6 +5148,7 @@ public class RestClient implements Closeable {
         return response.getBody();
     }
 
+    @SuppressWarnings("removal")
     public CustomMenu saveCustomMenu(CustomMenuInfo customMenuInfo, UUID[] ids, Boolean force) {
         Map<String, Object> params = new HashMap<>();
         if (ids != null && ids.length > 0) {
@@ -5159,8 +5163,8 @@ public class RestClient implements Closeable {
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             builder.queryParam(entry.getKey(), entry.getValue());
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         HttpEntity<CustomMenuInfo> requestEntity = new HttpEntity<>(customMenuInfo, headers);
         return restTemplate.postForEntity(builder.toUriString(), requestEntity, CustomMenu.class).getBody();
     }

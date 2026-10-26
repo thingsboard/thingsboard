@@ -8,16 +8,20 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.API_ENTRY_POINT;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.CURRENT_USER_BY_ID_ENTRY_POINT;
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.DEVICE_API_ENTRY_POINT;
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT;
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.FORM_BASED_LOGIN_ENTRY_POINT;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.LOGIN_LOGO_ENTRY_POINT;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.SETUP_ENTRY_POINT;
 
 class SkipPathRequestMatcherTest {
 
     private final SkipPathRequestMatcher matcher = new SkipPathRequestMatcher(
-            List.of(FORM_BASED_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, "/api/noauth/setup/**",
-                    DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT, "/api/noauth/whiteLabel/loginLogo/*/*"),
-            List.of("/api/**", "/api/user/{userId:[0-9a-fA-F-]{36}}"));
+            List.of(FORM_BASED_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, SETUP_ENTRY_POINT,
+                    DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT, LOGIN_LOGO_ENTRY_POINT),
+            List.of(API_ENTRY_POINT, CURRENT_USER_BY_ID_ENTRY_POINT));
 
     @Test
     void processesProtectedApiPaths() {

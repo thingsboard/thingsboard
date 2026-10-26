@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import textwrap
@@ -61,10 +62,21 @@ class GitFixture:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
 
-    def commit(self, message):
+    def commit(self, message, *options):
         self("add", ".")
-        self("commit", "-m", message)
+        self("commit", *options, "-m", message)
         return self("rev-parse", "HEAD")
+
+    def sign_with_new_ssh_key(self, test):
+        if shutil.which("ssh-keygen") is None:
+            test.skipTest("ssh-keygen is not available")
+        keys = temporary_directory(test)
+        subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "test", "-f", str(keys / "key")],
+                       check=True, capture_output=True)
+        (keys / "allowed_signers").write_text("test@example.invalid " + (keys / "key.pub").read_text())
+        self("config", "gpg.format", "ssh")
+        self("config", "user.signingkey", str(keys / "key.pub"))
+        self("config", "gpg.ssh.allowedSignersFile", str(keys / "allowed_signers"))
 
 
 class DecisionTests(unittest.TestCase):
@@ -630,7 +642,11 @@ class GitHistoryTests(unittest.TestCase):
         base = git.commit("CE base")
         git("checkout", "-b", "downstream")
         git("mv", "A.java", "B.java")
-        git.commit("rename")
+        git.sign_with_new_ssh_key(self)
+        try:
+            git.commit("rename", "-S")
+        except p.Failure as e:
+            self.skipTest(f"git cannot sign with an SSH key: {e}")
         git("config", "log.follow", "true")
         git("config", "log.showSignature", "true")
         self.assertEqual({"B.java": ("A.java", "ce")},
