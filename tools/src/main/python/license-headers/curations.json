@@ -1714,7 +1714,7 @@
     {
       "path": "application/src/main/java/org/thingsboard/server/service/trace/TraceSpanListQuery.java",
       "contentHash": "sha256:5ce135b1ed9abca6a6fe5be11ff5f21a6f4f1b67d03ec7704ba048dfc5f20289",
-      "header": "pe-only",
+      "header": "busl",
       "reason": "New query DTO for trace spans; the CE match (SetupInfo.java) is only a structural resemblance of a small Lombok class."
     },
     {
