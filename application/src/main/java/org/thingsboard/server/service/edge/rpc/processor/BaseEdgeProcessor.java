@@ -12,6 +12,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -323,7 +325,19 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     }
 
     protected boolean isEntityExists(TenantId tenantId, EntityId entityId) {
-        return entityDaoRegistry.getDao(entityId.getEntityType()).existsById(tenantId, entityId.getId());
+        return tenantId.equals(findEntityTenantId(tenantId, entityId));
+    }
+
+    protected void checkEntityTenant(TenantId tenantId, EntityId entityId) {
+        TenantId entityTenantId = findEntityTenantId(tenantId, entityId);
+        if (entityTenantId != null && !tenantId.equals(entityTenantId)) {
+            throw new DataValidationException(entityId.getEntityType() + " " + entityId.getId() + " belongs to a different tenant!");
+        }
+    }
+
+    private TenantId findEntityTenantId(TenantId tenantId, EntityId entityId) {
+        Object entity = entityDaoRegistry.getDao(entityId.getEntityType()).findById(tenantId, entityId.getId());
+        return entity instanceof HasTenantId hasTenantId ? hasTenantId.getTenantId() : null;
     }
 
     protected void createRelationFromEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {

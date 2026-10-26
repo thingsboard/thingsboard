@@ -63,6 +63,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
@@ -1022,6 +1023,55 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                     Map<String, Object> activeAttr = activeAttrOpt.get();
                     return "true".equals(activeAttr.get("value").toString());
                 });
+    }
+
+    @Test
+    public void testSendDeviceCredentialsRequestForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceCredentialsRequestMsg(DeviceCredentialsRequestMsg.newBuilder()
+                .setDeviceIdMSB(device.getUuidId().getMostSignificantBits())
+                .setDeviceIdLSB(device.getUuidId().getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testSendAttributesRequestForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        loginDifferentTenant();
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"key1\":\"value1\"}"));
+        loginTenantAdmin();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addAttributesRequestMsg(AttributesRequestMsg.newBuilder()
+                .setEntityType(EntityType.DEVICE.name())
+                .setEntityIdMSB(device.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setScope(DataConstants.SERVER_SCOPE).build()));
+    }
+
+    @Test
+    public void testSendDeviceUpdateForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Device deviceUpdate = new Device(device);
+        deviceUpdate.setName("Updated Name");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdate)));
+
+        loginDifferentTenant();
+        Assert.assertEquals(device.getName(), doGet("/api/device/" + device.getUuidId(), Device.class).getName());
+    }
+
+    @Test
+    public void testSendDeviceWithTenantIdOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setId(new DeviceId(Uuids.timeBased()));
+        device.setTenantId(differentTenantId);
+        device.setName("Edge Device With Different Tenant");
+        device.setType("default");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, device)));
+
+        Assert.assertEquals(tenantId, doGet("/api/device/" + device.getUuidId(), Device.class).getTenantId());
     }
 
 }
