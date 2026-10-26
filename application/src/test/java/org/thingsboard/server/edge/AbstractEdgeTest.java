@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -105,6 +106,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -117,6 +119,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -138,7 +141,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         registry.add("edges.rpc.port", () -> EDGE_PORT);
     }
 
-    public static final Integer CONNECT_MESSAGE_COUNT = 31;
+    public static final Integer CONNECT_MESSAGE_COUNT = 29;
     public static final Integer INSTALLATION_MESSAGE_COUNT = 6;
     public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
     protected static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
@@ -155,6 +158,16 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     private CustomMenuDao customMenuDao;
 
     private static List<UUID> idsToRemove = new ArrayList<>();
+
+    protected void sendUplinkMsgAndWaitForResponse(Consumer<UplinkMsg.Builder> customizer) throws Exception {
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        uplinkMsgBuilder.setUplinkMsgId(EdgeUtils.nextPositiveInt());
+        customizer.accept(uplinkMsgBuilder);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+    }
 
     @Before
     public void setupEdgeTest() throws Exception {
@@ -298,9 +311,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
-        // 4 messages ('general', 'mail', 'connectivity', 'jwt')
-        validateMsgsCnt(AdminSettingsUpdateMsg.class, 4);
-        validateAdminSettings(4);
+        // 2 messages ('general', 'connectivity')
+        validateMsgsCnt(AdminSettingsUpdateMsg.class, 2);
+        validateAdminSettings(2);
 
         // 5 messages
         // - 1 from default profile fetcher
@@ -467,32 +480,21 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : adminSettingsUpdateMsgs) {
             AdminSettings adminSettings = JacksonUtil.fromString(adminSettingsUpdateMsg.getEntity(), AdminSettings.class, true);
             Assert.assertNotNull(adminSettings);
+            // Only allow-listed keys sync to the edge; provider/secret settings (e.g. 'mail', 'jwt',
+            // self-registration mappings) must never arrive on the edge.
+            Assert.assertTrue("Unexpected admin settings key synced to edge: " + adminSettings.getKey(),
+                    adminSettings.getKey().equals("general") || adminSettings.getKey().equals("connectivity"));
             if (adminSettings.getKey().equals("general")) {
                 validateGeneralAdminSettings(adminSettings);
             }
-            if (adminSettings.getKey().equals("mail")) {
-                validateMailAdminSettings(adminSettings);
-            }
             if (adminSettings.getKey().equals("connectivity")) {
                 validateConnectivityAdminSettings(adminSettings);
-            }
-            if (adminSettings.getKey().equals("jwt")) {
-                validateJwtAdminSettings(adminSettings);
             }
         }
     }
 
     private void validateGeneralAdminSettings(AdminSettings adminSettings) {
         Assert.assertNotNull(adminSettings.getJsonValue().get("baseUrl"));
-    }
-
-    private void validateMailAdminSettings(AdminSettings adminSettings) {
-        JsonNode jsonNode = adminSettings.getJsonValue();
-        Assert.assertNotNull(jsonNode.get("mailFrom"));
-        Assert.assertNotNull(jsonNode.get("smtpProtocol"));
-        Assert.assertNotNull(jsonNode.get("smtpHost"));
-        Assert.assertNotNull(jsonNode.get("smtpPort"));
-        Assert.assertNotNull(jsonNode.get("timeout"));
     }
 
     private void validateConnectivityAdminSettings(AdminSettings adminSettings) {
