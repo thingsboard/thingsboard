@@ -9,9 +9,14 @@ import { generateSecret } from '@core/utils';
 
 const DEFAULT_RANDOM_SIZE = 20;
 
-/** Fields shown on one line. */
+/**
+ * Fields shown on one line. When one of them has a help popup (outside review mode), the row shows
+ * the field's hint in a box under it, next to the popup trigger, and its fields don't reserve space
+ * for a hint or an error, so the box sits right under them.
+ */
 interface FormRow {
   fields: FormFieldDefinition[];
+  hasHintBox: boolean;
 }
 
 /** Consecutive rows of one group, shown in a panel with the group as its title; no title for ungrouped fields. */
@@ -53,7 +58,6 @@ export class InstallFormRendererComponent implements OnChanges {
   sections: FormSection[] = [];
   // The same for the fields of the collapsed Advanced settings panel
   advancedSections: FormSection[] = [];
-  private rowOf = new Map<string, FormRow>();
   private focusedControl: AbstractControl | null = null;
   private keepFocusedError = false;
 
@@ -81,8 +85,8 @@ export class InstallFormRendererComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.fields) {
-      this.rowOf.clear();
+    // The hint boxes depend on reviewMode too
+    if (changes.fields || changes.reviewMode) {
       const fields = this.fields ?? [];
       this.sections = this.buildSections(fields.filter(field => field.section !== 'advanced'));
       this.advancedSections = this.buildSections(fields.filter(field => field.section === 'advanced'));
@@ -108,12 +112,13 @@ export class InstallFormRendererComponent implements OnChanges {
       }
       const rows = sections[sections.length - 1].rows;
       const last = rows[rows.length - 1];
+      const hasHintBox = !!field.helpPopupId && !this.reviewMode;
       if (field.row && last?.fields[0].row === field.row) {
         last.fields.push(field);
+        last.hasHintBox ||= hasHintBox;
       } else {
-        rows.push({ fields: [field] });
+        rows.push({ fields: [field], hasHintBox });
       }
-      this.rowOf.set(field.key, rows[rows.length - 1]);
       previous = field;
     }
     return sections;
@@ -156,19 +161,6 @@ export class InstallFormRendererComponent implements OnChanges {
 
   getPatternErrorMessage(field: FormFieldDefinition): string {
     return field.validators?.[0]?.message || 'Invalid format';
-  }
-
-  /** Fields with a help popup show their hint in a box under the row, with the popup trigger. */
-  hasHintBox(field: FormFieldDefinition): boolean {
-    return !!field.helpPopupId && !this.reviewMode;
-  }
-
-  /**
-   * True for the fields of a row that has a hint box. They don't reserve space for a hint or an
-   * error, so the box sits right under them.
-   */
-  isInHintBoxRow(field: FormFieldDefinition): boolean {
-    return !!this.rowOf.get(field.key)?.fields.some(f => this.hasHintBox(f));
   }
 
   /** True when the field fails a validator other than required and pattern (one the dialog added). */

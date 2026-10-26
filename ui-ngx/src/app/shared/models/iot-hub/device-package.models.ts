@@ -279,7 +279,7 @@ export interface FormFieldDefinition {
   // (tb-secret-key-input); false / undefined → render the typed widget.
   secretSupport?: boolean;
   secretType?: SecretType;
-  // Fields with the same group get one header above the first of them
+  // Consecutive fields with the same group are shown in one panel titled with the group
   group?: string;
   readOnly?: boolean;
   // Shown inside the empty field; the label then always stays above it
