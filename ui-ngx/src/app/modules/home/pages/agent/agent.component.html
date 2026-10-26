@@ -126,22 +126,28 @@
         <mat-label translate>agent.routing-key</mat-label>
         <input matInput formControlName="routingKey">
       </mat-form-field>
-      <button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onAgentInfoCopied('key')"
-        [cbContent]="entityForm?.get('routingKey').value"
-        matTooltip="{{'agent.copy-routing-key' | translate}}">
-        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="entityForm?.get('routingKey').value"
+        tooltipText="{{'agent.copy-routing-key' | translate}}"
+        tooltipPosition="above"
+        (successCopied)="onAgentInfoCopied('key')"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
     <div class="flex flex-row" [class.!hidden]="agentScope === 'customer_user'">
       <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>agent.secret</mat-label>
         <input matInput formControlName="secret">
       </mat-form-field>
-      <button mat-icon-button type="button" ngxClipboard (cbOnSuccess)="onAgentInfoCopied('secret')"
-        [cbContent]="entityForm?.get('secret').value"
-        matTooltip="{{'agent.copy-secret' | translate}}">
-        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="entityForm?.get('secret').value"
+        tooltipText="{{'agent.copy-secret' | translate}}"
+        tooltipPosition="above"
+        (successCopied)="onAgentInfoCopied('secret')"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <tb-agent-profile-autocomplete

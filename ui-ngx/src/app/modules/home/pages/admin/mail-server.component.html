@@ -321,11 +321,11 @@
                           <input matInput formControlName="redirectUri" readonly>
                           <tb-copy-button
                             matSuffix
-                            color="primary"
+                            miniButton="false"
                             [copyText]="mailSettings.get('redirectUri').value"
                             tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                             tooltipPosition="above"
-                            icon="mdi:clipboard-arrow-left">
+                            icon="content_copy">
                           </tb-copy-button>
                         </mat-form-field>
                       </div>

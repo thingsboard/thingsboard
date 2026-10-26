@@ -66,14 +66,15 @@
         <mat-label translate>dashboard.public-link</mat-label>
         <input matInput disabled [ngModel]="publicLink">
       </mat-form-field>
-      <button mat-icon-button style="margin-top: 8px;"
-        ngxClipboard
-        (cbOnSuccess)="onPublicLinkCopied($event)"
-        cbContent="{{ publicLink }}"
-        matTooltipPosition="above"
-        matTooltip="{{ 'dashboard.copy-public-link' | translate }}">
-        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      </button>
+      <tb-copy-button
+        class="mt-2"
+        miniButton="false"
+        copyText="{{ publicLink }}"
+        tooltipText="{{ 'dashboard.copy-public-link' | translate }}"
+        tooltipPosition="above"
+        (successCopied)="onPublicLinkCopied($event)"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
   </div>
   <form [formGroup]="entityForm">
