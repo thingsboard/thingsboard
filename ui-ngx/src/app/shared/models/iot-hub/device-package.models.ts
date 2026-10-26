@@ -289,7 +289,7 @@ export interface FormFieldDefinition {
   randomGenerator?: boolean;
   randomSize?: number;
   randomByDefault?: boolean;
-  // Fields with the same group get one header above the first of them
+  // Consecutive fields with the same group are shown in one panel titled with the group
   group?: string;
   // Set by the install dialog for the fields it adds, not by packages.
   readOnly?: boolean;

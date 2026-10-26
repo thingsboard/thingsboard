@@ -25,16 +25,16 @@
               @for (field of row.fields; track field.key) {
                 <div class="flex min-w-0 flex-col" [class.flex-1]="!field.width"
                      [style.flex]="field.width ? '0 1 ' + field.width + 'px' : null">
-                  <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+                  <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field, row: row }"></ng-container>
                 </div>
               }
             </div>
           } @else {
-            <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: row.fields[0] }"></ng-container>
+            <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: row.fields[0], row: row }"></ng-container>
           }
           <!-- A field with a help popup shows its hint under the row, next to the popup trigger -->
           @for (field of row.fields; track field.key) {
-            @if (hasHintBox(field)) {
+            @if (row.hasHintBox && field.helpPopupId) {
               <div class="tb-form-hint tb-primary-fill flex items-center justify-between gap-5">
                 <div class="w-full">{{ field.helpText }}</div>
                 <div class="flex shrink-0"
@@ -51,21 +51,21 @@
       }
     </ng-template>
 
-    <ng-template #fieldTemplate let-field>
+    <ng-template #fieldTemplate let-field let-row="row">
       <!-- typed widget -->
       @switch (field.type) {
         @case (FormFieldType.BOOLEAN) {
           <mat-checkbox [formControlName]="field.key">{{ field.label }}</mat-checkbox>
         }
         @case (FormFieldType.SELECT) {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'">
             <mat-label>{{ field.label }}</mat-label>
             <mat-select [formControlName]="field.key">
               @for (opt of field.options; track opt.value) {
                 <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
               }
             </mat-select>
-            @if (field.helpText && !hasHintBox(field)) {
+            @if (field.helpText && !(row.hasHintBox && field.helpPopupId)) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
@@ -74,7 +74,7 @@
           </mat-form-field>
         }
         @case (FormFieldType.PASSWORD) {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
                    [formControlName]="field.key"
@@ -91,7 +91,7 @@
                 <mat-icon>autorenew</mat-icon>
               </button>
             }
-            @if (field.helpText && !hasHintBox(field)) {
+            @if (field.helpText && !(row.hasHintBox && field.helpPopupId)) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
@@ -106,11 +106,11 @@
           </mat-form-field>
         }
         @case (FormFieldType.INTEGER) {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput type="number" [formControlName]="field.key"
                    data-lpignore="true" data-1p-ignore data-bwignore>
-            @if (field.helpText && !hasHintBox(field)) {
+            @if (field.helpText && !(row.hasHintBox && field.helpPopupId)) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
@@ -125,7 +125,7 @@
           </mat-form-field>
         }
         @default {
-          <mat-form-field appearance="outline" [subscriptSizing]="isInHintBoxRow(field) ? 'dynamic' : 'fixed'">
+          <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'">
             <mat-label>{{ field.label }}</mat-label>
             <input matInput [formControlName]="field.key"
                    autocomplete="new-username" data-lpignore="true" data-1p-ignore data-bwignore>
@@ -137,7 +137,7 @@
                 <mat-icon>autorenew</mat-icon>
               </button>
             }
-            @if (field.helpText && !hasHintBox(field)) {
+            @if (field.helpText && !(row.hasHintBox && field.helpPopupId)) {
               <mat-hint>{{ field.helpText }}</mat-hint>
             }
             @if (formGroup.controls[field.key]?.hasError('required')) {
