@@ -80,7 +80,7 @@ public class TranslationControllerTest extends AbstractControllerTest {
         JsonNode fullSystemTranslation = doGet("/api/translation/full/" + ES_ES, JsonNode.class);
         assertThat(fullSystemTranslation.get("save").asText()).isEqualTo("system");
         assertThat(fullSystemTranslation.get("access").get("unauthorized").asText()).isEqualTo("No autorizado");
-        assertThat(fullSystemTranslation.get("solution-template").get("solution-template").asText()).isEqualTo("Plantilla de solución");
+        assertThat(fullSystemTranslation.get("device").get("device").asText()).isEqualTo("Dispositivo");
 
         // get full tenant translation
         loginTenantAdmin();
@@ -88,7 +88,7 @@ public class TranslationControllerTest extends AbstractControllerTest {
         assertThat(fullTenantTranslation.get("save").asText()).isEqualTo("system");
         assertThat(fullTenantTranslation.get("update").asText()).isEqualTo("tenant");
         assertThat(fullTenantTranslation.get("access").get("unauthorized").asText()).isEqualTo("No autorizado");
-        assertThat(fullTenantTranslation.get("solution-template").get("solution-template").asText()).isEqualTo("Plantilla de solución");
+        assertThat(fullTenantTranslation.get("device").get("device").asText()).isEqualTo("Dispositivo");
 
         // get full customer custom translation
         loginCustomerAdminUser();
@@ -97,7 +97,7 @@ public class TranslationControllerTest extends AbstractControllerTest {
         assertThat(fullCustomerTranslation.get("update").asText()).isEqualTo("tenant");
         assertThat(fullCustomerTranslation.get("remove").asText()).isEqualTo("customer");
         assertThat(fullCustomerTranslation.get("access").get("unauthorized").asText()).isEqualTo("No autorizado");
-        assertThat(fullCustomerTranslation.get("solution-template").get("solution-template").asText()).isEqualTo("Plantilla de solución");
+        assertThat(fullCustomerTranslation.get("device").get("device").asText()).isEqualTo("Dispositivo");
 
         // get full subcustomer custom translation
         loginSubCustomerAdminUser();
@@ -107,7 +107,7 @@ public class TranslationControllerTest extends AbstractControllerTest {
         assertThat(fullSubCustomerTranslation.get("remove").asText()).isEqualTo("customer");
         assertThat(fullSubCustomerTranslation.get("search").asText()).isEqualTo("subCustomer");
         assertThat(fullSubCustomerTranslation.get("access").get("unauthorized").asText()).isEqualTo("No autorizado");
-        assertThat(fullSubCustomerTranslation.get("solution-template").get("solution-template").asText()).isEqualTo("Plantilla de solución");
+        assertThat(fullSubCustomerTranslation.get("device").get("device").asText()).isEqualTo("Dispositivo");
     }
 
     @Test
@@ -396,7 +396,7 @@ public class TranslationControllerTest extends AbstractControllerTest {
 
         assertThat(downloadedCustomTranslation.get("save").asText()).isEqualTo("system");
         assertThat(downloadedCustomTranslation.get("access").get("unauthorized").asText()).isEqualTo("No autorizado");
-        assertThat(downloadedCustomTranslation.get("solution-template").get("solution-template").asText()).isEqualTo("Plantilla de solución");
+        assertThat(downloadedCustomTranslation.get("device").get("device").asText()).isEqualTo("Dispositivo");
     }
 
     @Test
