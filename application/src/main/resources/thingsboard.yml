@@ -303,6 +303,7 @@ ui:
 # Tracing is created only when OTEL_TRACING_ENABLED=true; it works with either cache type.
 otel:
   tracing:
+    # Enables rule chain tracing: messages are sampled per the tenant trace coverage setting and spans are recorded
     enabled: "${OTEL_TRACING_ENABLED:false}"
     coverage:
       # Tenant coverage setting cache TTL, minutes.
@@ -316,6 +317,7 @@ otel:
       # Buffered trace processor. Buffer backend follows 'cache.type': redis (shared) or caffeine (local).
       enabled: "${OTEL_TRACE_PROCESSOR_ENABLED:false}"
       buffer:
+        # Max spans kept for one trace; further spans of that trace are dropped ('trace.export.limit.reached')
         max-spans-per-trace: "${OTEL_TRACE_PROCESSOR_BUFFER_MAX_SPANS_PER_TRACE:200}"
         # Quiet time (ms) after a trace's last span before the job may drain it. Sets buffer residency.
         trace-ttl-ms: "${OTEL_TRACE_PROCESSOR_BUFFER_TRACE_TTL_MS:60000}"
@@ -337,41 +339,60 @@ otel:
         # Spans per drain batch. Bounds heap and batch duration, not total throughput.
         drain-batch-spans: "${OTEL_TRACE_PROCESSOR_AGGREGATION_DRAIN_BATCH_SPANS:5000}"
       batch:
+        # Delay (ms) between two exports of ended spans to the trace buffer
         schedule-delay-ms: "${OTEL_TRACE_PROCESSOR_BATCH_SCHEDULE_DELAY_MS:2000}"
         # OpenTelemetry rounds this up to a power of two (100000 -> 131072).
         max-queue-size: "${OTEL_TRACE_PROCESSOR_BATCH_MAX_QUEUE_SIZE:131072}"
+        # Max spans in one export to the trace buffer
         max-export-batch-size: "${OTEL_TRACE_PROCESSOR_BATCH_MAX_EXPORT_BATCH_SIZE:60000}"
+        # Max time (ms) for one export to the trace buffer before it is cancelled
         exporter-timeout-ms: "${OTEL_TRACE_PROCESSOR_BATCH_EXPORTER_TIMEOUT_MS:30000}"
       metrics:
+        # Interval (ms) at which the span export metrics are published to the platform metrics ('otel.trace.*')
         interval-ms: "${OTEL_TRACE_PROCESSOR_METRICS_INTERVAL_MS:5000}"
       pressure:
         # Percentages of 'batch.max-queue-size', measured on ended spans queued for export. New trace ids stop first
         # so in-flight traces can finish.
         trace-id-max-queue-usage-pct: "${OTEL_TRACE_PROCESSOR_PRESSURE_TRACE_ID_MAX_QUEUE_USAGE_PCT:50}"
+        # Queue usage at which new spans of in-flight traces are dropped as well
         span-max-queue-usage-pct: "${OTEL_TRACE_PROCESSOR_PRESSURE_SPAN_MAX_QUEUE_USAGE_PCT:100}"
   exporter:
     otlp:
+      # Enables an additional export of the spans to an OpenTelemetry collector over OTLP gRPC
       enabled: "${OTEL_EXPORTER_OTLP_ENABLED:false}"
+      # OTLP gRPC endpoint of the OpenTelemetry collector
       endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}"
       batch:
+        # Delay (ms) between two exports to the collector
         schedule-delay-ms: "${OTEL_OTLP_BATCH_SCHEDULE_DELAY_MS:2000}"
+        # Max spans queued for the collector; further spans are dropped
         max-queue-size: "${OTEL_OTLP_BATCH_MAX_QUEUE_SIZE:10000}"
+        # Max spans in one export to the collector
         max-export-batch-size: "${OTEL_OTLP_BATCH_MAX_EXPORT_BATCH_SIZE:10000}"
+        # Max time (ms) for one export to the collector before it is cancelled
         exporter-timeout-ms: "${OTEL_OTLP_BATCH_EXPORTER_TIMEOUT_MS:10000}"
       metrics:
+        # Interval (ms) at which the OTLP exporter metrics are sent to the collector
         interval-ms: "${OTEL_OTLP_METRICS_INTERVAL_MS:5000}"
 
+# Queue name to queue id cache used by rule engine monitoring
 queue-cache:
+  # Time (minutes) after which the cached queues are loaded again
   ttl-min: "${QUEUE_CACHE_TTL_MIN:30}"
 
+# Rule engine monitoring: rule node and queue execution statistics
 rule-node-exec-stats:
+  # Enables collection of rule node and queue execution statistics
   enabled: "${RULE_NODE_EXEC_STATS_ENABLED:false}"
+  # TTL (minutes) of the rule node to rule chain cache
   rule-chain-cache-ttl-min: "${RULE_NODE_EXEC_STATS_RULE_CHAIN_CACHE_TTL_MIN:30}"
+  # Interval (ms) at which the rule node statistics are written to the database
   exec-flush-interval-ms: "${RULE_NODE_EXEC_STATS_EXEC_FLUSH_INTERVAL_MS:60000}"
   # TTL for the per-rule-node exec key cache (idle nodes are evicted after this period)
   exec-key-cache-ttl-min: "${RULE_NODE_EXEC_STATS_EXEC_KEY_CACHE_TTL_MIN:30}"
   # Max number of distinct keys in the rule node exec metrics accumulator per flush interval; new keys beyond this are dropped
   exec-max-keys: "${RULE_NODE_EXEC_STATS_EXEC_MAX_KEYS:1000000}"
+  # Interval (ms) at which the queue statistics are written to the database
   queue-flush-interval-ms: "${RULE_NODE_EXEC_STATS_QUEUE_FLUSH_INTERVAL_MS:60000}"
   # Max number of distinct keys in the queue metrics accumulator per flush interval; new keys beyond this are dropped
   queue-max-keys: "${RULE_NODE_EXEC_STATS_QUEUE_MAX_KEYS:1000000}"
