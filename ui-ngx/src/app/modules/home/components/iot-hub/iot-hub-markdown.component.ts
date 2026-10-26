@@ -188,16 +188,18 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
     //
     // Format: ${images.gallery({src: 'p1', alt: 'a1', caption: 'c1'}, {src: 'p2'}, ...)}
     // Each image entry is a JS object literal with a required `src`
-    // and optional `alt` / `caption` string fields. A field may hold one
-    // level of braces, e.g. a ${...} variable resolved by the generic pass below.
+    // and optional `alt` / `caption` string fields. A string field may hold
+    // braces, e.g. a ${...} variable, which is resolved before the field is escaped.
     content = content.replace(/\$\{\s*images\.gallery\(([\s\S]*?)\)\s*}/g, (_match, inner: string) => {
-      const objects: string[] = inner.match(/\{(?:[^{}]|\{[^{}]*})*}/g) || [];
+      const objects: string[] = inner.match(/\{(?:'(?:[^'\n]|'(?!\s*[,}]))*'|"(?:[^"\n]|"(?!\s*[,}]))*"|[^{}'"])*}/g) || [];
+      const resolveFieldVariables = (value: string) =>
+        value.replace(/\$\{([^}]+)}/g, (whole, key) => this.onResolveVariable(key) || whole);
       const items = objects
         .map((obj: string) => {
           const src = (obj.match(/src\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
           const alt = (obj.match(/alt\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
           const caption = (obj.match(/caption\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
-          return { src: this.resolveImage(src), alt, caption };
+          return { src: this.resolveImage(src), alt: resolveFieldVariables(alt), caption: resolveFieldVariables(caption) };
         })
         .filter((item: { src?: string }) => !!item.src);
       const images = items
