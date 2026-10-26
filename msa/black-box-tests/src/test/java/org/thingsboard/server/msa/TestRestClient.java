@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.group.EntityGroup;
@@ -52,6 +53,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -66,6 +68,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -922,6 +925,58 @@ public class TestRestClient {
                 .extract()
                 .as(new TypeRef<List<EntityGroupInfo>>() {
                 });
+    }
+
+    public Edge postEdge(Edge edge) {
+        return given().spec(requestSpec).body(edge)
+                .post("/api/edge")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Edge.class);
+    }
+
+    public void deleteEdge(EdgeId edgeId) {
+        given().spec(requestSpec)
+                .delete("/api/edge/{edgeId}", edgeId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public void assignEntityGroupToEdge(EdgeId edgeId, EntityGroupId entityGroupId, EntityType groupType) {
+        given().spec(requestSpec)
+                .post("/api/edge/{edgeId}/entityGroup/{entityGroupId}/{groupType}", edgeId.getId(), entityGroupId.getId(), groupType.name())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public Device postDevice(String accessToken, Device device, EntityGroupId entityGroupId) {
+        return given().spec(requestSpec).body(device)
+                .post("/api/device?accessToken={accessToken}&entityGroupId={entityGroupId}", accessToken, entityGroupId.getId())
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Device.class);
+    }
+
+    public Device updateDevice(Device device) {
+        return given().spec(requestSpec).body(device)
+                .post("/api/device")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(Device.class);
+    }
+
+    public ObjectNode getAggregatedTimeSeries(EntityId entityId, String key, long startTs, long endTs, long interval, Aggregation agg) {
+        return given().spec(requestSpec)
+                .get("/api/plugins/telemetry/" + entityId.getEntityType().name() + "/" + entityId.getId() +
+                                "/values/timeseries?keys={keys}&startTs={startTs}&endTs={endTs}&interval={interval}&agg={agg}&limit=1000",
+                        key, startTs, endTs, interval, agg.name())
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(ObjectNode.class);
     }
 
     public EntityGroupInfo postEntityGroup(EntityGroup entityGroup) {
