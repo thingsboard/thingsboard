@@ -5,6 +5,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -24,6 +26,7 @@ import org.thingsboard.server.service.ai.solution.AiSolutionService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER;
@@ -70,6 +73,22 @@ public class AiSolutionController extends BaseController {
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
         return aiSolutionService.chat(solutionId, step, message, user);
     }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping(value = "/{solutionId}/{step}/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public JsonNode sendMessage(@PathVariable UUID solutionId,
+                                @PathVariable SolutionStep step,
+                                @RequestBody SolutionChatMessage request) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
+        String message = request.message() != null ? request.message() : "";
+        if (message.isBlank() && (request.resources() == null || request.resources().isEmpty())) {
+            throw new ThingsboardException("Message cannot be blank", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        return aiSolutionService.chat(solutionId, step, message, request.resources(), user);
+    }
+
+    record SolutionChatMessage(String message, List<UUID> resources) {}
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/create")

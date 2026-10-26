@@ -1,0 +1,27 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar class="flex items-center gap-2">
+  <h2 class="preview-title">{{ data.item.name }}</h2>
+  <span class="flex-1"></span>
+  @if (data.item.resource) {
+    <button mat-icon-button type="button" (click)="download()"
+            [matTooltip]="'action.download' | translate" matTooltipPosition="above">
+      <mat-icon>download</mat-icon>
+    </button>
+  }
+  <button mat-icon-button type="button" (click)="close()"
+          [matTooltip]="'action.close' | translate" matTooltipPosition="above">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content class="preview-content">
+  @if (data.item.url$ | async; as url) {
+    <img [src]="url" [alt]="data.item.name">
+  } @else {
+    <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+  }
+</div>

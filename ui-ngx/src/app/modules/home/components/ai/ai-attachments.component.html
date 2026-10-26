@@ -1,0 +1,48 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="attachments">
+  @for (item of shown; track item.key) {
+    <div class="attachment"
+         [class.image]="item.image"
+         [class.file]="!item.image"
+         [class.uploading]="item.status === 'uploading'"
+         [class.failed]="item.status === 'error'"
+         [class.clickable]="item.status !== 'uploading' && item.status !== 'error'"
+         [matTooltip]="item.status === 'error' ? ('ai-assistant.attachment-failed' | translate) : item.name"
+         matTooltipPosition="above"
+         (click)="open(item)">
+      @if (item.image) {
+        @if (item.url$ | async; as url) {
+          <img [src]="url" [alt]="item.name">
+        } @else {
+          <mat-icon class="placeholder">image</mat-icon>
+        }
+      } @else {
+        <div class="file-icon"><mat-icon>{{ icon(item.mediaType, item.name) }}</mat-icon></div>
+        <div class="file-meta">
+          <span class="file-name">{{ item.name }}</span>
+          <span class="file-info">{{ extension(item.name) }}@if (extension(item.name)) { · }{{ item.size | fileSize }}</span>
+        </div>
+      }
+      @if (item.status === 'uploading') {
+        <div class="state">
+          <mat-progress-spinner diameter="24" strokeWidth="3"
+                                [mode]="item.progress ? 'determinate' : 'indeterminate'"
+                                [value]="item.progress"></mat-progress-spinner>
+        </div>
+      } @else if (item.status === 'error') {
+        <div class="state"><mat-icon class="error-icon">error_outline</mat-icon></div>
+      }
+      @if (removable) {
+        <button type="button" class="remove" [attr.aria-label]="'ai-assistant.remove-attachment' | translate"
+                (click)="remove($event, item)">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  }
+</div>

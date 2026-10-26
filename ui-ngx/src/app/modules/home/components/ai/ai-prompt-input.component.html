@@ -5,26 +5,48 @@
 
 -->
 <div class="prompt-input">
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mr-10 flex-1">
+  @if (attachments().length) {
+    <tb-ai-attachments class="pending-attachments"
+                       [items]="attachments()"
+                       [removable]="true"
+                       (removed)="removeAttachment($event)">
+    </tb-ai-attachments>
+  }
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="prompt-field">
     <textarea
       matInput
       #textarea
       cdkTextareaAutosize
-      rows="2"
+      rows="1"
       #autosize="cdkTextareaAutosize"
-      cdkAutosizeMinRows="2"
-      cdkAutosizeMaxRows="6"
+      cdkAutosizeMinRows="1"
+      cdkAutosizeMaxRows="8"
       [placeholder]="placeholder"
       [formControl]="message"
+      (paste)="onPaste($event)"
       (keydown.enter)="onEnter($event)">
     </textarea>
   </mat-form-field>
-  <button mat-icon-button
-          type="button"
-          color="primary"
-          class="tb-mat-24 send-button !size-8"
-          [disabled]="loading"
-          (click)="send()">
-    <mat-icon>send</mat-icon>
-  </button>
+  <div class="prompt-toolbar">
+    @if (attachEnabled()) {
+      <input #fileInput type="file" class="hidden" multiple [accept]="accept()" (change)="onFilesPicked($event)">
+      <button mat-icon-button
+              type="button"
+              class="tb-mat-20 attach-button !size-8"
+              [matTooltip]="'ai-assistant.attach-files' | translate"
+              matTooltipPosition="above"
+              (click)="openFilePicker()">
+        <mat-icon>add</mat-icon>
+      </button>
+    }
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            type="button"
+            color="primary"
+            class="tb-mat-20 send-button !size-8"
+            [disabled]="loading || uploading()"
+            (click)="send()">
+      <mat-icon>send</mat-icon>
+    </button>
+  </div>
 </div>

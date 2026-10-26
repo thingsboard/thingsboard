@@ -16,6 +16,7 @@ import {
   SolutionStepStatus
 } from '@shared/models/solution-creator.models';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
+import { AiPromptMessage } from '@shared/models/ai-chat.models';
 import { SolutionsCreatorService } from '@core/http/solutions-creator.service';
 import {
   catchError,
@@ -507,7 +508,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
   startCreateSolution(key: string) {
     const example = this.solutionExamples.find(ex => ex.key === key);
     if (example) {
-      this.sendMsgFromUser(example.message);
+      this.sendMsgFromUser({message: example.message, resources: []});
     }
   }
 
@@ -531,7 +532,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
     }).afterClosed().subscribe(() => {});
   }
 
-  private sendMessage(msg: string): Observable<SolutionCreatorInfo> {
+  private sendMessage(msg: string, resources: string[] = []): Observable<SolutionCreatorInfo> {
     this.initLoadingState();
 
     const startOrContinue$ = this.solutionId
@@ -550,7 +551,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
 
     return startOrContinue$.pipe(
       switchMap(() =>
-        this.solutionCreator.chatSolution(this.solutionId, this.solutionStep(), msg, {ignoreLoading: true, ignoreErrors: true})
+        this.solutionCreator.chatSolution(this.solutionId, this.solutionStep(), msg, {ignoreLoading: true, ignoreErrors: true}, resources)
       ),
       tap(solution => {
         this.solutionInfo = solution;
@@ -709,9 +710,11 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
     this.sendMessage('<skip-interview/>').subscribe(() => {});
   }
 
-  sendMsgFromUser(msg: string): void {
-    this.messages.update(list => [...list, {from: 'USER', content: msg}]);
-    this.sendMessage(msg).subscribe(() => {});
+  sendMsgFromUser(prompt: AiPromptMessage): void {
+    this.messages.update(list => [...list, prompt.resources.length
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
+      : {from: 'USER', content: prompt.message}]);
+    this.sendMessage(prompt.message, prompt.resources.map(resource => resource.id)).subscribe(() => {});
   }
 
   private initLoadingState(): void {

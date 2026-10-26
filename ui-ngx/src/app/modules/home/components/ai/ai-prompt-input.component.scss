@@ -4,27 +4,59 @@
   width: 100%;
 
   .prompt-input {
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid rgba(0, 0, 0, 0.2);
     background-color: #fff;
-    position: relative;
     display: flex;
+    flex-direction: column;
     flex: 1;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     --mat-form-field-outlined-outline-width: 0px;
     --mat-form-field-outlined-focus-outline-width: 0px;
 
-    .send-button {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
+    &:focus-within {
+      border-color: rgba(0, 0, 0, 0.32);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .pending-attachments {
+      padding: 12px 12px 0;
+    }
+
+    .prompt-field {
+      width: 100%;
+    }
+
+    .prompt-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 8px 8px;
+    }
+
+    .attach-button {
+      color: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(0, 0, 0, 0.16);
+
+      &:hover {
+        color: rgba(0, 0, 0, 0.87);
+        border-color: rgba(0, 0, 0, 0.32);
+      }
     }
   }
 }
 
 :host::ng-deep {
-  .prompt-input {
+  .prompt-input .prompt-field {
     .mdc-text-field--outlined {
-      padding-right: 8px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .mat-mdc-form-field-infix {
+      padding-top: 14px;
+      padding-bottom: 6px;
+      min-height: 0;
     }
   }
 }

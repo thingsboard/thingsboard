@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface AiSolutionService {
@@ -17,6 +18,8 @@ public interface AiSolutionService {
     JsonNode getSolutions(SecurityUser user);
 
     JsonNode chat(UUID solutionId, SolutionStep step, String message, SecurityUser user);
+
+    JsonNode chat(UUID solutionId, SolutionStep step, String message, List<UUID> resources, SecurityUser user);
 
     JsonNode createSolution(UUID solutionId, SecurityUser user);
 

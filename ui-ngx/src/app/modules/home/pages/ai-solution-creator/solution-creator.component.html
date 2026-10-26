@@ -38,7 +38,7 @@
     @switch (creatorStep()) {
       @case ('chat') {
         <div class="chat-container flex w-full flex-auto rounded-lg">
-          <div class="chat relative flex size-full flex-col items-center justify-end gap-3"
+          <div #chatArea class="chat relative flex size-full flex-col items-center justify-end gap-3"
                [class.background]="isInitialEmpty()">
             @if (isInitialEmpty()) {
               <div class="welcome-content">
@@ -72,6 +72,8 @@
               <tb-ai-prompt-input
                 [placeholder]="activePlaceholder() | translate"
                 [loading]="loading()"
+                toastTarget="solution-creator-chat"
+                [dropZone]="chatArea"
                 (messageSent)="sendMsgFromUser($event)">
               </tb-ai-prompt-input>
               @if (isInitialEmpty()) {

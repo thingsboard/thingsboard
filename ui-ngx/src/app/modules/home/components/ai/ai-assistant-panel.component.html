@@ -4,7 +4,7 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="ai-assistant-container relative"
+<div #chatContainer class="ai-assistant-container relative"
      [class.fill]="panelService.detailsOpen() || !!panelService.config()?.fill"
      [class.details-open]="panelService.detailsOpen()">
   <div class="ai-assistant-header">
@@ -100,6 +100,8 @@
         class="flex"
         [placeholder]="activePlaceholder()"
         [loading]="loading()"
+        toastTarget="aiAssistant"
+        [dropZone]="chatContainer"
         (messageSent)="sendMsgFromUser($event)">
       </tb-ai-prompt-input>
     </div>

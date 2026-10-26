@@ -7,7 +7,12 @@
 @for (msg of messages; track $index) {
   @if (msg.from === 'USER') {
     <div class="user">
-      <div class="msg">{{ msg.content }}</div>
+      @if (msg.resources?.length) {
+        <tb-ai-attachments class="user-attachments" [resources]="msg.resources"></tb-ai-attachments>
+      }
+      @if (msg.content) {
+        <div class="msg">{{ msg.content }}</div>
+      }
     </div>
   } @else {
     <div class="ai">

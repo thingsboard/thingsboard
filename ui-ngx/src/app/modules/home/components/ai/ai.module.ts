@@ -12,6 +12,8 @@ import { AiCreditsComponent } from '@home/components/ai/ai-credits.component';
 import { AiCreditsPopupComponent } from '@home/components/ai/ai-credits-popup.component';
 import { AiLoadingModalComponent } from '@home/components/ai/ai-loading-modal.component';
 import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry-modal.component';
+import { AiAttachmentsComponent } from '@home/components/ai/ai-attachments.component';
+import { AiAttachmentPreviewDialogComponent } from '@home/components/ai/ai-attachment-preview-dialog.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +25,9 @@ import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry
     AiCreditsComponent,
     AiCreditsPopupComponent,
     AiLoadingModalComponent,
-    AiNoTelemetryModalComponent
+    AiNoTelemetryModalComponent,
+    AiAttachmentsComponent,
+    AiAttachmentPreviewDialogComponent
   ],
   imports: [
     CommonModule,
@@ -37,7 +41,8 @@ import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry
     AiRenameDialogComponent,
     AiCreditsComponent,
     AiLoadingModalComponent,
-    AiNoTelemetryModalComponent
+    AiNoTelemetryModalComponent,
+    AiAttachmentsComponent
   ]
 })
 export class AiModule {}

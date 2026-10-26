@@ -39,8 +39,10 @@ export class SolutionsCreatorService {
     return this.http.post<SolutionCreatorInfo>(`/api/ai/solution/${solutionId}/create`, '', defaultHttpOptionsFromConfig(config));
   }
 
-  public chatSolution(solutionId: string, step: SolutionStep, msg: string, config?: RequestConfig): Observable<SolutionCreatorInfo> {
-    return this.http.post<SolutionCreatorInfo>(`/api/ai/solution/${solutionId}/${step}/chat`, msg, defaultHttpOptionsFromConfig(config));
+  public chatSolution(solutionId: string, step: SolutionStep, msg: string, config?: RequestConfig,
+                      resources: string[] = []): Observable<SolutionCreatorInfo> {
+    return this.http.post<SolutionCreatorInfo>(`/api/ai/solution/${solutionId}/${step}/messages`,
+      {message: msg, resources}, defaultHttpOptionsFromConfig(config));
   }
 
   public updateSolutionData(solutionId: string, dataKey: SolutionDataKey, msg: SolutionDataValues, config?: RequestConfig): Observable<SolutionCreatorInfo> {

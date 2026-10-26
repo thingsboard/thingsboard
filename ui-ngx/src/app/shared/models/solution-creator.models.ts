@@ -7,7 +7,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldType } from '@shared/models/calculated-field.models';
 import { AlarmSeverity } from '@shared/models/alarm.models';
-import { ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
+import { ToolExecutionRequested, ToolExecutionResult, AiResourceInfo } from '@shared/models/ai-chat.models';
 
 export interface SolutionInfo {
   id: string;
@@ -178,6 +178,7 @@ export interface GeneralChatMessage {
   from: 'USER' | 'AI' | 'SYSTEM' | 'GENERATE';
   content: string;
   status?: 'INCOMPLETE';
+  resources?: AiResourceInfo[];
 }
 
 export interface ApprovalChatMessage {

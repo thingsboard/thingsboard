@@ -21,6 +21,7 @@ import { AiChatService } from '@core/http/ai-chat.service';
 import {
   AiAssistantPromptExample,
   AiChatClientContext,
+  AiPromptMessage,
   ApprovalResult,
   ChatEvent,
   ChatInfo,
@@ -235,10 +236,12 @@ export class AiAssistantPanelComponent implements OnInit {
     this.promptInput?.setValue(example.message);
   }
 
-  sendMsgFromUser(msg: string): void {
-    const userMessage: ChatMessage = {from: 'USER', content: msg};
+  sendMsgFromUser(prompt: AiPromptMessage): void {
+    const userMessage: ChatMessage = prompt.resources.length
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
+      : {from: 'USER', content: prompt.message};
     this.messages.update(list => [...list, userMessage]);
-    this.sendMessage(msg).subscribe({
+    this.sendMessage(prompt).subscribe({
       error: (err) => {
         if (this.isConnectionLost(err) && this.chatId()) {
           this.showErrorToast(this.translate.instant('ai-assistant.connection-lost'));
@@ -351,7 +354,7 @@ export class AiAssistantPanelComponent implements OnInit {
     }
   }
 
-  private sendMessage(msg: string): Observable<ChatEvent> {
+  private sendMessage(prompt: AiPromptMessage): Observable<ChatEvent> {
     this.initLoadingState();
     this.sessionAffectedEntities = [];
     this.messageCancelled = false;
@@ -368,9 +371,12 @@ export class AiAssistantPanelComponent implements OnInit {
       );
 
     const request: SendChatMessageRequest = {
-      message: msg,
+      message: prompt.message,
       clientContext: this.resolveClientContextToSend()
     };
+    if (prompt.resources.length) {
+      request.resources = prompt.resources.map(resource => resource.id);
+    }
 
     return startOrContinue$.pipe(
       switchMap(() => this.aiChat.sendChatMessage(this.chatId(), request, {ignoreLoading: true, ignoreErrors: true})),

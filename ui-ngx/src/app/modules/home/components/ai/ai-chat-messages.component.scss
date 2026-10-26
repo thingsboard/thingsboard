@@ -15,7 +15,22 @@
 
   .user {
     display: flex;
-    justify-content: end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+
+    .user-attachments {
+      max-width: 80%;
+
+      ::ng-deep .attachments {
+        justify-content: flex-end;
+
+        .attachment.image {
+          width: 120px;
+          height: 90px;
+        }
+      }
+    }
 
     .msg {
       max-width: 80%;

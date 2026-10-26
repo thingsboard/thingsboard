@@ -18,6 +18,7 @@ import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -48,8 +49,14 @@ public class DefaultAiSolutionService implements AiSolutionService {
 
     @Override
     public JsonNode chat(UUID solutionId, SolutionStep step, String message, SecurityUser user) {
+        return chat(solutionId, step, message, null, user);
+    }
+
+    @Override
+    public JsonNode chat(UUID solutionId, SolutionStep step, String message, List<UUID> resources, SecurityUser user) {
+        List<UUID> attached = resources == null || resources.isEmpty() ? null : resources;
         return tbAiService.process(tokenProvider -> operations.execute(
-                new TbAiOperation(ChannelProtocol.SOLUTION_CHAT, new SolutionChatRequest(solutionId, step, message)), user, tokenProvider), user);
+                new TbAiOperation(ChannelProtocol.SOLUTION_CHAT, new SolutionChatRequest(solutionId, step, message, attached)), user, tokenProvider), user);
     }
 
     @Override
