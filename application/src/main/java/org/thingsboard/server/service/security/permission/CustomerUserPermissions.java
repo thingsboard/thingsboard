@@ -227,7 +227,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     }
                 }
             } else {
-                if (operation == Operation.CLAIM_DEVICES) {
+                if (operation == Operation.CLAIM_DEVICES && user.getTenantId().equals(((HasOwnerId) entity).getOwnerId())) {
                     return user.getUserPermissions().hasGenericPermission(resource, operation);
                 }
                 if (entity.getEntityType() == EntityType.CUSTOMER && user.getCustomerId().equals(entityId) ||
