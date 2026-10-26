@@ -1,0 +1,20 @@
+/** Encoder **/
+
+// Encode downlink data from the incoming Rule Engine message.
+// msg: JSON message payload.
+// msgType: message type, e.g. 'ATTRIBUTES_UPDATED', 'POST_TELEMETRY_REQUEST', etc.
+// metadata: key-value pairs containing additional message data.
+// integrationMetadata: key-value pairs configured in the integration.
+
+var result = {
+    // Specify the TCP payload format: JSON, TEXT, or BINARY.
+    contentType: "JSON",
+
+    // Serialize the incoming message and use it as the TCP payload.
+    data: JSON.stringify(msg),
+
+    // Add optional metadata when required by the integration.
+    metadata: {}
+};
+
+return result;
