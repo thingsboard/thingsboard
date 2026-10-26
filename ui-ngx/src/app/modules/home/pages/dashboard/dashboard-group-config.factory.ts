@@ -39,6 +39,10 @@ import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
+import {
+  DashboardInfoDialogData,
+  ImportDashboardFileDialogComponent
+} from '@home/pages/dashboard/import-dashboard-file-dialog.component';
 
 // @dynamic
 @Injectable()
@@ -253,6 +257,26 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
       });
   }
 
+  importDashboardFile($event: Event, dashboard: DashboardInfo, config: GroupEntityTableConfig<DashboardInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<ImportDashboardFileDialogComponent, DashboardInfoDialogData,
+      boolean>(ImportDashboardFileDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        dashboard
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          config.updateData();
+        }
+      }
+    );
+  }
+
   manageOwnerAndGroups($event: Event, dashboard: DashboardInfo, config: GroupEntityTableConfig<DashboardInfo>) {
     this.homeDialogs.manageOwnerAndGroups($event, dashboard).subscribe(
       (res) => {
@@ -271,6 +295,9 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
         return true;
       case 'export':
         this.exportDashboard(action.event, action.entity);
+        return true;
+      case 'import':
+        this.importDashboardFile(action.event, action.entity, config);
         return true;
       case 'manageOwnerAndGroups':
         this.manageOwnerAndGroups(action.event, action.entity, config);
