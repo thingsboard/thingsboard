@@ -157,6 +157,25 @@ Open a pull request against `master`. Fill out the pull request template, and ma
 - The change builds cleanly: `mvn -pl <module> -am -DskipTests -Dpkg.skip=true test-compile` at minimum for the modules you touched.
 - You have signed the Contributor License Agreement (see below).
 
+### Pull request titles
+
+The release notes are generated from pull request titles, word for word. Write the title for the
+people who read them — users and customers, not reviewers:
+
+- **Describe the change in behavior, as a user sees it.** Name the feature or screen and what now
+  works differently. Leave out class names, exceptions, library versions and other internals a
+  user can't relate to; they belong in the description.
+- **Use the past tense, starting with a verb:** `Fixed`, `Added`, `Updated`, `Improved`,
+  `Removed`. Not `Fix`, `Add` or `Update`.
+- **Leave out prefixes and suffixes** such as `fix(ui):`, ticket keys or branch names
+  (`(lts-4.3)`).
+
+| Instead of                                                     | Write                                                                                          |
+|----------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `fix(ui): update moment-timezone to 0.6.5 (tzdata 2026e)`      | `Updated UI time zone data to reflect 2026 daylight saving time changes in Canada, Morocco and Moldova` |
+| `Warn that updating a solution template recreates everything it installed` | `Added a warning that updating a solution template recreates everything it installed` |
+| `Fix empty Provisioning step in the device install wizard`     | `Fixed empty Provisioning step in the device install wizard`                                    |
+
 ## Contributor License Agreement
 
 Before we can merge your pull request, you need to sign the ThingsBoard
