@@ -188,9 +188,10 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
     //
     // Format: ${images.gallery({src: 'p1', alt: 'a1', caption: 'c1'}, {src: 'p2'}, ...)}
     // Each image entry is a JS object literal with a required `src`
-    // and optional `alt` / `caption` string fields.
+    // and optional `alt` / `caption` string fields. A field may hold one
+    // level of braces, e.g. a ${...} variable resolved by the generic pass below.
     content = content.replace(/\$\{\s*images\.gallery\(([\s\S]*?)\)\s*}/g, (_match, inner: string) => {
-      const objects: string[] = inner.match(/\{[\s\S]*?}/g) || [];
+      const objects: string[] = inner.match(/\{(?:[^{}]|\{[^{}]*})*}/g) || [];
       const items = objects
         .map((obj: string) => {
           const src = (obj.match(/src\s*:\s*(['"])((?:(?!\1).)*)\1/) || [])[2] || '';
