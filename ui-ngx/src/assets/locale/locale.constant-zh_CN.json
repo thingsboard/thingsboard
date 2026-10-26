@@ -3974,9 +3974,9 @@
     "app-install-cred-routing-key": "路由密钥",
     "app-install-cred-routing-secret": "路由密码",
     "app-install-cred-security-type": "安全类型",
-    "app-install-cred-security-access-token": "访问令牌",
+    "app-install-cred-security-access-token": "访问 Token",
     "app-install-cred-security-username-password": "用户名 / 密码",
-    "app-install-cred-access-token": "访问令牌",
+    "app-install-cred-access-token": "访问 Token",
     "app-install-cred-client-id": "客户端 ID",
     "app-install-cred-username": "用户名",
     "app-install-cred-password": "密码",
@@ -13951,7 +13951,7 @@
         },
         "step2": {
           "title": "连接设备",
-          "content-before": "<p>要连接设备，您需要获取设备凭据。本指南建议使用默认自动生成的凭据，即访问令牌。</p><ul><li>前往设备列表</li><li>点击设备行以打开设备详情</li><li>点击“复制访问令牌”按钮</li></ul><p>使用简单命令通过 HTTP 发布数据。请将 <em>$ACCESS_TOKEN</em> 替换为您的设备访问令牌：</p>",
+          "content-before": "<p>要连接设备，您需要获取设备凭据。本指南建议使用默认自动生成的凭据，即访问 Token。</p><ul><li>前往设备列表</li><li>点击设备行以打开设备详情</li><li>点击“复制访问 Token”按钮</li></ul><p>使用简单命令通过 HTTP 发布数据。请将 <em>$ACCESS_TOKEN</em> 替换为您的设备访问 Token：</p>",
           "ubuntu": {
             "install-curl": "为 Ubuntu 安装 cURL："
           },
