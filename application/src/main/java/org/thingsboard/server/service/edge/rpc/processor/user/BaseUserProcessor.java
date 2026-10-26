@@ -17,8 +17,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -44,8 +46,15 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             if (user == null) {
                 throw new IllegalArgumentException(String.format("[%s] Failed to parse User from UserUpdateMsg: %s", tenantId, userUpdateMsg));
             }
+            if (user.getAuthority() != Authority.TENANT_ADMIN && user.getAuthority() != Authority.CUSTOMER_USER) {
+                throw new DataValidationException("User authority " + user.getAuthority() + " is not allowed!");
+            }
+            user.setTenantId(tenantId);
 
             User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
+            if (userById != null && !tenantId.equals(userById.getTenantId())) {
+                throw new DataValidationException("User " + userId + " belongs to a different tenant!");
+            }
             if (userById == null) {
                 isCreated = true;
                 user.setId(null);
@@ -118,7 +127,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
 
     private User deleteUser(TenantId tenantId, UserId userId) throws ThingsboardException {
         User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
-        if (userById == null) {
+        if (userById == null || !tenantId.equals(userById.getTenantId())) {
             log.trace("[{}] User with id {} does not exist", tenantId, userId);
             return null;
         }
@@ -133,7 +142,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             throw new IllegalArgumentException(String.format("[%s] Failed to parse UserCredentials from updateMsg: %s", tenantId, updateMsg));
         }
         User user = edgeCtx.getUserService().findUserById(tenantId, userCredentials.getUserId());
-        if (user == null) {
+        if (user == null || !tenantId.equals(user.getTenantId())) {
             log.warn("[{}] Can't find user by id [{}] skipping credentials update. UserCredentialsUpdateMsg [{}]",
                     tenantId, userCredentials.getUserId(), updateMsg);
             return;
