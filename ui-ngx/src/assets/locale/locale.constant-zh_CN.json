@@ -6283,8 +6283,7 @@
     "type-rule-chain": "规则链",
     "type-rule-chain-plural": "规则链",
     "type-device": "设备",
-    "type-device-plural": "设备",
-    "selected": "已选择"
+    "type-device-plural": "设备"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7995,7 +7994,6 @@
     "endpoint-url-pattern": "Endpoint URL 模式",
     "endpoint-url-pattern-required": "Endpoint URL 模式为必填项",
     "request-method": "请求方法",
-    "use-simple-client-http-factory": "使用简单客户端 HTTP 工厂",
     "ignore-request-body": "无请求体",
     "request-body-template": "请求体模板",
     "request-body-template-hint": "使用 <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> 引用元数据，使用 <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> 引用消息值。如果为空，则将消息负载用作请求体。对于非 JSON 负载，请启用“解析为纯文本”。<br/><br/> 您可以使用占位符 <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code> 注入密钥，其中“name”为密钥标识符，“type”为 TEXT 或 TEXT_FILE。这适用于不直接支持“使用密钥”的规则节点配置字段。示例：<code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>。",
@@ -8171,7 +8169,6 @@
     "proxy-port-range": "代理端口应在 1 到 65535 的范围内。",
     "proxy-user": "代理用户",
     "proxy-password": "代理密码",
-    "proxy-scheme": "代理方案",
     "numbers-to-template": "电话号码收件人模板",
     "numbers-to-template-required": "电话号码收件人模板为必填项",
     "numbers-to-template-hint": "逗号分隔的电话号码，使用 <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> 获取元数据中的值，使用 <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> 获取消息体中的值",
@@ -8956,8 +8953,6 @@
     "single-entity": "单个实体",
     "group-entities": "实体组",
     "entities-group-owner": "实体组所有者",
-    "single-device": "单个设备",
-    "group-of-devices": "设备组",
     "devices-group-owner": "设备组所有者",
     "message-body": "消息体",
     "target": "目标",
@@ -11369,22 +11364,6 @@
     "ai-credits-usage": "AI 额度：已使用 {{ used }}/{{ max }}",
     "ai-credits-description": "本月您已使用 AI 额度 <strong>{{ used }}</strong>/<strong>{{ max }}</strong>。额度将于 {{ date }} 重置。如需提高 AI 额度，请联系系统管理员。"
   },
-  "solution-template": {
-    "solution-template": "解决方案模板",
-    "solution-templates": "解决方案模板",
-    "management": "管理解决方案模板",
-    "details": "详情",
-    "install": "安装",
-    "level": "级别",
-    "install-title": "解决方案模板安装成功",
-    "install-failed-title": "解决方案模板安装失败",
-    "instructions": "说明",
-    "goto-main-dashboard": "前往主仪表板",
-    "delete": "删除",
-    "delete-solution-title": "确定要删除解决方案 '{{solutionTitle}}' 吗？",
-    "delete-solution-text": "请注意，确认后该解决方案及所有相关数据将无法恢复。",
-    "installing": "正在安装解决方案模板..."
-  },
   "markdown": {
     "edit": "编辑",
     "preview": "预览",
@@ -11401,20 +11380,8 @@
     "app-title": "应用标题",
     "favicon": "网站图标",
     "favicon-desc": "浏览器标签页和书签中的图标。PNG 或 ICO，建议 32×32 px",
-    "favicon-description": "*.ico、*.gif 或 *.png 图片，最大 {{kbSize}} KB。",
-    "favicon-size-error": "网站图片过大。允许的最大网站图片大小为 {{kbSize}} KB。",
-    "favicon-type-error": "无效的网站图片文件格式。仅接受 ICO、GIF 或 PNG 图片。",
-    "drop-favicon-image": "拖放网站图标图片或点击选择要上传的文件。",
-    "drop-favicon-image-or": "拖放网站图标图片或",
-    "no-favicon-image": "未选择图标",
     "logo": "Logo",
     "logo-desc": "SVG 或 PNG，高度至少 96px，不超过 200 KB",
-    "logo-description": "任意图片，最大 {{kbSize}} KB。",
-    "logo-size-error": "Logo 图片过大。允许的最大 Logo 图片大小为 {{kbSize}} KB。",
-    "logo-type-error": "无效的 Logo 文件格式。仅接受图片文件。",
-    "drop-logo-image": "拖放 Logo 图片或点击选择要上传的文件。",
-    "drop-logo-image-or": "拖放 Logo 图片或",
-    "no-logo-image": "未选择 Logo",
     "logo-height": "Logo 高度（px）",
     "logo-height-desc": "按比例缩放 Logo 并居中。Logo 较高时可增大高度（最高 200px）",
     "collapsed-logo": "侧边栏折叠时的 Logo",
@@ -11458,11 +11425,9 @@
     "error-verification-url": "域名不应包含 '/' 和 ':' 符号。示例：thingsboard.io",
     "show-connectivity-dialog": "显示连接对话框",
     "show-connectivity-dialog-desc": "创建设备后显示包含连接说明的设备连接对话框",
-    "hide-connectivity-dialog": "隐藏连接对话框",
     "override-trendz-add-on-name": "覆盖 Trendz 分析附加功能名称",
     "override-trendz-add-on-name-desc": "在整个平台中将“Trendz”附加功能重命名为“高级分析”",
     "show-platform-name-version-bottom-left-corner": "在左下角显示平台名称和版本",
-    "override-trendz-add-on-name-hint": "启用后，“Trendz analytics”将在整个平台中显示为“Advanced analytics”。",
     "show-platform-name-version": "显示平台名称和版本",
     "platform-name": "平台名称",
     "platform-version": "平台版本",
@@ -12688,9 +12653,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13027,10 +12990,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "凭据",
-      "here-app-id": "HERE 应用 ID",
-      "here-app-code": "HERE 应用代码",
       "here-api-key": "HERE API 密钥",
-      "here-use-new-version-api-3": "使用 API 版本 3",
       "tencent-maps-api-key": "腾讯地图 API 密钥",
       "tencent-map-type-roadmap": "路线图",
       "tencent-map-type-satelite": "卫星图",
@@ -13927,7 +13887,6 @@
       "roles-and-permissions": "角色与权限",
       "groups": "分组",
       "integrations": "集成",
-      "solution-templates": "解决方案模板",
       "scheduler": "调度器",
       "white-labeling": "白标"
     },
@@ -13941,11 +13900,6 @@
       "critical": "严重",
       "assigned-to-me": "分配给我",
       "total": "总计"
-    },
-    "solution-templates": {
-      "title": "解决方案模板",
-      "prototype-plan": "原型方案",
-      "startup-plan": "创业方案"
     },
     "getting-started": {
       "get-started": "开始使用",
