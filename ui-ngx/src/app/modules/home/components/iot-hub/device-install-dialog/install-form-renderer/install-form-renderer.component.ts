@@ -85,18 +85,16 @@ export class InstallFormRendererComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // The hint boxes depend on reviewMode too
+    // The hint boxes and the unmasked passwords depend on reviewMode too
     if (changes.fields || changes.reviewMode) {
       const fields = this.fields ?? [];
       this.sections = this.buildSections(fields.filter(field => field.section !== 'advanced'));
       this.advancedSections = this.buildSections(fields.filter(field => field.section === 'advanced'));
-    }
-    if (changes.fields || changes.reviewMode) {
       this.passwordVisible = {};
       if (this.reviewMode) {
-        for (const f of this.fields) {
-          if (f.type === FormFieldType.PASSWORD) {
-            this.passwordVisible[f.key] = true;
+        for (const field of fields) {
+          if (field.type === FormFieldType.PASSWORD) {
+            this.passwordVisible[field.key] = true;
           }
         }
       }
