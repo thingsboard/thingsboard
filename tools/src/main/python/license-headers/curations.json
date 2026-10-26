@@ -1848,6 +1848,18 @@
       "header": "pe-only",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/asset-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 86ca874a92346a950b6912d78116f1f7ee6bb654).",
       "contentHash": "sha256:5427b1c6bf59f9e9372c47717fee96bf94bddeaf65ad920b77647b16539bf5f9"
+    },
+    {
+      "path": "application/src/main/java/org/thingsboard/server/service/trace/TraceSpanListQuery.java",
+      "contentHash": "sha256:5ce135b1ed9abca6a6fe5be11ff5f21a6f4f1b67d03ec7704ba048dfc5f20289",
+      "header": "pe-only",
+      "reason": "New query DTO for trace spans; the CE match (SetupInfo.java) is only a structural resemblance of a small Lombok class."
+    },
+    {
+      "path": "dao/src/main/java/org/thingsboard/server/dao/sql/trace/DedicatedTraceInsertRepository.java",
+      "contentHash": "sha256:ebffadb9151ba7b89344bb6e3e087673d9b539daa03a42b0d7768105ea4f4ac2",
+      "header": "ce-modified",
+      "reason": "Adapted from CE dao/src/main/java/org/thingsboard/server/dao/sql/event/DedicatedEventInsertRepository.java."
     }
   ]
 }
