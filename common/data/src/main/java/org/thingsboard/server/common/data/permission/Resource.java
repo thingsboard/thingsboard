@@ -7,6 +7,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.security.Authority;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -78,6 +79,8 @@ public enum Resource {
     private static final Map<EntityType, Resource> resourceByEntityType = new HashMap<>();
     public static final Map<Resource, Set<Operation>> operationsByResource = new HashMap<>();
     public static final Map<Authority, Set<Resource>> resourcesByAuthority = new HashMap<>();
+    // Entity types in scope of the attributes and time series API, resolved from the operations their resources support.
+    public static final Set<EntityType> ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES;
 
     static {
         groupResourceByGroupType.put(EntityType.CUSTOMER, CUSTOMER_GROUP);
@@ -114,9 +117,9 @@ public enum Resource {
                 Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY,
                 Operation.CLAIM_DEVICES, Operation.CHANGE_OWNER, Operation.ASSIGN_TO_TENANT, Operation.READ_CALCULATED_FIELD,
                 Operation.WRITE_CALCULATED_FIELD));
-        operationsByResource.put(Resource.DEVICE_PROFILE, Operation.defaultCFEntityOperations);
-        operationsByResource.put(Resource.ASSET_PROFILE, Operation.defaultCFEntityOperations);
-        operationsByResource.put(Resource.OTA_PACKAGE, Operation.defaultEntityOperations);
+        operationsByResource.put(Resource.DEVICE_PROFILE, withoutTsAndAttributes(Operation.defaultCFEntityOperations));
+        operationsByResource.put(Resource.ASSET_PROFILE, withoutTsAndAttributes(Operation.defaultCFEntityOperations));
+        operationsByResource.put(Resource.OTA_PACKAGE, withoutTsAndAttributes(Operation.defaultEntityOperations));
         operationsByResource.put(Resource.ASSET, Operation.defaultCFEntityOperations);
         operationsByResource.put(Resource.CUSTOMER, Operation.defaultCFEntityOperations);
         operationsByResource.put(Resource.DASHBOARD, Operation.defaultEntityOperations);
@@ -131,11 +134,11 @@ public enum Resource {
         operationsByResource.put(Resource.USER, userOperations);
         operationsByResource.put(Resource.WIDGETS_BUNDLE, Operation.crudOperations);
         operationsByResource.put(Resource.WIDGET_TYPE, Operation.crudOperations);
-        operationsByResource.put(Resource.TB_RESOURCE, Operation.defaultEntityOperations);
+        operationsByResource.put(Resource.TB_RESOURCE, withoutTsAndAttributes(Operation.defaultEntityOperations));
         operationsByResource.put(Resource.CONVERTER, Operation.defaultEntityOperations);
         operationsByResource.put(Resource.INTEGRATION, Operation.defaultEntityOperations);
-        operationsByResource.put(Resource.SCHEDULER_EVENT, Operation.defaultEntityOperations);
-        operationsByResource.put(Resource.BLOB_ENTITY, Operation.defaultEntityOperations);
+        operationsByResource.put(Resource.SCHEDULER_EVENT, withoutTsAndAttributes(Operation.defaultEntityOperations));
+        operationsByResource.put(Resource.BLOB_ENTITY, withoutTsAndAttributes(Operation.defaultEntityOperations));
         operationsByResource.put(Resource.CUSTOMER_GROUP, Operation.defaultEntityGroupOperations);
         operationsByResource.put(Resource.DEVICE_GROUP, Operation.defaultEntityGroupOperations);
         operationsByResource.put(Resource.ASSET_GROUP, Operation.defaultEntityGroupOperations);
@@ -164,6 +167,15 @@ public enum Resource {
         operationsByResource.put(Resource.AGENT, Operation.defaultEntityOperations);
         operationsByResource.put(Resource.AGENT_APP_PROFILE, Operation.crudOperations);
         operationsByResource.put(Resource.AGENT_PROFILE, Operation.crudOperations);
+
+        Set<EntityType> entityTypesWithTsAndAttributes = EnumSet.noneOf(EntityType.class);
+        operationsByResource.forEach((resource, operations) -> {
+            // Resource.ALL is a wildcard holding every operation, but its own entity types are empty, so it contributes nothing
+            if (!Collections.disjoint(operations, Operation.TS_AND_ATTRIBUTES_OPERATIONS)) {
+                entityTypesWithTsAndAttributes.addAll(resource.getEntityTypes());
+            }
+        });
+        ENTITY_TYPES_WITH_TS_AND_ATTRIBUTES = Collections.unmodifiableSet(entityTypesWithTsAndAttributes);
 
         resourcesByAuthority.put(Authority.SYS_ADMIN, Set.of(
                 Resource.ALL,
@@ -286,6 +298,12 @@ public enum Resource {
                 Resource.API_KEY
         ));
 
+    }
+
+    private static Set<Operation> withoutTsAndAttributes(Set<Operation> operations) {
+        Set<Operation> result = new HashSet<>(operations);
+        result.removeAll(Operation.TS_AND_ATTRIBUTES_OPERATIONS);
+        return result;
     }
 
     public static Resource groupResourceFromGroupType(EntityType groupType) {

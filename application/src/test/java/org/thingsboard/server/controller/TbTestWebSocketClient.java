@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -282,12 +283,17 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public JsonNode sendTimeseriesCmd(EntityId entityId, String scope) {
-        log.warn("sendTimeseriesCmd entityId: {}, scope: {}", entityId, scope);
-        TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10, null);
+        return sendTimeseriesCmd(entityId, scope, null);
+    }
+
+    public JsonNode sendTimeseriesCmd(EntityId entityId, String scope, String keys) {
+        log.warn("sendTimeseriesCmd entityId: {}, scope: {}, keys: {}", entityId, scope, keys);
+        TimeseriesSubscriptionCmd cmd = new TimeseriesSubscriptionCmd(0, 0, 0, 10,  null);
         cmd.setEntityId(entityId.getId().toString());
         cmd.setEntityType(entityId.getEntityType().toString());
         cmd.setCmdId(1);
         cmd.setScope(scope);
+        cmd.setKeys(keys);
         send(cmd);
         String msg = this.waitForReply();
         return JacksonUtil.fromString(msg, JsonNode.class);
