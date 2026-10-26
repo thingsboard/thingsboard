@@ -165,16 +165,22 @@ people who read them — users and customers, not reviewers:
 - **Describe the change in behavior, as a user sees it.** Name the feature or screen and what now
   works differently. Leave out class names, exceptions, library versions and other internals a
   user can't relate to; they belong in the description.
-- **Use the past tense, starting with a verb:** `Fixed`, `Added`, `Updated`, `Improved`,
-  `Removed`. Not `Fix`, `Add` or `Update`.
-- **Leave out prefixes and suffixes** such as `fix(ui):`, ticket keys or branch names
-  (`(lts-4.3)`).
+- **Use the past tense, starting with a verb** such as `Fixed`, `Added`, `Updated`, `Improved`,
+  `Removed`, `Renamed` or `Made`. Not `Fix`, `Add` or `Update`.
+- **Leave out code-scope prefixes and suffixes** such as `fix(ui):`, ticket keys or branch names
+  (`(lts-4.3)`). A product-area prefix a user recognizes is fine, followed by the verb:
+  `IoT Hub: added filtering of the catalogue by the creator's verification status`.
+
+The section an entry appears under (`UI`, `Bug: UI`, `Edge`, …) comes from the pull request's
+labels, not its title, so don't repeat the area or the change type in the title. Changes users
+don't see — CI, build, docs, refactoring, a second backport of the same fix — get the
+`Ignore for release` label and stay out of the release notes.
 
 | Instead of                                                     | Write                                                                                          |
 |----------------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | `fix(ui): update moment-timezone to 0.6.5 (tzdata 2026e)`      | `Updated UI time zone data to reflect 2026 daylight saving time changes in Canada, Morocco and Moldova` |
 | `Warn that updating a solution template recreates everything it installed` | `Added a warning that updating a solution template recreates everything it installed` |
-| `Fix empty Provisioning step in the device install wizard`     | `Fixed empty Provisioning step in the device install wizard`                                    |
+| `Fix empty Provisioning step when navigating the device install wizard via the stepper header` | `Fixed empty Provisioning step when navigating the device install wizard via the stepper header` |
 
 ## Contributor License Agreement
 
