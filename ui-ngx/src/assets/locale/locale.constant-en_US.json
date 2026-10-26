@@ -712,6 +712,8 @@
         "denied": "Denied",
         "error": "Failed",
         "thinking": "Thinking...",
+        "connection-lost": "Connection to the AI Assistant was lost. Reconnecting...",
+        "reconnect-failed": "Couldn't reconnect to the AI Assistant. Reopen the chat to see its reply.",
         "rename-chat-title": "Rename this chat",
         "export-chat": "Export chat",
         "main-title": "Hello! I'm your AI Assistant"

@@ -26,4 +26,6 @@ public interface AiChatService {
             SecurityUser user
     );
 
+    Flux<ServerSentEvent<String>> resumeChat(UUID chatId, String tbAccessToken, String acceptLanguage, String clientOrigin, SecurityUser user);
+
 }

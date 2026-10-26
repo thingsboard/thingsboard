@@ -18,6 +18,11 @@
           [autoApprove]="autoApprove"
           (approvalAction)="approval($event)">
         </tb-ai-approval-card>
+      } @else if (msg.status === 'INCOMPLETE') {
+        <div class="incomplete flex items-start gap-2">
+          <mat-icon class="incomplete-icon">warning_amber</mat-icon>
+          <span>{{ msg.content }}</span>
+        </div>
       } @else {
         <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
       }
