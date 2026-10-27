@@ -1,5 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
+:host {
+  display: block;
+  max-width: 600px;
+}
+
 .tb-iot-hub-delete-title {
   font-size: 20px;
   font-weight: 600;
