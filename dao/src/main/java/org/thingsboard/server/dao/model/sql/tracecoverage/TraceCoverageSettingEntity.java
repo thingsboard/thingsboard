@@ -18,8 +18,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SET
 import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_MAX_TRACE_GROUPS_PER_DAY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_MESSAGE_PAYLOAD_RECORDING_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_RULE_ENGINE_ROTATION_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_SWITCH_PERIOD_SECONDS_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TRACE_COVERAGE_SETTING_TRACES_PER_INTERVAL_PROPERTY;
@@ -45,12 +43,6 @@ public final class TraceCoverageSettingEntity extends BaseSqlEntity<TraceCoverag
     @Column(name = TRACE_COVERAGE_SETTING_INTERVAL_SECONDS_PROPERTY)
     private int intervalSeconds;
 
-    @Column(name = TRACE_COVERAGE_SETTING_RULE_ENGINE_ROTATION_PROPERTY)
-    private boolean ruleEngineRotation;
-
-    @Column(name = TRACE_COVERAGE_SETTING_SWITCH_PERIOD_SECONDS_PROPERTY)
-    private int switchPeriodSeconds;
-
     @Column(name = TRACE_COVERAGE_SETTING_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS_PROPERTY)
     private int relatedTraceSampleIntervalSeconds;
 
@@ -74,8 +66,6 @@ public final class TraceCoverageSettingEntity extends BaseSqlEntity<TraceCoverag
         this.tracesPerInterval = setting.getTracesPerInterval();
         this.tracesPerPack = setting.getTracesPerPack();
         this.intervalSeconds = setting.getIntervalSeconds();
-        this.ruleEngineRotation = setting.isRuleEngineRotation();
-        this.switchPeriodSeconds = setting.getSwitchPeriodSeconds();
         this.relatedTraceSampleIntervalSeconds = setting.getRelatedTraceSampleIntervalSeconds();
         this.messagePayloadRecording = setting.getMessagePayloadRecording() != null
                 ? setting.getMessagePayloadRecording().name()
@@ -95,8 +85,6 @@ public final class TraceCoverageSettingEntity extends BaseSqlEntity<TraceCoverag
         setting.setIntervalSeconds(intervalSeconds > 0
                 ? intervalSeconds
                 : TraceCoverageSetting.DEFAULT_INTERVAL_SECONDS);
-        setting.setRuleEngineRotation(ruleEngineRotation);
-        setting.setSwitchPeriodSeconds(switchPeriodSeconds);
         setting.setRelatedTraceSampleIntervalSeconds(relatedTraceSampleIntervalSeconds);
         setting.setMessagePayloadRecording(parseMessagePayloadRecording(messagePayloadRecording));
         setting.setMaxTraceGroupsPerDay(maxTraceGroupsPerDay);

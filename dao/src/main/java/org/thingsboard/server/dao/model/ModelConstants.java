@@ -135,8 +135,6 @@ public class ModelConstants {
     public static final String TRACE_COVERAGE_SETTING_TRACES_PER_INTERVAL_PROPERTY = "traces_per_interval";
     public static final String TRACE_COVERAGE_SETTING_TRACES_PER_PACK_PROPERTY = "traces_per_pack";
     public static final String TRACE_COVERAGE_SETTING_INTERVAL_SECONDS_PROPERTY = "interval_seconds";
-    public static final String TRACE_COVERAGE_SETTING_RULE_ENGINE_ROTATION_PROPERTY = "rule_engine_rotation";
-    public static final String TRACE_COVERAGE_SETTING_SWITCH_PERIOD_SECONDS_PROPERTY = "switch_period_seconds";
     public static final String TRACE_COVERAGE_SETTING_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS_PROPERTY = "related_trace_sample_interval_seconds";
     public static final String TRACE_COVERAGE_SETTING_MESSAGE_PAYLOAD_RECORDING_PROPERTY = "message_payload_recording";
     public static final String TRACE_COVERAGE_SETTING_MAX_TRACE_GROUPS_PER_DAY_PROPERTY = "max_trace_groups_per_day";

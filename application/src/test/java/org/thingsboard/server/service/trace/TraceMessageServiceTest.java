@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.trace.TraceCoverageSetting.MessagePayl
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TraceRetryMetadata;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
@@ -80,7 +78,6 @@ class TraceMessageServiceTest {
         Mockito.when(pressureGate.canCreateSpan()).thenReturn(true);
         StatsFactory statsFactory = Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS);
         service = new TraceMessageService(Mockito.mock(RateLimitService.class), tracerProvider.get("test"),
-                Mockito.mock(PartitionService.class), Mockito.mock(TbServiceInfoProvider.class),
                 coverageSettingService, pressureGate, statsFactory, 1);
         givenRecording(MessagePayloadRecording.NONE);
     }

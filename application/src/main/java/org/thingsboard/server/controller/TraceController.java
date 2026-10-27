@@ -70,7 +70,7 @@ public class TraceController extends BaseController {
 
     @Operation(summary = "Save trace coverage setting",
             description = "Create or update (upsert) the trace coverage setting for the current tenant. " +
-                    "Validates that tracesPerInterval, switchPeriodSeconds and relatedTraceSampleIntervalSeconds are " +
+                    "Validates that tracesPerInterval and relatedTraceSampleIntervalSeconds are " +
                     "positive integers, tracesPerPack is zero (unlimited) or positive, and intervalSeconds is a positive number of seconds.")
     @PostMapping("/coverage")
     @ResponseStatus(value = HttpStatus.OK)

@@ -18,8 +18,6 @@ public class TraceCoverageSetting implements Serializable {
     public static final int DEFAULT_TRACES_PER_INTERVAL = 10;
     public static final int DEFAULT_TRACES_PER_PACK = 1;
     public static final int DEFAULT_INTERVAL_SECONDS = 1;
-    public static final boolean DEFAULT_RULE_ENGINE_ROTATION = true;
-    public static final int DEFAULT_SWITCH_PERIOD_SECONDS = 60;
     public static final int DEFAULT_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS = 1800;
     public static final MessagePayloadRecording DEFAULT_MESSAGE_PAYLOAD_RECORDING = MessagePayloadRecording.NONE;
     public static final int DEFAULT_MAX_TRACE_GROUPS_PER_DAY = 10000;
@@ -44,7 +42,8 @@ public class TraceCoverageSetting implements Serializable {
     @Schema(description = "Whether trace coverage is active for this tenant", example = "false")
     private boolean enabled;
 
-    @Schema(description = "How many traces to admit per interval (one message per admitted trace group)", example = "10")
+    @Schema(description = "How many traces to admit per interval (one message per admitted trace group). " +
+            "The limit applies to each rule-engine instance separately", example = "10")
     private int tracesPerInterval = DEFAULT_TRACES_PER_INTERVAL;
 
     @Schema(description = "Max traced messages per pack per tenant; 0 means unlimited (no grouping by message type)", example = "1")
@@ -52,12 +51,6 @@ public class TraceCoverageSetting implements Serializable {
 
     @Schema(description = "Length of the trace budget window, in seconds", example = "1")
     private int intervalSeconds = DEFAULT_INTERVAL_SECONDS;
-
-    @Schema(description = "Whether coverage evaluation rotates across rule-engine instances (one at a time) instead of every instance sampling", example = "true")
-    private boolean ruleEngineRotation = DEFAULT_RULE_ENGINE_ROTATION;
-
-    @Schema(description = "How long (seconds) a single rule-engine instance owns coverage evaluation before rotating; applies only when ruleEngineRotation is true", example = "60")
-    private int switchPeriodSeconds = DEFAULT_SWITCH_PERIOD_SECONDS;
 
     @Schema(description = "Minimum spacing (seconds) between related traces persisted per path, so drill-down trace coverage is spread over time", example = "1800")
     private int relatedTraceSampleIntervalSeconds = DEFAULT_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS;
@@ -76,8 +69,6 @@ public class TraceCoverageSetting implements Serializable {
         setting.setTracesPerInterval(DEFAULT_TRACES_PER_INTERVAL);
         setting.setTracesPerPack(DEFAULT_TRACES_PER_PACK);
         setting.setIntervalSeconds(DEFAULT_INTERVAL_SECONDS);
-        setting.setRuleEngineRotation(DEFAULT_RULE_ENGINE_ROTATION);
-        setting.setSwitchPeriodSeconds(DEFAULT_SWITCH_PERIOD_SECONDS);
         setting.setRelatedTraceSampleIntervalSeconds(DEFAULT_RELATED_TRACE_SAMPLE_INTERVAL_SECONDS);
         setting.setMessagePayloadRecording(DEFAULT_MESSAGE_PAYLOAD_RECORDING);
         setting.setMaxTraceGroupsPerDay(DEFAULT_MAX_TRACE_GROUPS_PER_DAY);

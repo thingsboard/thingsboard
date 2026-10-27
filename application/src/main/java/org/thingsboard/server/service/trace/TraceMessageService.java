@@ -29,13 +29,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TraceRetryMetadata;
 
@@ -79,8 +76,6 @@ public class TraceMessageService {
 
     private final RateLimitService rateLimitService;
     private final Tracer tracer;
-    private final PartitionService partitionService;
-    private final TbServiceInfoProvider serviceInfoProvider;
     private final TraceCoverageSettingService traceCoverageSettingService;
     private final TraceExportPressureGate pressureGate;
 
@@ -89,15 +84,12 @@ public class TraceMessageService {
     private final Timer onMessagePackTimer;
 
     public TraceMessageService(RateLimitService rateLimitService, Tracer tracer,
-                               PartitionService partitionService, TbServiceInfoProvider serviceInfoProvider,
                                TraceCoverageSettingService traceCoverageSettingService,
                                TraceExportPressureGate pressureGate,
                                StatsFactory statsFactory,
                                @Value("${otel.tracing.coverage.settings-cache-ttl-minutes:1}") int settingsCacheTtlMinutes) {
         this.rateLimitService = rateLimitService;
         this.tracer = tracer;
-        this.partitionService = partitionService;
-        this.serviceInfoProvider = serviceInfoProvider;
         this.traceCoverageSettingService = traceCoverageSettingService;
         this.pressureGate = pressureGate;
         this.coverageSettingCache = Caffeine.newBuilder()
@@ -511,17 +503,10 @@ public class TraceMessageService {
     }
 
     private Map<TenantId, TraceCoverageSetting> resolveTenantsToSample(Set<TenantId> tenants) {
-        long nowEpochSeconds = System.currentTimeMillis() / 1000L;
-        List<String> sortedServiceIds = sortedRuleEngineServiceIds();
-        String selfServiceId = serviceInfoProvider.getServiceId();
         Map<TenantId, TraceCoverageSetting> tenantsToSample = new HashMap<>();
         for (TenantId tenantId : tenants) {
             TraceCoverageSetting setting = getCoverageSetting(tenantId);
             if (setting == null || !setting.isEnabled()) {
-                continue;
-            }
-            if (setting.isRuleEngineRotation()
-                    && !isActiveInstance(sortedServiceIds, selfServiceId, setting.getSwitchPeriodSeconds(), nowEpochSeconds)) {
                 continue;
             }
             tenantsToSample.put(tenantId, setting);
@@ -631,26 +616,6 @@ public class TraceMessageService {
     private TraceCoverageSetting getCoverageSetting(TenantId tenantId) {
         return coverageSettingCache.get(tenantId.getId(),
                 id -> traceCoverageSettingService.findTraceCoverageSettingByTenantId(tenantId));
-    }
-
-    private List<String> sortedRuleEngineServiceIds() {
-        Set<String> idSet = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
-        if (idSet == null || idSet.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<String> ids = new ArrayList<>(idSet);
-        Collections.sort(ids);
-        return ids;
-    }
-
-    private boolean isActiveInstance(List<String> sortedServiceIds, String selfServiceId, int switchPeriodSeconds, long nowEpochSeconds) {
-        if (sortedServiceIds.isEmpty()) {
-            return true;
-        }
-        int period = Math.max(1, switchPeriodSeconds);
-        long periodIndex = nowEpochSeconds / period;
-        int idx = Math.floorMod(periodIndex, sortedServiceIds.size());
-        return sortedServiceIds.get(idx).equals(selfServiceId);
     }
 
     private String serializeMetadataToJson(TbMsgMetaData metaData) {

@@ -67,9 +67,6 @@ public class TraceCoverageSettingServiceImpl implements TraceCoverageSettingServ
         if (setting.getTracesPerPack() < 0) {
             throw new DataValidationException("Trace coverage setting tracesPerPack should be zero (unlimited) or a positive integer!");
         }
-        if (setting.getSwitchPeriodSeconds() < 1) {
-            throw new DataValidationException("Trace coverage setting switchPeriodSeconds should be a positive integer!");
-        }
         if (setting.getRelatedTraceSampleIntervalSeconds() < 1) {
             throw new DataValidationException("Trace coverage setting relatedTraceSampleIntervalSeconds should be a positive integer!");
         }
