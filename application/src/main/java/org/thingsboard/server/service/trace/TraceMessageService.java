@@ -310,18 +310,20 @@ public class TraceMessageService {
             }
             boolean systemQueue = queueTenantId.isSysTenantId();
 
-            Set<TenantId> tenants = collectUntracedByTenant(queueTenantId, systemQueue, pending,
-                    resolvePackTenants(queueTenantId, systemQueue, pending), packCtx).keySet();
-            if (tenants.isEmpty()) {
-                return;
-            }
-
-            Map<TenantId, TraceCoverageSetting> tenantsToSample = resolveTenantsToSample(tenants);
+            // Tenant ids and cached settings need no message parsing, so a pack with no covered tenant returns here.
+            Map<TenantId, TraceCoverageSetting> tenantsToSample =
+                    resolveTenantsToSample(resolvePackTenants(queueTenantId, systemQueue, pending));
             if (tenantsToSample.isEmpty()) {
                 return;
             }
 
-            Set<UUID> selected = selectCoveredMessages(queueTenantId, systemQueue, pending, packCtx, tenantsToSample);
+            Map<TenantId, List<UUID>> untracedByTenant =
+                    collectUntracedByTenant(queueTenantId, systemQueue, pending, tenantsToSample.keySet(), packCtx);
+            if (untracedByTenant.isEmpty()) {
+                return;
+            }
+
+            Set<UUID> selected = selectCoveredMessages(untracedByTenant, tenantsToSample);
             if (!selected.isEmpty()) {
                 packCtx.setTraceCoverageSelectedMsgIds(selected);
             }
@@ -554,14 +556,10 @@ public class TraceMessageService {
         return byTenant;
     }
 
-    private Set<UUID> selectCoveredMessages(TenantId queueTenantId, boolean systemQueue,
-                                            Map<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> pending,
-                                            TbMsgPackProcessingContext packCtx,
+    private Set<UUID> selectCoveredMessages(Map<TenantId, List<UUID>> untracedByTenant,
                                             Map<TenantId, TraceCoverageSetting> tenantsToSample) {
-        Map<TenantId, List<UUID>> byTenant =
-                collectUntracedByTenant(queueTenantId, systemQueue, pending, tenantsToSample.keySet(), packCtx);
         Set<UUID> selected = new HashSet<>();
-        for (Map.Entry<TenantId, List<UUID>> tenantEntry : byTenant.entrySet()) {
+        for (Map.Entry<TenantId, List<UUID>> tenantEntry : untracedByTenant.entrySet()) {
             TenantId tenantId = tenantEntry.getKey();
             TraceCoverageSetting setting = tenantsToSample.get(tenantId);
             int maxPerPack = setting.getTracesPerPack();

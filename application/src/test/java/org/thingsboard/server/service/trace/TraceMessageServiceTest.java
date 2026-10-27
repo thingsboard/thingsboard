@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
@@ -27,6 +28,8 @@ import org.thingsboard.server.common.data.trace.TraceCoverageSetting.MessagePayl
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TraceRetryMetadata;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
@@ -48,6 +51,7 @@ class TraceMessageServiceTest {
     private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
     private final List<ReadableSpan> endedSpans = new CopyOnWriteArrayList<>();
     private final TraceCoverageSettingService coverageSettingService = Mockito.mock(TraceCoverageSettingService.class);
+    private final RateLimitService rateLimitService = Mockito.mock(RateLimitService.class);
 
     private SdkTracerProvider tracerProvider;
     private TraceMessageService service;
@@ -76,8 +80,10 @@ class TraceMessageServiceTest {
         }).build();
         TraceExportPressureGate pressureGate = Mockito.mock(TraceExportPressureGate.class);
         Mockito.when(pressureGate.canCreateSpan()).thenReturn(true);
+        Mockito.when(pressureGate.canIssueTraceId()).thenReturn(true);
+        Mockito.when(rateLimitService.checkRateLimit(Mockito.any(LimitedApi.class), Mockito.<Object>any(), Mockito.anyString())).thenReturn(true);
         StatsFactory statsFactory = Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS);
-        service = new TraceMessageService(Mockito.mock(RateLimitService.class), tracerProvider.get("test"),
+        service = new TraceMessageService(rateLimitService, tracerProvider.get("test"),
                 coverageSettingService, pressureGate, statsFactory, 1);
         givenRecording(MessagePayloadRecording.NONE);
     }
@@ -225,6 +231,47 @@ class TraceMessageServiceTest {
     private TbMsgPackProcessingContext selectedPack(TbMsg msg) {
         TbMsgPackProcessingContext packCtx = pack();
         packCtx.setTraceCoverageSelectedMsgIds(Set.of(msg.getId()));
+        return packCtx;
+    }
+
+    @Test
+    void givenCoverageEnabled_whenPackArrives_thenMessageIsSelected() {
+        givenCoverage(true);
+        TbMsg msg = msgWithStaleFlag();
+        TbMsgPackProcessingContext packCtx = packWith(msg);
+
+        service.onMessagePack(tenantId, packCtx);
+
+        assertThat(packCtx.isTraceCoverageSelected(msg.getId())).isTrue();
+    }
+
+    @Test
+    void givenCoverageDisabled_whenPackArrives_thenNothingIsSelectedOrRateLimited() {
+        givenCoverage(false);
+        TbMsg msg = msgWithStaleFlag();
+        TbMsgPackProcessingContext packCtx = packWith(msg);
+
+        service.onMessagePack(tenantId, packCtx);
+
+        assertThat(packCtx.isTraceCoverageSelected(msg.getId())).isFalse();
+        Mockito.verifyNoInteractions(rateLimitService);
+    }
+
+    private void givenCoverage(boolean enabled) {
+        TraceCoverageSetting setting = TraceCoverageSetting.defaultSetting(tenantId.getId());
+        setting.setEnabled(enabled);
+        Mockito.when(coverageSettingService.findTraceCoverageSettingByTenantId(tenantId)).thenReturn(setting);
+    }
+
+    private TbMsgPackProcessingContext packWith(TbMsg msg) {
+        TbMsgPackProcessingContext packCtx = pack();
+        TransportProtos.ToRuleEngineMsg queueMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTbMsgProto(TbMsg.toProto(msg))
+                .build();
+        UUID key = UUID.randomUUID();
+        packCtx.getPendingMap().put(key, new TbProtoQueueMsg<>(key, queueMsg));
         return packCtx;
     }
 
