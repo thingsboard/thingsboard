@@ -112,7 +112,8 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
         try {
             var rotatedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(rotatedApiKey.getId()).entity(rotatedApiKey).oldEntity(old).created(false).build());
-            publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+            // the cache is keyed by value, so the entry to evict is the one the rotated-away value still resolves to
+            publishEvictEvent(new ApiKeyEvictEvent(old.getValue()));
             return rotatedApiKey;
         } catch (Exception e) {
             checkConstraintViolation(e, "api_key_value_unq_key", "API Key with such value already exists!");
