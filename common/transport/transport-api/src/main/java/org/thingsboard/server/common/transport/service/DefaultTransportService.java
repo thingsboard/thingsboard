@@ -344,35 +344,33 @@ public class DefaultTransportService extends TransportActivityManager implements
                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
         String token = msg.getToken();
-        if (tokenValidationCacheService.isEnabled()) {
-            Optional<TransportProtos.TokenValidationCacheEntryProto> cached = tokenValidationCacheService.lookup(token);
-            if (cached.isPresent()) {
-                processCachedValidation(transportType, cached.get().getResponse(), callback);
-                return;
-            }
-        }
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
                 TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(
                         msg.toBuilder().setSupportsDeviceProfileCaching(true).build()).build());
-        doProcess(transportType, protoMsg, token, callback);
-    }
-
-    private void processCachedValidation(DeviceTransportType transportType, TransportProtos.ValidateDeviceCredentialsResponseMsg cachedMsg,
-                                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
-        if (!cachedMsg.hasDeviceInfo()) {
-            callback.onSuccess(ValidateDeviceCredentialsResponse.builder().build());
+        if (!tokenValidationCacheService.isEnabled()) {
+            doProcess(transportType, protoMsg, token, callback);
             return;
         }
-        transportCallbackExecutor.execute(() -> {
-            ValidateDeviceCredentialsResponse response;
-            try {
-                response = toValidateResponse(cachedMsg, transportType);
-            } catch (Throwable t) {
-                callback.onError(t);
-                return;
-            }
-            callback.onSuccess(response);
-        });
+        // lookup() may block on a remote cache read, so the whole cache interaction runs on the callback executor
+        try {
+            transportCallbackExecutor.execute(() -> {
+                try {
+                    Optional<TransportProtos.TokenValidationCacheEntryProto> cached = tokenValidationCacheService.lookup(token);
+                    if (cached.isEmpty()) {
+                        doProcess(transportType, protoMsg, token, callback);
+                        return;
+                    }
+                    TransportProtos.ValidateDeviceCredentialsResponseMsg cachedMsg = cached.get().getResponse();
+                    ValidateDeviceCredentialsResponse response = cachedMsg.hasDeviceInfo() ?
+                            toValidateResponse(cachedMsg, transportType) : ValidateDeviceCredentialsResponse.builder().build();
+                    callback.onSuccess(response);
+                } catch (Throwable t) {
+                    callback.onError(t);
+                }
+            });
+        } catch (Throwable t) {
+            callback.onError(t);
+        }
     }
 
     @Override
