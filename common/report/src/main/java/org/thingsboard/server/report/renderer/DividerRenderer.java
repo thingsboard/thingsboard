@@ -23,9 +23,8 @@ public class DividerRenderer extends ReportComponentWithLayoutRenderer<DividerCo
         HashMap<String, Object> componentVariables = new HashMap<>();
         componentVariables.put("width", component.getLength() != null && component.getLength() == SHORT ? "50%" : "100%");
         BorderType borderTypeEnum = component.getBorderType() != null ? component.getBorderType() : BorderType.SOLID;
-        int minWidth = borderTypeEnum == BorderType.DOUBLE ? 3 : 1;
-        int widthPx = component.getWidthPx() != null ? component.getWidthPx() : minWidth;
-        String borderWidth = Math.max(widthPx, minWidth) + "px";
+        int widthPx = component.getWidthPx() != null ? component.getWidthPx() : 1;
+        String borderWidth = widthPx + "px";
         String borderColor = component.getColor() != null ? ColorUtils.normalizeCssColor(component.getColor()) : "#000";
         String borderType = borderTypeEnum.getValue();
         componentVariables.put("borderStyle", borderWidth + " " + borderType + " " + borderColor);

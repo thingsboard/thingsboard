@@ -250,8 +250,6 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
     static class CellVariables {
         // matches the 1px baseline set on th/td in main.css / report-component-style.scss
         private static final int DEFAULT_BORDER_WIDTH_PX = 1;
-        // double border needs at least 3px to render two visible lines
-        private static final int DOUBLE_BORDER_MIN_WIDTH_PX = 3;
 
         private String key;
         private String value;
@@ -319,8 +317,7 @@ public abstract class TableWithLayoutComponentRenderer<C extends TableWithLayout
             if (borderWidth == null && borderType == null && borderColor == null) {
                 return;
             }
-            int defaultWidth = borderType == BorderType.DOUBLE ? DOUBLE_BORDER_MIN_WIDTH_PX : DEFAULT_BORDER_WIDTH_PX;
-            int width = borderWidth != null ? borderWidth : defaultWidth;
+            int width = borderWidth != null ? borderWidth : DEFAULT_BORDER_WIDTH_PX;
             List<String> sides = new ArrayList<>();
             sides.add("right");
             sides.add("bottom");

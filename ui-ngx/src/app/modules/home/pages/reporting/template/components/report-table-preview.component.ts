@@ -9,7 +9,6 @@ import { DataKey } from '@shared/models/widget.models';
 import { Direction } from '@shared/models/page/sort-order';
 
 const DEFAULT_TABLE_BORDER_WIDTH_PX = 1;
-const DOUBLE_BORDER_MIN_WIDTH_PX = 3;
 
 @Directive()
 export abstract class AbstractReportTablePreviewComponent<C extends TableReportComponentConfig> extends AbstractReportComponentPreview<C> {
@@ -120,8 +119,7 @@ export abstract class AbstractReportTablePreviewComponent<C extends TableReportC
     if (cellSettings.borderWidth == null && cellSettings.borderColor == null && cellSettings.borderType == null) {
       return;
     }
-    const defaultWidth = cellSettings.borderType === BorderType.double ? DOUBLE_BORDER_MIN_WIDTH_PX : DEFAULT_TABLE_BORDER_WIDTH_PX;
-    const width = (cellSettings.borderWidth ?? defaultWidth) + 'px';
+    const width = (cellSettings.borderWidth ?? DEFAULT_TABLE_BORDER_WIDTH_PX) + 'px';
     const sides = ['Right', 'Bottom'];
     if (firstColumn) {
       sides.push('Left');
