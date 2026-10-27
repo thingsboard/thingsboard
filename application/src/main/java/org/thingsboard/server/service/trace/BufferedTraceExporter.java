@@ -59,7 +59,7 @@ public class BufferedTraceExporter implements SpanExporter {
 
         try {
             buffer.append(bufferedSpans);
-            log.info("Buffered Trace Exporter Stats: batchSpans = [{}] writeTimeMs = [{}]",
+            log.debug("Buffered Trace Exporter Stats: batchSpans = [{}] writeTimeMs = [{}]",
                     spans.size(), System.currentTimeMillis() - exportStart);
         } catch (Exception e) {
             log.error("Failed to persist span batch of size {}", bufferedSpans.size(), e);
