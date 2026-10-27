@@ -36,7 +36,7 @@ public class TraceGroupPersistenceService {
 
     @Transactional
     public void persist(long bucketTime, long now, Collection<TraceGroupContribution> contributions,
-                        Map<String, LoadedTrace> tracesByTraceId,
+                        Map<String, BufferedTrace> tracesByTraceId,
                         Map<String, TraceSummaryInfo> summariesByTraceId) {
         if (CollectionUtils.isEmpty(contributions)) {
             return;
@@ -184,17 +184,17 @@ public class TraceGroupPersistenceService {
         return result;
     }
 
-    private void saveSampledSpans(List<String> traceIds, Map<String, LoadedTrace> tracesByTraceId) {
+    private void saveSampledSpans(List<String> traceIds, Map<String, BufferedTrace> tracesByTraceId) {
         if (CollectionUtils.isEmpty(traceIds)) {
             return;
         }
         List<SpanEntity> spanEntities = new ArrayList<>();
         for (String traceId : traceIds) {
-            LoadedTrace loaded = tracesByTraceId.get(traceId);
-            if (loaded == null || loaded.trace() == null || CollectionUtils.isEmpty(loaded.trace().spans())) {
+            BufferedTrace trace = tracesByTraceId.get(traceId);
+            if (trace == null || CollectionUtils.isEmpty(trace.spans())) {
                 continue;
             }
-            for (BufferedSpan span : loaded.trace().spans()) {
+            for (BufferedSpan span : trace.spans()) {
                 spanEntities.add(toSpanEntity(span));
             }
         }

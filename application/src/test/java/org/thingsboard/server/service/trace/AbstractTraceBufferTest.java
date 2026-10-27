@@ -68,10 +68,10 @@ public abstract class AbstractTraceBufferTest {
                 span(tenantA, traceTwo, "b1", null, "two"),
                 span(tenantB, traceOne, "c1", null, "same-trace-id-other-tenant")));
 
-        List<LoadedTrace> loaded = drain(buffer);
+        List<BufferedTrace> loaded = drain(buffer);
         assertThat(loaded).hasSize(3);
         Map<String, BufferedTrace> byIdentity = loaded.stream().collect(Collectors.toMap(
-                t -> t.trace().tenantId() + ":" + t.trace().traceId(), LoadedTrace::trace));
+                t -> t.tenantId() + ":" + t.traceId(), t -> t));
         assertThat(byIdentity.get(tenantA + ":" + traceOne).spans()).hasSize(2);
         assertThat(byIdentity.get(tenantA + ":" + traceTwo).spans()).hasSize(1);
         assertThat(byIdentity.get(tenantB + ":" + traceOne).spans()).hasSize(1);
@@ -129,7 +129,7 @@ public abstract class AbstractTraceBufferTest {
                 .collect(Collectors.toList()));
 
         Map<String, BufferedTrace> byTraceId = drain(buffer).stream()
-                .collect(Collectors.toMap(t -> t.trace().traceId(), LoadedTrace::trace));
+                .collect(Collectors.toMap(BufferedTrace::traceId, t -> t));
         assertThat(byTraceId.get(belowCapTraceId).truncated()).isFalse();
         assertThat(byTraceId.get(atCapTraceId).spans()).hasSize(cap);
         assertThat(byTraceId.get(atCapTraceId).truncated()).isTrue();
@@ -187,22 +187,22 @@ public abstract class AbstractTraceBufferTest {
         }
         buffer.append(appended);
 
-        List<LoadedTrace> drained = new ArrayList<>();
+        List<BufferedTrace> drained = new ArrayList<>();
 
         for (int call = 0; call < traceCount * 8; call++) {
-            List<LoadedTrace> batch = buffer.drainExpired(farFuture(), budget);
+            List<BufferedTrace> batch = buffer.drainExpired(farFuture(), budget);
             if (batch.isEmpty()) {
                 break;
             }
 
-            assertThat(batch.stream().mapToInt(t -> t.trace().spans().size()).sum())
+            assertThat(batch.stream().mapToInt(t -> t.spans().size()).sum())
                     .isLessThanOrEqualTo(budget + maxSpansPerTrace);
             drained.addAll(batch);
         }
 
         assertThat(drained).hasSize(traceCount);
-        assertThat(drained.stream().map(LoadedTrace::bufferKey)).doesNotHaveDuplicates();
-        assertThat(drained).allSatisfy(t -> assertThat(spanIds(t.trace())).containsExactlyInAnyOrder("span-1", "span-2"));
+        assertThat(drained.stream().map(t -> t.tenantId() + ":" + t.traceId())).doesNotHaveDuplicates();
+        assertThat(drained).allSatisfy(t -> assertThat(spanIds(t)).containsExactlyInAnyOrder("span-1", "span-2"));
 
         assertThat(buffer.drainExpired(farFuture(), 1000)).isEmpty();
     }
@@ -252,7 +252,7 @@ public abstract class AbstractTraceBufferTest {
         buffer.append(batch);
 
         Map<String, BufferedTrace> loaded = drain(buffer).stream().collect(Collectors.toMap(
-                t -> t.trace().tenantId() + ":" + t.trace().traceId(), LoadedTrace::trace));
+                t -> t.tenantId() + ":" + t.traceId(), t -> t));
         assertThat(loaded).hasSize(traceCount + 1);
         expectedSpanCounts.forEach((identity, spanCount) -> assertThat(loaded.get(identity))
                 .as("trace [%s]", identity)
@@ -279,9 +279,9 @@ public abstract class AbstractTraceBufferTest {
     }
 
     // As the aggregation job does: one call returns one batch (for Redis, one partition), so call until nothing is left.
-    protected static List<LoadedTrace> drain(TraceBuffer buffer) {
-        List<LoadedTrace> drained = new ArrayList<>();
-        List<LoadedTrace> batch;
+    protected static List<BufferedTrace> drain(TraceBuffer buffer) {
+        List<BufferedTrace> drained = new ArrayList<>();
+        List<BufferedTrace> batch;
         while (!(batch = buffer.drainExpired(farFuture(), Integer.MAX_VALUE)).isEmpty()) {
             drained.addAll(batch);
         }
@@ -289,9 +289,9 @@ public abstract class AbstractTraceBufferTest {
     }
 
     protected static BufferedTrace onlyTrace(TraceBuffer buffer) {
-        List<LoadedTrace> loaded = drain(buffer);
+        List<BufferedTrace> loaded = drain(buffer);
         assertThat(loaded).hasSize(1);
-        return loaded.get(0).trace();
+        return loaded.get(0);
     }
 
     protected static BufferedSpan span(UUID tenantId, String traceId, String spanId, String parentSpanId, String name) {

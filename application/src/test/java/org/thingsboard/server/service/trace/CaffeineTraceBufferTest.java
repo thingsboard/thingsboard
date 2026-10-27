@@ -125,7 +125,7 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isEqualTo(500);
 
         List<BufferedSpan> buffered = drain(buffer).stream()
-                .flatMap(loaded -> loaded.trace().spans().stream())
+                .flatMap(trace -> trace.spans().stream())
                 .collect(Collectors.toList());
         assertThat(buffered).hasSize(maxBufferedSpans);
         assertThat(buffered).extracting(BufferedSpan::getSpanId)
@@ -149,7 +149,7 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
         String traceId = randomTraceId();
         buffer.append(List.of(span(tenantId, traceId, "fresh", null, "fresh")));
         assertThat(drain(buffer).stream()
-                .flatMap(loaded -> loaded.trace().spans().stream())
+                .flatMap(trace -> trace.spans().stream())
                 .map(BufferedSpan::getSpanId)).containsExactly("fresh");
         assertThat(counterValue(registry, "trace.buffer.rejected", "cause", "full")).isEqualTo(1);
     }
@@ -265,9 +265,9 @@ class CaffeineTraceBufferTest extends AbstractTraceBufferTest {
         assertThat(((AtomicLong) ReflectionTestUtils.getField(buffer, "bufferedSpans")).get()).isZero();
     }
 
-    private static void collect(List<LoadedTrace> loaded, Set<String> drained, AtomicInteger duplicates) {
-        for (LoadedTrace trace : loaded) {
-            for (BufferedSpan span : trace.trace().spans()) {
+    private static void collect(List<BufferedTrace> loaded, Set<String> drained, AtomicInteger duplicates) {
+        for (BufferedTrace trace : loaded) {
+            for (BufferedSpan span : trace.spans()) {
                 if (!drained.add(span.getSpanId())) {
                     duplicates.incrementAndGet();
                 }

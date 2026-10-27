@@ -76,7 +76,7 @@ public class TraceAggregationJob {
         int batches = 0;
         int traces = 0;
         while (true) {
-            List<LoadedTrace> batch = buffer.drainExpired(cutoff, drainBatchSpans);
+            List<BufferedTrace> batch = buffer.drainExpired(cutoff, drainBatchSpans);
             if (batch.isEmpty()) {
                 if (batches > 0) {
                     log.debug("Buffer drained: {} batches / {} traces", batches, traces);
@@ -96,11 +96,11 @@ public class TraceAggregationJob {
         }
     }
 
-    private void aggregateAndPersist(List<LoadedTrace> loaded, long now) {
+    private void aggregateAndPersist(List<BufferedTrace> loaded, long now) {
         long bucketTime = TraceGroup.floorToDay(now);
         Map<TraceGroupKey, TraceGroupContribution> contributions = aggregator.aggregate(loaded, bucketTime, now);
-        Map<String, LoadedTrace> tracesByTraceId = loaded.stream()
-                .collect(Collectors.toMap(t -> t.trace().traceId(), Function.identity(), (a, b) -> a));
+        Map<String, BufferedTrace> tracesByTraceId = loaded.stream()
+                .collect(Collectors.toMap(BufferedTrace::traceId, Function.identity(), (a, b) -> a));
         Map<String, TraceSummaryInfo> summariesByTraceId = traceSummaryBuilder.buildByTraceId(loaded);
         persistenceService.persist(bucketTime, now,
                 contributions.values(), tracesByTraceId, summariesByTraceId);

@@ -10,7 +10,7 @@ import java.util.List;
 public interface TraceBuffer {
     void append(Collection<BufferedSpan> spans);
 
-    List<LoadedTrace> drainExpired(long now, int maxSpans);
+    List<BufferedTrace> drainExpired(long now, int maxSpans);
 
     boolean isShared();
 }

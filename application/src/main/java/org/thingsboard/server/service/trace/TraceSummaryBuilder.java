@@ -33,22 +33,20 @@ public class TraceSummaryBuilder {
         this.tracePathBuilder = tracePathBuilder;
     }
 
-    public Map<String, TraceSummaryInfo> buildByTraceId(List<LoadedTrace> loaded) {
+    public Map<String, TraceSummaryInfo> buildByTraceId(List<BufferedTrace> traces) {
         Map<String, TraceSummaryInfo> result = new HashMap<>();
-        if (CollectionUtils.isEmpty(loaded)) {
+        if (CollectionUtils.isEmpty(traces)) {
             return result;
         }
-        for (LoadedTrace loadedTrace : loaded) {
-            if (loadedTrace == null || loadedTrace.trace() == null
-                    || loadedTrace.trace().tenantId() == null
-                    || CollectionUtils.isEmpty(loadedTrace.trace().spans())) {
+        for (BufferedTrace trace : traces) {
+            if (trace == null || trace.tenantId() == null || CollectionUtils.isEmpty(trace.spans())) {
                 continue;
             }
-            TracePath path = tracePathBuilder.build(loadedTrace.trace()).orElse(null);
+            TracePath path = tracePathBuilder.build(trace).orElse(null);
             if (path == null) {
                 continue;
             }
-            result.put(path.traceId(), build(loadedTrace.trace(), path));
+            result.put(path.traceId(), build(trace, path));
         }
         return result;
     }

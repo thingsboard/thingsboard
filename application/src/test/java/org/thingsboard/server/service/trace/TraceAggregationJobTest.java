@@ -128,14 +128,14 @@ class TraceAggregationJobTest {
         when(buffer.isShared()).thenReturn(shared);
         var stubbing = when(buffer.drainExpired(anyLong(), anyInt()));
         for (int i = 0; i < batches; i++) {
-            stubbing = stubbing.thenReturn(oneTrace("trace-key-" + i));
+            stubbing = stubbing.thenReturn(oneTrace("trace-" + i));
         }
         stubbing.thenReturn(List.of());
         return buffer;
     }
 
-    private static List<LoadedTrace> oneTrace(String bufferKey) {
-        return List.of(new LoadedTrace(bufferKey, new BufferedTrace(UUID.randomUUID(), "trace-1", false, Set.of())));
+    private static List<BufferedTrace> oneTrace(String traceId) {
+        return List.of(new BufferedTrace(UUID.randomUUID(), traceId, false, Set.of()));
     }
 
     private static Clock steppingClock(long stepMillis) {

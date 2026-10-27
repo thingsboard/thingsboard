@@ -9,7 +9,6 @@ import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,17 +25,17 @@ public class TraceGroupAggregator {
         this.tracePathBuilder = tracePathBuilder;
     }
 
-    public Map<TraceGroupKey, TraceGroupContribution> aggregate(Collection<LoadedTrace> traces,
+    public Map<TraceGroupKey, TraceGroupContribution> aggregate(Collection<BufferedTrace> traces,
                                                                 long bucketTime, long now) {
         Map<TraceGroupKey, Accumulator> accumulators = new HashMap<>();
-        for (LoadedTrace loaded : traces) {
-            TracePath path = tracePathBuilder.build(loaded.trace()).orElse(null);
+        for (BufferedTrace trace : traces) {
+            TracePath path = tracePathBuilder.build(trace).orElse(null);
             if (path == null) {
                 continue;
             }
             TraceGroupKey key = new TraceGroupKey(path.tenantId(), path.pathId());
             accumulators.computeIfAbsent(key, ignored -> new Accumulator(path, bucketTime, now))
-                    .add(path, loaded);
+                    .add(path, trace);
         }
         Map<TraceGroupKey, TraceGroupContribution> result = new HashMap<>(accumulators.size());
         accumulators.forEach((key, accumulator) -> result.put(key, accumulator.finish()));
@@ -46,8 +45,6 @@ public class TraceGroupAggregator {
     private static final class Accumulator {
         private final long now;
         private final TraceGroup metrics;
-        private final Set<String> sourceBufferKeys = new HashSet<>();
-        private final Set<String> traceIds = new HashSet<>();
         private long seenTraces;
         private String sampledTraceId;
 
@@ -56,32 +53,30 @@ public class TraceGroupAggregator {
             this.metrics = newMetrics(firstPath, bucketTime, now);
         }
 
-        void add(TracePath path, LoadedTrace loaded) {
+        void add(TracePath path, BufferedTrace trace) {
             seenTraces++;
 
             if (ThreadLocalRandom.current().nextLong(seenTraces) == 0L) {
                 sampledTraceId = path.traceId();
             }
-            traceIds.add(path.traceId());
             metrics.setProcessedTraces(metrics.getProcessedTraces() + 1);
-            if (hasTimeout(loaded.trace())) {
+            if (hasTimeout(trace)) {
                 metrics.setProcessedTracesWithTimeout(metrics.getProcessedTracesWithTimeout() + 1);
             }
-            if (hasError(loaded.trace())) {
+            if (hasError(trace)) {
                 metrics.setProcessedTracesWithError(metrics.getProcessedTracesWithError() + 1);
             }
             metrics.setLastObserved(now);
-            long traceDuration = traceDuration(loaded.trace());
+            long traceDuration = traceDuration(trace);
             metrics.setTotalTime(metrics.getTotalTime() + traceDuration);
             metrics.setMaxTime(Math.max(metrics.getMaxTime(), traceDuration));
             metrics.setTotalInQueueTime(metrics.getTotalInQueueTime() + path.totalInQueueTime());
             metrics.setTotalRuleNodeProcessingTime(metrics.getTotalRuleNodeProcessingTime() + path.totalRuleNodeProcessingTime());
             TraceGroup.mergeRuleNodePathMetrics(metrics.getRuleNodePathMetrics(), path.ruleNodePathMetrics());
-            sourceBufferKeys.add(loaded.bufferKey());
         }
 
         TraceGroupContribution finish() {
-            return new TraceGroupContribution(metrics, sampledTraceId, traceIds, sourceBufferKeys);
+            return new TraceGroupContribution(metrics, sampledTraceId);
         }
     }
 

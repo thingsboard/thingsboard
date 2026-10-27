@@ -88,8 +88,8 @@ public class CaffeineTraceBuffer implements TraceBuffer {
     }
 
     @Override
-    public List<LoadedTrace> drainExpired(long now, int maxSpans) {
-        List<LoadedTrace> loaded = new ArrayList<>();
+    public List<BufferedTrace> drainExpired(long now, int maxSpans) {
+        List<BufferedTrace> loaded = new ArrayList<>();
         int spans = 0;
         for (Map.Entry<String, BufferedTraceEntry> candidate : traces.asMap().entrySet()) {
             if (candidate.getValue().deadline() > now) {
@@ -111,8 +111,7 @@ public class CaffeineTraceBuffer implements TraceBuffer {
             }
             TraceSnapshot snapshot = claimed[0].snapshot();
             TraceIdentity identity = parseTraceIdentity(candidate.getKey());
-            loaded.add(new LoadedTrace(candidate.getKey(), new BufferedTrace(identity.tenantId(), identity.traceId(),
-                    snapshot.truncated(), snapshot.spans())));
+            loaded.add(new BufferedTrace(identity.tenantId(), identity.traceId(), snapshot.truncated(), snapshot.spans()));
             spans += snapshot.spans().size();
             if (spans >= maxSpans) {
                 break;

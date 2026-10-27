@@ -247,12 +247,12 @@ public class RedisTraceBufferImpl implements TraceBuffer {
     }
 
     @Override
-    public List<LoadedTrace> drainExpired(long now, int maxSpans) {
+    public List<BufferedTrace> drainExpired(long now, int maxSpans) {
         int budget = Math.max(1, maxSpans);
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             for (int attempt = 0; attempt < TRACE_PARTITION_COUNT; attempt++) {
                 int partition = Math.floorMod(drainCursor.getAndIncrement(), TRACE_PARTITION_COUNT);
-                List<LoadedTrace> drained = drainPartition(connection, partition, now, budget);
+                List<BufferedTrace> drained = drainPartition(connection, partition, now, budget);
                 if (!drained.isEmpty()) {
                     return drained;
                 }
@@ -263,7 +263,7 @@ public class RedisTraceBufferImpl implements TraceBuffer {
         return List.of();
     }
 
-    private List<LoadedTrace> drainPartition(RedisConnection connection, int partition, long now, int budget) {
+    private List<BufferedTrace> drainPartition(RedisConnection connection, int partition, long now, int budget) {
         byte[][] keysAndArgs = {
                 raw(deadlinesKey(partition)),
                 raw(Long.toString(now)),
@@ -285,8 +285,8 @@ public class RedisTraceBufferImpl implements TraceBuffer {
         return parseDrainReply(reply, traceKeyPrefix(partition));
     }
 
-    private List<LoadedTrace> parseDrainReply(List<Object> reply, String traceKeyPrefix) {
-        List<LoadedTrace> drained = new ArrayList<>();
+    private List<BufferedTrace> parseDrainReply(List<Object> reply, String traceKeyPrefix) {
+        List<BufferedTrace> drained = new ArrayList<>();
         int i = 0;
         while (i + 1 < reply.size()) {
             String member = str(reply.get(i++));
@@ -299,7 +299,7 @@ public class RedisTraceBufferImpl implements TraceBuffer {
                     fields.put(str(reply.get(f)), str(reply.get(f + 1)));
                 }
                 if (!fields.isEmpty()) {
-                    drained.add(toLoadedTrace(traceKey, fields));
+                    drained.add(toBufferedTrace(traceKey, fields));
                 }
             } catch (Exception e) {
                 log.warn("Failed to decode drained trace [{}]", traceKey, e);
@@ -314,7 +314,7 @@ public class RedisTraceBufferImpl implements TraceBuffer {
         return true;
     }
 
-    private LoadedTrace toLoadedTrace(String traceKey, Map<String, String> fields) {
+    private BufferedTrace toBufferedTrace(String traceKey, Map<String, String> fields) {
         RedisTraceKey parsedKey = parseTraceKey(traceKey);
         boolean truncated = false;
         Set<BufferedSpan> spans = new HashSet<>();
@@ -336,8 +336,7 @@ public class RedisTraceBufferImpl implements TraceBuffer {
             span.setTraceId(parsedKey.traceId());
             spans.add(span);
         }
-        return new LoadedTrace(traceKey,
-                new BufferedTrace(parsedKey.tenantId(), parsedKey.traceId(), truncated, spans));
+        return new BufferedTrace(parsedKey.tenantId(), parsedKey.traceId(), truncated, spans);
     }
 
     private static String str(Object value) {
