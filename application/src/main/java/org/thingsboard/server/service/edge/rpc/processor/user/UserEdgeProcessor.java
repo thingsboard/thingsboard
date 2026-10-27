@@ -136,7 +136,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         switch (edgeEvent.getAction()) {
             case ADDED, ADDED_TO_ENTITY_GROUP, UPDATED, ASSIGNED_TO_EDGE -> {
                 User user = edgeCtx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
-                if (user != null) {
+                if (user != null && edgeEvent.getTenantId().equals(user.getTenantId())) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

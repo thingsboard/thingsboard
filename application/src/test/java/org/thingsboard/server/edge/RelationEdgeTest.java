@@ -21,8 +21,11 @@ import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.UUID;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class RelationEdgeTest extends AbstractEdgeTest {
@@ -195,6 +198,38 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         relation.setTo(deviceId);
         relation.setFrom(assetId);
         relation.setAdditionalInfo(TextNode.valueOf("{}"));
+        return relation;
+    }
+
+    @Test
+    public void testSendRelationRequestForEntityOfDifferentTenantToCloud() throws Exception {
+        EntityRelation relation = saveDifferentTenantRelation();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addRelationRequestMsg(RelationRequestMsg.newBuilder()
+                .setEntityType(EntityType.DEVICE.name())
+                .setEntityIdMSB(relation.getFrom().getId().getMostSignificantBits())
+                .setEntityIdLSB(relation.getFrom().getId().getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testSendRelationDeleteForEntitiesOfDifferentTenantToCloud() throws Exception {
+        EntityRelation relation = saveDifferentTenantRelation();
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addRelationUpdateMsg(
+                EdgeMsgConstructorUtils.constructRelationUpdatedMsg(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, relation)));
+
+        loginDifferentTenant();
+        doGet("/api/relation?fromId=" + relation.getFrom().getId() + "&fromType=DEVICE&relationType=test&toId="
+                + relation.getTo().getId() + "&toType=ASSET").andExpect(status().isOk());
+    }
+
+    private EntityRelation saveDifferentTenantRelation() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        loginDifferentTenant();
+        Asset asset = new Asset();
+        asset.setName("Different Tenant Asset");
+        asset.setType("default");
+        asset = doPost("/api/asset", asset, Asset.class);
+        EntityRelation relation = doPost("/api/v2/relation", new EntityRelation(device.getId(), asset.getId(), "test"), EntityRelation.class);
+        loginTenantAdmin();
         return relation;
     }
 

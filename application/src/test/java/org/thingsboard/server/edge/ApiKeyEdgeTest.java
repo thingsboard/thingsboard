@@ -225,4 +225,20 @@ public class ApiKeyEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(description, apiKey.getDescription());
     }
 
+    @Test
+    public void testSendApiKeyForUserOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UUID uuid = Uuids.timeBased();
+        ApiKey apiKey = createSimpleApiKey("Different Tenant User Key");
+        apiKey.setTenantId(differentTenantId);
+        apiKey.setUserId(savedDifferentTenantUser.getId());
+        UplinkMsg uplinkMsg = getUplinkMsg(uuid, apiKey, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Assert.assertNull(apiKeyService.findApiKeyById(tenantId, new ApiKeyId(uuid)));
+    }
+
 }

@@ -42,6 +42,8 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
             if (device == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceUpdateMsg {" + deviceUpdateMsg + "} cannot be converted to device");
             }
+            checkEntityTenant(tenantId, deviceId);
+            device.setTenantId(tenantId);
             Device deviceById = edgeCtx.getDeviceService().findDeviceById(tenantId, deviceId);
             if (deviceById == null) {
                 created = true;
