@@ -217,6 +217,12 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         if (type.isAllTenantEdgesRelated()) {
             return processEntityNotificationForAllEdges(tenantId, type, actionType, entityId, originatorEdgeId);
         } else { // Edge-assigned: device, asset, dashboard, entity view, rule chain, alarm..
+            if (tenantId.isSysTenantId()) {
+                // tenant entity updated in system context
+                TenantId entityTenantId = findEntityTenantId(tenantId, entityId);
+                return entityTenantId != null && !entityTenantId.isSysTenantId() ?
+                        processEntityNotification(entityTenantId, edgeNotificationMsg) : Futures.immediateFuture(null);
+            }
             JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
             EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
             switch (actionType) {
