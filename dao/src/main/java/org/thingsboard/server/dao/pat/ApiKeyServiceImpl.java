@@ -187,12 +187,8 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     /**
-     * Whether an update changed anything the cached copy of the key is read for. A newly created key has nothing
-     * cached yet, hence the null check on the previous state.
-     * <p>
-     * Authentication resolves a key by value straight from the cache, so both the enabled flag and the value must
-     * trigger an eviction. A regular update preserves the value, but a save with an explicit value (e.g. an edge
-     * applying a key rotated on the cloud) replaces it, leaving the old value to authenticate from the cache.
+     * Authentication resolves keys by value straight from the cache, so a changed enabled flag or value (explicit-value
+     * save, e.g. edge sync) requires eviction. A newly created key has nothing cached yet, hence the null check.
      */
     private static boolean isPublishEvictRequired(ApiKey old, ApiKey apiKey) {
         return old != null
