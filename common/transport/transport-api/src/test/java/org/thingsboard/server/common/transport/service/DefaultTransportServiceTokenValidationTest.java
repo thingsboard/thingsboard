@@ -4,6 +4,7 @@ package org.thingsboard.server.common.transport.service;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -86,16 +87,16 @@ class DefaultTransportServiceTokenValidationTest {
 
         service.process(DeviceTransportType.DEFAULT, request(), callback);
 
-        verify(cache, never()).lookup(any());
+        verify(cache, never()).lookupAsync(any());
         verify(template).send(any());
-        verify(cache).store(Mockito.eq("tok"), any());
+        verify(cache, never()).store(any(), any());
         verify(callback).onSuccess(any());
     }
 
     @Test
     void givenPositiveHit_whenProcess_thenSuccessWithoutKafka() {
         when(cache.isEnabled()).thenReturn(true);
-        when(cache.lookup("tok")).thenReturn(Optional.of(positiveEntry()));
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(positiveEntry())));
         when(profileCache.get(profileId)).thenReturn(profile(DeviceTransportType.DEFAULT));
 
         service.process(DeviceTransportType.DEFAULT, request(), callback);
@@ -109,7 +110,7 @@ class DefaultTransportServiceTokenValidationTest {
     @Test
     void givenPositiveHitWithProfileTransportMismatch_whenProcess_thenOnError() {
         when(cache.isEnabled()).thenReturn(true);
-        when(cache.lookup("tok")).thenReturn(Optional.of(positiveEntry()));
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(positiveEntry())));
         when(profileCache.get(profileId)).thenReturn(profile(DeviceTransportType.MQTT));
 
         service.process(DeviceTransportType.COAP, request(), callback);
@@ -124,7 +125,7 @@ class DefaultTransportServiceTokenValidationTest {
     @Test
     void givenNegativeHit_whenProcess_thenEmptyResponseWithoutKafka() {
         when(cache.isEnabled()).thenReturn(true);
-        when(cache.lookup("tok")).thenReturn(Optional.of(TransportProtos.TokenValidationCacheEntryProto.getDefaultInstance()));
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(TransportProtos.TokenValidationCacheEntryProto.getDefaultInstance())));
 
         service.process(DeviceTransportType.DEFAULT, request(), callback);
 
@@ -138,7 +139,7 @@ class DefaultTransportServiceTokenValidationTest {
     void givenMiss_whenProcess_thenKafkaRequestCarriesProfileCachingFlag() {
         ReflectionTestUtils.setField(service, "profileNegotiationEnabled", true);
         when(cache.isEnabled()).thenReturn(true);
-        when(cache.lookup("tok")).thenReturn(Optional.empty());
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.empty()));
 
         service.process(DeviceTransportType.DEFAULT, request(), callback);
 
@@ -148,6 +149,31 @@ class DefaultTransportServiceTokenValidationTest {
         assertThat(sent.getToken()).isEqualTo("tok");
         assertThat(sent.getSupportsDeviceProfileCaching()).isTrue();
         verify(cache).store(Mockito.eq("tok"), any());
+    }
+
+    @Test
+    void givenLookupStillRunning_whenProcess_thenNoKafkaUntilLookupCompletesAsMiss() {
+        when(cache.isEnabled()).thenReturn(true);
+        SettableFuture<Optional<TransportProtos.TokenValidationCacheEntryProto>> lookup = SettableFuture.create();
+        when(cache.lookupAsync("tok")).thenReturn(lookup);
+
+        service.process(DeviceTransportType.DEFAULT, request(), callback);
+        verify(template, never()).send(any());
+
+        lookup.set(Optional.empty());
+        verify(template).send(any());
+        verify(callback).onSuccess(any());
+    }
+
+    @Test
+    void givenLookupFailed_whenProcess_thenTreatedAsMiss() {
+        when(cache.isEnabled()).thenReturn(true);
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFailedFuture(new RuntimeException("boom")));
+
+        service.process(DeviceTransportType.DEFAULT, request(), callback);
+
+        verify(template).send(any());
+        verify(callback).onSuccess(any());
     }
 
     @Test
@@ -181,8 +207,9 @@ class DefaultTransportServiceTokenValidationTest {
     }
 
     @Test
-    void givenSaturatedExecutor_whenProcess_thenOnErrorAndNoThrow() {
+    void givenSaturatedCallbackExecutorOnHit_whenProcess_thenOnErrorAndNoThrow() {
         when(cache.isEnabled()).thenReturn(true);
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(positiveEntry())));
         ExecutorService rejecting = mock(ExecutorService.class);
         Mockito.doThrow(new RejectedExecutionException("full")).when(rejecting).execute(any());
         ReflectionTestUtils.setField(service, "transportCallbackExecutor", rejecting);

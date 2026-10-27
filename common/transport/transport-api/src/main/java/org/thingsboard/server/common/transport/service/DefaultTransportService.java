@@ -4,6 +4,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -350,18 +351,34 @@ public class DefaultTransportService extends TransportActivityManager implements
                 TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(
                         msg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
         if (!tokenValidationCacheService.isEnabled()) {
-            doProcess(transportType, protoMsg, token, callback);
+            doProcess(transportType, protoMsg, null, callback);
             return;
         }
-        // lookup() may block on a remote cache read, so the whole cache interaction runs on the callback executor
+        // Cache I/O runs on the cache's own bounded executor; a saturated executor completes immediately as a miss.
+        Futures.addCallback(tokenValidationCacheService.lookupAsync(token), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Optional<TransportProtos.TokenValidationCacheEntryProto> cached) {
+                continueTokenValidation(transportType, protoMsg, token, cached, callback);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                continueTokenValidation(transportType, protoMsg, token, Optional.empty(), callback);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private void continueTokenValidation(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String token,
+                                         Optional<TransportProtos.TokenValidationCacheEntryProto> cached,
+                                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         try {
+            if (cached.isEmpty()) {
+                doProcess(transportType, protoMsg, token, callback);
+                return;
+            }
+            // a hit may resolve the device profile with a blocking core round-trip, so it runs on the callback executor
             transportCallbackExecutor.execute(() -> {
                 try {
-                    Optional<TransportProtos.TokenValidationCacheEntryProto> cached = tokenValidationCacheService.lookup(token);
-                    if (cached.isEmpty()) {
-                        doProcess(transportType, protoMsg, token, callback);
-                        return;
-                    }
                     TransportProtos.ValidateDeviceCredentialsResponseMsg cachedMsg = cached.get().getResponse();
                     ValidateDeviceCredentialsResponse response = cachedMsg.hasDeviceInfo() ?
                             toValidateResponse(cachedMsg, transportType, true) : ValidateDeviceCredentialsResponse.builder().build();
