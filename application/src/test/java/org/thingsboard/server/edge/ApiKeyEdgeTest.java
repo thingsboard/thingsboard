@@ -15,6 +15,9 @@ import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -25,7 +28,9 @@ import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -239,6 +244,25 @@ public class ApiKeyEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
 
         Assert.assertNull(apiKeyService.findApiKeyById(tenantId, new ApiKeyId(uuid)));
+    }
+
+    @Test
+    public void testSendInternalApiKeyWithPermissionsToCloud() throws Exception {
+        UUID uuid = Uuids.timeBased();
+        ApiKey apiKey = createSimpleApiKey("Internal Key From Edge");
+        apiKey.setInternal(true);
+        AuthorityPermissionsInfo permissions = new AuthorityPermissionsInfo();
+        permissions.setOperationsByResource(Map.of(Authority.SYS_ADMIN, Map.of(Resource.ALL, Set.of(Operation.ALL))));
+        apiKey.setPermissions(permissions);
+        UplinkMsg uplinkMsg = getUplinkMsg(uuid, apiKey, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        ApiKey savedApiKey = apiKeyService.findApiKeyById(tenantId, new ApiKeyId(uuid));
+        Assert.assertNotNull(savedApiKey);
+        Assert.assertFalse(savedApiKey.isInternal());
+        Assert.assertNull(savedApiKey.getPermissions());
     }
 
 }
