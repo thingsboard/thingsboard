@@ -20,9 +20,8 @@ export class DividerPreviewComponent extends AbstractReportComponentPreview<Divi
     this.dividerStyle = {};
     this.dividerStyle.width = this.reportComponent.length === BorderLength.SHORT ? '50%' : '100%';
     const borderStyle = this.reportComponent.borderType || BorderType.solid;
-    const minWidth = borderStyle === BorderType.double ? 3 : 1;
-    const widthPx = isDefinedAndNotNull(this.reportComponent.widthPx) ? this.reportComponent.widthPx : minWidth;
-    const borderWidth = Math.max(widthPx, minWidth) + 'px';
+    const widthPx = isDefinedAndNotNull(this.reportComponent.widthPx) ? this.reportComponent.widthPx : 1;
+    const borderWidth = widthPx + 'px';
     const borderColor = this.reportComponent.color || '#000';
     this.dividerStyle.borderBottom = `${borderWidth} ${borderColor} ${borderStyle}`;
   }

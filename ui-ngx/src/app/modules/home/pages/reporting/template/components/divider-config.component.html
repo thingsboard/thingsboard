@@ -35,7 +35,7 @@
     <div class="tb-form-row space-between">
       <div translate>report-template.component.divider.line-width</div>
       <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="widthPx" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        <input matInput formControlName="widthPx" type="number" [attr.min]="widthPxMin" step="1" placeholder="{{ 'widget-config.set' | translate }}">
         <div matSuffix>px</div>
       </mat-form-field>
     </div>

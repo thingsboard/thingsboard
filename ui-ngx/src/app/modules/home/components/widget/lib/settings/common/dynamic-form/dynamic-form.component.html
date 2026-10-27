@@ -234,6 +234,15 @@
         @if (property.fieldSuffix) {
           <div class="lt-md:!hidden" matSuffix>{{ property.fieldSuffix | customTranslate }}</div>
         }
+        @if (property.validatorFunction && propertiesFormGroup.get(property.id)?.hasError('customError') && propertiesFormGroup.get(property.id)?.getError('customError')?.message) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="propertiesFormGroup.get(property.id).getError('customError').message | customTranslate"
+                    class="material-icons tb-suffix-show-always tb-error">
+            warning
+          </mat-icon>
+        }
       </mat-form-field>
     }
     @if (property.type === FormPropertyType.select) {

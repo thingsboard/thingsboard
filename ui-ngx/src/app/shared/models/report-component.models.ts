@@ -251,6 +251,8 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
     name: '{i18n:report-template.border}',
     subLabel: '{i18n:report-template.width}',
     fieldSuffix: 'px',
+    hint: '{i18n:report-template.double-border-min-width-hint}',
+    validator: `return model.borderType === 'double' && value != null && value < 3 ? '{i18n:report-template.double-border-min-width}' : null;`,
     min: 0,
     step: 1,
     default: null

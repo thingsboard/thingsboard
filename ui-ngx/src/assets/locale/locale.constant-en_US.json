@@ -9111,6 +9111,8 @@
         "bottom": "Bottom",
         "background": "Background",
         "border": "Border",
+        "double-border-min-width-hint": "Double line requires at least 3 px",
+        "double-border-min-width": "Double line requires at least 3 px when using Double border style",
         "radius": "Radius",
         "insert-update-image": "Insert/update image",
         "edit-image": "Edit image",
