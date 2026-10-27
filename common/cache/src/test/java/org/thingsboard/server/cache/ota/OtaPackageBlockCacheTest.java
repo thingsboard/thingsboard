@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 class OtaPackageBlockCacheTest {
@@ -110,6 +111,30 @@ class OtaPackageBlockCacheTest {
     void chunkSizeZero_delegatesToGetAll() {
         OtaPackageBlockCache cache = newCache(1024);
         assertThat(cache.getChunk(KEY_A, 0, 0)).containsExactly(data20);
+    }
+
+    @Test
+    void chunkSizeZero_absentPackage_returnsNull() {
+        OtaPackageBlockCache cache = newCache(1024);
+        assertThat(cache.getChunk("missing", 0, 0)).isNull();
+    }
+
+    @Test
+    void constructor_rejectsNonPositiveBlockSize() {
+        assertThatThrownBy(() -> new OtaPackageBlockCache(1024, Duration.ofMinutes(10), 0, this::fetchBlock,
+                key -> 0, mock(StatsFactory.class))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void constructor_rejectsZeroExpireAfterAccess() {
+        assertThatThrownBy(() -> new OtaPackageBlockCache(1024, Duration.ZERO, BLOCK_SIZE, this::fetchBlock,
+                key -> 0, mock(StatsFactory.class))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void constructor_rejectsNegativeExpireAfterAccess() {
+        assertThatThrownBy(() -> new OtaPackageBlockCache(1024, Duration.ofMinutes(-1), BLOCK_SIZE, this::fetchBlock,
+                key -> 0, mock(StatsFactory.class))).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

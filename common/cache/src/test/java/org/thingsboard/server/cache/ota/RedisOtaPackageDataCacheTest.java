@@ -4,6 +4,7 @@ package org.thingsboard.server.cache.ota;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisKeyCommands;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -177,5 +179,46 @@ class RedisOtaPackageDataCacheTest {
 
         cache.get("id", 4, 0);
         verify(stringCommands, times(2)).getRange(RAW_KEY, 0, 3);
+    }
+
+    @Test
+    void evict_nonEmptyPrefix_deletesPrefixedAndLegacyKeys() {
+        cache("citus:", 0, MIB, 0).evict("id");
+
+        verify(keyCommands).del("citus:otaPackagesData::id".getBytes());
+        verify(keyCommands).del(RAW_KEY);
+        verifyNoMoreInteractions(keyCommands);
+    }
+
+    @Test
+    void evict_emptyPrefix_issuesSingleDel() {
+        cache("", 0, MIB, 0).evict("id");
+
+        verify(keyCommands, times(1)).del(RAW_KEY);
+        verifyNoMoreInteractions(keyCommands);
+    }
+
+    @Test
+    void l1On_redisTtlOn_fullRead_slidesExpireAfterStrLen() {
+        when(stringCommands.strLen(RAW_KEY)).thenReturn(4L);
+        when(stringCommands.getRange(RAW_KEY, 0, 3)).thenReturn(new byte[]{1, 2, 3, 4});
+
+        assertThat(cache("", 1024, 4, 30).get("id")).containsExactly(1, 2, 3, 4);
+
+        InOrder order = inOrder(stringCommands, keyCommands);
+        order.verify(stringCommands).strLen(RAW_KEY);
+        order.verify(keyCommands).expire(RAW_KEY, 1800);
+        order.verify(stringCommands).getRange(RAW_KEY, 0, 3);
+        order.verify(keyCommands).expire(RAW_KEY, 1800);
+    }
+
+    @Test
+    void has_l1Off_usesOneByteGetRange() {
+        when(stringCommands.getRange(RAW_KEY, 0, 0)).thenReturn(new byte[]{1});
+        RedisOtaPackageDataCache cache = cache("", 0, MIB, 0);
+        assertThat(cache.has("id")).isTrue();
+
+        when(stringCommands.getRange(RAW_KEY, 0, 0)).thenReturn(new byte[0]);
+        assertThat(cache.has("id")).isFalse();
     }
 }

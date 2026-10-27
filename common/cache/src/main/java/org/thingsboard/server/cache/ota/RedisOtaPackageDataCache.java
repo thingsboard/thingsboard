@@ -25,8 +25,9 @@ import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_DATA
  * The Redis TTL, when enabled ({@code cache.ota.redis_ttl_minutes > 0}), slides on every read. Only tb-core can
  * refill the key, and MQTT serves chunks without revisiting core, so an absolute TTL expiring mid-download would
  * serve empty chunks to slow devices with no refill path. When both L1 and the Redis TTL are enabled,
- * {@code redis_ttl} must exceed {@code l1_ttl} plus the maximum gap between two chunk requests of one device,
- * because L1 hits do not touch Redis and therefore do not slide its TTL.
+ * set {@code redis_ttl_minutes} well above {@code l1_ttl_minutes} plus the slowest device's download time.
+ * L1 is expire-after-access, so warm blocks may never be refetched and Redis may see no TTL slides
+ * during an active rollout.
  * <p>
  * {@link #put} uses SET NX: package bytes are immutable for a given key, so concurrent fills are idempotent.
  */
@@ -94,6 +95,10 @@ public class RedisOtaPackageDataCache implements OtaPackageDataCache {
     public void evict(String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             connection.keyCommands().del(toOtaPackageCacheKey(key));
+            if (!keyPrefix.isEmpty()) {
+                // also drop the legacy unprefixed blob so pre-upgrade data is not orphaned
+                connection.keyCommands().del(String.format("%s::%s", OTA_PACKAGE_DATA_CACHE, key).getBytes());
+            }
         }
         if (blockCache != null) {
             blockCache.evict(key);
@@ -113,7 +118,9 @@ public class RedisOtaPackageDataCache implements OtaPackageDataCache {
 
     private long fetchLength(String key) {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            Long length = connection.stringCommands().strLen(toOtaPackageCacheKey(key));
+            byte[] rawKey = toOtaPackageCacheKey(key);
+            Long length = connection.stringCommands().strLen(rawKey);
+            slideExpire(connection, rawKey);
             return length == null ? 0 : length;
         }
     }

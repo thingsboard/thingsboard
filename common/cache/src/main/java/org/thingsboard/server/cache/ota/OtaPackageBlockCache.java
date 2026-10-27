@@ -43,6 +43,14 @@ public class OtaPackageBlockCache {
     public OtaPackageBlockCache(long maxBytes, Duration expireAfterAccess, int blockSize,
                                 BlockFetcher blockFetcher, LengthFetcher lengthFetcher,
                                 StatsFactory statsFactory) {
+        if (maxBytes > 0) {
+            if (blockSize <= 0) {
+                throw new IllegalArgumentException("OTA block cache block size must be positive, got " + blockSize);
+            }
+            if (expireAfterAccess == null || expireAfterAccess.isZero() || expireAfterAccess.isNegative()) {
+                throw new IllegalArgumentException("OTA block cache expire-after-access must be positive, got " + expireAfterAccess);
+            }
+        }
         this.maxBytes = maxBytes;
         this.blockSize = blockSize;
         this.lengthFetcher = lengthFetcher;
@@ -56,14 +64,19 @@ public class OtaPackageBlockCache {
                     return block == null || block.length == 0 ? null : block; // null: nothing is stored
                 });
         statsFactory.createGauge("otaBlockCache", "hitRate", cache, c -> c.stats().hitRate());
+        statsFactory.createGauge("otaBlockCache", "hitCount", cache, c -> c.stats().hitCount());
+        statsFactory.createGauge("otaBlockCache", "missCount", cache, c -> c.stats().missCount());
         statsFactory.createGauge("otaBlockCache", "estimatedWeightBytes", cache,
                 c -> c.policy().eviction().map(e -> (double) e.weightedSize().orElse(0)).orElse(0.0));
     }
 
+    /**
+     * @return the requested chunk (possibly shorter than chunkSize, or empty past EOF); when chunkSize <= 0
+     * delegates to {@link #getAll(String)}, which returns null when the package is absent
+     */
     public byte[] getChunk(String key, int chunkSize, int chunk) {
-        if (chunkSize == 0) {
-            byte[] all = getAll(key);
-            return all == null ? new byte[0] : all;
+        if (chunkSize <= 0) {
+            return getAll(key);
         }
         long start = (long) chunkSize * chunk;
         long end = start + chunkSize - 1;
