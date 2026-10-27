@@ -1490,4 +1490,58 @@ public class TestRestClient {
                 .extract()
                 .as(TrendzSummary.class);
     }
+
+    public JsonNode getTraceCoverageSetting() {
+        return given().spec(requestSpec)
+                .get("/api/traces/coverage")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode saveTraceCoverageSetting(JsonNode setting) {
+        return given().spec(requestSpec).body(setting)
+                .post("/api/traces/coverage")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode searchTraces(EntityId originatorId, long startTime, long endTime) {
+        return given().spec(requestSpec)
+                .get("/api/traces?originatorId={originatorId}&startTime={startTime}&endTime={endTime}", originatorId.getId(), startTime, endTime)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode getTraceSpans(String traceId) {
+        return given().spec(requestSpec)
+                .get("/api/traces/{traceId}/spans", traceId)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode getRuleNodeStatsTable(long startTs, long endTs) {
+        return given().spec(requestSpec)
+                .get("/api/ruleEngineMonitoring/nodeStats/table?startTs={startTs}&endTs={endTs}", startTs, endTs)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
+
+    public JsonNode getQueueStatsTable(long startTs, long endTs) {
+        return given().spec(requestSpec)
+                .get("/api/ruleEngineMonitoring/queueStats/table?startTs={startTs}&endTs={endTs}", startTs, endTs)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(JsonNode.class);
+    }
 }
