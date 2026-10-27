@@ -313,7 +313,8 @@ otel:
   processor:
     trace:
       # Buffered trace processor that stores the spans in ThingsBoard. Buffer backend follows 'cache.type': redis
-      # (shared) or caffeine (local). Disable only to send the spans to the OTLP exporter alone.
+      # (shared) or caffeine (local; single-node deployments only). Disable only to send the spans to the OTLP
+      # exporter alone.
       enabled: "${OTEL_TRACE_PROCESSOR_ENABLED:true}"
       buffer:
         # Max spans kept for one trace; further spans of that trace are dropped ('trace.export.limit.reached')
@@ -331,10 +332,9 @@ otel:
           # JDBC batch size for span inserts.
           insert-batch-size: "${OTEL_TRACE_PROCESSOR_POSTGRES_INSERT_BATCH_SIZE:250}"
       aggregation:
-        # Job period (ms), measured from the previous start. Runs never overlap.
+        # Job period (ms), measured from the previous start. Runs never overlap. With the Redis buffer, only the
+        # node that owns the system rule engine partition runs it.
         interval-ms: "${OTEL_TRACE_PROCESSOR_AGGREGATION_INTERVAL_MS:10000}"
-        # Redis only: drain leader lease (ms). Also bounds one run.
-        leader-lease-ms: "${OTEL_TRACE_PROCESSOR_AGGREGATION_LEADER_LEASE_MS:60000}"
         # Spans per drain batch. Bounds heap and batch duration, not total throughput.
         drain-batch-spans: "${OTEL_TRACE_PROCESSOR_AGGREGATION_DRAIN_BATCH_SPANS:5000}"
       batch:
@@ -398,10 +398,9 @@ rule-node-exec-stats:
   queue-max-keys: "${RULE_NODE_EXEC_STATS_QUEUE_MAX_KEYS:1000000}"
   # Allows grouping timeout metrics by last visited rule node
   queue-timeout-last-visited-rule-node-enabled: "${RULE_NODE_EXEC_STATS_QUEUE_TIMEOUT_LAST_VISITED_RULE_NODE_ENABLED:false}"
-  # Interval between queue lag collection runs (Kafka deployments only)
+  # Interval between queue lag collection runs (Kafka deployments only). Only the node that owns the system rule
+  # engine partition collects and writes lag.
   queue-lag-flush-interval-ms: "${RULE_NODE_EXEC_STATS_QUEUE_LAG_FLUSH_INTERVAL_MS:60000}"
-  # Lease duration for the 'queue-lag' leader lock; only the lease holder collects and writes lag
-  queue-lag-leader-lease-ms: "${RULE_NODE_EXEC_STATS_QUEUE_LAG_LEADER_LEASE_MS:120000}"
 
 # Database parameters
 # Selects the storage backend (SQL, Cassandra, or TimescaleDB) for time-series and latest telemetry data and the maximum query intervals,

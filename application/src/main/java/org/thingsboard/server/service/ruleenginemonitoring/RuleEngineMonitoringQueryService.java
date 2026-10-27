@@ -48,8 +48,6 @@ public class RuleEngineMonitoringQueryService {
 
     @Value("${rule-node-exec-stats.queue-lag-flush-interval-ms:60000}")
     private long queueLagFlushIntervalMs;
-    @Value("${rule-node-exec-stats.queue-lag-leader-lease-ms:120000}")
-    private long queueLagLeaderLeaseMs;
 
     public RuleEngineMonitoringFilters getFilters(UUID tenantId) {
         List<String> serviceIds = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)
@@ -115,9 +113,9 @@ public class RuleEngineMonitoringQueryService {
                 new QueueLagTimeseriesQuery(queueTenantId, startTs, endTs, dims, queueIds, intervalMs));
     }
 
-    // Lag is written every flush interval by the lease holder; allow a missed flush and a leader handover.
+    // Lag is written every flush interval by the system partition owner; allow a missed flush and a handover.
     private long lagStaleAfterMs() {
-        return 2 * queueLagFlushIntervalMs + queueLagLeaderLeaseMs;
+        return 3 * queueLagFlushIntervalMs;
     }
 
     private UUID resolveQueueTenantId(UUID tenantId) {

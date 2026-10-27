@@ -54,8 +54,6 @@ public interface TraceDao {
                                                   int page, int pageSize,
                                                   TraceSortField sortField, SortOrder sortOrder);
 
-    boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs);
-
     void deleteByTenantId(UUID tenantId);
 
     void cleanUp(long spansExpTime, long groupsExpTime, int batchSize);

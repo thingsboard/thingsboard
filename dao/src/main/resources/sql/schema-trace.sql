@@ -31,22 +31,6 @@ CREATE TABLE IF NOT EXISTS span
 CREATE INDEX IF NOT EXISTS idx_span_tenant_end_time
     ON span (tenant_id, end_time DESC);
 
--- Leader-election row for the span-stats aggregation job
--- One pod at a time holds the lease (lock_name = 'aggregation'); lease self-renews on each successful run
-CREATE TABLE IF NOT EXISTS span_stats_leader
-(
-    lock_name    varchar(64)  NOT NULL,
-    leader_id    varchar(255) NOT NULL DEFAULT '',
-    leader_until bigint       NOT NULL DEFAULT 0,
-    CONSTRAINT span_stats_leader_pkey PRIMARY KEY (lock_name)
-);
-INSERT INTO span_stats_leader (lock_name, leader_id, leader_until)
-VALUES ('aggregation', '', 0)
-ON CONFLICT DO NOTHING;
-INSERT INTO span_stats_leader (lock_name, leader_id, leader_until)
-VALUES ('queue-lag', '', 0)
-ON CONFLICT DO NOTHING;
-
 -- Pre-aggregated trace summary table (one row per trace, kept current by the aggregation job)
 CREATE TABLE IF NOT EXISTS trace_summary
 (

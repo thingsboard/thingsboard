@@ -50,7 +50,7 @@ public class TraceTenantDataCleanupTest extends AbstractControllerTest {
 
     @After
     public void dropTraceSchema() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, span_stats_leader, trace_summary, rule_node_exec_stats, " +
+        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
                 "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
     }
 

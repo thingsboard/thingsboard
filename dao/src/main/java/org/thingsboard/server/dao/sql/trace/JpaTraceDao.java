@@ -165,11 +165,6 @@ public class JpaTraceDao implements TraceDao {
     }
 
     @Override
-    public boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs) {
-        return traceInsertRepository.tryAcquireAggregationLeader(serviceId, nowMs, leaseMs);
-    }
-
-    @Override
     public void deleteByTenantId(UUID tenantId) {
         traceInsertRepository.deleteByTenantId(tenantId);
     }

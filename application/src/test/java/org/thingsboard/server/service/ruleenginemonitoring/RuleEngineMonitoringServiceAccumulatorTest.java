@@ -20,7 +20,7 @@ import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeExecStatsRow;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
@@ -77,9 +77,9 @@ class RuleEngineMonitoringServiceAccumulatorTest {
         @SuppressWarnings("unchecked")
         ObjectProvider<KafkaAdmin> kafkaAdminProvider = Mockito.mock(ObjectProvider.class);
         service = new RuleEngineMonitoringService(dao, Mockito.mock(TbTenantProfileCache.class),
-                Mockito.mock(TbServiceInfoProvider.class), Mockito.mock(TopicService.class), kafkaAdminProvider,
+                Mockito.mock(PartitionService.class), Mockito.mock(TopicService.class), kafkaAdminProvider,
                 Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), Mockito.mock(QueueCacheService.class),
-                30, 30, 1_000_000, 1_000_000, false, 120_000);
+                30, 30, 1_000_000, 1_000_000, false);
     }
 
     @Test

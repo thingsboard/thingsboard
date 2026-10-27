@@ -29,8 +29,6 @@ public interface RuleEngineMonitoringDao {
 
     void saveQueueLagStats(List<QueueLagStatsRow> rows);
 
-    boolean tryAcquireQueueLagLeader(String serviceId, long nowMs, long leaseMs);
-
     void deleteByTenantId(UUID tenantId);
 
     /**

@@ -18,6 +18,7 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -26,7 +27,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeExecStatsRow;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
@@ -65,10 +66,9 @@ public class RuleEngineMonitoringService {
 
     private final RuleEngineMonitoringDao dao;
     private final TbTenantProfileCache tenantProfileCache;
-    private final TbServiceInfoProvider serviceInfoProvider;
+    private final PartitionService partitionService;
     private final TopicService topicService;
     private final KafkaAdmin kafkaAdmin;
-    private final long queueLagLeaderLeaseMs;
     private final QueueCacheService queueCacheService;
     private final Cache<UUID, UUID> ruleChainByRuleNodeCache;
     private final Cache<RuleNodeId, ConcurrentHashMap<String, RuleNodeExecKey>> execKeyCache;
@@ -90,7 +90,7 @@ public class RuleEngineMonitoringService {
 
     public RuleEngineMonitoringService(RuleEngineMonitoringDao dao,
                                        TbTenantProfileCache tenantProfileCache,
-                                       TbServiceInfoProvider serviceInfoProvider,
+                                       PartitionService partitionService,
                                        TopicService topicService,
                                        ObjectProvider<KafkaAdmin> kafkaAdminProvider,
                                        StatsFactory statsFactory,
@@ -99,14 +99,12 @@ public class RuleEngineMonitoringService {
                                        @Value("${rule-node-exec-stats.exec-key-cache-ttl-min:30}") int execKeyCacheTtlMin,
                                        @Value("${rule-node-exec-stats.exec-max-keys:1000000}") int ruleNodeMaxKeys,
                                        @Value("${rule-node-exec-stats.queue-max-keys:1000000}") int queueMaxKeys,
-                                       @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:false}") boolean queueTimeoutLastVisitedRuleNodeEnabled,
-                                       @Value("${rule-node-exec-stats.queue-lag-leader-lease-ms:120000}") long queueLagLeaderLeaseMs) {
+                                       @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:false}") boolean queueTimeoutLastVisitedRuleNodeEnabled) {
         this.dao = dao;
         this.tenantProfileCache = tenantProfileCache;
-        this.serviceInfoProvider = serviceInfoProvider;
+        this.partitionService = partitionService;
         this.topicService = topicService;
         this.kafkaAdmin = kafkaAdminProvider.getIfAvailable();
-        this.queueLagLeaderLeaseMs = queueLagLeaderLeaseMs;
         this.queueTimeoutLastVisitedRuleNodeEnabled = queueTimeoutLastVisitedRuleNodeEnabled;
         this.ruleNodeMaxKeys = ruleNodeMaxKeys;
         this.queueMaxKeys = queueMaxKeys;
@@ -311,9 +309,10 @@ public class RuleEngineMonitoringService {
         if (kafkaAdmin == null) {
             return;
         }
-        long now = System.currentTimeMillis();
-        if (!dao.tryAcquireQueueLagLeader(serviceInfoProvider.getServiceId(), now, queueLagLeaderLeaseMs)) {
-            log.debug("Not the queue-lag leader, skipping flush");
+        // Lag is read from Kafka for the whole cluster, so one node writes it: the owner of the system rule engine
+        // partition, which the cluster assigns to exactly one node.
+        if (!partitionService.isSystemTenantPartitionMine(ServiceType.TB_RULE_ENGINE)) {
+            log.debug("Not the owner of the system rule engine partition, skipping queue lag flush");
             return;
         }
 

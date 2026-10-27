@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -54,7 +53,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
 
     @After
     public void dropTraceSchema() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, span_stats_leader, trace_summary, rule_node_exec_stats, " +
+        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
                 "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
         // The span partitions went with the table; the next test must create them again.
         traceDao.cleanUpPartitionsCache(Long.MAX_VALUE);
@@ -177,14 +176,6 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         // LIKE wildcards in user input are matched literally.
         assertEquals(0, search(null, false, null, null, "temp%42").getTotalElements());
         assertEquals(1, search(null, false, null, null, "\"temperature\":42").getTotalElements());
-    }
-
-    @Test
-    public void givenLeaderRow_whenTryAcquireAggregationLeader_thenOnlyOneServiceHoldsTheLease() {
-        assertTrue(traceDao.tryAcquireAggregationLeader("node-a", 1_000, 10_000));
-        assertTrue(traceDao.tryAcquireAggregationLeader("node-a", 2_000, 10_000));
-        assertFalse(traceDao.tryAcquireAggregationLeader("node-b", 3_000, 10_000));
-        assertTrue(traceDao.tryAcquireAggregationLeader("node-b", 20_000, 10_000));
     }
 
     @Test

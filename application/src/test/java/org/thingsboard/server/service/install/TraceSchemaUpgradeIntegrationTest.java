@@ -21,7 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -39,7 +38,7 @@ import static org.junit.Assert.assertTrue;
 public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
 
     private static final List<String> TRACE_TABLES = List.of(
-            "span", "span_stats_leader", "trace_summary", "rule_node_exec_stats", "rule_node_queue_stats",
+            "span", "trace_summary", "rule_node_exec_stats", "rule_node_queue_stats",
             "rule_node_queue_lag_stats", "trace_group");
 
     @Autowired
@@ -85,27 +84,20 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void givenDbWithoutTraceSchema_whenTraceSchemaIsCreatedOnUpgrade_thenAllTablesAndLeaderLocksExistAndRerunIsNoOp() throws Exception {
+    public void givenDbWithoutTraceSchema_whenTraceSchemaIsCreatedOnUpgrade_thenAllTablesExistAndRerunIsNoOp() throws Exception {
         TRACE_TABLES.forEach(table -> assertFalse(table + " must not exist before the upgrade", tableExists(table)));
 
         traceSchemaService.createDatabaseSchema(false);
 
         TRACE_TABLES.forEach(table -> assertTrue(table + " must exist after the upgrade", tableExists(table)));
-        assertEquals(List.of("aggregation", "queue-lag"), findLeaderLockNames());
-
-        // A leader row taken over by a running node must survive the next upgrade untouched.
-        jdbcTemplate.update("UPDATE span_stats_leader SET leader_until = 42 WHERE lock_name = 'aggregation'");
 
         traceSchemaService.createDatabaseSchema(false);
 
         TRACE_TABLES.forEach(table -> assertTrue(table + " must still exist after a re-run", tableExists(table)));
-        assertEquals(List.of("aggregation", "queue-lag"), findLeaderLockNames());
-        assertEquals(Long.valueOf(42), jdbcTemplate.queryForObject(
-                "SELECT leader_until FROM span_stats_leader WHERE lock_name = 'aggregation'", Long.class));
     }
 
     @Test
-    public void givenDbWithoutTraceSchema_whenPatchedTo4_4_1_0_thenAllTablesAndLeaderLocksExistAndRerunIsNoOp() {
+    public void givenDbWithoutTraceSchema_whenPatchedTo4_4_1_0_thenAllTablesExistAndRerunIsNoOp() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS trace_coverage_setting");
         TRACE_TABLES.forEach(table -> assertFalse(table + " must not exist before the patch", tableExists(table)));
 
@@ -113,7 +105,6 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
 
         assertTrue("trace_coverage_setting must exist after the patch", tableExists("trace_coverage_setting"));
         TRACE_TABLES.forEach(table -> assertTrue(table + " must exist after the patch", tableExists(table)));
-        assertEquals(List.of("aggregation", "queue-lag"), findLeaderLockNames());
 
         // A forced re-run (SKIP_PATCH_VERSION_CHECK) selects 4.4.1.0 again; it must not fail on the existing tables.
         migrationService.applyMigrations("4.4.1.0", "4.4.1.0", true, () -> {});
@@ -124,10 +115,6 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
 
     private void dropTraceTables() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS " + String.join(", ", TRACE_TABLES));
-    }
-
-    private List<String> findLeaderLockNames() {
-        return jdbcTemplate.queryForList("SELECT lock_name FROM span_stats_leader ORDER BY lock_name", String.class);
     }
 
     private boolean tableExists(String table) {

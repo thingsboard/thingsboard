@@ -6,9 +6,9 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.server.dao.sql.trace.TraceDao;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.sql.trace.TraceSummaryInfo;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -34,42 +33,37 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class TraceAggregationJobTest {
-    private static final String SERVICE_ID = "tb-rule-engine-0";
-    private static final long LEADER_LEASE_MS = 300_000L;
     private static final int DRAIN_BATCH_SPANS = 5_000;
 
-    private TraceDao traceDao;
     private TraceGroupAggregator aggregator;
     private TraceGroupPersistenceService persistenceService;
     private TraceSummaryBuilder traceSummaryBuilder;
-    private TbServiceInfoProvider serviceInfoProvider;
+    private PartitionService partitionService;
 
     @BeforeEach
     void setUp() {
-        traceDao = mock(TraceDao.class);
         aggregator = mock(TraceGroupAggregator.class);
         persistenceService = mock(TraceGroupPersistenceService.class);
         traceSummaryBuilder = mock(TraceSummaryBuilder.class);
-        serviceInfoProvider = mock(TbServiceInfoProvider.class);
-        when(serviceInfoProvider.getServiceId()).thenReturn(SERVICE_ID);
+        partitionService = mock(PartitionService.class);
     }
 
     @Test
-    void localBufferIsDrainedWithoutConsultingTheLease() {
+    void localBufferIsDrainedWithoutCheckingThePartitionOwner() {
         TraceBuffer buffer = bufferWithBatches(false, 1);
         stubAggregation();
 
         newJob(buffer).run();
 
-        verify(traceDao, never()).tryAcquireAggregationLeader(anyString(), anyLong(), anyLong());
+        verifyNoInteractions(partitionService);
         verify(persistenceService).persist(anyLong(), anyLong(), any(), any(), any());
     }
 
     @Test
-    void localBufferIsDrainedEvenWhileAnotherServiceHoldsTheLease() {
-        TraceBuffer buffer = bufferWithBatches(false, 1);
+    void sharedBufferIsDrainedByTheSystemPartitionOwner() {
+        TraceBuffer buffer = bufferWithBatches(true, 1);
         stubAggregation();
-        when(traceDao.tryAcquireAggregationLeader(anyString(), anyLong(), anyLong())).thenReturn(false);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_RULE_ENGINE)).thenReturn(true);
 
         newJob(buffer).run();
 
@@ -77,21 +71,9 @@ class TraceAggregationJobTest {
     }
 
     @Test
-    void sharedBufferIsDrainedOnlyByTheLeaseHolder() {
+    void sharedBufferIsLeftAloneWhenAnotherNodeOwnsTheSystemPartition() {
         TraceBuffer buffer = bufferWithBatches(true, 1);
-        stubAggregation();
-        when(traceDao.tryAcquireAggregationLeader(eq(SERVICE_ID), anyLong(), anyLong())).thenReturn(true);
-
-        newJob(buffer).run();
-
-        verify(traceDao).tryAcquireAggregationLeader(anyString(), anyLong(), anyLong());
-        verify(persistenceService).persist(anyLong(), anyLong(), any(), any(), any());
-    }
-
-    @Test
-    void sharedBufferIsLeftAloneWhenAnotherServiceHoldsTheLease() {
-        TraceBuffer buffer = bufferWithBatches(true, 1);
-        when(traceDao.tryAcquireAggregationLeader(anyString(), anyLong(), anyLong())).thenReturn(false);
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_RULE_ENGINE)).thenReturn(false);
 
         newJob(buffer).run();
 
@@ -110,34 +92,18 @@ class TraceAggregationJobTest {
         verify(persistenceService, times(3)).persist(anyLong(), anyLong(), any(), any(), any());
     }
 
+    // Under steady load new traces keep expiring while a run drains; a run that re-read the clock per batch would
+    // never see an empty batch. Every batch must use the time the run started.
     @Test
-    void aSharedBufferRunStopsOnceItsLeaderLeaseHasExpired() {
-        TraceBuffer buffer = bufferWithEndlessBatches(true);
-        stubAggregation();
-        when(traceDao.tryAcquireAggregationLeader(anyString(), anyLong(), anyLong())).thenReturn(true);
-
-        TraceAggregationJob job = newJob(buffer, 100L);
-
-        ReflectionTestUtils.setField(job, "clock", steppingClock(40L));
-
-        job.run();
-
-        verify(buffer, times(2)).drainExpired(anyLong(), anyInt());
-        verify(persistenceService, times(2)).persist(anyLong(), anyLong(), any(), any(), any());
-    }
-
-    @Test
-    void aLocalBufferRunIsNotBoundedByTheLeaseDuration() {
+    void everyBatchOfARunDrainsUpToTheRunStartTime() {
         TraceBuffer buffer = bufferWithBatches(false, 3);
         stubAggregation();
-
-        TraceAggregationJob job = newJob(buffer, 1L);
+        TraceAggregationJob job = newJob(buffer);
         ReflectionTestUtils.setField(job, "clock", steppingClock(40L));
 
         job.run();
 
-        verify(buffer, times(4)).drainExpired(anyLong(), anyInt());
-        verify(persistenceService, times(3)).persist(anyLong(), anyLong(), any(), any(), any());
+        verify(buffer, times(4)).drainExpired(eq(0L), eq(DRAIN_BATCH_SPANS));
     }
 
     @Test
@@ -153,20 +119,8 @@ class TraceAggregationJobTest {
     }
 
     private TraceAggregationJob newJob(TraceBuffer buffer) {
-        return newJob(buffer, LEADER_LEASE_MS);
-    }
-
-    private TraceAggregationJob newJob(TraceBuffer buffer, long leaderLeaseMs) {
-        return new TraceAggregationJob(buffer, aggregator, persistenceService, traceDao, traceSummaryBuilder,
-                serviceInfoProvider, leaderLeaseMs, DRAIN_BATCH_SPANS,
-                AbstractTraceBufferTest.statsFactory(new SimpleMeterRegistry()));
-    }
-
-    private TraceBuffer bufferWithEndlessBatches(boolean shared) {
-        TraceBuffer buffer = mock(TraceBuffer.class);
-        when(buffer.isShared()).thenReturn(shared);
-        when(buffer.drainExpired(anyLong(), anyInt())).thenReturn(oneTrace("trace-key"));
-        return buffer;
+        return new TraceAggregationJob(buffer, aggregator, persistenceService, traceSummaryBuilder,
+                partitionService, DRAIN_BATCH_SPANS, AbstractTraceBufferTest.statsFactory(new SimpleMeterRegistry()));
     }
 
     private TraceBuffer bufferWithBatches(boolean shared, int batches) {

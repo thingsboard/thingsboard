@@ -40,14 +40,6 @@ public class RuleEngineStatsInsertRepository {
             VALUES (?,?,?,?)
             """;
 
-    private static final String QUEUE_LAG_LEADER_SQL = """
-            UPDATE span_stats_leader
-               SET leader_id = ?,
-                   leader_until = ?
-             WHERE lock_name = 'queue-lag'
-               AND (leader_id = ? OR leader_until < ?)
-            """;
-
     private static final int BATCH_SIZE = 5000;
 
     private static final List<String> STATS_TABLES = List.of("rule_node_exec_stats", "rule_node_queue_stats", "rule_node_queue_lag_stats");
@@ -100,10 +92,6 @@ public class RuleEngineStatsInsertRepository {
             ps.setObject(3, row.queueId());
             ps.setLong(4, row.lag());
         });
-    }
-
-    public boolean tryAcquireQueueLagLeader(String serviceId, long nowMs, long leaseMs) {
-        return jdbcTemplate.update(QUEUE_LAG_LEADER_SQL, serviceId, nowMs + leaseMs, serviceId, nowMs) > 0;
     }
 
     public void cleanUp(long expTime, int batchSize) {

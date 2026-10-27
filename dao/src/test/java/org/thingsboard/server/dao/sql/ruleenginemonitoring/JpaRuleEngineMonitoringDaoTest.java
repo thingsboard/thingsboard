@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +55,7 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
 
     @After
     public void cleanUp() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, span_stats_leader, trace_summary, rule_node_exec_stats, " +
+        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
                 "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
         jdbcTemplate.update("DELETE FROM rule_node WHERE rule_chain_id = ?", ruleChainId);
         jdbcTemplate.update("DELETE FROM rule_chain WHERE id = ?", ruleChainId);
@@ -173,13 +172,6 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
                 Set.of(RuleNodeDimension.LAST_VISITED_RULE_NODE_ID), null, null, null, null)));
         assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findQueueLagTable(new QueueLagTableQuery(tenantId, T0, T0 + MINUTE,
                 Set.of(RuleNodeDimension.SERVICE_ID), null)));
-    }
-
-    @Test
-    public void givenLeaderRow_whenTryAcquireQueueLagLeader_thenOnlyOneServiceHoldsTheLease() {
-        assertTrue(dao.tryAcquireQueueLagLeader("node-a", 1_000, 10_000));
-        assertFalse(dao.tryAcquireQueueLagLeader("node-b", 2_000, 10_000));
-        assertTrue(dao.tryAcquireQueueLagLeader("node-b", 20_000, 10_000));
     }
 
     @Test

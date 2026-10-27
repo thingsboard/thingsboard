@@ -64,11 +64,6 @@ public class JpaRuleEngineMonitoringDao implements RuleEngineMonitoringDao {
     }
 
     @Override
-    public boolean tryAcquireQueueLagLeader(String serviceId, long nowMs, long leaseMs) {
-        return statsInsertRepository.tryAcquireQueueLagLeader(serviceId, nowMs, leaseMs);
-    }
-
-    @Override
     public void deleteByTenantId(UUID tenantId) {
         statsInsertRepository.deleteByTenantId(tenantId);
     }

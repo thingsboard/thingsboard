@@ -83,14 +83,6 @@ public class TraceInsertRepository {
             WHERE tenant_id = ? AND bucket_time = ? AND path_id = ?
             """;
 
-    private static final String AGGREGATION_LEADER_SQL = """
-            UPDATE span_stats_leader
-               SET leader_id = ?,
-                   leader_until = ?
-             WHERE lock_name = 'aggregation'
-               AND (leader_id = ? OR leader_until < ?)
-            """;
-
     private static final int TRACE_GROUP_BATCH_SIZE = 1000;
 
     private static final int DELETE_BATCH_SIZE = 10_000;
@@ -161,10 +153,6 @@ public class TraceInsertRepository {
                 jdbcTemplate.batchUpdate(TRACE_GROUP_UPDATE_SQL, new ArrayList<>(toUpdateGroups), TRACE_GROUP_BATCH_SIZE, this::bindTraceGroupUpdate);
             }
         });
-    }
-
-    public boolean tryAcquireAggregationLeader(String serviceId, long nowMs, long leaseMs) {
-        return jdbcTemplate.update(AGGREGATION_LEADER_SQL, serviceId, nowMs + leaseMs, serviceId, nowMs) > 0;
     }
 
     /**
