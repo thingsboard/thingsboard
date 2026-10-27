@@ -379,7 +379,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     public void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(tenantId, deviceCredentials.getUuidId());
-        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
+        publishEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null, true));
     }
 
     @Override
@@ -387,7 +387,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         log.trace("Executing deleteDeviceCredentialsByDeviceId [{}]", deviceId);
         DeviceCredentials credentials = deviceCredentialsDao.removeByDeviceId(tenantId, deviceId);
         if (credentials != null) {
-            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null));
+            publishEvictEvent(new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null, true));
         }
     }
 
