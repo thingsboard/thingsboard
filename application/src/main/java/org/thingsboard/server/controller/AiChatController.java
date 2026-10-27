@@ -109,6 +109,20 @@ class AiChatController extends BaseController {
         return withTraceLogging(chatId, aiChatService.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, clientOrigin, user));
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping(value = "/{chatId}/resume", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> resumeChat(
+            @PathVariable UUID chatId,
+            @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken,
+            @RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, required = false) String acceptLanguage,
+            HttpServletRequest httpRequest
+    ) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
+        String clientOrigin = systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest);
+        return withTraceLogging(chatId, aiChatService.resumeChat(chatId, tbAccessToken, acceptLanguage, clientOrigin, user));
+    }
+
     private Flux<ServerSentEvent<String>> withTraceLogging(UUID chatId, Flux<ServerSentEvent<String>> events) {
         return events.doOnNext(event -> {
             if (log.isTraceEnabled()) {

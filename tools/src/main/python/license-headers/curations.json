@@ -1148,6 +1148,12 @@
       "contentHash": "sha256:f4568fd8a8158238c9d60bf6fce8ea4c7a3d98959bcf1e9fb3ef91aced0a3c46"
     },
     {
+      "path": "msa/web-report/pom.xml",
+      "header": "busl",
+      "reason": "Build descriptor of the PE-only web-report module; CE has no web-report module. The only CE version is an empty file (blob e69de29bb2d) added by stray commit 2b1c5d92f3a, pushed to fix/maven-node-lts-4.3 after #16417 merged and carried into lts-4.4 via #16419; it never reached CE lts-4.3 and is not the origin of this file.",
+      "contentHash": "sha256:f2b9258104e62bbcff5625cad22a7a1ea7b9aad862b547e6ac1d83aafe9abaff"
+    },
+    {
       "path": "report/src/main/conf/logback.xml",
       "header": "busl",
       "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate edqs/src/main/conf/logback.xml at d23c8fc0d5a408f1bb560ec2b7af0622e93008fb (blob 850a28b2125c6fe56ce01769400e72d5ee58f7c4).",
