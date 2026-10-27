@@ -37,7 +37,7 @@ class TokenValidationCacheEvictionListenerTest {
 
     @Test
     void givenRotation_thenOldIdGetsRevokedMarker_newIdEvicted() {
-        listener.handleEvictEvent(new DeviceCredentialsEvictEvent("newId", "oldId"));
+        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", "oldId"));
 
         verify(cache).evict(TokenValidationCacheService.cacheKey("newId"));
         ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
@@ -49,7 +49,7 @@ class TokenValidationCacheEvictionListenerTest {
 
     @Test
     void givenCreate_thenNewIdEvictedOnly() {
-        listener.handleEvictEvent(new DeviceCredentialsEvictEvent("newId", null));
+        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", null));
 
         verify(cache).evict(TokenValidationCacheService.cacheKey("newId"));
         verify(cache, never()).put(anyString(), any());
@@ -58,7 +58,7 @@ class TokenValidationCacheEvictionListenerTest {
 
     @Test
     void givenDelete_thenRevokedMarkerForDeletedId() {
-        listener.handleEvictEvent(new DeviceCredentialsEvictEvent("delId", null, true));
+        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("delId", null, true));
 
         ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<TokenValidationCacheEntryProto> value = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
@@ -71,13 +71,13 @@ class TokenValidationCacheEvictionListenerTest {
     @Test
     void givenNoCacheBean_thenNoop() {
         TokenValidationCacheEvictionListener noop = new TokenValidationCacheEvictionListener(Optional.empty());
-        assertThatCode(() -> noop.handleEvictEvent(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
+        assertThatCode(() -> noop.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
     }
 
     @Test
     void givenCacheFailure_thenNotPropagated() {
         doThrow(new RuntimeException("redis down")).when(cache).evict(anyString());
-        assertThatCode(() -> listener.handleEvictEvent(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
+        assertThatCode(() -> listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
     }
 
 }

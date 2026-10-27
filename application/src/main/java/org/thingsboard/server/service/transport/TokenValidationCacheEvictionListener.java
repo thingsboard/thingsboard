@@ -7,10 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.transport.auth.cache.TokenValidationCacheService;
 import org.thingsboard.server.dao.device.DeviceCredentialsEvictEvent;
+import org.thingsboard.server.dao.device.DeviceCredentialsEvictionHook;
 import org.thingsboard.server.gen.transport.TransportProtos.TokenValidationCacheEntryProto;
 
 import java.util.Optional;
@@ -22,7 +22,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
-public class TokenValidationCacheEvictionListener {
+public class TokenValidationCacheEvictionListener implements DeviceCredentialsEvictionHook {
 
     private final TbTransactionalCache<String, TokenValidationCacheEntryProto> cache;
 
@@ -32,8 +32,8 @@ public class TokenValidationCacheEvictionListener {
         this.cache = cache != null ? cache.orElse(null) : null;
     }
 
-    @TransactionalEventListener(fallbackExecution = true, classes = DeviceCredentialsEvictEvent.class)
-    public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
+    @Override
+    public void onDeviceCredentialsEvict(DeviceCredentialsEvictEvent event) {
         if (cache == null) {
             return;
         }

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -49,12 +50,22 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     private final DeviceCredentialsDao deviceCredentialsDao;
     private final DeviceCredentialsDataValidator credentialsValidator;
 
+    @Autowired(required = false)
+    private DeviceCredentialsEvictionHook evictionHook;
+
     @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
     @Override
     public void handleEvictEvent(DeviceCredentialsEvictEvent event) {
         cache.evict(event.getNewCredentialsId());
         if (StringUtils.isNotEmpty(event.getOldCredentialsId()) && !event.getNewCredentialsId().equals(event.getOldCredentialsId())) {
             cache.evict(event.getOldCredentialsId());
+        }
+        if (evictionHook != null) {
+            try {
+                evictionHook.onDeviceCredentialsEvict(event);
+            } catch (Exception e) {
+                log.warn("Device credentials eviction hook failed for event [{}]", event, e);
+            }
         }
     }
 
@@ -103,7 +114,12 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
             }
             return value;
         } catch (Exception t) {
-            handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
+            // defensive eviction of the dao cache only; the old credentials are still valid, so the eviction hook must not be invoked
+            cache.evict(deviceCredentials.getCredentialsId());
+            if (oldDeviceCredentials != null && StringUtils.isNotEmpty(oldDeviceCredentials.getCredentialsId())
+                    && !oldDeviceCredentials.getCredentialsId().equals(deviceCredentials.getCredentialsId())) {
+                cache.evict(oldDeviceCredentials.getCredentialsId());
+            }
             ConstraintViolationException e = DaoUtil.extractConstraintViolationException(t).orElse(null);
             if (e != null
                     && (DaoUtil.constraintNameMatches(e.getConstraintName(), "device_credentials_id_unq_key") || DaoUtil.constraintNameMatches(e.getConstraintName(), "device_credentials_device_id_unq_key"))) {
