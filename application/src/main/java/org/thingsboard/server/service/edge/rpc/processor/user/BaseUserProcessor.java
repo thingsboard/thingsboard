@@ -123,6 +123,13 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                     tenantId, userCredentials.getUserId(), updateMsg);
             return;
         }
+        if (userCredentials.getId() != null) {
+            UserCredentials userCredentialsById = edgeCtx.getUserService().findUserCredentialsById(tenantId, userCredentials.getId());
+            if (userCredentialsById != null && !user.getId().equals(userCredentialsById.getUserId())) {
+                log.warn("[{}] User credentials [{}] belong to a different user, skipping credentials update", tenantId, userCredentials.getId());
+                return;
+            }
+        }
         log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
                 tenantId, user.getName(), userCredentials.getId(), userCredentials.isEnabled());
         try {

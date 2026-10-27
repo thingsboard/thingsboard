@@ -7,10 +7,13 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -27,6 +30,9 @@ import static org.thingsboard.server.gen.edge.v1.UpdateMsgType.ENTITY_DELETED_RP
 
 @DaoSqlTest
 public class AiModelEdgeTest extends AbstractEdgeTest {
+
+    @Autowired
+    private AiModelService aiModelService;
 
     private static final String DEFAULT_AI_MODEL_NAME = "Edge Test AiModel";
     private static final String UPDATED_AI_MODEL_NAME = "Updated Edge Test AiModel";
@@ -198,6 +204,23 @@ public class AiModelEdgeTest extends AbstractEdgeTest {
         AiModel aiModel = doGet("/api/ai/model/" + uuid, AiModel.class);
         Assert.assertNotNull(aiModel);
         Assert.assertEquals(resourceTitle, aiModel.getName());
+    }
+
+    @Test
+    public void testSendAiModelWithTenantIdOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UUID uuid = Uuids.timeBased();
+        AiModel aiModel = createSimpleAiModel("Edge AI Model With Different Tenant");
+        aiModel.setTenantId(differentTenantId);
+        UplinkMsg uplinkMsg = getUplinkMsg(uuid, aiModel, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        Optional<AiModel> aiModelFromCloud = aiModelService.findAiModelById(tenantId, new AiModelId(uuid));
+        Assert.assertTrue(aiModelFromCloud.isPresent());
+        Assert.assertEquals(tenantId, aiModelFromCloud.get().getTenantId());
     }
 
 }

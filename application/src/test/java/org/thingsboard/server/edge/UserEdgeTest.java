@@ -285,6 +285,19 @@ public class UserEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testSendUserWithTokenAuthorityFromEdgeToCloud() throws Exception {
+        UserId userId = new UserId(UUID.randomUUID());
+        User user = buildUser(Authority.REFRESH_TOKEN, null);
+        user.setId(userId);
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, user))
+                .build());
+
+        Assert.assertNull(userService.findUserById(tenantId, userId));
+    }
+
+    @Test
     public void testSendUserWithUnsupportedAuthorityFromEdgeToCloud() throws Exception {
         UserId userId = new UserId(UUID.randomUUID());
         User sysAdmin = buildUser(Authority.SYS_ADMIN, null);
@@ -474,6 +487,23 @@ public class UserEdgeTest extends AbstractEdgeTest {
                     PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Long.MAX_VALUE, new TimePageLink(1000));
                     Assert.assertTrue(edgeEvents.getData().stream().noneMatch(edgeEvent -> userId.getId().equals(edgeEvent.getEntityId())));
                 });
+    }
+
+    @Test
+    public void testSendUserCredentialsWithIdOfDifferentTenantUserToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UserCredentials differentTenantCredentials = userService.findUserCredentialsByUserId(differentTenantId, savedDifferentTenantUser.getId());
+        UserCredentials userCredentials = buildCredentials(differentTenantCredentials.getId(), tenantAdminUserId, true);
+        userCredentials.setPassword(passwordEncoder.encode("password"));
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials))
+                .build());
+
+        UserCredentials differentTenantCredentialsAfter = userService.findUserCredentialsByUserId(differentTenantId, savedDifferentTenantUser.getId());
+        Assert.assertNotNull(differentTenantCredentialsAfter);
+        Assert.assertEquals(differentTenantCredentials.getPassword(), differentTenantCredentialsAfter.getPassword());
     }
 
 }
