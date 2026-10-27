@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.system.ResolvedBaseUrl;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-import org.thingsboard.server.service.iot_hub.DeleteInstalledItemResult;
+import org.thingsboard.server.service.iot_hub.InstalledItemKeptEntities;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
 import org.thingsboard.server.service.iot_hub.InstallPlan;
 import org.thingsboard.server.service.iot_hub.InstallPlanResult;
@@ -138,8 +138,15 @@ public class IotHubController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping("/installedItems/{installedItemId}")
     @ResponseBody
-    public DeleteInstalledItemResult deleteInstalledItem(@PathVariable UUID installedItemId) throws ThingsboardException {
-        return iotHubService.deleteInstalledItem(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
+    public void deleteInstalledItem(@PathVariable UUID installedItemId) throws ThingsboardException {
+        iotHubService.deleteInstalledItem(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/installedItems/{installedItemId}/keptEntities")
+    @ResponseBody
+    public InstalledItemKeptEntities getInstalledItemKeptEntities(@PathVariable UUID installedItemId) throws ThingsboardException {
+        return iotHubService.findKeptEntities(getTenantId(), new IotHubInstalledItemId(installedItemId));
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

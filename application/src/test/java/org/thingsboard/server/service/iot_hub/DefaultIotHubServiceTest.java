@@ -16,6 +16,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,12 +26,14 @@ import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescript
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -59,6 +63,8 @@ class DefaultIotHubServiceTest {
     private IotHubInstalledItemService iotHubInstalledItemService;
     @Mock
     private DeviceService deviceService;
+    @Mock
+    private EntityService entityService;
     @Mock
     private TbDeviceService tbDeviceService;
     @Mock
@@ -334,7 +340,7 @@ class DefaultIotHubServiceTest {
         doReturn(dep1Item).when(service).doInstallVersion(eq(user), eq(dep1VersionId), any(), any());
         doReturn(dep2Item).when(service).doInstallVersion(eq(user), eq(dep2VersionId), any(), any());
         doThrow(new IllegalStateException("install failed")).when(service).doInstallVersion(eq(user), eq(rootVersionId), any(), any());
-        doReturn(new DeleteInstalledItemResult(List.of())).when(service).deleteInstalledItem(eq(user), any());
+        doNothing().when(service).deleteInstalledItem(eq(user), any());
 
         InstallPlanResult result = service.installPlan(user, new InstallPlan(rootVersionId, List.of(dep1, dep2, root)), null, request);
 
@@ -443,16 +449,49 @@ class DefaultIotHubServiceTest {
         Device device = new Device(deviceId);
         when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
 
-        DeleteInstalledItemResult result = service.deleteInstalledItem(user, deleted.getId());
+        service.deleteInstalledItem(user, deleted.getId());
 
-        assertThat(result.getKeptEntities()).singleElement().satisfies(kept -> {
-            assertThat(kept.getEntityId()).isEqualTo(sharedDashboardId);
-            assertThat(kept.getUsedBy()).containsExactly("Other package");
-        });
         verify(tbDeviceService).delete(device, user);
         verify(dashboardService, never()).findDashboardById(any(), any());
         verify(tbDashboardService, never()).delete(any(), any());
         verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
+    }
+
+    @Test
+    void findKeptEntities_devicePackage_namesTheSharedEntitiesAndCountsTheOtherPackages() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
+        DeviceProfileId sharedProfileId = new DeviceProfileId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackage(sharedProfileId, deviceId, sharedDashboardId);
+        IotHubInstalledItem first = devicePackage(sharedProfileId, sharedDashboardId);
+        IotHubInstalledItem second = devicePackage(sharedDashboardId);
+        IotHubInstalledItem unrelated = devicePackage(new DeviceId(UUID.randomUUID()));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, first, second, unrelated), 1, 4, false));
+        when(entityService.fetchEntityName(tenantId, sharedProfileId)).thenReturn(Optional.of("Shared profile"));
+        when(entityService.fetchEntityName(tenantId, sharedDashboardId)).thenReturn(Optional.of("Shared dashboard"));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).containsExactly(
+                new InstalledItemKeptEntities.KeptEntity(sharedProfileId, "Shared profile"),
+                new InstalledItemKeptEntities.KeptEntity(sharedDashboardId, "Shared dashboard"));
+        assertThat(kept.getUsedByItemsCount()).isEqualTo(2);
+    }
+
+    @Test
+    void findKeptEntities_devicePackageSharingNothing_keepsNothing() {
+        IotHubInstalledItem checked = devicePackage(new DeviceId(UUID.randomUUID()));
+        IotHubInstalledItem other = devicePackage(new DeviceId(UUID.randomUUID()));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, other), 1, 2, false));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).isEmpty();
+        assertThat(kept.getUsedByItemsCount()).isZero();
     }
 
     private IotHubInstalledItem devicePackage(EntityId... createdEntityIds) {

@@ -9,21 +9,22 @@ import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
 
+/** What deleting an installed item keeps, because other installed items use it too. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeleteInstalledItemResult {
+public class InstalledItemKeptEntities {
 
-    /** Entities the delete kept, because other installed items use them too. */
-    private List<KeptEntity> keptEntities;
+    private List<KeptEntity> entities;
+    // How many other installed items use at least one of the kept entities
+    private int usedByItemsCount;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class KeptEntity {
         private EntityId entityId;
-        // Names of the other installed items that use the entity
-        private List<String> usedBy;
+        private String name;
     }
 
 }

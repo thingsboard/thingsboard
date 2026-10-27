@@ -101,14 +101,15 @@ export interface ItemPublishedVersionInfo {
   publishedVersion: string;
 }
 
-/** An entity that deleting an installed item kept, because other installed items use it too. */
+/** An entity that deleting an installed item keeps, because other installed items use it too. */
 export interface IotHubKeptEntity {
   entityId: { id: string; entityType: string };
-  usedBy: string[];
+  name: string;
 }
 
-export interface DeleteInstalledItemResult {
-  keptEntities?: IotHubKeptEntity[];
+export interface IotHubInstalledItemKeptEntities {
+  entities: IotHubKeptEntity[];
+  usedByItemsCount: number;
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
