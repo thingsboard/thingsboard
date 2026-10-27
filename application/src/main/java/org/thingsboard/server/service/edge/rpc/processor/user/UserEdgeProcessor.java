@@ -48,9 +48,6 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                         .build();
             }
             case CREDENTIALS_UPDATED -> {
-                if (!isEntityExists(edgeEvent.getTenantId(), userId)) {
-                    return null;
-                }
                 UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
                 if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentialsByUserId);

@@ -30,8 +30,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -148,14 +150,28 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
                                                               JsonNode body, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeCtx.getEdgeService().findActiveEdges(link), 1024);
-            for (Edge edge : edges) {
-                futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), type, actionType, entityId, body, false));
+            if (type.isSystemLevelSupported()) {
+                PageDataIterable<Edge> edges = new PageDataIterable<>(this::getActiveEdges, 1024);
+                for (Edge edge : edges) {
+                    futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), type, actionType, entityId, body, false));
+                }
+            } else {
+                // tenant entity updated in system context
+                TenantId entityTenantId = entityId != null ? findEntityTenantId(tenantId, entityId) : null;
+                if (entityTenantId != null && !entityTenantId.isSysTenantId()) {
+                    futures = processActionForAllEdgesByTenantId(entityTenantId, type, actionType, entityId, body, sourceEdgeId);
+                } else {
+                    log.debug("[{}] Skipping {} event for entity {} that does not belong to a tenant", tenantId, type, entityId);
+                }
             }
         } else {
             futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null, sourceEdgeId);
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+    }
+
+    private PageData<Edge> getActiveEdges(PageLink link) {
+        return edgeCtx.getEdgeService().findActiveEdges(link);
     }
 
     private List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId,
@@ -198,9 +214,9 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
-        if (type.isAllEdgesRelated()) {
+        if (type.isAllTenantEdgesRelated()) {
             return processEntityNotificationForAllEdges(tenantId, type, actionType, entityId, originatorEdgeId);
-        } else {
+        } else { // Edge-assigned: device, asset, dashboard, entity view, rule chain, alarm..
             JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
             EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
             switch (actionType) {
