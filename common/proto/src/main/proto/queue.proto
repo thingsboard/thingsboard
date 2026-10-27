@@ -507,26 +507,45 @@ message AttributeUpdateNotificationMsg {
 
 message ValidateDeviceTokenRequestMsg {
   string token = 1;
+  bool supportsDeviceProfileCaching = 2;
 }
 
 message ValidateDeviceX509CertRequestMsg {
   string hash = 1;
+  bool supportsDeviceProfileCaching = 2;
 }
 
 message ValidateOrCreateDeviceX509CertRequestMsg {
   string certificateChain = 1;
+  bool supportsDeviceProfileCaching = 2;
 }
 
 message ValidateBasicMqttCredRequestMsg {
   string clientId = 1;
   string userName = 2;
   string password = 3;
+  bool supportsDeviceProfileCaching = 4;
+}
+
+enum CredentialsValidationResult {
+  VALIDATION_RESULT_UNKNOWN = 0;
+  VALIDATION_OK = 1;
+  CREDENTIALS_NOT_FOUND = 2;
+  VALIDATION_INTERNAL_ERROR = 3;
 }
 
 message ValidateDeviceCredentialsResponseMsg {
   DeviceInfoProto deviceInfo = 1;
   string credentialsBody = 2;
   DeviceProfileProto deviceProfile = 3;
+  int64 deviceProfileVersion = 4;
+  CredentialsValidationResult result = 5;
+}
+
+message TokenValidationCacheEntryProto {
+  int64 createdTime = 1;
+  ValidateDeviceCredentialsResponseMsg response = 2; // deviceProfile always cleared
+  bool revoked = 3; // written by core on credential rotation/delete; exempt from negative_ttl
 }
 
 message GetOrCreateDeviceFromGatewayRequestMsg {
@@ -671,6 +690,7 @@ message GetResourceResponseMsg {
 
 message ValidateDeviceLwM2MCredentialsRequestMsg {
   string credentialsId = 1;
+  bool supportsDeviceProfileCaching = 2;
 }
 
 message ToTransportUpdateCredentialsProto {
