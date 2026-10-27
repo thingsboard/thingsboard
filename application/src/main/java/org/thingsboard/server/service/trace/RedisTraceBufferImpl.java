@@ -195,7 +195,7 @@ public class RedisTraceBufferImpl implements TraceBuffer {
     private final DefaultCounter limitReachedCounter;
 
     public RedisTraceBufferImpl(RedisConnectionFactory redisConnectionFactory,
-                                @Value("${otel.processor.trace.buffer.max-spans-per-trace:1000}") int maxSpansPerTrace,
+                                @Value("${otel.processor.trace.buffer.max-spans-per-trace:200}") int maxSpansPerTrace,
                                 @Value("${otel.processor.trace.buffer.trace-ttl-ms:60000}") long traceTtlMs,
                                 @Value("${otel.processor.trace.buffer.redis-key-ttl-ms:1800000}") long keyTtlMs,
                                 StatsFactory statsFactory) {

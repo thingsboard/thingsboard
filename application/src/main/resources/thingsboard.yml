@@ -343,7 +343,8 @@ otel:
       batch:
         # Delay (ms) between two exports of ended spans to the trace buffer
         schedule-delay-ms: "${OTEL_TRACE_PROCESSOR_BATCH_SCHEDULE_DELAY_MS:2000}"
-        # OpenTelemetry rounds this up to a power of two (100000 -> 131072).
+        # Max spans queued for export to the trace buffer. Rounded up to a power of two (100000 -> 131072), as
+        # OpenTelemetry sizes the queue that way; the pressure thresholds use the rounded value.
         max-queue-size: "${OTEL_TRACE_PROCESSOR_BATCH_MAX_QUEUE_SIZE:131072}"
         # Max spans in one export to the trace buffer
         max-export-batch-size: "${OTEL_TRACE_PROCESSOR_BATCH_MAX_EXPORT_BATCH_SIZE:60000}"

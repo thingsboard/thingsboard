@@ -43,7 +43,7 @@ public class TraceAggregationJob {
     public TraceAggregationJob(TraceBuffer buffer, TraceGroupAggregator aggregator,
                                TraceGroupPersistenceService persistenceService, TraceDao traceDao,
                                TraceSummaryBuilder traceSummaryBuilder, TbServiceInfoProvider serviceInfoProvider,
-                               @Value("${otel.processor.trace.aggregation.leader-lease-ms:300000}") long leaderLeaseMs,
+                               @Value("${otel.processor.trace.aggregation.leader-lease-ms:60000}") long leaderLeaseMs,
                                @Value("${otel.processor.trace.aggregation.drain-batch-spans:5000}") int drainBatchSpans,
                                StatsFactory statsFactory) {
         this.buffer = buffer;
@@ -58,8 +58,8 @@ public class TraceAggregationJob {
         this.drainedTracesCounter = statsFactory.createDefaultCounter("trace.aggregation.drained");
     }
 
-    @Scheduled(initialDelayString = "${otel.processor.trace.aggregation.interval-ms:60000}",
-            fixedRateString = "${otel.processor.trace.aggregation.interval-ms:60000}")
+    @Scheduled(initialDelayString = "${otel.processor.trace.aggregation.interval-ms:10000}",
+            fixedRateString = "${otel.processor.trace.aggregation.interval-ms:10000}")
     public void run() {
         long startedAt = clock.millis();
         try {

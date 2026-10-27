@@ -51,11 +51,9 @@ public class OpenTelemetryConfig {
 
     @Value("${otel.processor.trace.batch.schedule-delay-ms:2000}")
     private long postgresScheduleDelayMs;
-    @Value("${otel.processor.trace.batch.max-queue-size:100000}")
-    private int postgresMaxQueueSize;
-    @Value("${otel.processor.trace.batch.max-export-batch-size:10000}")
+    @Value("${otel.processor.trace.batch.max-export-batch-size:60000}")
     private int postgresMaxExportBatchSize;
-    @Value("${otel.processor.trace.batch.exporter-timeout-ms:120000}")
+    @Value("${otel.processor.trace.batch.exporter-timeout-ms:30000}")
     private long postgresExporterTimeoutMs;
     @Value("${otel.processor.trace.metrics.interval-ms:5000}")
     private long postgresMetricsIntervalMs;
@@ -77,8 +75,8 @@ public class OpenTelemetryConfig {
 
     @Bean
     @ConditionalOnProperty(name = "otel.processor.trace.enabled", havingValue = "true")
-    public SdkMeterProvider postgresMeterProvider(MeterRegistry meterRegistry) {
-        Gauge.builder("otel.trace.queueMaxSize", () -> postgresMaxQueueSize)
+    public SdkMeterProvider postgresMeterProvider(MeterRegistry meterRegistry, TraceExportPressureGate pressureGate) {
+        Gauge.builder("otel.trace.queueMaxSize", pressureGate::getMaxQueueSize)
                 .tag("processorType", "BatchSpanProcessor")
                 .description("Configured BatchSpanProcessor max queue size")
                 .register(meterRegistry);
@@ -112,7 +110,7 @@ public class OpenTelemetryConfig {
                     BatchSpanProcessor.builder(bufferedTraceExporter)
                             .setMeterProvider(postgresMeterProvider)
                             .setScheduleDelay(postgresScheduleDelayMs, TimeUnit.MILLISECONDS)
-                            .setMaxQueueSize(postgresMaxQueueSize)
+                            .setMaxQueueSize(pressureGate.getMaxQueueSize())
                             .setMaxExportBatchSize(postgresMaxExportBatchSize)
                             .setExporterTimeout(postgresExporterTimeoutMs, TimeUnit.MILLISECONDS)
                             .build(),

@@ -60,33 +60,33 @@ class BufferedTraceExporterTest {
 
     @Test
     void givenSuccessfulAppend_whenExported_thenSlotsReleased() {
-        TraceExportPressureGate gate = gate(10);
+        TraceExportPressureGate gate = gate(16);
         BufferedTraceExporter exporter = new BufferedTraceExporter(buffer, spanMapper, gate, statsFactory);
 
-        exporter.export(spans(10));
+        exporter.export(spans(16));
 
         assertThat(gate.getInFlight()).isZero();
     }
 
     @Test
     void givenFailingAppend_whenExported_thenSlotsStillReleased() {
-        TraceExportPressureGate gate = gate(10);
+        TraceExportPressureGate gate = gate(16);
         doThrow(new RuntimeException("redis is down")).when(buffer).append(any());
         BufferedTraceExporter exporter = new BufferedTraceExporter(buffer, spanMapper, gate, statsFactory);
 
-        exporter.export(spans(10));
+        exporter.export(spans(16));
 
         assertThat(gate.getInFlight()).isZero();
     }
 
     @Test
     void givenRepeatedFailures_whenExported_thenGateStaysOpen() {
-        TraceExportPressureGate gate = gate(100);
+        TraceExportPressureGate gate = gate(128);
         doThrow(new RuntimeException("redis is down")).when(buffer).append(any());
         BufferedTraceExporter exporter = new BufferedTraceExporter(buffer, spanMapper, gate, statsFactory);
 
-        for (int i = 0; i < 10; i++) {
-            exporter.export(spans(10));
+        for (int i = 0; i < 8; i++) {
+            exporter.export(spans(16));
         }
 
         assertThat(gate.getInFlight()).isZero();
@@ -96,11 +96,11 @@ class BufferedTraceExporterTest {
 
     @Test
     void givenEmptyBatch_whenExported_thenNothingReleased() {
-        TraceExportPressureGate gate = gate(10);
+        TraceExportPressureGate gate = gate(16);
         BufferedTraceExporter exporter = new BufferedTraceExporter(buffer, spanMapper, gate, statsFactory);
 
         exporter.export(List.of());
 
-        assertThat(gate.getInFlight()).isEqualTo(10);
+        assertThat(gate.getInFlight()).isEqualTo(16);
     }
 }

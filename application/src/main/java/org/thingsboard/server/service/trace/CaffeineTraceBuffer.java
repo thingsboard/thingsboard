@@ -41,9 +41,9 @@ public class CaffeineTraceBuffer implements TraceBuffer {
     private final DefaultCounter limitReachedCounter;
     private final DefaultCounter rejectedSpansCounter;
 
-    public CaffeineTraceBuffer(@Value("${otel.processor.trace.buffer.max-spans-per-trace:1000}") int maxSpansPerTrace,
+    public CaffeineTraceBuffer(@Value("${otel.processor.trace.buffer.max-spans-per-trace:200}") int maxSpansPerTrace,
                                @Value("${otel.processor.trace.buffer.trace-ttl-ms:60000}") long traceTtlMs,
-                               @Value("${otel.processor.trace.buffer.max-buffered-spans:1000000}") long maxBufferedSpans,
+                               @Value("${otel.processor.trace.buffer.max-buffered-spans:300000}") long maxBufferedSpans,
                                StatsFactory statsFactory) {
         this.maxSpansPerTrace = maxSpansPerTrace;
         this.traceTtlMs = traceTtlMs;
