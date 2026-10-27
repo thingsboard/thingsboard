@@ -388,8 +388,9 @@ public class DefaultTransportService extends TransportActivityManager implements
         log.trace("Processing msg: {}", requestMsg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(
                 requestMsg.toBuilder().setSupportsDeviceProfileCaching(true).build()).build());
+        // not directExecutor: the transform may fetch the device profile through the same request template (see doProcess)
         ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg),
-                tmp -> toValidateResponse(tmp.getValue().getValidateCredResponseMsg(), DeviceTransportType.DEFAULT), MoreExecutors.directExecutor());
+                tmp -> toValidateResponse(tmp.getValue().getValidateCredResponseMsg(), DeviceTransportType.DEFAULT), transportCallbackExecutor);
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
@@ -411,13 +412,16 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     private void doProcess(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String cacheToken,
                            TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        // The transform must not run on directExecutor: the request template completes futures on its single internal
+        // loop thread, and toValidateResponse may resolve an unseen device profile with a blocking getEntityProfile()
+        // through the same template, which only that loop thread can complete.
         ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
             TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
             if (cacheToken != null) {
                 tokenValidationCacheService.store(cacheToken, msg);
             }
             return toValidateResponse(msg, transportType);
-        }, MoreExecutors.directExecutor());
+        }, transportCallbackExecutor);
         AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
     }
 
