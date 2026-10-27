@@ -43,8 +43,13 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationProvider;
+import org.thingsboard.server.service.security.exception.IpNotAllowedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
+import org.thingsboard.server.service.security.ip.SysAdminIpPolicy;
 import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.ws.AuthCmd;
@@ -96,6 +101,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private JwtAuthenticationProvider authenticationProvider;
     @Autowired
     private ApiKeyAuthenticationProvider apiKeyAuthenticationProvider;
+    @Autowired
+    private SysAdminIpPolicy sysAdminIpPolicy;
 
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
@@ -195,6 +202,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 } else {
                     securityCtx = authenticate(authCmd.getToken());
                 }
+                checkSysAdminIpAllowed(securityCtx, sessionMd.session);
             } catch (Exception e) {
                 close(sessionRef, CloseStatus.BAD_DATA.withReason(e.getMessage()));
                 return;
@@ -333,6 +341,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             String token = extractQueryParam(query, "token");
             if (StringUtils.isNotEmpty(token)) {
                 securityCtx = authenticate(token);
+                checkSysAdminIpAllowed(securityCtx, session);
             }
         }
         return WebSocketSessionRef.builder()
@@ -359,6 +368,22 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             throw new BadCredentialsException("Token is invalid");
         }
         return securityUser;
+    }
+
+    private void checkSysAdminIpAllowed(SecurityUser user, WebSocketSession session) {
+        InetAddress resolved = sessionAddress(session, org.thingsboard.server.config.ClientAddressCaptureFilter.RESOLVED_CLIENT_ADDRESS_ATTR);
+        InetAddress socket = sessionAddress(session, org.thingsboard.server.config.ClientAddressCaptureFilter.RAW_SOCKET_ADDRESS_ATTR);
+        if (sysAdminIpPolicy.isBlocked(user.getAuthority(), user.getTenantId(), user.getId(), resolved, socket, "ws")) {
+            throw new IpNotAllowedException();
+        }
+    }
+
+    private static InetAddress sessionAddress(WebSocketSession session, String attribute) {
+        if (session.getAttributes().get(attribute) instanceof InetAddress address) {
+            return address;
+        }
+        InetSocketAddress remote = session.getRemoteAddress();
+        return remote != null ? remote.getAddress() : null;
     }
 
     private SessionMetaData getSessionMd(String internalSessionId) {
