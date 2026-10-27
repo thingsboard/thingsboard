@@ -3,6 +3,7 @@
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +15,13 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -418,6 +422,58 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Optional<UserCredentialsUpdateMsg> opt = edgeImitator.findMessageByType(UserCredentialsUpdateMsg.class);
         Assert.assertTrue(opt.isPresent());
         return opt.get();
+    }
+
+    public void testSendUserCredentialsRequestForUserOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        UUID userUuid = savedDifferentTenantUser.getUuidId();
+        loginTenantAdmin();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addUserCredentialsRequestMsg(UserCredentialsRequestMsg.newBuilder()
+                .setUserIdMSB(userUuid.getMostSignificantBits())
+                .setUserIdLSB(userUuid.getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testUserActivationInDifferentTenant() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        verifyNoEdgeEvents(savedDifferentTenantUser.getId());
+    }
+
+    @Test
+    public void testSysAdminCredentialsUpdate() throws Exception {
+        loginSysAdmin();
+        UserId sysAdminId = doGet("/api/auth/user", User.class).getId();
+        resetTokens();
+        doPost("/api/noauth/resetPasswordByEmail", JacksonUtil.newObjectNode().put("email", SYS_ADMIN_EMAIL))
+                .andExpect(status().isOk());
+        loginTenantAdmin();
+        verifyNoEdgeEvents(sysAdminId);
+    }
+
+    @Test
+    public void testTenantUserCredentialsUpdate() throws Exception {
+        resetTokens();
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/noauth/resetPasswordByEmail", JacksonUtil.newObjectNode().put("email", TENANT_ADMIN_EMAIL))
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof UserCredentialsUpdateMsg);
+        UserCredentials userCredentials = JacksonUtil.fromString(((UserCredentialsUpdateMsg) latestMessage).getEntity(), UserCredentials.class, true);
+        Assert.assertNotNull(userCredentials);
+        Assert.assertEquals(tenantAdminUserId, userCredentials.getUserId());
+        loginTenantAdmin();
+    }
+
+    private void verifyNoEdgeEvents(UserId userId) {
+        Awaitility.await()
+                .pollDelay(3, TimeUnit.SECONDS)
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Long.MAX_VALUE, new TimePageLink(1000));
+                    Assert.assertTrue(edgeEvents.getData().stream().noneMatch(edgeEvent -> userId.getId().equals(edgeEvent.getEntityId())));
+                });
     }
 
 }
