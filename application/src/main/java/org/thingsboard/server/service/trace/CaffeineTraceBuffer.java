@@ -14,8 +14,10 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +38,11 @@ public class CaffeineTraceBuffer implements TraceBuffer {
     private final Cache<String, BufferedTraceEntry> traces;
 
     private final AtomicLong bufferedSpans = new AtomicLong();
+
+    // Keys found expired by the last scan, claimed batch by batch. A run passes the same cutoff to every batch, so
+    // the map is scanned when the queue runs out rather than once per batch.
+    private final Deque<String> expiredKeys = new ArrayDeque<>();
+    private long scannedCutoff = Long.MIN_VALUE;
 
     private final DefaultCounter failedSpansCounter;
     private final DefaultCounter limitReachedCounter;
@@ -88,18 +95,23 @@ public class CaffeineTraceBuffer implements TraceBuffer {
     }
 
     @Override
-    public List<BufferedTrace> drainExpired(long now, int maxSpans) {
+    public synchronized List<BufferedTrace> drainExpired(long now, int maxSpans) {
+        if (now != scannedCutoff) {
+            expiredKeys.clear();
+            scannedCutoff = now;
+        }
+        if (expiredKeys.isEmpty()) {
+            collectExpiredKeys(now);
+        }
         List<BufferedTrace> loaded = new ArrayList<>();
         int spans = 0;
-        for (Map.Entry<String, BufferedTraceEntry> candidate : traces.asMap().entrySet()) {
-            if (candidate.getValue().deadline() > now) {
-                continue;
-            }
+        while (!expiredKeys.isEmpty()) {
+            String key = expiredKeys.poll();
             // Re-check and remove under the key's lock, which append also takes: a span appended after the scan
             // either moved the deadline (the trace stays) or is part of what is drained, never dropped in between.
             // removal still fires onRemoval (EXPLICIT), which releases exactly the spans the entry held.
             BufferedTraceEntry[] claimed = new BufferedTraceEntry[1];
-            traces.asMap().computeIfPresent(candidate.getKey(), (key, entry) -> {
+            traces.asMap().computeIfPresent(key, (k, entry) -> {
                 if (entry.deadline() > now) {
                     return entry;
                 }
@@ -110,7 +122,7 @@ public class CaffeineTraceBuffer implements TraceBuffer {
                 continue;
             }
             TraceSnapshot snapshot = claimed[0].snapshot();
-            TraceIdentity identity = parseTraceIdentity(candidate.getKey());
+            TraceIdentity identity = parseTraceIdentity(key);
             loaded.add(new BufferedTrace(identity.tenantId(), identity.traceId(), snapshot.truncated(), snapshot.spans()));
             spans += snapshot.spans().size();
             if (spans >= maxSpans) {
@@ -118,6 +130,14 @@ public class CaffeineTraceBuffer implements TraceBuffer {
             }
         }
         return loaded;
+    }
+
+    private void collectExpiredKeys(long cutoff) {
+        for (Map.Entry<String, BufferedTraceEntry> candidate : traces.asMap().entrySet()) {
+            if (candidate.getValue().deadline() <= cutoff) {
+                expiredKeys.add(candidate.getKey());
+            }
+        }
     }
 
     @Override
