@@ -1049,6 +1049,9 @@ cache:
     secrets:
       timeToLiveInMinutes: "${CACHE_SPECS_SECRETS_SETTINGS_TTL:1440}" # Secrets cache TTL
       maxSize: "${CACHE_SPECS_SECRETS_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    transportTokenValidation:
+      timeToLiveInMinutes: "${CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_TTL:5}" # Transport token-validation cache TTL (positive entries and revoked markers)
+      maxSize: "${CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_MAX_SIZE:100000}" # 0 means the cache is disabled
 
   # deliberately placed outside the 'specs' group above
   notificationRules:

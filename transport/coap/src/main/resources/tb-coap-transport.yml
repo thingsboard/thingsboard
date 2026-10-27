@@ -47,6 +47,10 @@ cache:
   entityLimits:
     timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_LIMITS_TTL:5}" # Entity limits cache TTL
     maxSize: "${CACHE_SPECS_ENTITY_LIMITS_MAX_SIZE:100000}" # 0 means the cache is disabled
+  specs:
+    transportTokenValidation:
+      timeToLiveInMinutes: "${CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_TTL:5}" # Transport token-validation cache TTL (positive entries and revoked markers)
+      maxSize: "${CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_MAX_SIZE:100000}" # 0 means the cache is disabled
 
 # Redis/Valkey configuration parameters
 # Defines connection mode, authentication, SSL, and connection pool settings for Redis or Valkey.
