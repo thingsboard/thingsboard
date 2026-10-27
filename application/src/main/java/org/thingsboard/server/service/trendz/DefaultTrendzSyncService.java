@@ -389,9 +389,9 @@ public class DefaultTrendzSyncService implements TrendzSyncService {
         permissions.put(Authority.TENANT_ADMIN, tenantCustomerPermissions);
         permissions.put(Authority.CUSTOMER_USER, tenantCustomerPermissions);
 
-        // SYS_ADMIN permissions
+        // SYS_ADMIN permissions. No ADMIN_SETTINGS: they hold the mail, security and JWT settings, and the one
+        // settings call Trendz makes, GET /api/trendz/config, admits this key by identity (see TrendzController).
         Map<Resource, Set<Operation>> sysAdminPermissions = new HashMap<>();
-        sysAdminPermissions.put(Resource.ADMIN_SETTINGS, Set.of(Operation.READ, Operation.WRITE));
         sysAdminPermissions.put(Resource.WIDGETS_BUNDLE, Set.of(Operation.READ, Operation.CREATE, Operation.WRITE, Operation.DELETE));
         sysAdminPermissions.put(Resource.WIDGET_TYPE, Set.of(Operation.READ, Operation.CREATE, Operation.WRITE, Operation.DELETE));
         sysAdminPermissions.put(Resource.TB_RESOURCE, Set.of(Operation.READ, Operation.CREATE, Operation.WRITE, Operation.DELETE));

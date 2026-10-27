@@ -36,15 +36,17 @@ public class ApiKeyAuthenticationProvider extends AbstractAuthenticationProvider
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         ApiKeyAuthRequest apiKeyAuthRequest = (ApiKeyAuthRequest) authentication.getCredentials();
-        SecurityUser securityUser = authenticate(apiKeyAuthRequest.apiKey(), apiKeyAuthRequest.userId(), apiKeyAuthRequest.customerId());
-        return new ApiKeyAuthenticationToken(securityUser);
+        ApiKey apiKey = findActiveApiKey(apiKeyAuthRequest.apiKey());
+        SecurityUser securityUser = authenticate(apiKey, apiKeyAuthRequest.userId(), apiKeyAuthRequest.customerId());
+        return new ApiKeyAuthenticationToken(securityUser, apiKey.getId());
     }
 
     public SecurityUser authenticate(String key) {
-        return authenticate(key, null, null);
+        ApiKey apiKey = findActiveApiKey(key);
+        return authenticate(apiKey, null, null);
     }
 
-    private SecurityUser authenticate(String key, UserId userIdInternal, CustomerId customerIdInternal) {
+    private ApiKey findActiveApiKey(String key) {
         if (StringUtils.isEmpty(key)) {
             throw new BadCredentialsException("Empty API key");
         }
@@ -58,7 +60,10 @@ public class ApiKeyAuthenticationProvider extends AbstractAuthenticationProvider
         if (apiKey.getExpirationTime() != 0 && apiKey.getExpirationTime() < System.currentTimeMillis()) {
             throw new CredentialsExpiredException("API key is expired");
         }
+        return apiKey;
+    }
 
+    private SecurityUser authenticate(ApiKey apiKey, UserId userIdInternal, CustomerId customerIdInternal) {
         ResolvedUser resolvedUser = resolveUser(apiKey, userIdInternal, customerIdInternal);
 
         SecurityUser securityUser;

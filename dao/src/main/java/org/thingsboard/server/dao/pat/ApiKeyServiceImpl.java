@@ -102,8 +102,8 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     @Override
     public ApiKey rotateInternalApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo) {
         log.trace("Executing rotateInternalApiKey [{}]", apiKeyInfo);
-        var apiKey = new ApiKey(apiKeyInfo);
-        var old = apiKeyValidator.validate(apiKey, ApiKey::getTenantId);
+        ApiKey apiKey = new ApiKey(apiKeyInfo);
+        ApiKey old = apiKeyValidator.validate(apiKey, ApiKey::getTenantId);
         if (!old.isInternal()) {
             throw new IllegalArgumentException("Can't rotate non-internal API Key!");
         }
@@ -112,7 +112,8 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
         try {
             var rotatedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(rotatedApiKey.getId()).entity(rotatedApiKey).oldEntity(old).created(false).build());
-            publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+            // The cache is keyed by value: evicting the retired value is what stops it from authenticating.
+            publishEvictEvent(new ApiKeyEvictEvent(old.getValue()));
             return rotatedApiKey;
         } catch (Exception e) {
             checkConstraintViolation(e, "api_key_value_unq_key", "API Key with such value already exists!");
