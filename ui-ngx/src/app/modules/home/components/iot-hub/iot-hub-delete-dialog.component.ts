@@ -14,6 +14,7 @@ export interface IotHubDeleteDialogData {
   installedItemId: string;
   itemName: string;
   itemType?: string;
+  keptEntities?: IotHubInstalledItemKeptEntities | null;
 }
 
 @Component({
@@ -35,12 +36,8 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
-    this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
-    if (data.itemType === 'DEVICE') {
-      this.iotHubApiService.getInstalledItemKeptEntities(data.installedItemId, {ignoreLoading: true}).subscribe(
-        kept => this.describeKeptEntities(kept)
-      );
-    }
+    this.description = data.keptEntities?.entities.length ? this.describeKeptEntities(data.keptEntities) :
+      this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
   }
 
   confirm(): void {
@@ -56,10 +53,7 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
   }
 
   /** A device package keeps the entities other installed packages use, and the description names them before the user confirms. */
-  private describeKeptEntities(kept: IotHubInstalledItemKeptEntities): void {
-    if (!kept.entities.length) {
-      return;
-    }
+  private describeKeptEntities(kept: IotHubInstalledItemKeptEntities): string {
     const names = kept.entities.map(entity => {
       const key = `iot-hub.remove-kept-entity.${entity.entityId.entityType}`;
       const named = this.translate.instant(key, { name: entity.name });
@@ -67,7 +61,7 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     });
     const entities = names.length === 1 ? names[0] :
       this.translate.instant('iot-hub.remove-kept-entities', { first: names.slice(0, -1).join(', '), last: names[names.length - 1] });
-    this.description = this.translate.instant('iot-hub.remove-desc-kept',
+    return this.translate.instant('iot-hub.remove-desc-kept',
       { entities, count: kept.usedByItemsCount, kept: kept.entities.length });
   }
 }
