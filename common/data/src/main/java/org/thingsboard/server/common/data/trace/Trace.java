@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.common.data.trace;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.dao.model.sql.trace.TraceProjection;
 
 @Schema(description = "Trace entity with first span name")
 @Data
@@ -64,31 +63,4 @@ public class Trace {
     private Boolean hasErrors;
     @Schema(description = "Whether the trace had any queue timeout")
     private Boolean hasQueueTimeouts;
-
-    public static Trace fromEntity(TraceProjection entity) {
-        return fromEntity(entity, null);
-    }
-
-    public static Trace fromEntity(TraceProjection entity, String rootQueueName) {
-        return Trace.builder()
-                .rootQueueId(entity.getRootQueueId())
-                .queueName(rootQueueName)
-                .messageType(entity.getMessageType())
-                .rootRuleChainId(entity.getRootRuleChainId())
-                .ruleNodeCount(entity.getRuleNodeCount())
-                .hasErrors(entity.getHasErrors())
-                .hasQueueTimeouts(entity.getHasQueueTimeouts())
-                .traceId(entity.getTraceId())
-                .serviceName(entity.getServiceName())
-                .startTime(entity.getStartTime())
-                .endTime(entity.getEndTime())
-                .duration(entity.getDuration())
-                .spanCount(entity.getSpanCount())
-                .errorCount(entity.getErrorCount())
-                .createdTime(entity.getCreatedTime())
-                .firstSpanName(entity.getFirstSpanName())
-                .inQueueTime(entity.getInQueueTime())
-                .totalSpanTime(entity.getTotalSpanTime())
-                .build();
-    }
 }

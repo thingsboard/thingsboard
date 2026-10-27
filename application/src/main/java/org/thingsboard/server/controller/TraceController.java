@@ -29,14 +29,15 @@ import org.thingsboard.server.dao.sql.trace.TracePathSortField;
 import org.thingsboard.server.dao.sql.trace.TraceSortField;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.trace.TracePathListQuery;
-import org.thingsboard.server.service.trace.Trace;
+import org.thingsboard.server.common.data.trace.Trace;
 import org.thingsboard.server.service.trace.TraceCoverageSettingService;
-import org.thingsboard.server.service.trace.SpanAttributeDTO;
-import org.thingsboard.server.service.trace.SpanDTO;
-import org.thingsboard.server.service.trace.SpanEventDTO;
-import org.thingsboard.server.service.trace.SpanLinkDTO;
+import org.thingsboard.server.service.trace.TraceDtoMapper;
+import org.thingsboard.server.common.data.trace.SpanAttributeDTO;
+import org.thingsboard.server.common.data.trace.SpanDTO;
+import org.thingsboard.server.common.data.trace.SpanEventDTO;
+import org.thingsboard.server.common.data.trace.SpanLinkDTO;
 import org.thingsboard.server.service.trace.SpanSubResourceQuery;
-import org.thingsboard.server.service.trace.SpanTreeNode;
+import org.thingsboard.server.common.data.trace.SpanTreeNode;
 import org.thingsboard.server.service.trace.TraceSearchQuery;
 import org.thingsboard.server.service.trace.TraceService;
 import org.thingsboard.server.service.trace.TraceSpanListQuery;
@@ -102,7 +103,7 @@ public class TraceController extends BaseController {
         checkReadPermission();
         TraceSpanListQuery query = new TraceSpanListQuery(traceId);
         return traceService.getSpans(getTenantId(), query).stream()
-                .map(SpanDTO::fromEntity)
+                .map(TraceDtoMapper::toSpanDto)
                 .collect(Collectors.toList());
     }
 
@@ -131,7 +132,7 @@ public class TraceController extends BaseController {
         checkReadPermission();
         SpanSubResourceQuery query = new SpanSubResourceQuery(traceId, spanId);
         return traceService.getSpanAttributes(getTenantId(), query).stream()
-                .map(SpanAttributeDTO::fromEntity)
+                .map(TraceDtoMapper::toSpanAttributeDto)
                 .collect(Collectors.toList());
     }
 
@@ -147,7 +148,7 @@ public class TraceController extends BaseController {
         checkReadPermission();
         SpanSubResourceQuery query = new SpanSubResourceQuery(traceId, spanId);
         return traceService.getSpanEvents(getTenantId(), query).stream()
-                .map(SpanEventDTO::fromEntity)
+                .map(TraceDtoMapper::toSpanEventDto)
                 .collect(Collectors.toList());
     }
 
@@ -163,7 +164,7 @@ public class TraceController extends BaseController {
         checkReadPermission();
         SpanSubResourceQuery query = new SpanSubResourceQuery(trimToNull(traceId), trimToNull(spanId));
         return traceService.getSpanLinks(getTenantId(), query).stream()
-                .map(SpanLinkDTO::fromEntity)
+                .map(TraceDtoMapper::toSpanLinkDto)
                 .collect(Collectors.toList());
     }
 

@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.common.data.trace;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 
 @Schema(description = "Span data transfer object")
 @Data
@@ -50,21 +49,4 @@ public class SpanDTO {
 
     @Schema(description = "Created time in milliseconds", example = "1699123456789")
     private long createdTime;
-
-    public static SpanDTO fromEntity(SpanEntity entity) {
-        return SpanDTO.builder()
-                .spanId(entity.getSpanId())
-                .traceId(entity.getTraceId())
-                .parentSpanId(entity.getParentSpanId())
-                .name(entity.getName())
-                .kind(entity.getKind())
-                .serviceName(entity.getServiceName())
-                .startTime(entity.getStartTime())
-                .endTime(entity.getEndTime())
-                .duration(entity.getDuration())
-                .statusCode(entity.getStatusCode())
-                .statusMessage(entity.getStatusMessage())
-                .createdTime(entity.getCreatedTime())
-                .build();
-    }
 }

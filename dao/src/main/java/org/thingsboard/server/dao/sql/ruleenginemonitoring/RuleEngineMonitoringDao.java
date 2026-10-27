@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.sql.ruleenginemonitoring;
 
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTableEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTimeseriesEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueTableEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueTimeseriesEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTableRow;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTsKvEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringOption;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringQueueOption;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringRuleNodeOption;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTableRow;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTsKvEntry;
 
 import java.util.Collection;
 import java.util.List;

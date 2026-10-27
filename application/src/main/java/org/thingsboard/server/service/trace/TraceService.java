@@ -12,6 +12,8 @@ import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.trace.SpanTreeNode;
+import org.thingsboard.server.common.data.trace.Trace;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.common.data.page.PageData;
@@ -66,7 +68,7 @@ public class TraceService {
         if (entity == null) {
             throw new ThingsboardException("Trace not found: " + traceId, ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
-        return Trace.fromEntity(entity, resolveRootQueueName(tenantId, entity.getRootQueueId(), new HashMap<>()));
+        return TraceDtoMapper.toTrace(entity, resolveRootQueueName(tenantId, entity.getRootQueueId(), new HashMap<>()));
     }
 
     public List<SpanEntity> getSpans(TenantId tenantId, TraceSpanListQuery query) {
@@ -102,7 +104,7 @@ public class TraceService {
 
         for (SpanEntity span : spans) {
             List<SpanAttributeEntity> spanAttributes = attributesBySpanId.getOrDefault(span.getSpanId(), new ArrayList<>());
-            nodeMap.put(span.getSpanId(), SpanTreeNode.fromEntity(span, spanAttributes));
+            nodeMap.put(span.getSpanId(), TraceDtoMapper.toSpanTreeNode(span, spanAttributes));
         }
 
         List<SpanTreeNode> rootNodes = new ArrayList<>();
@@ -140,7 +142,7 @@ public class TraceService {
 
         Map<String, String> queueNames = new HashMap<>();
         List<Trace> traces = entities.getData().stream()
-                .map(entity -> Trace.fromEntity(entity, resolveRootQueueName(tenantId, entity.getRootQueueId(), queueNames)))
+                .map(entity -> TraceDtoMapper.toTrace(entity, resolveRootQueueName(tenantId, entity.getRootQueueId(), queueNames)))
                 .collect(Collectors.toList());
 
         return new PageData<>(traces, entities.getTotalPages(), entities.getTotalElements(), entities.hasNext());

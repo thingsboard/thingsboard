@@ -8,12 +8,12 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.config.DefaultDataSource;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTableEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueLagTimeseriesEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueTableEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.QueueTimeseriesEntry;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTableRow;
-import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.RuleNodeTsKvEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTableRow;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTsKvEntry;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.ResultSet;

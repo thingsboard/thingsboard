@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.common.data.trace;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.dao.model.sql.trace.SpanAttributeEntity;
 
 @Schema(description = "Span attribute data transfer object")
 @Data
@@ -37,16 +36,4 @@ public class SpanAttributeDTO {
 
     @Schema(description = "Boolean attribute value", example = "true")
     private Boolean attributeValueBoolean;
-
-    public static SpanAttributeDTO fromEntity(SpanAttributeEntity entity) {
-        return SpanAttributeDTO.builder()
-                .traceId(entity.getTraceId())
-                .spanId(entity.getSpanId())
-                .attributeKey(entity.getAttributeKey())
-                .attributeValueType(entity.getAttributeValueType())
-                .attributeValueString(entity.getAttributeValueString())
-                .attributeValueNumber(entity.getAttributeValueNumber())
-                .attributeValueBoolean(entity.getAttributeValueBoolean())
-                .build();
-    }
 }

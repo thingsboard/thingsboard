@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.common.data.trace;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.dao.model.sql.trace.SpanEventEntity;
 
 import java.util.UUID;
 
@@ -37,16 +36,4 @@ public class SpanEventDTO {
 
     @Schema(description = "Created time in milliseconds", example = "1699123456789")
     private long createdTime;
-
-    public static SpanEventDTO fromEntity(SpanEventEntity entity) {
-        return SpanEventDTO.builder()
-                .id(entity.getId())
-                .spanId(entity.getSpanId())
-                .traceId(entity.getTraceId())
-                .eventName(entity.getEventName())
-                .eventTime(entity.getEventTime())
-                .attributesJson(entity.getAttributesJson())
-                .createdTime(entity.getCreatedTime())
-                .build();
-    }
 }

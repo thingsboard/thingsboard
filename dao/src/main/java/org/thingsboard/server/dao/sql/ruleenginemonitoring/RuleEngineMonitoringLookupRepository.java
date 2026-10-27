@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringOption;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringQueueOption;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringRuleNodeOption;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.PreparedStatement;

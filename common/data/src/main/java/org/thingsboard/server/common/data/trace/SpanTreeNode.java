@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-package org.thingsboard.server.service.trace;
+package org.thingsboard.server.common.data.trace;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,12 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.dao.model.sql.trace.SpanAttributeEntity;
-import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Schema(description = "Span tree node with hierarchical structure")
 @Data
@@ -65,30 +62,4 @@ public class SpanTreeNode {
     @Schema(description = "Span attributes (key-value pairs)")
     @Builder.Default
     private List<SpanAttributeDTO> attributes = new ArrayList<>();
-
-    public static SpanTreeNode fromEntity(SpanEntity entity) {
-        return fromEntity(entity, null);
-    }
-
-    public static SpanTreeNode fromEntity(SpanEntity entity, List<SpanAttributeEntity> attributes) {
-        List<SpanAttributeDTO> attributeDTOs = attributes != null
-                ? attributes.stream().map(SpanAttributeDTO::fromEntity).collect(Collectors.toList())
-                : new ArrayList<>();
-        return SpanTreeNode.builder()
-                .spanId(entity.getSpanId())
-                .traceId(entity.getTraceId())
-                .parentSpanId(entity.getParentSpanId())
-                .name(entity.getName())
-                .kind(entity.getKind())
-                .serviceName(entity.getServiceName())
-                .startTime(entity.getStartTime())
-                .endTime(entity.getEndTime())
-                .duration(entity.getDuration())
-                .statusCode(entity.getStatusCode())
-                .statusMessage(entity.getStatusMessage())
-                .createdTime(entity.getCreatedTime())
-                .children(new ArrayList<>())
-                .attributes(attributeDTOs)
-                .build();
-    }
 }
