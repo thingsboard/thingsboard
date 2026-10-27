@@ -287,10 +287,9 @@ import org.thingsboard.server.common.data.trace.SpanLinkDTO;
 import org.thingsboard.server.common.data.trace.SpanTreeNode;
 import org.thingsboard.server.common.data.trace.Trace;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
-import org.thingsboard.server.common.data.trace.TraceListFilters;
+import org.thingsboard.server.common.data.trace.TraceFilters;
 import org.thingsboard.server.common.data.trace.TracePathDTO;
 import org.thingsboard.server.common.data.trace.TracePathDetailsDTO;
-import org.thingsboard.server.common.data.trace.TracePathFilters;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -6611,8 +6610,8 @@ public class RestClient implements Closeable {
                 }, traceId, spanId).getBody();
     }
 
-    public TraceListFilters getTraceFilters() {
-        return restTemplate.getForObject(baseURL + "/api/traces/filters", TraceListFilters.class);
+    public TraceFilters getTraceFilters() {
+        return restTemplate.getForObject(baseURL + "/api/traces/filters", TraceFilters.class);
     }
 
     /**
@@ -6643,8 +6642,8 @@ public class RestClient implements Closeable {
         });
     }
 
-    public TracePathFilters getTracePathFilters() {
-        return restTemplate.getForObject(baseURL + "/api/traces/paths/filters", TracePathFilters.class);
+    public TraceFilters getTracePathFilters() {
+        return restTemplate.getForObject(baseURL + "/api/traces/paths/filters", TraceFilters.class);
     }
 
     public TracePathDetailsDTO getTracePathDetails(String pathId, long startTime, long endTime) {

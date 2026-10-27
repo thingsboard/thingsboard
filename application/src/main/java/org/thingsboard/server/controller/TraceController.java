@@ -20,10 +20,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
-import org.thingsboard.server.common.data.trace.TraceListFilters;
+import org.thingsboard.server.common.data.trace.TraceFilters;
 import org.thingsboard.server.common.data.trace.TracePathDTO;
 import org.thingsboard.server.common.data.trace.TracePathDetailsDTO;
-import org.thingsboard.server.common.data.trace.TracePathFilters;
 import org.thingsboard.server.dao.sql.trace.SortOrder;
 import org.thingsboard.server.dao.sql.trace.TracePathSortField;
 import org.thingsboard.server.dao.sql.trace.TraceSortField;
@@ -174,7 +173,7 @@ public class TraceController extends BaseController {
                     "are resolved server-side.")
     @GetMapping("/filters")
     @ResponseStatus(value = HttpStatus.OK)
-    public TraceListFilters getTraceFilters() throws ThingsboardException {
+    public TraceFilters getTraceFilters() throws ThingsboardException {
         checkReadPermission();
         return traceService.getTraceFilters(getTenantId());
     }
@@ -298,7 +297,7 @@ public class TraceController extends BaseController {
                     "plus the known message types. Names are resolved server-side.")
     @GetMapping("/paths/filters")
     @ResponseStatus(value = HttpStatus.OK)
-    public TracePathFilters getPathFilters() throws ThingsboardException {
+    public TraceFilters getPathFilters() throws ThingsboardException {
         checkReadPermission();
         return traceService.getPathFilters(getTenantId());
     }

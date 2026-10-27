@@ -21,10 +21,9 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.trace.RuleNodeTreeNodeDTO;
-import org.thingsboard.server.common.data.trace.TraceListFilters;
+import org.thingsboard.server.common.data.trace.TraceFilters;
 import org.thingsboard.server.common.data.trace.TracePathDTO;
 import org.thingsboard.server.common.data.trace.TracePathDetailsDTO;
-import org.thingsboard.server.common.data.trace.TracePathFilters;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -201,46 +200,32 @@ public class TraceService {
         return cache.computeIfAbsent(rootQueueId, id -> resolveQueueName(tenantId, id));
     }
 
-    public TracePathFilters getPathFilters(TenantId tenantId) {
-        UUID tid = tenantId.getId();
-        List<TracePathFilters.Option> queues = ruleEngineMonitoringDao.findFilterQueues(tid).stream()
-                .map(q -> new TracePathFilters.Option(q.id() != null ? q.id().toString() : null, q.name()))
-                .collect(Collectors.toList());
-        List<TracePathFilters.Option> ruleChains = ruleEngineMonitoringDao.findFilterRuleChains(tid).stream()
-                .map(c -> new TracePathFilters.Option(c.id() != null ? c.id().toString() : null, c.name()))
-                .collect(Collectors.toList());
-        List<TracePathFilters.RuleNodeOption> ruleNodes = ruleEngineMonitoringDao.findFilterRuleNodes(tid).stream()
-                .map(n -> new TracePathFilters.RuleNodeOption(
-                        n.id() != null ? n.id().toString() : null, n.name(),
-                        n.ruleChainId() != null ? n.ruleChainId().toString() : null))
-                .collect(Collectors.toList());
-        List<String> messageTypes = Arrays.stream(TbMsgType.values())
-                .map(Enum::name)
-                .collect(Collectors.toList());
-        return TracePathFilters.builder()
-                .queues(queues)
-                .ruleChains(ruleChains)
-                .ruleNodes(ruleNodes)
-                .messageTypes(messageTypes)
-                .build();
+    public TraceFilters getPathFilters(TenantId tenantId) {
+        return buildFilters(tenantId, false);
     }
 
-    public TraceListFilters getTraceFilters(TenantId tenantId) {
+    public TraceFilters getTraceFilters(TenantId tenantId) {
+        return buildFilters(tenantId, true);
+    }
+
+    private TraceFilters buildFilters(TenantId tenantId, boolean withRuleEngines) {
         UUID tid = tenantId.getId();
-        List<TraceListFilters.Option> queues = ruleEngineMonitoringDao.findFilterQueues(tid).stream()
-                .map(q -> new TraceListFilters.Option(q.id() != null ? q.id().toString() : null, q.name()))
+        List<TraceFilters.Option> queues = ruleEngineMonitoringDao.findFilterQueues(tid).stream()
+                .map(q -> new TraceFilters.Option(q.id() != null ? q.id().toString() : null, q.name()))
                 .collect(Collectors.toList());
-        List<TraceListFilters.Option> ruleChains = ruleEngineMonitoringDao.findFilterRuleChains(tid).stream()
-                .map(c -> new TraceListFilters.Option(c.id() != null ? c.id().toString() : null, c.name()))
+        List<TraceFilters.Option> ruleChains = ruleEngineMonitoringDao.findFilterRuleChains(tid).stream()
+                .map(c -> new TraceFilters.Option(c.id() != null ? c.id().toString() : null, c.name()))
                 .collect(Collectors.toList());
-        List<TraceListFilters.RuleNodeOption> ruleNodes = ruleEngineMonitoringDao.findFilterRuleNodes(tid).stream()
-                .map(n -> new TraceListFilters.RuleNodeOption(
+        List<TraceFilters.RuleNodeOption> ruleNodes = ruleEngineMonitoringDao.findFilterRuleNodes(tid).stream()
+                .map(n -> new TraceFilters.RuleNodeOption(
                         n.id() != null ? n.id().toString() : null, n.name(),
                         n.ruleChainId() != null ? n.ruleChainId().toString() : null))
                 .collect(Collectors.toList());
         List<String> messageTypes = Arrays.stream(TbMsgType.values()).map(Enum::name).collect(Collectors.toList());
-        List<String> ruleEngines = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE).stream().toList();
-        return TraceListFilters.builder()
+        List<String> ruleEngines = withRuleEngines
+                ? partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE).stream().toList()
+                : null;
+        return TraceFilters.builder()
                 .ruleEngines(ruleEngines)
                 .queues(queues)
                 .ruleChains(ruleChains)
