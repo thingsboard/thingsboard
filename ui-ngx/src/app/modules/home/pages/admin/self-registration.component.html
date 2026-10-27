@@ -135,11 +135,11 @@
           </fieldset>
           <fieldset class="fields-group">
             <legend class="group-title" translate>self-registration.privacy-policy-text</legend>
-            <div class="mat-content flex flex-col">
-              <mat-slide-toggle formControlName="showPrivacyPolicy">
+            <div class="flex flex-col">
+              <mat-slide-toggle class="pb-2 pt-3" formControlName="showPrivacyPolicy">
                 {{ 'self-registration.show-privacy-policy' | translate }}
               </mat-slide-toggle>
-              <div class="tb-privacy-policy mat-elevation-z1">
+              <div class="tb-privacy-policy">
                 <editor [init]="hugeRteOptions" id="privacy-policy"
                   formControlName="privacyPolicy">
                 </editor>
@@ -148,11 +148,11 @@
           </fieldset>
           <fieldset class="fields-group" style="margin-top: 20px">
             <legend class="group-title" translate>self-registration.terms-of-use-text</legend>
-            <div class="mat-content flex flex-col">
-              <mat-slide-toggle formControlName="showTermsOfUse">
+            <div class="flex flex-col">
+              <mat-slide-toggle class="pb-2 pt-3" formControlName="showTermsOfUse">
                 {{ 'self-registration.show-terms-of-use' | translate }}
               </mat-slide-toggle>
-              <div class="tb-terms-of-use mat-elevation-z1">
+              <div class="tb-terms-of-use">
                 <editor [init]="hugeRteOptions" id="terms-of-use"
                   formControlName="termsOfUse">
                 </editor>
