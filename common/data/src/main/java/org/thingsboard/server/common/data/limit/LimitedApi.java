@@ -57,6 +57,8 @@ public enum LimitedApi {
     WS_SUBSCRIPTIONS("WS subscriptions", false),
     CALCULATED_FIELD_DEBUG_EVENTS("calculated field debug events", true),
     TRENDZ_PUBLIC_SYNC("Trendz sync from public endpoint", false),
+    EXTENSION_LOGS("extension log reads", false),
+    EXTENSION_API_DOCS("extension API docs reads", false),
     AI_CHAT_REQUESTS("AI chat requests", true);
 
     private final Function<DefaultTenantProfileConfiguration, String> configExtractor;

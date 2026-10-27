@@ -178,6 +178,7 @@ export enum MenuId {
   secrets = 'secrets',
   ai_models = 'ai_models',
   iot_hub = 'iot_hub',
+  extensions = 'extensions',
   reporting = 'reporting',
   report_templates = 'report_templates',
   report_scheduling = 'report_scheduling',
@@ -400,6 +401,17 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       path: '/settings/ai-models',
       icon: 'auto_awesome',
       outlinedIcon: 'auto_awesome'
+    }
+  ],
+  [
+    MenuId.extensions,
+    {
+      id: MenuId.extensions,
+      name: 'extension.extensions',
+      type: 'link',
+      path: '/extensions',
+      icon: 'extension',
+      outlinedIcon: 'extension'
     }
   ],
   [
@@ -1908,6 +1920,12 @@ const menuFilters = new Map<MenuId, MenuFilter>([
             userPermissionsService.hasReadGenericPermission(Resource.AI_MODEL)
   ],
   [
+    MenuId.extensions, (authState, userPermissionsService) =>
+            authState.extensionsEnabled &&
+            authState.authUser.authority === Authority.TENANT_ADMIN &&
+            userPermissionsService.hasReadGenericPermission(Resource.EXTENSION)
+  ],
+  [
     MenuId.trendz_settings, (authState) =>
             authState.authUser.authority === Authority.SYS_ADMIN
   ]
@@ -2113,7 +2131,8 @@ export const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         id: MenuId.data_processing,
         pages: [
           {id: MenuId.calculated_fields},
-          {id: MenuId.rule_chains}
+          {id: MenuId.rule_chains},
+          {id: MenuId.extensions}
         ]
       },
       {

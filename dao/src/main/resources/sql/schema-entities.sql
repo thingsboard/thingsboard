@@ -1391,3 +1391,21 @@ CREATE TABLE IF NOT EXISTS iot_hub_installed_item (
     version         VARCHAR       NOT NULL,
     descriptor      JSONB         NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS extension (
+                                         id              UUID          NOT NULL CONSTRAINT extension_pkey PRIMARY KEY,
+                                         created_time    BIGINT        NOT NULL,
+                                         tenant_id       UUID          NOT NULL,
+                                         name            VARCHAR(255)  NOT NULL,
+    slug            VARCHAR(255)  NOT NULL,
+    state           VARCHAR(32),
+    container_spec  JSONB,
+    last_error      VARCHAR,
+    last_error_at   BIGINT,
+    additional_info VARCHAR,
+    external_id     UUID,
+    version         BIGINT        DEFAULT 1,
+    CONSTRAINT extension_slug_unq_key        UNIQUE (slug),
+    CONSTRAINT extension_tenant_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT extension_external_id_unq_key UNIQUE (tenant_id, external_id)
+    );

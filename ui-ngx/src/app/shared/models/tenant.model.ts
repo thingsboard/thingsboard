@@ -27,6 +27,9 @@ export interface DefaultTenantProfileConfiguration {
   maxIntegrations: number;
   maxConverters: number;
   maxSchedulerEvents: number;
+  maxExtensions: number;
+  maxExtensionCpuMillicores: number;
+  maxExtensionMemoryMb: number;
   maxAgents: number;
   maxAgentApplications: number;
   maxGeneratedReports: number;
@@ -135,6 +138,15 @@ export interface TenantProfileConfiguration extends TenantProfileConfigurations 
   type: TenantProfileType;
 }
 
+// Mirror DefaultTenantProfileConfiguration on the backend. Extensions run tenant-supplied containers on
+// the platform's own infrastructure, so a profile that says nothing is deliberately NOT unlimited there:
+// it starts with room for exactly one SMALL extension. Every other limit below defaults to 0 = unlimited
+// by house convention, and following that convention here would silently hand out unlimited extension CPU
+// and memory to any profile created from the UI — undoing the one quota the backend fails closed on.
+export const defaultMaxExtensions = 1;
+export const defaultMaxExtensionCpuMillicores = 500;
+export const defaultMaxExtensionMemoryMb = 256;
+
 export function createTenantProfileConfiguration(type: TenantProfileType): TenantProfileConfiguration {
   let configuration: TenantProfileConfiguration = null;
   if (type) {
@@ -151,6 +163,9 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxIntegrations: 0,
           maxConverters: 0,
           maxSchedulerEvents: 0,
+          maxExtensions: defaultMaxExtensions,
+          maxExtensionCpuMillicores: defaultMaxExtensionCpuMillicores,
+          maxExtensionMemoryMb: defaultMaxExtensionMemoryMb,
           maxAgents: 0,
           maxAgentApplications: 0,
           maxGeneratedReports: 0,

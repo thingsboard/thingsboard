@@ -211,7 +211,12 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
 
     private void handleRateLimitException(HttpServletResponse response, TbRateLimitsException exception) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-        String message = "Too many requests for current " + exception.getEntityType().name().toLowerCase() + "!";
+        // entityType is null for the message-only form of the exception, which is what a limit that is not
+        // about an entity's quota uses. Dereferencing it unconditionally turned such a case into a 500 —
+        // the caller saw a server error instead of the 429 that was actually being raised.
+        String message = exception.getEntityType() != null
+                ? "Too many requests for current " + exception.getEntityType().name().toLowerCase() + "!"
+                : exception.getMessage();
         JacksonUtil.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(message,
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
