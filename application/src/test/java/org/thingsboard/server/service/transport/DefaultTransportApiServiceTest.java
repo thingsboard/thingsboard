@@ -66,6 +66,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -278,6 +279,39 @@ public class DefaultTransportApiServiceTest {
 
         assertThat(response.hasDeviceInfo()).isFalse();
         assertThat(response.getResult()).isEqualTo(TransportProtos.CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
+    }
+
+    @Test
+    public void givenX509ProvisionNotSuccessForEveryCert_whenValidateOrCreateX509_thenWholeChainTriedAndInternalErrorResult() throws Exception {
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
+        when(deviceProfileService.findDeviceProfileByProvisionDeviceKey(any())).thenReturn(createDeviceProfile(chain[1]));
+        when(deviceProvisionService.provisionDeviceViaX509Chain(any(), any()))
+                .thenReturn(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND));
+
+        TransportProtos.ValidateDeviceCredentialsResponseMsg response = handleValidation(
+                TransportProtos.TransportApiRequestMsg.newBuilder()
+                        .setValidateOrCreateX509CertRequestMsg(TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg.newBuilder()
+                                .setCertificateChain(certificateChain))
+                        .build());
+
+        assertThat(response.hasDeviceInfo()).isFalse();
+        assertThat(response.getResult()).isEqualTo(TransportProtos.CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
+        verify(deviceProvisionService, atLeast(2)).provisionDeviceViaX509Chain(any(), any());
+    }
+
+    @Test
+    public void givenX509ProvisionNotSuccessForFirstCert_whenValidateOrCreateX509_thenNextCertProvisioned() {
+        var device = createDevice();
+        var deviceCredentials = createDeviceCredentials(chain[0], device.getId());
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
+        when(deviceProfileService.findDeviceProfileByProvisionDeviceKey(any())).thenReturn(createDeviceProfile(chain[1]));
+        when(deviceProvisionService.provisionDeviceViaX509Chain(any(), any()))
+                .thenReturn(new ProvisionResponse(null, ProvisionResponseStatus.NOT_FOUND), createProvisionResponse(deviceCredentials));
+        TransportProtos.TransportApiResponseMsg response = mock(TransportProtos.TransportApiResponseMsg.class);
+        willReturn(response).given(service).getDeviceInfo(deviceCredentials, false);
+
+        assertThat(service.validateOrCreateDeviceX509Certificate(certificateChain, false)).isSameAs(response);
+        verify(deviceProvisionService, times(2)).provisionDeviceViaX509Chain(any(), any());
     }
 
     private DeviceProfile prepareDeviceWithProfile(String token, DeviceCredentialsType credentialsType, long profileVersion) {

@@ -19,7 +19,7 @@ public class TokenValidationCacheEntrySerializer implements TbRedisSerializer<St
         try {
             return TokenValidationCacheEntryProto.parseFrom(bytes);
         } catch (InvalidProtocolBufferException e) {
-            throw new SerializationException(e.getMessage());
+            throw new SerializationException("Failed to deserialize token validation cache entry", e);
         }
     }
 

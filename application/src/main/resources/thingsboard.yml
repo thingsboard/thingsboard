@@ -1473,6 +1473,17 @@ transport:
   # per request. Positive-entry TTL is cache.specs.transportTokenValidation.timeToLiveInMinutes.
   # With cache.type 'caffeine' in a microservices setup, core-side eviction cannot reach the
   # per-pod cache and staleness is bounded by the TTL only.
+  # tb-core and the transports must share cache.type, the Redis instance and CACHE_KEY_PREFIX;
+  # otherwise core-side eviction on credential changes does not reach the transport cache.
+  # Fail-open: enabled without a reachable Redis, the cache is a no-op apart from rate-limited
+  # warnings, and every request falls back to tb-core.
+  # Cache reads and writes run on a small dedicated bounded executor; a saturated executor
+  # degrades to cache misses. When enabling, lower REDIS_CLIENT_READ_TIMEOUT on the transports
+  # (Redis client defaults are 30-60 s) so that a slow Redis turns into fast misses.
+  # Do not use CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_TTL=0 with this cache enabled: 0 means
+  # never-expiring entries. CACHE_SPECS_TRANSPORT_TOKEN_VALIDATION_MAX_SIZE=0 disables the cache
+  # entirely. tb-core writes to this cache on every device credentials change (a delete or a
+  # revoked marker) regardless of the transport flags below.
   validation_cache:
     # Enable transport-side caching of device token validation results
     enabled: "${TRANSPORT_VALIDATION_CACHE_ENABLED:false}"

@@ -42,6 +42,9 @@ zk:
 cache:
   # caffeine or redis
   type: "${CACHE_TYPE:redis}"
+  # Prefix prepended to every Redis cache key. Must match the CACHE_KEY_PREFIX of tb-core,
+  # otherwise caches shared with tb-core (e.g. the transport token validation cache) do not line up.
+  key_prefix: "${CACHE_KEY_PREFIX:}"
   # Deliberately placed outside the 'specs' group above
   entityLimits:
     timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_LIMITS_TTL:5}" # Entity limits cache TTL

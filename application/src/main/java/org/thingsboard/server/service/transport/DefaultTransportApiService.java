@@ -254,6 +254,7 @@ public class DefaultTransportApiService implements TransportApiService {
     protected TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain, boolean supportsProfileCaching) {
         List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
                 EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
+        boolean provisionFailed = false;
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
             DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
@@ -269,7 +270,8 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
                         return getDeviceInfo(provisionResponse.getDeviceCredentials(), supportsProfileCaching);
                     }
-                    return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
+                    // keep walking the chain as before; remember the failure so it is not reported as unknown credentials
+                    provisionFailed = true;
                 } catch (ProvisionFailedException e) {
                     log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
                     return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
@@ -278,7 +280,8 @@ public class DefaultTransportApiService implements TransportApiService {
                 log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
-        return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
+        return getEmptyTransportApiResponse(provisionFailed ?
+                CredentialsValidationResult.VALIDATION_INTERNAL_ERROR : CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
     }
 
     private TransportApiResponseMsg validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
