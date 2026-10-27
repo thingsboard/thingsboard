@@ -54,6 +54,23 @@ public class SysAdminAllowlistPropertiesTest {
     }
 
     @Test
+    void nativeForwardHeadersStrategyFailsStartupWhenEnforced() {
+        SysAdminAllowlistProperties props = new SysAdminAllowlistProperties(
+                List.of("203.0.113.10"), List.of(), "native");
+        assertThatThrownBy(props::init)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("native");
+    }
+
+    @Test
+    void nativeForwardHeadersStrategyAllowedWhenNotEnforced() {
+        SysAdminAllowlistProperties props = new SysAdminAllowlistProperties(
+                List.of(), List.of(), "native");
+        props.init();
+        assertThat(props.isEnforced()).isFalse();
+    }
+
+    @Test
     void trustedProxiesParsedIndependently() {
         SysAdminAllowlistProperties props = new SysAdminAllowlistProperties(
                 List.of(), List.of("10.0.0.0/8"));

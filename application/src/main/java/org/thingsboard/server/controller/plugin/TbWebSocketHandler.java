@@ -373,7 +373,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private void checkSysAdminIpAllowed(SecurityUser user, WebSocketSession session) {
         InetAddress resolved = sessionAddress(session, org.thingsboard.server.config.ClientAddressCaptureFilter.RESOLVED_CLIENT_ADDRESS_ATTR);
         InetAddress socket = sessionAddress(session, org.thingsboard.server.config.ClientAddressCaptureFilter.RAW_SOCKET_ADDRESS_ATTR);
-        if (sysAdminIpPolicy.isBlocked(user.getAuthority(), user.getTenantId(), user.getId(), resolved, socket, "ws")) {
+        if (sysAdminIpPolicy.isBlocked(user, resolved, socket, "ws")) {
             throw new IpNotAllowedException();
         }
     }
@@ -381,6 +381,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private static InetAddress sessionAddress(WebSocketSession session, String attribute) {
         if (session.getAttributes().get(attribute) instanceof InetAddress address) {
             return address;
+        }
+        if (session.getAttributes().get(org.thingsboard.server.config.ClientAddressCaptureFilter.CAPTURE_DONE_ATTR) != null) {
+            // capture ran on the handshake but resolution failed: fail closed
+            return null;
         }
         InetSocketAddress remote = session.getRemoteAddress();
         return remote != null ? remote.getAddress() : null;

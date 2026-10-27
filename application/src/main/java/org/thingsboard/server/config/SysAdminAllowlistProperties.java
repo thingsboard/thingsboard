@@ -21,21 +21,37 @@ public class SysAdminAllowlistProperties {
 
     private final List<String> allowedAddresses;
     private final List<String> trustedProxies;
+    private final String forwardHeadersStrategy;
 
     private List<CidrRange> allowedRanges;
     private List<CidrRange> trustedProxyRanges;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public SysAdminAllowlistProperties(
             @Value("${security.sysadmin_allowlist.allowed_addresses:}") List<String> allowedAddresses,
-            @Value("${security.sysadmin_allowlist.trusted_proxies:}") List<String> trustedProxies) {
+            @Value("${security.sysadmin_allowlist.trusted_proxies:}") List<String> trustedProxies,
+            @Value("${server.forward_headers_strategy:framework}") String forwardHeadersStrategy) {
         this.allowedAddresses = allowedAddresses;
         this.trustedProxies = trustedProxies;
+        this.forwardHeadersStrategy = forwardHeadersStrategy;
+    }
+
+    public SysAdminAllowlistProperties(List<String> allowedAddresses, List<String> trustedProxies) {
+        this(allowedAddresses, trustedProxies, "framework");
     }
 
     @PostConstruct
     public void init() {
         allowedRanges = parse(allowedAddresses, "security.sysadmin_allowlist.allowed_addresses");
         trustedProxyRanges = parse(trustedProxies, "security.sysadmin_allowlist.trusted_proxies");
+        if (!allowedRanges.isEmpty() && "native".equalsIgnoreCase(forwardHeadersStrategy)) {
+            // under the native strategy the servlet container rewrites the peer address from
+            // forwarded headers below this application's capture, using the container's own
+            // trusted ranges - the allowlist could then be bypassed from any private network
+            throw new IllegalStateException("security.sysadmin_allowlist cannot be enforced with "
+                    + "server.forward_headers_strategy=native; use the default 'framework' strategy and "
+                    + "configure security.sysadmin_allowlist.trusted_proxies instead");
+        }
         if (allowedRanges.isEmpty()) {
             log.info("Sysadmin IP allowlist is disabled (no allowed addresses configured)");
         } else {

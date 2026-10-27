@@ -14,10 +14,12 @@ import java.util.List;
 /**
  * Resolves the effective client address from the TCP peer address and the X-Forwarded-For chain
  * using the rightmost-untrusted algorithm: forwarded headers are honored only when presented by
- * a configured trusted proxy (loopback is always trusted), and the first address that is not a
- * trusted proxy, scanning right to left, is the client. A malformed entry stops the scan and the
- * last trusted address wins (fail closed), so header forgery can never move the result towards
- * an attacker-chosen address.
+ * a configured trusted proxy, and the first address that is not a trusted proxy, scanning right
+ * to left, is the client. Loopback is trusted only for requests that carry the per-boot internal
+ * forwarding token (the node's own loopback calls), never for arbitrary server-side processes,
+ * so a sysadmin credential replayed through an in-cluster HTTP hop cannot forge its origin.
+ * A malformed entry resolves to {@code null}, which blocks sysadmin-scoped principals (fail
+ * closed): header forgery can never move the result towards an attacker-chosen address.
  */
 @Component
 public class ClientAddressResolver {
@@ -28,8 +30,11 @@ public class ClientAddressResolver {
         this.properties = properties;
     }
 
-    public InetAddress resolve(InetAddress socketAddress, List<String> forwardedForValues) {
-        if (socketAddress == null || !isTrustedProxy(socketAddress)) {
+    public InetAddress resolve(InetAddress socketAddress, List<String> forwardedForValues, boolean internallyForwarded) {
+        if (socketAddress == null) {
+            return null;
+        }
+        if (!isTrustedProxy(socketAddress, internallyForwarded)) {
             return socketAddress;
         }
         List<String> chain = splitChain(forwardedForValues);
@@ -37,9 +42,9 @@ public class ClientAddressResolver {
         for (int i = chain.size() - 1; i >= 0; i--) {
             InetAddress entry = parseQuietly(chain.get(i));
             if (entry == null) {
-                return lastTrusted;
+                return null;
             }
-            if (isTrustedProxy(entry)) {
+            if (isTrustedProxy(entry, internallyForwarded)) {
                 lastTrusted = entry;
             } else {
                 return entry;
@@ -48,8 +53,8 @@ public class ClientAddressResolver {
         return lastTrusted;
     }
 
-    private boolean isTrustedProxy(InetAddress address) {
-        if (address.isLoopbackAddress()) {
+    private boolean isTrustedProxy(InetAddress address, boolean internallyForwarded) {
+        if (internallyForwarded && address.isLoopbackAddress()) {
             return true;
         }
         for (CidrRange range : properties.getTrustedProxyRanges()) {

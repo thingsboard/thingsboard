@@ -24,6 +24,9 @@ public class ClientAddressHandshakeInterceptor implements HandshakeInterceptor {
         if (request instanceof ServletServerHttpRequest servletRequest) {
             copyAttribute(servletRequest, attributes, ClientAddressCaptureFilter.RESOLVED_CLIENT_ADDRESS_ATTR);
             copyAttribute(servletRequest, attributes, ClientAddressCaptureFilter.RAW_SOCKET_ADDRESS_ATTR);
+            if (servletRequest.getServletRequest().getAttribute(ClientAddressCaptureFilter.CAPTURE_DONE_ATTR) != null) {
+                attributes.put(ClientAddressCaptureFilter.CAPTURE_DONE_ATTR, Boolean.TRUE);
+            }
         }
         return true;
     }

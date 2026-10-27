@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.auth.rest;
 
-import com.google.common.net.InetAddresses;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import org.thingsboard.server.config.ClientAddressCaptureFilter;
@@ -24,23 +23,8 @@ public class RestAuthenticationDetails implements Serializable {
     public RestAuthenticationDetails(HttpServletRequest request) {
         this.clientAddress = request.getRemoteAddr();
         this.userAgent = getUserAgent(request);
-        this.resolvedAddress = addressAttribute(request, ClientAddressCaptureFilter.RESOLVED_CLIENT_ADDRESS_ATTR);
-        this.rawSocketAddress = addressAttribute(request, ClientAddressCaptureFilter.RAW_SOCKET_ADDRESS_ATTR);
-    }
-
-    private static InetAddress addressAttribute(HttpServletRequest request, String attribute) {
-        if (request.getAttribute(attribute) instanceof InetAddress address) {
-            return address;
-        }
-        String remoteAddr = request.getRemoteAddr();
-        if (remoteAddr == null || remoteAddr.isBlank()) {
-            return null;
-        }
-        try {
-            return InetAddresses.forString(remoteAddr);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        this.resolvedAddress = ClientAddressCaptureFilter.resolvedClientAddress(request);
+        this.rawSocketAddress = ClientAddressCaptureFilter.rawSocketAddress(request);
     }
 
     private static Client getUserAgent(HttpServletRequest request) {

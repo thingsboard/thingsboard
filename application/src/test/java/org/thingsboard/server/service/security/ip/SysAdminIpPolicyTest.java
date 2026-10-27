@@ -103,6 +103,18 @@ public class SysAdminIpPolicyTest {
     }
 
     @Test
+    void sysAdminOwnedCredentialScopedEvenWhenImpersonatingTenantUser() {
+        SysAdminIpPolicy policy = policy(List.of("203.0.113.0/24"));
+        SecurityUser impersonated = new SecurityUser(userId());
+        impersonated.setAuthority(Authority.TENANT_ADMIN);
+        impersonated.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        assertThat(policy.isBlocked(impersonated, addr("9.9.9.9"), addr("9.9.9.9"), "rest")).isFalse();
+        impersonated.setSysAdminOwnedCredential(true);
+        assertThat(policy.isBlocked(impersonated, addr("9.9.9.9"), addr("9.9.9.9"), "rest")).isTrue();
+        assertThat(policy.isBlocked(impersonated, addr("203.0.113.5"), addr("203.0.113.5"), "rest")).isFalse();
+    }
+
+    @Test
     void enforceThrowsForBlockedSysAdmin() {
         SysAdminIpPolicy policy = policy(List.of("203.0.113.0/24"));
         SecurityUser user = sysAdmin();

@@ -16,13 +16,15 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The embedded server is reached over loopback, which the address resolver implicitly trusts as a
- * proxy, so the X-Forwarded-For header steers the resolved client address end to end: through the
- * capture servlet filter on the WS handshake, the handshake interceptor, and the handler's check.
+ * The embedded server is reached over loopback, which this test's configuration explicitly lists
+ * as a trusted proxy, so the X-Forwarded-For header steers the resolved client address end to
+ * end: through the capture servlet filter on the WS handshake, the handshake interceptor, and
+ * the handler's check.
  */
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "security.sysadmin_allowlist.allowed_addresses=127.0.0.1,::1,203.0.113.0/24"
+        "security.sysadmin_allowlist.allowed_addresses=127.0.0.1,::1,203.0.113.0/24",
+        "security.sysadmin_allowlist.trusted_proxies=127.0.0.1,::1"
 })
 public class WsAllowlistTest extends AbstractControllerTest {
 

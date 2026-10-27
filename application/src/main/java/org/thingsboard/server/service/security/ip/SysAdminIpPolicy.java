@@ -4,7 +4,6 @@ package org.thingsboard.server.service.security.ip;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.net.InetAddresses;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,7 +48,9 @@ public class SysAdminIpPolicy {
     }
 
     public boolean isSysAdminScoped(SecurityUser user) {
-        return isSysAdminScoped(user.getAuthority(), user.getTenantId());
+        // credentials owned by a system administrator stay sysadmin-scoped even when they
+        // impersonate another user (internal API keys with X-User-Id / X-Customer-Id)
+        return user.isSysAdminOwnedCredential() || isSysAdminScoped(user.getAuthority(), user.getTenantId());
     }
 
     public boolean isAllowed(InetAddress address) {
@@ -80,25 +81,28 @@ public class SysAdminIpPolicy {
         return true;
     }
 
+    /**
+     * SecurityUser-based variant: additionally treats sysadmin-owned impersonating credentials as scoped.
+     */
+    public boolean isBlocked(SecurityUser user, InetAddress clientAddress, InetAddress socketAddress, String surface) {
+        if (!isEnforced() || !isSysAdminScoped(user)) {
+            return false;
+        }
+        if (isAllowed(clientAddress)) {
+            return false;
+        }
+        logBlocked(clientAddress, socketAddress, surface, user.getId());
+        return true;
+    }
+
     public void enforce(SecurityUser user, HttpServletRequest request, String surface) throws IpNotAllowedException {
-        if (isBlocked(user.getAuthority(), user.getTenantId(), user.getId(),
-                resolveFromRequest(request), rawSocketAddress(request), surface)) {
+        if (isBlocked(user, resolveFromRequest(request), ClientAddressCaptureFilter.rawSocketAddress(request), surface)) {
             throw new IpNotAllowedException();
         }
     }
 
     public InetAddress resolveFromRequest(HttpServletRequest request) {
-        if (request.getAttribute(ClientAddressCaptureFilter.RESOLVED_CLIENT_ADDRESS_ATTR) instanceof InetAddress resolved) {
-            return resolved;
-        }
-        return parseQuietly(request.getRemoteAddr());
-    }
-
-    private static InetAddress rawSocketAddress(HttpServletRequest request) {
-        if (request.getAttribute(ClientAddressCaptureFilter.RAW_SOCKET_ADDRESS_ATTR) instanceof InetAddress socket) {
-            return socket;
-        }
-        return parseQuietly(request.getRemoteAddr());
+        return ClientAddressCaptureFilter.resolvedClientAddress(request);
     }
 
     private static boolean isSysAdminScoped(Authority authority, TenantId tenantId) {
@@ -119,17 +123,6 @@ public class SysAdminIpPolicy {
                     socketAddress != null ? socketAddress.getHostAddress() : "unknown",
                     surface,
                     userId != null ? userId.getId() : "unknown");
-        }
-    }
-
-    private static InetAddress parseQuietly(String literal) {
-        if (literal == null || literal.isBlank()) {
-            return null;
-        }
-        try {
-            return InetAddresses.forString(literal);
-        } catch (IllegalArgumentException e) {
-            return null;
         }
     }
 
