@@ -110,8 +110,8 @@ export const installMethodLabels = new Map<string, string>(
     [InstallMethod.INTEGRATION_TCP, 'TCP Integration'],
     [InstallMethod.INTEGRATION_THINGPARK, 'ThingPark Wireless'],
     [InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE, 'ThingPark Enterprise'],
-    [InstallMethod.INTEGRATION_TTI, 'The Things Industries'],
-    [InstallMethod.INTEGRATION_TTN, 'The Things Stack'],
+    [InstallMethod.INTEGRATION_TTI, 'The Things Stack Cloud'],
+    [InstallMethod.INTEGRATION_TTN, 'The Things Stack Sandbox'],
     [InstallMethod.INTEGRATION_TUYA, 'Tuya'],
     [InstallMethod.INTEGRATION_UDP, 'UDP Integration']
   ]
@@ -279,8 +279,40 @@ export interface FormFieldDefinition {
   // (tb-secret-key-input); false / undefined → render the typed widget.
   secretSupport?: boolean;
   secretType?: SecretType;
+  // Fields with the same group get one header above the first of them
   group?: string;
+  readOnly?: boolean;
+  // Shown inside the empty field; the label then always stays above it
+  placeholder?: string;
+  // Fills the field from other fields of the form, e.g. "TTN – ${appId}", until the user edits it.
+  // defaultValue stays the value for ThingsBoard versions that don't know this attribute.
+  defaultValueTemplate?: string;
+  // Replaces helpText when defaultValueTemplate fills the field
+  defaultValueTemplateHelpText?: string;
+  // 'advanced' puts the field into the collapsed Advanced settings panel below the form
+  section?: FormFieldSection;
+  // Shows the Check connection button of the integration the form configures under this field
+  checkConnection?: boolean;
+  // A regular expression whose matches are removed from the value when the user leaves the field
+  // and before the step is committed, e.g. "@ttn$" for an ID copied with its suffix.
+  // validators check the cleaned value.
+  cleanupPattern?: string;
+  // Set by the install dialog for the fields it adds, not by packages:
+  // help popup shown under the field, and the text of its trigger
+  helpPopupId?: string;
+  helpPopupText?: string;
+  // Shown when the field fails a validator the dialog adds (not on required)
+  errorMessage?: string;
+  // Consecutive fields with the same row are shown on one line. A field with a width (px) keeps it;
+  // the other fields of the row share the remaining space.
+  row?: string;
+  width?: number;
 }
+
+export type FormFieldSection = 'advanced';
+
+export const cleanFormFieldValue = (field: FormFieldDefinition, value: any): any =>
+  field.cleanupPattern && typeof value === 'string' ? value.replace(new RegExp(field.cleanupPattern, 'g'), '') : value;
 
 export interface EntityStepOutput {
   id: string;

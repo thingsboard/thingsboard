@@ -1,12 +1,13 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="flex flex-col gap-5 p-6">
   <h2 class="tb-iot-hub-delete-title">{{ 'iot-hub.remove-confirm-title' | translate:{ name: data.itemName } }}</h2>
-  <p class="tb-iot-hub-delete-desc">{{ (data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc') | translate }}</p>
+  <p class="tb-iot-hub-delete-desc">{{ description }}</p>
 </div>
 <div class="flex items-center justify-end gap-2 p-2">
   <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>

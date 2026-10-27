@@ -103,6 +103,17 @@ export interface ItemPublishedVersionInfo {
   publishedVersion: string;
 }
 
+/** An entity that deleting an installed item keeps, because other installed items use it too. */
+export interface IotHubKeptEntity {
+  entityId: { id: string; entityType: string };
+  name: string;
+}
+
+export interface IotHubInstalledItemKeptEntities {
+  entities: IotHubKeptEntity[];
+  usedByItemsCount: number;
+}
+
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
   itemId: string;
   itemVersionId: string;
@@ -112,7 +123,8 @@ export interface IotHubInstalledItem extends BaseData<{id: string}> {
   descriptor: IotHubInstalledItemDescriptor;
 }
 
-export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null => {
+/** The entity the Open action of an installed item opens, and its URL. */
+export const getInstalledItemTarget = (descriptor?: IotHubInstalledItemDescriptor): { url: string; entityType: EntityType } | null => {
   if (!descriptor) {
     return null;
   }
@@ -125,10 +137,12 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
         entityId = descriptor.dashboardId?.id;
         entityType = EntityType.DASHBOARD;
       } else if (descriptor.createdEntityIds) {
-        const found = descriptor.createdEntityIds.find(id => id.entityType === EntityType.DEVICE);
+        // A gateway package (e.g. TTN) creates no device, only a converter and an integration
+        const found = descriptor.createdEntityIds.find(id => id.entityType === EntityType.DEVICE)
+          ?? descriptor.createdEntityIds.find(id => id.entityType === EntityType.INTEGRATION);
         if (found) {
           entityId = found.id;
-          entityType = EntityType.DEVICE;
+          entityType = found.entityType as EntityType;
         }
       }
       break;
@@ -160,7 +174,10 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     } else {
        url = getEntityDetailsPageURL(entityId, entityType);
     }
-    return url;
+    return url ? { url, entityType } : null;
   }
   return null;
 }
+
+export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor): string | null =>
+  getInstalledItemTarget(descriptor)?.url ?? null;

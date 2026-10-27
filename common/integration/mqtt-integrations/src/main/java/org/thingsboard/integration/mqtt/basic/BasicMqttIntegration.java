@@ -101,6 +101,8 @@ public class BasicMqttIntegration extends AbstractMqttIntegration<BasicMqttInteg
         try {
             mqttClientConfiguration = getClientConfiguration(configuration, MqttClientConfiguration.class);
             log.debug("mqttClientConfiguration from JSON: {}", mqttClientConfiguration);
+            // The same setup as a running integration, e.g. TTN expands a region to the full host
+            setupConfiguration(mqttClientConfiguration);
             if (mqttClientConfiguration.getConnectTimeoutSec() > ctx.getIntegrationConnectTimeoutSec() && ctx.getIntegrationConnectTimeoutSec() > 0) {
                 log.debug("Reduce connection timeout sec down to the limit [{}]", mqttClientConfiguration.getConnectTimeoutSec());
                 mqttClientConfiguration.setConnectTimeoutSec(ctx.getIntegrationConnectTimeoutSec());

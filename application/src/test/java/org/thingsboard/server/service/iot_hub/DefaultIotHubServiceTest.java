@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,14 +14,27 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +62,16 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private DeviceService deviceService;
+    @Mock
+    private EntityService entityService;
+    @Mock
+    private TbDeviceService tbDeviceService;
+    @Mock
+    private DashboardService dashboardService;
+    @Mock
+    private TbDashboardService tbDashboardService;
 
     @Spy
     @InjectMocks
@@ -411,4 +435,72 @@ class DefaultIotHubServiceTest {
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
     }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsEntitiesAnotherDevicePackageUses() {
+        mockTenant();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(deviceId, sharedDashboardId);
+        IotHubInstalledItem other = devicePackage(sharedDashboardId);
+        other.setItemName("Other package");
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted, other), 1, 2, false));
+        Device device = new Device(deviceId);
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        verify(tbDeviceService).delete(device, user);
+        verify(dashboardService, never()).findDashboardById(any(), any());
+        verify(tbDashboardService, never()).delete(any(), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, deleted.getId());
+    }
+
+    @Test
+    void findKeptEntities_devicePackage_namesTheSharedEntitiesAndCountsTheOtherPackages() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DashboardId sharedDashboardId = new DashboardId(UUID.randomUUID());
+        DeviceProfileId sharedProfileId = new DeviceProfileId(UUID.randomUUID());
+        IotHubInstalledItem checked = devicePackage(sharedProfileId, deviceId, sharedDashboardId);
+        IotHubInstalledItem first = devicePackage(sharedProfileId, sharedDashboardId);
+        IotHubInstalledItem second = devicePackage(sharedDashboardId);
+        IotHubInstalledItem unrelated = devicePackage(new DeviceId(UUID.randomUUID()));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, first, second, unrelated), 1, 4, false));
+        when(entityService.fetchEntityName(tenantId, sharedProfileId)).thenReturn(Optional.of("Shared profile"));
+        when(entityService.fetchEntityName(tenantId, sharedDashboardId)).thenReturn(Optional.of("Shared dashboard"));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).containsExactly(
+                new InstalledItemKeptEntities.KeptEntity(sharedProfileId, "Shared profile"),
+                new InstalledItemKeptEntities.KeptEntity(sharedDashboardId, "Shared dashboard"));
+        assertThat(kept.getUsedByItemsCount()).isEqualTo(2);
+    }
+
+    @Test
+    void findKeptEntities_devicePackageSharingNothing_keepsNothing() {
+        IotHubInstalledItem checked = devicePackage(new DeviceId(UUID.randomUUID()));
+        IotHubInstalledItem other = devicePackage(new DeviceId(UUID.randomUUID()));
+        when(iotHubInstalledItemService.findById(tenantId, checked.getId())).thenReturn(checked);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(checked, other), 1, 2, false));
+
+        InstalledItemKeptEntities kept = service.findKeptEntities(tenantId, checked.getId());
+
+        assertThat(kept.getEntities()).isEmpty();
+        assertThat(kept.getUsedByItemsCount()).isZero();
+    }
+
+    private IotHubInstalledItem devicePackage(EntityId... createdEntityIds) {
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.of(createdEntityIds));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        return item;
+    }
+
 }

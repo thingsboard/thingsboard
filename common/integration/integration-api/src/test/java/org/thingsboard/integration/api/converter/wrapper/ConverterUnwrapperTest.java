@@ -197,6 +197,22 @@ public class ConverterUnwrapperTest {
     }
 
     @Test
+    public void thingsStackConverterWrapperTakesCodingRateFromLoraDataRateAndChannelFromStrongestGateway() throws Exception {
+        ConverterUnwrapper wrapper = ConverterUnwrapperFactory.getUnwrapper(IntegrationType.TTN).get();
+        ObjectNode payloadMsg = JacksonUtil.fromString(readPayloadFromFile("ThingsStackPayload.json"), ObjectNode.class);
+        ObjectNode settings = (ObjectNode) payloadMsg.at("/uplink_message/settings");
+        settings.remove("coding_rate");
+        ((ObjectNode) settings.at("/data_rate/lora")).put("coding_rate", "4/6");
+        ((ObjectNode) payloadMsg.at("/uplink_message/rx_metadata/0")).put("channel_index", 3);
+        ((ObjectNode) payloadMsg.at("/uplink_message/rx_metadata/1")).put("channel_index", 5);
+
+        Map<String, Object> kvMap = wrapper.unwrap(JacksonUtil.writeValueAsBytes(payloadMsg),
+                new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond().getKvMap();
+
+        assertThat(kvMap).containsEntry("codeRate", "4/6").containsEntry("channel", 3).containsEntry("rssi", -22);
+    }
+
+    @Test
     public void thingsParkConverterWrapperTest() throws Exception {
         ConverterUnwrapper wrapper = ConverterUnwrapperFactory.getUnwrapper(IntegrationType.THINGPARK).get();
 

@@ -58,7 +58,22 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
                 .put("simulated", "/simulated")
                 .put("rssi", "")
                 .put("snr", "")
+                .put("channel", "")
                 .build();
+    }
+
+    @Override
+    protected void addGatewayAdditionalInfo(Map<String, Object> kvMap, JsonNode payloadJson) {
+        super.addGatewayAdditionalInfo(kvMap, payloadJson);
+        JsonNode rxMetadata = findByMaxRssi(payloadJson.at(getGatewayInfoPath()));
+        if (rxMetadata != null && rxMetadata.has("channel_index")) {
+            kvMap.put("channel", rxMetadata.get("channel_index").asInt());
+        }
+        // The Things Stack moved the coding rate from the settings into the LoRa data rate
+        JsonNode loraCodingRate = payloadJson.at("/uplink_message/settings/data_rate/lora/coding_rate");
+        if (!kvMap.containsKey("codeRate") && loraCodingRate.isTextual()) {
+            kvMap.put("codeRate", loraCodingRate.asText());
+        }
     }
 
     @Override

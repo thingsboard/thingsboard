@@ -1,7 +1,8 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-installed-table-container flex flex-1 flex-col overflow-hidden rounded-lg">
@@ -88,9 +89,12 @@
                 <mat-icon>info_outline</mat-icon>
               </button>
             }
-            <button mat-icon-button (click)="openEntity(item)" matTooltip="{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}">
-              <mat-icon>open_in_new</mat-icon>
-            </button>
+            <!-- The tooltip sits on a wrapper: a disabled button shows none -->
+            <span matTooltip="{{ openLabel(item) }}">
+              <button mat-icon-button (click)="openEntity(item)" [disabled]="!canOpen(item)">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            </span>
             <button mat-icon-button (click)="deleteItem(item)" matTooltip="{{ 'iot-hub.remove' | translate }}">
               <tb-icon>mdi:trash-can-outline</tb-icon>
             </button>
@@ -107,9 +111,9 @@
                   <span>{{ (item.itemType === 'DEVICE' ? 'iot-hub.review-device-instructions' : 'iot-hub.view-item-details') | translate }}</span>
                 </button>
               }
-              <button mat-menu-item (click)="openEntity(item)">
+              <button mat-menu-item (click)="openEntity(item)" [disabled]="!canOpen(item)">
                 <mat-icon>open_in_new</mat-icon>
-                <span>{{ (item.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.goto-main-dashboard' : 'iot-hub.open-item-type') | translate:{ type: getItemTypeLabel(item.itemType) } }}</span>
+                <span>{{ openLabel(item) }}</span>
               </button>
               <button mat-menu-item (click)="deleteItem(item)">
                 <tb-icon>mdi:trash-can-outline</tb-icon>

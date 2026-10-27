@@ -4,12 +4,13 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
-import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DeviceInstalledItemDescriptor, IotHubInstalledItem, IotHubInstalledItemKeptEntities } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemDialogResult } from './iot-hub-add-item-dialog.component';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
@@ -35,7 +36,8 @@ export class IotHubActionsService {
     private dialog: MatDialog,
     private dialogService: DialogService,
     private translate: TranslateService,
-    private builtInService: IotHubBuiltInService
+    private builtInService: IotHubBuiltInService,
+    private iotHubApiService: IotHubApiService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -166,12 +168,18 @@ export class IotHubActionsService {
     if (!installedItem) {
       return of(false);
     }
-    return this.dialog.open<TbIotHubDeleteDialogComponent, IotHubDeleteDialogData, boolean>(TbIotHubDeleteDialogComponent, {
-      panelClass: ['tb-dialog'],
-      disableClose: true,
-      autoFocus: false,
-      data: { installedItemId: installedItem.id.id, itemName: installedItem.itemName, itemType: installedItem.itemType }
-    }).afterClosed();
+    // A device package keeps what other installed packages use: the dialog opens with that already known
+    const keptEntities$: Observable<IotHubInstalledItemKeptEntities | null> = installedItem.itemType === 'DEVICE' ?
+      this.iotHubApiService.getInstalledItemKeptEntities(installedItem.id.id, {ignoreErrors: true}).pipe(catchError(() => of(null))) :
+      of(null);
+    return keptEntities$.pipe(
+      switchMap(keptEntities => this.dialog.open<TbIotHubDeleteDialogComponent, IotHubDeleteDialogData, boolean>(TbIotHubDeleteDialogComponent, {
+        panelClass: ['tb-dialog'],
+        disableClose: true,
+        autoFocus: false,
+        data: { installedItemId: installedItem.id.id, itemName: installedItem.itemName, itemType: installedItem.itemType, keptEntities }
+      }).afterClosed())
+    );
   }
 
   // Reached only for items whose action mode is 'connect', i.e. never for built-in content:

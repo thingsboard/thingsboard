@@ -49,13 +49,43 @@
       }
 
       @case ('form') {
-        <div class="tb-device-install-form flex flex-col gap-2 p-6">
+        <div class="tb-device-install-form p-6">
           <tb-install-form-renderer
             [fields]="ws.formFields"
             [formGroup]="ws.formGroup"
             [resolveImagePath]="resolveImagePathFn"
-            [reviewMode]="reviewMode">
+            [reviewMode]="reviewMode"
+            [checkConnectionTemplate]="connectionCheckOf(ws) && hasCheckConnectionField(ws) ? checkConnectionTpl : null">
           </tb-install-form-renderer>
+          <ng-template #checkConnectionTpl>
+            <div class="flex items-center gap-4">
+              <button mat-stroked-button color="primary" type="button"
+                      [disabled]="connectionCheckResult(ws) === 'checking'"
+                      (click)="checkConnection(ws)">
+                {{ 'iot-hub.check-connection' | translate }}
+              </button>
+              @switch (connectionCheckMessage(ws)) {
+                @case ('checking') {
+                  <mat-spinner diameter="20"></mat-spinner>
+                }
+                @case ('success') {
+                  <span class="tb-connection-check-result flex items-center gap-2">
+                    <mat-icon>check_circle</mat-icon>
+                    {{ 'iot-hub.connection-check-success' | translate }}
+                  </span>
+                }
+                @case ('error') {
+                  <span class="tb-connection-check-result tb-connection-check-error flex items-center gap-2">
+                    <mat-icon>error</mat-icon>
+                    {{ 'iot-hub.connection-check-failed' | translate }}
+                  </span>
+                }
+              }
+            </div>
+          </ng-template>
+          @if (connectionCheckOf(ws) && !hasCheckConnectionField(ws)) {
+            <ng-container *ngTemplateOutlet="checkConnectionTpl"></ng-container>
+          }
         </div>
       }
 
@@ -207,7 +237,7 @@
 
         @for (ws of wizardSteps; track ws.label) {
           <mat-step [editable]="true"
-                    [completed]="ws.completed"
+                    [completed]="ws.completed && !ws.formGroup?.invalid"
                     [stepControl]="ws.type === 'form' ? ws.formGroup : null">
             <ng-template matStepLabel>{{ ws.label }}</ng-template>
             <ng-container *ngTemplateOutlet="stepContent; context: { $implicit: ws }"></ng-container>
@@ -252,7 +282,11 @@
           @case ('form') {
             <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
             <button mat-stroked-button color="primary" (click)="nextStep()">
-              {{ 'action.next' | translate }}@if (nextWizardStepLabel) {: {{ nextWizardStepLabel }}}
+              @if (continueAnyway) {
+                {{ 'iot-hub.continue-anyway' | translate }}
+              } @else {
+                {{ 'action.next' | translate }}@if (nextWizardStepLabel) {: {{ nextWizardStepLabel }}}
+              }
             </button>
           }
           @case ('progress') {
