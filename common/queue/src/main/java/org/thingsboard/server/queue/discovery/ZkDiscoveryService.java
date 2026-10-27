@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.queue.discovery;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -33,7 +20,7 @@ import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.curator.retry.RetryForever;
 import org.apache.curator.utils.CloseableUtils;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -45,12 +32,14 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.curator.framework.recipes.cache.CuratorCacheAccessor.parentPathFilter;
@@ -116,19 +105,31 @@ public class ZkDiscoveryService implements DiscoveryService {
 
     @Override
     public List<TransportProtos.ServiceInfo> getOtherServers() {
+        String currentServiceId = serviceInfoProvider.getServiceInfo().getServiceId();
         return cache.stream()
                 .filter(parentPathFilter(zkNodesDir))
                 .filter(cd -> !cd.getPath().equals(nodePath))
                 .map(cd -> {
                     try {
-                        return TransportProtos.ServiceInfo.parseFrom(cd.getData());
+                        return new Registration(cd, TransportProtos.ServiceInfo.parseFrom(cd.getData()));
                     } catch (NoSuchElementException | InvalidProtocolBufferException e) {
                         log.error("Failed to decode ZK node", e);
                         throw new RuntimeException(e);
                     }
                 })
+                .filter(r -> !r.info().getServiceId().equals(currentServiceId))
+                // Orders ZK registrations by creation, so that a re-registration wins over a stale node of the same service.
+                // Uses the creation zxid: ZooKeeper's transaction id, which grows across leader changes and is the same
+                // on every client. ctime/mtime are not used, as they come from the leader's wall clock and may go backwards.
+                .collect(Collectors.toMap(r -> r.info().getServiceId(), Function.identity(),
+                        (a, b) -> b.data().getStat().getCzxid() > a.data().getStat().getCzxid() ? b : a,
+                        LinkedHashMap::new))
+                .values().stream()
+                .map(Registration::info)
                 .collect(Collectors.toList());
     }
+
+    private record Registration(ChildData data, TransportProtos.ServiceInfo info) {}
 
     @Override
     public boolean isMonolith() {
@@ -159,21 +160,26 @@ public class ZkDiscoveryService implements DiscoveryService {
     @SneakyThrows
     public synchronized void publishCurrentServer() {
         TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
-        if (currentServerExists()) {
-            log.trace("[{}] Updating ZK node for current instance: {}", self.getServiceId(), nodePath);
-            client.setData().forPath(nodePath, serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo().toByteArray());
-        } else {
-            try {
-                log.info("[{}] Creating ZK node for current instance", self.getServiceId());
-                nodePath = client.create()
-                        .creatingParentsIfNeeded()
-                        .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/", self.toByteArray());
-                log.info("[{}] Created ZK node for current instance: {}", self.getServiceId(), nodePath);
-                client.getConnectionStateListenable().addListener(checkReconnect(self));
-            } catch (Exception e) {
-                log.error("Failed to create ZK node", e);
-                throw new RuntimeException(e);
+        switch (getCurrentServerNodeState()) {
+            case PRESENT -> {
+                log.trace("[{}] Updating ZK node for current instance: {}", self.getServiceId(), nodePath);
+                client.setData().forPath(nodePath, serviceInfoProvider.generateNewServiceInfoWithCurrentSystemInfo().toByteArray());
             }
+            case ABSENT -> {
+                try {
+                    log.info("[{}] Creating ZK node for current instance", self.getServiceId());
+                    nodePath = client.create()
+                            .creatingParentsIfNeeded()
+                            .withProtection()
+                            .withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(zkNodesDir + "/node-", self.toByteArray());
+                    log.info("[{}] Created ZK node for current instance: {}", self.getServiceId(), nodePath);
+                    client.getConnectionStateListenable().addListener(checkReconnect(self));
+                } catch (Exception e) {
+                    log.error("Failed to create ZK node", e);
+                    throw new RuntimeException(e);
+                }
+            }
+            case UNKNOWN -> log.debug("[{}] Skipping ZK node publish, node state is unknown", self.getServiceId());
         }
     }
 
@@ -190,23 +196,35 @@ public class ZkDiscoveryService implements DiscoveryService {
         }
     }
 
-    private boolean currentServerExists() {
+    private NodeState getCurrentServerNodeState() {
         if (nodePath == null) {
-            return false;
+            return NodeState.ABSENT;
         }
         try {
-            TransportProtos.ServiceInfo self = serviceInfoProvider.getServiceInfo();
-            TransportProtos.ServiceInfo registeredServerInfo = null;
-            registeredServerInfo = TransportProtos.ServiceInfo.parseFrom(client.getData().forPath(nodePath));
-            if (self.equals(registeredServerInfo)) {
-                return true;
+            Stat stat = client.checkExists().forPath(nodePath);
+            if (stat == null) {
+                log.info("ZK node does not exist: {}", nodePath);
+                return NodeState.ABSENT;
             }
-        } catch (KeeperException.NoNodeException e) {
-            log.info("ZK node does not exist: {}", nodePath);
+            long sessionId = client.getZookeeperClient().getZooKeeper().getSessionId();
+            if (stat.getEphemeralOwner() != sessionId) {
+                log.warn("ZK node {} is owned by another session 0x{}, current session 0x{}",
+                        nodePath, Long.toHexString(stat.getEphemeralOwner()), Long.toHexString(sessionId));
+                return NodeState.ABSENT;
+            }
+            return NodeState.PRESENT;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Interrupted while checking if ZK node exists", e);
+            return NodeState.UNKNOWN;
         } catch (Exception e) {
             log.error("Couldn't check if ZK node exists", e);
+            return NodeState.UNKNOWN;
         }
-        return false;
+    }
+
+    private enum NodeState {
+        PRESENT, ABSENT, UNKNOWN
     }
 
     private ConnectionStateListener checkReconnect(TransportProtos.ServiceInfo self) {
@@ -326,6 +344,14 @@ public class ZkDiscoveryService implements DiscoveryService {
         String serviceId = instance.getServiceId();
         ProtocolStringList serviceTypesList = instance.getServiceTypesList();
 
+        if (serviceId.equals(serviceInfoProvider.getServiceInfo().getServiceId())) {
+            if (type == CuratorCacheListener.Type.NODE_CREATED) {
+                log.error("[{}] Ignoring ZK node {} registered with the current service id. " +
+                        "It is either a stale registration of this service or another service uses the same service id", serviceId, data.getPath());
+            }
+            return;
+        }
+
         log.trace("Processing [{}] event for [{}]", type, serviceId);
         switch (type) {
             case NODE_CREATED:
@@ -346,16 +372,19 @@ public class ZkDiscoveryService implements DiscoveryService {
                 }
                 break;
             case NODE_DELETED:
+                if (getOtherServers().stream().anyMatch(s -> s.getServiceId().equals(serviceId))) {
+                    log.debug("[{}] Ignoring removal of duplicate ZK node {}, service is still registered", serviceId, data.getPath());
+                    break;
+                }
                 zkExecutorService.submit(() -> applicationEventPublisher.publishEvent(new OtherServiceShutdownEvent(this, serviceId, serviceTypesList)));
-                ScheduledFuture<?> future = zkExecutorService.schedule(() -> {
+                delayedTasks.compute(serviceId, (id, previous) -> zkExecutorService.schedule(() -> {
                     log.debug("[{}] Going to recalculate partitions due to removed node [{}]",
                             serviceId, serviceTypesList);
                     ScheduledFuture<?> removedTask = delayedTasks.remove(serviceId);
                     if (removedTask != null) {
                         recalculatePartitions();
                     }
-                }, recalculateDelay, TimeUnit.MILLISECONDS);
-                delayedTasks.put(serviceId, future);
+                }, recalculateDelay, TimeUnit.MILLISECONDS));
                 break;
             default:
                 break;

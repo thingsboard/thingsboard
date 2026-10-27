@@ -74,8 +74,18 @@
               },
               {
                 "glob": "**/*",
-                "input": "node_modules/tinymce",
-                "output": "/assets/tinymce/"
+                "input": "node_modules/hugerte",
+                "output": "/assets/hugerte/"
+              },
+              {
+                "glob": "maplibre-gl-worker.mjs",
+                "input": "node_modules/maplibre-gl/dist/",
+                "output": "/assets/maplibre-gl/"
+              },
+              {
+                "glob": "maplibre-gl-shared.mjs",
+                "input": "node_modules/maplibre-gl/dist/",
+                "output": "/assets/maplibre-gl/"
               },
               {
                 "glob": "marker-icon-2x.png",

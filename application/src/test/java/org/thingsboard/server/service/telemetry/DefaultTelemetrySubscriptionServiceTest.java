@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.telemetry;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -40,6 +27,7 @@ import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -89,6 +77,7 @@ import java.util.stream.Stream;
 import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -1153,6 +1142,26 @@ class DefaultTelemetrySubscriptionServiceTest {
 
         // THEN
         then(deviceStateManager).shouldHaveNoInteractions();
+    }
+
+    /* --- Subscription forwarding --- */
+
+    @Test
+    void shouldSkipSubscriptionForwardWhenTenantWasDeleted() {
+        // GIVEN the tenant was deleted concurrently, so partition resolution fails
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId))
+                .willThrow(new TenantNotFoundException(tenantId));
+
+        // WHEN forwarding a subscription update (e.g. from an in-flight async save callback)
+        // THEN it must not propagate the exception
+        assertThatNoException().isThrownBy(() -> telemetryService.forwardToSubscriptionManagerService(
+                tenantId, entityId,
+                sm -> sm.onAttributesUpdate(tenantId, entityId, AttributeScope.SERVER_SCOPE.name(), List.of(), TbCallback.EMPTY),
+                () -> null));
+
+        // AND nothing is forwarded, since there is no partition to route to and no subscribers to notify
+        then(subscriptionManagerService).shouldHaveNoInteractions();
+        then(clusterService).shouldHaveNoInteractions();
     }
 
     // used to emulate versions returned by save APIs

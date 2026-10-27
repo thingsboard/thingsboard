@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -24,6 +11,7 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,6 +35,7 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
+import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -73,6 +62,9 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 @RequestMapping(TbUrlConstants.RPC_V2_URL_PREFIX)
 @Slf4j
 public class RpcV2Controller extends AbstractRpcController {
+
+    @Autowired
+    private TbRpcService tbRpcService;
 
     private static final String RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " +
             "The RPC call is A JSON that contains the method name ('method'), parameters ('params') and multiple optional fields. " +
@@ -230,13 +222,13 @@ public class RpcV2Controller extends AbstractRpcController {
         Rpc rpc = checkRpcId(rpcId, Operation.DELETE);
 
         if (rpc != null) {
-            if (rpc.getStatus().isPushDeleteNotificationToCore()) {
+            if (rpc.getStatus().isIntermediate()) {
                 RemoveRpcActorMsg removeMsg = new RemoveRpcActorMsg(getTenantId(), rpc.getDeviceId(), rpc.getUuidId());
                 log.trace("[{}] Forwarding msg {} to queue actor!", rpc.getDeviceId(), rpc);
                 tbClusterService.pushMsgToCore(removeMsg, null);
             }
 
-            rpcService.deleteRpc(getTenantId(), rpcId);
+            tbRpcService.deleteRpc(getTenantId(), rpc);
             rpc.setStatus(RpcStatus.DELETED);
 
             TbMsg msg = TbMsg.newMsg()

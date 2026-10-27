@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 syntax = "proto3";
 
 option java_package = "org.thingsboard.server.gen.edge.v1";
@@ -50,6 +37,10 @@ enum EdgeVersion {
   V_4_2_2_2 = 4222;
   V_4_2_2_3 = 4223;
   V_4_2_2_4 = 4224;
+  V_4_2_2_5 = 4225;
+  V_4_2_2_6 = 4226;
+  V_4_2_2_7 = 4227;
+  V_4_2_2_8 = 4228;
 
   V_LATEST = 99999;
 }
@@ -347,6 +338,28 @@ message CalculatedFieldRequestMsg {
   string entityType = 3;
 }
 
+// Edge-delegated send requests (mail/sms/notification). The Cloud always resolves the tenant from the
+// authenticated edge session (edge.getTenantId()) and ignores tenantIdMSB/tenantIdLSB below - they are kept
+// only for symmetry with other uplink messages and must not be treated as authoritative by the receiver.
+// 'request' is the JSON-serialized Edge{Mail,Sms,Notification}Request payload.
+message SendEmailUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
+message SendSmsUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
+message SendNotificationUplinkMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string request = 3;
+}
+
 // DEPRECATED. FOR REMOVAL
 message UserCredentialsRequestMsg {
   option deprecated = true;
@@ -391,6 +404,7 @@ message DeviceRpcCallMsg {
   optional string additionalInfo = 12;
   optional string serviceId = 13;
   optional string sessionId = 14;
+  optional string rpcStatus = 15;
 }
 
 message RpcRequestMsg {
@@ -447,6 +461,9 @@ message UplinkMsg {
   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
   repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
   repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 26;
+  repeated SendEmailUplinkMsg sendEmailUplinkMsg = 35;
+  repeated SendSmsUplinkMsg sendSmsUplinkMsg = 36;
+  repeated SendNotificationUplinkMsg sendNotificationUplinkMsg = 37;
 }
 
 message UplinkResponseMsg {
