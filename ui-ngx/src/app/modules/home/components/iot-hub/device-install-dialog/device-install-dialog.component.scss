@@ -195,21 +195,8 @@
   }
 }
 
-.tb-connection-check-result {
-  font-size: 14px;
-  color: #198038;
-
-  mat-icon {
-    color: #198038;
-  }
-
-  &.tb-connection-check-error {
-    color: #dd2c00;
-
-    mat-icon {
-      color: #dd2c00;
-    }
-  }
+.tb-device-install-form-checking {
+  opacity: 0.6;
 }
 
 .tb-progress-divider {

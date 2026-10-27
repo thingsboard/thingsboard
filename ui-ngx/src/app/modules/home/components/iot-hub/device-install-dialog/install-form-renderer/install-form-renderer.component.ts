@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
-import { Component, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { cleanFormFieldValue, FormFieldDefinition, FormFieldType } from '@shared/models/iot-hub/device-package.models';
+import { cleanFormFieldValue, FormFieldDefinition, FormFieldType, pastedPortOf } from '@shared/models/iot-hub/device-package.models';
 import { generateSecret } from '@core/utils';
 
 const DEFAULT_RANDOM_SIZE = 20;
@@ -49,8 +49,6 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() resolveImagePath?: (path: string) => string;
   /** When true, PASSWORD inputs render unmasked by default (used by review mode). */
   @Input() reviewMode = false;
-  /** Rendered under the field marked with checkConnection; the dialog supplies it. */
-  @Input() checkConnectionTemplate?: TemplateRef<unknown> | null;
 
   passwordVisible: Record<string, boolean> = {};
   // Fields in render order: consecutive fields of a group form a section, and consecutive fields
@@ -122,10 +120,6 @@ export class InstallFormRendererComponent implements OnChanges {
     return sections;
   }
 
-  hasCheckConnectionField(fields: FormFieldDefinition[]): boolean {
-    return fields.some(field => field.checkConnection);
-  }
-
   /** The hint of a field that a defaultValueTemplate fills describes the filled value. */
   helpTextOf(field: FormFieldDefinition): string | undefined {
     return field.defaultValueTemplate && field.defaultValueTemplateHelpText ? field.defaultValueTemplateHelpText : field.helpText;
@@ -151,6 +145,12 @@ export class InstallFormRendererComponent implements OnChanges {
   onBlur(field: FormFieldDefinition): void {
     this.focusedControl = null;
     const control = this.formGroup.controls[field.key];
+    const port = pastedPortOf(field, control?.value);
+    const portControl = field.portField ? this.formGroup.controls[field.portField] : undefined;
+    if (port !== undefined && portControl) {
+      portControl.setValue(port);
+      portControl.markAsDirty();
+    }
     const cleaned = cleanFormFieldValue(field, control?.value);
     if (control && cleaned !== control.value) {
       control.setValue(cleaned);

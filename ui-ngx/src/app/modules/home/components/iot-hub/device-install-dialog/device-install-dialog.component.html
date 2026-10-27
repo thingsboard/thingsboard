@@ -49,43 +49,14 @@
       }
 
       @case ('form') {
-        <div class="tb-device-install-form p-6">
+        <div class="tb-device-install-form p-6" [class.tb-device-install-form-checking]="connectionChecking(ws)"
+             [attr.inert]="connectionChecking(ws) ? '' : null">
           <tb-install-form-renderer
             [fields]="ws.formFields"
             [formGroup]="ws.formGroup"
             [resolveImagePath]="resolveImagePathFn"
-            [reviewMode]="reviewMode"
-            [checkConnectionTemplate]="connectionCheckOf(ws) && hasCheckConnectionField(ws) ? checkConnectionTpl : null">
+            [reviewMode]="reviewMode">
           </tb-install-form-renderer>
-          <ng-template #checkConnectionTpl>
-            <div class="flex items-center gap-4">
-              <button mat-stroked-button color="primary" type="button"
-                      [disabled]="connectionCheckResult(ws) === 'checking'"
-                      (click)="checkConnection(ws)">
-                {{ 'iot-hub.check-connection' | translate }}
-              </button>
-              @switch (connectionCheckMessage(ws)) {
-                @case ('checking') {
-                  <mat-spinner diameter="20"></mat-spinner>
-                }
-                @case ('success') {
-                  <span class="tb-connection-check-result flex items-center gap-2">
-                    <mat-icon>check_circle</mat-icon>
-                    {{ 'iot-hub.connection-check-success' | translate }}
-                  </span>
-                }
-                @case ('error') {
-                  <span class="tb-connection-check-result tb-connection-check-error flex items-center gap-2">
-                    <mat-icon>error</mat-icon>
-                    {{ 'iot-hub.connection-check-failed' | translate }}
-                  </span>
-                }
-              }
-            </div>
-          </ng-template>
-          @if (connectionCheckOf(ws) && !hasCheckConnectionField(ws)) {
-            <ng-container *ngTemplateOutlet="checkConnectionTpl"></ng-container>
-          }
         </div>
       }
 
@@ -256,7 +227,7 @@
 
     <mat-dialog-actions>
       @if (!isFirstWizardStep) {
-        <button mat-stroked-button (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-stroked-button [disabled]="connectionChecking(currentWizardStep)" (click)="previousStep()">{{ 'action.back' | translate }}</button>
       }
       <span class="flex-1"></span>
       @if (currentWizardStep; as step) {
@@ -281,9 +252,12 @@
           }
           @case ('form') {
             <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
-            <button mat-stroked-button color="primary" (click)="nextStep()">
-              @if (continueAnyway) {
-                {{ 'iot-hub.continue-anyway' | translate }}
+            <button mat-stroked-button color="primary" [disabled]="connectionChecking(step)" (click)="nextStep()">
+              @if (connectionChecking(step)) {
+                <span class="flex items-center gap-2">
+                  <mat-spinner diameter="16"></mat-spinner>
+                  {{ 'iot-hub.checking-connection' | translate }}
+                </span>
               } @else {
                 {{ 'action.next' | translate }}@if (nextWizardStepLabel) {: {{ nextWizardStepLabel }}}
               }
