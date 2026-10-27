@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.trace;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
@@ -14,9 +14,7 @@ import io.micrometer.core.instrument.Timer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.trace.IdGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
@@ -28,7 +26,6 @@ import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -79,22 +76,27 @@ public class TraceMessageService {
     private final TraceCoverageSettingService traceCoverageSettingService;
     private final TraceExportPressureGate pressureGate;
 
-    private final Cache<UUID, TraceCoverageSetting> coverageSettingCache;
+    private static final long SETTINGS_REFRESH_MINUTES = 1;
+
+    private final LoadingCache<UUID, TraceCoverageSetting> coverageSettingCache;
 
     private final Timer onMessagePackTimer;
 
     public TraceMessageService(RateLimitService rateLimitService, Tracer tracer,
                                TraceCoverageSettingService traceCoverageSettingService,
                                TraceExportPressureGate pressureGate,
-                               StatsFactory statsFactory,
-                               @Value("${otel.tracing.coverage.settings-cache-ttl-minutes:1}") int settingsCacheTtlMinutes) {
+                               StatsFactory statsFactory) {
         this.rateLimitService = rateLimitService;
         this.tracer = tracer;
         this.traceCoverageSettingService = traceCoverageSettingService;
         this.pressureGate = pressureGate;
+        // Read on the rule engine consumer thread: after a minute an entry is reloaded in the background while the
+        // stale value is still served, so only a tenant's first lookup reaches the database. Not configurable: a saved
+        // setting must apply within that minute. Tenants that stop sending messages drop out after an hour.
         this.coverageSettingCache = Caffeine.newBuilder()
-                .expireAfterWrite(settingsCacheTtlMinutes, TimeUnit.MINUTES)
-                .build();
+                .refreshAfterWrite(SETTINGS_REFRESH_MINUTES, TimeUnit.MINUTES)
+                .expireAfterAccess(1, TimeUnit.HOURS)
+                .build(id -> traceCoverageSettingService.findTraceCoverageSettingByTenantId(TenantId.fromUUID(id)));
         this.onMessagePackTimer = statsFactory.createTimer("traceCoverageOnMessagePackDuration");
     }
 
@@ -331,14 +333,6 @@ public class TraceMessageService {
             log.warn("[{}] Failed to evaluate trace coverage for message pack", queueTenantId, e);
         } finally {
             onMessagePackTimer.record(System.currentTimeMillis() - startTs, MILLISECONDS);
-        }
-    }
-
-    @EventListener(ComponentLifecycleMsg.class)
-    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
-        if (event.getEntityId() != null && TraceCoverageSetting.SETTINGS_ASSET_ID.equals(event.getEntityId().getId())) {
-            coverageSettingCache.invalidateAll();
-            log.debug("Invalidated trace coverage setting cache on lifecycle event {}", event.getEvent());
         }
     }
 
@@ -612,8 +606,7 @@ public class TraceMessageService {
     }
 
     private TraceCoverageSetting getCoverageSetting(TenantId tenantId) {
-        return coverageSettingCache.get(tenantId.getId(),
-                id -> traceCoverageSettingService.findTraceCoverageSettingByTenantId(tenantId));
+        return coverageSettingCache.get(tenantId.getId());
     }
 
     private String serializeMetadataToJson(TbMsgMetaData metaData) {

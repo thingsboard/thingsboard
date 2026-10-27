@@ -22,7 +22,6 @@ public class TraceCoverageSetting implements Serializable {
     public static final MessagePayloadRecording DEFAULT_MESSAGE_PAYLOAD_RECORDING = MessagePayloadRecording.NONE;
     public static final int DEFAULT_MAX_TRACE_GROUPS_PER_DAY = 10000;
 
-    public static final UUID SETTINGS_ASSET_ID = UUID.fromString("00000000-0000-0000-0000-00000000c0fe");
 
     public enum MessagePayloadRecording {
         NONE,

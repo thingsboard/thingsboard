@@ -306,9 +306,6 @@ otel:
     # Enables rule chain tracing: messages are sampled per the tenant trace coverage setting. The spans go to the
     # buffered trace processor (stored in ThingsBoard) and, when enabled, to the OTLP exporter
     enabled: "${OTEL_TRACING_ENABLED:false}"
-    coverage:
-      # Tenant coverage setting cache TTL, minutes.
-      settings-cache-ttl-minutes: "${OTEL_TRACING_COVERAGE_SETTINGS_CACHE_TTL_MINUTES:1}"
     span-limits:
       # Max length (chars) of any span attribute value; longer values are truncated. Bounds heap held by queued
       # spans when message payload recording is on.

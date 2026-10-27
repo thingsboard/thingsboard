@@ -50,8 +50,9 @@ public class RuleChainTracingTest extends AbstractContainerTest {
         String accessToken = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
         long startTime = System.currentTimeMillis();
 
-        // The rule engine nodes cache the coverage setting, so keep sending until a message is traced.
-        JsonNode trace = await().alias("telemetry -> trace stored").atMost(2 * TIMEOUT, TimeUnit.SECONDS)
+        // The rule engine nodes reload the cached coverage setting once a minute, so keep sending until a message is
+        // traced.
+        JsonNode trace = await().alias("telemetry -> trace stored").atMost(4 * TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> {
                     testRestClient.postTelemetry(accessToken, JacksonUtil.toJsonNode(createPayload().toString()));

@@ -84,7 +84,7 @@ class TraceMessageServiceTest {
         Mockito.when(rateLimitService.checkRateLimit(Mockito.any(LimitedApi.class), Mockito.<Object>any(), Mockito.anyString())).thenReturn(true);
         StatsFactory statsFactory = Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS);
         service = new TraceMessageService(rateLimitService, tracerProvider.get("test"),
-                coverageSettingService, pressureGate, statsFactory, 1);
+                coverageSettingService, pressureGate, statsFactory);
         givenRecording(MessagePayloadRecording.NONE);
     }
 

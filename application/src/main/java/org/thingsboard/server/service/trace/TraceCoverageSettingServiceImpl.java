@@ -5,10 +5,7 @@ package org.thingsboard.server.service.trace;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
 import org.thingsboard.server.dao.sql.tracecoverage.TraceCoverageSettingDao;
 import org.thingsboard.server.exception.DataValidationException;
@@ -18,7 +15,6 @@ import org.thingsboard.server.exception.DataValidationException;
 @RequiredArgsConstructor
 public class TraceCoverageSettingServiceImpl implements TraceCoverageSettingService {
     private final TraceCoverageSettingDao traceCoverageSettingDao;
-    private final TbClusterService clusterService;
 
     @Override
     public TraceCoverageSetting findTraceCoverageSettingByTenantId(TenantId tenantId) {
@@ -35,14 +31,9 @@ public class TraceCoverageSettingServiceImpl implements TraceCoverageSettingServ
         validate(setting);
 
         // The id and created time are never taken from the request: the row is found by tenant.
-        TraceCoverageSetting saved = traceCoverageSettingDao.upsertByTenantId(tenantId.getId(), setting);
-        broadcastCacheInvalidation(ComponentLifecycleEvent.UPDATED);
-        return saved;
-    }
-
-    private void broadcastCacheInvalidation(ComponentLifecycleEvent event) {
-        clusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID,
-                new AssetId(TraceCoverageSetting.SETTINGS_ASSET_ID), event);
+        // No cluster broadcast: rule engines reload the setting in the background (TraceMessageService), so a
+        // saved setting applies within a minute.
+        return traceCoverageSettingDao.upsertByTenantId(tenantId.getId(), setting);
     }
 
     private void validateTenantId(TenantId tenantId) {
