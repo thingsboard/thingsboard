@@ -49,6 +49,13 @@ ospackage {
         into "bin"
     }
 
+    from("${buildDir}/control/java-env") {
+        filePermissions {
+            unix('rw-r--r--')  // 0644
+        }
+        into "bin"
+    }
+
     if("${pkgCopyInstallScripts}".equalsIgnoreCase("true")) {
         // Copy the install files
         from("${buildDir}/bin/install/install.sh") {
@@ -109,7 +116,7 @@ buildRpm {
     }
 
     // RPM boolean expression syntax, since .or() chaining is for DEB only
-    requires("(java-25 or java-25-headless or jre-25 or jre-25-headless)")
+    requires("(java-${pkgMinJavaVersion} or java-${pkgMinJavaVersion}-headless or jre-${pkgMinJavaVersion} or jre-${pkgMinJavaVersion}-headless)")
     requires("shadow-utils", "", Flags.SCRIPT_PRE)
     if ("${pkgRequiresFonts}".equalsIgnoreCase("true")) {
         requires("fontconfig")
@@ -157,7 +164,7 @@ buildDeb {
 
     archiveFileName = "${pkgName}.deb"
 
-    requires("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
+    requires("openjdk-${pkgMinJavaVersion}-jre").or("java${pkgMinJavaVersion}-runtime").or("oracle-java${pkgMinJavaVersion}-installer").or("openjdk-${pkgMinJavaVersion}-jre-headless")
     preDepends("adduser")
     if ("${pkgRequiresFonts}".equalsIgnoreCase("true")) {
         requires("fontconfig")

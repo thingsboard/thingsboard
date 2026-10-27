@@ -61,6 +61,7 @@
         <!-- Set to true in services that render text with AWT (SVG previews, reports): the JDK needs fontconfig and a font. -->
         <pkg.requiresFonts>false</pkg.requiresFonts>
         <pkg.user>thingsboard</pkg.user>
+        <pkg.minJavaVersion>25</pkg.minJavaVersion>
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
@@ -632,6 +633,7 @@
                                     <arg>-PpkgUser=${pkg.user}</arg>
                                     <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                                     <arg>-PpkgCopyInstallScripts=${pkg.copyInstallScripts}</arg>
+                                    <arg>-PpkgMinJavaVersion=${pkg.minJavaVersion}</arg>
                                     <arg>-PpkgRequiresFonts=${pkg.requiresFonts}</arg>
                                     <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
                                     <arg>-PskipDeb=${pkg.skip.deb}</arg>

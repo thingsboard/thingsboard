@@ -28,22 +28,18 @@ installDir=${pkg.installFolder}/data
 
 source "${CONF_FOLDER}/${configfile}"
 
-require_java_25() {
-    local javaVersion javaMajor
-    javaVersion=$(JAVA_TOOL_OPTIONS= JDK_JAVA_OPTIONS= "$1" -version 2>&1 | sed -n 's/.*version "\([^"]*\)".*/\1/p' | head -n 1)
-    javaMajor=$(echo "$javaVersion" | sed -e 's/^1\.//' -e 's/^\([0-9]*\).*/\1/')
-    if [ -z "$javaMajor" ] || [ "$javaMajor" -lt 25 ]; then
-        echo "${pkg.name} requires Java 25 or later, but '$1' is ${javaVersion:-not a working Java}." >&2
-        echo "Select Java 25 with 'update-alternatives --config java' (deb) or 'alternatives --config java' (rpm), or set JAVA_HOME in $CONF_FOLDER/${pkg.name}.conf." >&2
-        exit 78
-    fi
-}
+javaenv=${pkg.installFolder}/bin/java-env
+if [ ! -r "$javaenv" ]; then
+    echo "Cannot read $javaenv; reinstall ${pkg.name}." >&2
+    exit 1
+fi
+source "$javaenv"
 
-require_java_25 java
+require_java "$javaexe"
 
 run_user=${pkg.user}
 
-su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
+su -s /bin/sh -c "'$javaexe' -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dinstall.upgrade=false \
