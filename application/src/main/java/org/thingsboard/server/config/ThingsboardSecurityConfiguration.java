@@ -269,6 +269,16 @@ public class ThingsboardSecurityConfiguration {
     }
 
     @Bean
+    protected FilterRegistrationBean<ClientAddressCaptureFilter> clientAddressCaptureFilter(org.thingsboard.server.service.security.ip.ClientAddressResolver clientAddressResolver) {
+        FilterRegistrationBean<ClientAddressCaptureFilter> filterRegistrationBean
+                = new FilterRegistrationBean<>(new ClientAddressCaptureFilter(clientAddressResolver));
+        filterRegistrationBean.setDispatcherTypes(jakarta.servlet.DispatcherType.REQUEST, jakarta.servlet.DispatcherType.ASYNC, jakarta.servlet.DispatcherType.ERROR);
+        filterRegistrationBean.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
+        filterRegistrationBean.setName("clientAddressCaptureFilter");
+        return filterRegistrationBean;
+    }
+
+    @Bean
     protected RestLoginProcessingFilter buildRestLoginProcessingFilter() {
         RestLoginProcessingFilter filter = new RestLoginProcessingFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler);
         filter.setAuthenticationManager(this.authenticationManager);
