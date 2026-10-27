@@ -68,7 +68,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Device deviceToDelete = edgeCtx.getDeviceService().findDeviceById(tenantId, deviceId);
-                    if (deviceToDelete != null) {
+                    if (deviceToDelete != null && tenantId.equals(deviceToDelete.getTenantId())) {
                         edgeCtx.getDeviceService().unassignDeviceFromEdge(tenantId, deviceId, edge.getId());
                     }
                     return Futures.immediateFuture(null);

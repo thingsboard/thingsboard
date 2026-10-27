@@ -1060,6 +1060,19 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testSendDeviceDeleteForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        DeviceUpdateMsg.Builder deviceDeleteMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceDeleteMsgBuilder.setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE);
+        deviceDeleteMsgBuilder.setIdMSB(device.getUuidId().getMostSignificantBits());
+        deviceDeleteMsgBuilder.setIdLSB(device.getUuidId().getLeastSignificantBits());
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(deviceDeleteMsgBuilder.build()));
+
+        loginDifferentTenant();
+        doGet("/api/device/" + device.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
     public void testSendDeviceWithTenantIdOfDifferentTenantToCloud() throws Exception {
         loginDifferentTenant();
         loginTenantAdmin();
