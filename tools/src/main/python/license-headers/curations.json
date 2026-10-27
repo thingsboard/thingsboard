@@ -1130,12 +1130,6 @@
       "contentHash": "sha256:b16ddb9bcfd179a9348c678e530e50924d8d678f2c9e1c05012deae7cb7969ea"
     },
     {
-      "path": "msa/black-box-tests/src/test/resources/black-box.xml",
-      "header": "busl",
-      "reason": "PE black-box test setup and logging/suite configuration. This selects the PE test environment and scenarios using shared configuration syntax. Curated as PE-only test scaffolding consistently with the maintainer decision for PE module launch/logging files. Reviewed similarity candidate msa/black-box-tests/src/test/resources/connectivity.xml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 7cd96bb429343ed9153b67281b1e48602beb28c7).",
-      "contentHash": "sha256:2a0dca3720c2f97ea0c782b69e2ff574656838600f459b31ff2ccff857147695"
-    },
-    {
       "path": "msa/black-box-tests/src/test/resources/solutionTemplates.xml",
       "header": "busl",
       "reason": "PE black-box test setup and logging/suite configuration. This selects the PE test environment and scenarios using shared configuration syntax. Curated as PE-only test scaffolding consistently with the maintainer decision for PE module launch/logging files. Reviewed similarity candidate msa/black-box-tests/src/test/resources/smokeDevices.xml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob cfcd51065f974c4474ffc02b1912edd5ae6e4ff9).",
