@@ -73,6 +73,9 @@ export const formPropertyFieldClasses =
 
 export type PropertyConditionFunction = (property: FormProperty, model: any) => boolean;
 
+export type ValidatorResult = null | false | true | string;
+export type ValidatorFunction = (value: any, model: any, property: FormProperty) => ValidatorResult;
+
 export interface FormPropertyBase {
   id: string;
   name: string;
@@ -87,6 +90,8 @@ export interface FormPropertyBase {
   disableOnProperty?: string;
   condition?: string;
   conditionFunction?: PropertyConditionFunction;
+  validator?: string;
+  validatorFunction?: ValidatorFunction;
   disabled?: boolean;
   visible?: boolean;
   rowClass?: string;
@@ -221,6 +226,10 @@ export const cleanupFormProperty = (property: FormProperty): FormProperty => {
   if (property.type !== FormPropertyType.units) {
     delete property.supportsUnitConversion;
   }
+  if ([FormPropertyType.fieldset, FormPropertyType.htmlSection].includes(property.type)) {
+    delete property.validator;
+  }
+  delete property.validatorFunction;
   for (const key of Object.keys(property)) {
     const val = property[key];
     if (isUndefinedOrNull(val) || isEmptyStr(val)) {
@@ -336,6 +345,8 @@ const toPropertyContainers = (properties: FormProperty[],
       delete arrayItemProperty.disableOnProperty;
       delete arrayItemProperty.condition;
       delete arrayItemProperty.conditionFunction;
+      delete arrayItemProperty.validator;
+      delete arrayItemProperty.validatorFunction;
       delete arrayItemProperty.group;
       delete arrayItemProperty.hint;
       propertyArray.arrayItemProperty = arrayItemProperty;

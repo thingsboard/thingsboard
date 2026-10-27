@@ -133,12 +133,33 @@ export interface ReportDataKeySettings {
   type: ReportDataKeySettingsType;
 }
 
+export enum BorderType {
+  solid = 'solid',
+  dashed = 'dashed',
+  dotted = 'dotted',
+  double = 'double'
+}
+
+export const borderTypes = Object.keys(BorderType) as BorderType[];
+
+export const borderTypeTranslations = new Map<BorderType, string>(
+  [
+    [BorderType.solid, 'report-template.component.divider.line-type-solid'],
+    [BorderType.dashed, 'report-template.component.divider.line-type-dashed'],
+    [BorderType.dotted, 'report-template.component.divider.line-type-dotted'],
+    [BorderType.double, 'report-template.component.divider.line-type-double']
+  ]
+);
+
 export interface TableReportCellSettings {
   font?: Font;
   color?: string;
   backgroundColor?: string;
   textAlignment?: alignment;
   verticalAlignment?: alignment;
+  borderType?: BorderType;
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 export interface TableReportColumnSettings extends ReportDataKeySettings {
@@ -223,7 +244,37 @@ const tableReportCellSettings = (header = false): FormProperty[] => ([
       }
     ],
     default: 'middle'
-  }
+  },
+  {
+    id: 'borderWidth',
+    type: FormPropertyType.number,
+    name: '{i18n:report-template.border}',
+    subLabel: '{i18n:report-template.width}',
+    fieldSuffix: 'px',
+    hint: '{i18n:report-template.double-border-min-width-hint}',
+    validator: `return model.borderType === 'double' && value != null && value < 3 ? '{i18n:report-template.double-border-min-width}' : null;`,
+    min: 0,
+    step: 1,
+    default: null
+  },
+  {
+    id: 'borderType',
+    type: FormPropertyType.select,
+    name: '{i18n:report-template.border}',
+    subLabel: '{i18n:report-template.style}',
+    fieldClass: 'standard-width',
+    items: borderTypes.map(type => ({
+      label: `{i18n:${borderTypeTranslations.get(type)}}`,
+      value: type
+    })),
+    default: BorderType.solid
+  },
+  {
+    id: 'borderColor',
+    type: FormPropertyType.color,
+    name: '{i18n:report-template.border}',
+    default: null
+  },
 ]);
 
 const severityReportCellSettings = (): FormProperty[] => {
@@ -984,22 +1035,6 @@ export const borderLengthTranslations = new Map<BorderLength, string>(
   [
     [BorderLength.LONG, 'report-template.component.divider.divider-type-long'],
     [BorderLength.SHORT, 'report-template.component.divider.divider-type-short']
-  ]
-);
-
-export enum BorderType {
-  solid = 'solid',
-  dashed = 'dashed',
-  dotted = 'dotted'
-}
-
-export const borderTypes = Object.keys(BorderType) as BorderType[];
-
-export const borderTypeTranslations = new Map<BorderType, string>(
-  [
-    [BorderType.solid, 'report-template.component.divider.line-type-solid'],
-    [BorderType.dashed, 'report-template.component.divider.line-type-dashed'],
-    [BorderType.dotted, 'report-template.component.divider.line-type-dotted']
   ]
 );
 

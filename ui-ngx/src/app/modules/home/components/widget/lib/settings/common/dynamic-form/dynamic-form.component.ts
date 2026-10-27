@@ -12,6 +12,7 @@ import {
   SimpleChanges
 } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -33,7 +34,9 @@ import {
   FormPropertyType,
   isInputFieldPropertyType,
   PropertyConditionFunction,
-  toPropertyGroups
+  toPropertyGroups,
+  ValidatorFunction,
+  ValidatorResult
 } from '@shared/models/dynamic-form.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -193,6 +196,12 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
           } catch (_e) {
           }
         }
+        if (property.validator) {
+          try {
+            property.validatorFunction = new Function('value', 'model', 'property', property.validator) as ValidatorFunction;
+          } catch (_e) {
+          }
+        }
       }
       this.propertyGroups = toPropertyGroups(this.properties, this.isArrayItem, this.customTranslate, this.sanitizer);
       for (const property of this.properties) {
@@ -223,6 +232,9 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
                 validators.push(Validators.maxLength(property.maxItems));
               }
             }
+          }
+          if (property.validatorFunction) {
+            validators.push(this.buildCustomValidator(property));
           }
           this.propertiesFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
         }
@@ -271,6 +283,9 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
           if (property.visible && !property.disabled) {
             control.enable({emitEvent: false});
             control.updateValueAndValidity({emitEvent: false});
+            if (property.validatorFunction && control.hasError('customError')) {
+              control.markAsTouched({onlySelf: true});
+            }
           } else {
             control.disable({emitEvent: false});
           }
@@ -298,6 +313,21 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
       result = trimDefaultValues(this.modelValue, this.defaults);
     }
     this.propagateChange(result);
+  }
+
+  private buildCustomValidator(property: FormProperty): ValidatorFn {
+    return (control: AbstractControl) => {
+      try {
+        const model = (control.parent as UntypedFormGroup)?.getRawValue() ?? {};
+        const result: ValidatorResult = property.validatorFunction(control.value, model, property);
+        if (!result) {
+          return null;
+        }
+        return { customError: { message: result === true ? null : result as string } };
+      } catch (_e) {
+        return null;
+      }
+    };
   }
 
 }
