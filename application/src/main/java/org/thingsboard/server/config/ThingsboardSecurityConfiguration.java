@@ -241,6 +241,9 @@ public class ThingsboardSecurityConfiguration {
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
     @Autowired
+    private SysAdminIpFilter sysAdminIpFilter;
+
+    @Autowired
     private SystemSetupFilter systemSetupFilter;
 
     @Autowired
@@ -404,6 +407,7 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildApiKeyTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(payloadSizeFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(sysAdminIpFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(authExceptionHandler, buildRestLoginProcessingFilter().getClass());
         if (oauth2Configuration != null) {
