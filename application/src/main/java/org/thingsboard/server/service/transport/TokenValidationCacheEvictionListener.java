@@ -49,7 +49,9 @@ public class TokenValidationCacheEvictionListener implements DeviceCredentialsEv
                 cache.put(TokenValidationCacheService.cacheKey(oldId), TokenValidationCacheService.revokedMarker(now));
             }
         } catch (Exception e) {
-            log.warn("Failed to update token validation cache on credentials change [{}]", event, e);
+            // never log the event: credentials ids are secrets (access tokens); the hashed cache key is safe
+            log.warn("[{}] Failed to update token validation cache on credentials change (deleted: {})",
+                    event.getNewCredentialsId() != null ? TokenValidationCacheService.cacheKey(event.getNewCredentialsId()) : null, event.isDeleted(), e);
         }
     }
 

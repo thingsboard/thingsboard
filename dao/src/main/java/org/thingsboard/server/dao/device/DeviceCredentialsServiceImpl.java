@@ -37,6 +37,8 @@ import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException
 import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -51,7 +53,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     private final DeviceCredentialsDataValidator credentialsValidator;
 
     @Autowired(required = false)
-    private DeviceCredentialsEvictionHook evictionHook;
+    private List<DeviceCredentialsEvictionHook> evictionHooks = Collections.emptyList();
 
     @TransactionalEventListener(classes = DeviceCredentialsEvictEvent.class)
     @Override
@@ -60,13 +62,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
         if (StringUtils.isNotEmpty(event.getOldCredentialsId()) && !event.getNewCredentialsId().equals(event.getOldCredentialsId())) {
             cache.evict(event.getOldCredentialsId());
         }
-        if (evictionHook != null) {
-            try {
-                evictionHook.onDeviceCredentialsEvict(event);
-            } catch (Exception e) {
-                log.warn("Device credentials eviction hook failed for event [{}]", event, e);
-            }
-        }
+        DeviceCredentialsEvictionHooks.invokeAll(evictionHooks, event);
     }
 
     @Override

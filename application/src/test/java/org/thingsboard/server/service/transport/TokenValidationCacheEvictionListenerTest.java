@@ -3,9 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.transport;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.transport.auth.cache.TokenValidationCacheService;
 import org.thingsboard.server.dao.device.DeviceCredentialsEvictEvent;
@@ -72,6 +76,25 @@ class TokenValidationCacheEvictionListenerTest {
     void givenNoCacheBean_thenNoop() {
         TokenValidationCacheEvictionListener noop = new TokenValidationCacheEvictionListener(Optional.empty());
         assertThatCode(() -> noop.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
+    }
+
+    @Test
+    void givenCacheFailure_thenWarningCarriesHashedKeyButNoCredentialsId() {
+        doThrow(new RuntimeException("redis down")).when(cache).evict(anyString());
+        Logger logger = (Logger) LoggerFactory.getLogger(TokenValidationCacheEvictionListener.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("secret-new-token", "secret-old-token"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+
+        assertThat(appender.list).hasSize(1);
+        String message = appender.list.get(0).getFormattedMessage();
+        assertThat(message).doesNotContain("secret-new-token").doesNotContain("secret-old-token")
+                .contains(TokenValidationCacheService.cacheKey("secret-new-token"));
     }
 
     @Test
