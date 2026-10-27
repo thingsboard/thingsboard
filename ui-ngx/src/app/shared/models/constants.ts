@@ -17,6 +17,7 @@ export const Constants = {
     itemNotFound: 32,
     tooManyRequests: 33,
     tooManyUpdates: 34,
+    ipNotAllowed: 48,
     subscriptionViolation: 40,
     entitiesLimitExceeded: 41,
     passwordViolation: 45
@@ -41,6 +42,7 @@ export const serverErrorCodesTranslations = new Map<number, string>([
   [Constants.serverErrorCode.tooManyRequests, 'server-error.too-many-requests'],
   [Constants.serverErrorCode.tooManyUpdates, 'server-error.too-many-updates'],
   [Constants.serverErrorCode.entitiesLimitExceeded, 'server-error.entities-limit-exceeded'],
+  [Constants.serverErrorCode.ipNotAllowed, 'server-error.ip-not-allowed'],
 ]);
 
 export const httpStatusMessageMap = new Map<number, string>([

@@ -9422,7 +9422,8 @@
         "item-not-found": "Item not found",
         "too-many-requests": "Too many requests",
         "too-many-updates": "Too many updates",
-        "entities-limit-exceeded": "Entities limit exceeded"
+        "entities-limit-exceeded": "Entities limit exceeded",
+        "ip-not-allowed": "Access from your network location is not permitted"
     },
     "tenant": {
         "tenant": "Tenant",
