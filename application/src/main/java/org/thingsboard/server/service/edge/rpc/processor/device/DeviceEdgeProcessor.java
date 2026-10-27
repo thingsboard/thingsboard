@@ -76,7 +76,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
                     if (deviceUpdateMsg.hasEntityGroupIdMSB() && deviceUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(deviceUpdateMsg.getEntityGroupIdMSB(), deviceUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, deviceId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, deviceId);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteDevice(tenantId, edge, deviceId);
                     } else {

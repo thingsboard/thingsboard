@@ -20,6 +20,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -1134,6 +1135,23 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, device, null)));
 
         Assert.assertEquals(tenantId, doGet("/api/device/" + device.getUuidId(), Device.class).getTenantId());
+    }
+
+    @Test
+    public void testSendDeviceUpdateWithCustomerOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        Customer customer = new Customer();
+        customer.setTitle("Different Tenant Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        loginTenantAdmin();
+
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Device deviceUpdate = new Device(device);
+        deviceUpdate.setCustomerId(savedCustomer.getId());
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdate, null)));
+
+        Assert.assertEquals(tenantId, doGet("/api/device/" + device.getUuidId(), Device.class).getOwnerId());
     }
 
 }

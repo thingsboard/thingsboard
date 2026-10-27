@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -561,6 +562,10 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         log.trace("[{}] processEntityGroupEntitiesRequest [{}][{}]", tenantId, edge.getName(), entityGroupEntitiesRequestMsg);
         if (entityGroupEntitiesRequestMsg.getEntityGroupIdMSB() != 0 && entityGroupEntitiesRequestMsg.getEntityGroupIdLSB() != 0) {
             EntityGroupId entityGroupId = new EntityGroupId(new UUID(entityGroupEntitiesRequestMsg.getEntityGroupIdMSB(), entityGroupEntitiesRequestMsg.getEntityGroupIdLSB()));
+            EntityGroup entityGroup = entityGroupService.findEntityGroupById(tenantId, entityGroupId);
+            if (entityGroup == null || !isTenantEntity(tenantId, entityGroup.getOwnerId())) {
+                return Futures.immediateFuture(null);
+            }
             ListenableFuture<List<EntityId>> entityIdsFuture;
             try {
                 // TODO: refactor this to pagination

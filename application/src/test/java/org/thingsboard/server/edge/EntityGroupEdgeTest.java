@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -21,12 +22,15 @@ import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.RoleId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
@@ -35,6 +39,7 @@ import org.thingsboard.server.gen.edge.v1.EntityGroupRequestMsg;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.GroupPermissionProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
 import java.util.List;
@@ -46,6 +51,9 @@ import static org.thingsboard.server.dao.customer.CustomerServiceImpl.PUBLIC_CUS
 
 @DaoSqlTest
 public class EntityGroupEdgeTest extends AbstractEdgeTest {
+
+    @Autowired
+    private EntityGroupService entityGroupService;
 
     @Test
     public void testAllEdgeEntityGroup_autoAssignedToEdgeAfterUnAssign() throws Exception {
@@ -147,6 +155,77 @@ public class EntityGroupEdgeTest extends AbstractEdgeTest {
             }
             Assert.assertEquals(dashboardGroup.getId(), groupPermission.getEntityGroupId());
         }
+    }
+
+    @Test
+    public void testSendDeviceDeleteFromGroupOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        Device device = new Device();
+        device.setName("Different Tenant Group Device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        EntityGroup deviceGroup = saveDifferentTenantGroup(EntityType.DEVICE, savedDevice.getId());
+        loginTenantAdmin();
+
+        DeviceUpdateMsg deviceDeleteMsg = DeviceUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(savedDevice.getUuidId().getMostSignificantBits())
+                .setIdLSB(savedDevice.getUuidId().getLeastSignificantBits())
+                .setEntityGroupIdMSB(deviceGroup.getUuidId().getMostSignificantBits())
+                .setEntityGroupIdLSB(deviceGroup.getUuidId().getLeastSignificantBits())
+                .build();
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(deviceDeleteMsg));
+
+        Assert.assertTrue(findGroupEntityIds(deviceGroup).contains(savedDevice.getId()));
+    }
+
+    @Test
+    public void testSendUserDeleteFromGroupOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        EntityGroup userGroup = saveDifferentTenantGroup(EntityType.USER, savedDifferentTenantUser.getId());
+        loginTenantAdmin();
+
+        UserUpdateMsg userDeleteMsg = UserUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(savedDifferentTenantUser.getUuidId().getMostSignificantBits())
+                .setIdLSB(savedDifferentTenantUser.getUuidId().getLeastSignificantBits())
+                .setEntityGroupIdMSB(userGroup.getUuidId().getMostSignificantBits())
+                .setEntityGroupIdLSB(userGroup.getUuidId().getLeastSignificantBits())
+                .build();
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addUserUpdateMsg(userDeleteMsg));
+
+        Assert.assertTrue(findGroupEntityIds(userGroup).contains(savedDifferentTenantUser.getId()));
+    }
+
+    @Test
+    public void testSendEntityGroupEntitiesRequestForGroupOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        Device device = new Device();
+        device.setName("Different Tenant Requested Device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        EntityGroup deviceGroup = saveDifferentTenantGroup(EntityType.DEVICE, savedDevice.getId());
+        loginTenantAdmin();
+
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityGroupEntitiesRequestMsg(EntityGroupRequestMsg.newBuilder()
+                .setEntityGroupIdMSB(deviceGroup.getUuidId().getMostSignificantBits())
+                .setEntityGroupIdLSB(deviceGroup.getUuidId().getLeastSignificantBits())
+                .setType(EntityType.DEVICE.name())
+                .build()));
+    }
+
+    private EntityGroup saveDifferentTenantGroup(EntityType groupType, EntityId entityId) throws Exception {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(groupType);
+        entityGroup.setName("Different Tenant " + groupType.name() + " Group");
+        entityGroup.setOwnerId(differentTenantId);
+        EntityGroup savedGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+        addEntitiesToEntityGroup(List.of(entityId), savedGroup.getId());
+        return savedGroup;
+    }
+
+    private List<EntityId> findGroupEntityIds(EntityGroup entityGroup) throws Exception {
+        return entityGroupService.findAllEntityIdsAsync(differentTenantId, entityGroup.getId(), new PageLink(100)).get();
     }
 
     private EntityGroup createUserGroup() {

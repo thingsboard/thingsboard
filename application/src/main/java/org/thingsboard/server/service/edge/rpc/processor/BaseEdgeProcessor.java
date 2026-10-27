@@ -503,6 +503,9 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected void changeOwnerIfRequired(TenantId tenantId, CustomerId customerId, EntityId entityId) throws ThingsboardException {
         EntityId newOwnerId = getOwnerId(tenantId, customerId);
+        if (!isEntityExists(tenantId, newOwnerId)) {
+            throw new DataValidationException("Owner " + newOwnerId + " belongs to a different tenant!");
+        }
         EntityId currentOwnerId;
         switch (entityId.getEntityType()) {
             case DEVICE -> {
@@ -564,9 +567,16 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     protected void safeAddEntityToGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
         if (entityGroupId != null && !ModelConstants.NULL_UUID.equals(entityGroupId.getId())) {
             EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
-            if (entityGroup != null) {
+            if (entityGroup != null && isEntityExists(tenantId, entityGroup.getOwnerId())) {
                 edgeCtx.getEntityGroupService().addEntityToEntityGroup(tenantId, entityGroupId, entityId);
             }
+        }
+    }
+
+    protected void safeRemoveEntityFromGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
+        EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
+        if (entityGroup != null && isEntityExists(tenantId, entityGroup.getOwnerId())) {
+            edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, entityId);
         }
     }
 
