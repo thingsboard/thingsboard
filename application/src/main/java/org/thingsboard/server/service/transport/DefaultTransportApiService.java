@@ -76,6 +76,7 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.CredentialsValidationResult;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
@@ -174,18 +175,18 @@ public class DefaultTransportApiService implements TransportApiService {
         if (transportApiRequestMsg.hasValidateTokenRequestMsg()) {
             ValidateDeviceTokenRequestMsg msg = transportApiRequestMsg.getValidateTokenRequestMsg();
             final String token = msg.getToken();
-            return validateCredentials(token, DeviceCredentialsType.ACCESS_TOKEN);
+            return validateCredentials(token, DeviceCredentialsType.ACCESS_TOKEN, msg.getSupportsDeviceProfileCaching());
         } else if (transportApiRequestMsg.hasValidateBasicMqttCredRequestMsg()) {
             TransportProtos.ValidateBasicMqttCredRequestMsg msg = transportApiRequestMsg.getValidateBasicMqttCredRequestMsg();
             return validateCredentials(msg);
         } else if (transportApiRequestMsg.hasValidateX509CertRequestMsg()) {
             ValidateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateX509CertRequestMsg();
             final String hash = msg.getHash();
-            return validateCredentials(hash, DeviceCredentialsType.X509_CERTIFICATE);
+            return validateCredentials(hash, DeviceCredentialsType.X509_CERTIFICATE, msg.getSupportsDeviceProfileCaching());
         } else if (transportApiRequestMsg.hasValidateOrCreateX509CertRequestMsg()) {
             TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg = transportApiRequestMsg.getValidateOrCreateX509CertRequestMsg();
             final String certChain = msg.getCertificateChain();
-            return validateOrCreateDeviceX509Certificate(certChain);
+            return validateOrCreateDeviceX509Certificate(certChain, msg.getSupportsDeviceProfileCaching());
         } else if (transportApiRequestMsg.hasGetOrCreateDeviceRequestMsg()) {
             return handle(transportApiRequestMsg.getGetOrCreateDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasEntityProfileRequestMsg()) {
@@ -195,7 +196,7 @@ public class DefaultTransportApiService implements TransportApiService {
         } else if (transportApiRequestMsg.hasValidateDeviceLwM2MCredentialsRequestMsg()) {
             ValidateDeviceLwM2MCredentialsRequestMsg msg = transportApiRequestMsg.getValidateDeviceLwM2MCredentialsRequestMsg();
             final String credentialsId = msg.getCredentialsId();
-            return validateCredentials(credentialsId, DeviceCredentialsType.LWM2M_CREDENTIALS);
+            return validateCredentials(credentialsId, DeviceCredentialsType.LWM2M_CREDENTIALS, msg.getSupportsDeviceProfileCaching());
         } else if (transportApiRequestMsg.hasProvisionDeviceRequestMsg()) {
             return handle(transportApiRequestMsg.getProvisionDeviceRequestMsg());
         } else if (transportApiRequestMsg.hasResourceRequestMsg()) {
@@ -214,12 +215,12 @@ public class DefaultTransportApiService implements TransportApiService {
         return getEmptyTransportApiResponse();
     }
 
-    private TransportApiResponseMsg validateCredentials(String credentialsId, DeviceCredentialsType credentialsType) {
+    private TransportApiResponseMsg validateCredentials(String credentialsId, DeviceCredentialsType credentialsType, boolean supportsProfileCaching) {
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-            return getDeviceInfo(credentials);
+            return getDeviceInfo(credentials, supportsProfileCaching);
         } else {
-            return getEmptyTransportApiResponse();
+            return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
         }
     }
 
@@ -228,9 +229,9 @@ public class DefaultTransportApiService implements TransportApiService {
         if (StringUtils.isEmpty(mqtt.getUserName())) {
             credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash(mqtt.getClientId()));
             if (credentials != null) {
-                return getDeviceInfo(credentials);
+                return getDeviceInfo(credentials, mqtt.getSupportsDeviceProfileCaching());
             } else {
-                return getEmptyTransportApiResponse();
+                return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
             }
         } else {
             credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(
@@ -238,9 +239,9 @@ public class DefaultTransportApiService implements TransportApiService {
             if (checkIsMqttCredentials(credentials)) {
                 var validationResult = validateMqttCredentials(mqtt, credentials);
                 if (VALID.equals(validationResult)) {
-                    return getDeviceInfo(credentials);
+                    return getDeviceInfo(credentials, mqtt.getSupportsDeviceProfileCaching());
                 } else if (PASSWORD_MISMATCH.equals(validationResult)) {
-                    return getEmptyTransportApiResponse();
+                    return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
                 } else {
                     return validateUserNameCredentials(mqtt);
                 }
@@ -250,14 +251,14 @@ public class DefaultTransportApiService implements TransportApiService {
         }
     }
 
-    protected TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain) {
+    protected TransportApiResponseMsg validateOrCreateDeviceX509Certificate(String certificateChain, boolean supportsProfileCaching) {
         List<String> chain = X509_CERTIFICATE_TRIM_CHAIN_PATTERN.matcher(certificateChain).results().map(match ->
                 EncryptionUtil.certTrimNewLines(match.group())).collect(Collectors.toList());
         for (String certificateValue : chain) {
             String certificateHash = EncryptionUtil.getSha3Hash(certificateValue);
             DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(certificateHash);
             if (credentials != null && DeviceCredentialsType.X509_CERTIFICATE.equals(credentials.getCredentialsType())) {
-                return getDeviceInfo(credentials);
+                return getDeviceInfo(credentials, supportsProfileCaching);
             }
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(certificateHash);
             if (deviceProfile != null && DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(deviceProfile.getProvisionType())) {
@@ -266,17 +267,17 @@ public class DefaultTransportApiService implements TransportApiService {
                 try {
                     ProvisionResponse provisionResponse = deviceProvisionService.provisionDeviceViaX509Chain(deviceProfile, provisionRequest);
                     if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
-                        return getDeviceInfo(provisionResponse.getDeviceCredentials());
+                        return getDeviceInfo(provisionResponse.getDeviceCredentials(), supportsProfileCaching);
                     }
                 } catch (ProvisionFailedException e) {
                     log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
-                    return getEmptyTransportApiResponse();
+                    return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
                 }
             } else if (deviceProfile != null) {
                 log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
             }
         }
-        return getEmptyTransportApiResponse();
+        return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
     }
 
     private TransportApiResponseMsg validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
@@ -284,16 +285,16 @@ public class DefaultTransportApiService implements TransportApiService {
         if (credentials != null) {
             switch (credentials.getCredentialsType()) {
                 case ACCESS_TOKEN:
-                    return getDeviceInfo(credentials);
+                    return getDeviceInfo(credentials, mqtt.getSupportsDeviceProfileCaching());
                 case MQTT_BASIC:
                     if (VALID.equals(validateMqttCredentials(mqtt, credentials))) {
-                        return getDeviceInfo(credentials);
+                        return getDeviceInfo(credentials, mqtt.getSupportsDeviceProfileCaching());
                     } else {
-                        return getEmptyTransportApiResponse();
+                        return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
                     }
             }
         }
-        return getEmptyTransportApiResponse();
+        return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
     }
 
     private DeviceCredentials checkMqttCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg clientCred, String credId) {
@@ -654,35 +655,43 @@ public class DefaultTransportApiService implements TransportApiService {
                 .build();
     }
 
-    TransportApiResponseMsg getDeviceInfo(DeviceCredentials credentials) {
+    TransportApiResponseMsg getDeviceInfo(DeviceCredentials credentials, boolean supportsProfileCaching) {
         Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, credentials.getDeviceId());
         if (device == null) {
             log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
-            return getEmptyTransportApiResponse();
+            return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
         }
         try {
             ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
             builder.setDeviceInfo(ProtoUtils.toDeviceInfoProto(device));
             DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
             if (deviceProfile != null) {
-                builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
+                if (!supportsProfileCaching) {
+                    builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
+                }
+                builder.setDeviceProfileVersion(deviceProfile.getVersion() != null ? deviceProfile.getVersion() : 0L);
             } else {
                 log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
             }
             if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
                 builder.setCredentialsBody(credentials.getCredentialsValue());
             }
+            builder.setResult(CredentialsValidationResult.VALIDATION_OK);
             return TransportApiResponseMsg.newBuilder()
                     .setValidateCredResponseMsg(builder.build()).build();
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
-            return getEmptyTransportApiResponse();
+            return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
         }
     }
 
     private TransportApiResponseMsg getEmptyTransportApiResponse() {
+        return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_RESULT_UNKNOWN);
+    }
+
+    private TransportApiResponseMsg getEmptyTransportApiResponse(CredentialsValidationResult result) {
         return TransportApiResponseMsg.newBuilder()
-                .setValidateCredResponseMsg(ValidateDeviceCredentialsResponseMsg.getDefaultInstance()).build();
+                .setValidateCredResponseMsg(ValidateDeviceCredentialsResponseMsg.newBuilder().setResult(result).build()).build();
     }
 
     private TransportApiResponseMsg handle(TransportProtos.LwM2MRequestMsg requestMsg) {
