@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
 import org.thingsboard.server.dao.group.EntityGroupService;
@@ -192,7 +193,7 @@ public class DefaultTransportApiServiceTest {
 
     @Test
     public void givenProfileCachingSupported_whenValidateToken_thenNoProfileInResponseAndVersionSet() throws Exception {
-        DeviceProfile profile = prepareDeviceWithProfile("token", 7L);
+        DeviceProfile profile = prepareDeviceWithProfile("token", DeviceCredentialsType.ACCESS_TOKEN, 7L);
 
         TransportProtos.ValidateDeviceCredentialsResponseMsg response = validateToken("token", true);
 
@@ -203,7 +204,7 @@ public class DefaultTransportApiServiceTest {
 
     @Test
     public void givenProfileCachingNotSupported_whenValidateToken_thenFullProfilePresent() throws Exception {
-        prepareDeviceWithProfile("token", 7L);
+        prepareDeviceWithProfile("token", DeviceCredentialsType.ACCESS_TOKEN, 7L);
 
         TransportProtos.ValidateDeviceCredentialsResponseMsg response = validateToken("token", false);
 
@@ -235,7 +236,51 @@ public class DefaultTransportApiServiceTest {
         assertThat(response.getResult()).isEqualTo(TransportProtos.CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
     }
 
-    private DeviceProfile prepareDeviceWithProfile(String token, long profileVersion) {
+    @Test
+    public void givenProfileCachingSupported_whenValidateX509_thenNoProfileInResponse() throws Exception {
+        prepareDeviceWithProfile("hash", DeviceCredentialsType.X509_CERTIFICATE, 7L);
+
+        TransportProtos.ValidateDeviceCredentialsResponseMsg response = handleValidation(
+                TransportProtos.TransportApiRequestMsg.newBuilder()
+                        .setValidateX509CertRequestMsg(TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder()
+                                .setHash("hash")
+                                .setSupportsDeviceProfileCaching(true))
+                        .build());
+
+        assertThat(response.hasDeviceProfile()).isFalse();
+        assertThat(response.getDeviceProfileVersion()).isEqualTo(7L);
+        assertThat(response.getResult()).isEqualTo(TransportProtos.CredentialsValidationResult.VALIDATION_OK);
+    }
+
+    @Test
+    public void givenDeviceProfileNotFound_whenValidateToken_thenInternalErrorResultWithDeviceInfo() throws Exception {
+        prepareDeviceWithProfile("token", DeviceCredentialsType.ACCESS_TOKEN, 7L);
+        when(deviceProfileCache.get(any(), any(DeviceProfileId.class))).thenReturn(null);
+
+        TransportProtos.ValidateDeviceCredentialsResponseMsg response = validateToken("token", true);
+
+        assertThat(response.hasDeviceInfo()).isTrue();
+        assertThat(response.hasDeviceProfile()).isFalse();
+        assertThat(response.getResult()).isEqualTo(TransportProtos.CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
+    }
+
+    @Test
+    public void givenX509ProvisionFails_whenValidateOrCreateX509_thenInternalErrorResult() throws Exception {
+        when(deviceCredentialsService.findDeviceCredentialsByCredentialsId(any())).thenReturn(null);
+        when(deviceProfileService.findDeviceProfileByProvisionDeviceKey(any())).thenReturn(createDeviceProfile(chain[1]));
+        when(deviceProvisionService.provisionDeviceViaX509Chain(any(), any())).thenThrow(new ProvisionFailedException("limit"));
+
+        TransportProtos.ValidateDeviceCredentialsResponseMsg response = handleValidation(
+                TransportProtos.TransportApiRequestMsg.newBuilder()
+                        .setValidateOrCreateX509CertRequestMsg(TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg.newBuilder()
+                                .setCertificateChain(certificateChain))
+                        .build());
+
+        assertThat(response.hasDeviceInfo()).isFalse();
+        assertThat(response.getResult()).isEqualTo(TransportProtos.CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
+    }
+
+    private DeviceProfile prepareDeviceWithProfile(String token, DeviceCredentialsType credentialsType, long profileVersion) {
         DeviceProfile profile = new DeviceProfile();
         profile.setId(new DeviceProfileId(UUID.randomUUID()));
         profile.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
@@ -258,7 +303,7 @@ public class DefaultTransportApiServiceTest {
 
         DeviceCredentials credentials = new DeviceCredentials();
         credentials.setDeviceId(device.getId());
-        credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        credentials.setCredentialsType(credentialsType);
         credentials.setCredentialsId(token);
         credentials.setCredentialsValue(token);
 
@@ -269,11 +314,14 @@ public class DefaultTransportApiServiceTest {
     }
 
     private TransportProtos.ValidateDeviceCredentialsResponseMsg validateToken(String token, boolean supportsProfileCaching) throws Exception {
-        TransportProtos.TransportApiRequestMsg request = TransportProtos.TransportApiRequestMsg.newBuilder()
+        return handleValidation(TransportProtos.TransportApiRequestMsg.newBuilder()
                 .setValidateTokenRequestMsg(TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder()
                         .setToken(token)
                         .setSupportsDeviceProfileCaching(supportsProfileCaching))
-                .build();
+                .build());
+    }
+
+    private TransportProtos.ValidateDeviceCredentialsResponseMsg handleValidation(TransportProtos.TransportApiRequestMsg request) throws Exception {
         return service.handle(new TbProtoQueueMsg<>(UUID.randomUUID(), request))
                 .get(10, TimeUnit.SECONDS).getValue().getValidateCredResponseMsg();
     }

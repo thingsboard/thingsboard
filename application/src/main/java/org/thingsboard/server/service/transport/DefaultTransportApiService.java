@@ -269,9 +269,10 @@ public class DefaultTransportApiService implements TransportApiService {
                     if (ProvisionResponseStatus.SUCCESS.equals(provisionResponse.getResponseStatus())) {
                         return getDeviceInfo(provisionResponse.getDeviceCredentials(), supportsProfileCaching);
                     }
+                    return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
                 } catch (ProvisionFailedException e) {
                     log.debug("[{}][{}] Failed to provision device with cert chain: {}", deviceProfile.getTenantId(), deviceProfile.getId(), provisionRequest, e);
-                    return getEmptyTransportApiResponse(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
+                    return getEmptyTransportApiResponse(CredentialsValidationResult.VALIDATION_INTERNAL_ERROR);
                 }
             } else if (deviceProfile != null) {
                 log.warn("[{}][{}] Device Profile provision configuration mismatched: expected {}, actual {}", deviceProfile.getTenantId(), deviceProfile.getId(), DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN, deviceProfile.getProvisionType());
@@ -665,6 +666,7 @@ public class DefaultTransportApiService implements TransportApiService {
             ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
             builder.setDeviceInfo(ProtoUtils.toDeviceInfoProto(device));
             DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
+            CredentialsValidationResult result = CredentialsValidationResult.VALIDATION_OK;
             if (deviceProfile != null) {
                 if (!supportsProfileCaching) {
                     builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
@@ -672,11 +674,12 @@ public class DefaultTransportApiService implements TransportApiService {
                 builder.setDeviceProfileVersion(deviceProfile.getVersion() != null ? deviceProfile.getVersion() : 0L);
             } else {
                 log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
+                result = CredentialsValidationResult.VALIDATION_INTERNAL_ERROR;
             }
             if (!StringUtils.isEmpty(credentials.getCredentialsValue())) {
                 builder.setCredentialsBody(credentials.getCredentialsValue());
             }
-            builder.setResult(CredentialsValidationResult.VALIDATION_OK);
+            builder.setResult(result);
             return TransportApiResponseMsg.newBuilder()
                     .setValidateCredResponseMsg(builder.build()).build();
         } catch (JsonProcessingException e) {
