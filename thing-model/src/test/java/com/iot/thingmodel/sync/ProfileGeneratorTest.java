@@ -1,5 +1,6 @@
 package com.iot.thingmodel.sync;
 
+import com.iot.thingmodel.common.Constants;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.client.model.DeviceProfile;
 import org.thingsboard.client.model.DeviceProfileProvisionType;
@@ -29,5 +30,31 @@ class ProfileGeneratorTest {
         assertNotNull(profile.getProfileData().getConfiguration());
         assertNotNull(profile.getProfileData().getTransportConfiguration());
         assertNotNull(profile.getProfileData().getProvisionConfiguration());
+    }
+
+    @Test
+    void usesDefaultBaseNameWhenNameIsBlank() {
+        assertEquals("product M1", generator.profileName(" ", "M1"));
+    }
+
+    @Test
+    void doesNotAppendModelWhenItMatchesName() {
+        assertEquals("Device", generator.profileName("Device", "device"));
+    }
+
+    @Test
+    void trimsNameAndModel() {
+        assertEquals("Device M1", generator.profileName(" Device ", " M1 "));
+    }
+
+    @Test
+    void formatsDescriptionWithCounts() {
+        DeviceProfile profile = generator.generate(
+                "Device", "M1", "P1", "C1", "2.0", 3, 4, 5);
+
+        assertEquals(String.format(
+                Constants.Product.PROFILE_DESCRIPTION_FORMAT,
+                "P1", "C1", "2.0", 3, 4, 5),
+                profile.getDescription());
     }
 }

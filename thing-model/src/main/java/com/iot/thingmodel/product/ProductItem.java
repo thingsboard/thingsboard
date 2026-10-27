@@ -15,5 +15,6 @@ public record ProductItem(
         long actionCount,
         String tbProfileId,
         String tbAssetId,
+        String tbRuleChainId,
         Instant updatedAt) {
 }

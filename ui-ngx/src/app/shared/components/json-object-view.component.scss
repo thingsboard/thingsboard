@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: Copyright The Thingsboard Authors
 // SPDX-License-Identifier: Apache-2.0
 :host {
+  .fill-height {
+    height: 100%;
+  }
+
   #tb-json-view {
     width: 100%;
     height: 100%;

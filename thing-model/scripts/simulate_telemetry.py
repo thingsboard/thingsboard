@@ -139,7 +139,7 @@ class TelemetryGenerator:
         values = self.telemetry()
         event = self.rng.choice(self.events) if self.events else None
         if event:
-            event_id = f"{event.get('id', 'event')}-{uuid.uuid4().hex[:8]}"
+            event_id = event.get("id", "event")
             event_type = event.get("type") or self._random_event_type()
         else:
             event_id = f"evt-{uuid.uuid4().hex[:8]}"

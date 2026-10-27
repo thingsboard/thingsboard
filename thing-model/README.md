@@ -17,6 +17,30 @@
 mvn -f thing-model/pom.xml test
 ```
 
+集成测试 `ProductRuleChainTbIntegrationTest` 会连接现有 ThingsBoard（默认 `http://localhost:18080`，账号 `tenant@thingsboard.org / tenant`、`sysadmin@thingsboard.org / sysadmin`），并用 Testcontainers 启动独立的 thing-model 数据库。可通过 `TB_URL`、`TB_USERNAME`、`TB_PASSWORD`、`TB_SYSADMIN_USERNAME`、`TB_SYSADMIN_PASSWORD` 覆盖。
+
+该测试默认保留 ThingsBoard 中的 `E2E_RULE_CHAIN` 规则链、Device Profile 和 Asset，便于运行后直接检查；产品记录位于临时 Testcontainers Postgres，测试结束即销毁。测试会打印保留资源的 ID。
+
+### 测试分层
+
+集成测试与业务代码同包：
+
+- `db.RepositoryIntegrationTest`：使用 Testcontainers Postgres
+- `product.ProductRuleChainTbIntegrationTest`：连接现有 ThingsBoard
+- 其余单元测试与 Web Slice：不依赖 Docker 和 ThingsBoard
+
+```bash
+# 全部测试（默认包含外部 ThingsBoard 集成测试）
+mvn -f thing-model/pom.xml test
+
+# 只跑单个集成测试
+mvn -f thing-model/pom.xml test -Dtest=ProductRuleChainTbIntegrationTest
+mvn -f thing-model/pom.xml test -Dtest=RepositoryIntegrationTest
+
+# 只跑单元/切片测试
+mvn -f thing-model/pom.xml test -Dtest='!*IntegrationTest'
+```
+
 只编译：
 
 ```bash
@@ -34,6 +58,13 @@ python thing-model/scripts/simulate_telemetry.py --mode mixed --count 10
 
 详细说明见 [scripts/README.md](scripts/README.md)。
 
+## 前端代理
+
+`ui-ngx` 通过 `/api/thing-model` 访问本服务：
+
+- 开发环境：`ui-ngx/proxy.conf.js` 将 `/api/thing-model` 转发到 `http://localhost:8090`，并重写为 `/api`
+- 生产环境：需要在 Nginx/HAProxy 配置同样的转发规则
+
 ## 配置
 
 `src/main/resources/application.yml` 支持以下环境变量：
@@ -45,7 +76,7 @@ python thing-model/scripts/simulate_telemetry.py --mode mixed --count 10
 | `SPRING_DATASOURCE_PASSWORD` | `postgres` | 数据库密码 |
 | `THINGMODEL_DB_NAME` | `thingmodel` | 启动时校验的数据库名 |
 | `THINGMODEL_DB_SCHEMA` | 空 | 独立库模式不设置；共用库时设为 `thingmodel` |
-| `THINGMODEL_TB_URL` | `http://localhost:8080` | ThingsBoard 地址 |
+| `THINGMODEL_TB_URL` | `http://localhost:18080` | ThingsBoard 地址 |
 | `THINGMODEL_SECRET_KEY` | 空 | AES-GCM 密钥，Base64 编码，16/24/32 字节 |
 | `THINGMODEL_KAFKA_BOOTSTRAP` | `kafka-test1:9095,kafka-test2:9095,kafka-test3:9095` | 规则链 Kafka bootstrap servers |
 
@@ -117,19 +148,20 @@ iot.event.normalized
 iot.telemetry.invalid
 ```
 
-产品发布/同步时会生成规则链：
+产品发布/同步时会生成规则链，名称直接使用 ProductId：
 
 ```text
-auto_<ProductId>_telemetry
+<ProductId>
 ```
 
-并绑定到对应 `DeviceProfile.defaultRuleChainId`。配置项：
+并绑定到对应 `DeviceProfile.defaultRuleChainId`。存量 `auto_<ProductId>_telemetry` 规则链会在下次发布/同步时自动复用并重命名为 ProductId。生成规则链时会把当前产品录入的压缩 TSL schema 内嵌到校验脚本，运行时按属性与事件校验；非法数据不写 ThingsBoard 时序库，只投递 `iot.telemetry.invalid`。TSL 变更后重新发布或调用 `/sync` 即可刷新规则链。
+
+配置项：
 
 ```yaml
 thingmodel:
   rulechain:
     enabled: true
-    name-prefix: auto_
     kafka-bootstrap: kafka-test1:9095,kafka-test2:9095,kafka-test3:9095
     topic-telemetry: iot.telemetry.normalized
     topic-event: iot.event.normalized
@@ -248,7 +280,8 @@ curl -X POST "http://localhost:8090/api/products" \
 3. 写入 `plat_product` 与 `plat_product_tsl`（DRAFT）。
 4. 按产品名幂等创建/更新 ThingsBoard Device Profile。
 5. 创建/更新产品 Asset，并写入 `tsl_json`、`tsl_schema` 等 SERVER_SCOPE 属性。
-6. 写入 `plat_profile_binding`，TSL 置为 PUBLISHED。
+6. 生成/更新规则链，并把压缩 TSL schema 内嵌到校验脚本。
+7. 写入 `plat_profile_binding`，TSL 置为 PUBLISHED。
 
 同步失败时 DRAFT 保留，接口返回 `502`，可调用 `POST /api/products/{productId}/sync` 重试。
 
@@ -280,7 +313,9 @@ curl -X POST "http://localhost:8090/api/products" \
 - TSL 解析、JSON Schema + 业务校验、压缩 schema
 - 产品与 TSL 版本持久化
 - Device Profile、产品 Asset、SERVER_SCOPE 属性同步
-- 按产品生成规则链 `auto_<ProductId>_telemetry` 并绑定 `defaultRuleChainId`
+- 按产品生成规则链 `<ProductId>` 并绑定 `defaultRuleChainId`
+- 规则链内嵌产品 TSL schema，按属性 + 事件校验类型、范围、必填、未知字段、枚举、int32、报文大小与时间戳单位
+- 非法数据不写时序库，只投递 `iot.telemetry.invalid`；合法遥测/事件继续落库并投 Kafka
 - 规则链 Kafka 出口：`iot.telemetry.normalized`、`iot.event.normalized`、`iot.telemetry.invalid`
 - 厂商服务账号 AES-GCM 加密
 - ThingsBoard JWT 校验与租户隔离
@@ -289,6 +324,7 @@ curl -X POST "http://localhost:8090/api/products" \
 - 独立 database 部署与 `DatabaseGuard` 防误连（可选同库 schema 模式）
 - 数据访问使用 jOOQ `DSLContext`，支持 JSONB、`ON CONFLICT`、`FOR UPDATE` 与批量写入，不再使用 `JdbcTemplate`
 - 单元/集成测试（校验器、压缩 schema、模板生成、规则链、同步、产品服务、Controller、权限、数据库校验、jOOQ 仓储）
+- 连接现有 ThingsBoard 的集成测试：新建产品后通过 ThingsBoard REST API 校验规则链名称、节点、连接、内嵌 schema 和 Device Profile 绑定
 
 未实现（后续阶段）：
 

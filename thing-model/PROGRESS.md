@@ -40,7 +40,7 @@
   - JSON Schema 结构校验
   - 标识符、重复、范围、枚举、结构体、功能点数量等业务校验
   - 保留键 `ID_RESERVED` 警告
-- 压缩 schema 生成并写入产品 Asset 的 `tsl_schema`。
+- 压缩 schema 生成并写入产品 Asset 的 `tsl_schema`，包含 `tslVersion` 与事件参数定义。
 - 数据表：
   - `plat_product`
   - `plat_product_tsl`
@@ -64,8 +64,10 @@
 - 规则链：
   - 按产品生成 `auto_<ProductId>_telemetry`
   - 绑定 `DeviceProfile.defaultRuleChainId`
+  - 生成时内嵌当前产品压缩 TSL schema，运行时按属性 + 事件校验
+  - 校验项：类型、min/max、required、未知字段、枚举 mapping、int32、报文大小、时间戳单位、event_id/event_type/事件参数
+  - 非法数据不写时序库，只投 `iot.telemetry.invalid`
   - Kafka 出口：遥测 / 事件 / 校验失败
-  - 非遥测消息转发租户根规则链
 - Kafka：
   - 使用外部 Kafka，地址由 `thingmodel.rulechain.kafka-bootstrap` / `THINGMODEL_KAFKA_BOOTSTRAP` 配置
   - 规则链投递三个 topic
@@ -86,7 +88,7 @@
 - OpenAPI / Swagger UI。
 - Python 数据模拟脚本：`scripts/simulate_telemetry.py`，自动创建并配置测试设备，支持遥测/事件/非法数据混合上报。
 - Docker Compose：TB + PostgreSQL，PostgreSQL 固定 `5432` 外部访问；Kafka 使用外部集群。
-- 59 个单元/集成测试通过，包含产品创建 → 规则链生成 → Device Profile 绑定 → 数据库回写的完整链路测试。
+- 79 个单元/集成测试通过，集成测试位于 `db`、`product` 业务包；包含连接现有 ThingsBoard 的产品创建 → Device Profile 绑定 → 规则链生成 → 规则链 API 校验集成测试。
 
 ## 4. 当前运行状态
 

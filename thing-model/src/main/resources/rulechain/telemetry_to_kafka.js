@@ -1,29 +1,181 @@
 var out = {msg: msg, metadata: metadata || {}, msgType: msgType};
-var raw = metadata.ss_tsl_schema;
-var schema = null;
-var strict = false;
-if (raw) {
-    try {
-        schema = (typeof raw === 'string') ? JSON.parse(raw) : raw;
-        strict = schema.strictUnknown === true;
-    } catch (e) {
-        metadata.tsl_invalid = '_schema:parse';
-    }
-}
-var keys = schema ? (schema.keys || schema) : null;
-var productId = schema ? schema.productId : null;
-var values = {};
-var dropped = [];
+var meta = out.metadata;
 var invalid = [];
-var reserved = {event_id: true, event_type: true, event_ts: true};
+var dropped = [];
+var values = {};
 
-Object.keys(msg).forEach(function (k) {
-    if (reserved[k]) {
-        return;
+var schema = null;
+try {
+    schema = JSON.parse(__TSL_SCHEMA__);
+} catch (e) {
+    invalid.push('_schema:parse');
+}
+
+var keys = schema && schema.keys ? schema.keys : {};
+var events = schema && schema.events ? schema.events : {};
+var strict = schema ? schema.strictUnknown === true : false;
+var reserved = {event_id: true, event_type: true, event_ts: true};
+var payloadOk = msg !== null && typeof msg === 'object' && !Array.isArray(msg);
+
+function isInteger(v) {
+    return typeof v === 'number' && isFinite(v) && v % 1 === 0;
+}
+
+function isNumber(v) {
+    return typeof v === 'number' && isFinite(v);
+}
+
+function isObject(v) {
+    return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+function mappingKeys(map) {
+    if (!map) {
+        return null;
     }
-    var v = msg[k];
-    if (keys) {
-        var d = keys[k];
+    var result = [];
+    if (Array.isArray(map)) {
+        map.forEach(function (item) {
+            if (item !== null && typeof item === 'object') {
+                if (item.key !== undefined) {
+                    result.push(String(item.key));
+                } else if (item.id !== undefined) {
+                    result.push(String(item.id));
+                }
+            } else {
+                result.push(String(item));
+            }
+        });
+        return result;
+    }
+    if (typeof map === 'object') {
+        return Object.keys(map);
+    }
+    return null;
+}
+
+function mappingHas(map, value) {
+    var candidate = mappingKeys(map);
+    if (!candidate) {
+        return true;
+    }
+    return candidate.indexOf(String(value)) >= 0;
+}
+
+function normalizeTimestamp(v) {
+    if (isNumber(v) && v < 1000000000000) {
+        return v * 1000;
+    }
+    return v;
+}
+
+function typeOk(t, v) {
+    if (t === 'bool') {
+        return typeof v === 'boolean' || v === 0 || v === 1;
+    }
+    if (t === 'int') {
+        return isInteger(v);
+    }
+    if (t === 'float') {
+        return isNumber(v);
+    }
+    if (t === 'string') {
+        return typeof v === 'string';
+    }
+    if (t === 'enum') {
+        return isInteger(v);
+    }
+    if (t === 'enum_string') {
+        return typeof v === 'string';
+    }
+    if (t === 'timestamp') {
+        return isInteger(v);
+    }
+    if (t === 'struct') {
+        return isObject(v);
+    }
+    return true;
+}
+
+function validateField(name, v, d) {
+    var t = d.t;
+    if (!typeOk(t, v)) {
+        invalid.push(name + ':' + (t || 'unknown'));
+        return false;
+    }
+    if (t === 'int' && (v < -2147483648 || v > 2147483647)) {
+        invalid.push(name + ':int32');
+        return false;
+    }
+    if ((t === 'enum' || t === 'enum_string') && !mappingHas(d.map, v)) {
+        invalid.push(name + ':enum');
+        return false;
+    }
+    if (t === 'struct') {
+        var fieldNames = Object.keys(v);
+        for (var i = 0; i < fieldNames.length; i++) {
+            if (isObject(v[fieldNames[i]])) {
+                invalid.push(name + '.' + fieldNames[i] + ':nested');
+                return false;
+            }
+        }
+    }
+    if (isNumber(v)) {
+        if (isNumber(d.min) && v < d.min) {
+            invalid.push(name + ':min');
+            return false;
+        }
+        if (isNumber(d.max) && v > d.max) {
+            invalid.push(name + ':max');
+            return false;
+        }
+    }
+    return true;
+}
+
+var eventId = payloadOk ? msg.event_id : undefined;
+var eventType = payloadOk ? msg.event_type : undefined;
+var eventDef = null;
+var allowed = {};
+
+if (payloadOk) {
+    Object.keys(keys).forEach(function (k) {
+        allowed[k] = keys[k];
+    });
+}
+
+if (!payloadOk) {
+    invalid.push('payload:type');
+} else if (JSON.stringify(msg).length > 4096) {
+    invalid.push('payload:size');
+}
+
+if (eventId !== undefined && eventId !== null) {
+    if (typeof eventId !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,49}$/.test(eventId)) {
+        invalid.push('event_id:invalid');
+    } else {
+        eventDef = events[eventId];
+        if (!eventDef) {
+            invalid.push('event_id:unknown');
+        } else if (eventDef.params) {
+            Object.keys(eventDef.params).forEach(function (k) {
+                if (!(k in allowed)) {
+                    allowed[k] = eventDef.params[k];
+                }
+            });
+        }
+    }
+} else if (eventType !== undefined && eventType !== null) {
+    invalid.push('event_type:orphan');
+}
+
+if (payloadOk) {
+    Object.keys(msg).forEach(function (k) {
+        if (reserved[k]) {
+            return;
+        }
+        var v = msg[k];
+        var d = allowed[k];
         if (!d) {
             if (strict) {
                 invalid.push(k + ':unknown');
@@ -32,34 +184,17 @@ Object.keys(msg).forEach(function (k) {
             }
             return;
         }
-        var t = d.t;
-        var ok = true;
-        if (t === 'int' || t === 'timestamp' || t === 'enum') {
-            ok = (typeof v === 'number' && v % 1 === 0);
-        } else if (t === 'float') {
-            ok = (typeof v === 'number');
-        } else if (t === 'bool') {
-            ok = (typeof v === 'boolean' || v === 0 || v === 1);
-        } else if (t === 'string') {
-            ok = (typeof v === 'string');
-        }
-        if (!ok) {
-            invalid.push(k + ':' + t);
+        if (!validateField(k, v, d)) {
             return;
         }
-        if (typeof v === 'number') {
-            if (typeof d.min === 'number' && v < d.min) {
-                invalid.push(k + ':min');
-            }
-            if (typeof d.max === 'number' && v > d.max) {
-                invalid.push(k + ':max');
-            }
+        if (d.t === 'bool' && (v === 0 || v === 1)) {
+            v = v === 1;
+        } else if (d.t === 'timestamp') {
+            v = normalizeTimestamp(v);
         }
-    }
-    values[k] = v;
-});
+        values[k] = v;
+    });
 
-if (keys) {
     Object.keys(keys).forEach(function (k) {
         var d = keys[k];
         if (d && d.req === true && !(k in msg)) {
@@ -68,24 +203,55 @@ if (keys) {
     });
 }
 
-var eventId = msg.event_id;
-var eventType = msg.event_type || 'info';
-var eventTs = msg.event_ts;
-if (eventId && eventType !== 'info' && eventType !== 'alert' && eventType !== 'fault') {
+if (eventType !== undefined && eventType !== null && eventType !== ''
+        && eventType !== 'info' && eventType !== 'alert' && eventType !== 'fault') {
     invalid.push('event_type:value');
 }
 
-var ts = metadata.ts ? Number(metadata.ts) : Date.now();
+if (eventDef) {
+    if (eventType === undefined || eventType === null || eventType === '') {
+        eventType = eventDef.type || 'info';
+    } else {
+        if (eventDef.type && eventType !== eventDef.type) {
+            invalid.push('event_type:mismatch');
+        }
+        eventType = eventDef.type || eventType;
+    }
+}
+
+var ts = meta.ts ? Number(meta.ts) : Date.now();
+if (!isNumber(ts)) {
+    ts = Date.now();
+}
+ts = normalizeTimestamp(ts);
+
+var eventTs = payloadOk ? msg.event_ts : undefined;
+if (eventTs !== undefined && eventTs !== null) {
+    if (!isInteger(eventTs)) {
+        invalid.push('event_ts:type');
+        eventTs = ts;
+    } else {
+        eventTs = normalizeTimestamp(eventTs);
+    }
+} else {
+    eventTs = ts;
+}
+
+var kind = eventId ? 'event' : 'telemetry';
+if (invalid.length > 0) {
+    kind = 'invalid';
+}
+
 var envelope = {
     v: 1,
-    tenantId: metadata.ss_tenant_id || metadata.tenantId || null,
-    deviceId: metadata.ss_device_uuid || metadata.deviceId || null,
-    deviceName: metadata.deviceName || null,
-    productId: productId,
-    tslVersion: metadata.ss_tsl_version || null,
-    siteCode: metadata.ss_site_code || null,
+    tenantId: meta.ss_tenant_id || meta.tenantId || null,
+    deviceId: meta.ss_device_uuid || meta.deviceId || null,
+    deviceName: meta.deviceName || null,
+    productId: schema ? schema.productId : null,
+    tslVersion: schema ? schema.tslVersion : null,
+    siteCode: meta.ss_site_code || null,
     ts: ts,
-    kind: 'telemetry',
+    kind: kind,
     values: values,
     dropped: dropped,
     event: null,
@@ -93,19 +259,14 @@ var envelope = {
 };
 
 if (eventId) {
-    envelope.kind = 'event';
     envelope.event = {
         id: eventId,
-        type: eventType,
-        ts: eventTs ? Number(eventTs) : ts,
+        type: eventType || 'info',
+        ts: eventTs,
         level: eventType === 'alert' ? 'MAJOR' : (eventType === 'fault' ? 'CRITICAL' : 'INFO')
     };
 }
-if (invalid.length > 0) {
-    envelope.kind = 'invalid';
-}
-metadata.tb_kind = envelope.kind;
-out.msg = JSON.stringify(envelope);
-out.metadata = metadata;
-out.msgType = 'POST_TELEMETRY_REQUEST';
+
+meta.tb_kind = envelope.kind;
+meta.tsl_normalized = JSON.stringify(envelope);
 return out;

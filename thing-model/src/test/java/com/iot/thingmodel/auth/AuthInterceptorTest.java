@@ -50,6 +50,67 @@ class AuthInterceptorTest {
         assertEquals(403, ex.getStatus().value());
     }
 
+    @Test
+    void rejectsMissingToken() throws Exception {
+        HandlerMethod handler = handler(new TestController(), "tenantAllowed");
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> interceptor.preHandle(
+                        new MockHttpServletRequest(), new MockHttpServletResponse(), handler));
+        assertEquals(401, ex.getStatus().value());
+    }
+
+    @Test
+    void acceptsAuthorizationHeaderFallback() throws Exception {
+        when(verifier.verify(TOKEN_HEADER)).thenReturn(tenantAdmin);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", TOKEN_HEADER);
+        HandlerMethod handler = handler(new TestController(), "tenantAllowed");
+
+        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), handler));
+        assertEquals(tenantAdmin, request.getAttribute(AuthInterceptor.CURRENT_USER_ATTRIBUTE));
+    }
+
+    @Test
+    void skipsOptionsRequests() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("OPTIONS", "/api/products");
+
+        assertTrue(interceptor.preHandle(
+                request, new MockHttpServletResponse(), new Object()));
+    }
+
+    @Test
+    void propagatesVerifierFailure() throws Exception {
+        when(verifier.verify(TOKEN_HEADER)).thenThrow(new ApiException(
+                org.springframework.http.HttpStatus.UNAUTHORIZED,
+                "UNAUTHORIZED", "bad token"));
+        HandlerMethod handler = handler(new TestController(), "tenantAllowed");
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> interceptor.preHandle(
+                        request(), new MockHttpServletResponse(), handler));
+        assertEquals(401, ex.getStatus().value());
+    }
+
+    @Test
+    void allowsNonHandlerMethod() throws Exception {
+        when(verifier.verify(TOKEN_HEADER)).thenReturn(tenantAdmin);
+
+        assertTrue(interceptor.preHandle(
+                request(), new MockHttpServletResponse(), new Object()));
+    }
+
+    @Test
+    void matchesAuthorityIgnoringCase() throws Exception {
+        CurrentUser lowerCase = new CurrentUser(
+                "u1", UUID.randomUUID().toString(), "tenant_admin", "a@b");
+        when(verifier.verify(TOKEN_HEADER)).thenReturn(lowerCase);
+        HandlerMethod handler = handler(new TestController(), "tenantAllowed");
+
+        assertTrue(interceptor.preHandle(
+                request(), new MockHttpServletResponse(), handler));
+    }
+
     private MockHttpServletRequest request() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("X-Authorization", TOKEN_HEADER);

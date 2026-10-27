@@ -33,6 +33,7 @@ export interface HomeSection {
 
 export enum MenuId {
   home = 'home',
+  products = 'products',
   tenants = 'tenants',
   tenants_section = 'tenants_section',
   tenant_profiles = 'tenant_profiles',
@@ -114,6 +115,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/home',
       icon: 'mdi:home-outline'
+    }
+  ],
+  [
+    MenuId.products,
+    {
+      id: MenuId.products,
+      name: 'product.products',
+      type: 'link',
+      path: '/entities/products',
+      icon: 'mdi:package-variant-closed'
     }
   ],
   [
@@ -817,13 +828,22 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
 
 const menuFilters = new Map<MenuId, MenuFilter>([
   [
-    MenuId.edges, (authState) => authState.edgesSupportEnabled
+    MenuId.assets, () => false
   ],
   [
-    MenuId.edge_management, (authState) => authState.edgesSupportEnabled
+    MenuId.asset_profiles, () => false
   ],
   [
-    MenuId.rulechain_templates, (authState) => authState.edgesSupportEnabled
+    MenuId.entity_views, () => false
+  ],
+  [
+    MenuId.edges, () => false
+  ],
+  [
+    MenuId.edge_management, () => false
+  ],
+  [
+    MenuId.rulechain_templates, () => false
   ]
 ]);
 
@@ -832,6 +852,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     Authority.SYS_ADMIN,
     [
       {id: MenuId.home},
+      {id: MenuId.products},
       {
         id: MenuId.tenants_section,
         pages: [
@@ -897,6 +918,27 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
       {id: MenuId.home},
       {id: MenuId.divider},
       {
+        id: MenuId.entities,
+        pages: [
+          {id: MenuId.products},
+          {id: MenuId.devices},
+          {id: MenuId.gateways},
+          {id: MenuId.assets},
+          {id: MenuId.device_profiles},
+          {id: MenuId.asset_profiles},
+          {id: MenuId.entity_views},
+          {id: MenuId.otaUpdates}
+        ]
+      },
+      {id: MenuId.customers_and_users},
+      {
+        id: MenuId.data_processing,
+        pages: [
+          {id: MenuId.calculated_fields},
+          {id: MenuId.rule_chains}
+        ]
+      },
+      {
         id: MenuId.monitor,
         pages: [
           {id: MenuId.dashboards},
@@ -917,26 +959,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
               {id: MenuId.notification_rules}
             ]
           }
-        ]
-      },
-      {
-        id: MenuId.entities,
-        pages: [
-          {id: MenuId.devices},
-          {id: MenuId.gateways},
-          {id: MenuId.assets},
-          {id: MenuId.device_profiles},
-          {id: MenuId.asset_profiles},
-          {id: MenuId.entity_views},
-          {id: MenuId.otaUpdates}
-        ]
-      },
-      {id: MenuId.customers_and_users},
-      {
-        id: MenuId.data_processing,
-        pages: [
-          {id: MenuId.calculated_fields},
-          {id: MenuId.rule_chains}
         ]
       },
       {

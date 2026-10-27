@@ -139,6 +139,8 @@ public final class Constants {
         public static final String KEY_FIELDS = "fields";
         public static final String KEY_KEYS = "keys";
         public static final String KEY_SCHEMA_VERSION = "schemaVersion";
+        public static final String KEY_COMPACT_TSL_VERSION = "tslVersion";
+        public static final String KEY_COMPACT_EVENTS = "events";
         public static final String KEY_STRICT_UNKNOWN = "strictUnknown";
         public static final String KEY_REQUEST_TSL = "tsl";
         public static final String KEY_COMPACT_TYPE = "t";
@@ -237,11 +239,16 @@ public final class Constants {
                 "org.thingsboard.rule.engine.action.TbLogNode";
         public static final String SEND_RPC =
                 "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode";
-        public static final String NAME_SUFFIX = "_telemetry";
+        public static final String LEGACY_NAME_PREFIX = "auto_";
+        public static final String LEGACY_NAME_SUFFIX = "_telemetry";
         public static final String NODE_ID_SEPARATOR = "|";
         public static final String SCRIPT_RESOURCE = "/rulechain/telemetry_to_kafka.js";
+        public static final String NORMALIZE_SCRIPT_RESOURCE = "/rulechain/apply_envelope.js";
+        public static final String SCRIPT_SCHEMA_PLACEHOLDER = "__TSL_SCHEMA__";
         public static final String SCRIPT_LANG_JS = "JS";
         public static final String JS_KIND_SCRIPT = "return metadata.tb_kind;";
+        public static final String JS_VALIDATION_SCRIPT =
+                "return metadata.tb_kind === 'invalid' ? 'invalid' : 'valid';";
         public static final String FETCH_TO_METADATA = "METADATA";
         public static final int FIRST_NODE_INDEX = 0;
         public static final int CONFIGURATION_VERSION = 1;
@@ -264,6 +271,8 @@ public final class Constants {
         public static final int NODE_KAFKA_TELEMETRY = 9;
         public static final int NODE_KAFKA_EVENT = 10;
         public static final int NODE_KAFKA_INVALID = 11;
+        public static final int NODE_VALIDATE = 12;
+        public static final int NODE_VALIDATION_SWITCH = 13;
         public static final String NODE_KEY_MSG_TYPE_SWITCH = "msgTypeSwitch";
         public static final String NODE_KEY_SAVE_TIMESERIES = "saveTimeseries";
         public static final String NODE_KEY_SAVE_CLIENT_ATTRIBUTES = "saveClientAttributes";
@@ -276,6 +285,8 @@ public final class Constants {
         public static final String NODE_KEY_KAFKA_TELEMETRY = "kafkaTelemetry";
         public static final String NODE_KEY_KAFKA_EVENT = "kafkaEvent";
         public static final String NODE_KEY_KAFKA_INVALID = "kafkaInvalid";
+        public static final String NODE_KEY_VALIDATE = "validate";
+        public static final String NODE_KEY_VALIDATION_SWITCH = "validationSwitch";
         public static final String NODE_NAME_MSG_TYPE_SWITCH = "Message Type Switch";
         public static final String NODE_NAME_SAVE_TIMESERIES = "Save Timeseries";
         public static final String NODE_NAME_SAVE_CLIENT_ATTRIBUTES = "Save Client Attributes";
@@ -283,8 +294,10 @@ public final class Constants {
         public static final String NODE_NAME_LOG_OTHER = "Log Other";
         public static final String NODE_NAME_SEND_RPC = "RPC Call Request";
         public static final String NODE_NAME_GET_ATTRIBUTES = "Get TSL Attributes";
-        public static final String NODE_NAME_TRANSFORM = "TSL Validate And Normalize";
+        public static final String NODE_NAME_TRANSFORM = "Normalize Envelope";
         public static final String NODE_NAME_SWITCH = "Route By Kind";
+        public static final String NODE_NAME_VALIDATE = "TSL Validate";
+        public static final String NODE_NAME_VALIDATION_SWITCH = "Route By Validation";
         public static final String NODE_NAME_KAFKA_TELEMETRY = "Kafka Telemetry";
         public static final String NODE_NAME_KAFKA_EVENT = "Kafka Event";
         public static final String NODE_NAME_KAFKA_INVALID = "Kafka Invalid";
@@ -294,6 +307,7 @@ public final class Constants {
         public static final String CONNECTION_RPC_TO_DEVICE = "RPC Request to Device";
         public static final String CONNECTION_OTHER = "Other";
         public static final String CONNECTION_SUCCESS = "Success";
+        public static final String CONNECTION_VALID = "valid";
         public static final String CONNECTION_TELEMETRY = "telemetry";
         public static final String CONNECTION_EVENT = "event";
         public static final String CONNECTION_INVALID = "invalid";
@@ -377,14 +391,13 @@ public final class Constants {
 
     public static final class Defaults {
 
-        public static final String TB_BASE_URL = "http://localhost:8080";
+        public static final String TB_BASE_URL = "http://localhost:18080";
         public static final int TB_CLIENT_MAX_RETRIES = 3;
         public static final long TB_CLIENT_INITIAL_RETRY_DELAY_MS = 1000L;
         public static final long TB_CLIENT_MAX_RETRY_DELAY_MS = 30000L;
         public static final int AUTH_CACHE_SECONDS = 60;
         public static final String DB_NAME = "thingmodel";
         public static final String DB_SCHEMA = "";
-        public static final String RULE_CHAIN_NAME_PREFIX = "auto_";
         public static final String KAFKA_TOPIC_TELEMETRY = "iot.telemetry.normalized";
         public static final String KAFKA_TOPIC_EVENT = "iot.event.normalized";
         public static final String KAFKA_TOPIC_INVALID = "iot.telemetry.invalid";

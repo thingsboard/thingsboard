@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "profile": {
+    "ProductId": "EVTPRODUCT01",
+    "CategoryId": "2"
+  },
+  "properties": [
+    {
+      "id": "speed",
+      "name": "速度",
+      "mode": "r",
+      "required": true,
+      "define": {
+        "type": "float",
+        "min": 0,
+        "max": 200,
+        "unit": "km/h"
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "overSpeed",
+      "name": "超速",
+      "type": "alert",
+      "params": [
+        {
+          "id": "speed",
+          "name": "速度",
+          "define": {
+            "type": "float",
+            "min": 0,
+            "max": 300
+          }
+        },
+        {
+          "id": "limit",
+          "name": "限速",
+          "define": {
+            "type": "int",
+            "min": 0,
+            "max": 200
+          }
+        }
+      ]
+    }
+  ],
+  "actions": []
+}

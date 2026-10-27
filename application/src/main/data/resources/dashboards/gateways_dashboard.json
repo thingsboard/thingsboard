@@ -16,7 +16,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "4px",
           "settings": {
-            "entitiesTitle": "Gateway list",
+            "entitiesTitle": "网关列表",
             "enableSearch": true,
             "enableSelectColumnDisplay": false,
             "enableStickyHeader": true,
@@ -31,7 +31,7 @@
             "defaultSortOrder": "entityName",
             "useRowStyleFunction": false
           },
-          "title": "Gateway list",
+          "title": "网关列表",
           "dropShadow": true,
           "enableFullscreen": false,
           "titleStyle": {
@@ -50,7 +50,7 @@
                 {
                   "name": "createdTime",
                   "type": "entityField",
-                  "label": "Created time",
+                  "label": "创建时间",
                   "color": "#2196f3",
                   "settings": {
                     "columnWidth": "140px",
@@ -70,7 +70,7 @@
                 {
                   "name": "name",
                   "type": "entityField",
-                  "label": "Gateway name",
+                  "label": "网关名称",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "20%",
@@ -90,13 +90,13 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#f44336",
                   "settings": {
                     "columnWidth": "20%",
                     "useCellStyleFunction": false,
                     "useCellContentFunction": true,
-                    "cellContentFunction": "var newValue = value == 'true' ? \"Active\" : \"Inactive\";\r\nvar bgColor = value == 'true' ? 'rgba(25,128,56, .06)': 'rgba(203,37,48, .06)',\r\ncolor = value == 'true' ? 'rgb(25,128,56)': 'rgb(203,37,48)';\r\nreturn `<div style=\"text-align: center;\r\n    border-radius: 16px;\r\n    font-weight: 500;\r\n    color: ${color};\r\n    background: ${bgColor};\r\n    width: fit-content;\r\n    padding: 5px 15px;\">${newValue}</div>`",
+                    "cellContentFunction": "var newValue = value == 'true' ? \"在线\" : \"离线\";\r\nvar bgColor = value == 'true' ? 'rgba(25,128,56, .06)': 'rgba(203,37,48, .06)',\r\ncolor = value == 'true' ? 'rgb(25,128,56)': 'rgb(203,37,48)';\r\nreturn `<div style=\"text-align: center;\r\n    border-radius: 16px;\r\n    font-weight: 500;\r\n    color: ${color};\r\n    background: ${bgColor};\r\n    width: fit-content;\r\n    padding: 5px 15px;\">${newValue}</div>`",
                     "defaultColumnVisibility": "visible",
                     "columnSelectionToDisplay": "enabled"
                   },
@@ -111,7 +111,7 @@
                 {
                   "name": "active_connectors",
                   "type": "attribute",
-                  "label": "Enabled Connectors",
+                  "label": "已启用连接器",
                   "color": "#3f51b5",
                   "settings": {
                     "columnWidth": "20%",
@@ -132,7 +132,7 @@
                 {
                   "name": "Version",
                   "type": "attribute",
-                  "label": "Version",
+                  "label": "版本",
                   "color": "#8bc34a",
                   "settings": {
                     "columnWidth": "40%",
@@ -155,7 +155,7 @@
           "actions": {
             "actionCellButton": [
               {
-                "name": "Launch command",
+                "name": "启动命令",
                 "icon": "terminal",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
@@ -174,7 +174,7 @@
                 "id": "ae2e5995-505f-a241-5fb2-6cbaf08b1b55"
               },
               {
-                "name": "General configuration",
+                "name": "常规配置",
                 "icon": "settings",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
@@ -192,7 +192,7 @@
                 "id": "a54acd30-5c5f-d709-b892-5fc14f780e34"
               },
               {
-                "name": "Connectors",
+                "name": "连接器",
                 "icon": "private_connectivity",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
@@ -206,12 +206,12 @@
                 "id": "e27eea56-c57c-0a45-eb1d-f48f19e5356b"
               },
               {
-                "name": "Delete gateway",
+                "name": "删除网关",
                 "icon": "delete",
                 "useShowWidgetActionFunction": false,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const { $scope, servicesMap } = widgetContext;\nconst $injector = $scope.$injector;\nconst dialogs = $injector.get(servicesMap.get('dialogs'));\nconst deviceService = $injector.get(servicesMap.get('deviceService'));\n\nopenDeleteDeviceDialog();\n\nfunction openDeleteDeviceDialog() {\n  const title = `Are you sure you want to delete the gateway device '${entityName}'?`;\n  const content = 'Be careful, after the confirmation, the device and all related data will become unrecoverable!';\n  \n  dialogs.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {\n    if (result) {\n      deleteDevice();\n    }\n  });\n}\n\nfunction deleteDevice() {\n  deviceService.deleteDevice(entityId.id).subscribe(() => {\n    widgetContext.updateAliases();\n  });\n}",
+                "customFunction": "const { $scope, servicesMap } = widgetContext;\nconst $injector = $scope.$injector;\nconst dialogs = $injector.get(servicesMap.get('dialogs'));\nconst deviceService = $injector.get(servicesMap.get('deviceService'));\n\nopenDeleteDeviceDialog();\n\nfunction openDeleteDeviceDialog() {\n  const title = `确定要删除网关设备“${entityName}”吗？`;\n  const content = '请注意，确认后该设备及所有相关数据将无法恢复！';\n  \n  dialogs.confirm(title, content, '取消', '删除').subscribe(result => {\n    if (result) {\n      deleteDevice();\n    }\n  });\n}\n\nfunction deleteDevice() {\n  deviceService.deleteDevice(entityId.id).subscribe(() => {\n    widgetContext.updateAliases();\n  });\n}",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "0ec170eb-de35-cab1-99a1-a922eb42cdf0"
@@ -219,7 +219,7 @@
             ],
             "rowClick": [
               {
-                "name": "Show geteway details",
+                "name": "查看网关详情",
                 "icon": "more_horiz",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
@@ -235,14 +235,14 @@
             ],
             "headerButton": [
               {
-                "name": "Add Gateway",
+                "name": "添加网关",
                 "buttonType": "icon",
                 "icon": "add",
                 "buttonColor": "rgba(0, 0, 0, 0.87)",
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "customPretty",
-                "customHtml": "<form #addEntityForm=\"ngForm\" [formGroup]=\"addEntityFormGroup\"\r\n      (ngSubmit)=\"save($event)\" class=\"add-entity-form\">\r\n    <mat-toolbar class=\"flex flex-row items-center\" color=\"primary\">\r\n        <h2>Add gateway</h2>\r\n        <span class=\"flex-1\"></span>\r\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\r\n            <mat-icon class=\"material-icons\">close</mat-icon>\r\n        </button>\r\n    </mat-toolbar>\r\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\r\n    </mat-progress-bar>\r\n    <div class=\"h-1\" *ngIf=\"!(isLoading$ | async)\"></div>\r\n    <div mat-dialog-content class=\"flex flex-col\">\r\n        <div class=\"flex flex-row gap-2 flex-wrap\" >\r\n            <mat-form-field class=\"w-full sm:w-auto\">\r\n                <mat-label>Name</mat-label>\r\n                <input matInput formControlName=\"entityName\" required>\r\n                <mat-error *ngIf=\"addEntityFormGroup.get('entityName').hasError('required') || addEntityFormGroup.get('entityName').hasError('pattern')\">\r\n                    Gateway name is required.\r\n                </mat-error>\r\n            </mat-form-field>\r\n        </div>\r\n        <div class=\"flex flex-row gap-2 flex-wrap\">\r\n            <tb-entity-subtype-autocomplete\r\n                    class=\"w-full sm:w-auto\"\r\n                    formControlName=\"type\"\r\n                    [required]=\"true\"\r\n                    [entityType]=\"'DEVICE'\"\r\n            ></tb-entity-subtype-autocomplete>\r\n        </div>\r\n    </div>\r\n    <div mat-dialog-actions class=\"flex flex-row justify-end items-center\">\r\n        <button mat-button color=\"primary\"\r\n                type=\"button\"\r\n                [disabled]=\"(isLoading$ | async)\"\r\n                (click)=\"cancel()\" cdkFocusInitial>\r\n            Cancel\r\n        </button>\r\n        <button mat-button mat-raised-button color=\"primary\"\r\n                type=\"submit\"\r\n                [disabled]=\"(isLoading$ | async) || addEntityForm.invalid || !addEntityForm.dirty\">\r\n            Create\r\n        </button>\r\n    </div>\r\n</form>\r\n",
+                "customHtml": "<form #addEntityForm=\"ngForm\" [formGroup]=\"addEntityFormGroup\"\r\n      (ngSubmit)=\"save($event)\" class=\"add-entity-form\">\r\n    <mat-toolbar class=\"flex flex-row items-center\" color=\"primary\">\r\n        <h2>添加网关</h2>\r\n        <span class=\"flex-1\"></span>\r\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\r\n            <mat-icon class=\"material-icons\">close</mat-icon>\r\n        </button>\r\n    </mat-toolbar>\r\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\r\n    </mat-progress-bar>\r\n    <div class=\"h-1\" *ngIf=\"!(isLoading$ | async)\"></div>\r\n    <div mat-dialog-content class=\"flex flex-col\">\r\n        <div class=\"flex flex-row gap-2 flex-wrap\" >\r\n            <mat-form-field class=\"w-full sm:w-auto\">\r\n                <mat-label>名称</mat-label>\r\n                <input matInput formControlName=\"entityName\" required>\r\n                <mat-error *ngIf=\"addEntityFormGroup.get('entityName').hasError('required') || addEntityFormGroup.get('entityName').hasError('pattern')\">\r\n                    网关名称不能为空。\r\n                </mat-error>\r\n            </mat-form-field>\r\n        </div>\r\n        <div class=\"flex flex-row gap-2 flex-wrap\">\r\n            <tb-entity-subtype-autocomplete\r\n                    class=\"w-full sm:w-auto\"\r\n                    formControlName=\"type\"\r\n                    [required]=\"true\"\r\n                    [entityType]=\"'DEVICE'\"\r\n            ></tb-entity-subtype-autocomplete>\r\n        </div>\r\n    </div>\r\n    <div mat-dialog-actions class=\"flex flex-row justify-end items-center\">\r\n        <button mat-button color=\"primary\"\r\n                type=\"button\"\r\n                [disabled]=\"(isLoading$ | async)\"\r\n                (click)=\"cancel()\" cdkFocusInitial>\r\n            取消\r\n        </button>\r\n        <button mat-button mat-raised-button color=\"primary\"\r\n                type=\"submit\"\r\n                [disabled]=\"(isLoading$ | async) || addEntityForm.invalid || !addEntityForm.dirty\">\r\n            创建\r\n        </button>\r\n    </div>\r\n</form>\r\n",
                 "customCss": ".add-entity-form {\r\n    min-width: 400px !important;\r\n}\r\n\r\n.add-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.add-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n\r\n",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet assetService = $injector.get(widgetContext.servicesMap.get('assetService'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\r\nlet entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));\r\nlet userSettingsService = $injector.get(widgetContext.servicesMap.get('userSettingsService'));\r\n\r\nopenAddEntityDialog();\r\n\r\nfunction openAddEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\r\n}\r\n\r\nfunction AddEntityDialogController(instance) {\r\n    let vm = instance;\r\n    let userSettings;\r\n    userSettingsService.loadUserSettings().subscribe(settings=> {\r\n        userSettings = settings;\r\n        if (!userSettings.createdGatewaysCount) userSettings.createdGatewaysCount = 0;\r\n    });\r\n    \r\n\r\n    vm.addEntityFormGroup = vm.fb.group({\r\n     entityName: ['', [vm.validators.required, vm.validators.pattern(/.*\\S.*/)]],\r\n     entityType: ['DEVICE'],\r\n     entityLabel: [''],\r\n     type: ['', [vm.validators.required]],\r\n    });\r\n\r\n    vm.cancel = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n    vm.save = function($event) {\r\n        vm.addEntityFormGroup.markAsPristine();\r\n        saveEntityObservable().subscribe(\r\n            function (device) {\r\n                widgetContext.updateAliases();\r\n                userSettingsService.putUserSettings({ createdGatewaysCount: ++userSettings.createdGatewaysCount }).subscribe(_=>{\r\n                });\r\n                vm.dialogRef.close(null);\r\n                openCommandDialog(device, $event);\r\n            }\r\n        );\r\n    };\r\n    \r\n    function openCommandDialog(device, $event) {\r\n        vm.device = device;\r\n        let openCommandAction = widgetContext.actionsApi.getActionDescriptors(\"actionCellButton\").find(action => action.name == \"Launch command\");\r\n        setTimeout(() => {\r\n            widgetContext.actionsApi.handleWidgetAction($event, openCommandAction, device.id, device.name, {newDevice: true});\r\n        });\r\n        goToConfigState();\r\n    }\r\n\r\n    \r\n    function goToConfigState() {\r\n        const stateParams = {};\r\n        stateParams.entityId = vm.device.id;\r\n        stateParams.entityName = vm.device.name;\r\n        const newStateParams = {\r\n            targetEntityParamName: 'default',\r\n            new_gateway: {\r\n                entityId: vm.device.id,\r\n                entityName: vm.device.name\r\n            }\r\n        }\r\n        const params = {...stateParams, ...newStateParams};\r\n        widgetContext.stateController.openState('gateway_details', params, false);\r\n    }\r\n\r\n    function saveEntityObservable() {\r\n        const formValues = vm.addEntityFormGroup.value;\r\n        let entity = {\r\n            name: formValues.entityName.trim(),\r\n            type: formValues.type,\r\n            label: formValues.entityLabel,\r\n            additionalInfo: {\r\n                gateway: true\r\n            }\r\n        };\r\n        return deviceService.saveDevice(entity);\r\n    }\r\n}\r\n",
                 "customResources": [],
@@ -290,7 +290,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "0px",
           "settings": {},
-          "title": "New Gateway configuration",
+          "title": "网关配置",
           "showTitleIcon": false,
           "titleTooltip": "",
           "dropShadow": true,
@@ -364,7 +364,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "0px",
           "settings": {},
-          "title": "New Gateway connector",
+          "title": "连接器",
           "showTitleIcon": false,
           "titleTooltip": "",
           "dropShadow": false,
@@ -448,7 +448,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#e91e63",
                   "settings": {},
                   "_hash": 0.10301612696488416,
@@ -470,7 +470,7 @@
                 {
                   "name": "Version",
                   "type": "attribute",
-                  "label": "Version",
+                  "label": "版本",
                   "color": "#03a9f4",
                   "settings": {},
                   "_hash": 0.007837366355011532
@@ -540,7 +540,7 @@
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".divider {\n    position: absolute;\n    width: 3px;\n    top: 8px;\n    border-radius: 2px;\n    bottom: 8px;\n    border: 1px solid rgba(31, 70, 144, 1);\n    background-color: rgba(31, 70, 144, 1);\n    left: 10px;\n}\n.divider-green .divider {\n    border: 1px solid rgb(25,128,56);\n    background-color: rgb(25,128,56);\n}\n\n.divider-green .mat-mdc-card-content {\n    color: rgb(25,128,56);\n}\n\n.divider-red .divider {\n    border: 1px solid rgb(203,37,48);\n    background-color: rgb(203,37,48);\n}\n\n.divider-red .mat-mdc-card-content {\n    color: rgb(203,37,48);\n}\n\n.mdc-card {\n    position: relative;\n    padding-left: 10px;\n    margin-bottom: 1px;\n}\n\n.mat-mdc-card-subtitle {\n    font-weight: 400;\n    font-size: 12px;\n}\n\n.mat-mdc-card-header {\n    padding: 8px 16px 0;\n}\n\n.mat-mdc-card-content:last-child {\n    padding-bottom: 8px;\n    font-size: 16px;\n}\n\n.cards-container {\n    height: calc(100% - 1px);\n    justify-content: stretch;\n    align-items: center;\n    margin-bottom: 1px;\n}\n\n::ng-deep.tb-home-widget-link > div {\n    flex-grow: 1;\n}\n\n.tb-home-widget-link {\n    cursor: pointer;\n    width: 100%;\n}\n\n.tb-home-widget-link:hover::after{\n    color: inherit;\n}\n \n.tb-home-widget-link::after{\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;\n}"
           },
-          "title": "Connectors",
+          "title": "连接器",
           "showTitleIcon": false,
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
@@ -643,7 +643,7 @@
             "defaultSortOrder": "-createdTime",
             "useRowStyleFunction": false
           },
-          "title": "Alarms",
+          "title": "告警",
           "dropShadow": true,
           "enableFullscreen": false,
           "titleStyle": {
@@ -662,7 +662,7 @@
               {
                 "name": "createdTime",
                 "type": "alarm",
-                "label": "Created time",
+                "label": "创建时间",
                 "color": "#2196f3",
                 "settings": {
                   "useCellStyleFunction": false,
@@ -707,7 +707,7 @@
               {
                 "name": "status",
                 "type": "alarm",
-                "label": "Status",
+                "label": "状态",
                 "color": "#607d8b",
                 "settings": {},
                 "_hash": 0.5260411335842929
@@ -777,7 +777,7 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "8px",
           "settings": {},
-          "title": "Logs",
+          "title": "日志",
           "showTitleIcon": false,
           "dropShadow": true,
           "enableFullscreen": true,
@@ -843,7 +843,7 @@
             "isConnectorLog": true,
             "connectorLogState": "connector_logs"
           },
-          "title": "${connectorName} logs",
+          "title": "${connectorName} 日志",
           "showTitleIcon": false,
           "dropShadow": true,
           "enableFullscreen": true,
@@ -913,7 +913,7 @@
               }
             ]
           },
-          "title": "RPC remote shell",
+          "title": "远程终端",
           "dropShadow": true,
           "enableFullscreen": true,
           "widgetStyle": {
@@ -1033,7 +1033,7 @@
             "disableStickyHeader": false,
             "useRowStyleFunction": false
           },
-          "title": "RPC Logs",
+          "title": "RPC 日志",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -1111,7 +1111,7 @@
               }
             ]
           },
-          "title": "RPC debug terminal",
+          "title": "调试终端",
           "dropShadow": true,
           "enableFullscreen": true,
           "widgetStyle": {},
@@ -1184,7 +1184,7 @@
               }
             ]
           },
-          "title": "Service RPC",
+          "title": "服务 RPC",
           "datasources": [],
           "showTitleIcon": false,
           "titleTooltip": "",
@@ -1224,7 +1224,7 @@
           "settings": {
             "isConnector": true
           },
-          "title": "Service RPC",
+          "title": "服务 RPC",
           "datasources": [],
           "showTitleIcon": false,
           "titleTooltip": "",
@@ -1266,7 +1266,7 @@
                 {
                   "name": "SERVICE_LOGS",
                   "type": "timeseries",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "useCellStyleFunction": false,
@@ -1347,7 +1347,7 @@
             "disableStickyHeader": false,
             "useRowStyleFunction": false
           },
-          "title": "RPC Logs",
+          "title": "RPC 日志",
           "dropShadow": true,
           "enableFullscreen": true,
           "titleStyle": {
@@ -1798,7 +1798,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -1939,7 +1939,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2080,7 +2080,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2220,7 +2220,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2360,7 +2360,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2500,7 +2500,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2640,7 +2640,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2780,7 +2780,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -2920,7 +2920,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3060,7 +3060,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3200,7 +3200,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3340,7 +3340,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3480,7 +3480,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3620,7 +3620,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3760,7 +3760,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -3900,7 +3900,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -4040,7 +4040,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -6961,7 +6961,7 @@
                 {
                   "name": "active",
                   "type": "attribute",
-                  "label": "Status",
+                  "label": "状态",
                   "color": "#4caf50",
                   "settings": {
                     "columnWidth": "0px",
@@ -7046,7 +7046,7 @@
     },
     "states": {
       "default": {
-        "name": "Gateway List",
+        "name": "网关列表",
         "root": true,
         "layouts": {
           "main": {
@@ -7074,7 +7074,7 @@
         }
       },
       "configuration": {
-        "name": "Configuration",
+        "name": "配置",
         "root": false,
         "layouts": {
           "main": {
@@ -7189,7 +7189,7 @@
         }
       },
       "logs": {
-        "name": "Logs",
+        "name": "日志",
         "root": false,
         "layouts": {
           "main": {
@@ -7217,7 +7217,7 @@
         }
       },
       "connector_logs": {
-        "name": "Logs",
+        "name": "日志",
         "root": false,
         "layouts": {
           "main": {
@@ -7245,7 +7245,7 @@
         }
       },
       "remote_shell": {
-        "name": "Remote Shell",
+        "name": "远程终端",
         "root": false,
         "layouts": {
           "main": {
@@ -7362,7 +7362,7 @@
         }
       },
       "storage_statistics": {
-        "name": "Storage statistics",
+        "name": "存储统计",
         "root": false,
         "layouts": {
           "main": {
@@ -7415,7 +7415,7 @@
         }
       },
       "machine_statistics": {
-        "name": "Machine statistics",
+        "name": "机器统计",
         "root": false,
         "layouts": {
           "main": {
@@ -7467,7 +7467,7 @@
         }
       },
       "storage_statistics_info": {
-        "name": "Storage statistics info",
+        "name": "存储统计信息",
         "root": false,
         "layouts": {
           "main": {
@@ -7528,7 +7528,7 @@
         }
       },
       "machine_statistics_info": {
-        "name": "Machine statistics info",
+        "name": "机器统计信息",
         "root": false,
         "layouts": {
           "main": {
@@ -7589,7 +7589,7 @@
         }
       },
       "gateway_devices_all": {
-        "name": "Gateway devices",
+        "name": "网关设备",
         "root": false,
         "layouts": {
           "main": {
@@ -8203,7 +8203,7 @@
           "fetchLastLevelOnly": false,
           "filters": [
             {
-              "relationType": "Created",
+              "relationType": "创建d",
               "entityTypes": [
                 "DEVICE"
               ]

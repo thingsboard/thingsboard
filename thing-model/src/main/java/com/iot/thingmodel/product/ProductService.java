@@ -197,6 +197,21 @@ public class ProductService {
         return new ValidationResponse(result.valid(), result.errors(), result.warnings());
     }
 
+    public ThingModelView getThingModel(TenantScope scope, String productId) {
+        requireProduct(scope, productId);
+        ProductRepository.TslRow tsl = repository.findLatestTsl(productId)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        Constants.ErrorCode.TSL_NOT_FOUND,
+                        "产品尚未提交物模型"));
+        return new ThingModelView(
+                productId,
+                tsl.version(),
+                tsl.status(),
+                tsl.strictUnknown(),
+                tsl.tsl());
+    }
+
     public ProductResponse sync(TenantScope scope, String productId) {
         ProductRepository.ProductRow product = requireProduct(scope, productId);
         ProductRepository.TslRow tsl = repository.findLatestTsl(productId)
@@ -347,6 +362,7 @@ public class ProductService {
                 actions,
                 binding == null || binding.profileId() == null ? null : binding.profileId().toString(),
                 binding == null || binding.assetId() == null ? null : binding.assetId().toString(),
+                binding == null || binding.ruleChainId() == null ? null : binding.ruleChainId().toString(),
                 product.updatedAt());
     }
 

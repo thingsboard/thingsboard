@@ -1,0 +1,35 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-toolbar class="tb-dialog-header">
+  <h2>{{ data.title | translate }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button type="button" (click)="close()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-dialog-content>
+  @if (!data.issues.length) {
+    <div class="tb-product-issues-empty">{{ 'product.no-issues' | translate }}</div>
+  } @else {
+    <div class="tb-product-issues-list">
+      @for (issue of data.issues; track issue) {
+        <div class="tb-product-issue">
+          <div class="tb-product-issue-header">
+            <span class="tb-product-issue-code">{{ issue.code }}</span>
+            <span class="tb-product-issue-path">{{ issue.path }}</span>
+          </div>
+          <div class="tb-product-issue-message">{{ issue.message }}</div>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+<mat-dialog-actions class="flex flex-row items-center justify-end">
+  <button mat-button type="button" (click)="close()">
+    {{ 'action.close' | translate }}
+  </button>
+</mat-dialog-actions>

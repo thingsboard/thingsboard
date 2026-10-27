@@ -1,0 +1,101 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="mat-padding">
+  <mat-card appearance="outlined" class="tb-product-card">
+    <mat-toolbar class="mat-mdc-table-toolbar">
+      <div class="mat-toolbar-tools">
+        <span class="tb-product-title">{{ 'product.products' | translate }}</span>
+        <span class="flex-1"></span>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-product-search">
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [formControl]="searchControl"
+                 [placeholder]="'product.search' | translate">
+        </mat-form-field>
+        <button mat-icon-button type="button" (click)="loadProducts()"
+                [matTooltip]="'action.refresh' | translate" matTooltipPosition="above">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-flat-button color="primary" type="button" (click)="createProduct()">
+          <mat-icon>add</mat-icon>
+          {{ 'product.create-product' | translate }}
+        </button>
+      </div>
+    </mat-toolbar>
+    <div class="tb-product-table-container">
+      <table mat-table [dataSource]="dataSource" matSort class="w-full">
+        <ng-container matColumnDef="productId">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.product-id' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.productId }}</td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.name' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="model">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.model' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.model }}</td>
+        </ng-container>
+        <ng-container matColumnDef="categoryId">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.category' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.categoryId }}</td>
+        </ng-container>
+        <ng-container matColumnDef="tslVersion">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.tsl-version' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.tslVersion }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.status' | translate }}</th>
+          <td mat-cell *matCellDef="let product">
+            <span [class]="statusClass(product.status)">
+              {{ statusTranslationKey(product.status) | translate }}
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="propertyCount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.properties' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.propertyCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="eventCount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.events' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.eventCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actionCount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.actions' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.actionCount }}</td>
+        </ng-container>
+        @if (isSystemAdmin) {
+          <ng-container matColumnDef="tenantId">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.tenant' | translate }}</th>
+            <td mat-cell *matCellDef="let product" class="tb-product-tenant">{{ product.tenantId }}</td>
+          </ng-container>
+        }
+        <ng-container matColumnDef="updatedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'product.updated-at' | translate }}</th>
+          <td mat-cell *matCellDef="let product">{{ product.updatedAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let product">
+            <button mat-icon-button type="button" (click)="openProduct(product, $event)"
+                    [matTooltip]="'action.view' | translate" matTooltipPosition="above">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"
+            class="tb-product-row" (click)="openProduct(row)"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            <div class="tb-product-empty">{{ 'product.no-products' | translate }}</div>
+          </td>
+        </tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card>
+</div>

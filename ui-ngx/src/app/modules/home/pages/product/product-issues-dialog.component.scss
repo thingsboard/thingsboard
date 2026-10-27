@@ -1,0 +1,44 @@
+.tb-product-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.tb-product-issue {
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.tb-product-issue-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.tb-product-issue-code {
+  font-weight: 600;
+  color: #195da2;
+}
+
+.tb-product-issue-path {
+  color: rgba(0, 0, 0, 0.54);
+  word-break: break-all;
+}
+
+.tb-product-issue-message {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.87);
+  word-break: break-word;
+}
+
+.tb-product-issues-empty {
+  padding: 24px 0;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
+}

@@ -113,6 +113,7 @@ public class ProductRepository {
                         actionCount,
                         PLAT_PROFILE_BINDING.TB_PROFILE_ID,
                         PLAT_PROFILE_BINDING.TB_ASSET_ID,
+                        PLAT_PROFILE_BINDING.TB_RULE_CHAIN_ID,
                         PLAT_PRODUCT.UPDATED_AT)
                 .from(PLAT_PRODUCT)
                 .leftJoin(latest).on(latestProductId.eq(PLAT_PRODUCT.PRODUCT_ID))
@@ -134,6 +135,7 @@ public class ProductRepository {
                         longValue(record.get(actionCount)),
                         uuidString(record.get(PLAT_PROFILE_BINDING.TB_PROFILE_ID)),
                         uuidString(record.get(PLAT_PROFILE_BINDING.TB_ASSET_ID)),
+                        uuidString(record.get(PLAT_PROFILE_BINDING.TB_RULE_CHAIN_ID)),
                         JooqTime.toInstant(record.get(PLAT_PRODUCT.UPDATED_AT))));
     }
 

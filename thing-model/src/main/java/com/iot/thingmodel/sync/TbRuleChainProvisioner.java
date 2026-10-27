@@ -1,5 +1,6 @@
 package com.iot.thingmodel.sync;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -33,7 +34,8 @@ public class TbRuleChainProvisioner {
     private final ThingsboardClientProvider clientProvider;
     private final ThingModelProperties properties;
     private final ObjectMapper objectMapper;
-    private final String script;
+    private final String scriptTemplate;
+    private final String normalizeScript;
 
     public TbRuleChainProvisioner(
             ThingsboardClientProvider clientProvider,
@@ -42,7 +44,8 @@ public class TbRuleChainProvisioner {
         this.clientProvider = clientProvider;
         this.properties = properties;
         this.objectMapper = objectMapper;
-        this.script = loadScript();
+        this.scriptTemplate = loadScript(SCRIPT_RESOURCE);
+        this.normalizeScript = loadScript(NORMALIZE_SCRIPT_RESOURCE);
     }
 
     public UUID ensure(TbSyncRequest request) {
@@ -50,13 +53,20 @@ public class TbRuleChainProvisioner {
             return null;
         }
         ThingsboardClient client = clientProvider.get(request.tenantId());
-        String name = properties.getRuleChain().getNamePrefix()
-                + request.productId()
-                + NAME_SUFFIX;
+        String name = request.productId();
         RuleChain existingChain = findByName(client, name);
         boolean existed = existingChain != null;
         RuleChain chain = existingChain;
 
+        if (chain == null) {
+            String legacyName = LEGACY_NAME_PREFIX + request.productId() + LEGACY_NAME_SUFFIX;
+            RuleChain legacyChain = findByName(client, legacyName);
+            if (legacyChain != null) {
+                legacyChain.setName(name);
+                chain = client.saveRuleChain(legacyChain);
+                existed = true;
+            }
+        }
         if (chain == null) {
             chain = new RuleChain();
             chain.setName(name);
@@ -70,7 +80,7 @@ public class TbRuleChainProvisioner {
         }
 
         UUID chainId = chain.getId().getId();
-        RuleChainMetaData metadata = buildMetadata(chainId);
+        RuleChainMetaData metadata = buildMetadata(chainId, request);
         if (existed) {
             applyExistingNodeIds(metadata, client.getRuleChainMetaData(chainId.toString()));
         }
@@ -96,12 +106,13 @@ public class TbRuleChainProvisioner {
         return null;
     }
 
-    private RuleChainMetaData buildMetadata(UUID chainId) {
+    private RuleChainMetaData buildMetadata(UUID chainId, TbSyncRequest request) {
+        String validationScript = renderValidationScript(request);
         List<NodeSpec> specs = List.of(
                 new NodeSpec(NODE_KEY_MSG_TYPE_SWITCH, MSG_TYPE_SWITCH,
                         NODE_NAME_MSG_TYPE_SWITCH, 0, 2, msgTypeSwitchConfig()),
                 new NodeSpec(NODE_KEY_SAVE_TIMESERIES, SAVE_TIMESERIES,
-                        NODE_NAME_SAVE_TIMESERIES, 1, 0, saveTimeseriesConfig()),
+                        NODE_NAME_SAVE_TIMESERIES, 4, 0, saveTimeseriesConfig()),
                 new NodeSpec(NODE_KEY_SAVE_CLIENT_ATTRIBUTES, SAVE_CLIENT_ATTRIBUTES,
                         NODE_NAME_SAVE_CLIENT_ATTRIBUTES, 1, 1, saveClientAttributesConfig()),
                 new NodeSpec(NODE_KEY_LOG_RPC_FROM_DEVICE, LOG,
@@ -111,30 +122,37 @@ public class TbRuleChainProvisioner {
                 new NodeSpec(NODE_KEY_SEND_RPC, SEND_RPC,
                         NODE_NAME_SEND_RPC, 1, 4, sendRpcConfig()),
                 new NodeSpec(NODE_KEY_GET_ATTRIBUTES, GET_ATTRIBUTES,
-                        NODE_NAME_GET_ATTRIBUTES, 2, 0, getAttributesConfig()),
+                        NODE_NAME_GET_ATTRIBUTES, 1, 0, getAttributesConfig()),
                 new NodeSpec(NODE_KEY_TRANSFORM, TRANSFORM_SCRIPT,
-                        NODE_NAME_TRANSFORM, 3, 0, transformConfig()),
+                        NODE_NAME_TRANSFORM, 5, 1, normalizeConfig()),
                 new NodeSpec(NODE_KEY_SWITCH, JS_SWITCH,
-                        NODE_NAME_SWITCH, 4, 0, jsSwitchConfig()),
+                        NODE_NAME_SWITCH, 6, 1, jsSwitchConfig()),
                 new NodeSpec(NODE_KEY_KAFKA_TELEMETRY, KAFKA,
-                        NODE_NAME_KAFKA_TELEMETRY, 5, 0,
+                        NODE_NAME_KAFKA_TELEMETRY, 7, 0,
                         kafkaConfig(properties.getRuleChain().getTopicTelemetry())),
                 new NodeSpec(NODE_KEY_KAFKA_EVENT, KAFKA,
-                        NODE_NAME_KAFKA_EVENT, 5, 1,
+                        NODE_NAME_KAFKA_EVENT, 7, 1,
                         kafkaConfig(properties.getRuleChain().getTopicEvent())),
                 new NodeSpec(NODE_KEY_KAFKA_INVALID, KAFKA,
-                        NODE_NAME_KAFKA_INVALID, 5, 2,
-                        kafkaConfig(properties.getRuleChain().getTopicInvalid())));
+                        NODE_NAME_KAFKA_INVALID, 7, 2,
+                        kafkaConfig(properties.getRuleChain().getTopicInvalid())),
+                new NodeSpec(NODE_KEY_VALIDATE, TRANSFORM_SCRIPT,
+                        NODE_NAME_VALIDATE, 2, 0, validationConfig(validationScript)),
+                new NodeSpec(NODE_KEY_VALIDATION_SWITCH, JS_SWITCH,
+                        NODE_NAME_VALIDATION_SWITCH, 3, 0, validationSwitchConfig()));
         List<RuleNode> nodes = specs.stream().map(spec -> node(chainId, spec)).toList();
 
         List<NodeConnectionInfo> connections = List.of(
-                connection(NODE_MSG_TYPE_SWITCH, NODE_SAVE_TIMESERIES, CONNECTION_POST_TELEMETRY),
+                connection(NODE_MSG_TYPE_SWITCH, NODE_GET_ATTRIBUTES, CONNECTION_POST_TELEMETRY),
                 connection(NODE_MSG_TYPE_SWITCH, NODE_SAVE_CLIENT_ATTRIBUTES, CONNECTION_POST_ATTRIBUTES),
                 connection(NODE_MSG_TYPE_SWITCH, NODE_LOG_RPC_FROM_DEVICE, CONNECTION_RPC_FROM_DEVICE),
                 connection(NODE_MSG_TYPE_SWITCH, NODE_SEND_RPC, CONNECTION_RPC_TO_DEVICE),
                 connection(NODE_MSG_TYPE_SWITCH, NODE_LOG_OTHER, CONNECTION_OTHER),
-                connection(NODE_SAVE_TIMESERIES, NODE_GET_ATTRIBUTES, CONNECTION_SUCCESS),
-                connection(NODE_GET_ATTRIBUTES, NODE_TRANSFORM, CONNECTION_SUCCESS),
+                connection(NODE_GET_ATTRIBUTES, NODE_VALIDATE, CONNECTION_SUCCESS),
+                connection(NODE_VALIDATE, NODE_VALIDATION_SWITCH, CONNECTION_SUCCESS),
+                connection(NODE_VALIDATION_SWITCH, NODE_SAVE_TIMESERIES, CONNECTION_VALID),
+                connection(NODE_VALIDATION_SWITCH, NODE_TRANSFORM, CONNECTION_INVALID),
+                connection(NODE_SAVE_TIMESERIES, NODE_TRANSFORM, CONNECTION_SUCCESS),
                 connection(NODE_TRANSFORM, NODE_SWITCH, CONNECTION_SUCCESS),
                 connection(NODE_SWITCH, NODE_KAFKA_TELEMETRY, CONNECTION_TELEMETRY),
                 connection(NODE_SWITCH, NODE_KAFKA_EVENT, CONNECTION_EVENT),
@@ -264,11 +282,19 @@ public class TbRuleChainProvisioner {
         return node;
     }
 
-    private JsonNode transformConfig() {
+    private JsonNode validationConfig(String script) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put(CONFIG_SCRIPT_LANG, SCRIPT_LANG_JS);
         node.put(CONFIG_JS_SCRIPT, script);
         node.put(CONFIG_TBEL_SCRIPT, script);
+        return node;
+    }
+
+    private JsonNode normalizeConfig() {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put(CONFIG_SCRIPT_LANG, SCRIPT_LANG_JS);
+        node.put(CONFIG_JS_SCRIPT, normalizeScript);
+        node.put(CONFIG_TBEL_SCRIPT, normalizeScript);
         return node;
     }
 
@@ -277,6 +303,14 @@ public class TbRuleChainProvisioner {
         node.put(CONFIG_SCRIPT_LANG, SCRIPT_LANG_JS);
         node.put(CONFIG_JS_SCRIPT, JS_KIND_SCRIPT);
         node.put(CONFIG_TBEL_SCRIPT, JS_KIND_SCRIPT);
+        return node;
+    }
+
+    private JsonNode validationSwitchConfig() {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put(CONFIG_SCRIPT_LANG, SCRIPT_LANG_JS);
+        node.put(CONFIG_JS_SCRIPT, JS_VALIDATION_SCRIPT);
+        node.put(CONFIG_TBEL_SCRIPT, JS_VALIDATION_SCRIPT);
         return node;
     }
 
@@ -305,10 +339,19 @@ public class TbRuleChainProvisioner {
             JsonNode configuration) {
     }
 
-    private String loadScript() {
-        try (InputStream input = getClass().getResourceAsStream(SCRIPT_RESOURCE)) {
+    private String renderValidationScript(TbSyncRequest request) {
+        try {
+            String schemaLiteral = objectMapper.writeValueAsString(request.compact().json());
+            return scriptTemplate.replace(SCRIPT_SCHEMA_PLACEHOLDER, schemaLiteral);
+        } catch (JsonProcessingException ex) {
+            throw new TbSyncException("物模型 schema 序列化失败", 500, null);
+        }
+    }
+
+    private String loadScript(String resource) {
+        try (InputStream input = getClass().getResourceAsStream(resource)) {
             if (input == null) {
-                throw new IllegalStateException("Missing " + SCRIPT_RESOURCE);
+                throw new IllegalStateException("Missing " + resource);
             }
             return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         } catch (Exception ex) {

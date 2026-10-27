@@ -1,0 +1,22 @@
+.tb-product-form-dialog-content {
+  min-width: 720px;
+  max-width: 960px;
+}
+
+.tb-product-tsl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tb-product-field-error {
+  color: #f44336;
+  font-size: 12px;
+}
+
+@media (max-width: 800px) {
+  .tb-product-form-dialog-content {
+    min-width: 0;
+    width: 100%;
+  }
+}

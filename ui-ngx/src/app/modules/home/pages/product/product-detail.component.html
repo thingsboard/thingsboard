@@ -1,0 +1,220 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="mat-padding tb-product-detail" *ngIf="detail">
+  <mat-card appearance="outlined" class="settings-card tb-product-detail-card">
+    <mat-toolbar class="mat-mdc-table-toolbar">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button type="button" (click)="back()"
+                [matTooltip]="'product.back-to-products' | translate" matTooltipPosition="above">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="tb-product-detail-title">
+          <div class="tb-product-detail-name">{{ detail.product.name }}</div>
+          <div class="tb-product-detail-id">{{ detail.product.productId }}</div>
+        </div>
+        <span [class]="statusClass(detail.product.status)">
+          {{ statusTranslationKey(detail.product.status) | translate }}
+        </span>
+        <span class="flex-1"></span>
+        <button mat-stroked-button color="primary" type="button" (click)="editThingModel()">
+          <mat-icon>edit</mat-icon>
+          {{ 'product.edit-thing-model' | translate }}
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-card-content class="tb-product-detail-content">
+      <div class="tb-product-overview">
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.tenant' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.tenantId }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.model' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.model }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.category' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.categoryId }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.tsl-version' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.tslVersion }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.properties' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.propertyCount }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.events' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.eventCount }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.actions' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.actionCount }}</span>
+        </div>
+        <div class="tb-product-overview-item">
+          <span class="tb-product-overview-label">{{ 'product.updated-at' | translate }}</span>
+          <span class="tb-product-overview-value">{{ detail.product.updatedAt | date:'yyyy-MM-dd HH:mm:ss' }}</span>
+        </div>
+      </div>
+      <div class="tb-product-links">
+        @if (detail.product.tbProfileId) {
+          <a mat-stroked-button color="primary"
+             [routerLink]="['/profiles/deviceProfiles', detail.product.tbProfileId]">
+            <mat-icon>developer_board</mat-icon>
+            {{ 'product.device-profile' | translate }}
+          </a>
+        }
+        @if (detail.product.tbAssetId) {
+          <a mat-stroked-button color="primary"
+             [routerLink]="['/entities/assets', detail.product.tbAssetId]">
+            <mat-icon>inventory_2</mat-icon>
+            {{ 'product.asset' | translate }}
+          </a>
+        }
+        @if (detail.product.tbRuleChainId) {
+          <a mat-stroked-button color="primary"
+             [routerLink]="['/ruleChains', detail.product.tbRuleChainId]">
+            <mat-icon>settings_ethernet</mat-icon>
+            {{ 'product.rule-chain' | translate }}
+          </a>
+        }
+      </div>
+      <mat-tab-group mat-stretch-tabs="false" class="tb-product-tabs">
+        <mat-tab label="{{ 'product.thing-model' | translate }}">
+          @if (thingModel) {
+            <div class="tb-product-tsl-view">
+              <tb-json-object-view
+                [ngModel]="thingModel.tsl"
+                [ngModelOptions]="{standalone: true}"
+                [fillHeight]="true">
+              </tb-json-object-view>
+            </div>
+          } @else {
+            <div class="tb-product-empty">{{ 'product.no-thing-model' | translate }}</div>
+          }
+        </mat-tab>
+        <mat-tab label="{{ 'product.properties' | translate }}">
+          <div class="tb-product-table-container">
+            <table mat-table [dataSource]="detail.catalog?.properties || []" class="w-full">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.id' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.id }}</td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.name' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="dataType">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.data-type' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.dataType }}</td>
+              </ng-container>
+              <ng-container matColumnDef="mode">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.mode' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.mode }}</td>
+              </ng-container>
+              <ng-container matColumnDef="unit">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.unit' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.unit }}</td>
+              </ng-container>
+              <ng-container matColumnDef="min">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.min' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.min }}</td>
+              </ng-container>
+              <ng-container matColumnDef="max">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.max' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.max }}</td>
+              </ng-container>
+              <ng-container matColumnDef="required">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.required-property' | translate }}</th>
+                <td mat-cell *matCellDef="let property">{{ property.required }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="propertyColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: propertyColumns"></tr>
+            </table>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'product.events' | translate }}">
+          <div class="tb-product-table-container">
+            <table mat-table [dataSource]="detail.catalog?.events || []" class="w-full">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.id' | translate }}</th>
+                <td mat-cell *matCellDef="let event">{{ event.id }}</td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.name' | translate }}</th>
+                <td mat-cell *matCellDef="let event">{{ event.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.event-type' | translate }}</th>
+                <td mat-cell *matCellDef="let event">{{ event.type }}</td>
+              </ng-container>
+              <ng-container matColumnDef="params">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.params' | translate }}</th>
+                <td mat-cell *matCellDef="let event"><code>{{ event.params | json }}</code></td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="eventColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: eventColumns"></tr>
+            </table>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'product.actions' | translate }}">
+          <div class="tb-product-table-container">
+            <table mat-table [dataSource]="detail.catalog?.actions || []" class="w-full">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.id' | translate }}</th>
+                <td mat-cell *matCellDef="let action">{{ action.id }}</td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.name' | translate }}</th>
+                <td mat-cell *matCellDef="let action">{{ action.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="input">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.input' | translate }}</th>
+                <td mat-cell *matCellDef="let action"><code>{{ action.input | json }}</code></td>
+              </ng-container>
+              <ng-container matColumnDef="output">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.output' | translate }}</th>
+                <td mat-cell *matCellDef="let action"><code>{{ action.output | json }}</code></td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="actionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: actionColumns"></tr>
+            </table>
+          </div>
+        </mat-tab>
+        <mat-tab label="{{ 'product.versions' | translate }}">
+          <div class="tb-product-table-container">
+            <table mat-table [dataSource]="detail.versions || []" class="w-full">
+              <ng-container matColumnDef="version">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.tsl-version' | translate }}</th>
+                <td mat-cell *matCellDef="let version">{{ version.version }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.status' | translate }}</th>
+                <td mat-cell *matCellDef="let version">{{ statusTranslationKey(version.status) | translate }}</td>
+              </ng-container>
+              <ng-container matColumnDef="checksum">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.checksum' | translate }}</th>
+                <td mat-cell *matCellDef="let version"><code>{{ version.checksum }}</code></td>
+              </ng-container>
+              <ng-container matColumnDef="publishedAt">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.published-at' | translate }}</th>
+                <td mat-cell *matCellDef="let version">{{ version.publishedAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="createdAt">
+                <th mat-header-cell *matHeaderCellDef>{{ 'product.created-at' | translate }}</th>
+                <td mat-cell *matCellDef="let version">{{ version.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="versionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: versionColumns"></tr>
+            </table>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card-content>
+  </mat-card>
+</div>

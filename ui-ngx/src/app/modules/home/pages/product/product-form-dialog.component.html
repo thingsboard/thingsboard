@@ -1,0 +1,97 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-toolbar class="tb-dialog-header">
+  <h2>{{ title | translate }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button type="button" (click)="cancel()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+} @else {
+  <div style="height: 4px;"></div>
+}
+<mat-dialog-content class="tb-product-form-dialog-content">
+  <form [formGroup]="form" class="flex flex-col gap-3">
+    @if (isSystemAdmin) {
+      <tb-entity-autocomplete
+        formControlName="tenantId"
+        [entityType]="entityType.TENANT"
+        labelText="product.tenant"
+        appearance="outline"
+        useFullEntityId
+        required>
+      </tb-entity-autocomplete>
+      @if (form.get('tenantId').hasError('required')) {
+        <mat-error>{{ 'product.tenant-required' | translate }}</mat-error>
+      }
+    }
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>product.product-id</mat-label>
+        <input matInput formControlName="productId" required/>
+        @if (form.get('productId').hasError('required')) {
+          <mat-error>{{ 'product.product-id-required' | translate }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>product.name</mat-label>
+        <input matInput formControlName="name" required/>
+        @if (form.get('name').hasError('required')) {
+          <mat-error>{{ 'product.name-required' | translate }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>product.model</mat-label>
+        <input matInput formControlName="model"/>
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>product.category</mat-label>
+        <input matInput formControlName="categoryId"/>
+      </mat-form-field>
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>product.tsl-version</mat-label>
+        <input matInput formControlName="tslVersion" required/>
+        @if (form.get('tslVersion').hasError('required')) {
+          <mat-error>{{ 'product.tsl-version-required' | translate }}</mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <mat-slide-toggle formControlName="strictUnknown">
+      {{ 'product.strict-unknown' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-product-tsl-editor">
+      <tb-json-object-edit
+        formControlName="tsl"
+        [label]="'product.thing-model' | translate"
+        [editorStyle]="{height: '360px'}"
+        jsonRequired>
+      </tb-json-object-edit>
+      @if (form.get('tsl').hasError('jsonParseError')) {
+        <div class="tb-product-field-error">{{ 'product.tsl-required' | translate }}</div>
+      }
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions class="flex flex-row items-center justify-end gap-2">
+  <button mat-button type="button" (click)="validateTsl()" [disabled]="isLoading$ | async">
+    {{ 'product.validate' | translate }}
+  </button>
+  <button mat-button type="button" (click)="fileInput.click()" [disabled]="isLoading$ | async">
+    {{ 'product.import-json' | translate }}
+  </button>
+  <input #fileInput type="file" accept=".json,application/json" hidden (change)="importJson($event)">
+  <span class="flex-1"></span>
+  <button mat-button type="button" (click)="cancel()" cdkFocusInitial>
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-flat-button color="primary" type="button" (click)="save()"
+          [disabled]="form.invalid || (isLoading$ | async)">
+    {{ 'action.save' | translate }}
+  </button>
+</mat-dialog-actions>

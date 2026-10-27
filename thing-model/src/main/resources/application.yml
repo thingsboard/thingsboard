@@ -31,14 +31,13 @@ thingmodel:
     expected-schema: ${THINGMODEL_DB_SCHEMA:}
   rulechain:
     enabled: ${THINGMODEL_RULECHAIN_ENABLED:true}
-    name-prefix: ${THINGMODEL_RULECHAIN_PREFIX:auto_}
     kafka-bootstrap: ${THINGMODEL_KAFKA_BOOTSTRAP:kafka-test1:9095,kafka-test2:9095,kafka-test3:9095}
     topic-telemetry: ${THINGMODEL_TOPIC_TELEMETRY:iot.telemetry.normalized}
     topic-event: ${THINGMODEL_TOPIC_EVENT:iot.event.normalized}
     topic-invalid: ${THINGMODEL_TOPIC_INVALID:iot.telemetry.invalid}
     key-pattern: ${THINGMODEL_KAFKA_KEY_PATTERN:$[deviceName]}
   tb:
-    base-url: ${THINGMODEL_TB_URL:http://localhost:8080}
+    base-url: ${THINGMODEL_TB_URL:http://localhost:18080}
     client-max-retries: 3
     client-initial-retry-delay-ms: 1000
     client-max-retry-delay-ms: 30000

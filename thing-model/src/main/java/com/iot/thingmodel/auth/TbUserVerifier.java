@@ -8,6 +8,8 @@ import java.security.MessageDigest;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.thingsboard.client.ThingsboardClient;
@@ -15,6 +17,8 @@ import org.thingsboard.client.model.User;
 
 @Component
 public class TbUserVerifier {
+
+    private static final Logger log = LoggerFactory.getLogger(TbUserVerifier.class);
 
     private final ThingModelProperties properties;
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
@@ -47,12 +51,18 @@ public class TbUserVerifier {
                     now + properties.getAuth().getCacheSeconds() * Constants.Auth.MILLIS_PER_SECOND));
             return currentUser;
         } catch (org.thingsboard.client.ApiException ex) {
+            log.warn(
+                    "ThingsBoard user verification failed: HTTP {} {}",
+                    ex.getCode(),
+                    ex.getResponseBody());
             if (ex.getCode() == HttpStatus.UNAUTHORIZED.value()) {
                 throw new ApiException(
                         HttpStatus.UNAUTHORIZED, Constants.ErrorCode.UNAUTHORIZED, "登录状态无效或已过期");
             }
             throw new ApiException(
-                    HttpStatus.BAD_GATEWAY, Constants.ErrorCode.TB_UNAVAILABLE, "无法校验 ThingsBoard 用户");
+                    HttpStatus.BAD_GATEWAY,
+                    Constants.ErrorCode.TB_UNAVAILABLE,
+                    "无法校验 ThingsBoard 用户: HTTP " + ex.getCode());
         }
     }
 

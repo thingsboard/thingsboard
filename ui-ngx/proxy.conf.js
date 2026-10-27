@@ -5,6 +5,13 @@ const wsForwardUrl = "ws://localhost:18080";
 const ruleNodeUiforwardUrl = forwardUrl;
 
 const PROXY_CONFIG = {
+  "/api/thing-model": {
+    "target": "http://localhost:8090",
+    "secure": false,
+    "pathRewrite": {
+      "^/api/thing-model": "/api"
+    },
+  },
   "/api": {
     "target": forwardUrl,
     "secure": false,

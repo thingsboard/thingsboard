@@ -12,6 +12,7 @@ import com.iot.thingmodel.product.ProductDetail;
 import com.iot.thingmodel.product.ProductItem;
 import com.iot.thingmodel.product.ProductResponse;
 import com.iot.thingmodel.product.ProductService;
+import com.iot.thingmodel.product.ThingModelView;
 import com.iot.thingmodel.product.UpdateThingModelRequest;
 import com.iot.thingmodel.product.ValidationResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,12 @@ public class ProductController extends BaseController {
     @GetMapping("/{productId}")
     public ProductDetail get(@PathVariable String productId) {
         return productService.get(tenantScope(), productId);
+    }
+
+    @Operation(summary = "Get the latest thing model")
+    @GetMapping("/{productId}/thing-model")
+    public ThingModelView getThingModel(@PathVariable String productId) {
+        return productService.getThingModel(tenantScope(), productId);
     }
 
     @Operation(summary = "Create or update a product and publish its thing model")

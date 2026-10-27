@@ -1,0 +1,528 @@
+{
+  "version": "1.0",
+  "profile": {
+    "ProductId": "4DZDCQUA2D",
+    "CategoryId": "1"
+  },
+  "properties": [
+    {
+      "id": "deviceInfo",
+      "name": "设备信息",
+      "desc": "",
+      "mode": "rw",
+      "define": {
+        "type": "struct",
+        "specs": [
+          {
+            "id": "company",
+            "name": "设备厂商",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "100"
+            }
+          },
+          {
+            "id": "name",
+            "name": "设备名称",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "50"
+            }
+          },
+          {
+            "id": "model",
+            "name": "设备型号",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "20"
+            }
+          },
+          {
+            "id": "sn",
+            "name": "设备序列号",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "20"
+            }
+          },
+          {
+            "id": "battery",
+            "name": "设备电量",
+            "dataType": {
+              "type": "int",
+              "min": "0",
+              "max": "100",
+              "start": "0",
+              "step": "1",
+              "unit": "%"
+            }
+          },
+          {
+            "id": "updateTs",
+            "name": "更新时间",
+            "dataType": {
+              "type": "timestamp"
+            }
+          },
+          {
+            "id": "category",
+            "name": "机械类型",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "50"
+            }
+          },
+          {
+            "id": "source",
+            "name": "机械来源",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "50"
+            }
+          },
+          {
+            "id": "managementNumber",
+            "name": "机械管理编号",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "100"
+            }
+          },
+          {
+            "id": "onlineState",
+            "name": "物联网连接状态",
+            "dataType": {
+              "type": "enum",
+              "mapping": {
+                "0": "未绑定",
+                "1": "已绑定",
+                "2": "已入网"
+              }
+            }
+          }
+        ]
+      },
+      "required": false
+    },
+    {
+      "id": "locationInfo",
+      "name": "位置信息",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "struct",
+        "specs": [
+          {
+            "id": "longitude",
+            "name": "经度",
+            "dataType": {
+              "type": "float",
+              "min": "-180",
+              "max": "180",
+              "start": "0",
+              "step": "0.000001",
+              "unit": "度"
+            }
+          },
+          {
+            "id": "latitude",
+            "name": "纬度",
+            "dataType": {
+              "type": "float",
+              "min": "-90",
+              "max": "90",
+              "start": "0",
+              "step": "0.000001",
+              "unit": "度"
+            }
+          },
+          {
+            "id": "updateTs",
+            "name": "位置更新时间",
+            "dataType": {
+              "type": "timestamp"
+            }
+          },
+          {
+            "id": "address",
+            "name": "当前地址描述",
+            "dataType": {
+              "type": "string",
+              "min": "0",
+              "max": "2048"
+            }
+          },
+          {
+            "id": "altitude",
+            "name": "海拔",
+            "dataType": {
+              "type": "float",
+              "min": "0",
+              "max": "10000",
+              "start": "0",
+              "step": "0.01",
+              "unit": "M"
+            }
+          }
+        ]
+      },
+      "required": false
+    },
+    {
+      "id": "realStateInfo",
+      "name": "实时状态",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "struct",
+        "specs": [
+          {
+            "id": "machineState",
+            "name": "机械状态",
+            "dataType": {
+              "type": "enum",
+              "mapping": {
+                "0": "working运行",
+                "1": "motionless静止",
+                "2": "idling怠速",
+                "4": "offline离线"
+              }
+            }
+          },
+          {
+            "id": "updateTs",
+            "name": "状态更新时间",
+            "dataType": {
+              "type": "timestamp"
+            }
+          },
+          {
+            "id": "speed",
+            "name": "当前速度",
+            "dataType": {
+              "type": "float",
+              "min": "0",
+              "max": "100",
+              "start": "0",
+              "step": "0.01",
+              "unit": "km/h"
+            }
+          },
+          {
+            "id": "todayMileage",
+            "name": "今日里程",
+            "dataType": {
+              "type": "int",
+              "min": "0",
+              "max": "100000000",
+              "start": "0",
+              "step": "1",
+              "unit": "m"
+            }
+          },
+          {
+            "id": "isWork",
+            "name": "今日是否工作",
+            "dataType": {
+              "type": "bool",
+              "mapping": {
+                "0": "未工作",
+                "1": "工作"
+              }
+            }
+          },
+          {
+            "id": "workTime",
+            "name": "今日运转时长",
+            "dataType": {
+              "type": "int",
+              "min": "0",
+              "max": "100000000",
+              "start": "0",
+              "step": "1",
+              "unit": "S"
+            }
+          },
+          {
+            "id": "idleTime",
+            "name": "今日怠速时长",
+            "dataType": {
+              "type": "int",
+              "min": "0",
+              "max": "100000000",
+              "start": "0",
+              "step": "1",
+              "unit": "S"
+            }
+          },
+          {
+            "id": "fuelConsumptionVolume",
+            "name": "今日油耗量",
+            "dataType": {
+              "type": "float",
+              "min": "0",
+              "max": "10000",
+              "start": "0",
+              "step": "0.01",
+              "unit": "L"
+            }
+          }
+        ]
+      },
+      "required": false
+    }
+  ],
+  "events": [
+    {
+      "id": "refuelRecord",
+      "name": "加油记录",
+      "desc": "",
+      "type": "info",
+      "params": [
+        {
+          "id": "volume",
+          "name": "加油量",
+          "define": {
+            "type": "float",
+            "min": "0",
+            "max": "10000",
+            "start": "0",
+            "step": "0.01",
+            "unit": "L"
+          }
+        },
+        {
+          "id": "percentage",
+          "name": "加油百分比",
+          "define": {
+            "type": "float",
+            "min": "0",
+            "max": "100",
+            "start": "0",
+            "step": "0.01",
+            "unit": "%"
+          }
+        },
+        {
+          "id": "startTs",
+          "name": "开始时间",
+          "define": {
+            "type": "timestamp"
+          }
+        },
+        {
+          "id": "endTs",
+          "name": "结束时间",
+          "define": {
+            "type": "timestamp"
+          }
+        },
+        {
+          "id": "tankId",
+          "name": "油箱编号",
+          "define": {
+            "type": "int",
+            "min": "0",
+            "max": "10",
+            "start": "0",
+            "step": "1",
+            "unit": ""
+          }
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "workRecord",
+      "name": "工作记录",
+      "desc": "",
+      "type": "info",
+      "params": [
+        {
+          "id": "state",
+          "name": "工作状态",
+          "define": {
+            "type": "enum",
+            "mapping": {
+              "0": "working运行",
+              "1": "motionless静止",
+              "2": "idling怠速",
+              "4": "offline离线"
+            }
+          }
+        },
+        {
+          "id": "startTs",
+          "name": "开始时间",
+          "define": {
+            "type": "timestamp"
+          }
+        },
+        {
+          "id": "endTs",
+          "name": "结束时间",
+          "define": {
+            "type": "timestamp"
+          }
+        },
+        {
+          "id": "mileage",
+          "name": "里程",
+          "define": {
+            "type": "int",
+            "min": "0",
+            "max": "100000000",
+            "start": "0",
+            "step": "1",
+            "unit": "M"
+          }
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "fuelRecord",
+      "name": "油量变化曲线",
+      "desc": "",
+      "type": "info",
+      "params": [
+        {
+          "id": "volume",
+          "name": "油耗量",
+          "define": {
+            "type": "float",
+            "min": "0",
+            "max": "10000",
+            "start": "0",
+            "step": "0.001",
+            "unit": ""
+          }
+        },
+        {
+          "id": "percentage",
+          "name": "油耗百分比",
+          "define": {
+            "type": "float",
+            "min": "0",
+            "max": "100",
+            "start": "0",
+            "step": "0.001",
+            "unit": "%"
+          }
+        },
+        {
+          "id": "presentTs",
+          "name": "油耗产生时间",
+          "define": {
+            "type": "timestamp"
+          }
+        },
+        {
+          "id": "pressure",
+          "name": "油箱压力",
+          "define": {
+            "type": "int",
+            "min": "0",
+            "max": "10000",
+            "start": "0",
+            "step": "1",
+            "unit": ""
+          }
+        },
+        {
+          "id": "tankId",
+          "name": "油箱编号",
+          "define": {
+            "type": "int",
+            "min": "0",
+            "max": "100",
+            "start": "0",
+            "step": "1",
+            "unit": ""
+          }
+        }
+      ],
+      "required": false
+    },
+    {
+      "id": "alarm",
+      "name": "设备告警",
+      "desc": "",
+      "type": "alert",
+      "params": [
+        {
+          "id": "address",
+          "name": "告警地点",
+          "define": {
+            "type": "string",
+            "min": "0",
+            "max": "2048"
+          }
+        },
+        {
+          "id": "longitude",
+          "name": "经度",
+          "define": {
+            "type": "float",
+            "min": "-180",
+            "max": "180",
+            "start": "0",
+            "step": "0.001",
+            "unit": "度"
+          }
+        },
+        {
+          "id": "latitude",
+          "name": "纬度",
+          "define": {
+            "type": "float",
+            "min": "-90",
+            "max": "90",
+            "start": "0",
+            "step": "0.001",
+            "unit": "度"
+          }
+        },
+        {
+          "id": "alarmAt",
+          "name": "告警时间",
+          "define": {
+            "type": "timestamp"
+          }
+        },
+        {
+          "id": "alarmType",
+          "name": "告警类型",
+          "define": {
+            "type": "stringenum",
+            "mapping": {
+              "low_power": "低电量报警",
+              "oil_abnormal": "油量异常报警",
+              "equipment_dismantle": "设备拆除报警",
+              "continuous_idling": "持续怠速报警",
+              "oil_equipment_dismantle": "油位监测仪破坏报警"
+            }
+          }
+        },
+        {
+          "id": "remark",
+          "name": "告警详情",
+          "define": {
+            "type": "string",
+            "min": "0",
+            "max": "2048"
+          }
+        }
+      ],
+      "required": false
+    }
+  ],
+  "actions": []
+}

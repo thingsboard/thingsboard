@@ -7,7 +7,8 @@
 - Python 3.9+
 - thing-model 已启动
 - ThingsBoard 已启动
-- 产品已同步，产品 Asset 上存在 `tsl_schema`
+- 产品已同步；规则链由产品发布/同步自动生成
+- 产品 Asset 上存在 `tsl_schema`（模拟脚本会复制到测试设备，便于兼容旧行为）
 - ThingsBoard 账号具备 `TENANT_ADMIN` 权限
 
 安装依赖：
@@ -120,6 +121,7 @@ python thing-model/scripts/simulate_telemetry.py \
 - `enum` / `enum_string`：从 mapping 中选择键
 - `timestamp`：当前时间
 - `struct`：默认跳过并打印 warning
+- 事件：`event_id` 直接使用 TSL `events[].id`；产品未定义事件时生成 `evt-<random>`，用于验证 invalid 分支
 
 ## Kafka 验证
 
@@ -147,9 +149,20 @@ iot.telemetry.invalid
 kcat -b kafka-test1:9095 -t iot.telemetry.normalized -C -o beginning -e
 ```
 
+## 规则链脚本测试
+
+不需要启动 ThingsBoard 即可验证校验脚本逻辑：
+
+```bash
+node thing-model/scripts/test_rulechain_validation.js
+```
+
+覆盖合法遥测、类型错误、越界、int32、报文超限、未知字段、枚举、时间戳归一、合法/未知事件、事件类型不匹配等情况。
+
 ## 注意
 
 - 默认会创建并删除测试设备；使用 `--keep-device` 可保留。
 - 脚本不会打印完整 Access Token。
 - `--dry-run` 仍需要登录 ThingsBoard 以读取产品目录。
 - 产品 Asset 上没有 `tsl_schema` 时，脚本会提示先执行产品同步。
+- 规则链校验使用生成时内嵌的产品 TSL schema，不再要求设备侧存在 `tsl_schema`；脚本仍写入该属性以兼容旧行为。

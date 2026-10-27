@@ -225,6 +225,28 @@ class RepositoryIntegrationTest {
     }
 
     @Test
+    void returnsEmptyForMissingEntities() {
+        assertTrue(productRepository.findProduct("missing").isEmpty());
+        assertTrue(productRepository.findLatestTsl("missing").isEmpty());
+        assertTrue(productRepository.findBinding("missing", "1.0").isEmpty());
+    }
+
+    @Test
+    void saveDraftIsIdempotentForSameChecksum() throws Exception {
+        UUID tenantId = UUID.randomUUID();
+        JsonNode tsl = tsl("1.0");
+
+        productRepository.saveDraft(
+                tenantId, "P1", "Alpha", "M1", "C1", null, "1.0", "sum-1", false, tsl);
+        ProductRepository.DraftResult second = productRepository.saveDraft(
+                tenantId, "P1", "Alpha", "M1", "C1", null, "1.0", "sum-1", false, tsl);
+
+        assertEquals("1.0", second.tsl().version());
+        assertEquals("sum-1", second.tsl().checksum());
+        assertEquals(1, productRepository.listVersions("P1").size());
+    }
+
+    @Test
     void upsertsTenantAccount() {
         UUID tenantId = UUID.randomUUID();
 

@@ -123,7 +123,6 @@ public class ThingModelProperties {
     public static class RuleChain {
 
         private boolean enabled = true;
-        private String namePrefix = Constants.Defaults.RULE_CHAIN_NAME_PREFIX;
         private String kafkaBootstrap = "";
         private String topicTelemetry = Constants.Defaults.KAFKA_TOPIC_TELEMETRY;
         private String topicEvent = Constants.Defaults.KAFKA_TOPIC_EVENT;
@@ -136,14 +135,6 @@ public class ThingModelProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-        }
-
-        public String getNamePrefix() {
-            return namePrefix;
-        }
-
-        public void setNamePrefix(String namePrefix) {
-            this.namePrefix = namePrefix;
         }
 
         public String getKafkaBootstrap() {
