@@ -4312,8 +4312,6 @@
     },
     "iot-hub": {
         "advanced-settings": "Advanced settings",
-        "delete-kept-entities": "Some entities were kept, because other installed items use them: {{entities}}",
-        "delete-kept-entity": "{{type}} (used by {{usedBy}}).",
         "iot-hub": "IoT Hub",
         "generate-random-value": "Generate random value",
         "home-title": "ThingsBoard IoT Hub",
@@ -4431,6 +4429,16 @@
         "remove": "Remove",
         "remove-confirm-title": "Remove '{{name}}'?",
         "remove-desc": "Removing this will also remove the installed entity and its associated resources within your tenant",
+        "remove-desc-kept": "Removing this will also remove the installed entity and its associated resources within your tenant, except {entities}. { count, plural, =1 {1 other installed package uses} other {# other installed packages use} } { kept, plural, =1 {it} other {them} }.",
+        "remove-kept-entities": "{{first}} and {{last}}",
+        "remove-kept-entity": {
+            "CONVERTER": "data converter '{{name}}'",
+            "DASHBOARD": "dashboard '{{name}}'",
+            "DEVICE": "device '{{name}}'",
+            "DEVICE_PROFILE": "device profile '{{name}}'",
+            "INTEGRATION": "integration '{{name}}'",
+            "RULE_CHAIN": "rule chain '{{name}}'"
+        },
         "remove-desc-solution-template": "Removing this solution template will also remove all created entities including dashboards, rule chains, devices, and other associated resources within your tenant",
         "remove-anyway": "Remove anyway",
         "select-entity-for-cf": "Select entity for calculated field '{{name}}'",

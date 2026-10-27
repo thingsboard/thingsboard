@@ -6,11 +6,9 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DeleteInstalledItemResult, IotHubInstalledItem } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubInstalledItemKeptEntities } from 'src/app/shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { entityTypeTranslations, EntityType } from '@shared/models/entity-type.models';
 
 export interface IotHubDeleteDialogData {
   installedItemId: string;
@@ -26,6 +24,8 @@ export interface IotHubDeleteDialogData {
 })
 export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDeleteDialogComponent, boolean> {
 
+  description: string;
+
   constructor(
     protected store: Store<AppState>,
     protected router: Router,
@@ -35,38 +35,39 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
+    this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
+    if (data.itemType === 'DEVICE') {
+      this.iotHubApiService.getInstalledItemKeptEntities(data.installedItemId, {ignoreLoading: true}).subscribe(
+        kept => this.describeKeptEntities(kept)
+      );
+    }
   }
 
   confirm(): void {
     this.iotHubApiService.deleteInstalledItem(this.data.installedItemId).subscribe(
-      result => {
-        this.notifyKeptEntities(result);
+      () => {
         this.dialogRef.close(true);
       }
     );
   }
 
-  /** Says which entities stayed because other installed items still use them. */
-  private notifyKeptEntities(result: DeleteInstalledItemResult | null): void {
-    const kept = result?.keptEntities ?? [];
-    if (!kept.length) {
-      return;
-    }
-    const entities = kept.map(entity => {
-      const typeKey = entityTypeTranslations.get(entity.entityId.entityType as EntityType)?.type;
-      const type = typeKey ? this.translate.instant(typeKey) : entity.entityId.entityType;
-      return this.translate.instant('iot-hub.delete-kept-entity', { type, usedBy: entity.usedBy.join(', ') });
-    }).join(' ');
-    this.store.dispatch(new ActionNotificationShow({
-      message: this.translate.instant('iot-hub.delete-kept-entities', { entities }),
-      type: 'info',
-      duration: 10000,
-      verticalPosition: 'top',
-      horizontalPosition: 'right'
-    }));
-  }
-
   cancel(): void {
     this.dialogRef.close(false);
+  }
+
+  /** A device package keeps the entities other installed packages use, and the description names them before the user confirms. */
+  private describeKeptEntities(kept: IotHubInstalledItemKeptEntities): void {
+    if (!kept.entities.length) {
+      return;
+    }
+    const names = kept.entities.map(entity => {
+      const key = `iot-hub.remove-kept-entity.${entity.entityId.entityType}`;
+      const named = this.translate.instant(key, { name: entity.name });
+      return named === key ? `'${entity.name}'` : named;
+    });
+    const entities = names.length === 1 ? names[0] :
+      this.translate.instant('iot-hub.remove-kept-entities', { first: names.slice(0, -1).join(', '), last: names[names.length - 1] });
+    this.description = this.translate.instant('iot-hub.remove-desc-kept',
+      { entities, count: kept.usedByItemsCount, kept: kept.entities.length });
   }
 }
