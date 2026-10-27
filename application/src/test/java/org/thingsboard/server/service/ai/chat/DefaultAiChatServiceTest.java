@@ -20,6 +20,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.ai.TbAiService;
 import org.thingsboard.server.service.ai.transport.TbAiTransport;
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.server.service.ai.transport.TbAiTurnLink;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -133,7 +134,8 @@ class DefaultAiChatServiceTest {
 
         assertThat(captureProcessCall().apply(tokenProvider)).isSameAs(tbAiResponse);
         then(operations).should().execute(argThat(operation -> ChannelProtocol.CHAT_MESSAGES.equals(operation.type())
-                && Objects.equals(new ChatOperationRequest(chatId, null), operation.payload())), same(user), same(tokenProvider));
+                && Objects.equals(new ChatOperationRequest(chatId, JacksonUtil.newObjectNode().put("toolCards", true)), operation.payload())),
+                same(user), same(tokenProvider));
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
 
@@ -164,10 +166,10 @@ class DefaultAiChatServiceTest {
                 .event("assistantMessage")
                 .data("{\"message\":\"ok\"}")
                 .build());
-        given(tbAiService.processStream(eq(chatId), any(), same(user))).willReturn(expectedStream);
+        given(tbAiService.processStream(eq(chatId), any(), same(user), any(TbAiTurnLink.class), eq(true))).willReturn(expectedStream);
         var clientOrigin = "https://tb.example.com";
         var expectedContext = new TbAiTurnContext(user, tbAccessToken, acceptLanguage, tokenProvider, clientOrigin);
-        given(tbAiTransport.sendChatMessage(eq(chatId), same(request), eq(expectedContext))).willReturn(expectedStream);
+        given(tbAiTransport.sendChatMessage(eq(chatId), same(request), eq(expectedContext), any(TbAiTurnLink.class))).willReturn(expectedStream);
 
         // WHEN
         Flux<ServerSentEvent<String>> result = service.sendChatMessage(chatId, request, tbAccessToken, acceptLanguage, clientOrigin, user);
@@ -175,8 +177,35 @@ class DefaultAiChatServiceTest {
         // THEN
         assertThat(result).isSameAs(expectedStream);
 
-        assertThat(captureProcessStreamCall(chatId).apply(tokenProvider)).isSameAs(expectedStream);
-        then(tbAiTransport).should().sendChatMessage(eq(chatId), same(request), eq(expectedContext));
+        ProcessStreamCall call = captureProcessStreamCall(chatId, true);
+        assertThat(call.action().apply(tokenProvider)).isSameAs(expectedStream);
+        then(tbAiTransport).should().sendChatMessage(eq(chatId), same(request), eq(expectedContext), same(call.link()));
+        then(tbAiTransport).shouldHaveNoMoreInteractions();
+        then(tbAiService).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldFollowTheRunningTurnWithoutCreditCheck_whenResumeChatCalled() {
+        // GIVEN
+        UUID chatId = UUID.randomUUID();
+        Flux<ServerSentEvent<String>> expectedStream = Flux.just(ServerSentEvent.<String>builder()
+                .event("turnResumed")
+                .data("{}")
+                .build());
+        given(tbAiService.processStream(eq(chatId), any(), same(user), any(TbAiTurnLink.class), eq(false))).willReturn(expectedStream);
+        var clientOrigin = "https://tb.example.com";
+        var expectedContext = new TbAiTurnContext(user, "tb-access-token", "en-US", tokenProvider, clientOrigin);
+        given(tbAiTransport.resumeChat(eq(chatId), eq(expectedContext), any(TbAiTurnLink.class))).willReturn(expectedStream);
+
+        // WHEN
+        Flux<ServerSentEvent<String>> result = service.resumeChat(chatId, "tb-access-token", "en-US", clientOrigin, user);
+
+        // THEN
+        assertThat(result).isSameAs(expectedStream);
+
+        ProcessStreamCall call = captureProcessStreamCall(chatId, false);
+        assertThat(call.action().apply(tokenProvider)).isSameAs(expectedStream);
+        then(tbAiTransport).should().resumeChat(eq(chatId), eq(expectedContext), same(call.link()));
         then(tbAiTransport).shouldHaveNoMoreInteractions();
         then(tbAiService).shouldHaveNoMoreInteractions();
     }
@@ -188,11 +217,14 @@ class DefaultAiChatServiceTest {
         return callCaptor.getValue();
     }
 
+    private record ProcessStreamCall(TbAiService.TbAiCall<Flux<ServerSentEvent<String>>> action, TbAiTurnLink link) {}
+
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private TbAiService.TbAiCall<Flux<ServerSentEvent<String>>> captureProcessStreamCall(UUID chatId) {
+    private ProcessStreamCall captureProcessStreamCall(UUID chatId, boolean checkCredits) {
         ArgumentCaptor<TbAiService.TbAiCall> callCaptor = ArgumentCaptor.forClass(TbAiService.TbAiCall.class);
-        then(tbAiService).should().processStream(eq(chatId), callCaptor.capture(), same(user));
-        return callCaptor.getValue();
+        ArgumentCaptor<TbAiTurnLink> linkCaptor = ArgumentCaptor.forClass(TbAiTurnLink.class);
+        then(tbAiService).should().processStream(eq(chatId), callCaptor.capture(), same(user), linkCaptor.capture(), eq(checkCredits));
+        return new ProcessStreamCall(callCaptor.getValue(), linkCaptor.getValue());
     }
 
     private static ObjectNode createChatRequest(String title) {

@@ -85,6 +85,11 @@ export interface ChatTitleGeneratedEvent extends BaseChatEvent {
   };
 }
 
+export interface TurnResumedEvent extends BaseChatEvent {
+  event: 'turnResumed';
+  data: Record<string, never>;
+}
+
 export interface ApprovalResult {
   executionId: string;
   approved: boolean;
@@ -97,7 +102,8 @@ export enum ToolApprovalResult {
   TIMEOUT = 'TIMEOUT'
 }
 
-export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent;
+export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
+  | TurnResumedEvent;
 
 export enum AiAssistantViewType {
   DASHBOARD = 'DASHBOARD',
