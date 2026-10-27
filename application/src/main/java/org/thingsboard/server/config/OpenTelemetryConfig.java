@@ -147,6 +147,11 @@ public class OpenTelemetryConfig {
                             .build());
         }
 
+        if (postgresMeterProvider == null && !otlpEnabled) {
+            log.warn("Tracing is enabled, but both the buffered trace processor (otel.processor.trace.enabled) and the " +
+                    "OTLP exporter (otel.exporter.otlp.enabled) are disabled: sampled spans are discarded");
+        }
+
         sdkBuilder.setTracerProvider(providerBuilder.build());
         return sdkBuilder.build();
     }

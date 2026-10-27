@@ -143,7 +143,6 @@ public class ContainerTestSuite {
             // the monitoring tests see the statistics within their timeout.
             addToFile(targetDir, "tb-node.env", Map.of(
                     "OTEL_TRACING_ENABLED", "true",
-                    "OTEL_TRACE_PROCESSOR_ENABLED", "true",
                     "RULE_NODE_EXEC_STATS_ENABLED", "true",
                     "RULE_NODE_EXEC_STATS_EXEC_FLUSH_INTERVAL_MS", "5000",
                     "RULE_NODE_EXEC_STATS_QUEUE_FLUSH_INTERVAL_MS", "5000"));

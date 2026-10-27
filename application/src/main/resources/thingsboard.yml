@@ -303,7 +303,8 @@ ui:
 # Tracing is created only when OTEL_TRACING_ENABLED=true; it works with either cache type.
 otel:
   tracing:
-    # Enables rule chain tracing: messages are sampled per the tenant trace coverage setting and spans are recorded
+    # Enables rule chain tracing: messages are sampled per the tenant trace coverage setting. The spans go to the
+    # buffered trace processor (stored in ThingsBoard) and, when enabled, to the OTLP exporter
     enabled: "${OTEL_TRACING_ENABLED:false}"
     coverage:
       # Tenant coverage setting cache TTL, minutes.
@@ -314,8 +315,9 @@ otel:
       max-attribute-value-length: "${OTEL_TRACING_SPAN_LIMITS_MAX_ATTRIBUTE_VALUE_LENGTH:4096}"
   processor:
     trace:
-      # Buffered trace processor. Buffer backend follows 'cache.type': redis (shared) or caffeine (local).
-      enabled: "${OTEL_TRACE_PROCESSOR_ENABLED:false}"
+      # Buffered trace processor that stores the spans in ThingsBoard. Buffer backend follows 'cache.type': redis
+      # (shared) or caffeine (local). Disable only to send the spans to the OTLP exporter alone.
+      enabled: "${OTEL_TRACE_PROCESSOR_ENABLED:true}"
       buffer:
         # Max spans kept for one trace; further spans of that trace are dropped ('trace.export.limit.reached')
         max-spans-per-trace: "${OTEL_TRACE_PROCESSOR_BUFFER_MAX_SPANS_PER_TRACE:200}"
