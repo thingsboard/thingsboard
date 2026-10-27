@@ -19,7 +19,6 @@ import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.NoSqlKeyspaceService;
-import org.thingsboard.server.service.install.SqlTraceDatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
@@ -52,9 +51,6 @@ public class ThingsboardInstallService {
 
     @Autowired(required = false)
     private TsLatestDatabaseSchemaService tsLatestDatabaseSchemaService;
-
-    @Autowired
-    private SqlTraceDatabaseSchemaService sqlTraceDatabaseSchemaService;
 
     @Autowired
     private DatabaseEntitiesUpgradeService databaseEntitiesUpgradeService;
@@ -144,8 +140,6 @@ public class ThingsboardInstallService {
                     databaseEntitiesUpgradeService.upgradeDatabase(updateFromCE);
                     // All new tables that do not have any data will be automatically created here.
                     entityDatabaseSchemaService.createDatabaseSchema(false);
-                    // Trace tables live in their own script (and in the events DB when it is dedicated); the script is idempotent.
-                    sqlTraceDatabaseSchemaService.createDatabaseSchema(false);
                     // Re-create all views, functions.
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
@@ -204,10 +198,6 @@ public class ThingsboardInstallService {
                 if (tsLatestDatabaseSchemaService != null) {
                     tsLatestDatabaseSchemaService.createDatabaseSchema();
                 }
-
-                log.info("Installing DataBase schema for traces...");
-
-                sqlTraceDatabaseSchemaService.createDatabaseSchema();
 
                 log.info("Loading system data...");
 

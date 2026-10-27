@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.sql.trace;
 
-import com.google.common.io.Resources;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,7 +14,6 @@ import org.thingsboard.server.dao.model.sql.trace.SpanAttributeEntity;
 import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 import org.thingsboard.server.dao.model.sql.trace.TraceProjection;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,17 +42,11 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     private final UUID tenantId = UUID.randomUUID();
     private final UUID ruleNodeId = UUID.randomUUID();
 
-    @Before
-    public void createTraceSchema() throws Exception {
-        // The suite DB is built without schema-trace.sql.
-        jdbcTemplate.execute(Resources.toString(Resources.getResource("sql/schema-trace.sql"), StandardCharsets.UTF_8));
-    }
-
     @After
-    public void dropTraceSchema() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
-                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
-        // The span partitions went with the table; the next test must create them again.
+    public void truncateTraceTables() {
+        TraceTestTables.recreate(jdbcTemplate);
+        TraceTestTables.truncate(jdbcTemplate);
+        // The span partitions went with a dropped or truncated table; the next test must create them again.
         traceDao.cleanUpPartitionsCache(Long.MAX_VALUE);
     }
 
@@ -196,7 +187,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void givenNoTraceSchema_whenDeleteByTenantId_thenNothingFails() {
-        dropTraceSchema();
+        TraceTestTables.drop(jdbcTemplate);
 
         traceDao.deleteByTenantId(tenantId);
     }
@@ -249,7 +240,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void givenNoTraceSchema_whenCleanUp_thenNothingFails() {
-        dropTraceSchema();
+        TraceTestTables.drop(jdbcTemplate);
 
         traceDao.cleanUp(BUCKET, BUCKET, 10);
     }

@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +65,7 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
     void executeQueryFromFile(String schemaIdxSql) throws SQLException, IOException {
         Path schemaIdxFile = Paths.get(installScripts.getDataDir(), SQL_DIR, schemaIdxSql);
         String sql = Files.readString(schemaIdxFile);
-        try (Connection conn = DriverManager.getConnection(getDbUrl(), getDbUserName(), getDbPassword())) {
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to load initial thingsboard database schema
         }
     }
@@ -77,25 +76,13 @@ public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchema
 
     protected void executeQuery(String query, String logQuery) {
         logQuery = logQuery != null ? logQuery : query;
-        try (Connection conn = DriverManager.getConnection(getDbUrl(), getDbUserName(), getDbPassword())) {
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             conn.createStatement().execute(query); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
             log.info("Successfully executed query: {}", logQuery);
             Thread.sleep(5000);
         } catch (InterruptedException | SQLException e) {
             throw new RuntimeException("Failed to execute query: " + logQuery, e);
         }
-    }
-
-    protected String getDbUrl() {
-        return dbUrl;
-    }
-
-    protected String getDbUserName() {
-        return dbUserName;
-    }
-
-    protected String getDbPassword() {
-        return dbPassword;
     }
 
 }

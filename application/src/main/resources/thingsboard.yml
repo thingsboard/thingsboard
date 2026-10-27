@@ -1366,7 +1366,7 @@ spring:
     events:
       # Enable dedicated datasource (a separate database) for events and audit logs.
       # Before enabling this, make sure you have set up the following tables in the new DB:
-      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, converter_debug_event, integration_debug_event, raw_data_event, audit_log, cf_debug_event, span
+      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, converter_debug_event, integration_debug_event, raw_data_event, audit_log, cf_debug_event, span, trace_summary, trace_group, rule_node_exec_stats, rule_node_queue_stats, rule_node_queue_lag_stats
       enabled: "${SPRING_DEDICATED_EVENTS_DATASOURCE_ENABLED:false}"
       # Database driver for Spring JPA for events datasource
       driverClassName: "${SPRING_EVENTS_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}"

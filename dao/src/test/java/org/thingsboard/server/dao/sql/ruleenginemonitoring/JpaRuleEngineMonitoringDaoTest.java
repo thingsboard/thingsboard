@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.sql.ruleenginemonitoring;
 
-import com.google.common.io.Resources;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -20,8 +18,8 @@ import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTableRow;
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTsKvEntry;
+import org.thingsboard.server.dao.sql.trace.TraceTestTables;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,16 +48,9 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     private final UUID ruleChainId = UUID.randomUUID();
     private final UUID ruleNodeId = UUID.randomUUID();
 
-    @Before
-    public void createTraceSchema() throws Exception {
-        // The suite DB is built without schema-trace.sql.
-        jdbcTemplate.execute(Resources.toString(Resources.getResource("sql/schema-trace.sql"), StandardCharsets.UTF_8));
-    }
-
     @After
     public void cleanUp() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
-                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
+        TraceTestTables.truncate(jdbcTemplate);
         jdbcTemplate.update("DELETE FROM rule_node WHERE rule_chain_id = ?", ruleChainId);
         jdbcTemplate.update("DELETE FROM rule_chain WHERE id = ?", ruleChainId);
         jdbcTemplate.update("DELETE FROM queue WHERE id = ?", queueId);

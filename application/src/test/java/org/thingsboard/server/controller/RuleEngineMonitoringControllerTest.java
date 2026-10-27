@@ -3,7 +3,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.io.Resources;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,8 +11,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeExecStatsRow;
+import org.thingsboard.server.dao.sql.trace.TraceTestTables;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,15 +35,12 @@ public class RuleEngineMonitoringControllerTest extends AbstractControllerTest {
 
     @Before
     public void setUp() throws Exception {
-        // The suite DB is built without schema-trace.sql.
-        jdbcTemplate.execute(Resources.toString(Resources.getResource("sql/schema-trace.sql"), StandardCharsets.UTF_8));
         loginTenantAdmin();
     }
 
     @After
-    public void dropTraceSchema() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
-                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
+    public void truncateTraceTables() {
+        TraceTestTables.truncate(jdbcTemplate);
     }
 
     @Test

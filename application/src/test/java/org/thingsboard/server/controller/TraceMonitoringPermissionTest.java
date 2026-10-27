@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.controller;
 
-import com.google.common.io.Resources;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,8 +16,8 @@ import org.thingsboard.server.common.data.role.RoleType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.sql.trace.TraceTestTables;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,16 +60,9 @@ public class TraceMonitoringPermissionTest extends AbstractControllerTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Before
-    public void createTraceSchema() throws Exception {
-        // The suite DB is built without schema-trace.sql.
-        jdbcTemplate.execute(Resources.toString(Resources.getResource("sql/schema-trace.sql"), StandardCharsets.UTF_8));
-    }
-
     @After
-    public void dropTraceSchema() {
-        jdbcTemplate.execute("DROP TABLE IF EXISTS span, trace_summary, rule_node_exec_stats, " +
-                "rule_node_queue_stats, rule_node_queue_lag_stats, trace_group");
+    public void truncateTraceTables() {
+        TraceTestTables.truncate(jdbcTemplate);
     }
 
     @Test
