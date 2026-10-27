@@ -1,0 +1,120 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "f127d253-5668-42e6-9a30-d4d102f4af78"
+  },
+  "type": "ALARM",
+  "name": "High Temperature",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "temperatureAlarmFlag": {
+        "refEntityKey": {
+          "key": "temperatureAlarmFlag",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        }
+      },
+      "temperature": {
+        "refEntityKey": {
+          "key": "temperature",
+          "type": "TS_LATEST"
+        }
+      },
+      "temperatureAlarmThreshold": {
+        "refEntityKey": {
+          "key": "temperatureAlarmThreshold",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "30.0"
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "temperatureAlarmFlag",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "temperature",
+                "valueType": "NUMERIC",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "NUMERIC",
+                    "operation": "GREATER",
+                    "value": {
+                      "staticValue": null,
+                      "dynamicValueArgument": "temperatureAlarmThreshold"
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": "Current temperature = ${temperature}",
+        "dashboardId": null
+      }
+    },
+    "clearRule": {
+      "condition": {
+        "type": "SIMPLE",
+        "expression": {
+          "type": "SIMPLE",
+          "filters": [
+            {
+              "argument": "temperature",
+              "valueType": "NUMERIC",
+              "operation": "AND",
+              "predicates": [
+                {
+                  "type": "NUMERIC",
+                  "operation": "LESS_OR_EQUAL",
+                  "value": {
+                    "staticValue": null,
+                    "dynamicValueArgument": "temperatureAlarmThreshold"
+                  }
+                }
+              ]
+            }
+          ],
+          "operation": "AND"
+        },
+        "schedule": null
+      },
+      "alarmDetails": null,
+      "dashboardId": null
+    },
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

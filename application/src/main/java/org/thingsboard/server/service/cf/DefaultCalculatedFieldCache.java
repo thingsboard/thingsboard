@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf;
 
 import lombok.Getter;
@@ -46,6 +34,7 @@ import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -72,9 +61,9 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbTenantProfileCache tenantProfileCache;
+    private final OwnersCacheService ownersCacheService;
     @Lazy
     private final ActorSystemContext systemContext;
-    private final OwnerService ownerService;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
@@ -268,8 +257,15 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public void addOwnerEntity(TenantId tenantId, EntityId entityId) {
-        EntityId owner = ownerService.getOwner(tenantId, entityId);
-        getOwnedEntities(tenantId, owner).add(entityId);
+        EntityId owner = ownersCacheService.getOwner(tenantId, entityId);
+        if (owner == null) {
+            return;
+        }
+        // No-op until a reader has lazily populated the bucket; subsequent reader will see the new entity from DB.
+        ownerEntities.computeIfPresent(owner, (k, entities) -> {
+            entities.add(entityId);
+            return entities;
+        });
     }
 
     @Override
@@ -298,7 +294,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private Set<EntityId> getOwnedEntities(TenantId tenantId, EntityId ownerId) {
         return ownerEntities.computeIfAbsent(ownerId, owner -> {
             Set<EntityId> entities = ConcurrentHashMap.newKeySet();
-            entities.addAll(ownerService.getOwnedEntities(tenantId, ownerId));
+            entities.addAll(ownersCacheService.getOwnedEntities(tenantId, ownerId, initFetchPackSize));
             return entities;
         });
     }

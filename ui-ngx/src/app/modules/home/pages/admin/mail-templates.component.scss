@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-mail-template-settings {
+    .tb-mail-body {
+      min-height: 450px;
+      mat-label.tb-title {
+        margin-top: -10px;
+        display: block;
+        margin-bottom: 10px;
+      }
+    }
+
+    fieldset{
+      min-width: 0;
+      width: 100%;
+    }
+  }
+}

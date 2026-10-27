@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,9 +12,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,7 +29,7 @@ import java.io.Serial;
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public final class AiModel extends BaseData<AiModelId> implements HasTenantId, HasVersion, ExportableEntity<AiModelId> {
+public final class AiModel extends BaseData<AiModelId> implements TenantEntity, HasVersion, ExportableEntity<AiModelId> {
 
     @Serial
     private static final long serialVersionUID = 9017108678716011604L;
@@ -97,6 +86,11 @@ public final class AiModel extends BaseData<AiModelId> implements HasTenantId, H
         name = model.getName();
         configuration = model.getConfiguration();
         externalId = model.getExternalId() == null ? null : new AiModelId(model.getExternalId().getId());
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.AI_MODEL;
     }
 
 }

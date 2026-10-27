@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div class="tb-threshold-settings-panel" [formGroup]="thresholdSettingsFormGroup">
@@ -35,7 +25,7 @@
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
       <tb-unit-input
-        supportsUnitConversion
+        [supportsUnitConversion]="supportsUnitConversion"
         formControlName="units">
       </tb-unit-input>
     </div>
@@ -61,12 +51,15 @@
         </mat-form-field>
         <tb-font-settings formControlName="labelFont"
                           clearButton
+                          [allowedFontWeights]="reportMode ? ['normal', 'bold', '500'] : []"
+                          [allowedFontStyles]="reportMode ? ['normal', 'italic'] : []"
                           disabledLineHeight
                           forceSizeUnit="px"
                           [previewText]="labelPreviewFn">
         </tb-font-settings>
         <tb-color-input asBoxInput
                         colorClearButton
+                        [useThemePalette]="!reportMode"
                         formControlName="labelColor">
         </tb-color-input>
       </div>
@@ -86,6 +79,7 @@
         <div translate>widgets.time-series-chart.threshold.line-color</div>
         <tb-color-input asBoxInput
                         colorClearButton
+                        [useThemePalette]="!reportMode"
                         formControlName="lineColor">
         </tb-color-input>
       </div>

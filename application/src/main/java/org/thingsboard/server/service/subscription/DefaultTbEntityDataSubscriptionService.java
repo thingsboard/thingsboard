@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.subscription;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -571,9 +559,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private TbAlarmDataSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
-        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
-                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription,
-                maxAlarmQueriesPerRefreshInterval);
+        TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService, attributesService,
+                stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription, maxAlarmQueriesPerRefreshInterval);
         ctx.setAndResolveQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -643,7 +630,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
         Map<EntityData, ListenableFuture<List<ReadTsKvQueryResult>>> fetchResultMap = new HashMap<>();
         List<EntityData> entityDataList = ctx.getData().getData();
-        entityDataList.forEach(entityData -> fetchResultMap.put(entityData,
+        ctx.getData().getData().stream().filter(EntityData::isReadTs).forEach(entityData -> fetchResultMap.put(entityData,
                 tsService.findAllByQueries(ctx.getTenantId(), entityData.getEntityId(), finalTsKvQueryList)));
         return Futures.transform(Futures.allAsList(fetchResultMap.values()), f -> {
             // Map that holds last ts for each key for each entity.
@@ -747,7 +734,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                             // if ctx has timeseries subscription, timeseries values are cleared after each update and is empty in ctx data,
                             // so to avoid sending timeseries update with empty map we set it to null
                             List<EntityData> preparedData = ctx.getData().getData().stream()
-                                    .map(entityData -> new EntityData(entityData.getEntityId(), entityData.getLatest(), null))
+                                    .map(entityData -> new EntityData(entityData.getEntityId(), entityData.isReadAttrs(), entityData.isReadTs(), entityData.getLatest(), null))
                                     .toList();
                             update = new EntityDataUpdate(ctx.getCmdId(), null, preparedData, ctx.getMaxEntitiesPerDataSubscription());
                         }

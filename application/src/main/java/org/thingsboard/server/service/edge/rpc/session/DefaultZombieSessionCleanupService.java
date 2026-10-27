@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge.rpc.session;
 
 import jakarta.annotation.PostConstruct;
@@ -72,8 +59,10 @@ public class DefaultZombieSessionCleanupService implements ZombieSessionCleanupS
 
     private void cleanupZombieSessions() {
         try {
+            // remove by identity: the edge may have reconnected since the zombie scan, and that newer
+            // session must not be evicted by the cleanup of the one it replaced
             tryToDestroyZombieSessions(getZombieSessions(edgeSessionsHolder.getSessions().values()),
-                    s -> edgeSessionsHolder.removeByEdgeId(s.getState().getEdge().getId()));
+                    s -> edgeSessionsHolder.removeByEdgeIdIfCurrent(s.getState().getEdgeId(), s.getState().getSessionId()));
 
             tryToDestroyZombieSessions(getZombieSessions(edgeSessionsHolder.getSessionsById().values()),
                     s -> edgeSessionsHolder.removeBySessionId(s.getState().getSessionId()));

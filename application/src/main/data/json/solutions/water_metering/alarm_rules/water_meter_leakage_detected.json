@@ -1,0 +1,89 @@
+{
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "58183d7e-4b7a-4ad6-a476-5d6c6571174c"
+  },
+  "type": "ALARM",
+  "name": "Leakage Detected",
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ALARM",
+    "arguments": {
+      "leakageAlarmEnabled": {
+        "refEntityId": {
+          "entityType": "TENANT",
+          "id": "13814000-1dd2-11b2-8080-808080808080"
+        },
+        "refEntityKey": {
+          "key": "leakageAlarmEnabled",
+          "type": "ATTRIBUTE",
+          "scope": "SERVER_SCOPE"
+        },
+        "defaultValue": "false"
+      },
+      "leakage": {
+        "refEntityKey": {
+          "key": "leakage",
+          "type": "TS_LATEST"
+        }
+      }
+    },
+    "createRules": {
+      "CRITICAL": {
+        "condition": {
+          "type": "SIMPLE",
+          "expression": {
+            "type": "SIMPLE",
+            "filters": [
+              {
+                "argument": "leakageAlarmEnabled",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              },
+              {
+                "argument": "leakage",
+                "valueType": "BOOLEAN",
+                "operation": "AND",
+                "predicates": [
+                  {
+                    "type": "BOOLEAN",
+                    "operation": "EQUAL",
+                    "value": {
+                      "staticValue": true,
+                      "dynamicValueArgument": null
+                    }
+                  }
+                ]
+              }
+            ],
+            "operation": "AND"
+          },
+          "schedule": null
+        },
+        "alarmDetails": null,
+        "dashboardId": null
+      }
+    },
+    "clearRule": null,
+    "propagate": false,
+    "propagateToOwner": false,
+    "propagateToTenant": false,
+    "propagateRelationTypes": null,
+    "output": null
+  }
+}

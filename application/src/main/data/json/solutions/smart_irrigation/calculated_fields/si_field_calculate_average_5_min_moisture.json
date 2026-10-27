@@ -1,0 +1,50 @@
+{
+  "reprocessingOrder": 1,
+  "type": "ENTITY_AGGREGATION",
+  "name": "Calculate average 5 min moisture",
+  "entityId": {
+    "entityType": "ASSET_PROFILE",
+    "id": "0d58a217-f0d9-4ab6-b8be-d7d41fb36437"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "ENTITY_AGGREGATION",
+    "arguments": {
+      "moisture": {
+        "refEntityKey": {
+          "key": "moisture",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      }
+    },
+    "metrics": {
+      "avgMoisture": {
+        "function": "AVG",
+        "input": {
+          "type": "key",
+          "key": "moisture"
+        }
+      }
+    },
+    "interval": {
+      "type": "CUSTOM",
+      "tz": "UTC",
+      "durationSec": 300
+    },
+    "watermark": null,
+    "produceIntermediateResult": false,
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      },
+      "decimalsByDefault": 2
+    }
+  }
+}

@@ -1,32 +1,20 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import tinycolor from 'tinycolor2';
-import Highlight = CanvasGauges.Highlight;
-import BaseGauge = CanvasGauges.BaseGauge;
-import GenericOptions = CanvasGauges.GenericOptions;
 import { TbUnit } from '@shared/models/unit.models';
 import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
 import { DataKey } from '@shared/models/widget.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
+import Highlight = CanvasGauges.Highlight;
+import BaseGauge = CanvasGauges.BaseGauge;
+import GenericOptions = CanvasGauges.GenericOptions;
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'
@@ -74,6 +62,9 @@ interface BaseGaugeModel extends BaseGauge {
   _value?: number;
 }
 
+export const getGaugeValueText = (value: any): string =>
+  !isDefinedAndNotNull(value) || value === '' ? 'N/A' : !isNumeric(value) ? NOT_SUPPORTED : '';
+
 export abstract class TbBaseGauge<S, O extends GenericOptions> {
 
   private gauge: BaseGaugeModel;
@@ -93,20 +84,23 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   update() {
     if (this.ctx.data.length > 0) {
       const cellData = this.ctx.data[0];
-      if (cellData.data.length > 0) {
-        const tvPair = cellData.data[cellData.data.length - 1];
-        let value = parseFloat(tvPair[1]);
-        if (this.formatValue) {
-          value = parseFloat(this.formatValue.format(value));
+      const origValue = cellData.data.length > 0 ? cellData.data[cellData.data.length - 1][1] : null;
+      let value = parseFloat(origValue);
+      if (this.formatValue) {
+        value = parseFloat(this.formatValue.format(value));
+      }
+      const valueText = getGaugeValueText(origValue);
+      if (this.gauge.options.valueText !== valueText) {
+        this.gauge.update({valueText} as GenericOptions);
+      }
+      const gaugeValue = valueText ? this.gauge.options.minValue : value;
+      if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
+        if (!this.gauge.options.animation) {
+          this.gauge._value = gaugeValue;
+        } else {
+          delete this.gauge._value;
         }
-        if (value !== this.gauge.value) {
-          if (!this.gauge.options.animation) {
-            this.gauge._value = value;
-          } else {
-            delete this.gauge._value;
-          }
-          this.gauge.value = value;
-        }
+        this.gauge.value = gaugeValue;
       }
     }
   }

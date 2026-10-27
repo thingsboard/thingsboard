@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="flex flex-col gap-5 p-6">
@@ -141,12 +130,14 @@
     @case ('error') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.install-error-title' | translate }}</h2>
       <p class="tb-iot-hub-install-desc">{{ 'iot-hub.install-error-message' | translate:{ name: item.name } }}</p>
-      @if (item.type === ItemType.SOLUTION_TEMPLATE) {
-        <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
-      } @else {
-        <div class="tb-iot-hub-error-details">
-          {{ errorMessage }}
-        </div>
+      @if (errorMessage) {
+        @if (item.type === ItemType.SOLUTION_TEMPLATE) {
+          <tb-iot-hub-markdown class="tb-iot-hub-error-details-markdown" [data]="errorMessage"></tb-iot-hub-markdown>
+        } @else {
+          <div class="tb-iot-hub-error-details">
+            {{ errorMessage }}
+          </div>
+        }
       }
     }
   }

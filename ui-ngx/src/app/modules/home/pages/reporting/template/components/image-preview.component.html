@@ -1,0 +1,9 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-image-preview" [style.justify-content]="imageAlign">
+  <img #image [src]="imageUrl | image: {emptyUrl: imagePlaceholder}: triggerUpdate | async" [style.width]="imageWidth" [style.min-width]="imageWidth"/>
+</div>

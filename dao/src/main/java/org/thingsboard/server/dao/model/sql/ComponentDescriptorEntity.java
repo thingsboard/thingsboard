@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -70,6 +58,9 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_HAS_QUEUE_NAME_PROPERTY)
     private boolean hasQueueName;
 
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_HAS_SECRETS_PROPERTY)
+    private boolean hasSecrets;
+
     public ComponentDescriptorEntity() {
     }
 
@@ -87,6 +78,7 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         this.configurationDescriptor = component.getConfigurationDescriptor();
         this.configurationVersion = component.getConfigurationVersion();
         this.hasQueueName = component.isHasQueueName();
+        this.hasSecrets = component.isHasSecrets();
     }
 
     @Override
@@ -102,6 +94,8 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
         data.setConfigurationDescriptor(configurationDescriptor);
         data.setConfigurationVersion(configurationVersion);
         data.setHasQueueName(hasQueueName);
+        data.setHasSecrets(hasSecrets);
         return data;
     }
+
 }

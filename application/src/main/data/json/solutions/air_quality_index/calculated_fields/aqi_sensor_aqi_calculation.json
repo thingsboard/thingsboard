@@ -1,0 +1,69 @@
+{
+  "reprocessingOrder": 0,
+  "type": "SCRIPT",
+  "name": "AQI Calculation",
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "6a35bc50-3a98-4169-8f1c-544bcc4d4076"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "co": {
+        "refEntityKey": {
+          "key": "co",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "no2": {
+        "refEntityKey": {
+          "key": "no2",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "o3": {
+        "refEntityKey": {
+          "key": "o3",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "pm10": {
+        "refEntityKey": {
+          "key": "pm10",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "pm25": {
+        "refEntityKey": {
+          "key": "pm25",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      },
+      "so2": {
+        "refEntityKey": {
+          "key": "so2",
+          "type": "TS_LATEST"
+        },
+        "defaultValue": ""
+      }
+    },
+    "expression": "var aqiMapping = [{\n        \"low\": 0,\n        \"high\": 50\n    },\n    {\n        \"low\": 51,\n        \"high\": 100\n    },\n    {\n        \"low\": 101,\n        \"high\": 150\n    },\n    {\n        \"low\": 151,\n        \"high\": 200\n    },\n    {\n        \"low\": 201,\n        \"high\": 300\n    },\n    {\n        \"low\": 301,\n        \"high\": 400\n    },\n    {\n        \"low\": 401,\n        \"high\": 500\n    }\n];\n\nvar pm25AqiMapping = [{\n        \"low\": 0.0,\n        \"high\": 12.0\n    },\n    {\n        \"low\": 12.1,\n        \"high\": 35.4\n    },\n    {\n        \"low\": 35.5,\n        \"high\": 55.4\n    },\n    {\n        \"low\": 55.5,\n        \"high\": 150.4\n    },\n    {\n        \"low\": 150.5,\n        \"high\": 250.4\n    },\n    {\n        \"low\": 250.5,\n        \"high\": 350.4\n    },\n    {\n        \"low\": 350.5,\n        \"high\": 500.4\n    }\n];\n\nvar pm10AqiMapping = [{\n        \"low\": 0,\n        \"high\": 54\n    },\n    {\n        \"low\": 55,\n        \"high\": 154\n    },\n    {\n        \"low\": 155,\n        \"high\": 254\n    },\n    {\n        \"low\": 255,\n        \"high\": 354\n    },\n    {\n        \"low\": 355,\n        \"high\": 424\n    },\n    {\n        \"low\": 425,\n        \"high\": 504\n    },\n    {\n        \"low\": 505,\n        \"high\": 604\n    }\n];\n\nvar no2AqiMapping = [{\n        \"low\": 0,\n        \"high\": 53\n    },\n    {\n        \"low\": 54,\n        \"high\": 100\n    },\n    {\n        \"low\": 101,\n        \"high\": 360\n    },\n    {\n        \"low\": 361,\n        \"high\": 649\n    },\n    {\n        \"low\": 650,\n        \"high\": 1249\n    },\n    {\n        \"low\": 1250,\n        \"high\": 1649\n    },\n    {\n        \"low\": 1650,\n        \"high\": 2049\n    }\n];\n\nvar coAqiMapping = [{\n        \"low\": 0.0,\n        \"high\": 4.4\n    },\n    {\n        \"low\": 4.5,\n        \"high\": 9.4\n    },\n    {\n        \"low\": 9.5,\n        \"high\": 12.4\n    },\n    {\n        \"low\": 12.5,\n        \"high\": 15.4\n    },\n    {\n        \"low\": 15.5,\n        \"high\": 30.4\n    },\n    {\n        \"low\": 30.5,\n        \"high\": 40.4\n    },\n    {\n        \"low\": 40.5,\n        \"high\": 50.4\n    }\n];\n\nvar so2AqiMapping = [{\n        \"low\": 0,\n        \"high\": 35\n    },\n    {\n        \"low\": 36,\n        \"high\": 75\n    },\n    {\n        \"low\": 76,\n        \"high\": 185\n    },\n    {\n        \"low\": 186,\n        \"high\": 304\n    },\n    {\n        \"low\": 305,\n        \"high\": 604\n    },\n    {\n        \"low\": 605,\n        \"high\": 804\n    },\n    {\n        \"low\": 805,\n        \"high\": 1004\n    }\n];\n\nvar o3AqiMapping = [{\n        \"low\": 0,\n        \"high\": 0\n    },\n    {\n        \"low\": 0,\n        \"high\": 0\n    },\n    {\n        \"low\": 0.125,\n        \"high\": 0.164\n    },\n    {\n        \"low\": 0.165,\n        \"high\": 0.204\n    },\n    {\n        \"low\": 0.205,\n        \"high\": 0.404\n    },\n    {\n        \"low\": 0.405,\n        \"high\": 0.504\n    },\n    {\n        \"low\": 0.505,\n        \"high\": 0.604\n    }\n];\n\n\nfunction calculateAqi(value, vMapping, aMapping) {\n    var bpLow = null;\n    var bpHigh = null;\n    var aqiLow = null;\n    var aqiHigh = null;\n    for (var i = 0; i < vMapping.length; i++) {\n        bpLow = vMapping[i].low;\n        bpHigh = vMapping[i].high;\n        if (value >= bpLow && value <= bpHigh) {\n            aqiLow = aMapping[i].low;\n            aqiHigh = aMapping[i].high;\n            return (int)(((aqiHigh - aqiLow) / (bpHigh - bpLow)) * (value - bpLow) + aqiLow);\n        }\n        if (i == vMapping.length - 1 && value > bpHigh) {\n            return aMapping[i].high;\n        }\n    }\n    return null;\n}\n\nvar result = {};\nvar aqi = -1;\n\nif (ctx.args.pm25.ts >= ctx.latestTs) {\n    pm25Aqi = calculateAqi(pm25, pm25AqiMapping, aqiMapping);\n    if (pm25Aqi != null) {\n        result.pm25Aqi = pm25Aqi;\n        aqi = Math.max(aqi, pm25Aqi);\n    };\n}\n\nif (ctx.args.pm10.ts >= ctx.latestTs) {\n    pm10Aqi = calculateAqi(pm10, pm10AqiMapping, aqiMapping);\n    if (pm10Aqi != null) {\n        result.pm10Aqi = pm10Aqi;\n        aqi = Math.max(aqi, pm10Aqi);\n    };\n}\n\nif (ctx.args.no2.ts >= ctx.latestTs) {\n    no2Aqi = calculateAqi(no2, no2AqiMapping, aqiMapping);\n    if (no2Aqi != null) {\n        result.no2Aqi = no2Aqi;\n        aqi = Math.max(aqi, no2Aqi);\n    };\n}\n\nif (ctx.args.co.ts >= ctx.latestTs) {\n    coAqi = calculateAqi(co, coAqiMapping, aqiMapping);\n    if (coAqi != null) {\n        result.coAqi = coAqi;\n        aqi = Math.max(aqi, coAqi);\n    };\n}\n\nif (ctx.args.so2.ts >= ctx.latestTs) {\n    so2Aqi = calculateAqi(so2, so2AqiMapping, aqiMapping);\n    if (so2Aqi != null) {\n        result.so2Aqi = so2Aqi;\n        aqi = Math.max(aqi, so2Aqi);\n    }\n}\n\nif (ctx.args.o3.ts >= ctx.latestTs) {\n    var o3Aqi = calculateAqi(o3, o3AqiMapping, aqiMapping);\n    if (o3Aqi != null) {\n        result.o3Aqi = o3Aqi;\n        aqi = Math.max(aqi, o3Aqi);\n    }\n}\n\nif (aqi >= 0) {\n    result.aqi = aqi;\n}\n\nreturn {\n    ts: ctx.latestTs,\n    values: result\n};",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    }
+  }
+}

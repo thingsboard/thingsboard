@@ -1,20 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.notification;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +15,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.http.HttpEntity;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.SecretType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
@@ -83,7 +74,10 @@ import org.thingsboard.server.common.data.notification.template.SlackDeliveryMet
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.secret.Secret;
+import org.thingsboard.server.common.data.secret.SecretInfo;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.encryptionkey.EncryptionService;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.DefaultNotifications.DefaultNotification;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -127,8 +121,11 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     private MicrosoftTeamsNotificationChannel microsoftTeamsNotificationChannel;
     @MockitoBean
     private FirebaseService firebaseService;
+    @Autowired
+    private EncryptionService encryptionService;
 
     private static final String TEST_MOBILE_TOKEN = "tenantFcmToken";
+    private static final String TEST_CREDENTIALS = "testCredentials";
 
     @Before
     public void beforeEach() throws Exception {
@@ -136,8 +133,10 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         wsClient = getWsClient();
 
         loginSysAdmin();
+        encryptionService.createEncryptionKey(TenantId.SYS_TENANT_ID);
+        SecretInfo secretInfo = createSecret("Test credentials", TEST_CREDENTIALS);
         MobileAppNotificationDeliveryMethodConfig config = new MobileAppNotificationDeliveryMethodConfig();
-        config.setFirebaseServiceAccountCredentials("testCredentials");
+        config.setFirebaseServiceAccountCredentials(toSecretPlaceholder(secretInfo.getName(), secretInfo.getType()));
         saveNotificationSettings(config);
 
         loginTenantAdmin();
@@ -433,6 +432,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
             NotificationApiWsClient wsClient = buildAndConnectWebSocketClient();
             sessions.put(user, wsClient);
 
+            loginTenantAdmin();
             NotificationTarget notificationTarget = createNotificationTarget(user.getId());
             targets.add(notificationTarget.getId());
 
@@ -479,6 +479,56 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         });
 
         sessions.values().forEach(WebSocketClient::close);
+    }
+
+    @Test
+    public void testNotificationsLocalization() throws Exception {
+        loginTenantAdmin();
+        JsonNode enTranslation = JacksonUtil.newObjectNode()
+                .set("custom", JacksonUtil.newObjectNode()
+                        .put("hi", "Hi, ${recipientTitle}")
+                        .put("check-docs", "Check out our documentation: https://thingsboard.io"));
+        doPost("/api/translation/custom/en_US", enTranslation);
+
+        JsonNode uaTranslation = JacksonUtil.newObjectNode()
+                .set("custom", JacksonUtil.newObjectNode()
+                        .put("hi", "Добрий день, ${recipientTitle}")
+                        .put("check-docs", "Прогляньте нашу документацію: https://thingsboard.io"));
+        doPost("/api/translation/custom/uk_UA", uaTranslation);
+
+        User englishUser = new User();
+        englishUser.setTenantId(tenantId);
+        englishUser.setAuthority(Authority.TENANT_ADMIN);
+        englishUser.setFirstName("Robert");
+        englishUser.setEmail("english-user@thingsboard.org");
+        englishUser.setAdditionalInfoField("lang", new TextNode("en_US"));
+        englishUser = createUser(englishUser, "password");
+
+        User ukrainianUser = new User();
+        ukrainianUser.setTenantId(tenantId);
+        ukrainianUser.setAuthority(Authority.TENANT_ADMIN);
+        ukrainianUser.setFirstName("Вячеслав");
+        ukrainianUser.setEmail("ukrainian-user@thingsboard.org");
+        ukrainianUser.setAdditionalInfoField("lang", new TextNode("uk_UA"));
+        ukrainianUser = createUser(ukrainianUser, "password");
+
+        NotificationTarget target = createNotificationTarget(englishUser.getId(), ukrainianUser.getId());
+        String subject = "${widgets.getting-started.done-welcome-title:translate}";
+        String body = "${custom.hi:translate}! ${custom.check-docs:translate}";
+        NotificationTemplate template = createNotificationTemplate(NotificationType.GENERAL, subject, body, NotificationDeliveryMethod.WEB);
+
+        NotificationRequest request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
+        awaitNotificationRequest(request.getId());
+
+        login(englishUser.getEmail(), "password");
+        Notification englishNotification = getMyNotifications(true, 1).get(0);
+        assertThat(englishNotification.getSubject()).isEqualTo("Welcome on board");
+        assertThat(englishNotification.getText()).isEqualTo("Hi, Robert! Check out our documentation: https://thingsboard.io");
+
+        login(ukrainianUser.getEmail(), "password");
+        Notification ukrainianNotification = getMyNotifications(true, 1).get(0);
+        assertThat(ukrainianNotification.getSubject()).isEqualTo("Ласкаво просимо");
+        assertThat(ukrainianNotification.getText()).isEqualTo("Добрий день, Вячеслав! Прогляньте нашу документацію: https://thingsboard.io");
     }
 
     @Test
@@ -692,7 +742,8 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationSettings settings = new NotificationSettings();
         SlackNotificationDeliveryMethodConfig slackConfig = new SlackNotificationDeliveryMethodConfig();
         String slackToken = "xoxb-123123123";
-        slackConfig.setBotToken(slackToken);
+        SecretInfo secretInfo = createSecret("Slack token", slackToken);
+        slackConfig.setBotToken(toSecretPlaceholder(secretInfo.getName(), secretInfo.getType()));
         settings.setDeliveryMethodsConfigs(Map.of(
                 NotificationDeliveryMethod.SLACK, slackConfig
         ));
@@ -728,12 +779,12 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         NotificationRequest successfulNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(successfulNotificationRequest.getId()).isSent());
-        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(slackNotificationTemplate.getBody()));
+        verify(slackService).sendMessage(eq(tenantId), eq(slackToken), eq(conversationId), eq(slackNotificationTemplate.getBody()), eq(null));
         NotificationRequestStats stats = getStats(successfulNotificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.SLACK)).hasValue(1);
 
         String errorMessage = "Error!!!";
-        doThrow(new RuntimeException(errorMessage)).when(slackService).sendMessage(any(), any(), any(), any());
+        doThrow(new RuntimeException(errorMessage)).when(slackService).sendMessage(any(), any(), any(), any(), any());
         NotificationRequest failedNotificationRequest = submitNotificationRequest(List.of(notificationTarget.getId()), notificationTemplate.getId(), 0);
         await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> findNotificationRequest(failedNotificationRequest.getId()).isSent());
@@ -928,11 +979,11 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(stats.getErrors().get(NotificationDeliveryMethod.MOBILE_APP).get(differentCustomerUser.getEmail()))
                 .contains("doesn't use the mobile app");
 
-        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+        verify(firebaseService).sendMessage(eq(tenantId), eq(TEST_CREDENTIALS),
                 eq(TEST_MOBILE_TOKEN), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))), eq(1));
-        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+        verify(firebaseService).sendMessage(eq(tenantId), eq(TEST_CREDENTIALS),
                 eq("tenantFcmToken2"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))), eq(1));
-        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+        verify(firebaseService).sendMessage(eq(tenantId), eq(TEST_CREDENTIALS),
                 eq("customerFcmToken"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))), eq(1));
         assertThat(getMyNotifications(NotificationDeliveryMethod.MOBILE_APP, true, 10)).singleElement().satisfies(notification -> {
             assertThat(notification.getDeliveryMethod()).isEqualTo(NotificationDeliveryMethod.MOBILE_APP);
@@ -948,9 +999,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         doDelete("/api/user/mobile/session").andExpect(status().isOk());
         request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
         awaitNotificationRequest(request.getId());
-        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+        verify(firebaseService).sendMessage(eq(tenantId), eq(TEST_CREDENTIALS),
                 eq(TEST_MOBILE_TOKEN), eq("Title"), eq("Message"), anyMap(), eq(2));
-        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+        verify(firebaseService).sendMessage(eq(tenantId), eq(TEST_CREDENTIALS),
                 eq("customerFcmToken"), eq("Title"), eq("Message"), anyMap(), eq(2));
         verifyNoMoreInteractions(firebaseService);
 
@@ -990,7 +1041,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         String expectedBody = TENANT_ADMIN_EMAIL + " added comment: text";
         ArgumentCaptor<Map<String, String>> msgCaptor = ArgumentCaptor.captor();
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+            verify(firebaseService).sendMessage(eq(tenantId), eq(TEST_CREDENTIALS),
                     eq(TEST_MOBILE_TOKEN), eq(expectedSubject),
                     eq(expectedBody),
                     msgCaptor.capture(), eq(1));
@@ -1014,17 +1065,62 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void testMobileSettings_tenantLevel() throws Exception {
-        MobileAppNotificationDeliveryMethodConfig config = new MobileAppNotificationDeliveryMethodConfig();
-        config.setFirebaseServiceAccountCredentials("testCredentials");
-        NotificationSettings settings = new NotificationSettings();
-        settings.setDeliveryMethodsConfigs(Map.of(
-                NotificationDeliveryMethod.MOBILE_APP, config
-        ));
+    public void testMobileSettings() throws Exception {
+        loginSysAdmin();
+        String sysAdminCredentials = "systemCreds";
+        SecretInfo sysAdminSecret = createSecret("Test secret", sysAdminCredentials);
+        var systemConfig = new MobileAppNotificationDeliveryMethodConfig();
+        systemConfig.setFirebaseServiceAccountCredentials(toSecretPlaceholder(sysAdminSecret.getName(), sysAdminSecret.getType()));
+        saveNotificationSettings(systemConfig);
 
-        ResultActions result = doPost("/api/notification/settings", settings)
-                .andExpect(status().isBadRequest());
-        assertThat(getErrorMessage(result)).contains("can only be configured by system administrator");
+        loginTenantAdmin();
+        mobileToken = "tenantFcmToken";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
+        NotificationTarget target = createNotificationTarget(tenantAdminUserId);
+
+        // no tenant settings
+        assertThat(getAvailableDeliveryMethods()).contains(NotificationDeliveryMethod.MOBILE_APP);
+        NotificationRequest request = submitNotificationRequest(target.getId(), "with systemCreds 1", NotificationDeliveryMethod.MOBILE_APP);
+        awaitNotificationRequest(request.getId());
+        verify(firebaseService).sendMessage(eq(tenantId), eq(sysAdminCredentials),
+                eq("tenantFcmToken"), any(), eq("with systemCreds 1"), anyMap(), any());
+
+        // tenant settings with useSystemSettings = false
+        String tenantCredentials = "tenantCreds";
+        SecretInfo tenantSecret = createSecret("Test secret", tenantCredentials);
+        var tenantConfig = new MobileAppNotificationDeliveryMethodConfig();
+        tenantConfig.setFirebaseServiceAccountCredentials(toSecretPlaceholder(tenantSecret.getName(), tenantSecret.getType()));
+        tenantConfig.setUseSystemSettings(false);
+        saveNotificationSettings(tenantConfig);
+        assertThat(getAvailableDeliveryMethods()).contains(NotificationDeliveryMethod.MOBILE_APP);
+        request = submitNotificationRequest(target.getId(), "with tenantCreds 2", NotificationDeliveryMethod.MOBILE_APP);
+        awaitNotificationRequest(request.getId());
+        verify(firebaseService).sendMessage(eq(tenantId), eq(tenantCredentials),
+                eq("tenantFcmToken"), any(), eq("with tenantCreds 2"), anyMap(), any());
+
+        // tenant settings with useSystemSettings = true
+        tenantConfig.setFirebaseServiceAccountCredentials(null);
+        tenantConfig.setUseSystemSettings(true);
+        saveNotificationSettings(tenantConfig);
+        assertThat(getAvailableDeliveryMethods()).contains(NotificationDeliveryMethod.MOBILE_APP);
+        request = submitNotificationRequest(target.getId(), "with systemCreds 3", NotificationDeliveryMethod.MOBILE_APP);
+        awaitNotificationRequest(request.getId());
+        verify(firebaseService).sendMessage(eq(tenantId), eq(sysAdminCredentials),
+                eq("tenantFcmToken"), any(), eq("with systemCreds 3"), anyMap(), any());
+
+        loginSysAdmin();
+        saveNotificationSettings(); // clearing system settings
+        assertThat(getAvailableDeliveryMethods()).doesNotContain(NotificationDeliveryMethod.MOBILE_APP);
+        loginTenantAdmin();
+        assertThat(getAvailableDeliveryMethods()).doesNotContain(NotificationDeliveryMethod.MOBILE_APP);
+
+        tenantConfig.setFirebaseServiceAccountCredentials(toSecretPlaceholder(tenantSecret.getName(), tenantSecret.getType()));
+        tenantConfig.setUseSystemSettings(false);
+        saveNotificationSettings(tenantConfig);
+        assertThat(getAvailableDeliveryMethods()).contains(NotificationDeliveryMethod.MOBILE_APP);
+
+        loginSysAdmin();
+        assertThat(getAvailableDeliveryMethods()).doesNotContain(NotificationDeliveryMethod.MOBILE_APP);
     }
 
     private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {
@@ -1041,6 +1137,10 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
             }
         });
         return future.get(30, TimeUnit.SECONDS);
+    }
+
+    private List<NotificationDeliveryMethod> getAvailableDeliveryMethods() throws Exception {
+        return doGetTyped("/api/notification/deliveryMethods", new TypeReference<>() {});
     }
 
     private NotificationRequestStats awaitNotificationRequest(NotificationRequestId requestId) {
@@ -1066,6 +1166,18 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         loginCustomerUser();
         otherWsClient = super.getAnotherWsClient();
         loginTenantAdmin();
+    }
+
+    private SecretInfo createSecret(String name, String value) {
+        Secret secret = new Secret();
+        secret.setName(name);
+        secret.setValue(value);
+        secret.setType(SecretType.TEXT);
+        return doPost("/api/secret", secret, SecretInfo.class);
+    }
+
+    private String toSecretPlaceholder(String name, SecretType type) {
+        return String.format("${secret:%s;type:%s}", name, type);
     }
 
 }

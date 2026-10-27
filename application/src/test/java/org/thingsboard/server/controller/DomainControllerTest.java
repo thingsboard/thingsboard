@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -47,7 +35,7 @@ public class DomainControllerTest extends AbstractControllerTest {
 
     @Before
     public void setUp() throws Exception {
-        loginSysAdmin();
+        loginTenantAdmin();
     }
 
     @After
@@ -70,7 +58,7 @@ public class DomainControllerTest extends AbstractControllerTest {
         PageData<DomainInfo> pageData = doGetTypedWithPageLink("/api/domain/infos?", PAGE_DATA_DOMAIN_TYPE_REF, new PageLink(10, 0));
         assertThat(pageData.getData()).isEmpty();
 
-        Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);
+        Domain domain = constructDomain("my.test.domain");
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
         PageData<DomainInfo> pageData2 = doGetTypedWithPageLink("/api/domain/infos?", PAGE_DATA_DOMAIN_TYPE_REF, new PageLink(10, 0));
@@ -87,7 +75,7 @@ public class DomainControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveDomainWithoutName() throws Exception {
-        Domain domain = constructDomain(TenantId.SYS_TENANT_ID, null, true, true);
+        Domain domain = constructDomain(null);
         doPost("/api/domain", domain)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("name must not be blank")));
@@ -95,7 +83,7 @@ public class DomainControllerTest extends AbstractControllerTest {
 
     @Test
     public void testUpdateDomainOauth2Clients() throws Exception {
-        Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);
+        Domain domain = constructDomain("my.test.domain");
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
         OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
@@ -120,19 +108,18 @@ public class DomainControllerTest extends AbstractControllerTest {
         OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
         OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
 
-        Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);
+        Domain domain = constructDomain("my.test.domain");
         Domain savedDomain = doPost("/api/domain?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), domain, Domain.class);
 
         DomainInfo retrievedDomainInfo = doGet("/api/domain/info/{id}", DomainInfo.class, savedDomain.getId().getId());
         assertThat(retrievedDomainInfo).isEqualTo(new DomainInfo(savedDomain, List.of(new OAuth2ClientInfo(savedOAuth2Client))));
     }
 
-    private Domain constructDomain(TenantId tenantId, String domainName, boolean oauth2Enabled, boolean propagateToEdge) {
+    private Domain constructDomain( String domainName) {
         Domain domain = new Domain();
-        domain.setTenantId(tenantId);
         domain.setName(domainName);
-        domain.setOauth2Enabled(oauth2Enabled);
-        domain.setPropagateToEdge(propagateToEdge);
+        domain.setOauth2Enabled(true);
+        domain.setPropagateToEdge(true);
         return domain;
     }
 

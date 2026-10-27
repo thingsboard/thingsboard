@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.session;
 
 import lombok.Data;
@@ -29,6 +17,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Data
@@ -48,11 +38,14 @@ public class EdgeSessionsHolder {
         unique.forEach(consumer);
     }
 
-    public void put(EdgeGrpcSessionManager session) {
+    /**
+     * Registers the session as the current one for its edge and returns the session it replaced, or null.
+     */
+    public EdgeGrpcSessionManager put(EdgeGrpcSessionManager session) {
         UUID sessionId = session.getState().getSessionId();
         EdgeId edgeId = session.getState().getEdgeId();
         sessionsById.put(sessionId, session);
-        sessions.put(edgeId, session);
+        return sessions.put(edgeId, session);
     }
 
     public EdgeGrpcSessionManager getByEdgeId(EdgeId id) {
@@ -65,6 +58,55 @@ public class EdgeSessionsHolder {
 
     public EdgeGrpcSessionManager removeByEdgeId(EdgeId id) {
         return sessions.remove(id);
+    }
+
+    /**
+     * Whether the given session is still the one registered for its edge. A session that has been
+     * superseded must not arm or run work on the edge's behalf - the session that replaced it owns
+     * that now - and a plain "some session exists for this edge" check does not catch that.
+     */
+    public boolean isCurrent(EdgeGrpcSessionManager session) {
+        EdgeSessionState state = session.getState();
+        return state != null && sessions.get(state.getEdgeId()) == session;
+    }
+
+    /**
+     * Removes the edge's registered session and returns it, but only if it is still the given session.
+     * Returns null when another session has taken the edge over in the meantime, so that a teardown
+     * racing with a reconnect cannot act on behalf of a session it no longer owns. The check and the
+     * removal are one atomic step.
+     * <p>
+     * Only cheap non-blocking work may run inside the remapping function: it holds the bin lock of
+     * {@link #sessions} for this edge, so a slow teardown such as
+     * {@link EdgeGrpcSessionManager#destroyAndMarkAsZombieIfFailed()} has to be done by the caller
+     * once compute has returned.
+     */
+    public EdgeGrpcSessionManager removeByEdgeIdIfCurrent(EdgeId id, UUID sessionId) {
+        AtomicReference<EdgeGrpcSessionManager> removed = new AtomicReference<>();
+        sessions.compute(id, (edgeId, current) -> {
+            if (current == null || !sessionId.equals(current.getState().getSessionId())) {
+                return current;
+            }
+            removed.set(current);
+            return null;
+        });
+        return removed.get();
+    }
+
+    /**
+     * Runs the action only if no session is registered for the edge, as one atomic step with {@link #put}.
+     * Returns whether it ran. The action holds the bin lock of {@link #sessions}, so it must be cheap and non-blocking.
+     */
+    public boolean runIfNoSession(EdgeId id, Runnable action) {
+        AtomicBoolean ran = new AtomicBoolean();
+        sessions.compute(id, (edgeId, current) -> {
+            if (current == null) {
+                action.run();
+                ran.set(true);
+            }
+            return current;
+        });
+        return ran.get();
     }
 
     public EdgeGrpcSessionManager removeBySessionId(UUID sessionId) {

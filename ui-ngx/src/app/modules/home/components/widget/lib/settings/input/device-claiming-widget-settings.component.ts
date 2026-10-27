@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -51,7 +38,10 @@ export class DeviceClaimingWidgetSettingsComponent extends WidgetSettingsCompone
       deviceNotFound: '',
       failedClaimDevice: '',
       requiredErrorDevice: '',
-      requiredErrorSecretKey: ''
+      requiredErrorSecretKey: '',
+      relateDevice: false,
+      relateDirection: 'from',
+      relateType: 'Contains'
     };
   }
 
@@ -76,17 +66,24 @@ export class DeviceClaimingWidgetSettingsComponent extends WidgetSettingsCompone
       deviceNotFound: [settings.deviceNotFound, []],
       failedClaimDevice: [settings.failedClaimDevice, []],
       requiredErrorDevice: [settings.requiredErrorDevice, []],
-      requiredErrorSecretKey: [settings.requiredErrorSecretKey, []]
+      requiredErrorSecretKey: [settings.requiredErrorSecretKey, []],
+
+      // Relations settings
+
+      relateDevice: [settings.relateDevice, []],
+      relateDirection: [settings.relateDirection, []],
+      relateType: [settings.relateType, []]
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['deviceSecret', 'showLabel'];
+    return ['deviceSecret', 'showLabel', 'relateDevice'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const deviceSecret: boolean = this.deviceClaimingWidgetSettingsForm.get('deviceSecret').value;
     const showLabel: boolean = this.deviceClaimingWidgetSettingsForm.get('showLabel').value;
+    const relateDevice: boolean = this.deviceClaimingWidgetSettingsForm.get('relateDevice').value;
     if (deviceSecret) {
       if (showLabel) {
         this.deviceClaimingWidgetSettingsForm.get('secretKeyLabel').enable();
@@ -103,9 +100,18 @@ export class DeviceClaimingWidgetSettingsComponent extends WidgetSettingsCompone
     } else {
       this.deviceClaimingWidgetSettingsForm.get('deviceLabel').disable();
     }
+    if (relateDevice) {
+      this.deviceClaimingWidgetSettingsForm.get('relateDirection').enable();
+      this.deviceClaimingWidgetSettingsForm.get('relateType').enable();
+    } else {
+      this.deviceClaimingWidgetSettingsForm.get('relateDirection').disable();
+      this.deviceClaimingWidgetSettingsForm.get('relateType').disable();
+    }
     this.deviceClaimingWidgetSettingsForm.get('secretKeyLabel').updateValueAndValidity({emitEvent});
     this.deviceClaimingWidgetSettingsForm.get('deviceLabel').updateValueAndValidity({emitEvent});
     this.deviceClaimingWidgetSettingsForm.get('requiredErrorSecretKey').updateValueAndValidity({emitEvent});
+    this.deviceClaimingWidgetSettingsForm.get('relateDirection').updateValueAndValidity({emitEvent});
+    this.deviceClaimingWidgetSettingsForm.get('relateType').updateValueAndValidity({emitEvent});
   }
 
 }

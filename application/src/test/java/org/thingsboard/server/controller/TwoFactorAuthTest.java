@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.java_websocket.framing.CloseFrame;
 import org.jboss.aerogear.security.otp.Totp;
 import org.junit.After;
 import org.junit.Before;
@@ -27,6 +16,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
@@ -39,6 +30,8 @@ import org.thingsboard.server.common.data.notification.targets.platform.TenantAd
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
@@ -52,10 +45,10 @@ import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProvi
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -88,8 +81,6 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
     private SmsService smsService;
     @Autowired
     private AuditLogService auditLogService;
-    @Autowired
-    private UserService userService;
 
     private User user;
     private String username;
@@ -147,6 +138,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
 
         ArgumentCaptor<String> verificationCodeCaptor = ArgumentCaptor.forClass(String.class);
         verify(smsService).sendSms(eq(tenantId), any(), any(), verificationCodeCaptor.capture());
+
         String correctVerificationCode = verificationCodeCaptor.getValue();
 
         JsonNode tokenPair = readResponse(doPost("/api/auth/2fa/verification/check?providerType=SMS&verificationCode=" + correctVerificationCode)
@@ -156,6 +148,48 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         User currentUser = readResponse(doGet("/api/auth/user")
                 .andExpect(status().isOk()), User.class);
         assertThat(currentUser.getId()).isEqualTo(user.getId());
+    }
+
+    @Test
+    public void testWsAuthCmd_preVerificationTokenRejected() throws Exception {
+        configureTotpTwoFa();
+        logInWithMfaToken(username, password, Authority.PRE_VERIFICATION_TOKEN);
+
+        wsClient = buildAndConnectWebSocketClient();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(wsClient::isClosed);
+    }
+
+    @Test
+    public void testWsQueryToken_preVerificationTokenRejected() throws Exception {
+        configureTotpTwoFa();
+        logInWithMfaToken(username, password, Authority.PRE_VERIFICATION_TOKEN);
+
+        // The server accepts the handshake and closes the session right away from afterConnectionEstablished().
+        // connectBlocking() returns false when that close frame is processed before it checks the open state,
+        // so its result is not asserted here; the server-side close code proves the token was rejected.
+        wsClient = buildWebSocketClient("/api/ws?token=" + token);
+        wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(wsClient::isClosed);
+        assertThat(wsClient.getCloseCode()).isEqualTo(CloseFrame.UNEXPECTED_CONDITION);
+    }
+
+    @Test
+    public void testWs_accessTokenAcceptedAfterTwoFa() throws Exception {
+        TotpTwoFaAccountConfig totpTwoFaAccountConfig = configureTotpTwoFa();
+        logInWithMfaToken(username, password, Authority.PRE_VERIFICATION_TOKEN);
+        JsonNode tokenPair = readResponse(doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + getCorrectTotp(totpTwoFaAccountConfig))
+                .andExpect(status().isOk()), JsonNode.class);
+        validateAndSetJwtToken(tokenPair, username);
+        Device device = createDevice("2FA device", "2FA device token");
+
+        EntityTypeFilter deviceFilter = new EntityTypeFilter();
+        deviceFilter.setEntityType(EntityType.DEVICE);
+        EntityDataUpdate update = getWsClient().sendEntityDataQuery(deviceFilter);
+
+        assertThat(update.getData().getData()).singleElement()
+                .extracting(EntityData::getEntityId).isEqualTo(device.getId());
     }
 
     @Test
@@ -348,6 +382,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
     @Test
     public void testTwoFa_multipleProviders() throws Exception {
         PlatformTwoFaSettings platformTwoFaSettings = new PlatformTwoFaSettings();
+        platformTwoFaSettings.setUseSystemTwoFactorAuthSettings(true);
 
         TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
         totpTwoFaProviderConfig.setIssuerName("TB");
@@ -481,11 +516,12 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         totpTwoFaProviderConfig.setIssuerName("tb");
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setUseSystemTwoFactorAuthSettings(false);
         twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{totpTwoFaProviderConfig}).collect(Collectors.toList()));
         twoFaSettings.setMinVerificationCodeSendPeriod(5);
         twoFaSettings.setTotalAllowedTimeForVerification(100);
         Arrays.stream(customizer).forEach(c -> c.accept(twoFaSettings));
-        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+        twoFaConfigManager.savePlatformTwoFaSettings(tenantId, twoFaSettings);
 
         TotpTwoFaAccountConfig totpTwoFaAccountConfig = (TotpTwoFaAccountConfig) twoFactorAuthService.generateNewAccountConfig(user, TwoFaProviderType.TOTP);
         twoFaConfigManager.saveTwoFaAccountConfig(tenantId, user, totpTwoFaAccountConfig);
@@ -499,10 +535,11 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         Arrays.stream(customizer).forEach(c -> c.accept(smsTwoFaProviderConfig));
 
         PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setUseSystemTwoFactorAuthSettings(false);
         twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{smsTwoFaProviderConfig}).collect(Collectors.toList()));
         twoFaSettings.setMinVerificationCodeSendPeriod(5);
         twoFaSettings.setTotalAllowedTimeForVerification(100);
-        twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+        twoFaConfigManager.savePlatformTwoFaSettings(tenantId, twoFaSettings);
 
         SmsTwoFaAccountConfig smsTwoFaAccountConfig = new SmsTwoFaAccountConfig();
         smsTwoFaAccountConfig.setPhoneNumber("+38050505050");

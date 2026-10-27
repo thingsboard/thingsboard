@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,13 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.cf.AlarmRuleDefinition;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.cf.AlarmRuleDefinitionInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
 import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.event.EventType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -47,12 +35,13 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -177,8 +166,16 @@ public class AlarmRuleController extends BaseController {
             entityTypes = CalculatedField.SUPPORTED_ENTITIES.entrySet().stream()
                     .filter(entry -> entry.getValue().contains(CalculatedFieldType.ALARM))
                     .map(Map.Entry::getKey)
+                    .filter(t -> {
+                        try {
+                            return accessControlService.hasPermission(user, Resource.resourceFromEntityType(t), Operation.READ_CALCULATED_FIELD);
+                        } catch (ThingsboardException e) {
+                            return false;
+                        }
+                    })
                     .collect(Collectors.toSet());
         } else {
+            accessControlService.checkPermission(user, Resource.resourceFromEntityType(entityType), Operation.READ_CALCULATED_FIELD);
             entityTypes = EnumSet.of(entityType);
         }
 

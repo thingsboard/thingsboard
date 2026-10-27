@@ -1,22 +1,12 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <section [formGroup]="resourcesFormGroup">
-  <div class="flex flex-row items-center justify-start">
+  <div class="hidden flex-row items-center justify-start gt-sm:flex">
     <div class="max-w-30% flex-full">
       <mat-label translate>device-profile.lwm2m.resource-label</mat-label>
     </div>
@@ -33,43 +23,62 @@
       <mat-label translate>device-profile.lwm2m.key-name</mat-label>
     </div>
   </div>
-  <mat-divider></mat-divider>
+  <mat-divider class="hidden gt-sm:block"></mat-divider>
   <div formArrayName="resources">
-    @for (resourceLwM2M of resourcesFormArray.controls; track resourceLwM2M.value.id) {
-      <div [formGroupName]="$index" class="resource-list flex flex-row items-center justify-start">
-        <div class="resource-name max-w-30% flex-full">
-          #{{ resourceLwM2M.get('id').value }} <span class="name">{{ resourceLwM2M.get('name').value }}</span>
+    @for (resourceLwM2M of resourcesFormArray.controls; track resourceLwM2M.value.id; let isLast = $last) {
+      <div [formGroupName]="$index">
+        <div class="resource-list flex flex-col gap-2 gt-sm:flex-row gt-sm:items-center gt-sm:justify-start gt-sm:gap-0">
+          <div class="flex flex-row items-center justify-between gt-sm:contents">
+            <div class="resource-name min-w-0 gt-sm:max-w-30% gt-sm:flex-full">
+              #{{ resourceLwM2M.get('id').value }} <span class="name">{{ resourceLwM2M.get('name').value }}</span>
+            </div>
+            <tb-profile-lwm2m-attributes
+              class="gt-sm:order-last gt-sm:ml-auto"
+              formControlName="attributes"
+              [isAttributeTelemetry]="isDisabledObserve($index)"
+              isResource="true"
+              [modelName]="getNameResourceLwm2m(resourceLwM2M.value)">
+            </tb-profile-lwm2m-attributes>
+          </div>
+          <div class="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 gt-sm:contents">
+            <mat-checkbox class="gt-sm:flex gt-sm:max-w-10% gt-sm:flex-full gt-sm:justify-center"
+                          formControlName="attribute" color="warn">
+              @if (!isGtSm) {
+                {{ 'device-profile.lwm2m.attribute-label' | translate }}
+              }
+            </mat-checkbox>
+            <mat-checkbox class="gt-sm:flex gt-sm:max-w-10% gt-sm:flex-full gt-sm:justify-center"
+                          formControlName="telemetry" color="primary">
+              @if (!isGtSm) {
+                {{ 'device-profile.lwm2m.telemetry-label' | translate }}
+              }
+            </mat-checkbox>
+            <mat-checkbox class="gt-sm:flex gt-sm:max-w-10% gt-sm:flex-full gt-sm:justify-center"
+                          formControlName="observe" color="primary"
+                          matTooltip="{{ 'device-profile.lwm2m.edit-observe-select' | translate }}"
+                          [matTooltipDisabled]="disabled || !isDisabledObserve($index)"
+                          matTooltipPosition="above">
+              @if (!isGtSm) {
+                {{ 'device-profile.lwm2m.observe-label' | translate }}
+              }
+            </mat-checkbox>
+          </div>
+          <mat-form-field class="min-w-0 gt-sm:max-w-33% gt-sm:flex-full" appearance="outline" subscriptSizing="dynamic">
+            @if (!isGtSm) {
+              <mat-label translate>device-profile.lwm2m.key-name</mat-label>
+            }
+            <input matInput type="text" formControlName="keyName" required>
+            <mat-hint></mat-hint>
+            @if (resourceLwM2M.get('keyName').hasError('required') ||
+            resourceLwM2M.get('keyName').hasError('pattern')) {
+              <mat-error>{{ 'device-profile.lwm2m.key-name-required' | translate }}</mat-error>
+            }
+          </mat-form-field>
         </div>
-        <div class="flex max-w-10% flex-full items-center justify-center">
-          <mat-checkbox formControlName="attribute" color="warn">
-          </mat-checkbox>
-        </div>
-        <div class="flex max-w-10% flex-full items-center justify-center">
-          <mat-checkbox formControlName="telemetry" color="primary">
-          </mat-checkbox>
-        </div>
-        <div class="flex max-w-10% flex-full items-center justify-center">
-          <mat-checkbox formControlName="observe" color="primary"
-                        matTooltip="{{ 'device-profile.lwm2m.edit-observe-select' | translate }}"
-                        [matTooltipDisabled]="disabled || !isDisabledObserve($index)"
-                        matTooltipPosition="above">
-          </mat-checkbox>
-        </div>
-        <mat-form-field class="max-w-33% flex-full" appearance="outline">
-          <input matInput type="text" formControlName="keyName" required>
-          @if (resourceLwM2M.get('keyName').hasError('required') ||
-          resourceLwM2M.get('keyName').hasError('pattern')) {
-            <mat-error>{{ 'device-profile.lwm2m.key-name-required' | translate }}</mat-error>
-          }
-        </mat-form-field>
-        <span class="flex-1"></span>
-        <tb-profile-lwm2m-attributes
-          formControlName="attributes"
-          [isAttributeTelemetry]="isDisabledObserve($index)"
-          isResource="true"
-          [modelName]="getNameResourceLwm2m(resourceLwM2M.value)">
-        </tb-profile-lwm2m-attributes>
       </div>
+      @if (!isLast) {
+        <mat-divider class="my-2 gt-sm:hidden"></mat-divider>
+      }
     }
   </div>
 </section>

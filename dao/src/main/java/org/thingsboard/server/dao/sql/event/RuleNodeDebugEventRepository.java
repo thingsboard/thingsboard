@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.data.domain.Page;
@@ -60,9 +48,9 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
                     "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
                     "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
-                    "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
+                    "AND (:eventEntityId IS NULL OR e.e_entity_id = :eventEntityId) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
-                    "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
+                    "AND (:msgId IS NULL OR e.e_msg_id = :msgId) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
                     "AND (:relationType IS NULL OR e.e_relation_type ILIKE concat('%', :relationType, '%')) " +
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
@@ -77,9 +65,9 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
                     "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
                     "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
-                    "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
+                    "AND (:eventEntityId IS NULL OR e.e_entity_id = :eventEntityId) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
-                    "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
+                    "AND (:msgId IS NULL OR e.e_msg_id = :msgId) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
                     "AND (:relationType IS NULL OR e.e_relation_type ILIKE concat('%', :relationType, '%')) " +
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
@@ -93,9 +81,9 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                                               @Param("endTime") Long endTime,
                                               @Param("serviceId") String server,
                                               @Param("eventType") String type,
-                                              @Param("eventEntityId") String eventEntityId,
+                                              @Param("eventEntityId") UUID eventEntityId,
                                               @Param("eventEntityType") String eventEntityType,
-                                              @Param("msgId") String eventMsgId,
+                                              @Param("msgId") UUID eventMsgId,
                                               @Param("msgType") String eventMsgType,
                                               @Param("relationType") String relationType,
                                               @Param("data") String data,

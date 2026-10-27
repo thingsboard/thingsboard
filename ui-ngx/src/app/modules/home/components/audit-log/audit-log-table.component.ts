@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { AuditLogService } from '@core/http/audit-log.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,6 +16,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { UtilsService } from '@core/services/utils.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -89,8 +77,8 @@ export class AuditLogTableComponent implements OnInit {
   @Input()
   set customerId(customerId: CustomerId) {
     this.customerIdValue = customerId;
-    if (this.auditLogTableConfig && this.auditLogTableConfig.customerId !== customerId) {
-      this.auditLogTableConfig.customerId = customerId;
+    if (this.auditLogTableConfig && this.auditLogTableConfig.customerId !== customerId?.id) {
+      this.auditLogTableConfig.customerId = customerId?.id;
       this.entitiesTable.resetSortAndFilter(this.activeValue);
       if (!this.activeValue) {
         this.dirtyValue = true;
@@ -104,6 +92,7 @@ export class AuditLogTableComponent implements OnInit {
 
   constructor(private auditLogService: AuditLogService,
               private translate: TranslateService,
+              private utils: UtilsService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private store: Store<AppState>,
@@ -124,12 +113,13 @@ export class AuditLogTableComponent implements OnInit {
     this.auditLogTableConfig = new AuditLogTableConfig(
       this.auditLogService,
       this.translate,
+      this.utils,
       this.datePipe,
       this.dialog,
       this.auditLogMode,
       this.entityIdValue,
       this.userIdValue,
-      this.customerIdValue,
+      this.customerIdValue?.id,
       updateOnInit,
       pageMode
     );

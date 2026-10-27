@@ -1,0 +1,82 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .row {
+    margin-bottom: 8px;
+  }
+
+  .remote-integration-setting {
+    box-shadow: none;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+
+    .mat-expansion-panel-header {
+      padding: 0 24px 0 16px;
+
+      &.mat-expanded {
+        height: 48px;
+      }
+    }
+  }
+
+  .fields-group {
+    padding: 0 16px 8px;
+    margin-bottom: 10px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+
+    legend {
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
+    }
+
+    legend + * {
+      display: block;
+      margin-top: 16px;
+    }
+  }
+
+  .tb-hint-edge {
+    border-radius: 6px;
+    background-color: rgba(48, 86, 128, 0.04);
+    line-height: 16px;
+    letter-spacing: 0.25px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}
+
+:host ::ng-deep {
+  .remote-integration-setting {
+    .mat-content {
+      overflow: visible;
+    }
+
+    .mat-expansion-panel-body {
+      padding: 0;
+
+      .remote-integration-setting-content {
+        margin: 0 16px;
+      }
+    }
+  }
+
+  .remote-config-panel {
+    padding: 16px;
+    margin: 8px 8px 16px;
+  }
+
+  mat-expansion-panel {
+    margin-bottom: 16px;
+  }
+
+  fieldset {
+    min-width: 0;
+    width: 100%;
+  }
+
+  tb-key-val-map {
+    margin-bottom: 6px;
+  }
+}

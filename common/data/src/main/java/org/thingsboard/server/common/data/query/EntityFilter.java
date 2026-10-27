@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,9 +20,15 @@ import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAlia
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "singleEntity", schema = SingleEntityFilter.class),
+                @DiscriminatorMapping(value = "entityGroup", schema = EntityGroupFilter.class),
                 @DiscriminatorMapping(value = "entityList", schema = EntityListFilter.class),
                 @DiscriminatorMapping(value = "entityName", schema = EntityNameFilter.class),
                 @DiscriminatorMapping(value = "entityType", schema = EntityTypeFilter.class),
+                @DiscriminatorMapping(value = "entityGroupList", schema = EntityGroupListFilter.class),
+                @DiscriminatorMapping(value = "entityGroupName", schema = EntityGroupNameFilter.class),
+                @DiscriminatorMapping(value = "entitiesByGroupName", schema = EntitiesByGroupNameFilter.class),
+                @DiscriminatorMapping(value = "stateEntity", schema = StateEntityFilter.class),
+                @DiscriminatorMapping(value = "stateEntityOwner", schema = StateEntityOwnerFilter.class),
                 @DiscriminatorMapping(value = "assetType", schema = AssetTypeFilter.class),
                 @DiscriminatorMapping(value = "deviceType", schema = DeviceTypeFilter.class),
                 @DiscriminatorMapping(value = "edgeType", schema = EdgeTypeFilter.class),
@@ -44,7 +38,8 @@ import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAlia
                 @DiscriminatorMapping(value = "assetSearchQuery", schema = AssetSearchQueryFilter.class),
                 @DiscriminatorMapping(value = "deviceSearchQuery", schema = DeviceSearchQueryFilter.class),
                 @DiscriminatorMapping(value = "entityViewSearchQuery", schema = EntityViewSearchQueryFilter.class),
-                @DiscriminatorMapping(value = "edgeSearchQuery", schema = EdgeSearchQueryFilter.class)
+                @DiscriminatorMapping(value = "edgeSearchQuery", schema = EdgeSearchQueryFilter.class),
+                @DiscriminatorMapping(value = "schedulerEvent", schema = SchedulerEventFilter.class)
         }
 )
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -54,9 +49,15 @@ import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAlia
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SingleEntityFilter.class, name = "singleEntity"),
+        @JsonSubTypes.Type(value = EntityGroupFilter.class, name = "entityGroup"),
         @JsonSubTypes.Type(value = EntityListFilter.class, name = "entityList"),
         @JsonSubTypes.Type(value = EntityNameFilter.class, name = "entityName"),
         @JsonSubTypes.Type(value = EntityTypeFilter.class, name = "entityType"),
+        @JsonSubTypes.Type(value = EntityGroupListFilter.class, name = "entityGroupList"),
+        @JsonSubTypes.Type(value = EntityGroupNameFilter.class, name = "entityGroupName"),
+        @JsonSubTypes.Type(value = EntitiesByGroupNameFilter.class, name = "entitiesByGroupName"),
+        @JsonSubTypes.Type(value = StateEntityFilter.class, name = "stateEntity"),
+        @JsonSubTypes.Type(value = StateEntityOwnerFilter.class, name = "stateEntityOwner"),
         @JsonSubTypes.Type(value = AssetTypeFilter.class, name = "assetType"),
         @JsonSubTypes.Type(value = DeviceTypeFilter.class, name = "deviceType"),
         @JsonSubTypes.Type(value = EdgeTypeFilter.class, name = "edgeType"),
@@ -66,7 +67,8 @@ import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAlia
         @JsonSubTypes.Type(value = AssetSearchQueryFilter.class, name = "assetSearchQuery"),
         @JsonSubTypes.Type(value = DeviceSearchQueryFilter.class, name = "deviceSearchQuery"),
         @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery"),
-        @JsonSubTypes.Type(value = EdgeSearchQueryFilter.class, name = "edgeSearchQuery")
+        @JsonSubTypes.Type(value = EdgeSearchQueryFilter.class, name = "edgeSearchQuery"),
+        @JsonSubTypes.Type(value = SchedulerEventFilter.class, name = "schedulerEvent")
 })
 public interface EntityFilter {
 
@@ -83,6 +85,17 @@ public interface EntityFilter {
         } else if (filter instanceof EntitySearchQueryFilter queryFilter) {
             AliasEntityId resolved = resolveAliasEntityId(queryFilter.getRootEntity(), tenantId, userId, userOwnerId);
             queryFilter.setRootEntity(resolved);
+        } else if (filter instanceof SchedulerEventFilter queryFilter) {
+            AliasEntityId resolved = resolveAliasEntityId(queryFilter.getOriginator(), tenantId, userId, userOwnerId);
+            queryFilter.setOriginator(resolved);
+        } else if (filter instanceof StateEntityFilter queryFilter) {
+            AliasEntityId resolved = resolveAliasEntityId(queryFilter.getDefaultStateEntity(), tenantId, userId, userOwnerId);
+            queryFilter.setDefaultStateEntity(resolved);
+        } else if (filter instanceof StateEntityOwnerFilter queryFilter) {
+            AliasEntityId resolvedEntityId = resolveAliasEntityId(queryFilter.getSingleEntity(), tenantId, userId, userOwnerId);
+            queryFilter.setSingleEntity(resolvedEntityId);
+            AliasEntityId resolvedDefaultEntityId = resolveAliasEntityId(queryFilter.getDefaultStateEntity(), tenantId, userId, userOwnerId);
+            queryFilter.setDefaultStateEntity(resolvedDefaultEntityId);
         }
     }
 }

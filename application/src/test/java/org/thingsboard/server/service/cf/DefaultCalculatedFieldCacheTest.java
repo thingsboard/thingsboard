@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -34,16 +21,13 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +36,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -65,27 +50,13 @@ public class DefaultCalculatedFieldCacheTest {
     @Mock
     private CalculatedFieldService calculatedFieldService;
     @Mock
-    private TbAssetProfileCache assetProfileCache;
-    @Mock
-    private TbDeviceProfileCache deviceProfileCache;
-    @Mock
-    private TbTenantProfileCache tenantProfileCache;
-    @Mock
-    private DeviceService deviceService;
-    @Mock
-    private AssetService assetService;
-    @Mock
-    private CustomerService customerService;
+    private OwnersCacheService ownersCacheService;
 
     private DefaultCalculatedFieldCache cache;
 
     @BeforeEach
     public void setUp() {
-        // ActorSystemContext is only used in getCalculatedFieldCtx (not tested here), so null is safe
-        OwnerService ownerService = new OwnerService(deviceService, assetService, customerService);
-        cache = new DefaultCalculatedFieldCache(calculatedFieldService, assetProfileCache,
-                deviceProfileCache, tenantProfileCache, null, ownerService);
-
+        cache = new DefaultCalculatedFieldCache(calculatedFieldService, null, null, null, ownersCacheService, null);
     }
 
     // --- Tenant deletion tests ---
@@ -114,6 +85,7 @@ public class DefaultCalculatedFieldCacheTest {
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, tenant);
 
+        cache.getDynamicEntities(tenant, tenant);
         cache.addOwnerEntity(tenant, device);
         assertThat(cache.getDynamicEntities(tenant, tenant)).contains(device);
 
@@ -181,6 +153,7 @@ public class DefaultCalculatedFieldCacheTest {
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, customer);
 
+        cache.getDynamicEntities(tenant, customer);
         cache.addOwnerEntity(tenant, device);
         assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
 
@@ -207,6 +180,7 @@ public class DefaultCalculatedFieldCacheTest {
         CustomerId customer = new CustomerId(UUID.randomUUID());
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, customer);
+        cache.getDynamicEntities(tenant, customer);
 
         cache.onComponentLifecycleEvent(new ComponentLifecycleMsg(tenant, device, ComponentLifecycleEvent.CREATED));
 
@@ -222,6 +196,7 @@ public class DefaultCalculatedFieldCacheTest {
         DeviceId device = new DeviceId(UUID.randomUUID());
         stubDeviceOwner(tenant, device, customer);
 
+        cache.getDynamicEntities(tenant, customer);
         cache.addOwnerEntity(tenant, device);
         assertThat(cache.getDynamicEntities(tenant, customer)).contains(device);
 
@@ -389,7 +364,12 @@ public class DefaultCalculatedFieldCacheTest {
         DeviceId device = new DeviceId(UUID.randomUUID());
 
         stubDeviceOwner(tenant, device, customer);
-        when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
+        when(ownersCacheService.getOwner(tenant, customer)).thenReturn(tenant);
+        when(ownersCacheService.getOwnedEntities(eq(tenant), eq(tenant), anyInt())).thenReturn(Collections.emptySet());
+
+        // prime the owner buckets so addOwnerEntity (computeIfPresent) populates them
+        cache.getDynamicEntities(tenant, tenant);
+        cache.getDynamicEntities(tenant, customer);
 
         // tenant owns customer (getOwner for CUSTOMER returns tenantId)
         cache.addOwnerEntity(tenant, customer);         // ownerEntities[tenant] = {customer}
@@ -411,7 +391,12 @@ public class DefaultCalculatedFieldCacheTest {
         DeviceId device = new DeviceId(UUID.randomUUID());
 
         stubDeviceOwner(tenant, device, customer);
-        when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
+        when(ownersCacheService.getOwner(tenant, customer)).thenReturn(tenant);
+        when(ownersCacheService.getOwnedEntities(eq(tenant), eq(tenant), anyInt())).thenReturn(Collections.emptySet());
+
+        // prime the owner buckets so addOwnerEntity (computeIfPresent) populates them
+        cache.getDynamicEntities(tenant, tenant);
+        cache.getDynamicEntities(tenant, customer);
 
         cache.addOwnerEntity(tenant, customer);         // ownerEntities[tenant] = {customer}
         cache.addOwnerEntity(tenant, device);           // ownerEntities[customer] = {device}
@@ -454,20 +439,8 @@ public class DefaultCalculatedFieldCacheTest {
     // --- Helpers ---
 
     private void stubDeviceOwner(TenantId tenantId, DeviceId deviceId, EntityId ownerId) {
-        Device device = new Device();
-        device.setId(deviceId);
-        device.setTenantId(tenantId);
-        if (ownerId instanceof CustomerId customerId) {
-            device.setCustomerId(customerId);
-        }
-        // If ownerId is a TenantId, leaving customerId null means getOwnerId() returns tenantId
-        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
-        // Stubs for getOwnedEntities iteration (empty pages — device is added explicitly)
-        when(deviceService.findDeviceInfosByFilter(any(), any())).thenReturn(PageData.emptyPageData());
-        when(assetService.findAssetsByTenantIdAndCustomerId(any(), any(), any())).thenReturn(PageData.emptyPageData());
-        if (ownerId instanceof TenantId) {
-            when(customerService.findCustomersByTenantId(any(), any())).thenReturn(PageData.emptyPageData());
-        }
+        when(ownersCacheService.getOwner(tenantId, deviceId)).thenReturn(ownerId);
+        when(ownersCacheService.getOwnedEntities(eq(tenantId), eq(ownerId), anyInt())).thenReturn(Collections.emptySet());
     }
 
     private CalculatedField addCfToCache(TenantId tenantId, EntityId entityId) {

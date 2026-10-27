@@ -1,0 +1,273 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-bottom-border">
+  <h2 translate>integration.add</h2>
+  <span class="flex-1"></span>
+  <div [tb-help]="helpLinkId"></div>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+@if (isLoading$ | async) {
+  <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+}
+<div mat-dialog-content>
+  <mat-stepper linear="true" labelPosition="bottom" #addIntegrationWizardStepper [orientation]="(stepperOrientation | async)"
+               (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="integrationWizardForm">
+      <form [formGroup]="integrationWizardForm">
+        <ng-template matStepLabel>
+          {{ "integration.basic-settings" | translate }}<br>
+          <div class="mat-step-optional" [class.invisible]="selectedIndex === 0">{{integrationType ? integrationType : 'Not select'}}</div>
+        </ng-template>
+        <tb-integration-type-select formControlName="type" required class="flex-1" appearance="outline">
+        </tb-integration-type-select>
+        <div class="flex gap-2">
+          <mat-form-field class="flex-1" appearance="outline">
+            <mat-label translate>integration.name</mat-label>
+            <input matInput formControlName="name" required>
+            @if (integrationWizardForm.get('name').hasError('required') || integrationWizardForm.get('name').hasError('pattern')) {
+              <mat-error>
+                {{ 'integration.name-required' | translate }}
+              </mat-error>
+            }
+            @if (integrationWizardForm.get('name').hasError('maxlength')) {
+              <mat-error>
+                {{ 'integration.name-max-length' | translate }}
+              </mat-error>
+            }
+          </mat-form-field>
+          <tb-entity-debug-settings-button
+            class="mb-5 flex items-center"
+            formControlName="debugSettings"
+            [entityType]="EntityType.INTEGRATION"
+          />
+        </div>
+        <div class="row flex flex-col gap-2">
+          <mat-slide-toggle formControlName="enabled">
+            {{ 'integration.enabled' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle formControlName="allowCreateDevicesOrAssets">
+            {{ 'integration.allow-create-devices-or-assets' | translate }}
+          </mat-slide-toggle>
+        </div>
+      </form>
+    </mat-step>
+    <mat-step #uplinkConverterStep [stepControl]="uplinkConverterForm">
+      <form [formGroup]="uplinkConverterForm">
+        <ng-template #uplinkLabel matStepLabel>{{ "integration.uplink-converter" | translate }}</ng-template>
+        <div class="tb-form-panel tb-converter-panel">
+          <div class="tb-form-row no-border no-padding column-xs">
+            <div class="tb-form-panel-title flex-1 xs:!hidden"><ng-container *ngTemplateOutlet="uplinkLabel"></ng-container></div>
+            @if ((integrationInfo$ | async)?.uplink?.existing || (integrationInfo$ | async)?.uplink?.library) {
+              <tb-toggle-select class="flex-1" appearance="fill" formControlName="converterType">
+                <tb-toggle-option [value]="ConverterSourceType.NEW">{{ 'integration.new-converter' | translate }}</tb-toggle-option>
+                @if ((integrationInfo$ | async)?.uplink?.existing) {
+                  <tb-toggle-option [value]="ConverterSourceType.EXISTING">{{ 'integration.existing-converter' | translate }}</tb-toggle-option>
+                }
+                @if ((integrationInfo$ | async)?.uplink?.library) {
+                  <tb-toggle-option [value]="ConverterSourceType.LIBRARY">{{ 'integration.library' | translate }}</tb-toggle-option>
+                }
+              </tb-toggle-select>
+            }
+          </div>
+          @if (uplinkConverterForm.get('converterType').value === ConverterSourceType.EXISTING) {
+            <tb-converter-autocomplete class="flex-1" formControlName="uplinkConverterId" required
+                                       labelText="integration.uplink-converter"
+                                       requiredText="integration.uplink-converter-required"
+                                       [converterType]="converterType.UPLINK"
+                                       [integrationType]="integrationWizardForm.get('type').value"
+                                       [useFullEntityId]="true"
+                                       [isEdgeTemplate]="isEdgeTemplate"
+                                       appearance="outline">
+            </tb-converter-autocomplete>
+          }
+          <tb-converter #uplinkDataConverter
+                        [class.!hidden]="(uplinkConverterForm.get('converterType').value !== ConverterSourceType.NEW) && (uplinkConverterForm.get('converterType').value !== ConverterSourceType.LIBRARY)"
+                        integrationWizardMode="true"
+                        [interacted]="uplinkConverterStep.interacted"
+                        [converterTypeValue]="uplinkConverterForm.get('converterType').value"
+                        [integrationName]="integrationWizardForm.get('name').value"
+                        [converterName]="createConvertorName(converterType.UPLINK)"
+                        isEdit="true"
+                        [entity]="uplinkConverter"
+          ></tb-converter>
+        </div>
+      </form>
+    </mat-step>
+    @if (showDownlinkStep) {
+      <mat-step #downlinkConverterStep [stepControl]="downlinkConverterForm">
+        <form [formGroup]="downlinkConverterForm">
+          <ng-template #downlinkLabel matStepLabel>{{ "integration.downlink-converter" | translate }}</ng-template>
+          <div class="tb-form-panel tb-converter-panel">
+            <div class="tb-form-row no-border no-padding column-xs tb-flex space-between">
+              <div class="tb-form-panel-title xs:!hidden"><ng-container *ngTemplateOutlet="downlinkLabel"></ng-container></div>
+              @if (integrationWizardForm.get('type').value) {
+                <tb-toggle-select appearance="fill" formControlName="converterType">
+                  <tb-toggle-option [value]="ConverterSourceType.NEW">{{ 'integration.new-converter' | translate }}</tb-toggle-option>
+                  <tb-toggle-option [value]="ConverterSourceType.SKIP">{{ 'integration.skip' | translate }}</tb-toggle-option>
+                  @if ((integrationInfo$ | async)?.downlink?.existing) {
+                    <tb-toggle-option [value]="ConverterSourceType.EXISTING">{{ 'integration.existing-converter' | translate }}</tb-toggle-option>
+                  }
+                  @if ((integrationInfo$ | async)?.downlink?.library) {
+                    <tb-toggle-option [value]="ConverterSourceType.LIBRARY">{{ 'integration.library' | translate }}</tb-toggle-option>
+                  }
+                </tb-toggle-select>
+              }
+            </div>
+            @if (downlinkConverterForm.get('converterType').value === ConverterSourceType.EXISTING) {
+              <tb-converter-autocomplete class="flex-1" formControlName="downlinkConverterId" required
+                                         labelText="integration.downlink-converter"
+                                         [converterType]="converterType.DOWNLINK"
+                                         [integrationType]="integrationWizardForm.get('type').value"
+                                         [useFullEntityId]="true"
+                                         [isEdgeTemplate]="isEdgeTemplate"
+                                         appearance="outline">
+              </tb-converter-autocomplete>
+            }
+            <tb-converter #downlinkDataConverter
+                          [class.!hidden]="(downlinkConverterForm.get('converterType').value !== ConverterSourceType.NEW) && (downlinkConverterForm.get('converterType').value !== ConverterSourceType.LIBRARY)"
+                          integrationWizardMode="true"
+                          [interacted]="downlinkConverterStep.interacted"
+                          [converterTypeValue]="downlinkConverterForm.get('converterType').value"
+                          [integrationName]="integrationWizardForm.get('name').value"
+                          [converterName]="createConvertorName(converterType.DOWNLINK)"
+                          isEdit="true"
+                          [entity]="downlinkConverter"
+            ></tb-converter>
+          </div>
+        </form>
+      </mat-step>
+    }
+    <mat-step [stepControl]="integrationConfigurationForm">
+      <ng-template matStepLabel>{{ "integration.connection" | translate }}</ng-template>
+      <form [formGroup]="integrationConfigurationForm" tb-toast toastTarget="integrationRoot">
+        @if (isEdgeTemplate) {
+          <div translate class="tb-hint tb-hint-edge">integration.edge-placeholder-hint</div>
+        }
+        <tb-integration-configuration
+          formControlName="configuration"
+          [routingKey]="integrationConfigurationForm.get('routingKey').value"
+          [genericAdditionalInfoTemplate]="genericAdditionalInfo"
+          [executeRemotelyTemplate]="executeRemotely"
+          [integrationType]="integrationWizardForm.get('type').value"
+          [isSetDownlink]="!!downlinkConverterForm.get('downlinkConverterId').value || downlinkConverterForm.get('converterType').value === 'new'"
+          [isEdgeTemplate]="isEdgeTemplate"
+        ></tb-integration-configuration>
+        <ng-template #genericAdditionalInfo>
+          <section [formGroup]="integrationConfigurationForm">
+            <div formGroupName="additionalInfo" class="flex flex-col">
+              <mat-form-field class="mat-block" appearance="outline">
+                <mat-label translate>integration.description</mat-label>
+                <textarea matInput formControlName="description" cdkTextareaAutosize
+                          cdkAutosizeMinRows="1" rows="1"></textarea>
+              </mat-form-field>
+            </div>
+            <fieldset class="fields-group">
+              <legend class="group-title" translate>integration.metadata</legend>
+              <tb-key-val-map formControlName="metadata" isStrokedButton="true" appearance="outline"></tb-key-val-map>
+            </fieldset>
+          </section>
+        </ng-template>
+        <ng-template #executeRemotely>
+          <section [formGroup]="integrationConfigurationForm">
+            <mat-expansion-panel class="remote-integration-setting" [expanded]="integrationConfigurationForm.get('remote').value">
+              <mat-expansion-panel-header class="flex flex-row">
+                <mat-panel-title>
+                  <mat-slide-toggle formControlName="remote" (click)="$event.stopPropagation()">
+                    {{'integration.execute-remotely' | translate}}
+                  </mat-slide-toggle>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <section class="remote-integration-setting-content">
+                  <div class="flex flex-row items-center justify-start">
+                    <mat-form-field class="mat-block flex-1" appearance="outline">
+                      <mat-label translate>integration.integration-key</mat-label>
+                      <input matInput formControlName="routingKey">
+                    </mat-form-field>
+                    <button mat-icon-button ngxClipboard type="button" color="primary"
+                            (cbOnSuccess)="onIntegrationInfoCopied('key')"
+                            [cbContent]="integrationConfigurationForm.get('routingKey').value"
+                            matTooltip="{{'integration.copy-integration-key' | translate}}">
+                      <mat-icon class="tb-mat-20">content_copy</mat-icon>
+                    </button>
+                  </div>
+                  <div class="flex flex-row items-center justify-start">
+                    <mat-form-field class="mat-block flex-1" appearance="outline">
+                      <mat-label translate>integration.integration-secret</mat-label>
+                      <input matInput formControlName="secret">
+                    </mat-form-field>
+                    <button mat-icon-button ngxClipboard type="button" color="primary"
+                            (cbOnSuccess)="onIntegrationInfoCopied('secret')"
+                            [cbContent]="integrationConfigurationForm.get('secret').value"
+                            matTooltip="{{'integration.copy-integration-secret' | translate}}">
+                      <mat-icon class="tb-mat-20">content_copy</mat-icon>
+                    </button>
+                  </div>
+                </section>
+              </ng-template>
+            </mat-expansion-panel>
+          </section>
+        </ng-template>
+      </form>
+    </mat-step>
+    @if (showCheckConnection) {
+      <mat-step optional="true">
+        <ng-template matStepLabel>{{ "integration.check-connection" | translate }}</ng-template>
+        <div class="flex h-full flex-1 flex-col items-center justify-center">
+          @if (!showCheckSuccess && !checkErrMsg) {
+            <mat-progress-spinner color="warn" mode="indeterminate" strokeWidth="5">
+            </mat-progress-spinner>
+          }
+          @if (showCheckSuccess) {
+            <div>
+              <div class="flex flex-1 items-center justify-center">
+                <mat-icon class="success connection-icon">check_circle</mat-icon>
+              </div>
+              <span class="connection-status success">{{ "integration.connected" | translate }}</span>
+            </div>
+          }
+          @if (checkErrMsg) {
+            <div>
+              <div class="flex flex-1 items-center justify-center">
+                <mat-icon class="error connection-icon">cancel</mat-icon>
+              </div>
+              <div class="connection-status error">{{ "integration.not-connected" | translate }}</div>
+              <div class="error_msg">{{ checkErrMsg }}</div>
+            </div>
+          }
+        </div>
+      </mat-step>
+    }
+  </mat-stepper>
+</div>
+<mat-divider></mat-divider>
+<div mat-dialog-actions class="flex flex-row">
+  @if (selectedIndex > 0) {
+    <button mat-stroked-button
+            [disabled]="(isLoading$ | async)"
+            (click)="backStep()">{{ 'action.back' | translate }}</button>
+  }
+  <span class="flex-1"></span>
+  @if (isCheckConnectionAvailable && selectedIndex === 3) {
+    <button mat-button mat-stroked-button color="primary"
+            (click)="onIntegrationCheck()"
+            [disabled]="(isLoading$ | async)">
+      {{ 'integration.check-connection' | translate }}
+    </button>
+  }
+  <button mat-raised-button
+          color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+</div>

@@ -1,0 +1,12 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  background: #fff;
+}
+
+::ng-deep .tb-agent-app-filter-panel {
+  max-width: 100%;
+  width: 420px;
+  min-width: 320px;
+}

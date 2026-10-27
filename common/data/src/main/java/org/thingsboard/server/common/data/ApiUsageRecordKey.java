@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data;
 
 import lombok.Getter;
@@ -29,7 +17,9 @@ public enum ApiUsageRecordKey {
     SMS_EXEC_COUNT(ApiFeature.SMS, "smsCount", "smsLimit", "SMS message", true, true),
     CREATED_ALARMS_COUNT(ApiFeature.ALARM, "createdAlarmsCount", "createdAlarmsLimit", "alarm"),
     ACTIVE_DEVICES("activeDevicesCount"),
-    INACTIVE_DEVICES("inactiveDevicesCount");
+    INACTIVE_DEVICES("inactiveDevicesCount"),
+    GENERATED_REPORTS_COUNT(ApiFeature.REPORT, "generatedReportsCount", "generatedReportsLimit", "report"),
+    AI_CREDITS_COUNT(ApiFeature.AI, "aiCreditsCount", "aiCreditsLimit", "AI credit", true, true);
 
     private static final ApiUsageRecordKey[] JS_RECORD_KEYS = {JS_EXEC_COUNT};
     private static final ApiUsageRecordKey[] TBEL_RECORD_KEYS = {TBEL_EXEC_COUNT};
@@ -39,6 +29,8 @@ public enum ApiUsageRecordKey {
     private static final ApiUsageRecordKey[] EMAIL_RECORD_KEYS = {EMAIL_EXEC_COUNT};
     private static final ApiUsageRecordKey[] SMS_RECORD_KEYS = {SMS_EXEC_COUNT};
     private static final ApiUsageRecordKey[] ALARM_RECORD_KEYS = {CREATED_ALARMS_COUNT};
+    private static final ApiUsageRecordKey[] REPORT_RECORD_KEYS = {GENERATED_REPORTS_COUNT};
+    private static final ApiUsageRecordKey[] AI_RECORD_KEYS = {AI_CREDITS_COUNT};
 
     @Getter
     private final ApiFeature apiFeature;
@@ -88,6 +80,10 @@ public enum ApiUsageRecordKey {
                 return SMS_RECORD_KEYS;
             case ALARM:
                 return ALARM_RECORD_KEYS;
+            case REPORT:
+                return REPORT_RECORD_KEYS;
+            case AI:
+                return AI_RECORD_KEYS;
             default:
                 return new ApiUsageRecordKey[]{};
         }

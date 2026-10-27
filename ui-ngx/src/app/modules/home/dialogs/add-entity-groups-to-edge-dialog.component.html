@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form [formGroup]="addEntityGroupToEdgeFormGroup" (ngSubmit)="addEntityGroupsToEdge()" style="width: 800px;">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border">
+    <h2>{{ addEntityGroupsToEdgeTitle | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+      (click)="cancel()"
+      type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate">
+    </mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <section class="flex flex-col">
+        <span translate style="padding-bottom: 10px;">edge.assign-entity-groups-to-edge-text</span>
+        <tb-edge-entity-group-list
+          required
+          [groupType]="groupType"
+          [excludeGroupAll]="true"
+          formControlName="edgeEntityGroupIds">
+        </tb-edge-entity-group-list>
+      </section>
+    </fieldset>
+  </div>
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
+    <button mat-button color="primary"
+      type="button"
+      [disabled]="(isLoading$ | async)"
+      (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+      type="submit"
+            [disabled]="(isLoading$ | async) || addEntityGroupToEdgeFormGroup.invalid
+            || !addEntityGroupToEdgeFormGroup.dirty">
+      {{ confirmSelectTitle | translate }}
+    </button>
+  </div>
+</form>

@@ -1,0 +1,31 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-padding no-border" [formGroup]="tableSortOrderFormGroup">
+  <div class="tb-form-row">
+    <div class="fixed-title-width" translate>report-template.component.table.sort-by</div>
+    <div class="flex flex-1 flex-row gap-2">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="column" placeholder="{{ 'report-template.component.table.sort-none' | translate }}">
+          <mat-option [value]="null">{{ 'report-template.component.table.sort-none' | translate }}</mat-option>
+          @for (column of columns; track column) {
+            <mat-option [value]="column">
+              {{ column }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (tableSortOrderFormGroup.get('column').value) {
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="direction">
+            <mat-option [value]="Direction.ASC">{{ 'report-template.component.table.sort-asc' | translate }}</mat-option>
+            <mat-option [value]="Direction.DESC">{{ 'report-template.component.table.sort-desc' | translate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+    </div>
+  </div>
+</div>

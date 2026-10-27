@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   Component,
@@ -21,13 +8,13 @@ import {
   ElementRef,
   Inject,
   OnDestroy,
-  OnInit,
+  OnInit, Renderer2,
   signal,
   ViewChild
 } from '@angular/core';
-import { skip, startWith, Subject } from 'rxjs';
+import { combineLatest, Observable, skip, startWith, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
-import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, share, take, takeUntil } from 'rxjs/operators';
 
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { PageComponent } from '@shared/components/page.component';
@@ -41,6 +28,9 @@ import { WINDOW } from '@core/services/window.service';
 import { instanceOfSearchableComponent, ISearchableComponent } from '@home/models/searchable-component.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { FormBuilder } from '@angular/forms';
+import { WhiteLabelingService } from '@core/http/white-labeling.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { HomeService } from '@core/services/home.service';
 
@@ -66,11 +56,14 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   sidenavCollapsed = signal(false);
   menuCollapsed= computed(() => this.sidenavDesktop() && this.sidenavCollapsed());
 
-  logo = 'assets/logo_title_black.svg';
-  collapsedLogo =  'assets/small_logo_title_black.svg';
-
   @ViewChild('sidenav')
   sidenav: MatSidenav;
+
+  @ViewChild('sidebarScroll', { static: true }) sidebarScroll: ElementRef<HTMLElement>;
+  @ViewChild('sideMenu', { static: true, read: ElementRef<HTMLElement> }) sideMenu: ElementRef<HTMLElement>;
+
+  @ViewChild('navHeader', { static: true }) navHeader: ElementRef<HTMLElement>;
+  @ViewChild('sidebarBottom', { static: true }) sidebarBottom: ElementRef<HTMLElement>;
 
   @ViewChild('mainContent', { static: true }) mainContent: ElementRef<HTMLElement>;
 
@@ -82,14 +75,22 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   showSearch = false;
   textSearch = this.fb.control('', {nonNullable: true});
 
+  private updateScrollShadows = this._updateScrollShadows.bind(this);
+  private scrollShadowWatcher$: ResizeObserver;
+  private sidebarScrollUnlisten: () => void;
+
   private destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
               @Inject(WINDOW) private window: Window,
               private activeComponentService: ActiveComponentService,
               private fb: FormBuilder,
+              private renderer: Renderer2,
+              public wl: WhiteLabelingService,
+              public translate: TranslateService,
               public breakpointObserver: BreakpointObserver,
-              public homeService: HomeService) {
+              public homeService: HomeService,
+              public panelService: AiAssistantPanelService) {
     super(store);
   }
 
@@ -127,6 +128,12 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
   }
 
   ngOnDestroy() {
+    if (this.scrollShadowWatcher$) {
+      this.scrollShadowWatcher$.disconnect();
+    }
+    if (this.sidebarScrollUnlisten) {
+      this.sidebarScrollUnlisten();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -139,6 +146,11 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
       skip(1),
       takeUntil(this.destroy$)
     ).subscribe(value => this.searchTextUpdated(value.trim()));
+
+    this.scrollShadowWatcher$ = new ResizeObserver(this.updateScrollShadows);
+    this.scrollShadowWatcher$.observe(this.sideMenu.nativeElement);
+    this.scrollShadowWatcher$.observe(this.sidebarScroll.nativeElement);
+    this.sidebarScrollUnlisten = this.renderer.listen(this.sidebarScroll.nativeElement, 'scroll', this.updateScrollShadows);
   }
 
   sidenavClicked() {
@@ -178,6 +190,21 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     }
   }
 
+  private _updateScrollShadows(): void {
+    const sidebarScrollElm = this.sidebarScroll.nativeElement;
+    if (sidebarScrollElm.scrollTop > 0) {
+      this.renderer.addClass(this.navHeader.nativeElement, 'tb-scrolled');
+    } else {
+      this.renderer.removeClass(this.navHeader.nativeElement, 'tb-scrolled');
+    }
+    const moreBelow = sidebarScrollElm.scrollTop + sidebarScrollElm.clientHeight < sidebarScrollElm.scrollHeight - 1;
+    if (moreBelow) {
+      this.renderer.addClass(this.sidebarBottom.nativeElement, 'tb-scrolled');
+    } else {
+      this.renderer.removeClass(this.sidebarBottom.nativeElement, 'tb-scrolled');
+    }
+  }
+
   private updateActiveComponent(activeComponent: any) {
     this.showSearch = false;
     this.textSearch.reset('', {emitEvent: false});
@@ -213,6 +240,13 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
         this.textSearch.reset();
       }
     }
+  }
+
+  platformNameAndVersion$(): Observable<string> {
+    return combineLatest([this.wl.getPlatformName$(), this.wl.getPlatformVersion$()]).pipe(
+      map((res) => this.translate.instant('white-labeling.version-mask', {name: res[0], version: res[1]})),
+      share()
+    );
   }
 
   private searchTextUpdated(searchText: string) {

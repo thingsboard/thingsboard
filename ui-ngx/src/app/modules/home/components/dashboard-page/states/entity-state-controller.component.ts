@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, Inject, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { StateObject, StateParams } from '@core/api/widget-api.models';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -28,9 +15,12 @@ import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, tap } from 'rxjs/operators';
+import { WINDOW } from '@core/services/window.service';
+import { EntityGroupInfo } from '@shared/models/entity-group.models';
 import { MobileService } from '@core/services/mobile.service';
 import { BreadcrumbService } from '@core/services/breadcrumb.service';
 
+// @dynamic
 @Component({
     selector: 'tb-entity-state-controller',
     templateUrl: './entity-state-controller.component.html',
@@ -44,15 +34,16 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   selectedStateIndex = -1;
 
   constructor(protected router: Router,
+              @Inject(WINDOW) protected window: Window,
               protected route: ActivatedRoute,
               protected ngZone: NgZone,
               protected statesControllerService: StatesControllerService,
-              private utils: UtilsService,
+              protected utils: UtilsService,
               private entityService: EntityService,
               private mobileService: MobileService,
-              private dashboardUtils: DashboardUtilsService,
+              dashboardUtils: DashboardUtilsService,
               private breadcrumbService: BreadcrumbService) {
-    super(router, route, ngZone, statesControllerService);
+    super(router, route, utils, window, ngZone, statesControllerService, dashboardUtils);
   }
 
   ngOnInit(): void {
@@ -65,7 +56,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
 
   public init() {
     if (this.preservedState) {
-      this.stateObject = this.preservedState;
+      this.stateObject = this.normalizeStateObject(this.preservedState);
       this.selectedStateIndex = this.stateObject.length - 1;
       setTimeout(() => {
         this.gotoState(this.stateObject[this.stateObject.length - 1].id, true);
@@ -87,6 +78,13 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   protected onStatesChanged() {
+    const prevStateId = this.getStateId();
+    this.stateObject = this.normalizeStateObject(this.stateObject);
+    this.selectedStateIndex = this.stateObject.length - 1;
+    const newStateId = this.getStateId();
+    if (newStateId !== prevStateId) {
+      this.gotoState(newStateId, true, undefined, true);
+    }
   }
 
   protected onStateChanged() {
@@ -257,32 +255,13 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       try {
         result = base64toObj(stateBase64);
       } catch (e) {
-        result = [ { id: null, params: {} } ];
+        result = [];
       }
     }
-    if (!result) {
-      result = [];
-    }
-    if (!result.length) {
-      result[0] = { id: null, params: {} };
-    }
-    const rootStateId = this.dashboardUtils.getRootStateId(this.states);
-    if (!result[0].id) {
-      result[0].id = rootStateId;
-    }
-    if (!this.states[result[0].id]) {
-      result[0].id = rootStateId;
-    }
-    let i = result.length;
-    while (i--) {
-      if (!result[i].id || !this.states[result[i].id]) {
-        result.splice(i, 1);
-      }
-    }
-    return result;
+    return this.normalizeStateObject(result);
   }
 
-  private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
+  private gotoState(stateId: string, update: boolean, openRightLayout?: boolean, replaceCurrentHistoryUrl?: boolean) {
     const isStateIdChanged = this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
     if (isStateIdChanged) {
@@ -292,11 +271,11 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     }
     if (update) {
-      this.updateLocation(isStateIdChanged);
+      this.updateLocation(replaceCurrentHistoryUrl ?? !isStateIdChanged);
     }
   }
 
-  private updateLocation(isStateIdChanged: boolean) {
+  private updateLocation(replaceCurrentHistoryUrl: boolean) {
     if (this.stateObject[this.stateObject.length - 1].id) {
       let newState;
       if (this.isDefaultState()) {
@@ -304,7 +283,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       } else {
         newState = objToBase64(this.stateObject);
       }
-      this.updateStateParam(newState, !isStateIdChanged);
+      this.updateStateParam(newState, replaceCurrentHistoryUrl);
     }
   }
 
@@ -332,6 +311,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
             tap((entity) => {
               params.entityName = entity.name;
               params.entityLabel = entity.label;
+              if (params.entityId.entityType === EntityType.ENTITY_GROUP) {
+                params.entityGroupType = (entity as EntityGroupInfo).type;
+              }
             }),
           map(() => null)
         );
@@ -342,6 +324,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   }
 
   private isEntityResolved(params: StateParams): boolean {
+    if (params.entityId && params.entityId.entityType === EntityType.ENTITY_GROUP && !params.entityGroupType) {
+      return false;
+    }
     return !(!params.entityName || !params.entityName.length);
   }
 

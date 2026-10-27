@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { widgetType } from '@shared/models/widget.models';
 import { AlarmSeverity } from '@shared/models/alarm.models';
@@ -58,6 +45,22 @@ export interface RpcSettings {
   persistentPollingInterval: number;
 }
 
+export enum RpcParamsType {
+  NONE = 'NONE',
+  CONSTANT = 'CONSTANT',
+  FUNCTION = 'FUNCTION'
+}
+
+export interface RpcParamsSettings {
+  type: RpcParamsType;
+  constantValue?: any;
+  paramsFunction?: TbFunction;
+}
+
+export interface GetValueRpcSettings extends RpcSettings {
+  params?: RpcParamsSettings;
+}
+
 export interface AlarmStatusSettings {
   severityList: Array<AlarmSeverity>;
   typeList: Array<string>;
@@ -93,7 +96,7 @@ export interface ValueActionSettings {
 export interface GetValueSettings<V> extends ValueActionSettings {
   action: GetValueAction;
   defaultValue: V;
-  executeRpc?: RpcSettings;
+  executeRpc?: GetValueRpcSettings;
   getAttribute: GetAttributeValueSettings;
   getTimeSeries: TelemetryValueSettings;
   getAlarmStatus: AlarmStatusSettings;

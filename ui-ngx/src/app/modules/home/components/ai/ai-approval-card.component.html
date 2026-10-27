@@ -1,0 +1,50 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@switch (state) {
+  @case ('pending') {
+    <div class="approval-title">{{ data.title ?? ('ai-assistant.action-approval-required' | translate) }}</div>
+    <div class="approval-content">{{ data.message }}</div>
+    <div class="approval-actions">
+      <button mat-stroked-button class="denied" (click)="deny()">
+        <mat-icon>block</mat-icon>
+        {{ data.denyLabel ?? ('ai-assistant.deny' | translate) }}
+      </button>
+      <button mat-flat-button [class.approved]="!isDestructive" [class.danger]="isDestructive" (click)="approve()">
+        <mat-icon>{{ approveIcon }}</mat-icon>
+        {{ data.approveLabel ?? ('ai-assistant.approve' | translate) }}
+      </button>
+    </div>
+    <button mat-button class="approve-all" (click)="approveAll()">
+      <mat-icon>done_all</mat-icon>
+      {{ 'ai-assistant.approve-all' | translate }}
+    </button>
+  }
+  @case ('executing') {
+    <div class="approval-result">
+      <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+      <span class="flex-1">{{ data.executing ?? ('ai-assistant.processing' | translate) }}</span>
+    </div>
+  }
+  @case ('approved') {
+    <div class="approval-result">
+      <mat-icon>{{ resultIcon }}</mat-icon>
+      <span class="flex-1">{{ completedExecution?.message || ('ai-assistant.approved' | translate) }}</span>
+    </div>
+  }
+  @case ('denied') {
+    <div class="approval-result">
+      <mat-icon>{{ resultIcon }}</mat-icon>
+      <span class="flex-1">{{ completedExecution?.message || ('ai-assistant.denied' | translate) }}</span>
+    </div>
+  }
+  @case ('error') {
+    <div class="approval-result">
+      <mat-icon>{{ resultIcon }}</mat-icon>
+      <span class="flex-1">{{ completedExecution?.message || ('ai-assistant.error' | translate) }}</span>
+    </div>
+  }
+}

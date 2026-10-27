@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-iot-hub-detail-dialog">
@@ -24,7 +13,7 @@
       </div>
     }
     <div class="flex min-w-0 flex-1 flex-col gap-2">
-      <span class="dlg-title">{{ item.name }}</span>
+      <span class="dlg-title">{{ itemTitle }}</span>
       <div class="dlg-subtitle">
         <span class="dlg-subtitle-group">
           <tb-icon class="dlg-subtitle-icon">{{ getTypeIcon() }}</tb-icon>
@@ -86,7 +75,7 @@
     <!-- Main content -->
     <div class="dlg-main">
       @if (isCompactLayout()) {
-        <!-- CF/RC/Device: description + author (no image) -->
+        <!-- Calculated field/alarm rule/rule chain: description + author (no image) -->
         <div class="dlg-info dlg-info-compact">
           <div class="dlg-info-text">
             @if (item.description) {
@@ -97,11 +86,15 @@
           </div>
         </div>
       } @else {
-        <!-- Widget/Dashboard/Solution: image + description side by side -->
+        <!-- Widget/Solution: image + description side by side -->
         <div class="flex gap-6 lt-md:flex-col">
           <div class="dlg-preview"
-               [class.dlg-preview-carousel]="item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1">
-            @if (item.type === ItemType.SOLUTION_TEMPLATE && carouselImages.length > 1) {
+               [class.dlg-preview-carousel]="carouselImages.length > 1"
+               tbPhotoSwipeGallery galleryChildrenSelector=".dlg-carousel-item, .dlg-preview-img"
+               (lightboxOpened)="lightboxOpen = true"
+               (slideChanged)="carouselIndex = $event"
+               (lightboxClosed)="lightboxOpen = false">
+            @if (carouselImages.length > 1) {
               <div class="dlg-hero-carousel">
                 <ngx-hm-carousel
                   [(ngModel)]="carouselIndex"
@@ -109,7 +102,7 @@
                   [infinite]="true"
                   [autoplay-speed]="3000"
                   [between-delay]="0"
-                  [autoplay]="true"
+                  [autoplay]="!lightboxOpen"
                   [mouse-enable]="true"
                   [show-num]="1"
                   class="dlg-carousel">
@@ -142,7 +135,7 @@
                 </div>
               </div>
             } @else {
-              @if (getPreviewUrl(); as url) {
+              @if (carouselImages[0]; as url) {
                 <img [src]="url" alt="" class="dlg-preview-img">
               } @else {
                 <div class="dlg-preview-placeholder">
@@ -167,7 +160,7 @@
     <!-- Categories & Use Cases / Device metadata -->
     <div class="dlg-meta-bar">
       <div class="dlg-divider"></div>
-      <div class="dlg-meta" [class.dlg-meta-4-col]="item.type === ItemType.SOLUTION_TEMPLATE || item.type === ItemType.DASHBOARD">
+      <div class="dlg-meta" [class.dlg-meta-4-col]="item.type === ItemType.SOLUTION_TEMPLATE">
         @if (showCreator) {
           <div class="dlg-meta-group dlg-meta-creator-section">
             <span class="dlg-meta-label">{{ 'iot-hub.creator' | translate }}</span>
