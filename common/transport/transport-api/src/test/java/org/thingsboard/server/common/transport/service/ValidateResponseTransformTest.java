@@ -62,7 +62,7 @@ class ValidateResponseTransformTest {
         TransportProtos.DeviceProfileProto proto = TransportProtos.DeviceProfileProto.newBuilder().build();
         when(deviceProfileCache.getOrCreate(any(), any())).thenReturn(profile);
 
-        var result = service.toValidateResponse(msgBuilder().setDeviceProfile(proto).build(), DeviceTransportType.DEFAULT);
+        var result = service.toValidateResponse(msgBuilder().setDeviceProfile(proto).build(), DeviceTransportType.DEFAULT, true);
 
         assertThat(result.getDeviceProfile()).isSameAs(profile);
         assertThat(result.getCredentials()).isEqualTo("body");
@@ -75,7 +75,7 @@ class ValidateResponseTransformTest {
         DeviceProfile profile = profile(DeviceTransportType.DEFAULT, 5L);
         when(deviceProfileCache.get(profileId)).thenReturn(profile);
 
-        var result = service.toValidateResponse(msgBuilder().setDeviceProfileVersion(5).build(), DeviceTransportType.DEFAULT);
+        var result = service.toValidateResponse(msgBuilder().setDeviceProfileVersion(5).build(), DeviceTransportType.DEFAULT, true);
 
         assertThat(result.getDeviceProfile()).isSameAs(profile);
         verify(deviceProfileCache).get(profileId);
@@ -88,7 +88,7 @@ class ValidateResponseTransformTest {
         DeviceProfile fresh = profile(DeviceTransportType.DEFAULT, 2L);
         when(deviceProfileCache.get(profileId)).thenReturn(stale, fresh);
 
-        var result = service.toValidateResponse(msgBuilder().setDeviceProfileVersion(2).build(), DeviceTransportType.DEFAULT);
+        var result = service.toValidateResponse(msgBuilder().setDeviceProfileVersion(2).build(), DeviceTransportType.DEFAULT, true);
 
         assertThat(result.getDeviceProfile()).isSameAs(fresh);
         InOrder order = inOrder(deviceProfileCache);
@@ -98,10 +98,19 @@ class ValidateResponseTransformTest {
     }
 
     @Test
+    void givenMsgWithoutProfileAndNoResolve_whenTransform_thenLegacyNoProfile() {
+        var result = service.toValidateResponse(msgBuilder().build(), DeviceTransportType.DEFAULT, false);
+
+        assertThat(result.hasDeviceInfo()).isTrue();
+        assertThat(result.getDeviceProfile()).isNull();
+        Mockito.verifyNoInteractions(deviceProfileCache);
+    }
+
+    @Test
     void givenCachedOkButProfileTransportTypeMismatch_thenError() {
         when(deviceProfileCache.get(profileId)).thenReturn(profile(DeviceTransportType.MQTT, 1L));
 
-        assertThatThrownBy(() -> service.toValidateResponse(msgBuilder().setDeviceProfileVersion(1).build(), DeviceTransportType.COAP))
+        assertThatThrownBy(() -> service.toValidateResponse(msgBuilder().setDeviceProfileVersion(1).build(), DeviceTransportType.COAP, true))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("different transport type");
     }

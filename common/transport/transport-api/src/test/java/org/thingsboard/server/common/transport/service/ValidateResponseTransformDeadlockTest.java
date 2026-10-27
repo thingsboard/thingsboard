@@ -77,6 +77,7 @@ class ValidateResponseTransformDeadlockTest {
         ReflectionTestUtils.setField(service, "deviceProfileCache", profileCache);
         ReflectionTestUtils.setField(service, "transportApiRequestTemplate", template);
         ReflectionTestUtils.setField(service, "transportCallbackExecutor", callbackExecutor);
+        ReflectionTestUtils.setField(service, "profileNegotiationEnabled", true);
     }
 
     @AfterEach

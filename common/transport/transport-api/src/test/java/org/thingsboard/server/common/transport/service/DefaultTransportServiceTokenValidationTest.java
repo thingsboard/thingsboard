@@ -20,6 +20,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -135,6 +136,7 @@ class DefaultTransportServiceTokenValidationTest {
 
     @Test
     void givenMiss_whenProcess_thenKafkaRequestCarriesProfileCachingFlag() {
+        ReflectionTestUtils.setField(service, "profileNegotiationEnabled", true);
         when(cache.isEnabled()).thenReturn(true);
         when(cache.lookup("tok")).thenReturn(Optional.empty());
 
@@ -146,6 +148,36 @@ class DefaultTransportServiceTokenValidationTest {
         assertThat(sent.getToken()).isEqualTo("tok");
         assertThat(sent.getSupportsDeviceProfileCaching()).isTrue();
         verify(cache).store(Mockito.eq("tok"), any());
+    }
+
+    @Test
+    void givenProfileNegotiationDisabled_whenAnyValidation_thenRequestsDoNotAskToOmitProfile() {
+        assertThat(sentProfileCachingFlags()).containsExactly(false, false, false, false, false);
+    }
+
+    @Test
+    void givenProfileNegotiationEnabled_whenAnyValidation_thenAllRequestsAskToOmitProfile() {
+        ReflectionTestUtils.setField(service, "profileNegotiationEnabled", true);
+        assertThat(sentProfileCachingFlags()).containsExactly(true, true, true, true, true);
+    }
+
+    private List<Boolean> sentProfileCachingFlags() {
+        when(cache.isEnabled()).thenReturn(false);
+        service.process(DeviceTransportType.DEFAULT, request(), callback);
+        service.process(DeviceTransportType.MQTT, TransportProtos.ValidateBasicMqttCredRequestMsg.newBuilder().setClientId("c").build(), callback);
+        service.process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId("e").build(), callback);
+        service.process(DeviceTransportType.MQTT, TransportProtos.ValidateDeviceX509CertRequestMsg.newBuilder().setHash("h").build(), callback);
+        service.process(DeviceTransportType.MQTT, TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg.newBuilder().setCertificateChain("c").build(), callback);
+
+        ArgumentCaptor<TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg>> captor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(template, Mockito.times(5)).send(captor.capture());
+        List<TransportProtos.TransportApiRequestMsg> sent = captor.getAllValues().stream().map(TbProtoQueueMsg::getValue).toList();
+        return List.of(
+                sent.get(0).getValidateTokenRequestMsg().getSupportsDeviceProfileCaching(),
+                sent.get(1).getValidateBasicMqttCredRequestMsg().getSupportsDeviceProfileCaching(),
+                sent.get(2).getValidateDeviceLwM2MCredentialsRequestMsg().getSupportsDeviceProfileCaching(),
+                sent.get(3).getValidateX509CertRequestMsg().getSupportsDeviceProfileCaching(),
+                sent.get(4).getValidateOrCreateX509CertRequestMsg().getSupportsDeviceProfileCaching());
     }
 
     @Test
