@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.validator.ApiKeyDataValidator;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -82,8 +83,13 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             }
             var savedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId()).entity(savedApiKey).created(apiKey.getId() == null).build());
-            if (old != null && old.isEnabled() != apiKey.isEnabled()) {
-                publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+            if (isPublishEvictRequired(old, apiKey)) {
+                // the cache is keyed by value, so the entry to evict is the one the old value still resolves to
+                publishEvictEvent(new ApiKeyEvictEvent(old.getValue()));
+                if (!Objects.equals(old.getValue(), apiKey.getValue())) {
+                    // a failed authentication attempt may have cached a miss for the new value
+                    publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+                }
             }
             return savedApiKey;
         } catch (Exception e) {
@@ -178,6 +184,20 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
 
     private String generateApiKeySecret() {
         return prefix + StringUtils.generateSafeToken(Math.min(valueBytesSize, MAX_API_KEY_VALUE_LENGTH));
+    }
+
+    /**
+     * Whether an update changed anything the cached copy of the key is read for. A newly created key has nothing
+     * cached yet, hence the null check on the previous state.
+     * <p>
+     * Authentication resolves a key by value straight from the cache, so both the enabled flag and the value must
+     * trigger an eviction. A regular update preserves the value, but a save with an explicit value (e.g. an edge
+     * applying a key rotated on the cloud) replaces it, leaving the old value to authenticate from the cache.
+     */
+    private static boolean isPublishEvictRequired(ApiKey old, ApiKey apiKey) {
+        return old != null
+               && (old.isEnabled() != apiKey.isEnabled()
+                   || !Objects.equals(old.getValue(), apiKey.getValue()));
     }
 
     @Override

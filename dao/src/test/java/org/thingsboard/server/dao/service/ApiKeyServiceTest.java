@@ -131,6 +131,39 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveApiKeyWithNewValue_oldValueEvictedFromCache() {
+        ApiKeyInfo apiKeyInfo = createApiKeyInfo(TEST_API_KEY_DESCRIPTION);
+        ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
+        String originalValue = savedApiKey.getValue();
+        // authentication resolves the key by value and caches the lookup
+        Assert.assertNotNull(apiKeyService.findApiKeyByValue(originalValue));
+
+        String newValue = "new-api-key-value-" + StringUtils.randomAlphanumeric(32);
+        apiKeyService.saveApiKey(tenantId, savedApiKey, newValue, false);
+
+        Assert.assertNull("Old API key value must not resolve after the value changed", apiKeyService.findApiKeyByValue(originalValue));
+        ApiKey foundByNewValue = apiKeyService.findApiKeyByValue(newValue);
+        Assert.assertNotNull(foundByNewValue);
+        Assert.assertEquals(savedApiKey.getId(), foundByNewValue.getId());
+    }
+
+    @Test
+    public void testSaveApiKeyWithNewValue_cachedMissForNewValueEvicted() {
+        ApiKeyInfo apiKeyInfo = createApiKeyInfo(TEST_API_KEY_DESCRIPTION);
+        ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
+
+        String newValue = "new-api-key-value-" + StringUtils.randomAlphanumeric(32);
+        // a failed authentication attempt caches the miss for the not-yet-saved value
+        Assert.assertNull(apiKeyService.findApiKeyByValue(newValue));
+
+        apiKeyService.saveApiKey(tenantId, savedApiKey, newValue, false);
+
+        ApiKey foundByNewValue = apiKeyService.findApiKeyByValue(newValue);
+        Assert.assertNotNull("New API key value must resolve after it is saved", foundByNewValue);
+        Assert.assertEquals(savedApiKey.getId(), foundByNewValue.getId());
+    }
+
+    @Test
     public void testFindApiKeysByUserId() {
         int size = 3;
         for (int i = 0; i < size; i++) {
