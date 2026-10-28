@@ -247,7 +247,7 @@ class ChannelTbAiOperationsTest {
     void shouldSendCallOrigin_whenChannelWasOpenedWithAnother() {
         // GIVEN
         server = FakeTbAiServer.start((connection, frame) -> connection.result(frame, new OperationResult(200, null, 0)));
-        TbAiChannelPool sharedPool = new TbAiChannelPool(server.client(), 10, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
+        TbAiChannelPool sharedPool = new TbAiChannelPool(server.client(), "4.4.0", 10, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
         SecurityUser user = TbAiChannelPoolTest.user();
         var channelOperations = new ChannelTbAiOperations(sharedPool, requestExecutor);
 
@@ -294,7 +294,7 @@ class ChannelTbAiOperationsTest {
 
     ChannelTbAiOperations operations() {
         if (pool == null) {
-            pool = new TbAiChannelPool(server.client(), maxConnections, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
+            pool = new TbAiChannelPool(server.client(), "4.4.0", maxConnections, 20, Duration.ofSeconds(60), Duration.ofMinutes(10), System::nanoTime, false);
         }
         return new ChannelTbAiOperations(pool, requestExecutor);
     }
