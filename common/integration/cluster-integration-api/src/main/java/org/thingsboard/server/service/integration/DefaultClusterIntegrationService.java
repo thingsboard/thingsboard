@@ -12,6 +12,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -23,6 +26,7 @@ import org.thingsboard.server.gen.integration.ToIntegrationExecutorDownlinkMsg;
 import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -58,6 +62,7 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
     private final TbQueueIntegrationExecutorSettings integrationNotificationSettings;
     private final TbCoreIntegrationExecutorQueueFactory queueFactory;
     private final IntegrationManagerService integrationManagerService;
+    private final PartitionService partitionService;
 
     @Autowired(required = false)
     private IntegrationExecutorCacheStartupService cacheStartupService;
@@ -67,11 +72,13 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
     public DefaultClusterIntegrationService(TbServiceInfoProvider serviceInfoProvider,
                                             TbQueueIntegrationExecutorSettings integrationNotificationSettings,
                                             TbCoreIntegrationExecutorQueueFactory queueFactory,
-                                            IntegrationManagerService integrationManagerService) {
+                                            IntegrationManagerService integrationManagerService,
+                                            PartitionService partitionService) {
         this.serviceInfoProvider = serviceInfoProvider;
         this.integrationNotificationSettings = integrationNotificationSettings;
         this.queueFactory = queueFactory;
         this.integrationManagerService = integrationManagerService;
+        this.partitionService = partitionService;
     }
 
     private volatile ExecutorService consumersExecutor;
@@ -332,9 +339,17 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
         }
     }
 
-    private void handleNotification(UUID id, TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg> msg, TbCallback callback) {
+    void handleNotification(UUID id, TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg> msg, TbCallback callback) {
         ToIntegrationExecutorNotificationMsg nf = msg.getValue();
-        handleComponentLifecycleMsg(id, ProtoUtils.fromProto(nf.getComponentLifecycle()));
+        if (nf.hasComponentLifecycle()) {
+            handleComponentLifecycleMsg(id, ProtoUtils.fromProto(nf.getComponentLifecycle()));
+        }
+        if (nf.getQueueUpdateMsgsCount() > 0) {
+            partitionService.updateQueues(nf.getQueueUpdateMsgsList());
+        }
+        if (nf.getQueueDeleteMsgsCount() > 0) {
+            partitionService.removeQueues(nf.getQueueDeleteMsgsList());
+        }
         callback.onSuccess();
     }
 
@@ -344,8 +359,17 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
                     componentLifecycleMsg.getEntityId().getEntityType(),
                     componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getEvent());
             integrationManagerService.handleComponentLifecycleMsg(componentLifecycleMsg);
+            // after the tenant profile caches are evicted, so that the routing info is re-read from the updated profile
+            evictTenantRoutingInfo(componentLifecycleMsg.getEntityId());
         }
         log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
+    }
+
+    private void evictTenantRoutingInfo(EntityId entityId) {
+        switch (entityId.getEntityType()) {
+            case TENANT -> partitionService.evictTenantInfo(TenantId.fromUUID(entityId.getId()));
+            case TENANT_PROFILE -> partitionService.evictTenantProfileInfo(new TenantProfileId(entityId.getId()));
+        }
     }
 
     private void refreshIntegrationsByType(IntegrationType type) {

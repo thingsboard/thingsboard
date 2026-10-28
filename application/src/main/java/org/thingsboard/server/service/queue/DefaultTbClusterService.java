@@ -1189,7 +1189,8 @@ public class DefaultTbClusterService implements TbClusterService {
         ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().addAllQueueUpdateMsgs(queueUpdateMsgs).build();
         ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().addAllQueueUpdateMsgs(queueUpdateMsgs).build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().addAllQueueUpdateMsgs(queueUpdateMsgs).build();
-        doSendQueueNotifications(ruleEngineMsg, coreMsg, transportMsg);
+        ToIntegrationExecutorNotificationMsg integrationExecutorMsg = ToIntegrationExecutorNotificationMsg.newBuilder().addAllQueueUpdateMsgs(queueUpdateMsgs).build();
+        doSendQueueNotifications(ruleEngineMsg, coreMsg, transportMsg, integrationExecutorMsg);
     }
 
     @Override
@@ -1207,15 +1208,20 @@ public class DefaultTbClusterService implements TbClusterService {
         ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().addAllQueueDeleteMsgs(queueDeleteMsgs).build();
         ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().addAllQueueDeleteMsgs(queueDeleteMsgs).build();
         ToTransportMsg transportMsg = ToTransportMsg.newBuilder().addAllQueueDeleteMsgs(queueDeleteMsgs).build();
-        doSendQueueNotifications(ruleEngineMsg, coreMsg, transportMsg);
+        ToIntegrationExecutorNotificationMsg integrationExecutorMsg = ToIntegrationExecutorNotificationMsg.newBuilder().addAllQueueDeleteMsgs(queueDeleteMsgs).build();
+        doSendQueueNotifications(ruleEngineMsg, coreMsg, transportMsg, integrationExecutorMsg);
     }
 
-    private void doSendQueueNotifications(ToRuleEngineNotificationMsg ruleEngineMsg, ToCoreNotificationMsg coreMsg, ToTransportMsg transportMsg) {
+    private void doSendQueueNotifications(ToRuleEngineNotificationMsg ruleEngineMsg, ToCoreNotificationMsg coreMsg, ToTransportMsg transportMsg,
+                                          ToIntegrationExecutorNotificationMsg integrationExecutorMsg) {
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
         Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
         Set<String> tbTransportServices = partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT);
+        Set<String> tbIntegrationExecutorServices = partitionService.getAllServiceIds(ServiceType.TB_INTEGRATION_EXECUTOR);
         // No need to push notifications twice
         tbTransportServices.removeAll(tbCoreServices);
+        tbIntegrationExecutorServices.removeAll(tbCoreServices);
+        tbIntegrationExecutorServices.removeAll(tbRuleEngineServices);
         tbCoreServices.removeAll(tbRuleEngineServices);
 
         for (String ruleEngineServiceId : tbRuleEngineServices) {
@@ -1232,6 +1238,11 @@ public class DefaultTbClusterService implements TbClusterService {
             TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);
             producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), null);
             toTransportNfs.incrementAndGet();
+        }
+        for (String integrationExecutorServiceId : tbIntegrationExecutorServices) {
+            TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_INTEGRATION_EXECUTOR, integrationExecutorServiceId);
+            producerProvider.getTbIntegrationExecutorNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), integrationExecutorMsg), null);
+            toIntegrationExecutorNfs.incrementAndGet();
         }
     }
 
