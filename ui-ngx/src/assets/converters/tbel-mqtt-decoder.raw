@@ -7,15 +7,42 @@
 // decode payload to JSON
 var data = decodeToJson(payload);
 
-// --- Device name and type ---
-// Extract from MQTT topic (e.g. "my/topic/deviceType/deviceName")
-var topicParts = metadata['topic'] != null ? metadata['topic'].split('/') : null;
+ // --- Device name and type ---
+ // Supported MQTT topic formats:
+ // tb/devices/{deviceType}/{deviceName}
+ // tb/devices/{deviceType}/{deviceName}/telemetry
+ // Also supports the existing tb/sensors/... prefix.
 
-var deviceName = data.deviceName != null ? data.deviceName :
-    (topicParts != null && topicParts.length > 0 ? topicParts[topicParts.length - 1] : 'Unknown Device');
+ var topicParts = metadata != null && metadata['topic'] != null
+     ? metadata['topic'].split('/')
+     : null;
 
-var deviceType = data.deviceType != null ? data.deviceType :
-    (topicParts != null && topicParts.length > 1 ? topicParts[topicParts.length - 2] : 'default');
+ // Validate the supported topic structure.
+ var validTopic = topicParts != null &&
+     (topicParts.length == 4 || topicParts.length == 5) &&
+     topicParts[0] == 'tb' &&
+     (topicParts[1] == 'devices' || topicParts[1] == 'sensors') &&
+     topicParts[2] != '' &&
+     topicParts[3] != '' &&
+     (topicParts.length == 4 || topicParts[4] == 'telemetry');
+
+ // Prefer device information from the payload.
+ // Otherwise, extract it from the MQTT topic.
+ var deviceName = data.deviceName != null &&
+     data.deviceName.toString().trim() != ''
+     ? data.deviceName
+     : (validTopic ? topicParts[3] : null);
+
+ var deviceType = data.deviceType != null &&
+     data.deviceType.toString().trim() != ''
+     ? data.deviceType
+     : (validTopic ? topicParts[2] : 'default');
+
+ // Reject messages without a valid device name.
+ if (deviceName == null || deviceName.toString().trim() == '') {
+     raiseError("Device name is missing. Provide deviceName in the payload or use a supported MQTT topic format.");
+ }
+
 // var customerName = 'Customer C';
 // var groupName = 'thermostat devices';
 

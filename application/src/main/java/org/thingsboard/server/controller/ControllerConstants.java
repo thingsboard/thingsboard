@@ -1968,6 +1968,18 @@ public class ControllerConstants {
     "    }\n" +
     "}\n";
 
+    static final String DEFAULT_MQTT_UPLINK_CONVERTER_MESSAGE =
+    "{\n" +
+    "    \"temperature\": 25.5,\n" +
+    "    \"humidity\": 60,\n" +
+    "    \"battery\": 95\n" +
+    "}";
+
+    static final String DEFAULT_MQTT_UPLINK_CONVERTER_METADATA =
+    "{\n" +
+    "    \"topic\": \"tb/devices/thermostat/Thermostat-01/telemetry\"\n" +
+    "}";
+
     static final String DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE =
     "{\n" +
     "    \"cmd\": \"rx\",\n" +
