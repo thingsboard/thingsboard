@@ -382,6 +382,17 @@ tbel:
   max_requests_timeout: "${TBEL_MAX_REQUEST_TIMEOUT:500}"
   # Maximum time in seconds for black listed function to stay in the list.
   max_black_list_duration_sec: "${TBEL_MAX_BLACKLIST_DURATION_SEC:60}"
+  # Timeout storm guard: when many different scripts time out at the same time (Kafka or JS executor stall, network blip, CPU starvation),
+  # the timeouts are caused by the infrastructure, not by the scripts, so they are not counted towards the blocklist
+  timeout_storm:
+    # Enable/Disable the timeout storm guard. When disabled, every timeout is counted towards the blocklist
+    enabled: "${TBEL_TIMEOUT_STORM_ENABLED:false}"
+    # Sliding window in milliseconds used to detect a timeout storm. The storm ends after this time without any timeout
+    window_ms: "${TBEL_TIMEOUT_STORM_WINDOW_MS:10000}"
+    # Minimum number of distinct scripts that must time out within the window to start a timeout storm (at least 2)
+    min_scripts: "${TBEL_TIMEOUT_STORM_MIN_SCRIPTS:3}"
+    # Maximum time in milliseconds from the storm start during which timeouts are not counted. After it, timeouts are counted again
+    max_duration_ms: "${TBEL_TIMEOUT_STORM_MAX_DURATION_MS:60000}"
   # Specify thread pool size for javascript executor service
   thread_pool_size: "${TBEL_THREAD_POOL_SIZE:50}"
   stats:
@@ -410,6 +421,17 @@ js:
     max_requests_timeout: "${LOCAL_JS_MAX_REQUEST_TIMEOUT:0}"
     # Maximum time in seconds for black listed function to stay in the list.
     max_black_list_duration_sec: "${LOCAL_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
+    # Timeout storm guard: when many different scripts time out at the same time (Kafka or JS executor stall, network blip, CPU starvation),
+    # the timeouts are caused by the infrastructure, not by the scripts, so they are not counted towards the blocklist
+    timeout_storm:
+      # Enable/Disable the timeout storm guard. When disabled, every timeout is counted towards the blocklist
+      enabled: "${LOCAL_JS_TIMEOUT_STORM_ENABLED:false}"
+      # Sliding window in milliseconds used to detect a timeout storm. The storm ends after this time without any timeout
+      window_ms: "${LOCAL_JS_TIMEOUT_STORM_WINDOW_MS:10000}"
+      # Minimum number of distinct scripts that must time out within the window to start a timeout storm (at least 2)
+      min_scripts: "${LOCAL_JS_TIMEOUT_STORM_MIN_SCRIPTS:3}"
+      # Maximum time in milliseconds from the storm start during which timeouts are not counted. After it, timeouts are counted again
+      max_duration_ms: "${LOCAL_JS_TIMEOUT_STORM_MAX_DURATION_MS:60000}"
     stats:
       # Enable/Disable stats collection for local JS executor
       enabled: "${TB_JS_LOCAL_STATS_ENABLED:false}"
@@ -423,6 +445,17 @@ js:
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
     # Maximum time in seconds for black listed function to stay in the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
+    # Timeout storm guard: when many different scripts time out at the same time (Kafka or JS executor stall, network blip, CPU starvation),
+    # the timeouts are caused by the infrastructure, not by the scripts, so they are not counted towards the blocklist
+    timeout_storm:
+      # Enable/Disable the timeout storm guard. When disabled, every timeout is counted towards the blocklist
+      enabled: "${REMOTE_JS_TIMEOUT_STORM_ENABLED:false}"
+      # Sliding window in milliseconds used to detect a timeout storm. The storm ends after this time without any timeout
+      window_ms: "${REMOTE_JS_TIMEOUT_STORM_WINDOW_MS:10000}"
+      # Minimum number of distinct scripts that must time out within the window to start a timeout storm (at least 2)
+      min_scripts: "${REMOTE_JS_TIMEOUT_STORM_MIN_SCRIPTS:3}"
+      # Maximum time in milliseconds from the storm start during which timeouts are not counted. After it, timeouts are counted again
+      max_duration_ms: "${REMOTE_JS_TIMEOUT_STORM_MAX_DURATION_MS:60000}"
     stats:
       # Enable/Disable stats collection for remote JS executor
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
