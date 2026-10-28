@@ -8,13 +8,15 @@ import { ProductsListComponent } from './products-list.component';
 import { ProductDetailComponent } from './product-detail.component';
 import { ProductFormDialogComponent } from './product-form-dialog.component';
 import { ProductIssuesDialogComponent } from './product-issues-dialog.component';
+import { ProductJsonDialogComponent } from './product-json-dialog.component';
 
 @NgModule({
   declarations: [
     ProductsListComponent,
     ProductDetailComponent,
     ProductFormDialogComponent,
-    ProductIssuesDialogComponent
+    ProductIssuesDialogComponent,
+    ProductJsonDialogComponent
   ],
   imports: [
     CommonModule,

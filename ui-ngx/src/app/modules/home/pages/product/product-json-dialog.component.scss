@@ -1,0 +1,25 @@
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+}
+
+.tb-product-json-dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tb-product-json-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: block;
+}

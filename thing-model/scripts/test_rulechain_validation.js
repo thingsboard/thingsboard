@@ -103,7 +103,9 @@ const validTelemetry = runValidation({
 }, telemetryMetadata);
 
 assert.strictEqual(validTelemetry.envelope.kind, 'telemetry');
-assert.deepStrictEqual(validTelemetry.envelope.invalid, []);
+assert.strictEqual(validTelemetry.envelope.v, 1);
+assert.strictEqual(validTelemetry.envelope.dropped, null);
+assert.strictEqual(validTelemetry.envelope.invalid, null);
 assert.strictEqual(validTelemetry.envelope.productId, 'EVTPRODUCT01');
 assert.strictEqual(validTelemetry.envelope.tslVersion, '1.0');
 assert.strictEqual(validTelemetry.envelope.deviceName, 'sim-device');
@@ -121,6 +123,7 @@ expectInvalid({speed: 1, label: 'x'.repeat(5000)}, 'payload:size', telemetryMeta
 const dropped = runValidation({speed: 1, unknownKey: 'x'}, telemetryMetadata);
 assert.strictEqual(dropped.envelope.kind, 'telemetry');
 assert.deepStrictEqual(dropped.envelope.dropped, ['unknownKey']);
+assert.strictEqual(dropped.envelope.invalid, null);
 
 const strictSchema = Object.assign({}, schema, {strictUnknown: true});
 const strict = runValidation({speed: 1, unknownKey: 'x'}, telemetryMetadata, strictSchema);
@@ -132,15 +135,35 @@ const validEvent = runValidation({
     event_id: 'overSpeed',
     event_type: 'alert',
     event_ts: 1700000000000,
+    event_uid: 'uid-001',
     speed: 120,
     limit: 100
 }, eventMetadata);
 
 assert.strictEqual(validEvent.envelope.kind, 'event');
-assert.strictEqual(validEvent.envelope.event.id, 'overSpeed');
+assert.strictEqual(validEvent.envelope.v, 1);
+assert.strictEqual(validEvent.envelope.values, null);
+assert.strictEqual(validEvent.envelope.dropped, null);
+assert.strictEqual(validEvent.envelope.invalid, null);
+assert.strictEqual(validEvent.envelope.event.id, 'uid-001');
+assert.strictEqual(validEvent.envelope.event.code, 'overSpeed');
+assert.strictEqual(validEvent.envelope.event.data.speed, 120);
+assert.strictEqual(validEvent.envelope.event.data.limit, 100);
 assert.strictEqual(validEvent.envelope.event.type, 'alert');
 assert.strictEqual(validEvent.envelope.event.level, 'MAJOR');
 assert.strictEqual(validEvent.envelope.event.ts, 1700000000000);
+
+const fallbackEvent = runValidation({
+    event_id: 'overSpeed',
+    event_type: 'alert',
+    event_ts: 1700000000000,
+    speed: 120,
+    limit: 100
+}, eventMetadata);
+assert.strictEqual(fallbackEvent.envelope.kind, 'event');
+assert.ok(fallbackEvent.envelope.event.id);
+assert.notStrictEqual(fallbackEvent.envelope.event.id, 'overSpeed');
+assert.strictEqual(fallbackEvent.envelope.event.code, 'overSpeed');
 
 expectInvalid({
     event_id: 'unknownEvent',
@@ -170,6 +193,7 @@ expectInvalid({event_id: 'bad-id', speed: 1}, 'event_id:invalid', eventMetadata)
 const normalized = runNormalize(validTelemetry.out.msg, validTelemetry.out.metadata);
 const normalizedEnvelope = JSON.parse(normalized.msg);
 assert.strictEqual(normalizedEnvelope.kind, 'telemetry');
+assert.strictEqual(normalizedEnvelope.v, 1);
 assert.strictEqual(normalizedEnvelope.productId, 'EVTPRODUCT01');
 assert.strictEqual(normalized.metadata.tsl_normalized, undefined);
 

@@ -85,19 +85,6 @@
         }
       </div>
       <mat-tab-group mat-stretch-tabs="false" class="tb-product-tabs">
-        <mat-tab label="{{ 'product.thing-model' | translate }}">
-          @if (thingModel) {
-            <div class="tb-product-tsl-view">
-              <tb-json-object-view
-                [ngModel]="thingModel.tsl"
-                [ngModelOptions]="{standalone: true}"
-                [fillHeight]="true">
-              </tb-json-object-view>
-            </div>
-          } @else {
-            <div class="tb-product-empty">{{ 'product.no-thing-model' | translate }}</div>
-          }
-        </mat-tab>
         <mat-tab label="{{ 'product.properties' | translate }}">
           <div class="tb-product-table-container">
             <table mat-table [dataSource]="detail.catalog?.properties || []" class="w-full">
@@ -133,6 +120,18 @@
                 <th mat-header-cell *matHeaderCellDef>{{ 'product.required-property' | translate }}</th>
                 <td mat-cell *matCellDef="let property">{{ property.required }}</td>
               </ng-container>
+              <ng-container matColumnDef="details">
+                <th mat-header-cell *matHeaderCellDef>{{ 'details.details' | translate }}</th>
+                <td mat-cell *matCellDef="let property">
+                  @if (property.dataType === 'struct') {
+                    <button mat-button color="primary" type="button"
+                            class="tb-product-view-button"
+                            (click)="showPropertyDetails(property)">
+                      {{ 'action.view' | translate }}
+                    </button>
+                  }
+                </td>
+              </ng-container>
               <tr mat-header-row *matHeaderRowDef="propertyColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: propertyColumns"></tr>
             </table>
@@ -155,7 +154,15 @@
               </ng-container>
               <ng-container matColumnDef="params">
                 <th mat-header-cell *matHeaderCellDef>{{ 'product.params' | translate }}</th>
-                <td mat-cell *matCellDef="let event"><code>{{ event.params | json }}</code></td>
+                <td mat-cell *matCellDef="let event">
+                  @if (event.params) {
+                    <button mat-button color="primary" type="button"
+                            class="tb-product-view-button"
+                            (click)="showEventParams(event)">
+                      {{ 'action.view' | translate }}
+                    </button>
+                  }
+                </td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="eventColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: eventColumns"></tr>
@@ -175,16 +182,45 @@
               </ng-container>
               <ng-container matColumnDef="input">
                 <th mat-header-cell *matHeaderCellDef>{{ 'product.input' | translate }}</th>
-                <td mat-cell *matCellDef="let action"><code>{{ action.input | json }}</code></td>
+                <td mat-cell *matCellDef="let action">
+                  @if (action.input) {
+                    <button mat-button color="primary" type="button"
+                            class="tb-product-view-button"
+                            (click)="showActionInput(action)">
+                      {{ 'action.view' | translate }}
+                    </button>
+                  }
+                </td>
               </ng-container>
               <ng-container matColumnDef="output">
                 <th mat-header-cell *matHeaderCellDef>{{ 'product.output' | translate }}</th>
-                <td mat-cell *matCellDef="let action"><code>{{ action.output | json }}</code></td>
+                <td mat-cell *matCellDef="let action">
+                  @if (action.output) {
+                    <button mat-button color="primary" type="button"
+                            class="tb-product-view-button"
+                            (click)="showActionOutput(action)">
+                      {{ 'action.view' | translate }}
+                    </button>
+                  }
+                </td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="actionColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: actionColumns"></tr>
             </table>
           </div>
+        </mat-tab>
+        <mat-tab label="{{ 'product.thing-model' | translate }}">
+          @if (thingModel) {
+            <div class="tb-product-tsl-view">
+              <tb-json-object-view
+                [ngModel]="thingModel.tsl"
+                [ngModelOptions]="{standalone: true}"
+                [fillHeight]="true">
+              </tb-json-object-view>
+            </div>
+          } @else {
+            <div class="tb-product-empty">{{ 'product.no-thing-model' | translate }}</div>
+          }
         </mat-tab>
         <mat-tab label="{{ 'product.versions' | translate }}">
           <div class="tb-product-table-container">

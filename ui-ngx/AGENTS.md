@@ -94,12 +94,13 @@ yarn install
 以下菜单在 `src/app/core/services/menu.models.ts` 的 `menuFilters` 中返回 `false`，
 因此不可见，但菜单定义、页面、路由和业务代码均保留：
 
-- 资产：`MenuId.assets`，路径 `/entities/assets`
-- 资产配置：`MenuId.asset_profiles`，路径 `/profiles/assetProfiles`
 - 实体视图：`MenuId.entity_views`，路径 `/entities/entityViews`
 - Edge 管理：`MenuId.edge_management`
 - Edge 实例：`MenuId.edges`
 - 规则链模板：`MenuId.rulechain_templates`
+
+资产（`MenuId.assets`）与资产配置（`MenuId.asset_profiles`）已恢复显示，不再由
+`menuFilters` 隐藏。
 
 说明：
 

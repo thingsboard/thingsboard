@@ -10,11 +10,15 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { ProductService } from '@core/http/product.service';
 import { PageComponent } from '@shared/components/page.component';
 import {
+  ProductAction,
   ProductDetail,
+  ProductEvent,
+  ProductProperty,
   ProductStatus,
   ThingModelView
 } from '@shared/models/product.models';
 import { ProductFormDialogComponent } from './product-form-dialog.component';
+import { ProductJsonDialogComponent, ProductJsonDialogData } from './product-json-dialog.component';
 
 @Component({
   selector: 'tb-product-detail',
@@ -30,7 +34,7 @@ export class ProductDetailComponent extends PageComponent implements OnInit {
 
   thingModel: ThingModelView;
 
-  propertyColumns = ['id', 'name', 'dataType', 'mode', 'unit', 'min', 'max', 'required'];
+  propertyColumns = ['id', 'name', 'dataType', 'mode', 'unit', 'min', 'max', 'required', 'details'];
   eventColumns = ['id', 'name', 'type', 'params'];
   actionColumns = ['id', 'name', 'input', 'output'];
   versionColumns = ['version', 'status', 'checksum', 'publishedAt', 'createdAt'];
@@ -77,8 +81,50 @@ export class ProductDetailComponent extends PageComponent implements OnInit {
     });
   }
 
+  showPropertyDetails(property: ProductProperty): void {
+    this.showJson(property.name || property.id, this.resolvePropertyDefinition(property));
+  }
+
+  showEventParams(event: ProductEvent): void {
+    this.showJson(`${event.name || event.id} - ${this.translate.instant('product.params')}`,
+      event.params);
+  }
+
+  showActionInput(action: ProductAction): void {
+    this.showJson(`${action.name || action.id} - ${this.translate.instant('product.input')}`,
+      action.input);
+  }
+
+  showActionOutput(action: ProductAction): void {
+    this.showJson(`${action.name || action.id} - ${this.translate.instant('product.output')}`,
+      action.output);
+  }
+
   back(): void {
     this.router.navigate(['/entities/products']);
+  }
+
+  private showJson(title: string, value: any): void {
+    this.dialog.open<ProductJsonDialogComponent, ProductJsonDialogData, void>(ProductJsonDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      width: '80vw',
+      maxWidth: '1200px',
+      height: '90vh',
+      maxHeight: '95vh',
+      data: {
+        title,
+        value
+      }
+    });
+  }
+
+  private resolvePropertyDefinition(property: ProductProperty): any {
+    const properties = this.thingModel?.tsl?.properties;
+    if (Array.isArray(properties)) {
+      return properties.find((item: any) => item?.id === property.id) ?? property;
+    }
+    return property;
   }
 
   statusTranslationKey(status: ProductStatus): string {

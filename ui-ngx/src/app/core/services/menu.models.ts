@@ -828,12 +828,6 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
 
 const menuFilters = new Map<MenuId, MenuFilter>([
   [
-    MenuId.assets, () => false
-  ],
-  [
-    MenuId.asset_profiles, () => false
-  ],
-  [
     MenuId.entity_views, () => false
   ],
   [

@@ -1,0 +1,21 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<mat-toolbar class="tb-dialog-header">
+  <h2>{{ title }}</h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button type="button" (click)="close()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-dialog-content class="tb-product-json-dialog-content">
+  <tb-json-object-view
+    class="tb-product-json-view"
+    [ngModel]="data.value"
+    [ngModelOptions]="{standalone: true}"
+    [fillHeight]="true">
+  </tb-json-object-view>
+</mat-dialog-content>

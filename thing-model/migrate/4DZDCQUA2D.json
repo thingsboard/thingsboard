@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "profile": {
     "ProductId": "4DZDCQUA2D",
     "CategoryId": "1"
@@ -277,6 +277,81 @@
         ]
       },
       "required": false
+    },
+    {
+      "id": "imei",
+      "name": "设备 IMEI",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "string"
+      },
+      "required": false
+    },
+    {
+      "id": "iccid",
+      "name": "SIM 卡号",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "string"
+      },
+      "required": false
+    },
+    {
+      "id": "firmwareVersion",
+      "name": "固件版本",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "string"
+      },
+      "required": false
+    },
+    {
+      "id": "signalStrength",
+      "name": "信号强度",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "int",
+        "min": "-120",
+        "max": "0",
+        "start": "-120",
+        "step": "1",
+        "unit": "dBm"
+      },
+      "required": false
+    },
+    {
+      "id": "reportInterval",
+      "name": "上报周期",
+      "desc": "",
+      "mode": "rw",
+      "define": {
+        "type": "int",
+        "min": "10",
+        "max": "3600",
+        "start": "60",
+        "step": "10",
+        "unit": "s"
+      },
+      "required": false
+    },
+    {
+      "id": "totalMileage",
+      "name": "累计里程",
+      "desc": "",
+      "mode": "r",
+      "define": {
+        "type": "int",
+        "min": "0",
+        "max": "1000000000",
+        "start": "0",
+        "step": "1",
+        "unit": "m"
+      },
+      "required": false
     }
   ],
   "events": [
@@ -524,5 +599,118 @@
       "required": false
     }
   ],
-  "actions": []
+  "actions": [
+    {
+      "id": "reboot",
+      "name": "重启设备",
+      "desc": "",
+      "input": [],
+      "output": [
+        {
+          "id": "success",
+          "name": "是否成功",
+          "define": {
+            "type": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "id": "setReportInterval",
+      "name": "设置上报周期",
+      "desc": "",
+      "input": [
+        {
+          "id": "interval",
+          "name": "上报周期",
+          "define": {
+            "type": "int",
+            "min": "10",
+            "max": "3600",
+            "start": "60",
+            "step": "10",
+            "unit": "s"
+          }
+        }
+      ],
+      "output": [
+        {
+          "id": "success",
+          "name": "是否成功",
+          "define": {
+            "type": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "id": "queryLocation",
+      "name": "查询当前位置",
+      "desc": "",
+      "input": [],
+      "output": [
+        {
+          "id": "longitude",
+          "name": "经度",
+          "define": {
+            "type": "float",
+            "min": "-180",
+            "max": "180",
+            "start": "0",
+            "step": "0.000001",
+            "unit": "度"
+          }
+        },
+        {
+          "id": "latitude",
+          "name": "纬度",
+          "define": {
+            "type": "float",
+            "min": "-90",
+            "max": "90",
+            "start": "0",
+            "step": "0.000001",
+            "unit": "度"
+          }
+        },
+        {
+          "id": "address",
+          "name": "当前地址描述",
+          "define": {
+            "type": "string"
+          }
+        },
+        {
+          "id": "updateTs",
+          "name": "位置更新时间",
+          "define": {
+            "type": "timestamp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lockMachine",
+      "name": "锁车/解锁",
+      "desc": "",
+      "input": [
+        {
+          "id": "locked",
+          "name": "是否锁定",
+          "define": {
+            "type": "bool"
+          }
+        }
+      ],
+      "output": [
+        {
+          "id": "success",
+          "name": "是否成功",
+          "define": {
+            "type": "bool"
+          }
+        }
+      ]
+    }
+  ]
 }

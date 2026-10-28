@@ -14,7 +14,7 @@ try {
 var keys = schema && schema.keys ? schema.keys : {};
 var events = schema && schema.events ? schema.events : {};
 var strict = schema ? schema.strictUnknown === true : false;
-var reserved = {event_id: true, event_type: true, event_ts: true};
+var reserved = {event_id: true, event_type: true, event_ts: true, event_uid: true};
 var payloadOk = msg !== null && typeof msg === 'object' && !Array.isArray(msg);
 
 function isInteger(v) {
@@ -133,8 +133,10 @@ function validateField(name, v, d) {
     return true;
 }
 
-var eventId = payloadOk ? msg.event_id : undefined;
+var eventCode = payloadOk ? msg.event_id : undefined;
 var eventType = payloadOk ? msg.event_type : undefined;
+var eventId = payloadOk && typeof msg.event_uid === 'string' && msg.event_uid
+    ? msg.event_uid : null;
 var eventDef = null;
 var allowed = {};
 
@@ -150,11 +152,11 @@ if (!payloadOk) {
     invalid.push('payload:size');
 }
 
-if (eventId !== undefined && eventId !== null) {
-    if (typeof eventId !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,49}$/.test(eventId)) {
+if (eventCode !== undefined && eventCode !== null) {
+    if (typeof eventCode !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,49}$/.test(eventCode)) {
         invalid.push('event_id:invalid');
     } else {
-        eventDef = events[eventId];
+        eventDef = events[eventCode];
         if (!eventDef) {
             invalid.push('event_id:unknown');
         } else if (eventDef.params) {
@@ -237,9 +239,22 @@ if (eventTs !== undefined && eventTs !== null) {
     eventTs = ts;
 }
 
-var kind = eventId ? 'event' : 'telemetry';
+var kind = eventCode ? 'event' : 'telemetry';
 if (invalid.length > 0) {
     kind = 'invalid';
+}
+
+var eventData = {};
+if (eventCode && eventDef && eventDef.params) {
+    Object.keys(eventDef.params).forEach(function (k) {
+        if (k in values) {
+            eventData[k] = values[k];
+            delete values[k];
+        }
+    });
+}
+if (kind === 'event') {
+    values = {};
 }
 
 var envelope = {
@@ -252,18 +267,20 @@ var envelope = {
     siteCode: meta.ss_site_code || null,
     ts: ts,
     kind: kind,
-    values: values,
-    dropped: dropped,
+    values: Object.keys(values).length ? values : null,
+    dropped: dropped.length ? dropped : null,
     event: null,
-    invalid: invalid
+    invalid: invalid.length ? invalid : null
 };
 
-if (eventId) {
+if (eventCode) {
     envelope.event = {
-        id: eventId,
+        id: eventId || (eventCode + '-' + eventTs + '-' + Math.random().toString(36).slice(2, 10)),
+        code: eventCode,
         type: eventType || 'info',
         ts: eventTs,
-        level: eventType === 'alert' ? 'MAJOR' : (eventType === 'fault' ? 'CRITICAL' : 'INFO')
+        level: eventType === 'alert' ? 'MAJOR' : (eventType === 'fault' ? 'CRITICAL' : 'INFO'),
+        data: Object.keys(eventData).length ? eventData : null
     };
 }
 
