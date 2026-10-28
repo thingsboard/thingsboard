@@ -11,6 +11,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -89,10 +90,10 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
                     additionalInfo.set("description", new TextNode(value));
                     break;
                 case IS_GATEWAY:
-                    additionalInfo.set("gateway", BooleanNode.valueOf(Boolean.parseBoolean(value)));
+                    additionalInfo.set(DataConstants.GATEWAY_PARAMETER, BooleanNode.valueOf(Boolean.parseBoolean(value)));
                     break;
                 case OVERWRITE_ACTIVITY_TIME:
-                    additionalInfo.set("overwriteActivityTime", BooleanNode.valueOf(Boolean.parseBoolean(value)));
+                    additionalInfo.set(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER, BooleanNode.valueOf(Boolean.parseBoolean(value)));
                     break;
             }
             device.setAdditionalInfo(additionalInfo);
