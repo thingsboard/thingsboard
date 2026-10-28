@@ -124,9 +124,9 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
         assertEquals(1, table.size());
         assertEquals(Long.valueOf(140), table.get(0).lag());
 
-        assertEquals(40, dao.findLastQueueLag(tenantId, List.of(queueId), 5 * MINUTE));
-        assertEquals(40, dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
-        assertEquals(0, dao.findLastQueueLag(UUID.randomUUID(), null, 5 * MINUTE));
+        assertEquals(Long.valueOf(40), dao.findLastQueueLag(tenantId, List.of(queueId), 5 * MINUTE));
+        assertEquals(Long.valueOf(40), dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
+        assertNull(dao.findLastQueueLag(UUID.randomUUID(), null, 5 * MINUTE));
     }
 
     @Test
@@ -146,15 +146,15 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
         dao.saveQueueLagStats(List.of(new QueueLagStatsRow(now - 2 * MINUTE, tenantId, queueId, 500),
                 new QueueLagStatsRow(now - MINUTE, tenantId, queueId, 0)));
 
-        assertEquals(0, dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
+        assertEquals(Long.valueOf(0), dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
     }
 
     @Test
     public void givenLongFlushInterval_whenFindLastQueueLag_thenOlderSampleIsStillFound() {
         dao.saveQueueLagStats(List.of(new QueueLagStatsRow(System.currentTimeMillis() - 10 * MINUTE, tenantId, queueId, 300)));
 
-        assertEquals(300, dao.findLastQueueLag(tenantId, null, 22 * MINUTE)); // 2 x 10-minute flush + 2-minute lease
-        assertEquals(0, dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
+        assertEquals(Long.valueOf(300), dao.findLastQueueLag(tenantId, null, 22 * MINUTE)); // 2 x 10-minute flush + 2-minute lease
+        assertNull(dao.findLastQueueLag(tenantId, null, 5 * MINUTE)); // stale: lag unknown
     }
 
     @Test

@@ -253,9 +253,9 @@ public class RuleEngineStatsQueryRepository {
         return jdbcTemplate.query(sql.toString(), params, QUEUE_LAG_TABLE_MAPPER);
     }
 
-    public long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs) {
+    public Long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs) {
         StringBuilder sql = new StringBuilder("""
-                SELECT COALESCE(SUM(latest.lag), 0)
+                SELECT SUM(latest.lag)
                 FROM (
                     SELECT DISTINCT ON (queue_tenant_id, queue_id) lag
                     FROM rule_node_queue_lag_stats
@@ -270,8 +270,8 @@ public class RuleEngineStatsQueryRepository {
                     ORDER BY queue_tenant_id, queue_id, bucket_time DESC
                 ) latest
                 """);
-        Long lag = jdbcTemplate.queryForObject(sql.toString(), params, Long.class);
-        return lag == null ? 0L : lag;
+        // null when no queue has a fresh sample: lag unknown, not 0.
+        return jdbcTemplate.queryForObject(sql.toString(), params, Long.class);
     }
 
     private static String bucketExpression(Long intervalMs) {

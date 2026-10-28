@@ -87,7 +87,7 @@ public class JpaRuleEngineMonitoringDao implements RuleEngineMonitoringDao {
     }
 
     @Override
-    public long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs) {
+    public Long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs) {
         return statsQueryRepository.findLastQueueLag(tenantId, queueIds, staleAfterMs);
     }
 

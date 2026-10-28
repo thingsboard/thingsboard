@@ -46,7 +46,7 @@ public interface RuleEngineMonitoringDao {
     /**
      * Sum of each queue's latest lag; a queue with no row in the last {@code staleAfterMs} counts as 0.
      */
-    long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs);
+    Long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs);
 
     Map<UUID, UUID> findRuleChainIdsByRuleNodeIds(Collection<UUID> ruleNodeIds);
 

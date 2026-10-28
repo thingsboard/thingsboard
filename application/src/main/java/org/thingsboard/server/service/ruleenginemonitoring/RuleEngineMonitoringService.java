@@ -324,7 +324,7 @@ public class RuleEngineMonitoringService {
                 return;
             }
 
-            Map<String, Long> lagByGroup = kafkaAdmin.getTotalLagForGroupsBulk(collectGroups(queueToGroups));
+            Map<String, Long> lagByGroup = kafkaAdmin.findTotalLagForGroups(collectGroups(queueToGroups));
             List<QueueLagStatsRow> rows = buildLagRows(queueToGroups, lagByGroup, System.currentTimeMillis());
 
             queueLagFlushRowsCounter.add(rows.size());
@@ -365,9 +365,11 @@ public class RuleEngineMonitoringService {
         List<QueueLagStatsRow> rows = new ArrayList<>();
         for (Map.Entry<QueueShortInfo, List<String>> entry : queueToGroups.entrySet()) {
             QueueShortInfo queue = entry.getKey();
-            long lag = entry.getValue().stream()
-                    .mapToLong(group -> lagByGroup.getOrDefault(group, 0L))
-                    .sum();
+            if (!lagByGroup.keySet().containsAll(entry.getValue())) {
+                // Lag unknown: write nothing, so "last" doesn't read it as drained.
+                continue;
+            }
+            long lag = entry.getValue().stream().mapToLong(lagByGroup::get).sum();
             // A 0 row is what tells "last" the backlog has drained.
             rows.add(new QueueLagStatsRow(bucketTime, queue.tenantId(), queue.id(), lag));
         }

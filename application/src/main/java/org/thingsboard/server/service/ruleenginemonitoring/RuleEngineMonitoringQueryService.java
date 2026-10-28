@@ -130,7 +130,7 @@ public class RuleEngineMonitoringQueryService {
                 new QueueLagTableQuery(resolveQueueTenantId(tenantId), startTs, endTs, dims, queueIds));
     }
 
-    public long getCurrentQueueLag(UUID tenantId, List<UUID> queueIds) {
+    public Long getCurrentQueueLag(UUID tenantId, List<UUID> queueIds) {
         return dao.findLastQueueLag(resolveQueueTenantId(tenantId), queueIds, lagStaleAfterMs());
     }
 

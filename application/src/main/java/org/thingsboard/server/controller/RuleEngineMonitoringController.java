@@ -149,7 +149,7 @@ public class RuleEngineMonitoringController extends BaseController {
     }
 
     @GetMapping("/queueLagStats/last")
-    public long getCurrentQueueLag(
+    public Long getCurrentQueueLag(
             @RequestParam(required = false) List<UUID> queueIds
     ) throws ThingsboardException {
         checkRuleChainPermission(Operation.READ);

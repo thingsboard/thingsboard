@@ -6707,13 +6707,12 @@ public class RestClient implements Closeable {
                 });
     }
 
-    public long getCurrentQueueLag(List<UUID> queueIds) {
+    public Long getCurrentQueueLag(List<UUID> queueIds) {
         Map<String, Object> params = new HashMap<>();
         params.put("queueIds", queueIds);
-        Long lag = getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/last", params,
+        return getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/last", params,
                 new ParameterizedTypeReference<Long>() {
                 });
-        return lag != null ? lag : 0L;
     }
 
     public List<MergedStatsTableRow> getMergedStatsTable(long startTs, long endTs, String groupBy, List<UUID> queueIds,
