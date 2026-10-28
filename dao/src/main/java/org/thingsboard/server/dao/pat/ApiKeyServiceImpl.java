@@ -86,10 +86,10 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             if (isPublishEvictRequired(old, apiKey)) {
                 // the cache is keyed by value, so the entry to evict is the one the old value still resolves to
                 publishEvictEvent(new ApiKeyEvictEvent(old.getValue()));
-                if (!Objects.equals(old.getValue(), apiKey.getValue())) {
-                    // a failed authentication attempt may have cached a miss for the new value
-                    publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
-                }
+            }
+            if (value != null && (old == null || !value.equals(old.getValue()))) {
+                // a failed authentication attempt may have cached a miss for the explicitly provided value (edge sync)
+                publishEvictEvent(new ApiKeyEvictEvent(value));
             }
             return savedApiKey;
         } catch (Exception e) {
@@ -187,8 +187,9 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     }
 
     /**
-     * Authentication resolves keys by value straight from the cache, so a changed enabled flag or value (explicit-value
-     * save, e.g. edge sync) requires eviction. A newly created key has nothing cached yet, hence the null check.
+     * Authentication resolves keys by value straight from the cache, so a changed enabled flag or value requires
+     * evicting the entry under the old value. Null old means create: there is no previous value to evict; a cached
+     * miss for an explicitly provided value is evicted separately in saveApiKey.
      */
     private static boolean isPublishEvictRequired(ApiKey old, ApiKey apiKey) {
         return old != null

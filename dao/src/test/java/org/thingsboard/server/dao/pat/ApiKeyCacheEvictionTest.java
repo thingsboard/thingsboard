@@ -8,9 +8,11 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.pat.ApiKey;
@@ -67,6 +69,22 @@ public class ApiKeyCacheEvictionTest extends AbstractServiceTest {
         Mockito.verify(apiKeyCache).evict(ApiKeyCacheKey.of(originalValue));
         Mockito.verify(apiKeyCache).evict(ApiKeyCacheKey.of(newValue));
         Mockito.verify(apiKeyCache, Mockito.times(2)).evict(Mockito.any(ApiKeyCacheKey.class));
+    }
+
+    @Test
+    public void testCreateApiKeyWithExplicitValue_evictsValueExactlyOnce() {
+        // the edge uplink creates the key on the cloud with a preset id and the value generated on the edge
+        ApiKeyInfo apiKeyInfo = createApiKeyInfo();
+        ApiKeyId apiKeyId = new ApiKeyId(Uuids.timeBased());
+        apiKeyInfo.setId(apiKeyId);
+        apiKeyInfo.setCreatedTime(Uuids.unixTimestamp(apiKeyId.getId()));
+        String value = "edge-api-key-value-" + StringUtils.randomAlphanumeric(32);
+        Mockito.clearInvocations(apiKeyCache);
+
+        apiKeyService.saveApiKey(tenantId, apiKeyInfo, value, false);
+
+        Mockito.verify(apiKeyCache).evict(ApiKeyCacheKey.of(value));
+        Mockito.verify(apiKeyCache, Mockito.times(1)).evict(Mockito.any(ApiKeyCacheKey.class));
     }
 
     @Test
