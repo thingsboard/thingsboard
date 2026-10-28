@@ -8,8 +8,9 @@
   <div class="tb-form-panel-title" translate>debug-settings.label</div>
   @if (maxMessagesCount) {
     <div class="hint-container">
-      <div class="tb-form-hint tb-primary-fill tb-flex center">
-        {{ 'debug-settings.hint.main-limited' | translate: { entity: (entityLabel | translate | lowercase), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+      <div class="tb-form-hint tb-primary-fill">
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ 'debug-settings.hint.main-limited' | translate: { entity: (entityLabel | translate | lowercase), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}</span>
       </div>
     </div>
   }

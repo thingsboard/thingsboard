@@ -8,9 +8,8 @@
     padding-bottom: 12px;
     background-color: var(--mat-dialog-container-color, white);
 
-    .tb-hint-available-params {
-      color: rgba(0, 0, 0, 0.54);
-      letter-spacing: 0.4px;
+    .tb-form-hint {
+      align-items: center;
 
       .content {
         vertical-align: middle;

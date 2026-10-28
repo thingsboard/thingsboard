@@ -6,7 +6,10 @@
 -->
 <form [formGroup]="aggregationOptionsConfigForm" class="tb-aggregation-options-form tb-form-panel no-border">
   <div class="tb-form-panel-title">{{ 'timewindow.edit-aggregation-functions-list' | translate }}</div>
-  <div class="tb-form-hint tb-primary-fill">{{ 'timewindow.edit-aggregation-functions-list-hint' | translate }}</div>
+  <div class="tb-form-hint tb-primary-fill">
+    <mat-icon>info_outline</mat-icon>
+    <span>{{ 'timewindow.edit-aggregation-functions-list-hint' | translate }}</span>
+  </div>
   <div class="tb-form-table no-gap no-padding">
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell">{{"timewindow.allowed-aggregation-functions" | translate }}</div>

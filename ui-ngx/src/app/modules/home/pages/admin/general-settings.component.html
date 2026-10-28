@@ -71,7 +71,10 @@
           <tb-toggle-option value="mqtt">{{ 'admin.device-connectivity.mqtt-s' | translate }}</tb-toggle-option>
           <tb-toggle-option value="coap">{{ 'admin.device-connectivity.coap-s' | translate }}</tb-toggle-option>
         </tb-toggle-select>
-        <div class="tb-form-hint tb-primary-fill">{{ 'admin.device-connectivity.hint' | translate }}</div>
+        <div class="tb-form-hint tb-primary-fill">
+          <mat-icon>info_outline</mat-icon>
+          <span>{{ 'admin.device-connectivity.hint' | translate }}</span>
+        </div>
       </div>
       <form [formGroup]="deviceConnectivitySettingsForm" (ngSubmit)="saveDeviceConnectivitySettings()"
             class="tb-form-panel no-border no-padding">

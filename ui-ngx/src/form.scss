@@ -186,6 +186,29 @@
     color: rgba(0, 0, 0, 0.6);
     white-space: normal;
     border-radius: 6px;
+    &.tb-primary-fill {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      > .mat-icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+        line-height: 20px;
+        color: var(--tb-primary-500);
+        + * {
+          flex: 1;
+          min-width: 0;
+        }
+      }
+      &.tb-form-hint-warning > .mat-icon {
+        color: #FAA405;
+      }
+      &.tb-form-hint-error > .mat-icon {
+        color: #D12730;
+      }
+    }
   }
   .tb-form-row {
     height: 100%;

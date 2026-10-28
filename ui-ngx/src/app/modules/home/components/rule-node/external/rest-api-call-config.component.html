@@ -51,7 +51,10 @@
         {{ 'rule-node-config.headers' | translate }}
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <div class="tb-form-hint tb-primary-fill mb-4" [innerHTML]="'rule-node-config.headers-hint' | translate | safe: 'html'"></div>
+        <div class="tb-form-hint tb-primary-fill mb-4">
+          <mat-icon>info_outline</mat-icon>
+          <span [innerHTML]="'rule-node-config.headers-hint' | translate | safe: 'html'"></span>
+        </div>
         <tb-kv-map-config
           required="false"
           formControlName="headers"
@@ -131,7 +134,10 @@
             {{ 'rule-node-config.ignore-request-body' | translate }}
           </mat-slide-toggle>
           @if(!restApiCallConfigForm.get('ignoreRequestBody').value) {
-            <div class="tb-form-hint tb-primary-fill mb-4" [innerHTML]="'rule-node-config.request-body-template-hint' | translate | safe: 'html'"></div>
+            <div class="tb-form-hint tb-primary-fill mb-4">
+              <mat-icon>info_outline</mat-icon>
+              <span [innerHTML]="'rule-node-config.request-body-template-hint' | translate | safe: 'html'"></span>
+            </div>
             <mat-form-field class="mat-block" subscriptSizing="dynamic" appearance="outline" floatLabel="always">
               <mat-label translate>rule-node-config.request-body-template</mat-label>
               <textarea matInput

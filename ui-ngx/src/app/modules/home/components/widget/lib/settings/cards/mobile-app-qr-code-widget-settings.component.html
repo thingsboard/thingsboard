@@ -18,10 +18,10 @@
       <div class="tb-form-panel" formGroupName="qrCodeConfig">
         <div class="tb-form-panel-title" translate>widget-config.card-style</div>
         <div class="tb-form-hint tb-primary-fill">
-          {{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}
+          <mat-icon>info_outline</mat-icon>
+          <span>{{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}</span>
           @if (displayConfigurationHint) {
             <button mat-icon-button color="primary" class="tb-mat-24"
-              style="position: absolute;top: 9px"
               (click)="navigateToMobileAppSettings($event)">
               <mat-icon class="material-icons tb-mat-16">open_in_new</mat-icon>
             </button>

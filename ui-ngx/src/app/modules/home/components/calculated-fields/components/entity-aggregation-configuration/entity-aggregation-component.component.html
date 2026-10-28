@@ -11,7 +11,8 @@
       {{ 'calculated-fields.arguments' | translate }}
     </div>
     <div class="tb-form-hint tb-primary-fill hint-container">
-      {{ 'calculated-fields.entity-aggregation.argument-hint' | translate }}
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ 'calculated-fields.entity-aggregation.argument-hint' | translate }}</span>
     </div>
     <tb-entity-aggregation-arguments-table formControlName="arguments"
                                            [entityId]="entityId"
@@ -91,7 +92,8 @@
                               formControlName="offsetSec">
           </tb-time-unit-input>
           <div class="tb-form-hint tb-primary-fill hint-container">
-            {{ hint }}
+            <mat-icon>info_outline</mat-icon>
+            <span>{{ hint }}</span>
           </div>
         }
       </div>

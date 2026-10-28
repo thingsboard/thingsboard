@@ -9,7 +9,8 @@
   <div class="tb-config-panel-content tb-form-panel no-border no-padding">
     @if (hint) {
       <div class="tb-form-hint tb-primary-fill hint-container">
-        {{ hint | translate }}
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ hint | translate }}</span>
       </div>
     }
     <div class="tb-form-panel no-border no-padding">

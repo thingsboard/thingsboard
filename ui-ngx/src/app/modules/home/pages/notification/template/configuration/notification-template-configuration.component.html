@@ -6,13 +6,16 @@
 -->
 <section class="tb-template-header">
   <div class="tb-form-panel-title" translate>notification.customize-messages</div>
-  <div class="tb-form-panel-hint tb-hint-available-params">
-    <span class="content">{{ 'notification.input-fields-support-templatization' | translate }}</span>
-    <span tb-help-popup="{{ NotificationTemplateTypeTranslateMap.get(notificationType).helpId }}"
-          tb-help-popup-placement="bottom"
-          trigger-style="letter-spacing:0.25px;font-size:12px;"
-          [tb-help-popup-style]="{maxWidth: '800px'}"
-          trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+  <div class="tb-form-hint tb-primary-fill">
+    <mat-icon>info_outline</mat-icon>
+    <span>
+      <span class="content">{{ 'notification.input-fields-support-templatization' | translate }}</span>
+      <span tb-help-popup="{{ NotificationTemplateTypeTranslateMap.get(notificationType).helpId }}"
+            tb-help-popup-placement="bottom"
+            trigger-style="letter-spacing:0.25px;font-size:12px;"
+            [tb-help-popup-style]="{maxWidth: '800px'}"
+            trigger-text="{{ 'notification.see-documentation' | translate }}"></span>
+    </span>
   </div>
 </section>
 <section [formGroup]="templateConfigurationForm" class="tb-form-panel no-border no-padding">

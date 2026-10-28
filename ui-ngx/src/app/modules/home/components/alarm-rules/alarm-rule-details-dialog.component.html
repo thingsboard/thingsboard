@@ -18,7 +18,8 @@
         <textarea matInput [formControl]="alarmDetailsControl" rows="5"
           placeholder="{{ 'alarm-rule.alarm-rule-additional-info-placeholder' | translate }}"></textarea>
       </mat-form-field>
-      <div class="tb-form-hint tb-primary-fill flex items-center gap-2">
+      <div class="tb-form-hint tb-primary-fill">
+        <mat-icon>info_outline</mat-icon>
         <span [innerHTML]="'alarm-rule.alarm-rule-additional-info-hint' | translate | safe: 'html'"></span>
       </div>
     </div>
