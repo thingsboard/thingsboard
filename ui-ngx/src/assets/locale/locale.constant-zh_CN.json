@@ -4853,7 +4853,7 @@
     "type-aws-kinesis-description": "实时视频和数据流服务。",
     "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "开放去中心化的 LoRaWAN 网络。",
-    "type-tti": "The Things Stack Cloud",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "用于大规模运营私有 LoRaWAN 网络的软件。",
     "type-chirpstack": "ChirpStack",
     "type-chirpstack-description": "LoRaWAN 网络配置服务器。",

@@ -4853,7 +4853,7 @@
     "type-aws-kinesis-description": "Υπηρεσία ροής δεδομένων και βίντεο σε πραγματικό χρόνο.",
     "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Ανοιχτό και αποκεντρωμένο δίκτυο LoRaWAN.",
-    "type-tti": "The Things Stack Cloud",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Λογισμικό για ιδιωτικά δίκτυα LoRaWAN.",
     "type-chirpstack": "ChirpStack",
     "type-chirpstack-description": "Διακομιστής διαμόρφωσης δικτύου LoRaWAN.",

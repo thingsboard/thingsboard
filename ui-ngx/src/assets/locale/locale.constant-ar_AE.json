@@ -3626,7 +3626,7 @@
         "type-ibm-watson-iot-description": "خدمة مُدارة بالكامل على السحابة.",
         "type-ttn": "The Things Stack Sandbox",
         "type-ttn-description": "شبكة LoRaWAN المفتوحة والمركزة.",
-        "type-tti": "The Things Stack Cloud",
+        "type-tti": "The Things Stack Cloud & Enterprise",
         "type-tti-description": "برنامج لتشغيل شبكات LoRaWAN الخاصة بنطاق واسع.",
         "type-chirpstack": "ChirpStack",
         "type-chirpstack-description": "خادم تكوين شبكة LoRaWAN.",

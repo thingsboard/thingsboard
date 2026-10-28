@@ -26,6 +26,7 @@ import { CustomerId } from '@shared/models/id/customer-id';
 import { generateSecret } from '@core/utils';
 import { ConverterService } from '@core/http/converter.service';
 import { IntegrationService } from '@core/http/integration.service';
+import { DialogService } from '@core/services/dialog.service';
 import { Converter, ConverterType } from '@shared/models/converter.models';
 import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-generation.service';
 import {
@@ -41,6 +42,7 @@ import {
   installMethodLabels as INSTALL_METHOD_LABELS,
   InstallMethod,
   InstallStepType,
+  pastedPortOf,
   stepTypeAliasMap
 } from '@shared/models/iot-hub/device-package.models';
 import { mergeMap } from 'rxjs/operators';
@@ -89,13 +91,9 @@ export interface ConnectionCheck {
   status: 'idle' | 'checking' | 'success' | 'error';
   // The values the status is for, as JSON: only the fields the integration template uses
   checkedValues?: string;
-  // The result shows next to the button for a few seconds after the check
-  resultVisible?: boolean;
-  resultTimer?: ReturnType<typeof setTimeout>;
 }
 
 const ENTITY_STEP_MIN_DELAY = 2000;
-const CONNECTION_CHECK_RESULT_MS = 5000;
 const DEFAULT_RANDOM_SIZE = 20;
 const TRANSPORT_HOST_FIELD_KEY = 'tbTransportHost';
 const TRANSPORT_PORT_FIELD_KEY = 'tbTransportPort';
@@ -261,6 +259,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private converterService: ConverterService,
     private integrationService: IntegrationService,
     private aiDashboardGenerationService: AiDashboardGenerationService,
+    private dialogService: DialogService,
     private translate: TranslateService
   ) {
     super(store, router, dialogRef);
@@ -333,7 +332,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   ngOnDestroy() {
     this.formTemplateSubscriptions.forEach(subscription => subscription.unsubscribe());
-    this.wizardSteps?.forEach(ws => clearTimeout(ws.connectionCheck?.resultTimer));
     for (const url of this.zipImages.values()) {
       URL.revokeObjectURL(url);
     }
@@ -437,10 +435,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       step.formGroup.markAllAsTouched();
       return;
     }
-    // Checks the connection unless these values were already checked; after a failed check,
-    // Next continues anyway.
+    // Checks the connection unless these values already passed the check; a failed check stops here
     const check = this.connectionCheckOf(step);
-    if (check && check.checkedValues !== this.checkedValuesOf(step, check)) {
+    if (check && !(check.status === 'success' && check.checkedValues === this.checkedValuesOf(step, check))) {
       if (check.status === 'checking' || !(await this.checkConnection(step))) {
         return;
       }
@@ -459,30 +456,23 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return undefined;
     }
     if (ws.connectionCheck === undefined) {
-      const template = this.findIntegrationTemplate(ws);
+      const template = this.hasCheckConnectionField(ws) ? this.findIntegrationTemplate(ws) : undefined;
       ws.connectionCheck = template ? { template, status: 'idle' } : null;
     }
     return ws.connectionCheck ?? undefined;
   }
 
-  /** True when the package puts the Check connection button under one of its fields. */
-  hasCheckConnectionField(ws: WizardStep): boolean {
+  /** True when a field of the package's form asks Next to check the connection. */
+  private hasCheckConnectionField(ws: WizardStep): boolean {
     return !!ws.formFields?.some(field => field.checkConnection);
   }
 
-  /** The result of the last check, while the form still has the values it checked. */
-  connectionCheckResult(ws: WizardStep): ConnectionCheck['status'] | undefined {
-    const check = this.connectionCheckOf(ws);
-    if (!check || check.status === 'idle') {
-      return undefined;
-    }
-    if (check.status === 'checking' || check.checkedValues === this.checkedValuesOf(ws, check)) {
-      return check.status;
-    }
-    return undefined;
+  /** True while Next checks the connection; the form and the buttons wait for it. */
+  connectionChecking(ws: WizardStep | undefined): boolean {
+    return !!ws && ws.connectionCheck?.status === 'checking';
   }
 
-  async checkConnection(ws: WizardStep): Promise<boolean> {
+  private async checkConnection(ws: WizardStep): Promise<boolean> {
     const check = this.connectionCheckOf(ws);
     if (!check) {
       return true;
@@ -515,29 +505,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       check.status = 'error';
     }
     check.checkedValues = this.checkedValuesOf(ws, check);
-    check.resultVisible = true;
-    clearTimeout(check.resultTimer);
-    check.resultTimer = setTimeout(() => {
-      check.resultVisible = false;
-      this.cdr.detectChanges();
-    }, CONNECTION_CHECK_RESULT_MS);
     this.cdr.detectChanges();
-    return check.status === 'success';
-  }
-
-  /** What shows next to the button: the spinner while checking, then the result for a few seconds. */
-  connectionCheckMessage(ws: WizardStep): ConnectionCheck['status'] | undefined {
-    const check = this.connectionCheckOf(ws);
-    if (check?.status === 'checking') {
-      return 'checking';
+    if (check.status === 'error') {
+      // The backend's error is not shown: the package's text names the fields to check
+      const checkedField = ws.formFields.find(field => field.checkConnection);
+      const method = this.installMethodLabels.get(this.selectedInstallMethod) || this.selectedInstallMethod;
+      await firstValueFrom(this.dialogService.alert(
+        this.translate.instant('iot-hub.connection-check-failed-title', { method }),
+        checkedField?.checkConnectionFailedText || this.translate.instant('iot-hub.connection-check-failed-text'),
+        this.translate.instant('iot-hub.back-to-configuration')));
     }
-    return check?.resultVisible && check.checkedValues === this.checkedValuesOf(ws, check) ? check.status : undefined;
-  }
-
-  /** True when the last check of the current values failed, so Next continues anyway. */
-  get continueAnyway(): boolean {
-    const step = this.currentWizardStep;
-    return !!step && this.connectionCheckResult(step) === 'error';
+    return check.status === 'success';
   }
 
   /**
@@ -1140,6 +1118,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private cleanFormStep(ws: WizardStep): void {
     for (const field of ws.formFields) {
       const control = ws.formGroup.controls[field.key];
+      const port = pastedPortOf(field, control?.value);
+      const portControl = field.portField ? ws.formGroup.controls[field.portField] : undefined;
+      if (port !== undefined && portControl?.enabled) {
+        portControl.setValue(port, { emitEvent: false });
+      }
       const cleaned = cleanFormFieldValue(field, control?.value);
       if (control?.enabled && cleaned !== control.value) {
         control.setValue(cleaned, { emitEvent: false });
@@ -1150,6 +1133,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private cleanedFormValues(ws: WizardStep): Record<string, any> {
     const values = ws.formGroup.getRawValue();
     for (const field of ws.formFields) {
+      const port = pastedPortOf(field, values[field.key]);
+      if (port !== undefined && field.portField in values) {
+        values[field.portField] = port;
+      }
       values[field.key] = cleanFormFieldValue(field, values[field.key]);
     }
     return values;

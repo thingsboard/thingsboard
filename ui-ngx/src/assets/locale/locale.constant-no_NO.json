@@ -4853,7 +4853,7 @@
     "type-aws-kinesis-description": "Tjeneste for sanntidsvideo og datastrømmer.",
     "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Åpent og desentralisert LoRaWAN-nettverk.",
-    "type-tti": "The Things Stack Cloud",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Programvare for å drive private LoRaWAN-nettverk i stor skala.",
     "type-chirpstack": "ChirpStack",
     "type-chirpstack-description": "Konfigurasjonsserver for LoRaWAN-nettverk.",

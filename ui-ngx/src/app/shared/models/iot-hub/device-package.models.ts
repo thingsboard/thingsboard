@@ -110,7 +110,7 @@ export const installMethodLabels = new Map<string, string>(
     [InstallMethod.INTEGRATION_TCP, 'TCP Integration'],
     [InstallMethod.INTEGRATION_THINGPARK, 'ThingPark Wireless'],
     [InstallMethod.INTEGRATION_THINGPARK_ENTERPRISE, 'ThingPark Enterprise'],
-    [InstallMethod.INTEGRATION_TTI, 'The Things Stack Cloud'],
+    [InstallMethod.INTEGRATION_TTI, 'The Things Stack Cloud & Enterprise'],
     [InstallMethod.INTEGRATION_TTN, 'The Things Stack Sandbox'],
     [InstallMethod.INTEGRATION_TUYA, 'Tuya'],
     [InstallMethod.INTEGRATION_UDP, 'UDP Integration']
@@ -291,12 +291,16 @@ export interface FormFieldDefinition {
   defaultValueTemplateHelpText?: string;
   // 'advanced' puts the field into the collapsed Advanced settings panel below the form
   section?: FormFieldSection;
-  // Shows the Check connection button of the integration the form configures under this field
+  // Next checks the connection of the integration the form configures and stops on a failure
   checkConnection?: boolean;
+  // With checkConnection: the text of the dialog a failed check shows
+  checkConnectionFailedText?: string;
   // A regular expression whose matches are removed from the value when the user leaves the field
   // and before the step is committed, e.g. "@ttn$" for an ID copied with its suffix.
   // validators check the cleaned value.
   cleanupPattern?: string;
+  // Key of the field that takes the port pasted at the end of this field's value, e.g. "host:8883"
+  portField?: string;
   // Set by the install dialog for the fields it adds, not by packages:
   // help popup shown under the field, and the text of its trigger
   helpPopupId?: string;
@@ -311,8 +315,22 @@ export interface FormFieldDefinition {
 
 export type FormFieldSection = 'advanced';
 
-export const cleanFormFieldValue = (field: FormFieldDefinition, value: any): any =>
-  field.cleanupPattern && typeof value === 'string' ? value.replace(new RegExp(field.cleanupPattern, 'g'), '') : value;
+const PASTED_PORT_PATTERN = /:(\d{1,5})\/*\s*$/;
+
+/** The value without the port that portField takes, then without the cleanupPattern matches. */
+export const cleanFormFieldValue = (field: FormFieldDefinition, value: any): any => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  const withoutPort = field.portField ? value.replace(PASTED_PORT_PATTERN, '') : value;
+  return field.cleanupPattern ? withoutPort.replace(new RegExp(field.cleanupPattern, 'g'), '') : withoutPort;
+};
+
+/** The port at the end of the value of a field with portField, e.g. 8883 for "eu1.example.com:8883". */
+export const pastedPortOf = (field: FormFieldDefinition, value: any): number | undefined => {
+  const match = field.portField && typeof value === 'string' ? PASTED_PORT_PATTERN.exec(value) : null;
+  return match ? Number(match[1]) : undefined;
+};
 
 export interface EntityStepOutput {
   id: string;
