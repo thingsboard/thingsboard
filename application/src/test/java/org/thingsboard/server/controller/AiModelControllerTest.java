@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.AiModelInfo;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
@@ -24,13 +25,17 @@ import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -393,10 +398,25 @@ public class AiModelControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
     }
 
+    @Test
+    public void sendChatRequestToAiModel_whenReadOnlyCustomerUser_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        loginReadOnlyCustomerUser();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
+
+        // THEN
+        result.andExpect(status().isForbidden())
+                .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
+    }
+
     /* --- Customer permission tests --- */
 
     @Test
-    public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowInvokeOnly() throws Exception {
+    public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowReadAndInvokeOnly() throws Exception {
         // GIVEN
         loginTenantAdmin();
         var modelConfig = constructValidOpenAiModel("Test model");
@@ -406,30 +426,44 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // WHEN / THEN
         assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
-        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "READ")).isTrue();
         assertThat(hasAiModelPermission(model, "WRITE")).isFalse();
         assertThat(hasAiModelPermission(model, "DELETE")).isFalse();
     }
 
     @Test
-    public void aiModelPermission_whenCustomerAccessDisabled_shouldDenyInvokeForCustomerAdminOnly() throws Exception {
+    public void aiModelPermission_whenCustomerAccessDisabled_shouldDenyReadAndInvokeForCustomerAdminOnly() throws Exception {
         // GIVEN
         loginTenantAdmin();
         var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
 
         // WHEN / THEN
         assertThat(model.isCustomerAccessEnabled()).isFalse();
+        assertThat(hasAiModelPermission(model, "READ")).isTrue();
         assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
 
         loginCustomerAdminUser();
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
         assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
     }
 
     @Test
-    public void aiModelPermission_whenCustomerUserGrantedReadOnAllResources_shouldDenyReadAndInvoke() throws Exception {
+    public void aiModelPermission_whenReadOnlyCustomerUser_shouldAllowReadOnly() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+        var model = saveModelWithBlockedBaseUrl();
+        loginReadOnlyCustomerUser();
+
+        // WHEN / THEN
+        assertThat(hasAiModelPermission(model, "READ")).isTrue();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
+    }
+
+    @Test
+    public void aiModelPermission_whenCustomerUserHasNoRole_shouldDenyReadAndInvoke() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
         loginCustomerUser();
 
         // WHEN / THEN
@@ -671,7 +705,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModelInfos_whenCustomerUserWithoutInvokePermission_shouldReturnForbidden() throws Exception {
+    public void getAiModelInfos_whenCustomerUserHasNoRole_shouldReturnForbidden() throws Exception {
         // GIVEN
         loginCustomerUser();
 
@@ -680,6 +714,21 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // THEN
         result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void getAiModelInfos_whenReadOnlyCustomerUser_shouldReturnCustomerAccessibleInfos() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var accessible = saveModelWithBlockedBaseUrl("Accessible model", true);
+        saveModelWithBlockedBaseUrl("Not accessible model", false);
+        loginReadOnlyCustomerUser();
+
+        // WHEN
+        PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
+
+        // THEN
+        assertThat(infos.getData()).containsExactly(new AiModelInfo(accessible));
     }
 
     @Test
@@ -740,6 +789,64 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(byModelIdAsc.getData()).containsExactly(new AiModelInfo(anthropicModel), new AiModelInfo(geminiModel));
         assertThat(searchByProvider.getData()).containsExactly(new AiModelInfo(geminiModel));
         assertThat(searchByModelId.getData()).containsExactly(new AiModelInfo(anthropicModel));
+    }
+
+    /**
+     * The infos query mirrors the filter, search and sort rules of the full models query in a separate repository,
+     * so both endpoints must return the same models in the same order for the same parameters.
+     */
+    @Test
+    public void getAiModelInfos_shouldMatchGetAiModelsForSameFilterSearchAndSort() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Support assistant")
+                .configuration(AnthropicChatModelConfig.builder()
+                        .providerConfig(new AnthropicProviderConfig("test-api-key"))
+                        .modelId("claude-sonnet-4-0")
+                        .build())
+                .customerAccessEnabled(true)
+                .build(), AiModel.class);
+        doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Internal analytics")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("gemini-2.5-pro")
+                        .build())
+                .build(), AiModel.class);
+        var openAiModel = constructValidOpenAiModel("Report assistant");
+        openAiModel.setCustomerAccessEnabled(true);
+        doPost("/api/ai/model", openAiModel, AiModel.class);
+
+        List<String> filters = List.of("", "customerAccessEnabled=true&", "customerAccessEnabled=false&");
+        List<String> searches = Arrays.asList(null, "assistant", "google ai", "sonnet");
+        List<SortOrder> sortOrders = Arrays.asList(null,
+                SortOrder.of("createdTime", SortOrder.Direction.DESC),
+                SortOrder.of("name", SortOrder.Direction.ASC),
+                SortOrder.of("provider", SortOrder.Direction.DESC),
+                SortOrder.of("modelId", SortOrder.Direction.ASC));
+
+        for (String filter : filters) {
+            for (String search : searches) {
+                for (SortOrder sortOrder : sortOrders) {
+                    var pageLink = new PageLink(10, 0, search, sortOrder);
+
+                    // WHEN
+                    PageData<AiModel> models = doGetTypedWithPageLink("/api/ai/model?" + filter, new TypeReference<>() {}, pageLink);
+                    PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?" + filter, new TypeReference<>() {}, pageLink);
+
+                    // THEN
+                    assertThat(infos.getData())
+                            .as("filter '%s', search '%s', sort %s", filter, search, sortOrder)
+                            .extracting(AiModelInfo::getId)
+                            .containsExactlyElementsOf(models.getData().stream().map(AiModel::getId).toList());
+                    assertThat(infos.getTotalElements()).isEqualTo(models.getTotalElements());
+                }
+            }
+        }
     }
 
     @Test
@@ -1050,6 +1157,19 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
     private TbChatRequest constructChatRequest() {
         return new TbChatRequest(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))), null);
+    }
+
+    // The default Customer User role, which grants read-only operations on all resources
+    private void loginReadOnlyCustomerUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(customerId);
+        user.setEmail("read-only-customer@thingsboard.org");
+        EntityGroupInfo customerUsers = findGroupByOwnerIdTypeAndName(customerId, EntityType.USER, EntityGroup.GROUP_CUSTOMER_USERS_NAME);
+        createUser(user, "customer", customerUsers.getId());
+        login(user.getEmail(), "customer");
     }
 
     private boolean hasAiModelPermission(AiModel model, String operation) throws Exception {

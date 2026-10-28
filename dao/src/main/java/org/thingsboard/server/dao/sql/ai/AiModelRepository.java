@@ -19,33 +19,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.AI_MODEL_MODEL_ID_EXPRESSION;
+import static org.thingsboard.server.dao.model.ModelConstants.AI_MODEL_PROVIDER_EXPRESSION;
+
 interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, ExportableEntityRepository<AiModelEntity> {
+
+    String FIND_BY_TENANT_ID_WHERE = " WHERE model.tenant_id = :tenantId" +
+            " AND (CAST(:customerAccessEnabled AS BOOLEAN) IS NULL OR model.customer_access_enabled = CAST(:customerAccessEnabled AS BOOLEAN))" +
+            " AND (:textSearch IS NULL" +
+            " OR model.name ILIKE '%' || :textSearch || '%'" +
+            " OR REPLACE(" + AI_MODEL_PROVIDER_EXPRESSION + ", '_', ' ') ILIKE '%' || :textSearch || '%'" +
+            " OR " + AI_MODEL_MODEL_ID_EXPRESSION + " ILIKE '%' || :textSearch || '%')";
 
     Optional<AiModelEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
     Optional<AiModelEntity> findByTenantIdAndName(UUID tenantId, String name);
 
     @Query(
-            value = """
-                    SELECT *
-                    FROM ai_model model
-                    WHERE model.tenant_id = :tenantId
-                      AND (CAST(:customerAccessEnabled AS BOOLEAN) IS NULL OR model.customer_access_enabled = CAST(:customerAccessEnabled AS BOOLEAN))
-                      AND (:textSearch IS NULL
-                        OR model.name ILIKE '%' || :textSearch || '%'
-                        OR REPLACE(model.configuration ->> 'provider', '_', ' ') ILIKE '%' || :textSearch || '%'
-                        OR model.configuration ->> 'modelId' ILIKE '%' || :textSearch || '%')
-                    """,
-            countQuery = """
-                    SELECT COUNT(*)
-                    FROM ai_model model
-                    WHERE model.tenant_id = :tenantId
-                      AND (CAST(:customerAccessEnabled AS BOOLEAN) IS NULL OR model.customer_access_enabled = CAST(:customerAccessEnabled AS BOOLEAN))
-                      AND (:textSearch IS NULL
-                        OR model.name ILIKE '%' || :textSearch || '%'
-                        OR REPLACE(model.configuration ->> 'provider', '_', ' ') ILIKE '%' || :textSearch || '%'
-                        OR (model.configuration ->> 'modelId') ILIKE '%' || :textSearch || '%')
-                    """,
+            value = "SELECT * FROM ai_model model" + FIND_BY_TENANT_ID_WHERE,
+            countQuery = "SELECT COUNT(*) FROM ai_model model" + FIND_BY_TENANT_ID_WHERE,
             nativeQuery = true
     )
     Page<AiModelEntity> findByTenantId(@Param("tenantId") UUID tenantId,

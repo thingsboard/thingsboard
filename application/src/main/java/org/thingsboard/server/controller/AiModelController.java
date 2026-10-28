@@ -123,8 +123,7 @@ class AiModelController extends BaseController {
     @ApiOperation(
             value = "Get AI model infos (getAiModelInfos)",
             notes = "Returns a page of AI model infos: AI models without the configuration and its provider credentials. " +
-                    "Requires the 'INVOKE' permission for AI models. " +
-                    "Customer users only get the models with customer access enabled, which are the ones they can send chat requests to. " +
+                    "Customer users only get the models with customer access enabled. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -144,7 +143,7 @@ class AiModelController extends BaseController {
             @RequestParam(required = false) Boolean customerAccessEnabled
     ) throws ThingsboardException {
         var user = getCurrentUser();
-        accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.INVOKE);
+        accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), user.isCustomerUser() ? Boolean.TRUE : customerAccessEnabled, pageLink);
     }

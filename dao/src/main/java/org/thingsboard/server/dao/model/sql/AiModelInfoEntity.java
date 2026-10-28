@@ -35,10 +35,10 @@ public class AiModelInfoEntity extends BaseVersionedEntity<AiModelInfo> {
     @Column(name = ModelConstants.AI_MODEL_CUSTOMER_ACCESS_ENABLED_COLUMN_NAME)
     private boolean customerAccessEnabled;
 
-    @Formula("configuration ->> 'provider'")
+    @Formula(ModelConstants.AI_MODEL_PROVIDER_EXPRESSION)
     private String provider;
 
-    @Formula("configuration ->> 'modelId'")
+    @Formula(ModelConstants.AI_MODEL_MODEL_ID_EXPRESSION)
     private String modelId;
 
     public AiModelInfoEntity() {}

@@ -36,8 +36,8 @@ public class AiModelEntity extends BaseVersionedEntity<AiModel> {
 
     public static final Map<String, String> COLUMN_MAP = Map.of(
             "createdTime", "created_time",
-            "provider", "(configuration ->> 'provider')",
-            "modelId", "(configuration ->> 'modelId')"
+            "provider", ModelConstants.AI_MODEL_PROVIDER_EXPRESSION,
+            "modelId", ModelConstants.AI_MODEL_MODEL_ID_EXPRESSION
     );
 
     public static final Set<String> ALLOWED_SORT_PROPERTIES = Collections.unmodifiableSet(
