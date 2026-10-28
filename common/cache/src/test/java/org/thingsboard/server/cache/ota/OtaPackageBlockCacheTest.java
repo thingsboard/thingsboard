@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.cache.ota;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -227,6 +227,30 @@ class OtaPackageBlockCacheTest {
         OtaPackageBlockCache cache = newCache(1024);
         assertThat(cache.getChunk(KEY_A, 8, -1)).isEmpty();
         assertThat(fetchCount.get()).isZero();
+    }
+
+    @Test
+    void chunkSpanningWarmBlockAndLostRedisKey_returnsEmptyAndEvictsStaleBlocks() {
+        OtaPackageBlockCache cache = newCache(1024);
+        cache.getChunk(KEY_A, 8, 0); // warms block 0
+
+        store.remove(KEY_A); // Redis key lost (TTL, eviction, flush, failover)
+
+        // spans warm block 0 + missing block 1: must not return a short chunk the device would take as EOF
+        assertThat(cache.getChunk(KEY_A, 12, 0)).isEmpty();
+
+        store.put(KEY_A, data20); // tb-core refills the key
+        assertThat(cache.getChunk(KEY_A, 12, 0)).containsExactly(Arrays.copyOfRange(data20, 0, 12));
+    }
+
+    @Test
+    void chunkPastBlockAlignedEof_staysShortNonEmpty() {
+        byte[] data16 = sequence(2 * BLOCK_SIZE); // EOF exactly at a block boundary
+        store.put("aligned", data16);
+        OtaPackageBlockCache cache = newCache(1024);
+
+        // chunk range 12..23 runs past EOF at 16: a legitimately short last chunk, not an inconsistency
+        assertThat(cache.getChunk("aligned", 12, 1)).containsExactly(Arrays.copyOfRange(data16, 12, 16));
     }
 
     @Test

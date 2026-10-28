@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.cache.ota;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -93,7 +93,14 @@ public class OtaPackageBlockCache {
         for (long b = firstBlock; b <= lastBlock; b++) {
             byte[] block = loadBlock(key, (int) b);
             if (block == null) {
-                break; // absent or past EOF
+                if (out.size() > 0 && !isEofAtBlockBoundary(key, b)) {
+                    // A warm L1 block was followed by a block Redis no longer has (key lost or being refilled).
+                    // A short non-empty chunk would look like EOF to the device and flash a truncated image,
+                    // so drop the stale blocks and answer empty, exactly like the legacy GETRANGE path.
+                    evict(key);
+                    return new byte[0];
+                }
+                break; // past EOF
             }
             long blockStart = b * blockSize;
             int from = (int) Math.max(start - blockStart, 0);
@@ -106,6 +113,12 @@ public class OtaPackageBlockCache {
             }
         }
         return out.toByteArray();
+    }
+
+    /** package bytes are immutable, so a missing block after a full one is consistent only when EOF sits exactly at the block boundary */
+    private boolean isEofAtBlockBoundary(String key, long block) {
+        long length = lengthFetcher.length(key);
+        return length > 0 && length <= block * blockSize;
     }
 
     public byte[] getAll(String key) {
@@ -122,7 +135,8 @@ public class OtaPackageBlockCache {
         for (int b = 0; b < blocks; b++) {
             byte[] block = loadBlock(key, b);
             if (block == null) {
-                return null; // package vanished or changed mid-read
+                evict(key); // key lost mid-read; drop warm blocks so the next read refetches from Redis
+                return null;
             }
             int n = Math.min(block.length, result.length - pos);
             System.arraycopy(block, 0, result, pos, n);
