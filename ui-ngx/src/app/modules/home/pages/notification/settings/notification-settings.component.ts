@@ -129,7 +129,14 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
             });
           }
           this.notificationSettings.setControl('prefs', this.fb.array(notificationSettingsControls), {emitEvent: false});
-          this.save();
+          const resetPrefs: {[key: string]: NotificationUserSetting} = {};
+          Object.keys(this.userPrefs).forEach(key => {
+            resetPrefs[key] = {
+              enabled: true,
+              enabledDeliveryMethods: this.notificationDeliveryMethods.reduce((a, v) => ({ ...a, [v]: true}), {})
+            };
+          });
+          this.save(resetPrefs);
         }
       }
     );
@@ -178,8 +185,8 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
     return this.notificationSettings.get('prefs') as UntypedFormArray;
   }
 
-  save(): void {
-    const settings = {prefs: deepClone(this.userPrefs)};
+  save(basePrefs = this.userPrefs): void {
+    const settings = {prefs: deepClone(basePrefs)};
     this.notificationSettings.getRawValue().prefs.forEach(value => {
       const key = value.name;
       delete value.name;

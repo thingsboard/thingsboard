@@ -13,6 +13,9 @@
     @media #{$mat-gt-sm} {
       width: 800px;
     }
+    @media #{$mat-md} {
+      width: 90%;
+    }
     .mat-mdc-card-content {
       display: flex;
       flex-direction: column;
@@ -27,19 +30,20 @@
       min-height: 0;
     }
     .delivery-method {
-      flex: 0 0 120px;
+      flex: 0 0 var(--tb-notification-delivery-method-width);
     }
     .notification-section {
       min-height: 0;
       border: 1px solid rgba(0, 0, 0, 0.12);
       overflow: auto;
       &-block {
+        --tb-notification-delivery-method-width: 120px;
         min-width: 720px;
       }
       .notification-header {
         position: sticky;
         top: 0;
-        z-index: 1;
+        z-index: 2;
         background-color: var(--mat-card-outlined-container-color, white);
       }
     }

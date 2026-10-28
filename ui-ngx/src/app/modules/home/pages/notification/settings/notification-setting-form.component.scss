@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 :host {
   .delivery-method {
-    flex: 0 0 120px;
+    flex: 0 0 var(--tb-notification-delivery-method-width);
   }
 
   .notification-type {
