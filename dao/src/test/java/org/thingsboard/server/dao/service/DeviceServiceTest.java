@@ -467,6 +467,48 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Assert.assertFalse(captor.getValue().isDeleted());
     }
 
+    @Test
+    public void testCredentialsLifecycleEmitsCorrectEvictionEvents() {
+        // pins the hook contract: create => (newId, null, false); rotate => (newId, oldId, false);
+        // delete => (id, null, true). A delete that reached hooks as deleted=false would downgrade the
+        // "revoked" marker to a tombstone and let an in-flight validation re-cache the dead token.
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Credentials lifecycle device");
+        device.setType("default");
+        Mockito.reset(credentialsEvictionHook);
+        Device savedDevice = deviceService.saveDevice(device);
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> created = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(created.capture());
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+        Assert.assertEquals(credentials.getCredentialsId(), created.getValue().getNewCredentialsId());
+        Assert.assertNull(created.getValue().getOldCredentialsId());
+        Assert.assertFalse(created.getValue().isDeleted());
+
+        Mockito.reset(credentialsEvictionHook);
+        String oldCredentialsId = credentials.getCredentialsId();
+        credentials.setCredentialsId("rotated-" + oldCredentialsId);
+        deviceCredentialsService.updateDeviceCredentials(tenantId, credentials);
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> rotated = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(rotated.capture());
+        Assert.assertEquals("rotated-" + oldCredentialsId, rotated.getValue().getNewCredentialsId());
+        Assert.assertEquals(oldCredentialsId, rotated.getValue().getOldCredentialsId());
+        Assert.assertFalse(rotated.getValue().isDeleted());
+
+        Mockito.reset(credentialsEvictionHook);
+        deviceCredentialsService.deleteDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+
+        ArgumentCaptor<DeviceCredentialsEvictEvent> deleted = ArgumentCaptor.forClass(DeviceCredentialsEvictEvent.class);
+        Mockito.verify(credentialsEvictionHook).onDeviceCredentialsEvict(deleted.capture());
+        Assert.assertEquals("rotated-" + oldCredentialsId, deleted.getValue().getNewCredentialsId());
+        Assert.assertNull(deleted.getValue().getOldCredentialsId());
+        Assert.assertTrue(deleted.getValue().isDeleted());
+
+        deviceService.deleteDevice(tenantId, savedDevice.getId());
+    }
+
     private Device saveDeviceForCustomer(TenantId tenantId, CustomerId customerId, String name) {
         Device device = new Device();
         device.setTenantId(tenantId);

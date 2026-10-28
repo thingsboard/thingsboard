@@ -546,6 +546,7 @@ message TokenValidationCacheEntryProto {
   int64 createdTime = 1;
   ValidateDeviceCredentialsResponseMsg response = 2; // deviceProfile always cleared
   bool revoked = 3; // written by core on credential rotation/delete; exempt from negative_ttl
+  bool tombstone = 4; // short-lived "just invalidated" marker written by core; treated as a miss, blocks late stores
 }
 
 message GetOrCreateDeviceFromGatewayRequestMsg {

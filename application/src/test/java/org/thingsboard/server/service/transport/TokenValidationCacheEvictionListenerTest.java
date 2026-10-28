@@ -9,6 +9,7 @@ import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.transport.auth.cache.TokenValidationCacheService;
@@ -20,8 +21,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -40,67 +44,85 @@ class TokenValidationCacheEvictionListenerTest {
     }
 
     @Test
-    void givenRotation_thenOldIdGetsRevokedMarker_newIdEvicted() {
-        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", "oldId"));
+    void givenRotation_thenRevokedMarkerForOldIdWrittenBeforeTombstoneForNewId() {
+        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", "oldId", false));
 
-        verify(cache).evict(TokenValidationCacheService.cacheKey("newId"));
-        ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<TokenValidationCacheEntryProto> value = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
-        verify(cache).put(key.capture(), value.capture());
-        assertThat(key.getValue()).isEqualTo(TokenValidationCacheService.cacheKey("oldId")).startsWith("vt:");
-        assertThat(value.getValue().getRevoked()).isTrue();
+        ArgumentCaptor<TokenValidationCacheEntryProto> revoked = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
+        ArgumentCaptor<TokenValidationCacheEntryProto> tombstone = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
+        InOrder order = inOrder(cache);
+        order.verify(cache).put(eq(TokenValidationCacheService.cacheKey("oldId")), revoked.capture(), eq(0L));
+        order.verify(cache).put(eq(TokenValidationCacheService.cacheKey("newId")), tombstone.capture(),
+                eq(TokenValidationCacheService.TOMBSTONE_TTL_SEC));
+        assertThat(revoked.getValue().getRevoked()).isTrue();
+        assertThat(tombstone.getValue().getTombstone()).isTrue();
+        assertThat(tombstone.getValue().getRevoked()).isFalse();
+        verify(cache, never()).evict(anyString());
     }
 
     @Test
-    void givenCreate_thenNewIdEvictedOnly() {
-        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", null));
+    void givenCreate_thenNewIdGetsShortLivedTombstoneOnly() {
+        listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", null, false));
 
-        verify(cache).evict(TokenValidationCacheService.cacheKey("newId"));
-        verify(cache, never()).put(anyString(), any());
+        ArgumentCaptor<TokenValidationCacheEntryProto> value = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
+        verify(cache).put(eq(TokenValidationCacheService.cacheKey("newId")), value.capture(),
+                eq(TokenValidationCacheService.TOMBSTONE_TTL_SEC));
+        assertThat(value.getValue().getTombstone()).isTrue();
         verifyNoMoreInteractions(cache);
     }
 
     @Test
-    void givenDelete_thenRevokedMarkerForDeletedId() {
+    void givenDelete_thenRevokedMarkerForDeletedIdOnly() {
         listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("delId", null, true));
 
-        ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<TokenValidationCacheEntryProto> value = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
-        verify(cache).put(key.capture(), value.capture());
-        assertThat(key.getValue()).isEqualTo(TokenValidationCacheService.cacheKey("delId"));
+        verify(cache).put(eq(TokenValidationCacheService.cacheKey("delId")), value.capture(), eq(0L));
         assertThat(value.getValue().getRevoked()).isTrue();
-        verify(cache, never()).evict(anyString());
+        verifyNoMoreInteractions(cache);
+    }
+
+    @Test
+    void givenRevokedMarkerWriteFails_thenTombstoneIsStillWritten() {
+        doThrow(new RuntimeException("redis down"))
+                .when(cache).put(eq(TokenValidationCacheService.cacheKey("oldId")), any(), anyLong());
+
+        assertThatCode(() -> listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("newId", "oldId", false)))
+                .doesNotThrowAnyException();
+
+        verify(cache).put(eq(TokenValidationCacheService.cacheKey("newId")), any(),
+                eq(TokenValidationCacheService.TOMBSTONE_TTL_SEC));
     }
 
     @Test
     void givenNoCacheBean_thenNoop() {
         TokenValidationCacheEvictionListener noop = new TokenValidationCacheEvictionListener(Optional.empty());
-        assertThatCode(() -> noop.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
+        assertThatCode(() -> noop.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b", false))).doesNotThrowAnyException();
     }
 
     @Test
     void givenCacheFailure_thenWarningCarriesHashedKeyButNoCredentialsId() {
-        doThrow(new RuntimeException("redis down")).when(cache).evict(anyString());
+        doThrow(new RuntimeException("redis down")).when(cache).put(anyString(), any(), anyLong());
         Logger logger = (Logger) LoggerFactory.getLogger(TokenValidationCacheEvictionListener.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
         try {
-            listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("secret-new-token", "secret-old-token"));
+            listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("secret-new-token", "secret-old-token", false));
         } finally {
             logger.detachAppender(appender);
         }
 
-        assertThat(appender.list).hasSize(1);
-        String message = appender.list.get(0).getFormattedMessage();
-        assertThat(message).doesNotContain("secret-new-token").doesNotContain("secret-old-token")
-                .contains(TokenValidationCacheService.cacheKey("secret-new-token"));
+        assertThat(appender.list).hasSize(2);
+        for (ILoggingEvent event : appender.list) {
+            assertThat(event.getFormattedMessage()).doesNotContain("secret-new-token").doesNotContain("secret-old-token");
+        }
+        assertThat(appender.list.get(0).getFormattedMessage()).contains(TokenValidationCacheService.cacheKey("secret-old-token"));
+        assertThat(appender.list.get(1).getFormattedMessage()).contains(TokenValidationCacheService.cacheKey("secret-new-token"));
     }
 
     @Test
     void givenCacheFailure_thenNotPropagated() {
-        doThrow(new RuntimeException("redis down")).when(cache).evict(anyString());
-        assertThatCode(() -> listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b"))).doesNotThrowAnyException();
+        doThrow(new RuntimeException("redis down")).when(cache).put(anyString(), any(), anyLong());
+        assertThatCode(() -> listener.onDeviceCredentialsEvict(new DeviceCredentialsEvictEvent("a", "b", false))).doesNotThrowAnyException();
     }
 
 }

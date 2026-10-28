@@ -151,6 +151,26 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     @Override
+    public void put(K key, V value, long ttlSec) {
+        put(key, value, ttlSec, RedisStringCommands.SetOption.UPSERT);
+    }
+
+    @Override
+    public void putIfAbsent(K key, V value, long ttlSec) {
+        put(key, value, ttlSec, RedisStringCommands.SetOption.SET_IF_ABSENT);
+    }
+
+    private void put(K key, V value, long ttlSec, RedisStringCommands.SetOption setOption) {
+        if (!cacheEnabled) {
+            return;
+        }
+        Expiration expiration = ttlSec > 0 ? Expiration.from(ttlSec, TimeUnit.SECONDS) : this.cacheTtl;
+        try (var connection = connectionFactory.getConnection()) {
+            connection.stringCommands().set(getRawKey(key), getRawValue(value), expiration, setOption);
+        }
+    }
+
+    @Override
     public void evict(K key) {
         if (!cacheEnabled) {
             return;

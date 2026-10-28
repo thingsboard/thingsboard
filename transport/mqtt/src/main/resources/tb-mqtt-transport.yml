@@ -140,11 +140,11 @@ transport:
   # Size of the thread pool that executes transport API callbacks (session registration, telemetry/attribute and RPC responses, entity update notifications, and the tenant profile fetch on a cache miss). Bounds how many such callbacks - including those that block on a backend round-trip - can run concurrently.
   callback_thread_pool_size: "${TB_TRANSPORT_CALLBACK_THREAD_POOL_SIZE:20}"
   # Device credentials validation parameters
-  validation_cache:
+  validation:
     # Ask tb-core to omit the device profile from credentials validation responses (all validation flows);
     # the transport resolves the profile from its local profile cache instead. Slims validation responses.
     # Requires an upgraded tb-core that supports profile negotiation; older cores ignore the flag.
-    profile_negotiation_enabled: "${TRANSPORT_VALIDATION_CACHE_PROFILE_NEGOTIATION_ENABLED:false}"
+    profile_negotiation_enabled: "${TRANSPORT_VALIDATION_PROFILE_NEGOTIATION_ENABLED:false}"
   mqtt:
     # MQTT bind-address
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"

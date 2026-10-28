@@ -149,7 +149,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     private boolean statsEnabled;
     @Value("${transport.callback_thread_pool_size:20}")
     private int callbackThreadPoolSize;
-    @Value("${transport.validation_cache.profile_negotiation_enabled:false}")
+    @Value("${transport.validation.profile_negotiation_enabled:false}")
     private boolean profileNegotiationEnabled;
 
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
@@ -354,18 +354,31 @@ public class DefaultTransportService extends TransportActivityManager implements
             doProcess(transportType, protoMsg, null, callback);
             return;
         }
-        // Cache I/O runs on the cache's own bounded executor; a saturated executor completes immediately as a miss.
+        // L2 cache I/O runs on the cache's own bounded executor; a saturated executor completes immediately as a miss.
+        // The continuation is handed to the callback executor and never runs on a cache I/O thread: on a miss it
+        // performs the core request (a Kafka send that can block), and a hit may resolve the device profile with a
+        // blocking round trip. The directExecutor callback itself only enqueues, which is cheap and non-blocking.
         Futures.addCallback(tokenValidationCacheService.lookupAsync(token), new FutureCallback<>() {
             @Override
             public void onSuccess(Optional<TransportProtos.TokenValidationCacheEntryProto> cached) {
-                continueTokenValidation(transportType, protoMsg, token, cached, callback);
+                dispatchTokenValidation(transportType, protoMsg, token, cached, callback);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                continueTokenValidation(transportType, protoMsg, token, Optional.empty(), callback);
+                dispatchTokenValidation(transportType, protoMsg, token, Optional.empty(), callback);
             }
         }, MoreExecutors.directExecutor());
+    }
+
+    private void dispatchTokenValidation(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String token,
+                                         Optional<TransportProtos.TokenValidationCacheEntryProto> cached,
+                                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        try {
+            transportCallbackExecutor.execute(() -> continueTokenValidation(transportType, protoMsg, token, cached, callback));
+        } catch (Throwable t) {
+            callback.onError(t);
+        }
     }
 
     private void continueTokenValidation(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String token,
@@ -376,17 +389,28 @@ public class DefaultTransportService extends TransportActivityManager implements
                 doProcess(transportType, protoMsg, token, callback);
                 return;
             }
-            // a hit may resolve the device profile with a blocking core round-trip, so it runs on the callback executor
-            transportCallbackExecutor.execute(() -> {
-                try {
-                    TransportProtos.ValidateDeviceCredentialsResponseMsg cachedMsg = cached.get().getResponse();
-                    ValidateDeviceCredentialsResponse response = cachedMsg.hasDeviceInfo() ?
-                            toValidateResponse(cachedMsg, transportType, true) : ValidateDeviceCredentialsResponse.builder().build();
-                    callback.onSuccess(response);
-                } catch (Throwable t) {
-                    callback.onError(t);
-                }
-            });
+            TransportProtos.ValidateDeviceCredentialsResponseMsg cachedMsg = cached.get().getResponse();
+            if (!cachedMsg.hasDeviceInfo()) {
+                callback.onSuccess(ValidateDeviceCredentialsResponse.builder().build());
+                return;
+            }
+            ValidateDeviceCredentialsResponse response = null;
+            Throwable hitFailure = null;
+            try {
+                response = toValidateResponse(cachedMsg, transportType, true);
+            } catch (Throwable t) {
+                hitFailure = t;
+            }
+            if (response != null && response.getDeviceProfile() != null) {
+                callback.onSuccess(response);
+            } else {
+                // the cached entry points at a device profile that no longer resolves (e.g. the device was moved and
+                // the old profile deleted): drop the entry and fall through to a regular core validation, so the
+                // device keeps working off the fresh state instead of failing on the same entry until the TTL
+                log.debug("Token validation cache hit could not resolve the device profile, falling back to core validation", hitFailure);
+                tokenValidationCacheService.evictAsync(token);
+                doProcess(transportType, protoMsg, token, callback);
+            }
         } catch (Throwable t) {
             callback.onError(t);
         }
@@ -407,13 +431,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         log.trace("Processing msg: {}", requestMsg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(
                 requestMsg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
-        // not directExecutor: the transform may fetch the device profile through the same request template (see doProcess)
-        ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg),
-                tmp -> {
-                    TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
-                    return toValidateResponse(msg, DeviceTransportType.DEFAULT, isProfileOmittedByCore(msg));
-                }, transportCallbackExecutor);
-        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+        doProcess(DeviceTransportType.DEFAULT, protoMsg, null, callback);
     }
 
     @Override

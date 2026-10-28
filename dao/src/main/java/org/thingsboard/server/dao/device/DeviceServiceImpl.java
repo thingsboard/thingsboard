@@ -612,8 +612,9 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     /**
      * Tenant reassignment keeps the device credentials, so the credentials eviction hooks are not triggered by a
      * credentials save. Without this, a transport-side cached validation result would keep serving the old tenant
-     * until its TTL. The event carries no old id and is not a delete, so hooks delete the cached entry (no revoked
-     * marker): the credentials stay valid. Runs after commit when a transaction is active. Fail-open.
+     * until its TTL. The event carries no old id and is not a delete (see {@link DeviceCredentialsEvictionHook}), so
+     * hooks invalidate the cached entry with a short-lived tombstone (no revoked marker): the credentials stay valid.
+     * Runs after commit when a transaction is active. Fail-open.
      */
     void evictCredentialsFromValidationCaches(TenantId tenantId, DeviceId deviceId) {
         if (credentialsEvictionHooks.isEmpty()) {
@@ -624,7 +625,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             if (credentials == null || StringUtils.isEmpty(credentials.getCredentialsId())) {
                 return;
             }
-            DeviceCredentialsEvictEvent event = new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null);
+            DeviceCredentialsEvictEvent event = new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null, false);
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                     @Override

@@ -108,18 +108,47 @@ class DefaultTransportServiceTokenValidationTest {
     }
 
     @Test
-    void givenPositiveHitWithProfileTransportMismatch_whenProcess_thenOnError() {
+    void givenPositiveHitWithProfileTransportMismatch_whenProcess_thenEntryDroppedAndRevalidatedThroughCore() {
         when(cache.isEnabled()).thenReturn(true);
         when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(positiveEntry())));
         when(profileCache.get(profileId)).thenReturn(profile(DeviceTransportType.MQTT));
 
         service.process(DeviceTransportType.COAP, request(), callback);
 
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(callback).onError(captor.capture());
-        assertThat(captor.getValue()).isInstanceOf(IllegalStateException.class);
-        verify(callback, never()).onSuccess(any());
-        verify(template, never()).send(any());
+        // the broken entry is dropped and the request falls through to a regular core validation
+        verify(cache).evictAsync("tok");
+        verify(template).send(any());
+        verify(callback).onSuccess(any());
+        verify(callback, never()).onError(any());
+    }
+
+    @Test
+    void givenPositiveHitWhoseProfileNoLongerResolves_whenProcess_thenEntryDroppedAndRevalidatedThroughCore() {
+        // the cached entry points at a deleted device profile: every transport evicted it, the core cannot return it
+        when(cache.isEnabled()).thenReturn(true);
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(positiveEntry())));
+        when(profileCache.get(profileId)).thenReturn(null);
+
+        service.process(DeviceTransportType.DEFAULT, request(), callback);
+
+        verify(cache).evictAsync("tok");
+        verify(template).send(any());
+        verify(callback).onSuccess(any());
+        verify(callback, never()).onError(any());
+    }
+
+    @Test
+    void givenPositiveHitAndProfileFetchThrows_whenProcess_thenEntryDroppedAndRevalidatedThroughCore() {
+        when(cache.isEnabled()).thenReturn(true);
+        when(cache.lookupAsync("tok")).thenReturn(Futures.immediateFuture(Optional.of(positiveEntry())));
+        when(profileCache.get(profileId)).thenThrow(new RuntimeException("profile fetch timed out"));
+
+        service.process(DeviceTransportType.DEFAULT, request(), callback);
+
+        verify(cache).evictAsync("tok");
+        verify(template).send(any());
+        verify(callback).onSuccess(any());
+        verify(callback, never()).onError(any());
     }
 
     @Test

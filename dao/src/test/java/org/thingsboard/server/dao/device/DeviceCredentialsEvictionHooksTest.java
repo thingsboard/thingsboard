@@ -22,7 +22,7 @@ class DeviceCredentialsEvictionHooksTest {
         DeviceCredentialsEvictionHook failing = mock(DeviceCredentialsEvictionHook.class);
         DeviceCredentialsEvictionHook healthy = mock(DeviceCredentialsEvictionHook.class);
         doThrow(new RuntimeException("cache down")).when(failing).onDeviceCredentialsEvict(any());
-        DeviceCredentialsEvictEvent event = new DeviceCredentialsEvictEvent("secret-new-token", "secret-old-token");
+        DeviceCredentialsEvictEvent event = new DeviceCredentialsEvictEvent("secret-new-token", "secret-old-token", false);
 
         LogCapture logs = new LogCapture(DeviceCredentialsEvictionHooks.class, Level.WARN);
         try {
@@ -39,7 +39,7 @@ class DeviceCredentialsEvictionHooksTest {
 
     @Test
     void givenNoHooks_whenInvokeAll_thenNoop() {
-        assertThatCode(() -> DeviceCredentialsEvictionHooks.invokeAll(List.of(), new DeviceCredentialsEvictEvent("a", null)))
+        assertThatCode(() -> DeviceCredentialsEvictionHooks.invokeAll(List.of(), new DeviceCredentialsEvictEvent("a", null, false)))
                 .doesNotThrowAnyException();
     }
 

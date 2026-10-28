@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -98,7 +99,9 @@ class TokenValidationCacheServiceTest {
 
     private void verifyNothingWritten() {
         verify(l2, never()).put(anyString(), any());
+        verify(l2, never()).put(anyString(), any(), anyLong());
         verify(l2, never()).putIfAbsent(anyString(), any());
+        verify(l2, never()).putIfAbsent(anyString(), any(), anyLong());
     }
 
     @Test
@@ -166,14 +169,44 @@ class TokenValidationCacheServiceTest {
     }
 
     @Test
-    void givenRevokedMarkerInL2_whenLookupTwice_thenKeptInL1() {
+    void givenRevokedMarkerInL2_whenLookupTwice_thenNotKeptInL1() {
+        // markers stay out of L1 so a re-created credential (core replaces the marker in L2 with a tombstone)
+        // takes effect on this pod within one L2 read, not after the L1 TTL
         l2Returns(TokenValidationCacheService.revokedMarker(now.get()));
         TokenValidationCacheService s = service(true, 30, 20);
 
         assertThat(s.lookup(TOKEN)).isPresent();
         assertThat(s.lookup(TOKEN)).isPresent();
 
-        verify(l2, times(1)).get(KEY);
+        verify(l2, times(2)).get(KEY);
+    }
+
+    @Test
+    void givenTombstoneInL2_whenLookup_thenMissAndNotKeptInL1() {
+        l2Returns(TokenValidationCacheService.tombstoneMarker(now.get()));
+        TokenValidationCacheService s = service(true, 30, 20);
+
+        assertThat(s.lookup(TOKEN)).isEmpty();
+        assertThat(s.lookup(TOKEN)).isEmpty();
+
+        verify(l2, times(2)).get(KEY);
+    }
+
+    @Test
+    void givenTombstonePresent_whenStorePositiveOrNegative_thenTombstoneIntact() {
+        InMemoryTransactionalCache<String, TokenValidationCacheEntryProto> store = new InMemoryTransactionalCache<>();
+        TokenValidationCacheEntryProto tombstone = TokenValidationCacheService.tombstoneMarker(now.get());
+        store.map.put(KEY, tombstone);
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, 30, 20);
+        created.add(s);
+        s.ioExecutor = MoreExecutors.directExecutor();
+
+        // responses produced before the invalidation arrive after the core wrote the tombstone
+        s.store(TOKEN, positive());
+        s.store(TOKEN, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
+
+        assertThat(store.map.get(KEY)).isEqualTo(tombstone);
+        assertThat(s.lookup(TOKEN)).isEmpty();
     }
 
     @Test
@@ -241,11 +274,12 @@ class TokenValidationCacheServiceTest {
     }
 
     @Test
-    void givenNotFoundResult_thenNegativeCachedAsUpsert() {
+    void givenNotFoundResult_thenNegativeCachedIfAbsentWithOwnRedisTtl() {
         service(true, 30, 20).store(TOKEN, withResult(CredentialsValidationResult.CREDENTIALS_NOT_FOUND));
         ArgumentCaptor<TokenValidationCacheEntryProto> c = ArgumentCaptor.forClass(TokenValidationCacheEntryProto.class);
-        verify(l2).put(eq(KEY), c.capture());
-        verify(l2, never()).putIfAbsent(anyString(), any());
+        verify(l2).putIfAbsent(eq(KEY), c.capture(), eq(30L));
+        verify(l2, never()).put(anyString(), any());
+        verify(l2, never()).put(anyString(), any(), anyLong());
         assertThat(c.getValue().getCreatedTime()).isEqualTo(now.get());
         assertThat(c.getValue().getRevoked()).isFalse();
         assertThat(c.getValue().getResponse().getResult()).isEqualTo(CredentialsValidationResult.CREDENTIALS_NOT_FOUND);
@@ -298,6 +332,44 @@ class TokenValidationCacheServiceTest {
         assertThat(s.lookup(TOKEN)).isPresent();
 
         assertThat(store.getCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void givenEntryInL1_whenLookupAsyncWithSaturatedExecutor_thenStillAnL1Hit() throws Exception {
+        // L1 is consulted on the calling thread, so in-memory hits keep working while the I/O executor is saturated
+        TokenValidationCacheEntryProto e = entry(now.get(), positive());
+        l2Returns(e);
+        TokenValidationCacheService s = service(true, 30, 20);
+        assertThat(s.lookup(TOKEN)).contains(e); // populates L1
+        s.ioExecutor = REJECTING;
+
+        ListenableFuture<Optional<TokenValidationCacheEntryProto>> f = s.lookupAsync(TOKEN);
+
+        assertThat(f.isDone()).isTrue();
+        assertThat(f.get()).contains(e);
+    }
+
+    @Test
+    void givenBrokenEntry_whenEvictAsync_thenGoneFromL1AndL2() {
+        InMemoryTransactionalCache<String, TokenValidationCacheEntryProto> store = new InMemoryTransactionalCache<>();
+        TokenValidationCacheService s = new TokenValidationCacheService(Optional.of(store), "redis", true, 30, 20);
+        created.add(s);
+        s.ioExecutor = MoreExecutors.directExecutor();
+        TokenValidationCacheEntryProto e = entry(now.get(), positive());
+        store.map.put(KEY, e);
+        assertThat(s.lookup(TOKEN)).contains(e); // populates L1
+
+        s.evictAsync(TOKEN);
+
+        assertThat(store.map.get(KEY)).isNull();
+        assertThat(s.lookup(TOKEN)).isEmpty();
+    }
+
+    @Test
+    void givenCacheThrows_whenEvictAsync_thenNoExceptionPropagates() {
+        doThrow(new RuntimeException("redis down")).when(l2).evict(anyString());
+        TokenValidationCacheService s = service(true, 30, 20);
+        assertThatCode(() -> s.evictAsync(TOKEN)).doesNotThrowAnyException();
     }
 
     @Test
