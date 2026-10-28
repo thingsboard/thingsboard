@@ -180,10 +180,13 @@ export class IotHubApiService {
   public registerDeviceInstall(
     versionId: string,
     descriptor: { type?: string; createdEntityIds: { entityType: string; id: string }[]; dashboardId?: { entityType: string; id: string }; selectedInstallMethod?: string; installState?: Record<string, any> },
-    config?: IotHubRequestConfig
+    config?: IotHubRequestConfig,
+    // Set for an update: the installed item takes the version and the descriptor
+    installedItemId?: string
   ): Observable<InstallItemVersionResult> {
+    const installedItemParam = installedItemId ? `&installedItemId=${installedItemId}` : '';
     return this.http.post<InstallItemVersionResult>(
-      `/api/iot-hub/device/register?versionId=${versionId}`,
+      `/api/iot-hub/device/register?versionId=${versionId}${installedItemParam}`,
       { type: 'DEVICE', ...descriptor },
       { params: this.buildParams(config) }
     );

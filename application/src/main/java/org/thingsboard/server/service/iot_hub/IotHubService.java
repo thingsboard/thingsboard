@@ -19,6 +19,8 @@ public interface IotHubService {
 
     InstallItemVersionResult registerDeviceInstall(SecurityUser user, String versionId, DeviceInstalledItemDescriptor descriptor);
 
+    InstallItemVersionResult registerDeviceUpdate(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId, DeviceInstalledItemDescriptor descriptor);
+
     void deleteInstalledItem(SecurityUser user, IotHubInstalledItemId installedItemId);
 
     InstalledItemKeptEntities findKeptEntities(TenantId tenantId, IotHubInstalledItemId installedItemId);

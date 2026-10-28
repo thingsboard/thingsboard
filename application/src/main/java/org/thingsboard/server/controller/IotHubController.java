@@ -92,9 +92,13 @@ public class IotHubController extends BaseController {
     @ResponseBody
     public InstallItemVersionResult registerDeviceInstall(
             @RequestParam String versionId,
+            @RequestParam(required = false) UUID installedItemId,
             @RequestBody JsonNode body) throws ThingsboardException {
         checkAllPermissions();
         DeviceInstalledItemDescriptor descriptor = JacksonUtil.treeToValue(body, DeviceInstalledItemDescriptor.class);
+        if (installedItemId != null) {
+            return iotHubService.registerDeviceUpdate(getCurrentUser(), new IotHubInstalledItemId(installedItemId), versionId, descriptor);
+        }
         return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor);
     }
 
