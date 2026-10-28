@@ -213,12 +213,34 @@ class RedisOtaPackageDataCacheTest {
     }
 
     @Test
-    void has_l1Off_usesOneByteGetRange() {
-        when(stringCommands.getRange(RAW_KEY, 0, 0)).thenReturn(new byte[]{1});
+    void has_usesRedisExists() {
+        when(keyCommands.exists(RAW_KEY)).thenReturn(true);
         RedisOtaPackageDataCache cache = cache("", 0, MIB, 0);
         assertThat(cache.has("id")).isTrue();
 
-        when(stringCommands.getRange(RAW_KEY, 0, 0)).thenReturn(new byte[0]);
+        when(keyCommands.exists(RAW_KEY)).thenReturn(false);
         assertThat(cache.has("id")).isFalse();
+        verifyNoInteractions(stringCommands);
+    }
+
+    @Test
+    void has_l1On_bypassesL1WhenRedisKeyIsLost() {
+        byte[] block = {1, 2, 3, 4};
+        when(stringCommands.getRange(RAW_KEY, 0, 3)).thenReturn(block);
+        RedisOtaPackageDataCache cache = cache("", 1024, 4, 0);
+
+        cache.get("id", 4, 0); // warms L1 block 0
+
+        when(keyCommands.exists(RAW_KEY)).thenReturn(false); // key lost: TTL, eviction, flush or failover
+        assertThat(cache.has("id")).isFalse();
+    }
+
+    @Test
+    void has_redisTtlOn_slidesExpire() {
+        when(keyCommands.exists(RAW_KEY)).thenReturn(true);
+
+        assertThat(cache("", 0, MIB, 30).has("id")).isTrue();
+
+        verify(keyCommands).expire(RAW_KEY, 1800);
     }
 }

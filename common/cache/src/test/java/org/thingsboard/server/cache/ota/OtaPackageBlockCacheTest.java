@@ -210,6 +210,26 @@ class OtaPackageBlockCacheTest {
     }
 
     @Test
+    void hugeDeviceSuppliedChunkSize_doesNotPreallocateAndReturnsPackage() {
+        OtaPackageBlockCache cache = newCache(1024);
+        assertThat(cache.getChunk(KEY_A, Integer.MAX_VALUE, 0)).containsExactly(data20);
+    }
+
+    @Test
+    void overflowingChunkStart_returnsEmptyWithoutFetching() {
+        OtaPackageBlockCache cache = newCache(1024);
+        assertThat(cache.getChunk(KEY_A, Integer.MAX_VALUE, Integer.MAX_VALUE)).isEmpty();
+        assertThat(fetchCount.get()).isZero();
+    }
+
+    @Test
+    void negativeChunkIndex_returnsEmptyWithoutFetching() {
+        OtaPackageBlockCache cache = newCache(1024);
+        assertThat(cache.getChunk(KEY_A, 8, -1)).isEmpty();
+        assertThat(fetchCount.get()).isZero();
+    }
+
+    @Test
     void budgetEviction_staysWithinMaxBytes() {
         OtaPackageBlockCache cache = newCache(2L * BLOCK_SIZE);
         store.put("big", sequence(4 * BLOCK_SIZE));

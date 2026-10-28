@@ -30,6 +30,13 @@ import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_DATA
  * during an active rollout.
  * <p>
  * {@link #put} uses SET NX: package bytes are immutable for a given key, so concurrent fills are idempotent.
+ * <p>
+ * {@link #has} always checks Redis directly ({@code EXISTS}), bypassing L1: tb-core uses it to decide whether to
+ * refill the key, and a warm L1 block must not mask a key lost to TTL, eviction, a flush or a failover.
+ * <p>
+ * {@link #evict} is only invoked in tb-core (transports have no OTA evict consumer), so after a package is deleted
+ * a transport may keep serving its cached blocks for up to {@code l1_ttl_minutes}. Package bytes are immutable and
+ * deletion requires the package to be unassigned first, so this only extends downloads already in flight.
  */
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
@@ -80,6 +87,16 @@ public class RedisOtaPackageDataCache implements OtaPackageDataCache {
             }
             slideExpire(connection, rawKey);
             return result;
+        }
+    }
+
+    @Override
+    public boolean has(String key) {
+        byte[] rawKey = toOtaPackageCacheKey(key);
+        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
+            Boolean exists = connection.keyCommands().exists(rawKey);
+            slideExpire(connection, rawKey);
+            return Boolean.TRUE.equals(exists);
         }
     }
 

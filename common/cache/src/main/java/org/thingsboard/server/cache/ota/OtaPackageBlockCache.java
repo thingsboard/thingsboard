@@ -78,17 +78,24 @@ public class OtaPackageBlockCache {
         if (chunkSize <= 0) {
             return getAll(key);
         }
+        if (chunk < 0) {
+            return new byte[0]; // a negative block index would make Redis GETRANGE read from the end of the value
+        }
         long start = (long) chunkSize * chunk;
         long end = start + chunkSize - 1;
-        int firstBlock = (int) (start / blockSize);
-        int lastBlock = (int) (end / blockSize);
-        ByteArrayOutputStream out = new ByteArrayOutputStream(chunkSize);
-        for (int b = firstBlock; b <= lastBlock; b++) {
-            byte[] block = loadBlock(key, b);
+        long firstBlock = start / blockSize;
+        long lastBlock = end / blockSize;
+        if (firstBlock > Integer.MAX_VALUE) {
+            return new byte[0]; // far past any package Redis can hold; the int cast below would overflow
+        }
+        // chunkSize is device-supplied and must not size allocations; the buffer grows to the bytes actually read
+        ByteArrayOutputStream out = new ByteArrayOutputStream(Math.min(chunkSize, blockSize));
+        for (long b = firstBlock; b <= lastBlock; b++) {
+            byte[] block = loadBlock(key, (int) b);
             if (block == null) {
                 break; // absent or past EOF
             }
-            long blockStart = (long) b * blockSize;
+            long blockStart = b * blockSize;
             int from = (int) Math.max(start - blockStart, 0);
             int to = (int) Math.min(end - blockStart + 1, block.length);
             if (from < to) {
