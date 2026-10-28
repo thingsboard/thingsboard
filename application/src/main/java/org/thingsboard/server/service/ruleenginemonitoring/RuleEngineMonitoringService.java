@@ -167,8 +167,8 @@ public class RuleEngineMonitoringService {
     }
 
     /**
-     * Records one outcome per message of a pack attempt. Successes are final; a timeout or failure is recorded only
-     * when the message won't be retried ({@code toReprocess}), so a retried message counts once, with its final result.
+     * Records one outcome per message of a pack attempt. An outcome is recorded only when the message won't be retried
+     * ({@code toReprocess}, which may include successes, e.g. with RETRY_ALL), so a message counts once, with its final result.
      */
     public void recordQueueOutcomes(TbMsgPackProcessingContext packCtx, Queue queue, String serviceId, Set<UUID> toReprocess) {
         long startTs = System.currentTimeMillis();
@@ -185,6 +185,7 @@ public class RuleEngineMonitoringService {
             timedOut.keySet().removeAll(toReprocess);
             failed.keySet().removeAll(succeeded.keySet());
             failed.keySet().removeAll(toReprocess);
+            succeeded.keySet().removeAll(toReprocess);
             recordOutcomesForMap(packCtx, timedOut, queueTenantId, queueId, serviceId, MetricType.TIMEOUT);
             recordOutcomesForMap(packCtx, failed, queueTenantId, queueId, serviceId, MetricType.FAILURE);
             recordOutcomesForMap(packCtx, succeeded, queueTenantId, queueId, serviceId, MetricType.SUCCESS);

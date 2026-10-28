@@ -10,6 +10,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -79,6 +80,24 @@ class RuleEngineMonitoringServiceQueueOutcomesTest {
         retry.onSuccess(ids.get(2));
         service.recordQueueOutcomes(retry, queue, "svc", Set.of());
         assertThat(outcomes()).containsExactlyInAnyOrderEntriesOf(Map.of(MetricType.SUCCESS, 1L, MetricType.TIMEOUT, 1L));
+    }
+
+    @Test
+    void givenSuccessfulMessagesToBeRetried_whenRecorded_thenOnlyFinalOutcomesCount() {
+        List<UUID> ids = msgIds(3);
+        TbMsgPackProcessingContext attempt = pack(ids);
+        attempt.onSuccess(ids.get(0));
+        attempt.onSuccess(ids.get(1));
+        attempt.onFailure(TenantId.SYS_TENANT_ID, ids.get(2), new RuleEngineException("failed"));
+
+        // RETRY_ALL reprocesses the whole pack, successes included.
+        service.recordQueueOutcomes(attempt, queue, "svc", Set.copyOf(ids));
+        assertThat(outcomes()).isEmpty();
+
+        TbMsgPackProcessingContext retry = pack(ids);
+        ids.forEach(retry::onSuccess);
+        service.recordQueueOutcomes(retry, queue, "svc", Set.of());
+        assertThat(outcomes()).containsExactlyInAnyOrderEntriesOf(Map.of(MetricType.SUCCESS, 3L));
     }
 
     @SuppressWarnings("unchecked")
