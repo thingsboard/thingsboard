@@ -211,7 +211,9 @@ export class IotHubActionsService {
       switchMap(item => this.openDeviceInstallDialog(item, {
         update: { installedItemId: installedItem.id.id, descriptor: installedItem.descriptor as DeviceInstalledItemDescriptor }
       })),
-      map(result => result === 'installed' ? 'updated' : result)
+      map(result => result === 'installed' ? 'updated' : result),
+      // The request has already shown the error
+      catchError(() => of(false))
     );
   }
 

@@ -66,6 +66,12 @@ export interface DeviceInstallDialogData {
  * The installed package an update changes. The steps of the new version change the entities
  * the package created in place, so the device keeps its id, credentials and history.
  */
+/** Update: an entity the installed version has for a step, and whether the user kept it as it was at install. */
+interface PreviousEntity {
+  output: EntityStepOutput;
+  useExisting: boolean;
+}
+
 export interface DeviceInstallUpdate {
   installedItemId: string;
   descriptor: DeviceInstalledItemDescriptor;
@@ -236,6 +242,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
   private installRegistered = false;
+  // Update: ids of the installed version's entities that were deleted since
+  private deletedPreviousIds = new Set<string>();
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -1093,8 +1101,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       .map(({ helpPopupId, helpPopupText, errorMessage, ...field }) => field);
     ws.formFields = [...packageFields, ...(ws.extraFormFields ?? [])];
     const controls: Record<string, UntypedFormControl> = {};
-    // In review mode, use stored values; an update starts from the values of the installed version; otherwise use defaults
-    const storedState = this.reviewMode ? this.data.installState : this.data.update?.descriptor.installState;
+    // In review mode, use stored values; an update starts from the values of the installed version,
+    // except the transport fields, which take the current Device connectivity settings; otherwise use defaults
+    const storedState = this.reviewMode ? this.data.installState :
+      ws.stateKey !== TRANSPORT_STEP_STATE_KEY ? this.data.update?.descriptor.installState : undefined;
     const storedValues = storedState?.[ws.stateKey ?? ws.label]?.formValues;
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
@@ -1265,7 +1275,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         const previous = await this.findPreviousEntity(ep.step);
         if (previous) {
           output = await this.updatePreviousEntity(ep.step, previous);
-          resolution = 'updated';
+          // Kept as 'use-existing', so the next update leaves it alone too
+          resolution = previous.useExisting ? 'use-existing' : 'updated';
         } else {
           // Pre-check for existing entity
           const existing = await this.preCheckEntity(ep.step);
@@ -1301,8 +1312,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.completed = true;
     try {
       const createdEntityIds = this.collectCreatedEntityIds();
-      const dashboardId = this.findCreatedDashboardId();
-      await firstValueFrom(
+      // Update: a version without a dashboard step keeps the installed dashboard, which the package still tracks
+      const previousDashboardId = this.data.update?.descriptor.dashboardId?.id;
+      const dashboardId = this.findCreatedDashboardId() ??
+        (createdEntityIds.some(id => id.id === previousDashboardId) ? { entityType: 'DASHBOARD', id: previousDashboardId } : undefined);
+      const result = await firstValueFrom(
         this.iotHubApiService.registerDeviceInstall(
           this.data.item.id as string,
           { createdEntityIds, dashboardId, selectedInstallMethod: this.selectedInstallMethod, installState: this.buildInstallState() },
@@ -1310,10 +1324,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           this.data.update?.installedItemId
         )
       );
+      if (!result.success) {
+        throw new Error(result.errorMessage);
+      }
       this.installRegistered = true;
-    } catch (_e) {
+    } catch (e: any) {
       // Non-critical — entities are created, tracking registration failed
-      console.error('Failed to register device install', _e);
+      console.error('Failed to register device install', e);
+      if (this.data.update) {
+        // The entities are already updated, but the installed item still has the old version: say so
+        ws.progressError = e?.error?.message || e?.message || 'Unknown error';
+        this.cdr.detectChanges();
+        return;
+      }
     }
 
     // Auto-advance to next step after a short pause
@@ -1630,6 +1653,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         template.id = { id: existing.id, entityType: 'DASHBOARD' };
         if (this.data.customerId) {
           template.customerId = new CustomerId(this.data.customerId);
+        } else if (keepName) {
+          // Update: the dashboard keeps its owner, e.g. the customer it was installed for
+          const current = await firstValueFrom(this.dashboardService.getDashboardInfo(existing.id, {ignoreErrors: true}));
+          template.customerId = current.customerId;
         }
         const result = await firstValueFrom(this.dashboardService.saveDashboard(template, null, {ignoreErrors: false}));
         return { id: result.id.id, name: result.title, url: `/dashboards/all/${result.id.id}` };
@@ -1696,56 +1723,68 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * Update: the entity the installed version created for this step. It is found by the id kept in
    * the install state, not by name, so an entity the user renamed is still found. Null when this
    * is not an update, when the installed version had no such step, or when the entity was deleted since.
+   * Any other failure to load it is thrown: creating the entity again would duplicate it.
    */
-  private async findPreviousEntity(step: DeviceInstallStep): Promise<EntityStepOutput | null> {
+  private async findPreviousEntity(step: DeviceInstallStep): Promise<PreviousEntity | null> {
     const installState = this.data.update?.descriptor.installState;
     // A connector lives in the gateway's attributes: its step runs again over the same gateway
     if (!installState || step.type === InstallStepType.GATEWAY_CONNECTOR) {
       return null;
     }
-    const id: string = (installState[step.name] || installState[this.resolveVariables(step.name)])?.entityOutput?.id;
+    const stored = installState[step.name] || installState[this.resolveVariables(step.name)];
+    const id: string = stored?.entityOutput?.id;
     if (!id) {
       return null;
     }
-    const config = {ignoreErrors: true};
     try {
-      switch (step.type) {
-        case InstallStepType.DEVICE_PROFILE: {
-          const profile = await firstValueFrom(this.deviceProfileService.getDeviceProfileInfo(id, config));
-          return { id, name: profile.name, url: `/profiles/deviceProfiles/${id}` };
-        }
-        case InstallStepType.DEVICE: {
-          const device = await firstValueFrom(this.deviceService.getDevice(id, config));
-          return { id, name: device.name, url: `/entities/devices/all/${id}` };
-        }
-        case InstallStepType.GATEWAY: {
-          const gateway = await firstValueFrom(this.deviceService.getDevice(id, config));
-          return { id, name: gateway.name, url: '/entities/gateways' };
-        }
-        case InstallStepType.DASHBOARD: {
-          const dashboard = await firstValueFrom(this.dashboardService.getDashboardInfo(id, config));
-          return { id, name: dashboard.title, url: `/dashboards/all/${id}` };
-        }
-        case InstallStepType.RULE_CHAIN: {
-          const ruleChain = await firstValueFrom(this.ruleChainService.getRuleChain(id, config));
-          return { id, name: ruleChain.name, url: `/ruleChains/${id}` };
-        }
-        case InstallStepType.UPLINK_CONVERTER:
-        case InstallStepType.DOWNLINK_CONVERTER: {
-          const converter = await firstValueFrom(this.converterService.getConverter(id, config));
-          const type = step.type === InstallStepType.UPLINK_CONVERTER ? ConverterType.UPLINK : ConverterType.DOWNLINK;
-          return converter.type === type ? { id, name: converter.name, url: `/converters/${id}` } : null;
-        }
-        case InstallStepType.INTEGRATION: {
-          const integration = await firstValueFrom(this.integrationService.getIntegration(id, config));
-          return { id, name: integration.name, url: `/integrations/${id}`, routingKey: integration.routingKey };
-        }
-        default:
-          return null;
+      const output = await this.loadPreviousEntity(step, id);
+      // The user chose to keep an entity they already had: the update doesn't overwrite it either
+      return output ? { output, useExisting: stored.resolution === 'use-existing' } : null;
+    } catch (e: any) {
+      if (e?.status === 404) {
+        // Deleted since: the step creates it again, and the package no longer tracks the old id
+        this.deletedPreviousIds.add(id);
+        return null;
       }
-    } catch (_e) {
-      // Deleted since: the step creates it again
-      return null;
+      throw e;
+    }
+  }
+
+  private async loadPreviousEntity(step: DeviceInstallStep, id: string): Promise<EntityStepOutput | null> {
+    const config = {ignoreErrors: true};
+    switch (step.type) {
+      case InstallStepType.DEVICE_PROFILE: {
+        const profile = await firstValueFrom(this.deviceProfileService.getDeviceProfileInfo(id, config));
+        return { id, name: profile.name, url: `/profiles/deviceProfiles/${id}` };
+      }
+      case InstallStepType.DEVICE: {
+        const device = await firstValueFrom(this.deviceService.getDevice(id, config));
+        return { id, name: device.name, url: `/entities/devices/all/${id}` };
+      }
+      case InstallStepType.GATEWAY: {
+        const gateway = await firstValueFrom(this.deviceService.getDevice(id, config));
+        return { id, name: gateway.name, url: '/entities/gateways' };
+      }
+      case InstallStepType.DASHBOARD: {
+        const dashboard = await firstValueFrom(this.dashboardService.getDashboardInfo(id, config));
+        return { id, name: dashboard.title, url: `/dashboards/all/${id}` };
+      }
+      case InstallStepType.RULE_CHAIN: {
+        const ruleChain = await firstValueFrom(this.ruleChainService.getRuleChain(id, config));
+        return { id, name: ruleChain.name, url: `/ruleChains/${id}` };
+      }
+      case InstallStepType.UPLINK_CONVERTER:
+      case InstallStepType.DOWNLINK_CONVERTER: {
+        const converter = await firstValueFrom(this.converterService.getConverter(id, config));
+        const type = step.type === InstallStepType.UPLINK_CONVERTER ? ConverterType.UPLINK : ConverterType.DOWNLINK;
+        return converter.type === type ? { id, name: converter.name, url: `/converters/${id}` } : null;
+      }
+      case InstallStepType.INTEGRATION: {
+        const integration = await firstValueFrom(this.integrationService.getIntegration(id, config));
+        return { id, name: integration.name, url: `/integrations/${id}`, routingKey: integration.routingKey };
+      }
+      default:
+        return null;
     }
   }
 
@@ -1753,11 +1792,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * Update: a device or gateway is kept as it is, so its credentials, which the firmware uses, don't change.
    * Other entities take the new version's template and keep their id and current name.
    */
-  private updatePreviousEntity(step: DeviceInstallStep, previous: EntityStepOutput): Promise<EntityStepOutput> {
-    if (step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
-      return this.useExistingEntity(step, previous);
+  private updatePreviousEntity(step: DeviceInstallStep, previous: PreviousEntity): Promise<EntityStepOutput> {
+    if (previous.useExisting || step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
+      return this.useExistingEntity(step, previous.output);
     }
-    return this.overwriteEntity(step, previous, true);
+    return this.overwriteEntity(step, previous.output, true);
   }
 
   private async preCheckEntity(step: DeviceInstallStep): Promise<EntityStepOutput | null> {
@@ -1825,7 +1864,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     // Update: what the installed version created and this one no longer uses stays with the package,
     // so deleting the package still deletes it
     for (const previousId of this.data.update?.descriptor.createdEntityIds ?? []) {
-      if (!ids.some(id => id.id === previousId.id)) {
+      if (!this.deletedPreviousIds.has(previousId.id) && !ids.some(id => id.id === previousId.id)) {
         ids.push(previousId);
       }
     }
