@@ -25,6 +25,7 @@ import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.ai.transport.TbAiTurnLink;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -57,9 +58,12 @@ class DefaultTbAiService implements TbAiService {
     }
 
     @Override
-    public Flux<ServerSentEvent<String>> processStream(UUID chatId, TbAiCall<Flux<ServerSentEvent<String>>> call, SecurityUser user) {
+    public Flux<ServerSentEvent<String>> processStream(UUID chatId, TbAiCall<Flux<ServerSentEvent<String>>> call, SecurityUser user,
+                                                       TbAiTurnLink link, boolean checkCredits) {
         checkEnabled();
-        checkApiUsage(user);
+        if (checkCredits) {
+            checkApiUsage(user);
+        }
         TbAiClient.TokenProvider tokenProvider = createCheckedTokenProvider(user);
         return Flux.defer(() -> {
             // Eager subscribe so client cancel does not drop the trailing creditsUsed event.
@@ -85,7 +89,8 @@ class DefaultTbAiService implements TbAiService {
                             clientSink::tryEmitComplete
                     );
 
-            return clientSink.asFlux();
+            Flux<ServerSentEvent<String>> client = clientSink.asFlux();
+            return link != null ? client.doOnCancel(link::clientLeft) : client;
         });
     }
 

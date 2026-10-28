@@ -41,6 +41,22 @@
     }
   }
 
+  .incomplete {
+    padding: 10px 14px;
+    border-radius: 12px;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.76);
+    background: rgba(255, 152, 0, 0.08);
+
+    .incomplete-icon {
+      flex: none;
+      color: #FF9800;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
   .generating {
     transition: all 0.3s ease-in-out;
 

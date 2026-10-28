@@ -712,6 +712,8 @@
         "denied": "Denied",
         "error": "Failed",
         "thinking": "Thinking...",
+        "connection-lost": "Connection to the AI Assistant was lost. Reconnecting...",
+        "reconnect-failed": "Couldn't reconnect to the AI Assistant. Reopen the chat to see its reply.",
         "rename-chat-title": "Rename this chat",
         "export-chat": "Export chat",
         "main-title": "Hello! I'm your AI Assistant"
@@ -13735,6 +13737,7 @@
             "state-when-result-is": "'{{state}}' when result is",
             "parameters": "Parameters",
             "convert-value-function": "Convert value function",
+            "rpc-params-function": "RPC parameters function",
             "error": {
                 "target-entity-is-not-set": "Target entity is not set!",
                 "failed-to-perform-action": "Failed to perform the <b>{{ actionLabel }}</b> action.",
