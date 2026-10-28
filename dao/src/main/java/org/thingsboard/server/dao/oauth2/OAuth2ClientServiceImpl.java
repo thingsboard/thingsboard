@@ -47,7 +47,12 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     @Override
     public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByDomainName(String domainName) {
         log.trace("Executing findOAuth2ClientLoginInfosByDomainName [{}] ", domainName);
-        return oauth2ClientDao.findEnabledByDomainName(domainName)
+        List<OAuth2Client> clients = oauth2ClientDao.findEnabledByDomainName(domainName);
+        if (clients.isEmpty() && domainName != null && domainName.contains(":")) {
+            String domainWithoutPort = domainName.substring(0, domainName.indexOf(":"));
+            clients = oauth2ClientDao.findEnabledByDomainName(domainWithoutPort);
+        }
+        return clients
                 .stream()
                 .map(OAuth2Utils::toClientLoginInfo)
                 .collect(Collectors.toList());
