@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.integration.IntegrationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -89,13 +90,14 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final String THINGPARK_UPLINK_DECODER = "converter/thingpark_uplink_decoder.raw";
     private static final String DEFAULT_TPE_UPLINK_DECODER = "converters/tbel-tpe-decoder.raw";
     private static final String TPE_UPLINK_DECODER = "converter/tpe_uplink_decoder.raw";
-    private static final String DEFAULT_TTI_UPLINK_DECODER = "converters/tbel-tti-decoder.raw";
     private static final String TTI_UPLINK_DECODER = "converter/tti_uplink_decoder.raw";
-    private static final String DEFAULT_TTN_UPLINK_DECODER = "converters/tbel-ttn-decoder.raw";
     private static final String TTN_UPLINK_DECODER = "converter/ttn_uplink_decoder.raw";
     private static final String TTN_UPLINK_JSON_DECODER = "converter/ttn_uplink_json_decoder.raw";
     private static final String LORIOT_UPLINK_DECODER_RETURN_ARRAY = "converter/loriot_uplink_decoder_array.raw";
     private static final String TTN_DECODED_PAYLOAD = "payload/ttn_payload_with_decoded.json";
+    private static final String DEFAULT_V2_CONFIGURATION = "converters/default-converters-v2-configuration.json";
+    private static final String THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD = "payload/things_stack_repository_device_payload.json";
+    private static final String THINGS_STACK_MANUAL_DEVICE_PAYLOAD = "payload/things_stack_manual_device_payload.json";
 
     @Before
     public void beforeTest() throws Exception {
@@ -674,17 +676,6 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testTTIDefaultDecoder() throws IOException {
-        String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"eui-1000000000000001\",\"profile\":\"application-tti-name\"," +
-                "\"telemetry\":{\"ts\":1684398325906,\"values\":{\"battery\":95,\"temperature\":36.6,\"saturation\":99}},\"attributes\":{\"sn\":32310067,\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";
-
-        DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
-        Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTI, 2);
-
-        testDecoder(DEFAULT_TTI_UPLINK_DECODER, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
-    }
-
-    @Test
     public void testTTINotDefaultDecoder() throws IOException {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"eui-1000000000000001\",\"profile\":\"IndustrialSensorProfile\",\"customer\":\"MyCustomer\",\"group\":\"SensorsGroup\"," +
                 "\"telemetry\":{\"ts\":1684398325906,\"values\":{\"battery\":95,\"temperature\":36.6}},\"attributes\":{\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";
@@ -696,14 +687,45 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testTTNDefaultDecoder() throws IOException {
-        String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"eui-1000000000000001\",\"profile\":\"application-tts-name\"," +
-                "\"telemetry\":{\"ts\":1684474415641,\"values\":{\"battery\":95,\"temperature\":36.6,\"saturation\":99}},\"attributes\":{\"sn\":32310067,\"devAddr\":\"20000001\",\"fPort\":85,\"eui\":\"1000000000000001\"}}";
+    public void testThingsStackDefaultConvertersGiveRepositoryDeviceItsModelProfile() throws IOException {
+        String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"am308-office\",\"profile\":\"milesight-iot-am308\",\"label\":\"am308-office\",\"group\":\"my-app\"," +
+                "\"telemetry\":[{\"ts\":1793170000000,\"values\":{\"temperature\":24.1,\"co2\":550}},{\"ts\":1793181600100,\"values\":{\"battery\":95,\"temperature\":24.5,\"co2\":560}}," +
+                "{\"fCnt\":12,\"data\":\"AXVk\",\"rssi\":-60,\"snr\":9.5,\"channel\":2,\"consumedAirtime\":\"0.061696s\"}]," +
+                "\"attributes\":{\"eui\":\"24E124707C481005\",\"joinEui\":\"24E124C0002A0001\",\"devAddr\":\"260B1234\",\"deviceId\":\"am308-office\",\"applicationId\":\"my-app\"," +
+                "\"fPort\":85,\"bandwidth\":125000,\"spreadingFactor\":7,\"codeRate\":\"4/5\",\"frequency\":\"868100000\",\"brandId\":\"milesight-iot\",\"modelId\":\"am308\"," +
+                "\"hardwareVersion\":\"1.0\",\"firmwareVersion\":\"1.0\",\"bandId\":\"EU_863_870\",\"netId\":\"000013\",\"tenantId\":\"ttn\",\"clusterId\":\"eu1\"," +
+                "\"clusterAddress\":\"eu1.cloud.thethings.network\"}}";
 
-        DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
-        Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTN, 2);
+        testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD, expectedDecodedMessage);
+    }
 
-        testDecoder(DEFAULT_TTN_UPLINK_DECODER, DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+    @Test
+    public void testThingsStackDefaultConvertersGiveManualDeviceRawData() throws IOException {
+        String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"manual-node\",\"profile\":\"LoRaWAN Device\",\"label\":\"manual-node\",\"group\":\"my-app\"," +
+                "\"telemetry\":{\"ts\":1793181600100,\"values\":{\"fCnt\":3,\"data\":\"Ae0DM18OTGM=\",\"rssi\":-70,\"snr\":7.0}}," +
+                "\"attributes\":{\"eui\":\"70B3D57ED006F370\",\"deviceId\":\"manual-node\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
+                "\"spreadingFactor\":9,\"frequency\":\"868300000\"}}";
+
+        testThingsStackDefaultConverters(THINGS_STACK_MANUAL_DEVICE_PAYLOAD, expectedDecodedMessage);
+    }
+
+    // The TBEL and JS defaults are two copies of one script, so each of them must give this result for TTN and TTI
+    private void testThingsStackDefaultConverters(String payloadFile, String expectedResult) throws IOException {
+        JsonNode defaultConfigurations = JacksonUtil.toJsonNode(readResource(DEFAULT_V2_CONFIGURATION));
+        String payload = readResource(payloadFile);
+        for (IntegrationType integrationType : List.of(IntegrationType.TTN, IntegrationType.TTI)) {
+            Converter converter = createConverter(defaultConfigurations.get(integrationType.name()), integrationType, 2);
+            for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+                String decoderFileName = "converters/" + scriptLang.name().toLowerCase() + "-" + integrationType.name().toLowerCase() + "-decoder.raw";
+                assertThat(JacksonUtil.toJsonNode(decode(decoderFileName, payload, converter, scriptLang)))
+                        .as("%s %s", integrationType, scriptLang)
+                        .isEqualTo(JacksonUtil.toJsonNode(expectedResult));
+            }
+        }
+    }
+
+    private String readResource(String name) throws IOException {
+        return new String(IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(name)), StandardCharsets.UTF_8);
     }
 
     @Test
@@ -870,6 +892,10 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     public void testDecoder(String decoderFileName, String payloadExample, String expectedResult, Converter converter) throws IOException {
+        assertThat(decode(decoderFileName, payloadExample, converter, ScriptLanguage.TBEL)).isEqualTo(expectedResult);
+    }
+
+    private String decode(String decoderFileName, String payloadExample, Converter converter, ScriptLanguage scriptLang) throws IOException {
         byte[] bytes = IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(decoderFileName));
 
         String base64Payload = Base64.getEncoder().encodeToString(payloadExample.getBytes(StandardCharsets.UTF_8));
@@ -895,14 +921,11 @@ public class ConverterControllerTest extends AbstractControllerTest {
             inputParams.set("payload", new TextNode(base64Payload));
         }
 
-        JsonNode response = doPost("/api/converter/testUpLink?scriptLang=TBEL", inputParams, JsonNode.class);
-        String output;
+        JsonNode response = doPost("/api/converter/testUpLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
         if (converter != null && converter.getConverterVersion() == 2) {
-            output = response.get("outputMsg").toString();
-        } else {
-            output = response.get("output").asText();
+            return response.get("outputMsg").toString();
         }
-        assertThat(output).isEqualTo(expectedResult);
+        return response.get("output").asText();
     }
 
     public DedicatedConverterConfig createDedicatedConverterConfig(EntityType type, String name, String profile, Set<String> attributes) {

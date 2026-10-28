@@ -96,6 +96,7 @@
                       <directory>src/assets/converters</directory>
                       <includes>
                         <include>**/*.raw</include>
+                        <include>default-converters-v2-configuration.json</include>
                       </includes>
                     </resource>
                   </resources>
