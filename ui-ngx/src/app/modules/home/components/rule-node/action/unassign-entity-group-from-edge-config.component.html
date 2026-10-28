@@ -1,0 +1,11 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="edgeGroupConfigForm" class="tb-form-panel no-border no-padding">
+  <tb-edge-source [form]="edgeGroupConfigForm"></tb-edge-source>
+
+  <tb-entity-group-patterns required formControlName="entityGroups"></tb-entity-group-patterns>
+</section>

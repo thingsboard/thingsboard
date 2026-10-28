@@ -272,6 +272,32 @@ export const ownerTypeTranslations = new Map<OwnerType, string>(
   ]
 );
 
+export enum EdgeSource {
+  MESSAGE_ORIGINATOR = 'MESSAGE_ORIGINATOR',
+  EDGE_NAME_PATTERN = 'EDGE_NAME_PATTERN'
+}
+
+export const edgeSourceTranslations = new Map<EdgeSource, string>(
+  [
+    [EdgeSource.MESSAGE_ORIGINATOR, 'rule-node-config.edge-source-originator'],
+    [EdgeSource.EDGE_NAME_PATTERN, 'rule-node-config.edge-source-name-pattern']
+  ]
+);
+
+export interface EntityGroupPattern {
+  groupType: string;
+  groupName: string;
+}
+
+/** Must stay in step with EdgeUtils.EDGE_SUPPORTED_GROUP_TYPES, which the node validates against. */
+export const edgeSupportedGroupTypes: EntityType[] = [
+  EntityType.DEVICE,
+  EntityType.ASSET,
+  EntityType.ENTITY_VIEW,
+  EntityType.DASHBOARD,
+  EntityType.USER
+];
+
 export enum AggMathFunction {
   MIN = 'MIN',
   MAX = 'MAX',
