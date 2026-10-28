@@ -218,6 +218,15 @@ public class DedicatedScriptUplinkDataConverterTest {
 
     @Test
     public void parseUplinkDataWithTelemetryArrayAddsMetadataToScriptElementAtUplinkTsTest() {
+        testMetadataJoinsScriptElementAtUplinkTs(false);
+    }
+
+    @Test
+    public void parseUplinkDataWithTelemetryArrayAddsMetadataToScriptElementAtStringUplinkTsTest() {
+        testMetadataJoinsScriptElementAtUplinkTs(true);
+    }
+
+    private void testMetadataJoinsScriptElementAtUplinkTs(boolean scriptTsAsString) {
         DedicatedConverterConfig config = new DedicatedConverterConfig();
         config.setType(EntityType.DEVICE);
         config.setName("Device ${eui}");
@@ -230,7 +239,11 @@ public class DedicatedScriptUplinkDataConverterTest {
         currentValues.addProperty("temperature", 24.5);
         currentValues.addProperty("rssi", -50);
         JsonObject current = new JsonObject();
-        current.addProperty("ts", uplinkTs);
+        if (scriptTsAsString) {
+            current.addProperty("ts", String.valueOf(uplinkTs));
+        } else {
+            current.addProperty("ts", uplinkTs);
+        }
         current.add("values", currentValues);
 
         JsonArray telemetryArray = new JsonArray();

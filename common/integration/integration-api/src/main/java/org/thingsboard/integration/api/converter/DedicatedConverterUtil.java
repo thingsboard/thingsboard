@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.integration.api.data.UplinkMetaData;
 import org.thingsboard.server.common.data.EntityType;
@@ -127,9 +128,13 @@ public final class DedicatedConverterUtil {
 
     private static boolean isValuesAtTs(JsonObject element, long ts) {
         JsonElement elementTs = element.get(TS);
-        return element.has(VALUES) && element.get(VALUES).isJsonObject()
-                && elementTs != null && elementTs.isJsonPrimitive() && elementTs.getAsJsonPrimitive().isNumber()
-                && elementTs.getAsLong() == ts;
+        if (!element.has(VALUES) || !element.get(VALUES).isJsonObject() || elementTs == null || !elementTs.isJsonPrimitive()) {
+            return false;
+        }
+        JsonPrimitive primitive = elementTs.getAsJsonPrimitive();
+        // A script passes a numeric-string metadata ts through unchanged, and the telemetry parser reads it as a long too
+        return (primitive.isNumber() || (primitive.isString() && StringUtils.isNumeric(primitive.getAsString())))
+                && primitive.getAsLong() == ts;
     }
 
     private static Long getUplinkTs(Map<String, Object> kvMap) {
