@@ -50,8 +50,10 @@ cache:
   # Transport-local OTA package block cache (L1) in front of Redis. 0 = disabled (default).
   # Enable on large fleets: set a byte budget that fits the package(s) being rolled out concurrently.
   ota:
+    # Total byte budget of the node-local OTA data block cache that serves firmware chunks in front of Redis. 0 = disabled (default); enable on transports for large OTA rollouts
     l1_max_bytes: "${CACHE_OTA_L1_MAX_BYTES:0}"
     l1_ttl_minutes: "${CACHE_OTA_L1_TTL_MINUTES:60}" # expire-after-access per block
+    # Size of a single cached block in bytes; blocks are fetched from Redis with GETRANGE at block-aligned offsets
     l1_block_size_bytes: "${CACHE_OTA_L1_BLOCK_SIZE_BYTES:1048576}"
     # Optional sliding TTL for the OTA data key in Redis. 0 = never expires (default, today's behavior).
     # If enabled together with L1, set it well above l1_ttl_minutes plus the slowest device's download time.
