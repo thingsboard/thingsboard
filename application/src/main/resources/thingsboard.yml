@@ -2907,6 +2907,7 @@ extensions:
       # Set BOTH to empty to fall back to an unscoped DNS rule (any destination on port 53 — not recommended).
       # Only load-bearing under egress-policy=restricted; under 'baseline' the wide rule already covers DNS.
       dns-namespace-selector: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_DNS_NS:kubernetes.io/metadata.name=kube-system}"
+      # Pod label selector of the DNS pods themselves, paired with the namespace selector above.
       dns-pod-selector: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_DNS_POD:k8s-app=kube-dns}"
       # Cluster IP range of the kube-dns Service, added to the port-53 rule NEXT TO the selectors above.
       # SET THIS ON AWS EKS when using egress-policy=restricted, or DNS will be denied.
@@ -2952,6 +2953,7 @@ extensions:
       # values match the client library defaults; they are spelled out so they are visible and tunable.
       # Raise request-timeout-ms on a slow or distant API server; lowering it fails slow calls sooner.
       connect-timeout-ms: "${TB_EXTENSIONS_K8S_CONNECT_TIMEOUT_MS:10000}"
+      # Max time (ms) for one API server call, from the sent request to the finished response.
       request-timeout-ms: "${TB_EXTENSIONS_K8S_REQUEST_TIMEOUT_MS:10000}"
     # How extension pods reach TB for the auth callback; must resolve from the pods' cluster.
     # Both of these live in the extensions.k8s block, so the K8S-qualified env-var name is the one to use
@@ -2985,12 +2987,15 @@ extensions:
     host: "${TB_EXTENSIONS_DOCKER_HOST:unix:///var/run/docker.sock}"
     # TLS for a tcp:// daemon endpoint. When true, cert-path must hold ca.pem/cert.pem/key.pem.
     tls-verify: "${TB_EXTENSIONS_DOCKER_TLS_VERIFY:false}"
+    # Folder holding ca.pem, cert.pem and key.pem for a tls-verify connection. Empty = no client TLS.
     cert-path: "${TB_EXTENSIONS_DOCKER_CERT_PATH:}"
     # Pin the Docker Engine API version (e.g. 1.43). Empty = negotiate automatically.
     api-version: "${TB_EXTENSIONS_DOCKER_API_VERSION:}"
     # HTTP client tuning for the daemon connection.
     max-connections: "${TB_EXTENSIONS_DOCKER_MAX_CONNECTIONS:100}"
+    # Max time (s) to open the connection to the daemon before the call fails.
     connect-timeout-seconds: "${TB_EXTENSIONS_DOCKER_CONNECT_TIMEOUT_SECONDS:10}"
+    # Max time (s) to wait for the daemon to answer a call once the connection is open.
     response-timeout-seconds: "${TB_EXTENSIONS_DOCKER_RESPONSE_TIMEOUT_SECONDS:45}"
     # Graceful stop timeout (seconds) before the daemon kills a container on stop/restart/recreate.
     stop-timeout-seconds: "${TB_EXTENSIONS_DOCKER_STOP_TIMEOUT_SECONDS:10}"
@@ -3010,6 +3015,7 @@ extensions:
       # is unbounded and one chatty container can fill the host disk shared with tb-core and the database.
       # Empty max-size = do not set a log config (use the daemon default).
       max-size: "${TB_EXTENSIONS_DOCKER_LOG_MAX_SIZE:10m}"
+      # How many rotated log files the daemon keeps per container.
       max-files: "${TB_EXTENSIONS_DOCKER_LOG_MAX_FILES:3}"
     image:
       # Max time (ms) to wait for an image pull before failing the apply. For a private registry, TB
