@@ -180,6 +180,43 @@ public class DedicatedScriptUplinkDataConverterTest {
     }
 
     @Test
+    public void parseUplinkDataWithTelemetryArraySavesMetadataAtUplinkTsTest() {
+        DedicatedConverterConfig config = new DedicatedConverterConfig();
+        config.setType(EntityType.DEVICE);
+        config.setName("Device ${eui}");
+        config.setTelemetry(Set.of("rssi"));
+
+        ReflectionTestUtils.setField(uplinkDataConverter, "config", config);
+
+        long historyTs = 1793170000000L;
+        long uplinkTs = 1793181600100L;
+        JsonObject historyValues = new JsonObject();
+        historyValues.addProperty("temperature", 24.1);
+        JsonObject history = new JsonObject();
+        history.addProperty("ts", historyTs);
+        history.add("values", historyValues);
+
+        JsonArray telemetryArray = new JsonArray();
+        telemetryArray.add(history);
+
+        JsonObject uplinkJson = new JsonObject();
+        uplinkJson.add("telemetry", telemetryArray);
+
+        UplinkMetaData uplinkMetaData = new UplinkMetaData(ContentType.JSON, Map.of(
+                "rssi", "-60",
+                "eui", "24E124707C481005",
+                "ts", String.valueOf(uplinkTs)));
+
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(uplinkJson, uplinkMetaData);
+
+        var tsKvLists = uplink.getTelemetry().getTsKvListList();
+        assertEquals(2, tsKvLists.size());
+        assertEquals(historyTs, tsKvLists.get(0).getTs());
+        assertEquals(uplinkTs, tsKvLists.get(1).getTs());
+        assertEquals("rssi", tsKvLists.get(1).getKv(0).getKey());
+    }
+
+    @Test
     public void parseUplinkDataTest() {
         DedicatedConverterConfig config = new DedicatedConverterConfig();
         config.setType(EntityType.DEVICE);

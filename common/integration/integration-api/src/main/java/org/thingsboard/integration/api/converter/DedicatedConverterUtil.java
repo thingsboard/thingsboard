@@ -40,7 +40,7 @@ public final class DedicatedConverterUtil {
             if (telemetry.isJsonArray()) {
                 JsonObject telemetryFromMetadata = addKvs(new JsonObject(), kvMap, config.getTelemetry());
                 if (!telemetryFromMetadata.isEmpty()) {
-                    telemetry.getAsJsonArray().add(telemetryFromMetadata);
+                    telemetry.getAsJsonArray().add(withUplinkTs(telemetryFromMetadata, kvMap));
                 }
             } else if (telemetry.isJsonObject()) {
                 var obj = telemetry.getAsJsonObject();
@@ -99,6 +99,24 @@ public final class DedicatedConverterUtil {
             }
         }
         return defaultValue.get();
+    }
+
+    // An array element without ts is saved at the server time, so the metadata element takes the uplink time when it is known
+    private static JsonObject withUplinkTs(JsonObject values, Map<String, Object> kvMap) {
+        Object ts = kvMap.get(TS);
+        Long uplinkTs = null;
+        if (ts instanceof Number number) {
+            uplinkTs = number.longValue();
+        } else if (ts instanceof String str && StringUtils.isNumeric(str)) {
+            uplinkTs = Long.parseLong(str);
+        }
+        if (uplinkTs == null) {
+            return values;
+        }
+        JsonObject element = new JsonObject();
+        element.addProperty(TS, uplinkTs);
+        element.add(VALUES, values);
+        return element;
     }
 
     private static JsonObject addKvs(JsonObject kvsObj, Map<String, Object> kvMap, Set<String> keys) {
