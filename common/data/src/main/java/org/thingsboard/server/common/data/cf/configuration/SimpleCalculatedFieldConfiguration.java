@@ -19,4 +19,12 @@ public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfi
         return CalculatedFieldType.SIMPLE;
     }
 
+    @Override
+    public void validate() {
+        super.validate();
+        if (arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
+        }
+    }
+
 }
