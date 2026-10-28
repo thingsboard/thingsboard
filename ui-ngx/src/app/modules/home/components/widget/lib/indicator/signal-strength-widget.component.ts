@@ -4,6 +4,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Input,
   OnDestroy,
@@ -13,6 +14,7 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   backgroundStyle,
@@ -21,6 +23,7 @@ import {
   createValueFormatterFromSettings,
   DateFormatProcessor,
   getSingleTsValue,
+  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   textStyle,
   ValueFormatProcessor
@@ -122,7 +125,8 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
               private sanitizer: DomSanitizer,
               private translate: TranslateService,
               private renderer: Renderer2,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -135,6 +139,11 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
       this.dateStyle = textStyle(this.settings.dateFont);
       this.dateStyle.color = this.settings.dateColor;
+      if (this.settings.dateFormat?.lastUpdateAgo) {
+        (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => this.cd.detectChanges());
+      }
     }
 
     this.noSignalRssiValue = this.settings.noSignalRssiValue ?? -100;
@@ -170,6 +179,11 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.tooltipDateStyle = textStyle(this.settings.tooltipDateFont);
       this.tooltipDateStyle.color = this.settings.tooltipDateColor;
       this.tooltipDateLabelStyle = {...this.tooltipDateStyle, ...this.tooltipDateLabelStyle};
+      if (this.settings.tooltipDateFormat?.lastUpdateAgo) {
+        (this.tooltipDateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() => this.cd.detectChanges());
+      }
     }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
@@ -189,6 +203,8 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
+    this.dateFormat?.destroy();
+    this.tooltipDateFormat?.destroy();
   }
 
   public onInit() {
