@@ -62,16 +62,19 @@ export interface DeviceInstallDialogData {
   update?: DeviceInstallUpdate;
 }
 
+/** Update: an entity the installed version has for a step. */
+interface PreviousEntity {
+  output: EntityStepOutput;
+  // Taken as it is instead of overwritten: the user kept it at install, or another installed package uses it
+  keepAsIs: boolean;
+  // What the install state records for it, so that the next update decides again
+  resolution: string;
+}
+
 /**
  * The installed package an update changes. The steps of the new version change the entities
  * the package created in place, so the device keeps its id, credentials and history.
  */
-/** Update: an entity the installed version has for a step, and whether the user kept it as it was at install. */
-interface PreviousEntity {
-  output: EntityStepOutput;
-  useExisting: boolean;
-}
-
 export interface DeviceInstallUpdate {
   installedItemId: string;
   descriptor: DeviceInstalledItemDescriptor;
@@ -244,6 +247,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private installRegistered = false;
   // Update: ids of the installed version's entities that were deleted since
   private deletedPreviousIds = new Set<string>();
+  // Update: ids of the package's entities that other installed device packages use, loaded once
+  private sharedEntityIds: Promise<Set<string>> | null = null;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -666,7 +671,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   done(): void {
-    this.dialogRef.close('installed');
+    // Update: the installed item keeps the old version until the registration succeeds
+    this.dialogRef.close(this.data.update && !this.installRegistered ? false : 'installed');
   }
 
   cancel(): void {
@@ -1275,8 +1281,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         const previous = await this.findPreviousEntity(ep.step);
         if (previous) {
           output = await this.updatePreviousEntity(ep.step, previous);
-          // Kept as 'use-existing', so the next update leaves it alone too
-          resolution = previous.useExisting ? 'use-existing' : 'updated';
+          resolution = previous.resolution;
         } else {
           // Pre-check for existing entity
           const existing = await this.preCheckEntity(ep.step);
@@ -1311,11 +1316,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.progressDone = true;
     ws.completed = true;
     try {
+      const dashboardId = this.findCreatedDashboardId() ?? await this.findPreviousDashboardId();
       const createdEntityIds = this.collectCreatedEntityIds();
-      // Update: a version without a dashboard step keeps the installed dashboard, which the package still tracks
-      const previousDashboardId = this.data.update?.descriptor.dashboardId?.id;
-      const dashboardId = this.findCreatedDashboardId() ??
-        (createdEntityIds.some(id => id.id === previousDashboardId) ? { entityType: 'DASHBOARD', id: previousDashboardId } : undefined);
       const result = await firstValueFrom(
         this.iotHubApiService.registerDeviceInstall(
           this.data.item.id as string,
@@ -1390,15 +1392,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           token: creds.credentialsId,
           dockerComposeUrl: `/api/device-connectivity/gateway-launch/${result.id.id}/docker-compose/download`
         };
-        // Store entity output early so docker-compose template can resolve ${gateway.token} etc.
-        this.entityOutputs.set('gateway', output);
-        // Resolve custom docker-compose template if provided
-        if (step.dockerCompose) {
-          const raw = this.zipFiles.get(step.dockerCompose);
-          if (raw) {
-            this.gatewayDockerComposeContent = this.resolveVariables(raw);
-          }
-        }
+        this.setGatewayOutput(step, output);
         return output;
       }
       case InstallStepType.GATEWAY_CONNECTOR: {
@@ -1642,11 +1636,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           token: creds.credentialsId,
           dockerComposeUrl: `/api/device-connectivity/gateway-launch/${result.id.id}/docker-compose/download`
         };
-        this.entityOutputs.set('gateway', output);
-        if (step.dockerCompose) {
-          const dcRaw = this.zipFiles.get(step.dockerCompose);
-          if (dcRaw) this.gatewayDockerComposeContent = this.resolveVariables(dcRaw);
-        }
+        this.setGatewayOutput(step, output);
         return output;
       }
       case InstallStepType.DASHBOARD: {
@@ -1709,14 +1699,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const output: EntityStepOutput = { ...existing, token: creds.credentialsId };
     if (step.type === InstallStepType.GATEWAY) {
       output.dockerComposeUrl = `/api/device-connectivity/gateway-launch/${output.id}/docker-compose/download`;
-      // As createEntity does: the docker-compose template resolves ${gateway.token}
-      this.entityOutputs.set('gateway', output);
-      if (step.dockerCompose) {
-        const dcRaw = this.zipFiles.get(step.dockerCompose);
-        if (dcRaw) this.gatewayDockerComposeContent = this.resolveVariables(dcRaw);
-      }
+      this.setGatewayOutput(step, output);
     }
     return output;
+  }
+
+  /** Stores the gateway output early, so the custom docker-compose template, if any, resolves ${gateway.token} etc. */
+  private setGatewayOutput(step: DeviceInstallStep, output: EntityStepOutput): void {
+    this.entityOutputs.set('gateway', output);
+    if (step.dockerCompose) {
+      const raw = this.zipFiles.get(step.dockerCompose);
+      if (raw) {
+        this.gatewayDockerComposeContent = this.resolveVariables(raw);
+      }
+    }
   }
 
   /**
@@ -1738,8 +1734,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     try {
       const output = await this.loadPreviousEntity(step, id);
+      if (!output) {
+        return null;
+      }
       // The user chose to keep an entity they already had: the update doesn't overwrite it either
-      return output ? { output, useExisting: stored.resolution === 'use-existing' } : null;
+      const useExisting = stored.resolution === 'use-existing';
+      const sharedEntityIds = await this.loadSharedEntityIds();
+      return {
+        output,
+        keepAsIs: useExisting || sharedEntityIds.has(id),
+        resolution: useExisting ? 'use-existing' : 'updated'
+      };
     } catch (e: any) {
       if (e?.status === 404) {
         // Deleted since: the step creates it again, and the package no longer tracks the old id
@@ -1748,6 +1753,22 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
       throw e;
     }
+  }
+
+  /**
+   * Update: the package's entities that other installed device packages also use (e.g. an integration
+   * one of them took over with Overwrite). Overwriting them with this package's templates would break
+   * those packages, so the update keeps them as they are, as deleting the package does.
+   */
+  private loadSharedEntityIds(): Promise<Set<string>> {
+    if (!this.sharedEntityIds) {
+      this.sharedEntityIds = firstValueFrom(
+        this.iotHubApiService.getInstalledItemKeptEntities(this.data.update.installedItemId, {ignoreLoading: true})
+      ).then(kept => new Set(kept.entities.map(e => e.entityId.id)));
+      // A failed request is asked again on retry instead of being remembered
+      this.sharedEntityIds.catch(() => this.sharedEntityIds = null);
+    }
+    return this.sharedEntityIds;
   }
 
   private async loadPreviousEntity(step: DeviceInstallStep, id: string): Promise<EntityStepOutput | null> {
@@ -1780,8 +1801,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return converter.type === type ? { id, name: converter.name, url: `/converters/${id}` } : null;
       }
       case InstallStepType.INTEGRATION: {
-        const integration = await firstValueFrom(this.integrationService.getIntegration(id, config));
-        return { id, name: integration.name, url: `/integrations/${id}`, routingKey: integration.routingKey };
+        // With httpEndpoint and baseUrl, which the instructions resolve for an integration kept as it is
+        return this.buildIntegrationOutput(await firstValueFrom(this.integrationService.getIntegration(id, config)));
       }
       default:
         return null;
@@ -1793,7 +1814,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * Other entities take the new version's template and keep their id and current name.
    */
   private updatePreviousEntity(step: DeviceInstallStep, previous: PreviousEntity): Promise<EntityStepOutput> {
-    if (previous.useExisting || step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
+    if (previous.keepAsIs || step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
       return this.useExistingEntity(step, previous.output);
     }
     return this.overwriteEntity(step, previous.output, true);
@@ -1869,6 +1890,27 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     return ids;
+  }
+
+  /**
+   * Update: a version without a dashboard step keeps the installed dashboard, unless it was deleted since.
+   * A deleted one is also dropped from the ids the package tracks.
+   */
+  private async findPreviousDashboardId(): Promise<{ entityType: string; id: string } | undefined> {
+    const previousDashboardId = this.data.update?.descriptor.dashboardId?.id;
+    if (!previousDashboardId || this.deletedPreviousIds.has(previousDashboardId)) {
+      return undefined;
+    }
+    try {
+      await firstValueFrom(this.dashboardService.getDashboardInfo(previousDashboardId, {ignoreErrors: true}));
+      return { entityType: 'DASHBOARD', id: previousDashboardId };
+    } catch (e: any) {
+      if (e?.status === 404) {
+        this.deletedPreviousIds.add(previousDashboardId);
+        return undefined;
+      }
+      throw e;
+    }
   }
 
   private findCreatedDashboardId(): { entityType: string; id: string } | undefined {
