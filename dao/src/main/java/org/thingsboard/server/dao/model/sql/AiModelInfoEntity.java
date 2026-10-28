@@ -32,8 +32,8 @@ public class AiModelInfoEntity extends BaseVersionedEntity<AiModelInfo> {
     @Column(name = ModelConstants.AI_MODEL_NAME_COLUMN_NAME)
     private String name;
 
-    @Column(name = ModelConstants.AI_MODEL_AVAILABLE_VIA_API_COLUMN_NAME)
-    private boolean availableViaApi;
+    @Column(name = ModelConstants.AI_MODEL_CUSTOMER_ACCESS_ENABLED_COLUMN_NAME)
+    private boolean customerAccessEnabled;
 
     @Formula("configuration ->> 'provider'")
     private String provider;
@@ -50,7 +50,7 @@ public class AiModelInfoEntity extends BaseVersionedEntity<AiModelInfo> {
         modelInfo.setVersion(version);
         modelInfo.setTenantId(TenantId.fromUUID(tenantId));
         modelInfo.setName(name);
-        modelInfo.setAvailableViaApi(availableViaApi);
+        modelInfo.setCustomerAccessEnabled(customerAccessEnabled);
         modelInfo.setProvider(provider != null ? AiProvider.valueOf(provider) : null);
         modelInfo.setModelId(modelId);
         return modelInfo;

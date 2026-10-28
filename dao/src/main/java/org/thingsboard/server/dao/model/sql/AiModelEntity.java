@@ -54,8 +54,8 @@ public class AiModelEntity extends BaseVersionedEntity<AiModel> {
     @Column(name = ModelConstants.AI_MODEL_CONFIGURATION_COLUMN_NAME, nullable = false, columnDefinition = "JSONB")
     private AiModelConfig configuration;
 
-    @Column(name = ModelConstants.AI_MODEL_AVAILABLE_VIA_API_COLUMN_NAME, nullable = false)
-    private boolean availableViaApi;
+    @Column(name = ModelConstants.AI_MODEL_CUSTOMER_ACCESS_ENABLED_COLUMN_NAME, nullable = false)
+    private boolean customerAccessEnabled;
 
     @Column(name = ModelConstants.EXTERNAL_ID_PROPERTY, columnDefinition = "UUID")
     private UUID externalId;
@@ -67,7 +67,7 @@ public class AiModelEntity extends BaseVersionedEntity<AiModel> {
         tenantId = getTenantUuid(aiModel.getTenantId());
         name = aiModel.getName();
         configuration = aiModel.getConfiguration();
-        availableViaApi = aiModel.isAvailableViaApi();
+        customerAccessEnabled = aiModel.isCustomerAccessEnabled();
         externalId = getUuid(aiModel.getExternalId());
     }
 
@@ -79,7 +79,7 @@ public class AiModelEntity extends BaseVersionedEntity<AiModel> {
         model.setTenantId(TenantId.fromUUID(tenantId));
         model.setName(name);
         model.setConfiguration(configuration);
-        model.setAvailableViaApi(availableViaApi);
+        model.setCustomerAccessEnabled(customerAccessEnabled);
         model.setExternalId(getEntityId(externalId, AiModelId::new));
         return model;
     }

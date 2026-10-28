@@ -44,11 +44,11 @@ public final class AiModel extends AiModelInfo implements ExportableEntity<AiMod
     }
 
     @Builder
-    public AiModel(TenantId tenantId, Long version, String name, AiModelConfig configuration, boolean availableViaApi, AiModelId externalId) {
+    public AiModel(TenantId tenantId, Long version, String name, AiModelConfig configuration, boolean customerAccessEnabled, AiModelId externalId) {
         setTenantId(tenantId);
         setVersion(version);
         setName(name);
-        setAvailableViaApi(availableViaApi);
+        setCustomerAccessEnabled(customerAccessEnabled);
         this.configuration = configuration;
         this.externalId = externalId;
     }

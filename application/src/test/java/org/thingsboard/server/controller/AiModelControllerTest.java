@@ -92,24 +92,24 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(savedModel.getTenantId()).isEqualTo(tenantId);
         assertThat(savedModel.getName()).isEqualTo("Test model");
         assertThat(savedModel.getConfiguration()).isEqualTo(model.getConfiguration());
-        assertThat(savedModel.isAvailableViaApi()).isFalse();
+        assertThat(savedModel.isCustomerAccessEnabled()).isFalse();
         assertThat(savedModel.getExternalId()).isNull();
     }
 
     @Test
-    public void saveAiModel_whenAvailableViaApiIsSet_shouldPersistIt() throws Exception {
+    public void saveAiModel_whenCustomerAccessEnabledIsSet_shouldPersistIt() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
         AiModel model = constructValidOpenAiModel("Test model");
-        model.setAvailableViaApi(true);
+        model.setCustomerAccessEnabled(true);
 
         // WHEN
         var savedModel = doPost("/api/ai/model", model, AiModel.class);
 
         // THEN
-        assertThat(savedModel.isAvailableViaApi()).isTrue();
-        assertThat(doGet("/api/ai/model/" + savedModel.getId(), AiModel.class).isAvailableViaApi()).isTrue();
+        assertThat(savedModel.isCustomerAccessEnabled()).isTrue();
+        assertThat(doGet("/api/ai/model/" + savedModel.getId(), AiModel.class).isCustomerAccessEnabled()).isTrue();
     }
 
     @Test
@@ -306,25 +306,44 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void sendChatRequestToAiModel_whenModelIsNotAvailableViaApi_shouldReturnForbidden() throws Exception {
+    public void sendChatRequestToAiModel_whenTenantAdminAndCustomerAccessDisabled_shouldBeAllowed() throws Exception {
         // GIVEN
         loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl(false);
+        SsrfProtectionValidator.setEnabled(true);
 
-        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+        try {
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatRequest(), TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).contains("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenCustomerAdminAndCustomerAccessDisabled_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl(false);
+        loginCustomerAdminUser();
 
         // WHEN
         ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
 
         // THEN
         result.andExpect(status().isForbidden())
-                .andExpect(statusReason(is("AI model with id [" + model.getId() + "] is not available via API")));
+                .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
     }
 
     @Test
     public void sendChatRequestToAiModel_whenTenantAdmin_shouldUseStoredConfigurationAndReturnProviderError() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        var model = saveModelWithBlockedBaseUrl();
         SsrfProtectionValidator.setEnabled(true);
 
         try {
@@ -343,7 +362,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
     public void sendChatRequestToAiModel_whenCustomerAdmin_shouldBeAllowedAndHideProviderError() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        var model = saveModelWithBlockedBaseUrl();
         loginCustomerAdminUser();
         SsrfProtectionValidator.setEnabled(true);
 
@@ -363,7 +382,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
     public void sendChatRequestToAiModel_whenCustomerUserWithoutInvokePermission_shouldReturnForbidden() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        var model = saveModelWithBlockedBaseUrl();
         loginCustomerUser();
 
         // WHEN
@@ -380,7 +399,9 @@ public class AiModelControllerTest extends AbstractControllerTest {
     public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowInvokeOnly() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+        var modelConfig = constructValidOpenAiModel("Test model");
+        modelConfig.setCustomerAccessEnabled(true);
+        var model = doPost("/api/ai/model", modelConfig, AiModel.class);
         loginCustomerAdminUser();
 
         // WHEN / THEN
@@ -388,6 +409,20 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(hasAiModelPermission(model, "READ")).isFalse();
         assertThat(hasAiModelPermission(model, "WRITE")).isFalse();
         assertThat(hasAiModelPermission(model, "DELETE")).isFalse();
+    }
+
+    @Test
+    public void aiModelPermission_whenCustomerAccessDisabled_shouldDenyInvokeForCustomerAdminOnly() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+
+        // WHEN / THEN
+        assertThat(model.isCustomerAccessEnabled()).isFalse();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
+
+        loginCustomerAdminUser();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
     }
 
     @Test
@@ -601,18 +636,18 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModels_testFilterByAvailableViaApi() throws Exception {
+    public void getAiModels_testFilterByCustomerAccessEnabled() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
         var available = constructValidOpenAiModel("Available model");
-        available.setAvailableViaApi(true);
+        available.setCustomerAccessEnabled(true);
         available = doPost("/api/ai/model", available, AiModel.class);
         var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
 
         // WHEN
-        PageData<AiModel> onlyAvailable = doGetTypedWithPageLink("/api/ai/model?availableViaApi=true&", new TypeReference<>() {}, new PageLink(10));
-        PageData<AiModel> onlyUnavailable = doGetTypedWithPageLink("/api/ai/model?availableViaApi=false&", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModel> onlyAvailable = doGetTypedWithPageLink("/api/ai/model?customerAccessEnabled=true&", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModel> onlyUnavailable = doGetTypedWithPageLink("/api/ai/model?customerAccessEnabled=false&", new TypeReference<>() {}, new PageLink(10));
         PageData<AiModel> all = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(10));
 
         // THEN
@@ -648,17 +683,17 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModelInfos_whenTenantAdmin_shouldReturnInfosFilteredByAvailableViaApi() throws Exception {
+    public void getAiModelInfos_whenTenantAdmin_shouldReturnInfosFilteredByCustomerAccessEnabled() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
         var available = constructValidOpenAiModel("Available model");
-        available.setAvailableViaApi(true);
+        available.setCustomerAccessEnabled(true);
         available = doPost("/api/ai/model", available, AiModel.class);
         var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
 
         // WHEN
-        PageData<AiModelInfo> onlyAvailable = doGetTypedWithPageLink("/api/ai/model/infos?availableViaApi=true&", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModelInfo> onlyAvailable = doGetTypedWithPageLink("/api/ai/model/infos?customerAccessEnabled=true&", new TypeReference<>() {}, new PageLink(10));
         PageData<AiModelInfo> all = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
 
         // THEN
@@ -708,18 +743,21 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModelInfos_whenCustomerAdmin_shouldReturnInfosWithoutConfiguration() throws Exception {
+    public void getAiModelInfos_whenCustomerAdmin_shouldReturnOnlyCustomerAccessibleInfosWithoutConfiguration() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        var accessible = saveModelWithBlockedBaseUrl("Accessible model", true);
+        var notAccessible = saveModelWithBlockedBaseUrl("Not accessible model", false);
         loginCustomerAdminUser();
 
         // WHEN
-        String response = doGet("/api/ai/model/infos?pageSize=10&page=0").andExpect(status().isOk())
+        String response = doGet("/api/ai/model/infos?pageSize=10&page=0&customerAccessEnabled=false").andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
         // THEN
-        assertThat(response).contains(model.getId().getId().toString()).doesNotContain("test-api-key");
+        assertThat(response).contains(accessible.getId().getId().toString())
+                .doesNotContain(notAccessible.getId().getId().toString())
+                .doesNotContain("test-api-key");
     }
 
     @Test
@@ -983,7 +1021,15 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(deleted).isFalse();
     }
 
-    private AiModel saveModelAvailableViaApiWithBlockedBaseUrl() throws Exception {
+    private AiModel saveModelWithBlockedBaseUrl() throws Exception {
+        return saveModelWithBlockedBaseUrl(true);
+    }
+
+    private AiModel saveModelWithBlockedBaseUrl(boolean customerAccessEnabled) throws Exception {
+        return saveModelWithBlockedBaseUrl("Test model", customerAccessEnabled);
+    }
+
+    private AiModel saveModelWithBlockedBaseUrl(String name, boolean customerAccessEnabled) throws Exception {
         var modelConfig = OpenAiChatModelConfig.builder()
                 .providerConfig(OpenAiProviderConfig.builder()
                         .baseUrl("http://10.0.0.1:8080/")
@@ -994,9 +1040,9 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         var model = AiModel.builder()
                 .tenantId(tenantId)
-                .name("Test model")
+                .name(name)
                 .configuration(modelConfig)
-                .availableViaApi(true)
+                .customerAccessEnabled(customerAccessEnabled)
                 .build();
 
         return doPost("/api/ai/model", model, AiModel.class);

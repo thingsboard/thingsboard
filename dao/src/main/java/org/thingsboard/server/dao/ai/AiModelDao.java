@@ -18,7 +18,7 @@ public interface AiModelDao extends TenantEntityDao<AiModel>, ExportableEntityDa
 
     Optional<AiModel> findByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
-    PageData<AiModel> findByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink);
+    PageData<AiModel> findByTenantId(TenantId tenantId, Boolean customerAccessEnabled, PageLink pageLink);
 
     boolean deleteById(TenantId tenantId, AiModelId modelId);
 

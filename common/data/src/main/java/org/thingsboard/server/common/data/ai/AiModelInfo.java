@@ -58,11 +58,12 @@ public class AiModelInfo extends BaseData<AiModelId> implements TenantEntity, Ha
     @Schema(
             requiredMode = Schema.RequiredMode.NOT_REQUIRED,
             accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Whether the model can be used via the AI model chat API by users with the 'INVOKE' permission. " +
-                    "Roles that grant all operations, such as the default 'Customer Administrator' role, include 'INVOKE'",
+            description = "Whether customer users with the 'INVOKE' permission for AI models can send chat requests to the model, " +
+                    "such as users with the default 'Customer Administrator' role, which grants all operations. " +
+                    "Tenant administrators with the 'INVOKE' permission can use the model regardless of this flag",
             defaultValue = "false"
     )
-    private boolean availableViaApi;
+    private boolean customerAccessEnabled;
 
     @Schema(
             accessMode = Schema.AccessMode.READ_ONLY,
@@ -89,7 +90,7 @@ public class AiModelInfo extends BaseData<AiModelId> implements TenantEntity, Ha
         tenantId = modelInfo.getTenantId();
         version = modelInfo.getVersion();
         name = modelInfo.getName();
-        availableViaApi = modelInfo.isAvailableViaApi();
+        customerAccessEnabled = modelInfo.isCustomerAccessEnabled();
         provider = modelInfo.getProvider();
         modelId = modelInfo.getModelId();
     }

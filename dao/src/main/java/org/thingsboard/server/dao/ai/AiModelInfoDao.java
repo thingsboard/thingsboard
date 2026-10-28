@@ -10,6 +10,6 @@ import org.thingsboard.server.dao.Dao;
 
 public interface AiModelInfoDao extends Dao<AiModelInfo> {
 
-    PageData<AiModelInfo> findByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink);
+    PageData<AiModelInfo> findByTenantId(TenantId tenantId, Boolean customerAccessEnabled, PageLink pageLink);
 
 }

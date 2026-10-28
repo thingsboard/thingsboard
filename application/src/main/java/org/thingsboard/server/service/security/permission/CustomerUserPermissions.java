@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TenantEntity;
+import org.thingsboard.server.common.data.ai.AiModelInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -489,7 +490,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
     };
 
     // Only INVOKE is grantable: reading the model would expose the provider credentials stored in its configuration.
-    // Roles granting ALL include INVOKE, so the model's 'availableViaApi' flag decides which models such users can call.
+    // Roles granting ALL include INVOKE, so the model's 'customerAccessEnabled' flag decides which models such users can call.
     private static final PermissionChecker aiModelPermissionChecker = new PermissionChecker() {
 
         @Override
@@ -499,7 +500,13 @@ public class CustomerUserPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
-            if (operation != Operation.INVOKE || !user.getTenantId().equals(entity.getTenantId())) {
+            if (operation != Operation.INVOKE) {
+                return false;
+            }
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof AiModelInfo model) || !model.isCustomerAccessEnabled()) {
                 return false;
             }
             return user.getUserPermissions().hasGenericPermission(Resource.AI_MODEL, operation);

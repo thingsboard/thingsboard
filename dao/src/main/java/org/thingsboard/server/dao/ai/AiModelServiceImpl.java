@@ -98,15 +98,15 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     }
 
     @Override
-    public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink) {
+    public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, Boolean customerAccessEnabled, PageLink pageLink) {
         validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
-        return aiModelDao.findByTenantId(tenantId, availableViaApi, pageLink);
+        return aiModelDao.findByTenantId(tenantId, customerAccessEnabled, pageLink);
     }
 
     @Override
-    public PageData<AiModelInfo> findAiModelInfosByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink) {
+    public PageData<AiModelInfo> findAiModelInfosByTenantId(TenantId tenantId, Boolean customerAccessEnabled, PageLink pageLink) {
         validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
-        return aiModelInfoDao.findByTenantId(tenantId, availableViaApi, pageLink);
+        return aiModelInfoDao.findByTenantId(tenantId, customerAccessEnabled, pageLink);
     }
 
     @Override

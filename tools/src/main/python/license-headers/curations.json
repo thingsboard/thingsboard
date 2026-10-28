@@ -275,7 +275,7 @@
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/ai/AiModelInfo.java",
       "header": "busl",
       "reason": "New PE file that does not exist in CE. It is the superclass of AiModel holding the fields shared with the configuration-free info view, so its field declarations and schema annotations repeat those of AiModel. Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/ai/AiModel.java at 269bc8dc73a.",
-      "contentHash": "sha256:d7b2034b532aa029c9ff49e794c57ba62fe674c0b502f73999b4204d5aa3b704"
+      "contentHash": "sha256:650bd82c42a513c19af48ba986481cd5a56f9f3491a9282deff76fccec64c4d0"
     },
     {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/edqs/fields/BlobEntityFields.java",

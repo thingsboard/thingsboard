@@ -111,19 +111,20 @@ class AiModelController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @Parameter(description = "Filter by the 'available via API' flag; all models are returned when omitted")
-            @RequestParam(required = false) Boolean availableViaApi
+            @Parameter(description = "Filter by the 'customer access enabled' flag; all models are returned when omitted")
+            @RequestParam(required = false) Boolean customerAccessEnabled
     ) throws ThingsboardException {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return aiModelService.findAiModelsByTenantId(user.getTenantId(), availableViaApi, pageLink);
+        return aiModelService.findAiModelsByTenantId(user.getTenantId(), customerAccessEnabled, pageLink);
     }
 
     @ApiOperation(
             value = "Get AI model infos (getAiModelInfos)",
             notes = "Returns a page of AI model infos: AI models without the configuration and its provider credentials. " +
-                    "Requires the 'INVOKE' permission for AI models, so it lists the models a user can choose from to send chat requests to. " +
+                    "Requires the 'INVOKE' permission for AI models. " +
+                    "Customer users only get the models with customer access enabled, which are the ones they can send chat requests to. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -139,13 +140,13 @@ class AiModelController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @Parameter(description = "Filter by the 'available via API' flag; all models are returned when omitted")
-            @RequestParam(required = false) Boolean availableViaApi
+            @Parameter(description = "Filter by the 'customer access enabled' flag; all models are returned when omitted. Ignored for customer users")
+            @RequestParam(required = false) Boolean customerAccessEnabled
     ) throws ThingsboardException {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.INVOKE);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), availableViaApi, pageLink);
+        return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), user.isCustomerUser() ? Boolean.TRUE : customerAccessEnabled, pageLink);
     }
 
     @ApiOperation(
@@ -195,9 +196,9 @@ class AiModelController extends BaseController {
             value = "Send request to a saved AI chat model (sendChatRequestToAiModel)",
             notes = "Submits a single prompt - made up of an optional system message and a required user message - to the AI chat model " +
                     "with the specified `id`, using its saved configuration, and returns either the generated answer or an error envelope. " +
-                    "The model must be marked as available via API, and the user must have the 'INVOKE' permission for AI models. " +
+                    "The user must have the 'INVOKE' permission for AI models, and customer users additionally require the model to have customer access enabled. " +
                     "Roles that grant all operations, such as the default 'Customer Administrator' role, include 'INVOKE', " +
-                    "so marking a model as available via API makes it callable by every user with such a role." +
+                    "so enabling customer access makes the model callable by every customer user with such a role." +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -212,9 +213,6 @@ class AiModelController extends BaseController {
             @Valid @RequestBody TbChatRequest tbChatRequest
     ) throws ThingsboardException {
         AiModel model = checkAiModelId(new AiModelId(modelUuid), Operation.INVOKE);
-        if (!model.isAvailableViaApi()) {
-            throw new ThingsboardException("AI model with id [" + modelUuid + "] is not available via API", ThingsboardErrorCode.PERMISSION_DENIED);
-        }
         if (!(model.getConfiguration() instanceof AiChatModelConfig<?> chatModelConfig)) {
             throw new ThingsboardException("AI model with id [" + modelUuid + "] is not a chat model", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
