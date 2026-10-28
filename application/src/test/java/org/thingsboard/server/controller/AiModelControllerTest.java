@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.AiModelInfo;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
 import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
 import org.thingsboard.server.common.data.ai.dto.TbContent;
@@ -18,6 +19,7 @@ import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
@@ -28,7 +30,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ai.TbAiModelChatRequest;
 
 import java.util.List;
 
@@ -260,6 +261,19 @@ public class AiModelControllerTest extends AbstractControllerTest {
         } finally {
             SsrfProtectionValidator.setEnabled(false);
         }
+    }
+
+    @Test
+    public void sendChatRequest_whenChatModelConfigIsMissing_shouldReturnBadRequest() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/chat", constructChatRequest());
+
+        // THEN
+        result.andExpect(status().isBadRequest())
+                .andExpect(statusReason(is("Validation error: chatModelConfig must not be null")));
     }
 
     /* --- Chat with saved model API tests --- */
@@ -607,6 +621,107 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(all.getData()).containsExactlyInAnyOrder(available, unavailable);
     }
 
+    /* --- Get infos API tests --- */
+
+    @Test
+    public void getAiModelInfos_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/infos?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModelInfos_whenCustomerUserWithoutInvokePermission_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/infos?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void getAiModelInfos_whenTenantAdmin_shouldReturnInfosFilteredByAvailableViaApi() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var available = constructValidOpenAiModel("Available model");
+        available.setAvailableViaApi(true);
+        available = doPost("/api/ai/model", available, AiModel.class);
+        var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
+
+        // WHEN
+        PageData<AiModelInfo> onlyAvailable = doGetTypedWithPageLink("/api/ai/model/infos?availableViaApi=true&", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModelInfo> all = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
+
+        // THEN
+        assertThat(onlyAvailable.getData()).containsExactly(new AiModelInfo(available));
+        assertThat(all.getData()).containsExactlyInAnyOrder(new AiModelInfo(available), new AiModelInfo(unavailable));
+        assertThat(onlyAvailable.getData().get(0).getProvider()).isEqualTo(AiProvider.OPENAI);
+        assertThat(onlyAvailable.getData().get(0).getModelId()).isEqualTo("gpt-4o");
+    }
+
+    @Test
+    public void getAiModelInfos_testSearchAndSortByProviderAndModelId() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var anthropicModel = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 1")
+                .configuration(AnthropicChatModelConfig.builder()
+                        .providerConfig(new AnthropicProviderConfig("test-api-key"))
+                        .modelId("claude-sonnet-4-0")
+                        .build())
+                .build(), AiModel.class);
+        var geminiModel = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 2")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("gemini-2.5-pro")
+                        .build())
+                .build(), AiModel.class);
+
+        // WHEN
+        PageData<AiModelInfo> byProviderDesc = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, null, SortOrder.of("provider", SortOrder.Direction.DESC)));
+        PageData<AiModelInfo> byModelIdAsc = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, null, SortOrder.of("modelId", SortOrder.Direction.ASC)));
+        PageData<AiModelInfo> searchByProvider = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, "google ai"));
+        PageData<AiModelInfo> searchByModelId = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, "sonnet"));
+
+        // THEN
+        assertThat(byProviderDesc.getData()).containsExactly(new AiModelInfo(geminiModel), new AiModelInfo(anthropicModel));
+        assertThat(byModelIdAsc.getData()).containsExactly(new AiModelInfo(anthropicModel), new AiModelInfo(geminiModel));
+        assertThat(searchByProvider.getData()).containsExactly(new AiModelInfo(geminiModel));
+        assertThat(searchByModelId.getData()).containsExactly(new AiModelInfo(anthropicModel));
+    }
+
+    @Test
+    public void getAiModelInfos_whenCustomerAdmin_shouldReturnInfosWithoutConfiguration() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelAvailableViaApiWithBlockedBaseUrl();
+        loginCustomerAdminUser();
+
+        // WHEN
+        String response = doGet("/api/ai/model/infos?pageSize=10&page=0").andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // THEN
+        assertThat(response).contains(model.getId().getId().toString()).doesNotContain("test-api-key");
+    }
+
     @Test
     public void getAiModels_testSortingByCreatedTime() throws Exception {
         // GIVEN
@@ -887,8 +1002,8 @@ public class AiModelControllerTest extends AbstractControllerTest {
         return doPost("/api/ai/model", model, AiModel.class);
     }
 
-    private TbAiModelChatRequest constructChatRequest() {
-        return new TbAiModelChatRequest(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))), null);
+    private TbChatRequest constructChatRequest() {
+        return new TbChatRequest(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))), null);
     }
 
     private boolean hasAiModelPermission(AiModel model, String operation) throws Exception {

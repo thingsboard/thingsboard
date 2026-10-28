@@ -3,63 +3,28 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
-import org.thingsboard.server.common.data.HasVersion;
-import org.thingsboard.server.common.data.TenantEntity;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.validation.Length;
-import org.thingsboard.server.common.data.validation.NoNullChar;
-import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serial;
 
 @Data
-@Builder
-@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public final class AiModel extends BaseData<AiModelId> implements TenantEntity, HasVersion, ExportableEntity<AiModelId> {
+public final class AiModel extends AiModelInfo implements ExportableEntity<AiModelId> {
 
     @Serial
     private static final long serialVersionUID = 9017108678716011604L;
-
-    @Schema(
-            accessMode = Schema.AccessMode.READ_ONLY,
-            description = "JSON object representing the ID of the tenant associated with this AI model",
-            example = "e3c4b7d2-5678-4a9b-0c1d-2e3f4a5b6c7d"
-    )
-    private TenantId tenantId;
-
-    @Schema(
-            accessMode = Schema.AccessMode.READ_ONLY,
-            description = "Version of the AI model record; increments automatically whenever the record is changed",
-            example = "7",
-            defaultValue = "1"
-    )
-    private Long version;
-
-    @NotBlank
-    @NoNullChar
-    @Length(min = 1, max = 255)
-    @NoXss
-    @Schema(
-            requiredMode = Schema.RequiredMode.REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Display name for this AI model configuration; not the technical model identifier",
-            example = "Fast and cost-efficient model"
-    )
-    private String name;
 
     @NotNull
     @Valid
@@ -70,15 +35,6 @@ public final class AiModel extends BaseData<AiModelId> implements TenantEntity, 
     )
     private AiModelConfig configuration;
 
-    @Schema(
-            requiredMode = Schema.RequiredMode.NOT_REQUIRED,
-            accessMode = Schema.AccessMode.READ_WRITE,
-            description = "Whether the model can be used via the AI model chat API by users with the 'INVOKE' permission. " +
-                    "Roles that grant all operations, such as the default 'Customer Administrator' role, include 'INVOKE'",
-            defaultValue = "false"
-    )
-    private boolean availableViaApi;
-
     private AiModelId externalId;
 
     public AiModel() {}
@@ -87,20 +43,32 @@ public final class AiModel extends BaseData<AiModelId> implements TenantEntity, 
         super(id);
     }
 
+    @Builder
+    public AiModel(TenantId tenantId, Long version, String name, AiModelConfig configuration, boolean availableViaApi, AiModelId externalId) {
+        setTenantId(tenantId);
+        setVersion(version);
+        setName(name);
+        setAvailableViaApi(availableViaApi);
+        this.configuration = configuration;
+        this.externalId = externalId;
+    }
+
     public AiModel(AiModel model) {
-        super(model.getId());
-        createdTime = model.getCreatedTime();
-        tenantId = model.getTenantId();
-        version = model.getVersion();
-        name = model.getName();
+        super(model);
         configuration = model.getConfiguration();
-        availableViaApi = model.isAvailableViaApi();
         externalId = model.getExternalId() == null ? null : new AiModelId(model.getExternalId().getId());
     }
 
     @Override
-    public EntityType getEntityType() {
-        return EntityType.AI_MODEL;
+    @JsonIgnore
+    public AiProvider getProvider() {
+        return configuration != null ? configuration.provider() : null;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getModelId() {
+        return configuration instanceof AiChatModelConfig<?> chatModelConfig ? chatModelConfig.modelId() : null;
     }
 
 }

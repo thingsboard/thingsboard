@@ -4,7 +4,6 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import dev.langchain4j.model.chat.request.ChatRequest;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -20,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.rule.engine.ai.TbResponseFormat;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.AiModelInfo;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
 import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
@@ -34,7 +33,6 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.AiChatModelService;
-import org.thingsboard.server.service.ai.TbAiModelChatRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.time.Duration;
@@ -123,6 +121,34 @@ class AiModelController extends BaseController {
     }
 
     @ApiOperation(
+            value = "Get AI model infos (getAiModelInfos)",
+            notes = "Returns a page of AI model infos: AI models without the configuration and its provider credentials. " +
+                    "Requires the 'INVOKE' permission for AI models, so it lists the models a user can choose from to send chat requests to. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+    )
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping("/infos")
+    public PageData<AiModelInfo> getAiModelInfos(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = AI_MODEL_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "provider", "modelId"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder,
+            @Parameter(description = "Filter by the 'available via API' flag; all models are returned when omitted")
+            @RequestParam(required = false) Boolean availableViaApi
+    ) throws ThingsboardException {
+        var user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.INVOKE);
+        var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), availableViaApi, pageLink);
+    }
+
+    @ApiOperation(
             value = "Delete AI model by ID (deleteAiModelById)",
             notes = "Deletes the AI model record by its `id`. " +
                     "If a record with the specified `id` exists, the record is deleted and the endpoint returns `true`. " +
@@ -159,7 +185,10 @@ class AiModelController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/chat")
     public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) throws ThingsboardException {
-        return executeChatRequest(tbChatRequest.chatModelConfig(), tbChatRequest.toLangChainChatRequest());
+        if (tbChatRequest.chatModelConfig() == null) {
+            throw new ThingsboardException("Validation error: chatModelConfig must not be null", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        return executeChatRequest(tbChatRequest.chatModelConfig(), tbChatRequest);
     }
 
     @ApiOperation(
@@ -180,7 +209,7 @@ class AiModelController extends BaseController {
                     example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
             )
             @PathVariable UUID modelUuid,
-            @Valid @RequestBody TbAiModelChatRequest request
+            @Valid @RequestBody TbChatRequest tbChatRequest
     ) throws ThingsboardException {
         AiModel model = checkAiModelId(new AiModelId(modelUuid), Operation.INVOKE);
         if (!model.isAvailableViaApi()) {
@@ -189,22 +218,12 @@ class AiModelController extends BaseController {
         if (!(model.getConfiguration() instanceof AiChatModelConfig<?> chatModelConfig)) {
             throw new ThingsboardException("AI model with id [" + modelUuid + "] is not a chat model", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-
-        ChatRequest chatRequest = new TbChatRequest(request.systemMessage(), request.userMessage(), chatModelConfig).toLangChainChatRequest();
-        TbResponseFormat responseFormat = request.responseFormat();
-        if (responseFormat != null) {
-            if (!responseFormat.isSupportedBy(chatModelConfig)) {
-                throw new ThingsboardException("AI model with id [" + modelUuid + "] does not support '" + responseFormat.type() + "' response format",
-                        ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            }
-            chatRequest = chatRequest.toBuilder().responseFormat(responseFormat.toLangChainResponseFormat()).build();
-        }
-        return executeChatRequest(chatModelConfig, chatRequest);
+        return executeChatRequest(chatModelConfig, tbChatRequest);
     }
 
-    private DeferredResult<TbChatResponse> executeChatRequest(AiChatModelConfig<?> chatModelConfig, ChatRequest chatRequest) throws ThingsboardException {
+    private DeferredResult<TbChatResponse> executeChatRequest(AiChatModelConfig<?> chatModelConfig, TbChatRequest tbChatRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(user.getTenantId(), chatModelConfig, chatRequest)
+        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(user.getTenantId(), chatModelConfig, tbChatRequest.toLangChainChatRequest())
                 .transform(chatResponse -> (TbChatResponse) new TbChatResponse.Success(chatResponse.aiMessage().text()), directExecutor())
                 .catching(Throwable.class, ex -> toFailure(user, ex), directExecutor());
 

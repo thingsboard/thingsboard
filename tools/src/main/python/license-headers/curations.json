@@ -272,6 +272,12 @@
       "contentHash": "sha256:ce067f7aad61fb79c44ac80ceda3b26e9908a8a648380097754ff9ee097256b1"
     },
     {
+      "path": "common/data/src/main/java/org/thingsboard/server/common/data/ai/AiModelInfo.java",
+      "header": "busl",
+      "reason": "New PE file that does not exist in CE. It is the superclass of AiModel holding the fields shared with the configuration-free info view, so its field declarations and schema annotations repeat those of AiModel. Reviewed similarity candidate common/data/src/main/java/org/thingsboard/server/common/data/ai/AiModel.java at 269bc8dc73a.",
+      "contentHash": "sha256:d7b2034b532aa029c9ff49e794c57ba62fe674c0b502f73999b4204d5aa3b704"
+    },
+    {
       "path": "common/data/src/main/java/org/thingsboard/server/common/data/edqs/fields/BlobEntityFields.java",
       "header": "busl",
       "reason": "PE-specific data/configuration type BlobEntityFields.java. Reviewed fields, type discriminators and serialization hooks describe PE entities or PE behavior; matching CE types supply only the common DTO/interface pattern. Resolved as PE-authored consistently with the maintainer decision for PE entity wrappers. Reviewed candidate common/data/src/main/java/org/thingsboard/server/common/data/edqs/fields/EntityViewFields.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob d21d495cf1871bdeca471f00d92c73d4d444a12a).",

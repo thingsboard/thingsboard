@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.dto;
 
 import dev.langchain4j.data.message.ChatMessage;
@@ -33,11 +34,12 @@ public record TbChatRequest(
         TbUserMessage userMessage,
 
         @Schema(
-                requiredMode = Schema.RequiredMode.REQUIRED,
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED,
                 accessMode = Schema.AccessMode.READ_WRITE,
-                description = "Configuration of the AI chat model that should execute the request"
+                description = "Configuration of the AI chat model that should execute the request. " +
+                        "Required when sending to an unsaved model; ignored when sending to a saved model by ID, which uses its saved configuration"
         )
-        @NotNull @Valid
+        @Valid
         AiChatModelConfig<?> chatModelConfig
 ) {
 

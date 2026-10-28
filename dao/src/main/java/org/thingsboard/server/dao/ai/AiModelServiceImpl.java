@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.AiModelInfo;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -38,6 +39,7 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
 
     private final JpaExecutorService jpaExecutor;
     private final AiModelDao aiModelDao;
+    private final AiModelInfoDao aiModelInfoDao;
 
     @Override
     @TransactionalEventListener
@@ -99,6 +101,12 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink) {
         validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
         return aiModelDao.findByTenantId(tenantId, availableViaApi, pageLink);
+    }
+
+    @Override
+    public PageData<AiModelInfo> findAiModelInfosByTenantId(TenantId tenantId, Boolean availableViaApi, PageLink pageLink) {
+        validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
+        return aiModelInfoDao.findByTenantId(tenantId, availableViaApi, pageLink);
     }
 
     @Override
