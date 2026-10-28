@@ -3,6 +3,7 @@
 package org.thingsboard.integration.api.converter;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.thingsboard.common.util.JacksonUtil;
@@ -38,10 +39,7 @@ public final class DedicatedConverterUtil {
             telemetry = src.get(TELEMETRY);
 
             if (telemetry.isJsonArray()) {
-                JsonObject telemetryFromMetadata = addKvs(new JsonObject(), kvMap, config.getTelemetry());
-                if (!telemetryFromMetadata.isEmpty()) {
-                    telemetry.getAsJsonArray().add(withUplinkTs(telemetryFromMetadata, kvMap));
-                }
+                addMetadataTelemetry(telemetry.getAsJsonArray(), kvMap, config.getTelemetry());
             } else if (telemetry.isJsonObject()) {
                 var obj = telemetry.getAsJsonObject();
                 if (obj.has(VALUES)) {
@@ -101,22 +99,48 @@ public final class DedicatedConverterUtil {
         return defaultValue.get();
     }
 
-    // An array element without ts is saved at the server time, so the metadata element takes the uplink time when it is known
-    private static JsonObject withUplinkTs(JsonObject values, Map<String, Object> kvMap) {
-        Object ts = kvMap.get(TS);
-        Long uplinkTs = null;
-        if (ts instanceof Number number) {
-            uplinkTs = number.longValue();
-        } else if (ts instanceof String str && StringUtils.isNumeric(str)) {
-            uplinkTs = Long.parseLong(str);
+    // The metadata keys join the script's element at the uplink ts, where the script's values win as in an object result.
+    // Without such an element they get their own one at the uplink ts: an element without ts is saved at the server time.
+    private static void addMetadataTelemetry(JsonArray telemetry, Map<String, Object> kvMap, Set<String> keys) {
+        Long uplinkTs = getUplinkTs(kvMap);
+        if (uplinkTs != null) {
+            for (JsonElement element : telemetry) {
+                if (element.isJsonObject() && isValuesAtTs(element.getAsJsonObject(), uplinkTs)) {
+                    addKvs(element.getAsJsonObject().getAsJsonObject(VALUES), kvMap, keys);
+                    return;
+                }
+            }
+        }
+        JsonObject values = addKvs(new JsonObject(), kvMap, keys);
+        if (values.isEmpty()) {
+            return;
         }
         if (uplinkTs == null) {
-            return values;
+            telemetry.add(values);
+            return;
         }
         JsonObject element = new JsonObject();
         element.addProperty(TS, uplinkTs);
         element.add(VALUES, values);
-        return element;
+        telemetry.add(element);
+    }
+
+    private static boolean isValuesAtTs(JsonObject element, long ts) {
+        JsonElement elementTs = element.get(TS);
+        return element.has(VALUES) && element.get(VALUES).isJsonObject()
+                && elementTs != null && elementTs.isJsonPrimitive() && elementTs.getAsJsonPrimitive().isNumber()
+                && elementTs.getAsLong() == ts;
+    }
+
+    private static Long getUplinkTs(Map<String, Object> kvMap) {
+        Object ts = kvMap.get(TS);
+        if (ts instanceof Number number) {
+            return number.longValue();
+        }
+        if (ts instanceof String str && StringUtils.isNumeric(str)) {
+            return Long.parseLong(str);
+        }
+        return null;
     }
 
     private static JsonObject addKvs(JsonObject kvsObj, Map<String, Object> kvMap, Set<String> keys) {

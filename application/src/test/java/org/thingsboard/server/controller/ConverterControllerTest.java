@@ -689,8 +689,8 @@ public class ConverterControllerTest extends AbstractControllerTest {
     @Test
     public void testThingsStackDefaultConvertersGiveRepositoryDeviceItsModelProfile() throws IOException {
         String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"am308-office\",\"profile\":\"milesight-iot-am308\",\"label\":\"am308-office\",\"group\":\"my-app\"," +
-                "\"telemetry\":[{\"ts\":1793170000000,\"values\":{\"temperature\":24.1,\"co2\":550}},{\"ts\":1793181600100,\"values\":{\"battery\":95,\"temperature\":24.5,\"co2\":560}}," +
-                "{\"ts\":1793181600100,\"values\":{\"fCnt\":12,\"data\":\"AXVk\",\"rssi\":-60,\"snr\":9.5,\"channel\":2,\"consumedAirtime\":\"0.061696s\"}}]," +
+                "\"telemetry\":[{\"ts\":1793170000000,\"values\":{\"temperature\":24.1,\"co2\":550}},{\"ts\":1793181600100,\"values\":{\"battery\":95,\"temperature\":24.5,\"co2\":560," +
+                "\"fCnt\":12,\"data\":\"AXVk\",\"rssi\":-60,\"snr\":9.5,\"channel\":2,\"consumedAirtime\":\"0.061696s\"}}]," +
                 "\"attributes\":{\"eui\":\"24E124707C481005\",\"joinEui\":\"24E124C0002A0001\",\"devAddr\":\"260B1234\",\"deviceId\":\"am308-office\",\"applicationId\":\"my-app\"," +
                 "\"fPort\":85,\"bandwidth\":125000,\"spreadingFactor\":7,\"codeRate\":\"4/5\",\"frequency\":\"868100000\",\"brandId\":\"milesight-iot\",\"modelId\":\"am308\"," +
                 "\"hardwareVersion\":\"1.0\",\"firmwareVersion\":\"1.0\",\"bandId\":\"EU_863_870\",\"netId\":\"000013\",\"tenantId\":\"ttn\",\"clusterId\":\"eu1\"," +
