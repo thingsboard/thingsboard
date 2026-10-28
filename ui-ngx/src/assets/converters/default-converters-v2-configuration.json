@@ -143,12 +143,17 @@
   },
   "TTN": {
     "type": "DEVICE",
-    "name": "Device $eui",
-    "profile": "$applicationId",
+    "name": "$deviceId",
+    "profile": "LoRaWAN Device",
     "label": "$deviceId",
+    "customer": "",
+    "group": "$applicationId",
     "attributes": [
       "eui",
+      "joinEui",
       "devAddr",
+      "deviceId",
+      "applicationId",
       "fPort",
       "bandwidth",
       "spreadingFactor",
@@ -158,23 +163,30 @@
       "modelId",
       "hardwareVersion",
       "firmwareVersion",
-      "attributes",
-      "tenantId"
+      "bandId",
+      "netId",
+      "tenantId",
+      "clusterId",
+      "clusterAddress",
+      "attributes"
     ],
     "telemetry": [
       "fCnt",
       "data",
-      "decoded",
       "latitude",
       "longitude",
       "altitude",
       "rssi",
       "snr",
-      "channel"
+      "channel",
+      "consumedAirtime"
     ],
     "updateOnlyKeys": [
       "eui",
+      "joinEui",
       "devAddr",
+      "deviceId",
+      "applicationId",
       "fPort",
       "bandwidth",
       "spreadingFactor",
@@ -184,18 +196,27 @@
       "modelId",
       "hardwareVersion",
       "firmwareVersion",
-      "attributes",
-      "tenantId"
+      "bandId",
+      "netId",
+      "tenantId",
+      "clusterId",
+      "clusterAddress",
+      "attributes"
     ]
   },
   "TTI": {
     "type": "DEVICE",
-    "name": "Device $eui",
-    "profile": "$applicationId",
+    "name": "$deviceId",
+    "profile": "LoRaWAN Device",
     "label": "$deviceId",
+    "customer": "",
+    "group": "$applicationId",
     "attributes": [
       "eui",
+      "joinEui",
       "devAddr",
+      "deviceId",
+      "applicationId",
       "fPort",
       "bandwidth",
       "spreadingFactor",
@@ -205,23 +226,30 @@
       "modelId",
       "hardwareVersion",
       "firmwareVersion",
-      "attributes",
-      "tenantId"
+      "bandId",
+      "netId",
+      "tenantId",
+      "clusterId",
+      "clusterAddress",
+      "attributes"
     ],
     "telemetry": [
       "fCnt",
       "data",
-      "decoded",
       "latitude",
       "longitude",
       "altitude",
       "rssi",
       "snr",
-      "channel"
+      "channel",
+      "consumedAirtime"
     ],
     "updateOnlyKeys": [
       "eui",
+      "joinEui",
       "devAddr",
+      "deviceId",
+      "applicationId",
       "fPort",
       "bandwidth",
       "spreadingFactor",
@@ -231,8 +259,12 @@
       "modelId",
       "hardwareVersion",
       "firmwareVersion",
-      "attributes",
-      "tenantId"
+      "bandId",
+      "netId",
+      "tenantId",
+      "clusterId",
+      "clusterAddress",
+      "attributes"
     ]
   }
 }
