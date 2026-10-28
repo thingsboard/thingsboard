@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.validator.ApiKeyDataValidator;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -82,8 +83,13 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             }
             var savedApiKey = apiKeyDao.save(tenantId, apiKey);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId()).entity(savedApiKey).created(apiKey.getId() == null).build());
-            if (old != null && old.isEnabled() != apiKey.isEnabled()) {
-                publishEvictEvent(new ApiKeyEvictEvent(apiKey.getValue()));
+            if (isPublishEvictRequired(old, apiKey)) {
+                // the cache is keyed by value, so the entry to evict is the one the old value still resolves to
+                publishEvictEvent(new ApiKeyEvictEvent(old.getValue()));
+            }
+            if (value != null && (old == null || !value.equals(old.getValue()))) {
+                // a failed authentication attempt may have cached a miss for the explicitly provided value (edge sync)
+                publishEvictEvent(new ApiKeyEvictEvent(value));
             }
             return savedApiKey;
         } catch (Exception e) {
@@ -178,6 +184,17 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
 
     private String generateApiKeySecret() {
         return prefix + StringUtils.generateSafeToken(Math.min(valueBytesSize, MAX_API_KEY_VALUE_LENGTH));
+    }
+
+    /**
+     * Authentication resolves keys by value straight from the cache, so a changed enabled flag or value requires
+     * evicting the entry under the old value. Null old means create: there is no previous value to evict; a cached
+     * miss for an explicitly provided value is evicted separately in saveApiKey.
+     */
+    private static boolean isPublishEvictRequired(ApiKey old, ApiKey apiKey) {
+        return old != null
+               && (old.isEnabled() != apiKey.isEnabled()
+                   || !Objects.equals(old.getValue(), apiKey.getValue()));
     }
 
     @Override
