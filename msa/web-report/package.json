@@ -8,34 +8,24 @@
   "scripts": {
     "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-report-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-report-win.exe ./target/src && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --watch '.' --ext 'ts' --exec 'ts-node server.ts'",
-    "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'NODE_ENV=production ts-node server.ts'",
+    "start": "node --watch --watch-preserve-output -r ts-node/register server.ts",
+    "start-prod": "NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",
     "build": "tsc"
   },
   "dependencies": {
-    "config": "~4.1.1",
-    "express": "~5.1.0",
-    "js-yaml": "^4.1.1",
-    "playwright-chromium": "~1.64.0",
-    "playwright-core": "~1.64.0",
-    "winston": "~3.17.0",
+    "config": "~4.4.2",
+    "express": "~5.3.0",
+    "js-yaml": "^4.3.2",
+    "playwright-chromium": "~1.64.1",
+    "playwright-core": "~1.64.1",
+    "winston": "~3.19.0",
     "winston-daily-rotate-file": "~5.0.0"
   },
-  "nyc": {
-    "exclude": [
-      "test",
-      "__tests__",
-      "node_modules",
-      "target"
-    ]
-  },
   "devDependencies": {
-    "@types/config": "~3.3.5",
-    "@types/express": "~5.0.3",
-    "@types/node": "~22.17.2",
-    "@yao-pkg/pkg": "^6.6.0",
-    "fs-extra": "~11.3.1",
-    "nodemon": "~3.1.10",
+    "@types/express": "~5.0.6",
+    "@types/node": "~22.20.5",
+    "@yao-pkg/pkg": "^6.24.0",
+    "fs-extra": "~11.4.1",
     "postinstall-postinstall": "^2.1.0",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3"

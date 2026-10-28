@@ -3,8 +3,10 @@
 package org.thingsboard.server.controller;
 
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.server.service.ai.transport.TbAiTurnLink;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.channel.ChatOperationRequest;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.Test;
@@ -28,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class AiChatControllerOnPremiseTest extends AbstractOnPremiseAiControllerTest {
+
+    private static final JsonNode TOOL_CARDS = JacksonUtil.newObjectNode().put("toolCards", true);
 
     @Test
     public void shouldCreateChatWithOnPremiseToken_whenTenantAdmin() throws Exception {
@@ -83,13 +87,13 @@ public class AiChatControllerOnPremiseTest extends AbstractOnPremiseAiController
         loginTenantAdmin();
         givenSubscriptionProvidesAiToken();
         UUID chatId = UUID.randomUUID();
-        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null), success(JacksonUtil.newArrayNode()));
+        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS), success(JacksonUtil.newArrayNode()));
 
         // WHEN
         doGet("/api/ai/chats/" + chatId + "/messages").andExpect(status().isOk());
 
         // THEN
-        TbAiTurnContext context = verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null));
+        TbAiTurnContext context = verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS));
         assertTokenProviderBelongsToTenantAdmin(context.tokenProvider());
     }
 
@@ -117,7 +121,7 @@ public class AiChatControllerOnPremiseTest extends AbstractOnPremiseAiController
         UUID chatId = UUID.randomUUID();
         ObjectNode requestBody = sendMessageBody("What is the device status?", null);
         String acceptLanguage = "es-ES";
-        given(tbAiTransport.sendChatMessage(eq(chatId), eq(requestBody), any(TbAiTurnContext.class)))
+        given(tbAiTransport.sendChatMessage(eq(chatId), eq(requestBody), any(TbAiTurnContext.class), any(TbAiTurnLink.class)))
                 .willReturn(Flux.just(ServerSentEvent.<String>builder().event("message").data("Checking device status...").build()));
 
         // WHEN
@@ -128,7 +132,7 @@ public class AiChatControllerOnPremiseTest extends AbstractOnPremiseAiController
 
         // THEN
         ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
-        verify(tbAiTransport).sendChatMessage(eq(chatId), eq(requestBody), context.capture());
+        verify(tbAiTransport).sendChatMessage(eq(chatId), eq(requestBody), context.capture(), any(TbAiTurnLink.class));
         assertThat(context.getValue().tbAccessToken()).isEqualTo("Bearer " + token);
         assertThat(context.getValue().acceptLanguage()).isEqualTo(acceptLanguage);
         assertTokenProviderBelongsToTenantAdmin(context.getValue().tokenProvider());
