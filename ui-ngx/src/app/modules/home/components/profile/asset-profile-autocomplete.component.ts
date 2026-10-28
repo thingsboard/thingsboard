@@ -93,6 +93,10 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
   @Output()
   assetProfileUpdated = new EventEmitter<AssetProfileId>();
 

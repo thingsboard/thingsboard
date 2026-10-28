@@ -27,6 +27,7 @@ import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 import { OAuth2Module } from '@home/pages/admin/oauth2/oauth2.module';
 import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-library-table-header.component';
+import { ResourceTypeFilterComponent } from '@home/pages/admin/resource/resource-type-filter.component';
 import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
 import { NgxFlowModule } from '@flowjs/ngx-flow';
 import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
@@ -55,6 +56,7 @@ import { LicenseHandOffDialogComponent } from '@home/pages/admin/license-hand-of
       ResourcesTableHeaderComponent,
       JsResourceComponent,
       JsLibraryTableHeaderComponent,
+      ResourceTypeFilterComponent,
       QueueComponent,
       RepositoryAdminSettingsComponent,
       AutoCommitAdminSettingsComponent,

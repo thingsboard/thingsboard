@@ -4,7 +4,12 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<mat-form-field [formGroup]="subTypeFormGroup" class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+<mat-form-field [formGroup]="subTypeFormGroup"
+  [class.tb-inline-field]="inlineField"
+  [class.flex]="inlineField"
+  class="mat-block"
+  [appearance]="inlineField ? 'outline' : 'fill'"
+  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
   @if (showLabel) {
     <mat-label>{{ entitySubtypeTitle | translate }}</mat-label>
   }

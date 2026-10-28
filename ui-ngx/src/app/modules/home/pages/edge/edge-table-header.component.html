@@ -6,13 +6,10 @@
 
 -->
 <div class="flex flex-row items-center justify-start">
-  <tb-entity-subtype-select
-    subscriptSizing="dynamic"
-    [showLabel]="true"
-    [entityType]="entityType.EDGE"
-    [ngModel]="entitiesTableConfig.componentsData.edgeType"
-    (ngModelChange)="edgeTypeChanged($event)">
-  </tb-entity-subtype-select>
+  <tb-entity-subtype-filter [entityType]="entityType.EDGE"
+                            [ngModel]="entitiesTableConfig.componentsData.edgeType"
+                            (ngModelChange)="edgeTypeChanged($event)">
+  </tb-entity-subtype-filter>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"

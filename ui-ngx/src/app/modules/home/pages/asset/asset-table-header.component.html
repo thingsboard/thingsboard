@@ -6,15 +6,9 @@
 
 -->
 <div class="flex flex-row items-center justify-start">
-  <tb-asset-profile-autocomplete
-    class="min-w-0 flex-1"
-    subscriptSizing="dynamic"
-    [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
-    (ngModelChange)="assetProfileChanged($event)"
-    [addNewProfile]="false"
-    [displayAllOnEmpty]="true"
-    [editProfileEnabled]="false">
-  </tb-asset-profile-autocomplete>
+  <tb-asset-info-filter [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
+                        (ngModelChange)="assetProfileChanged($event)">
+  </tb-asset-info-filter>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"

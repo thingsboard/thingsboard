@@ -1,0 +1,49 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<button color="primary"
+        matTooltip="{{ buttonDisplayValue }}"
+        matTooltipPosition="above"
+        mat-stroked-button
+        [disabled]="disabled"
+        (click)="toggleEntitySubtypeFilterPanel($event)">
+  <mat-icon>filter_list</mat-icon>{{ buttonDisplayValue }}
+</button>
+<ng-template #entitySubtypeFilterPanel>
+  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
+    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border" [formGroup]="entitySubtypeFilterForm">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width">{{ translations.subtypeTitle | translate }}</div>
+        <tb-entity-subtype-select
+          class="flex-1"
+          formControlName="subType"
+          [inlineField]="true"
+          [entityType]="entityType">
+        </tb-entity-subtype-select>
+      </div>
+    </div>
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+              mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+              mat-button
+              (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="entitySubtypeFilterForm.invalid || !entitySubtypeFilterForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>

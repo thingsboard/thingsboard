@@ -4,18 +4,10 @@
     SPDX-License-Identifier: Apache-2.0
 
 -->
-<mat-form-field class="mat-block" subscriptSizing="dynamic">
-  <mat-label translate>resource.resource-type</mat-label>
-  <mat-select [ngModel]="entitiesTableConfig.componentsData.resourceType"
-              (ngModelChange)="resourceTypeChanged($event)"
-              placeholder="{{ 'resource.resource-type' | translate }}">
-    <mat-option value="">
-      {{ "resource.all-types" | translate }}
-    </mat-option>
-    @for (resourceType of resourceTypes; track resourceType) {
-      <mat-option [value]="resourceType">
-        {{ resourceTypesTranslationMap.get(resourceType) | translate }}
-      </mat-option>
-    }
-  </mat-select>
-</mat-form-field>
+<tb-resource-type-filter [types]="resourceTypes"
+                         [typeTranslations]="resourceTypesTranslationMap"
+                         typeTitle="resource.resource-type"
+                         allTypesTitle="resource.all-types"
+                         [ngModel]="entitiesTableConfig.componentsData.resourceType"
+                         (ngModelChange)="resourceTypeChanged($event)">
+</tb-resource-type-filter>
