@@ -23,7 +23,7 @@ var topicPrefixes = ["tb/devices", "tb/sensors"];
 // --- Device name and type ---
 
 var topicParts = metadata != null && metadata['topic'] != null
-    ? metadata['topic'].split('/')
+    ? metadata['topic'].split('/', -1)
     : null;
 
 // Validate the supported topic structure.
