@@ -102,7 +102,36 @@ export type ScadaSymbolStateRenderFunction = (ctx: ScadaSymbolContext, svg: Svg)
 export type ScadaSymbolTagStateRenderFunction = (ctx: ScadaSymbolContext, element: Element) => void;
 
 // noinspection JSUnusedGlobalSymbols
-export type ScadaSymbolActionTrigger = 'click';
+export type ScadaSymbolActionTrigger = 'click' | 'dblclick' | 'contextmenu';
+
+export interface ScadaSymbolActionTriggerInfo {
+  name: string;
+  helpId: string;
+}
+
+export const scadaSymbolActionTriggerInfo: Record<ScadaSymbolActionTrigger, ScadaSymbolActionTriggerInfo> = {
+  click: {
+    name: 'scada.tag.on-click-action',
+    helpId: 'scada/tag_click_action_fn'
+  },
+  dblclick: {
+    name: 'scada.tag.on-double-click-action',
+    helpId: 'scada/tag_dblclick_action_fn'
+  },
+  contextmenu: {
+    name: 'scada.tag.on-right-click-action',
+    helpId: 'scada/tag_contextmenu_action_fn'
+  }
+};
+
+export const scadaSymbolActionTriggers =
+  Object.keys(scadaSymbolActionTriggerInfo) as ScadaSymbolActionTrigger[];
+
+// Max interval between clicks of a double click: a click action is deferred by this amount
+// when the same tag also has a dblclick action, so it can be canceled by the second click.
+const dblClickDelay = 500;
+
+
 
 export type ScadaSymbolActionFunction = (ctx: ScadaSymbolContext, element: Element, event: Event) => void;
 export interface ScadaSymbolAction {
@@ -114,7 +143,7 @@ export interface ScadaSymbolTag {
   tag: string;
   stateRenderFunction?: string;
   stateRender?: ScadaSymbolTagStateRenderFunction;
-  actions?: {[trigger: string]: ScadaSymbolAction};
+  actions?: {[trigger in ScadaSymbolActionTrigger]?: ScadaSymbolAction};
 }
 
 export enum ScadaSymbolBehaviorType {
@@ -503,6 +532,8 @@ export class ScadaSymbolObject {
   private readonly shapeResize$: ResizeObserver;
   private readonly destroy$ = new Subject<void>();
 
+  private readonly deferredClickTimeouts = new Set<ReturnType<typeof setTimeout>>();
+
   private scale = 1;
 
   private performInit = true;
@@ -532,6 +563,8 @@ export class ScadaSymbolObject {
   public destroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.deferredClickTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.deferredClickTimeouts.clear();
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -561,9 +594,11 @@ export class ScadaSymbolObject {
     for (const tag of this.metadata.tags) {
       tag.stateRender = parseFunction(tag.stateRenderFunction, ['ctx', 'element']) || (() => {});
       if (tag.actions) {
-        for (const trigger of Object.keys(tag.actions)) {
+        for (const trigger of scadaSymbolActionTriggers) {
           const action = tag.actions[trigger];
-          action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
+          if (action) {
+            action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
+          }
         }
       }
     }
@@ -655,13 +690,38 @@ export class ScadaSymbolObject {
     for (const tag of this.metadata.tags) {
       if (tag.actions) {
         const elements = this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
-        for (const trigger of Object.keys(tag.actions)) {
+        const deferClick = !!tag.actions.click && !!tag.actions.dblclick;
+        for (const trigger of scadaSymbolActionTriggers) {
           const action = tag.actions[trigger];
+          if (!action) {
+            continue;
+          }
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
-            element.on(trigger, (event) => {
-              action.action(this.context, element, event);
-            });
+            if (trigger === 'click' && deferClick) {
+              let clickTimeout: ReturnType<typeof setTimeout> = null;
+              element.on('click', (event: MouseEvent) => {
+                if (clickTimeout !== null) {
+                  clearTimeout(clickTimeout);
+                  this.deferredClickTimeouts.delete(clickTimeout);
+                  clickTimeout = null;
+                }
+                if (event.detail === 1) {
+                  clickTimeout = setTimeout(() => {
+                    this.deferredClickTimeouts.delete(clickTimeout);
+                    action.action(this.context, element, event);
+                  }, dblClickDelay);
+                  this.deferredClickTimeouts.add(clickTimeout);
+                }
+              });
+            } else {
+              element.on(trigger, (event) => {
+                if (trigger === 'contextmenu') {
+                  event.preventDefault();
+                }
+                action.action(this.context, element, event);
+              });
+            }
           });
         }
       }
