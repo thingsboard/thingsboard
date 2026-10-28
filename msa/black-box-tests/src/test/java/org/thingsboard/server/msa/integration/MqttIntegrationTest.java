@@ -341,11 +341,16 @@ public class MqttIntegrationTest extends AbstractIntegrationTest {
         RuleNode integrationNode = ruleChainMetadata.getNodes().stream().filter(ruleNode -> ruleNode.getType().equals("org.thingsboard.rule.engine.integration.TbIntegrationDownlinkNode")).findFirst().get();
         waitTillRuleNodeReceiveMsg(integrationNode.getId(), EventType.DEBUG_RULE_NODE, integration.getTenantId(), "ATTRIBUTES_UPDATED");
 
+        // The integration persists the 'Downlink' debug event after it published to the broker. Waiting for it
+        // first tells a downlink lost before the integration apart from one lost between the integration and the broker.
+        EventInfo downlinkEvent = waitForIntegrationDownlinkDebugEvent(integration);
+
         //check downlink
         Awaitility
                 .await()
-                .alias("Get integration events")
-                .atMost(10, TimeUnit.SECONDS)
+                .alias("Downlink message on broker topic " + DOWNLINK_TOPIC + " after integration debug event "
+                        + describeDebugEvents(List.of(downlinkEvent)))
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> !messageListener.getEvents().isEmpty());
 
         BlockingQueue<MqttEvent> events = messageListener.getEvents();
