@@ -129,7 +129,8 @@ export class TimeSeriesChartWidgetComponent implements ChartWidgetComponent, OnI
   }
 
   ngAfterViewInit() {
-    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, this.settings, this.chartShape.nativeElement, this.renderer);
+    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, this.settings, this.chartShape.nativeElement, this.renderer,
+      true, this.showLegend && (this.settings.legendConfig?.sortDataKeys ?? false));
     this.ctx.widgetActions = this.timeSeriesChart.getWidgetActions();
   }
 
