@@ -1704,6 +1704,12 @@
       "header": "busl",
       "reason": "ID wrapper for a PE-only entity. Maintainer resolved ConverterId and comparable PE-only entity wrappers as PE-authored; extending the common ID type and repeating its annotations/type tag is template use. Reviewed similarity candidate ui-ngx/src/app/shared/models/id/asset-id.ts at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 86ca874a92346a950b6912d78116f1f7ee6bb654).",
       "contentHash": "sha256:5427b1c6bf59f9e9372c47717fee96bf94bddeaf65ad920b77647b16539bf5f9"
+    },
+    {
+      "path": "ui-ngx/src/scss/filter-button.scss",
+      "header": "ce-modified",
+      "reason": "Shared filter button styles extracted from the CE device filter component; the rules are the CE implementation with the panel class renamed. Reviewed against CE ui-ngx/src/app/modules/home/components/device/device-info-filter.component.scss at 269bc8dc73a4892e93cf61db6a8a41ea377c8636 (blob 4a79c6c9ce599e85209d5a6ee9062b6f713ac0f1).",
+      "contentHash": "sha256:3b19b678564aa147c087269d91d7996a5c2a58d7ff058afbe6610c5cda56cc0e"
     }
   ]
 }
