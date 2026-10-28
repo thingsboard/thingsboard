@@ -7,11 +7,20 @@
 // decode payload to JSON
 var data = decodeToJson(payload);
 
-// --- Device name and type ---
+// --- MQTT topic configuration ---
+
 // Supported MQTT topic formats:
 // tb/devices/{deviceType}/{deviceName}
 // tb/devices/{deviceType}/{deviceName}/telemetry
-// Also supports the existing tb/sensors/... prefix.
+// tb/sensors/{deviceType}/{deviceName}
+// tb/sensors/{deviceType}/{deviceName}/telemetry
+//
+// Adjust these prefixes to match your MQTT topic layout.
+// Each prefix must consist of exactly two topic levels, e.g. "factory/devices":
+// {prefix}/{deviceType}/{deviceName}[/telemetry]
+var topicPrefixes = ["tb/devices", "tb/sensors"];
+
+// --- Device name and type ---
 
 var topicParts = metadata != null && metadata['topic'] != null
     ? metadata['topic'].split('/')
@@ -20,14 +29,14 @@ var topicParts = metadata != null && metadata['topic'] != null
 // Validate the supported topic structure.
 var validTopic = topicParts != null &&
     (topicParts.length == 4 || topicParts.length == 5) &&
-    topicParts[0] == 'tb' &&
-    (topicParts[1] == 'devices' || topicParts[1] == 'sensors') &&
+    topicPrefixes.indexOf(topicParts[0] + "/" + topicParts[1]) >= 0 &&
     topicParts[2] != '' &&
     topicParts[3] != '' &&
     (topicParts.length == 4 || topicParts[4] == 'telemetry');
 
 // Prefer device information from the payload.
 // Otherwise, extract it from the MQTT topic.
+// If neither provides deviceType, it falls back to 'default'.
 var deviceName = data.deviceName != null &&
     data.deviceName.toString().trim() != ''
     ? data.deviceName
@@ -52,6 +61,9 @@ if (deviceName == null || deviceName.toString().trim() == '') {
 // var assetType = 'building';
 
 // --- Timestamp parsing ---
+// ts - Unix time in milliseconds (seconds are not converted).
+// timestamp - ISO 8601 string, used only when ts is missing.
+// If neither is provided, the current time is used.
 var timestamp = -1;
 if (data.ts != null) {
     timestamp = data.ts;

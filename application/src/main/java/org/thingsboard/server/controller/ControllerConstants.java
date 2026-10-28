@@ -1970,6 +1970,7 @@ public class ControllerConstants {
 
     static final String DEFAULT_MQTT_UPLINK_CONVERTER_MESSAGE =
     "{\n" +
+    "    \"serialNumber\": \"SN-001\",\n" +
     "    \"temperature\": 25.5,\n" +
     "    \"humidity\": 60,\n" +
     "    \"battery\": 95\n" +
