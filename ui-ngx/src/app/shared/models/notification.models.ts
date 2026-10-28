@@ -23,6 +23,7 @@ import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Operation, Resource } from '@shared/models/security.models';
 import { AiAssistantPanelConfig, AiAssistantViewType } from '@shared/models/ai-chat.models';
+import { Authority } from '@shared/models/authority.enum';
 
 export interface Notification {
   readonly id: NotificationId;
@@ -803,6 +804,53 @@ export const singleNotificationTypeTemplate = (type: NotificationType) => {
   return type === NotificationType.USER_ACTIVATED ||
          type === NotificationType.USER_REGISTERED ||
          type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST;
+}
+
+const allAuthorities = [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER];
+const tenantAuthorities = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER];
+
+// Authorities that may receive notifications of the given type with any configuration of rules and recipients
+export const NotificationTypeRecipientAuthorities: Record<NotificationType, Authority[]> = {
+  [NotificationType.GENERAL]: allAuthorities,
+  [NotificationType.ALARM]: tenantAuthorities,
+  [NotificationType.DEVICE_ACTIVITY]: tenantAuthorities,
+  [NotificationType.ENTITY_ACTION]: tenantAuthorities,
+  [NotificationType.ALARM_COMMENT]: tenantAuthorities,
+  [NotificationType.ALARM_ASSIGNMENT]: tenantAuthorities,
+  [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT]: tenantAuthorities,
+  [NotificationType.ENTITIES_LIMIT]: allAuthorities,
+  [NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST]: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+  [NotificationType.ADDON_ACCESS_REQUEST]: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+  [NotificationType.ADDON_ACCESS_ERROR]: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+  [NotificationType.PLAN_UPGRADE_REQUEST]: [Authority.SYS_ADMIN],
+  [NotificationType.API_USAGE_LIMIT]: allAuthorities,
+  [NotificationType.NEW_PLATFORM_VERSION]: allAuthorities,
+  [NotificationType.RULE_NODE]: tenantAuthorities,
+  [NotificationType.INTEGRATION_LIFECYCLE_EVENT]: tenantAuthorities,
+  [NotificationType.RATE_LIMITS]: allAuthorities,
+  [NotificationType.EDGE_CONNECTION]: tenantAuthorities,
+  [NotificationType.EDGE_COMMUNICATION_FAILURE]: tenantAuthorities,
+  [NotificationType.TASK_PROCESSING_FAILURE]: allAuthorities,
+  [NotificationType.RESOURCES_SHORTAGE]: allAuthorities,
+  [NotificationType.USER_ACTIVATED]: tenantAuthorities,
+  [NotificationType.USER_REGISTERED]: tenantAuthorities,
+  [NotificationType.REPORT_GENERATED]: tenantAuthorities
+};
+
+const edgeNotificationTypes = new Set<NotificationType>([
+  NotificationType.EDGE_CONNECTION,
+  NotificationType.EDGE_COMMUNICATION_FAILURE
+]);
+
+export const isNotificationTypeApplicable = (type: NotificationType, authority: Authority, edgesSupportEnabled: boolean): boolean => {
+  const authorities = NotificationTypeRecipientAuthorities[type];
+  if (!authorities) {
+    return true;
+  }
+  if (edgeNotificationTypes.has(type) && !edgesSupportEnabled) {
+    return false;
+  }
+  return authorities.includes(authority);
 }
 
 export function notificationAiAssistantConfig(store: Store<AppState>,
