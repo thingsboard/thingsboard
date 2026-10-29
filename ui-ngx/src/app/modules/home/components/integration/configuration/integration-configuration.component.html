@@ -54,6 +54,7 @@
     @case (integrationTypes.KPN) {
       <tb-kpn-integration-form formControlName="configuration"
                                   [routingKey]="routingKey"
+                                  [isSetDownlink]="isSetDownlink"
                                   [executeRemotelyTemplate]="executeRemotelyTemplate"
                                   [genericAdditionalInfoTemplate]="genericAdditionalInfoTemplate"
                                   [allowLocalNetwork]="allowLocalNetwork">
