@@ -1882,6 +1882,8 @@
         "model": "Model",
         "name": "Name",
         "ai-provider": "AI provider",
+        "customer-access": "Customer access",
+        "customer-access-hint": "Allows customer users to send chat requests to this model, e.g. from Trendz Analytics. The model configuration and credentials are never exposed.",
         "no-found": "No AI models found",
         "list": "{ count, plural, =1 {One model} other {List of # models} }",
         "selected-fields": "{ count, plural, =1 {1 model} other {# models} } selected",
@@ -8854,7 +8856,8 @@
                 "SHARE_GROUP": "Share Group",
                 "ASSIGN_TO_TENANT": "Assign to Tenant",
                 "READ_CALCULATED_FIELD": "Read Calculated Field and Alarm Rules",
-                "WRITE_CALCULATED_FIELD": "Write Calculated Field and Alarm Rules"
+                "WRITE_CALCULATED_FIELD": "Write Calculated Field and Alarm Rules",
+                "INVOKE": "Invoke"
             }
         }
     },

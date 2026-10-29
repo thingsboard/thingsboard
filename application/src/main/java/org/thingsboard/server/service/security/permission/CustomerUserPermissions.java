@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TenantEntity;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -93,6 +94,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         put(Resource.REPORT_TEMPLATE, reportTemplatePermissionChecker);
         put(Resource.REPORT, customerStandaloneEntityPermissionChecker);
         put(Resource.API_KEY, apiKeysPermissionChecker);
+        put(Resource.AI_MODEL, aiModelPermissionChecker);
     }
 
     private final PermissionChecker<AlarmId, Alarm> customerAlarmPermissionChecker = new PermissionChecker<>() {
@@ -484,6 +486,29 @@ public class CustomerUserPermissions extends AbstractPermissions {
             } else {
                 return user.getTenantId().equals(customMenu.getTenantId()) && user.getCustomerId().equals(customMenu.getCustomerId());
             }
+        }
+    };
+
+    // Customers may only invoke models with customer access enabled
+    private static final PermissionChecker aiModelPermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Resource resource, Operation operation) {
+            return operation == Operation.INVOKE && user.getUserPermissions().hasGenericPermission(resource, operation);
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
+            if (operation != Operation.INVOKE) {
+                return false;
+            }
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            if (!(entity instanceof AiModel model) || !model.isCustomerAccessEnabled()) {
+                return false;
+            }
+            return user.getUserPermissions().hasGenericPermission(Resource.AI_MODEL, operation);
         }
     };
 

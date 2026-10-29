@@ -1882,6 +1882,8 @@
     "model": "Model",
     "name": "Ad",
     "ai-provider": "Yapay zeka sağlayıcısı",
+    "customer-access": "Müşteri erişimi",
+    "customer-access-hint": "Müşteri kullanıcılarının bu modele sohbet istekleri göndermesine olanak tanır, örneğin Trendz Analytics'ten. Model yapılandırması ve kimlik bilgileri asla açığa çıkarılmaz.",
     "no-found": "Yapay zeka modeli bulunamadı",
     "list": "{ count, plural, =1 {Bir model} other {# model listesi} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# model} } seçildi",
@@ -8850,7 +8852,8 @@
         "SHARE_GROUP": "Grubu paylaş",
         "ASSIGN_TO_TENANT": "Kiracıya ata",
         "READ_CALCULATED_FIELD": "Hesaplanmış alanları ve alarm kurallarını oku",
-        "WRITE_CALCULATED_FIELD": "Hesaplanmış alanları ve alarm kurallarını yaz"
+        "WRITE_CALCULATED_FIELD": "Hesaplanmış alanları ve alarm kurallarını yaz",
+        "INVOKE": "Çağır"
       }
     }
   },

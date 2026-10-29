@@ -1767,6 +1767,8 @@
     "model": "मॉडल",
     "name": "नाम",
     "ai-provider": "AI प्रदाता",
+    "customer-access": "ग्राहक पहुंच",
+    "customer-access-hint": "ग्राहक उपयोगकर्ताओं को इस मॉडल को चैट अनुरोध भेजने की अनुमति देता है, उदा. Trendz Analytics से। मॉडल कॉन्फ़िगरेशन और क्रेडेंशियल कभी उजागर नहीं किए जाते।",
     "no-found": "कोई AI मॉडल नहीं मिला",
     "list": "{ count, plural, =1 {एक मॉडल} other {# मॉडलों की सूची} }",
     "selected-fields": "{ count, plural, =1 {1 मॉडल} other {# मॉडल्स} } चयनित",
@@ -7680,7 +7682,8 @@
         "SHARE_GROUP": "समूह साझा करें",
         "ASSIGN_TO_TENANT": "टेनेंट को असाइन करें",
         "READ_CALCULATED_FIELD": "कैलक्युलेटेड फ़ील्ड पढ़ें",
-        "WRITE_CALCULATED_FIELD": "कैलक्युलेटेड फ़ील्ड लिखें"
+        "WRITE_CALCULATED_FIELD": "कैलक्युलेटेड फ़ील्ड लिखें",
+        "INVOKE": "इनवोक करें"
       }
     }
   },

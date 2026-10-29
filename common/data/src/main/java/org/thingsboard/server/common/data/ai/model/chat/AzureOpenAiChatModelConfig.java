@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import dev.langchain4j.model.chat.ChatModel;
@@ -19,7 +20,7 @@ import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 @Builder
 public record AzureOpenAiChatModelConfig(
         @Schema(ref = "#/components/schemas/AzureOpenAiProviderConfig")
-        @NotNull @Valid AzureOpenAiProviderConfig providerConfig,
+        @With @NotNull @Valid AzureOpenAiProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
@@ -33,6 +34,11 @@ public record AzureOpenAiChatModelConfig(
     @Override
     public AiProvider provider() {
         return AiProvider.AZURE_OPENAI;
+    }
+
+    @Override
+    public AzureOpenAiChatModelConfig withoutProviderConfig() {
+        return withProviderConfig(null);
     }
 
     @Override

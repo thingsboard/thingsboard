@@ -2038,7 +2038,8 @@
         "IMPERSONATE": "Personificēt",
         "CHANGE_OWNER": "Mainīt īpašnieku",
         "ADD_TO_GROUP": "Pievienot grupai",
-        "REMOVE_FROM_GROUP": "Noņemt no grupas"
+        "REMOVE_FROM_GROUP": "Noņemt no grupas",
+        "INVOKE": "Izsaukt"
       }
     }
   },

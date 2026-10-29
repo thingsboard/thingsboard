@@ -1882,6 +1882,8 @@
     "model": "模型",
     "name": "名称",
     "ai-provider": "AI 提供商",
+    "customer-access": "客户访问",
+    "customer-access-hint": "允许客户用户向此模型发送聊天请求，例如从 Trendz Analytics 发送。模型配置和凭据永远不会暴露。",
     "no-found": "未找到 AI 模型",
     "list": "{ count, plural, =1 {1 个模型} other {# 个模型列表} }",
     "selected-fields": "已选择{ count, plural, =1 {1 个模型} other {# 个模型} }",
@@ -8850,7 +8852,8 @@
         "SHARE_GROUP": "共享组",
         "ASSIGN_TO_TENANT": "分配给租户",
         "READ_CALCULATED_FIELD": "读取计算字段和告警规则",
-        "WRITE_CALCULATED_FIELD": "写入计算字段和告警规则"
+        "WRITE_CALCULATED_FIELD": "写入计算字段和告警规则",
+        "INVOKE": "调用"
       }
     }
   },

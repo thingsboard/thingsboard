@@ -2211,7 +2211,8 @@
         "IMPERSONATE": "განასახიერე",
         "CHANGE_OWNER": "მფლობელის ცვლილება",
         "ADD_TO_GROUP": "ჯგუფში დამატება",
-        "REMOVE_FROM_GROUP": "ჯგუფიდან წაშლა"
+        "REMOVE_FROM_GROUP": "ჯგუფიდან წაშლა",
+        "INVOKE": "გამოძახება"
       }
     }
   },

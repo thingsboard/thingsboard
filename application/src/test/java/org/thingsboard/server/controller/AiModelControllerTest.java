@@ -9,7 +9,10 @@ import org.junit.Test;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.SsrfProtectionValidator;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.AiModelInfo;
+import org.thingsboard.server.common.data.ai.dto.TbChatPrompt;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
 import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
 import org.thingsboard.server.common.data.ai.dto.TbContent;
@@ -18,20 +21,25 @@ import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig
 import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AnthropicProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,7 +98,24 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(savedModel.getTenantId()).isEqualTo(tenantId);
         assertThat(savedModel.getName()).isEqualTo("Test model");
         assertThat(savedModel.getConfiguration()).isEqualTo(model.getConfiguration());
+        assertThat(savedModel.isCustomerAccessEnabled()).isFalse();
         assertThat(savedModel.getExternalId()).isNull();
+    }
+
+    @Test
+    public void saveAiModel_whenCustomerAccessEnabledIsSet_shouldPersistIt() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        AiModel model = constructValidOpenAiModel("Test model");
+        model.setCustomerAccessEnabled(true);
+
+        // WHEN
+        var savedModel = doPost("/api/ai/model", model, AiModel.class);
+
+        // THEN
+        assertThat(savedModel.isCustomerAccessEnabled()).isTrue();
+        assertThat(doGet("/api/ai/model/" + savedModel.getId(), AiModel.class).isCustomerAccessEnabled()).isTrue();
     }
 
     @Test
@@ -242,6 +267,209 @@ public class AiModelControllerTest extends AbstractControllerTest {
         } finally {
             SsrfProtectionValidator.setEnabled(false);
         }
+    }
+
+    @Test
+    public void sendChatRequest_whenChatModelConfigIsMissing_shouldReturnBadRequest() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/chat", constructChatPrompt());
+
+        // THEN
+        result.andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("chatModelConfig")));
+    }
+
+    /* --- Chat with saved model API tests --- */
+
+    @Test
+    public void sendChatRequestToAiModel_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + Uuids.timeBased() + "/chat", constructChatPrompt());
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenModelDoesNotExist_shouldReturnNotFound() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var nonexistentModelId = new AiModelId(Uuids.timeBased());
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + nonexistentModelId + "/chat", constructChatPrompt());
+
+        // THEN
+        result.andExpect(status().isNotFound())
+                .andExpect(statusReason(is("AI model with id [" + nonexistentModelId + "] is not found")));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenTenantAdminAndCustomerAccessDisabled_shouldBeAllowed() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl(false);
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt(), TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).contains("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenCustomerAdminAndCustomerAccessDisabled_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl(false);
+        loginCustomerAdminUser();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt());
+
+        // THEN
+        result.andExpect(status().isForbidden())
+                .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenTenantAdmin_shouldUseStoredConfigurationAndReturnProviderError() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt(), TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).contains("URI is invalid");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenCustomerAdmin_shouldBeAllowedAndHideProviderError() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        loginCustomerAdminUser();
+        SsrfProtectionValidator.setEnabled(true);
+
+        try {
+            // WHEN
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt(), TbChatResponse.class, status().isOk());
+
+            // THEN
+            assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
+            assertThat(((TbChatResponse.Failure) response).errorDetails()).isEqualTo("Failed to get a response from the AI model");
+        } finally {
+            SsrfProtectionValidator.setEnabled(false);
+        }
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenCustomerUserWithoutInvokePermission_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt());
+
+        // THEN
+        result.andExpect(status().isForbidden())
+                .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
+    }
+
+    @Test
+    public void sendChatRequestToAiModel_whenReadOnlyCustomerUser_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        loginReadOnlyCustomerUser();
+
+        // WHEN
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt());
+
+        // THEN
+        result.andExpect(status().isForbidden())
+                .andExpect(statusReason(equalTo("You don't have permission to perform 'INVOKE' operation with AI_MODEL 'Test model'!")));
+    }
+
+    /* --- Customer permission tests --- */
+
+    @Test
+    public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowInvokeOnly() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var modelConfig = constructValidOpenAiModel("Test model");
+        modelConfig.setCustomerAccessEnabled(true);
+        var model = doPost("/api/ai/model", modelConfig, AiModel.class);
+        loginCustomerAdminUser();
+
+        // WHEN / THEN
+        assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "WRITE")).isFalse();
+        assertThat(hasAiModelPermission(model, "DELETE")).isFalse();
+    }
+
+    @Test
+    public void aiModelPermission_whenCustomerAccessDisabled_shouldDenyReadAndInvokeForCustomerAdminOnly() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = doPost("/api/ai/model", constructValidOpenAiModel("Test model"), AiModel.class);
+
+        // WHEN / THEN
+        assertThat(model.isCustomerAccessEnabled()).isFalse();
+        assertThat(hasAiModelPermission(model, "READ")).isTrue();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
+
+        loginCustomerAdminUser();
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
+    }
+
+    @Test
+    public void aiModelPermission_whenReadOnlyCustomerUser_shouldDenyReadAndInvoke() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        loginReadOnlyCustomerUser();
+
+        // WHEN / THEN
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
+    }
+
+    @Test
+    public void aiModelPermission_whenCustomerUserHasNoRole_shouldDenyReadAndInvoke() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        var model = saveModelWithBlockedBaseUrl();
+        loginCustomerUser();
+
+        // WHEN / THEN
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
+        assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
     }
 
     /* --- Get by ID API tests --- */
@@ -440,6 +668,107 @@ public class AiModelControllerTest extends AbstractControllerTest {
         assertThat(result4.getTotalPages()).isEqualTo(0);
         assertThat(result4.getTotalElements()).isEqualTo(0);
         assertThat(result4.hasNext()).isFalse();
+    }
+
+    @Test
+    public void getAiModelInfos_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginSysAdmin();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/infos?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModelInfos_whenCustomerUserHasNoRole_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginCustomerUser();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/infos?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void getAiModelInfos_whenCustomerUser_shouldReturnForbidden() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        saveModelWithBlockedBaseUrl("Accessible model", true);
+        loginCustomerAdminUser();
+
+        // WHEN
+        ResultActions result = doGet("/api/ai/model/infos?pageSize=10&page=0");
+
+        // THEN
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
+    }
+
+    @Test
+    public void getAiModelInfos_whenTenantAdmin_shouldReturnAllInfosWithoutProviderConfig() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var available = constructValidOpenAiModel("Available model");
+        available.setCustomerAccessEnabled(true);
+        available = doPost("/api/ai/model", available, AiModel.class);
+        var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
+
+        // WHEN
+        PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
+        String response = doGet("/api/ai/model/infos?pageSize=10&page=0").andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // THEN
+        assertThat(infos.getData()).containsExactlyInAnyOrder(AiModelInfo.from(available), AiModelInfo.from(unavailable));
+        assertThat(infos.getData()).allSatisfy(info -> {
+            assertThat(info.configuration().provider()).isEqualTo(AiProvider.OPENAI);
+            assertThat(info.configuration().providerConfig()).isNull();
+        });
+        assertThat(response).contains("\"providerConfig\":null").doesNotContain("test-api-key");
+    }
+
+    @Test
+    public void getAiModelInfos_testSearchAndSortByProviderAndModelId() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+
+        var anthropicModel = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 1")
+                .configuration(AnthropicChatModelConfig.builder()
+                        .providerConfig(new AnthropicProviderConfig("test-api-key"))
+                        .modelId("claude-sonnet-4-0")
+                        .build())
+                .build(), AiModel.class);
+        var geminiModel = doPost("/api/ai/model", AiModel.builder()
+                .tenantId(tenantId)
+                .name("Test model 2")
+                .configuration(GoogleAiGeminiChatModelConfig.builder()
+                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
+                        .modelId("gemini-2.5-pro")
+                        .build())
+                .build(), AiModel.class);
+
+        // WHEN
+        PageData<AiModelInfo> byProviderDesc = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, null, SortOrder.of("provider", SortOrder.Direction.DESC)));
+        PageData<AiModelInfo> byModelIdAsc = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, null, SortOrder.of("modelId", SortOrder.Direction.ASC)));
+        PageData<AiModelInfo> searchByProvider = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, "google ai"));
+        PageData<AiModelInfo> searchByModelId = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {},
+                new PageLink(10, 0, "sonnet"));
+
+        // THEN
+        assertThat(byProviderDesc.getData()).containsExactly(AiModelInfo.from(geminiModel), AiModelInfo.from(anthropicModel));
+        assertThat(byModelIdAsc.getData()).containsExactly(AiModelInfo.from(anthropicModel), AiModelInfo.from(geminiModel));
+        assertThat(searchByProvider.getData()).containsExactly(AiModelInfo.from(geminiModel));
+        assertThat(searchByModelId.getData()).containsExactly(AiModelInfo.from(anthropicModel));
     }
 
     @Test
@@ -701,6 +1030,54 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // THEN
         assertThat(deleted).isFalse();
+    }
+
+    private AiModel saveModelWithBlockedBaseUrl() throws Exception {
+        return saveModelWithBlockedBaseUrl(true);
+    }
+
+    private AiModel saveModelWithBlockedBaseUrl(boolean customerAccessEnabled) throws Exception {
+        return saveModelWithBlockedBaseUrl("Test model", customerAccessEnabled);
+    }
+
+    private AiModel saveModelWithBlockedBaseUrl(String name, boolean customerAccessEnabled) throws Exception {
+        var modelConfig = OpenAiChatModelConfig.builder()
+                .providerConfig(OpenAiProviderConfig.builder()
+                        .baseUrl("http://10.0.0.1:8080/")
+                        .apiKey("test-api-key")
+                        .build())
+                .modelId("gpt-4o")
+                .build();
+
+        var model = AiModel.builder()
+                .tenantId(tenantId)
+                .name(name)
+                .configuration(modelConfig)
+                .customerAccessEnabled(customerAccessEnabled)
+                .build();
+
+        return doPost("/api/ai/model", model, AiModel.class);
+    }
+
+    private TbChatPrompt constructChatPrompt() {
+        return new TbChatPrompt(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))));
+    }
+
+    // The default Customer User role, which grants read-only operations on all resources
+    private void loginReadOnlyCustomerUser() throws Exception {
+        loginTenantAdmin();
+        User user = new User();
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setTenantId(tenantId);
+        user.setCustomerId(customerId);
+        user.setEmail("read-only-customer@thingsboard.org");
+        EntityGroupInfo customerUsers = findGroupByOwnerIdTypeAndName(customerId, EntityType.USER, EntityGroup.GROUP_CUSTOMER_USERS_NAME);
+        createUser(user, "customer", customerUsers.getId());
+        login(user.getEmail(), "customer");
+    }
+
+    private boolean hasAiModelPermission(AiModel model, String operation) throws Exception {
+        return doGet("/api/permission/AI_MODEL/" + model.getId() + "/" + operation, Boolean.class);
     }
 
     private AiModel constructValidOpenAiModel(String name) {

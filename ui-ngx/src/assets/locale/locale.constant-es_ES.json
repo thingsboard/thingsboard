@@ -1880,6 +1880,8 @@
     "model": "Modelo",
     "name": "Nombre",
     "ai-provider": "Proveedor de IA",
+    "customer-access": "Acceso de clientes",
+    "customer-access-hint": "Permite a los usuarios de clientes enviar solicitudes de chat a este modelo, p. ej., desde Trendz Analytics. La configuración del modelo y las credenciales nunca se exponen.",
     "no-found": "No se encontraron modelos de IA",
     "list": "{ count, plural, =1 {Un modelo} other {Lista de # modelos} }",
     "selected-fields": "{ count, plural, =1 {1 modelo} other {# modelos} } seleccionados",
@@ -8848,7 +8850,8 @@
         "SHARE_GROUP": "Compartir grupo",
         "ASSIGN_TO_TENANT": "Asignar a inquilino",
         "READ_CALCULATED_FIELD": "Leer campo calculado",
-        "WRITE_CALCULATED_FIELD": "Escribir campo calculado"
+        "WRITE_CALCULATED_FIELD": "Escribir campo calculado",
+        "INVOKE": "Invocar"
       }
     }
   },
