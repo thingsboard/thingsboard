@@ -27,6 +27,7 @@ import { HttpIntegrationFormComponent } from './http-integration-form.component'
 export class OceanConnectIntegrationFormComponent extends HttpIntegrationFormComponent {
 
   showSecurity = false;
+  showReplaceNoContentToOk = false;
 
   protected integrationType = IntegrationType.OCEANCONNECT;
 
@@ -40,5 +41,6 @@ export class OceanConnectIntegrationFormComponent extends HttpIntegrationFormCom
     super.ngOnInit();
     this.baseHttpIntegrationConfigForm.removeControl('enableSecurity', {emitEvent: false});
     this.baseHttpIntegrationConfigForm.removeControl('headersFilter', {emitEvent: false});
+    this.baseHttpIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
   }
 }

@@ -44,6 +44,7 @@ export class HttpIntegrationFormComponent extends IntegrationForm implements Con
 
   baseHttpIntegrationConfigForm: UntypedFormGroup;
   showSecurity = true;
+  showReplaceNoContentToOk = true;
 
   @Input()
   routingKey: string;

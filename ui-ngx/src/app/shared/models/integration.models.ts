@@ -742,7 +742,7 @@ export interface HttpIntegration {
   httpEndpoint: string;
   enableSecurity?: boolean;
   headersFilter?: {[key: string]: string} | null;
-  replaceNoContentToOk: boolean;
+  replaceNoContentToOk?: boolean;
 }
 
 export interface KafkaIntegration {
@@ -915,7 +915,6 @@ export interface ThingParkIntegration {
   baseUrl: string;
   httpEndpoint: string;
   enableSecurity: boolean;
-  replaceNoContentToOk: boolean;
   downlinkUrl?: string;
   enableSecurityNew: boolean;
   asId?: string;

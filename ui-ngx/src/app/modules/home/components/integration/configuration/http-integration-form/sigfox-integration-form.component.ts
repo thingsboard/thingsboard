@@ -26,12 +26,19 @@ import { IntegrationType } from '@shared/models/integration.models';
 })
 export class SigfoxIntegrationFormComponent extends HttpIntegrationFormComponent {
 
+  showReplaceNoContentToOk = false;
+
   protected integrationType = IntegrationType.SIGFOX;
 
   constructor(protected fb: UntypedFormBuilder,
               protected store: Store<AppState>,
               protected translate: TranslateService) {
     super(fb, store, translate);
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    this.baseHttpIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
   }
 
 }
