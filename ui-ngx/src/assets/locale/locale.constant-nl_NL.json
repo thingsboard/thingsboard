@@ -1881,7 +1881,7 @@
     "name": "Naam",
     "ai-provider": "AI-provider",
     "customer-access": "Klanttoegang",
-    "customer-access-hint": "Hiermee kunnen klantgebruikers met de machtiging 'Aanroepen' voor AI-modellen chatverzoeken naar dit model sturen via de REST API, bijvoorbeeld vanuit Trendz Analytics. Rollen die alle bewerkingen toestaan, zoals de standaardrol 'Customer Administrator', bevatten 'Aanroepen', zodat elke klantgebruiker met zo'n rol dit model kan aanroepen. Tenantbeheerders met de machtiging 'Aanroepen' kunnen het model aanroepen ongeacht deze instelling. De modelconfiguratie en inloggegevens worden nooit vrijgegeven.",
+    "customer-access-hint": "Hiermee kunnen klantgebruikers chatverzoeken naar dit model sturen, bijvoorbeeld vanuit Trendz Analytics. De modelconfiguratie en inloggegevens worden nooit vrijgegeven.",
     "no-found": "Geen AI-modellen gevonden",
     "list": "{ count, plural, =1 {Eén model} other {Lijst van # modellen} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# modellen} } geselecteerd",

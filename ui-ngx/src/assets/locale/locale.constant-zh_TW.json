@@ -8618,7 +8618,7 @@
         "name": "名稱",
         "ai-provider": "AI 提供者",
         "customer-access": "客戶存取",
-        "customer-access-hint": "允許擁有 AI 模型「呼叫」權限的客戶使用者透過 REST API（例如從 Trendz Analytics）向此模型傳送聊天請求。授予所有操作的角色（例如預設的「Customer Administrator」角色）包含「呼叫」，因此擁有此類角色的每位客戶使用者都能呼叫此模型。擁有「呼叫」權限的租戶管理員可呼叫此模型，不受此設定影響。模型的設定與憑證永遠不會被公開。",
+        "customer-access-hint": "允許客戶使用者向此模型傳送聊天請求，例如從 Trendz Analytics 傳送。模型設定與憑證永遠不會公開。",
         "no-found": "找不到 AI 模型",
         "list": "{ count, plural, =1 {1 個模型} other {模型清單（# 個）} }",
         "selected-fields": "已選擇 { count, plural, =1 {1 個模型} other {# 個模型} }",

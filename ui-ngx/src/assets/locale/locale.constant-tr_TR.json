@@ -1768,7 +1768,7 @@
     "name": "Ad",
     "ai-provider": "Yapay Zeka Sağlayıcısı",
     "customer-access": "Müşteri erişimi",
-    "customer-access-hint": "Yapay zeka modelleri için 'Çağır' iznine sahip müşteri kullanıcılarının REST API üzerinden, örneğin Trendz Analytics'ten, bu modele sohbet istekleri göndermesine olanak tanır. Varsayılan 'Customer Administrator' rolü gibi tüm işlemleri veren roller 'Çağır' iznini içerir; bu nedenle böyle bir role sahip her müşteri kullanıcısı bu modeli çağırabilir. 'Çağır' iznine sahip kiracı yöneticileri bu ayardan bağımsız olarak modeli çağırabilir. Model yapılandırması ve kimlik bilgileri asla açığa çıkarılmaz.",
+    "customer-access-hint": "Müşteri kullanıcılarının bu modele sohbet istekleri göndermesine olanak tanır, örneğin Trendz Analytics'ten. Model yapılandırması ve kimlik bilgileri asla açığa çıkarılmaz.",
     "no-found": "Yapay zeka modeli bulunamadı",
     "list": "{ count, plural, =1 {Bir model} other {# model listesi} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# model seçildi} }",

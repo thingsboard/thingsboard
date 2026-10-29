@@ -1881,7 +1881,7 @@
     "name": "Nome",
     "ai-provider": "Fornitore IA",
     "customer-access": "Accesso clienti",
-    "customer-access-hint": "Consente agli utenti dei clienti con il permesso 'Invocare' per i modelli IA di inviare richieste di chat a questo modello tramite REST API, ad es. da Trendz Analytics. I ruoli che concedono tutte le operazioni, come il ruolo predefinito 'Customer Administrator', includono 'Invocare', quindi ogni utente cliente con tale ruolo può chiamare questo modello. Gli amministratori del tenant con il permesso 'Invocare' possono chiamare il modello indipendentemente da questa impostazione. La configurazione del modello e le credenziali non vengono mai esposte.",
+    "customer-access-hint": "Consente agli utenti dei clienti di inviare richieste di chat a questo modello, ad es. da Trendz Analytics. La configurazione del modello e le credenziali non vengono mai esposte.",
     "no-found": "Nessun modello IA trovato",
     "list": "{ count, plural, =1 {Un modello} other {Elenco di # modelli} }",
     "selected-fields": "{ count, plural, =1 {1 modello} other {# modelli} } selezionati",

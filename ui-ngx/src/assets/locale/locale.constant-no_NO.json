@@ -1768,7 +1768,7 @@
     "name": "Navn",
     "ai-provider": "AI-leverandør",
     "customer-access": "Kundetilgang",
-    "customer-access-hint": "Lar kundebrukere med tillatelsen 'Kall' for AI-modeller sende chatforespørsler til denne modellen via REST API, f.eks. fra Trendz Analytics. Roller som gir alle operasjoner, som standardrollen 'Customer Administrator', inkluderer 'Kall', så alle kundebrukere med en slik rolle kan kalle denne modellen. Leietakeradministratorer med tillatelsen 'Kall' kan kalle modellen uavhengig av denne innstillingen. Modellens konfigurasjon og legitimasjon blir aldri eksponert.",
+    "customer-access-hint": "Lar kundebrukere sende chatforespørsler til denne modellen, f.eks. fra Trendz Analytics. Modellens konfigurasjon og legitimasjon blir aldri eksponert.",
     "no-found": "Fant ingen AI-modeller",
     "list": "{ count, plural, =1 {Én modell} other {Liste over # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 modell} other {# modeller} } valgt",

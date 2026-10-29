@@ -1881,7 +1881,7 @@
     "name": "Name",
     "ai-provider": "KI-Anbieter",
     "customer-access": "Kundenzugriff",
-    "customer-access-hint": "Erlaubt Kundenbenutzern mit der Berechtigung 'Aufrufen' für KI-Modelle, über die REST-API Chat-Anfragen an dieses Modell zu senden, z. B. aus Trendz Analytics. Rollen, die alle Operationen gewähren, wie die Standardrolle 'Customer Administrator', enthalten 'Aufrufen', sodass jeder Kundenbenutzer mit einer solchen Rolle dieses Modell aufrufen kann. Mandantenadministratoren mit der Berechtigung 'Aufrufen' können das Modell unabhängig von dieser Einstellung aufrufen. Die Modellkonfiguration und die Zugangsdaten werden nie offengelegt.",
+    "customer-access-hint": "Erlaubt Kundenbenutzern, Chat-Anfragen an dieses Modell zu senden, z. B. aus Trendz Analytics. Die Modellkonfiguration und die Zugangsdaten werden nie offengelegt.",
     "no-found": "Keine KI-Modelle gefunden",
     "list": "{ count, plural, one {Ein Modell} other {Liste von # Modellen} }",
     "selected-fields": "{ count, plural, one {# Modell} other {# Modelle} } ausgewählt",

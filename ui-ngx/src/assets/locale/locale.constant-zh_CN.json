@@ -1883,7 +1883,7 @@
     "name": "名称",
     "ai-provider": "AI 提供商",
     "customer-access": "客户访问",
-    "customer-access-hint": "允许拥有 AI 模型“调用”权限的客户用户通过 REST API（例如从 Trendz Analytics）向此模型发送聊天请求。授予所有操作的角色（例如默认的“Customer Administrator”角色）包含“调用”，因此拥有此类角色的每个客户用户都可以调用此模型。拥有“调用”权限的租户管理员可以调用此模型，不受此设置影响。模型的配置和凭据永远不会被公开。",
+    "customer-access-hint": "允许客户用户向此模型发送聊天请求，例如从 Trendz Analytics 发送。模型配置和凭据永远不会暴露。",
     "no-found": "未找到 AI 模型",
     "list": "{ count, plural, =1 {1 个模型} other {# 个模型列表} }",
     "selected-fields": "已选择{ count, plural, =1 {1 个模型} other {# 个模型} }",

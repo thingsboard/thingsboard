@@ -1883,7 +1883,7 @@
         "name": "Name",
         "ai-provider": "AI provider",
         "customer-access": "Customer access",
-        "customer-access-hint": "Allows customer users with the 'Invoke' permission for AI models to send chat requests to this model via REST API, e.g. from Trendz Analytics. Roles that grant all operations, such as the default 'Customer Administrator' role, include 'Invoke', so every customer user with such a role can call this model. Tenant administrators with the 'Invoke' permission can call the model regardless of this setting. The model configuration and credentials are never exposed.",
+        "customer-access-hint": "Allows customer users to send chat requests to this model, e.g. from Trendz Analytics. The model configuration and credentials are never exposed.",
         "no-found": "No AI models found",
         "list": "{ count, plural, =1 {One model} other {List of # models} }",
         "selected-fields": "{ count, plural, =1 {1 model} other {# models} } selected",

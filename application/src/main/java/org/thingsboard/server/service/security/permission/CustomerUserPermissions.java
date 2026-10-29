@@ -489,8 +489,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         }
     };
 
-    // Customers only call models; listing models and reading their configuration are tenant administrator only.
-    // Roles granting ALL include INVOKE, so the model's 'customerAccessEnabled' flag decides which models such users can call.
+    // Customers may only invoke models with customer access enabled
     private static final PermissionChecker aiModelPermissionChecker = new PermissionChecker() {
 
         @Override

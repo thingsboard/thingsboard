@@ -1768,7 +1768,7 @@
     "name": "Navn",
     "ai-provider": "AI-udbyder",
     "customer-access": "Kundeadgang",
-    "customer-access-hint": "Giver kundebrugere med tilladelsen 'Kald' for AI-modeller mulighed for at sende chatforespørgsler til denne model via REST API, f.eks. fra Trendz Analytics. Roller, der giver alle handlinger, såsom standardrollen 'Customer Administrator', omfatter 'Kald', så alle kundebrugere med en sådan rolle kan kalde denne model. Lejeradministratorer med tilladelsen 'Kald' kan kalde modellen uanset denne indstilling. Modellens konfiguration og legitimationsoplysninger eksponeres aldrig.",
+    "customer-access-hint": "Giver kundebrugere mulighed for at sende chatforespørgsler til denne model, f.eks. fra Trendz Analytics. Modellens konfiguration og legitimationsoplysninger vises aldrig.",
     "no-found": "Ingen AI-modeller fundet",
     "list": "{ count, plural, =1 {Én model} other {Liste med # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# modeller} } valgt",
