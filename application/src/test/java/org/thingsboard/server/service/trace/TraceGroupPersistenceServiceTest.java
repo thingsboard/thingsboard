@@ -72,7 +72,7 @@ class TraceGroupPersistenceServiceTest {
         assertThat(inserted.getStoredTraces()).isEqualTo(1);
         assertThat(updatedGroups()).isEmpty();
         assertThat(savedSpans()).extracting(SpanEntity::getSpanId).containsExactly("span-1");
-        verify(traceDao).upsertTraceSummaries(List.of(summary));
+        assertThat(savedSummaries()).containsExactly(summary);
     }
 
     @Test
@@ -82,9 +82,7 @@ class TraceGroupPersistenceServiceTest {
         service.persist(BUCKET_TIME, NOW, List.of(contribution("path-1", "trace-1")),
                 Map.of("trace-1", trace("trace-1")), Map.of("trace-1", mock(TraceSummaryInfo.class)));
 
-        verify(traceDao, never()).saveTraceGroups(any(), any());
-        verify(traceDao, never()).saveSpans(any());
-        verify(traceDao, never()).upsertTraceSummaries(any());
+        verify(traceDao, never()).saveTraceBatch(any(), any(), any(), any());
     }
 
     @Test
@@ -112,7 +110,7 @@ class TraceGroupPersistenceServiceTest {
         TraceGroup updated = single(updatedGroups());
         assertThat(updated.getRelatedTraceIds()).containsExactly("old-trace");
         assertThat(updated.getLastRelatedTraceAddedTime()).isEqualTo(NOW - (SAMPLE_INTERVAL_SECONDS - 1) * 1000L);
-        verify(traceDao, never()).saveSpans(any());
+        assertThat(savedSpans()).isEmpty();
     }
 
     @Test
@@ -210,22 +208,29 @@ class TraceGroupPersistenceServiceTest {
     @SuppressWarnings("unchecked")
     private List<TraceGroup> insertedGroups() {
         ArgumentCaptor<Collection<TraceGroup>> captor = ArgumentCaptor.forClass(Collection.class);
-        verify(traceDao).saveTraceGroups(captor.capture(), any());
+        verify(traceDao).saveTraceBatch(captor.capture(), any(), any(), any());
         return new ArrayList<>(captor.getValue());
     }
 
     @SuppressWarnings("unchecked")
     private List<TraceGroup> updatedGroups() {
         ArgumentCaptor<Collection<TraceGroup>> captor = ArgumentCaptor.forClass(Collection.class);
-        verify(traceDao).saveTraceGroups(any(), captor.capture());
+        verify(traceDao).saveTraceBatch(any(), captor.capture(), any(), any());
         return new ArrayList<>(captor.getValue());
     }
 
     @SuppressWarnings("unchecked")
     private List<SpanEntity> savedSpans() {
         ArgumentCaptor<List<SpanEntity>> captor = ArgumentCaptor.forClass(List.class);
-        verify(traceDao).saveSpans(captor.capture());
+        verify(traceDao).saveTraceBatch(any(), any(), captor.capture(), any());
         return captor.getValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<TraceSummaryInfo> savedSummaries() {
+        ArgumentCaptor<Collection<TraceSummaryInfo>> captor = ArgumentCaptor.forClass(Collection.class);
+        verify(traceDao).saveTraceBatch(any(), any(), any(), captor.capture());
+        return new ArrayList<>(captor.getValue());
     }
 
     private static TraceGroup single(List<TraceGroup> groups) {

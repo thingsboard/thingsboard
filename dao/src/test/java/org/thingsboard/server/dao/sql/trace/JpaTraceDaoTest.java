@@ -5,6 +5,7 @@ package org.thingsboard.server.dao.sql.trace;
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.trace.TracePathDTO;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -167,6 +169,28 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject("SELECT jsonb_array_length(message_types_jsonb) FROM trace_summary WHERE trace_id = ?",
                 Integer.class, TRACE_ID));
         assertEquals(1, search(null, false, lateNodeId, null, null).getTotalElements());
+    }
+
+    @Test
+    public void givenFailingSpanInsert_whenSaveTraceBatch_thenNothingIsCommitted() {
+        SpanEntity invalid = span("span-1", "{}");
+        invalid.setTraceId(null); // violates NOT NULL
+
+        assertThrows(DataIntegrityViolationException.class, () -> traceDao.saveTraceBatch(List.of(traceGroup(10, 1)), List.of(),
+                List.of(invalid), List.of(traceSummary())));
+
+        assertEquals(0, countRows("trace_group", tenantId));
+        assertEquals(0, countRows("trace_summary", tenantId));
+        assertEquals(0, countRows("span", tenantId));
+    }
+
+    @Test
+    public void givenTraceBatch_whenSaveTraceBatch_thenGroupsSpansAndSummariesAreSaved() {
+        traceDao.saveTraceBatch(List.of(traceGroup(10, 1)), List.of(), List.of(span("span-1", "{}")), List.of(traceSummary()));
+
+        assertEquals(1, countRows("trace_group", tenantId));
+        assertEquals(1, countRows("trace_summary", tenantId));
+        assertEquals(1, countRows("span", tenantId));
     }
 
     @Test

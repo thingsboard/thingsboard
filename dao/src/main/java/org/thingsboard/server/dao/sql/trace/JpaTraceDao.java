@@ -72,6 +72,12 @@ public class JpaTraceDao implements TraceDao {
     }
 
     @Override
+    public void saveTraceBatch(Collection<TraceGroup> toInsertGroups, Collection<TraceGroup> toUpdateGroups,
+                               List<SpanEntity> spans, Collection<TraceSummaryInfo> summaries) {
+        traceInsertRepository.saveTraceBatch(toInsertGroups, toUpdateGroups, spans, summaries);
+    }
+
+    @Override
     public PageData<TracePathDTO> findPathsPaginated(UUID tenantId, long startTime, long endTime,
                                                      String rootQueueId, String rootMessageType, String rootRuleChainId,
                                                      String ruleNodeId, boolean errorsOnly,

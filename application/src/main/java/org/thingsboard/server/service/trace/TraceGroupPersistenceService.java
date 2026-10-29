@@ -5,7 +5,6 @@ package org.thingsboard.server.service.trace;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -38,7 +37,6 @@ public class TraceGroupPersistenceService {
         this.tenantService = tenantService;
     }
 
-    @Transactional
     public void persist(long bucketTime, long now, Collection<TraceGroupContribution> contributions,
                         Map<String, BufferedTrace> tracesByTraceId,
                         Map<String, TraceSummaryInfo> summariesByTraceId) {
@@ -94,9 +92,8 @@ public class TraceGroupPersistenceService {
             }
         }
 
-        traceDao.saveTraceGroups(toInsert, toUpdate);
-        saveSampledSpans(sampledTraceIds, tracesByTraceId);
-        traceDao.upsertTraceSummaries(summaryInfoByTraceId(sampledTraceIds, summariesByTraceId));
+        traceDao.saveTraceBatch(toInsert, toUpdate, sampledSpans(sampledTraceIds, tracesByTraceId),
+                summaryInfoByTraceId(sampledTraceIds, summariesByTraceId));
     }
 
     private long resolveSampleIntervalMs(UUID tenantId, Map<UUID, TraceCoverageSetting> settingCache) {
@@ -198,10 +195,7 @@ public class TraceGroupPersistenceService {
         return result;
     }
 
-    private void saveSampledSpans(List<String> traceIds, Map<String, BufferedTrace> tracesByTraceId) {
-        if (CollectionUtils.isEmpty(traceIds)) {
-            return;
-        }
+    private List<SpanEntity> sampledSpans(List<String> traceIds, Map<String, BufferedTrace> tracesByTraceId) {
         List<SpanEntity> spanEntities = new ArrayList<>();
         for (String traceId : traceIds) {
             BufferedTrace trace = tracesByTraceId.get(traceId);
@@ -212,7 +206,7 @@ public class TraceGroupPersistenceService {
                 spanEntities.add(toSpanEntity(span));
             }
         }
-        traceDao.saveSpans(spanEntities);
+        return spanEntities;
     }
 
     private SpanEntity toSpanEntity(BufferedSpan span) {

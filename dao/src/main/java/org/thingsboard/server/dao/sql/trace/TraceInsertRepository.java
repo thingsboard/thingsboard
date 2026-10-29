@@ -135,16 +135,38 @@ public class TraceInsertRepository {
         if (CollectionUtils.isEmpty(spans)) {
             return;
         }
-        int batchSize = Math.max(1, spanInsertBatchSize);
-        // Outside the insert transaction: a failed partition DDL must not abort it.
+        createSpanPartitions(spans);
+        transactionTemplate.executeWithoutResult(status -> insertSpans(spans));
+    }
+
+    public void saveTraceBatch(Collection<TraceGroup> toInsertGroups, Collection<TraceGroup> toUpdateGroups,
+                               List<SpanEntity> spans, Collection<TraceSummaryInfo> summaries) {
+        if (!CollectionUtils.isEmpty(spans)) {
+            createSpanPartitions(spans);
+        }
+        // The nested writes join this transaction: it is opened on this repository's datasource (main or events).
+        transactionTemplate.executeWithoutResult(status -> {
+            saveTraceGroups(toInsertGroups, toUpdateGroups);
+            if (!CollectionUtils.isEmpty(spans)) {
+                insertSpans(spans);
+            }
+            upsertTraceSummaries(summaries);
+        });
+    }
+
+    // Outside the insert transaction: a failed partition DDL must not abort it.
+    private void createSpanPartitions(List<SpanEntity> spans) {
         long partitionSizeMs = getPartitionSizeMs();
         spans.stream()
                 .map(span -> partitioningRepository.calculatePartitionStartTime(span.getStartTime(), partitionSizeMs))
                 .distinct()
                 .forEach(partitionStart -> partitioningRepository.createPartitionIfNotExists(SPAN_TABLE, partitionStart, partitionSizeMs));
+    }
+
+    private void insertSpans(List<SpanEntity> spans) {
+        int batchSize = Math.max(1, spanInsertBatchSize);
         log.debug("Saving {} spans using JDBC batch chunks of {}", spans.size(), batchSize);
-        transactionTemplate.executeWithoutResult(status ->
-                jdbcTemplate.batchUpdate(SPAN_INSERT_SQL, spans, batchSize, this::bindSpan));
+        jdbcTemplate.batchUpdate(SPAN_INSERT_SQL, spans, batchSize, this::bindSpan);
     }
 
     // A trace part that arrives after the buffer's quiet window is drained as another fragment of the same trace:

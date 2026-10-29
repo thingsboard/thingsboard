@@ -29,6 +29,13 @@ public interface TraceDao {
 
     void saveTraceGroups(Collection<TraceGroup> toInsertGroups, Collection<TraceGroup> toUpdateGroups);
 
+    /**
+     * Saves one aggregation batch (trace groups, the spans and summaries of their sampled traces) in a single
+     * transaction on the trace datasource, so a group never points at a sampled trace that wasn't stored.
+     */
+    void saveTraceBatch(Collection<TraceGroup> toInsertGroups, Collection<TraceGroup> toUpdateGroups,
+                        List<SpanEntity> spans, Collection<TraceSummaryInfo> summaries);
+
     PageData<TracePathDTO> findPathsPaginated(UUID tenantId, long startTime, long endTime,
                                               String rootQueueId, String rootMessageType, String rootRuleChainId,
                                               String ruleNodeId, boolean errorsOnly,
