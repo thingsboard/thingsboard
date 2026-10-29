@@ -147,9 +147,11 @@ Route By Kind → Kafka Telemetry / Kafka Event / Kafka Invalid
 - 运行时校验覆盖：
   - 报文结构、大小、时间戳单位
   - 属性类型、范围、required、未知字段、枚举、int32、struct
-  - `event_id` 必须属于 TSL `events[].id`
+  - 事件 id 必须属于 TSL `events[].id`，支持 `event_id`，兼容 `id`（`event_id` 优先）
   - `event_type` 与 TSL 一致
   - 事件参数类型与范围
+- 归一化事件固定为 `id/type/ts/data`；`event.id` 即 TSL `events[].id`，不使用随机 id，也不输出 `code`；`level` 由 ingest/event-center 按 `type` 映射。
+- 支持 `msg.events` 事件数组：归一化后信封使用 `events` 数组，一条消息可包含多个事件；同一包内 `event_id` 必须一致，否则标记 `events:mixed`；单事件仍使用 `event` 对象。
 
 ## 7. 数据与配置
 

@@ -97,48 +97,166 @@ function typeOk(t, v) {
     return true;
 }
 
-function validateField(name, v, d) {
+function validateField(name, v, d, errors, prefix) {
+    errors = errors || invalid;
+    prefix = prefix || '';
     var t = d.t;
     if (!typeOk(t, v)) {
-        invalid.push(name + ':' + (t || 'unknown'));
+        errors.push(prefix + name + ':' + (t || 'unknown'));
         return false;
     }
     if (t === 'int' && (v < -2147483648 || v > 2147483647)) {
-        invalid.push(name + ':int32');
+        errors.push(prefix + name + ':int32');
         return false;
     }
     if ((t === 'enum' || t === 'enum_string') && !mappingHas(d.map, v)) {
-        invalid.push(name + ':enum');
+        errors.push(prefix + name + ':enum');
         return false;
     }
     if (t === 'struct') {
         var fieldNames = Object.keys(v);
         for (var i = 0; i < fieldNames.length; i++) {
             if (isObject(v[fieldNames[i]])) {
-                invalid.push(name + '.' + fieldNames[i] + ':nested');
+                errors.push(prefix + name + '.' + fieldNames[i] + ':nested');
                 return false;
             }
         }
     }
     if (isNumber(v)) {
         if (isNumber(d.min) && v < d.min) {
-            invalid.push(name + ':min');
+            errors.push(prefix + name + ':min');
             return false;
         }
         if (isNumber(d.max) && v > d.max) {
-            invalid.push(name + ':max');
+            errors.push(prefix + name + ':max');
             return false;
         }
     }
     return true;
 }
 
-var eventCode = payloadOk ? msg.event_id : undefined;
-var eventType = payloadOk ? msg.event_type : undefined;
-var eventId = payloadOk && typeof msg.event_uid === 'string' && msg.event_uid
-    ? msg.event_uid : null;
+function normalizeEvent(item, defaultTs, prefix) {
+    var errors = [];
+    var idField = 'event_id';
+    var id = item.event_id;
+    var type = item.event_type;
+    var def = null;
+    var allowed = {};
+    Object.keys(keys).forEach(function (k) {
+        allowed[k] = keys[k];
+    });
+    if (id === undefined || id === null) {
+        if (typeof item.id === 'string' && (events[item.id]
+                || (type !== undefined && type !== null))) {
+            id = item.id;
+            idField = 'id';
+        }
+    }
+    if (id !== undefined && id !== null) {
+        if (typeof id !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,49}$/.test(id)) {
+            errors.push(prefix + 'event_id:invalid');
+        } else {
+            def = events[id];
+            if (!def) {
+                errors.push(prefix + 'event_id:unknown');
+            } else if (def.params) {
+                Object.keys(def.params).forEach(function (k) {
+                    if (!(k in allowed)) {
+                        allowed[k] = def.params[k];
+                    }
+                });
+            }
+        }
+    } else if (type !== undefined && type !== null) {
+        errors.push(prefix + 'event_type:orphan');
+    } else {
+        errors.push(prefix + 'event_id:missing');
+    }
+
+    var values = {};
+    Object.keys(item).forEach(function (k) {
+        if (reserved[k] || k === idField) {
+            return;
+        }
+        var v = item[k];
+        var d = allowed[k];
+        if (!d) {
+            if (strict) {
+                errors.push(prefix + k + ':unknown');
+            } else {
+                dropped.push(prefix + k);
+            }
+            return;
+        }
+        if (!validateField(k, v, d, errors, prefix)) {
+            return;
+        }
+        if (d.t === 'bool' && (v === 0 || v === 1)) {
+            v = v === 1;
+        } else if (d.t === 'timestamp') {
+            v = normalizeTimestamp(v);
+        }
+        values[k] = v;
+    });
+
+    if (type !== undefined && type !== null && type !== ''
+            && type !== 'info' && type !== 'alert' && type !== 'fault') {
+        errors.push(prefix + 'event_type:value');
+    }
+    if (def) {
+        if (type === undefined || type === null || type === '') {
+            type = def.type || 'info';
+        } else {
+            if (def.type && type !== def.type) {
+                errors.push(prefix + 'event_type:mismatch');
+            }
+            type = def.type || type;
+        }
+    }
+
+    var eventTs = item.event_ts;
+    if (eventTs !== undefined && eventTs !== null) {
+        if (!isInteger(eventTs)) {
+            errors.push(prefix + 'event_ts:type');
+            eventTs = defaultTs;
+        } else {
+            eventTs = normalizeTimestamp(eventTs);
+        }
+    } else {
+        eventTs = defaultTs;
+    }
+
+    var data = {};
+    if (def && def.params) {
+        Object.keys(def.params).forEach(function (k) {
+            if (k in values) {
+                data[k] = values[k];
+            }
+        });
+    }
+
+    errors.forEach(function (e) {
+        invalid.push(e);
+    });
+    if (errors.length > 0 || !def) {
+        return null;
+    }
+    var eventType = type || 'info';
+    return {
+        id: id,
+        type: eventType,
+        ts: eventTs,
+        data: Object.keys(data).length ? data : null
+    };
+}
+
+var batch = payloadOk && Array.isArray(msg.events);
+var eventId = null;
+var eventType = null;
+var eventIdField = 'event_id';
 var eventDef = null;
 var allowed = {};
+var batchEvents = [];
 
 if (payloadOk) {
     Object.keys(keys).forEach(function (k) {
@@ -152,28 +270,66 @@ if (!payloadOk) {
     invalid.push('payload:size');
 }
 
-if (eventCode !== undefined && eventCode !== null) {
-    if (typeof eventCode !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,49}$/.test(eventCode)) {
-        invalid.push('event_id:invalid');
-    } else {
-        eventDef = events[eventCode];
-        if (!eventDef) {
-            invalid.push('event_id:unknown');
-        } else if (eventDef.params) {
-            Object.keys(eventDef.params).forEach(function (k) {
-                if (!(k in allowed)) {
-                    allowed[k] = eventDef.params[k];
-                }
-            });
+if (batch) {
+    var batchTs = meta.ts ? Number(meta.ts) : Date.now();
+    if (!isNumber(batchTs)) {
+        batchTs = Date.now();
+    }
+    batchTs = normalizeTimestamp(batchTs);
+    if (msg.events.length === 0) {
+        invalid.push('events:empty');
+    }
+    for (var index = 0; index < msg.events.length; index++) {
+        var item = msg.events[index];
+        if (!isObject(item)) {
+            invalid.push('events[' + index + ']:type');
+            continue;
+        }
+        var normalized = normalizeEvent(item, batchTs, 'events[' + index + '].');
+        if (normalized) {
+            batchEvents.push(normalized);
         }
     }
-} else if (eventType !== undefined && eventType !== null) {
-    invalid.push('event_type:orphan');
-}
+    if (batchEvents.length > 1) {
+        var firstEventId = batchEvents[0].id;
+        for (var eventIndex = 1; eventIndex < batchEvents.length; eventIndex++) {
+            if (batchEvents[eventIndex].id !== firstEventId) {
+                invalid.push('events:mixed');
+                break;
+            }
+        }
+    }
+} else if (payloadOk) {
+    eventId = msg.event_id;
+    eventType = msg.event_type;
+    if (eventId === undefined || eventId === null) {
+        if (typeof msg.id === 'string' && (events[msg.id]
+                || (eventType !== undefined && eventType !== null))) {
+            eventId = msg.id;
+            eventIdField = 'id';
+        }
+    }
+    if (eventId !== undefined && eventId !== null) {
+        if (typeof eventId !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]{0,49}$/.test(eventId)) {
+            invalid.push('event_id:invalid');
+        } else {
+            eventDef = events[eventId];
+            if (!eventDef) {
+                invalid.push('event_id:unknown');
+            } else if (eventDef.params) {
+                Object.keys(eventDef.params).forEach(function (k) {
+                    if (!(k in allowed)) {
+                        allowed[k] = eventDef.params[k];
+                    }
+                });
+            }
+        }
+    } else if (eventType !== undefined && eventType !== null) {
+        invalid.push('event_type:orphan');
+    }
 
-if (payloadOk) {
     Object.keys(msg).forEach(function (k) {
-        if (reserved[k]) {
+        if (reserved[k] || k === eventIdField) {
             return;
         }
         var v = msg[k];
@@ -203,21 +359,21 @@ if (payloadOk) {
             invalid.push(k + ':missing');
         }
     });
-}
 
-if (eventType !== undefined && eventType !== null && eventType !== ''
-        && eventType !== 'info' && eventType !== 'alert' && eventType !== 'fault') {
-    invalid.push('event_type:value');
-}
+    if (eventType !== undefined && eventType !== null && eventType !== ''
+            && eventType !== 'info' && eventType !== 'alert' && eventType !== 'fault') {
+        invalid.push('event_type:value');
+    }
 
-if (eventDef) {
-    if (eventType === undefined || eventType === null || eventType === '') {
-        eventType = eventDef.type || 'info';
-    } else {
-        if (eventDef.type && eventType !== eventDef.type) {
-            invalid.push('event_type:mismatch');
+    if (eventDef) {
+        if (eventType === undefined || eventType === null || eventType === '') {
+            eventType = eventDef.type || 'info';
+        } else {
+            if (eventDef.type && eventType !== eventDef.type) {
+                invalid.push('event_type:mismatch');
+            }
+            eventType = eventDef.type || eventType;
         }
-        eventType = eventDef.type || eventType;
     }
 }
 
@@ -227,7 +383,7 @@ if (!isNumber(ts)) {
 }
 ts = normalizeTimestamp(ts);
 
-var eventTs = payloadOk ? msg.event_ts : undefined;
+var eventTs = payloadOk && !batch ? msg.event_ts : undefined;
 if (eventTs !== undefined && eventTs !== null) {
     if (!isInteger(eventTs)) {
         invalid.push('event_ts:type');
@@ -239,13 +395,13 @@ if (eventTs !== undefined && eventTs !== null) {
     eventTs = ts;
 }
 
-var kind = eventCode ? 'event' : 'telemetry';
+var kind = (eventId || batch) ? 'event' : 'telemetry';
 if (invalid.length > 0) {
     kind = 'invalid';
 }
 
 var eventData = {};
-if (eventCode && eventDef && eventDef.params) {
+if (!batch && eventId && eventDef && eventDef.params) {
     Object.keys(eventDef.params).forEach(function (k) {
         if (k in values) {
             eventData[k] = values[k];
@@ -253,7 +409,7 @@ if (eventCode && eventDef && eventDef.params) {
         }
     });
 }
-if (kind === 'event') {
+if (kind === 'event' && !batch) {
     values = {};
 }
 
@@ -270,16 +426,17 @@ var envelope = {
     values: Object.keys(values).length ? values : null,
     dropped: dropped.length ? dropped : null,
     event: null,
+    events: null,
     invalid: invalid.length ? invalid : null
 };
 
-if (eventCode) {
+if (batch) {
+    envelope.events = batchEvents.length ? batchEvents : null;
+} else if (eventId) {
     envelope.event = {
-        id: eventId || (eventCode + '-' + eventTs + '-' + Math.random().toString(36).slice(2, 10)),
-        code: eventCode,
+        id: eventId,
         type: eventType || 'info',
         ts: eventTs,
-        level: eventType === 'alert' ? 'MAJOR' : (eventType === 'fault' ? 'CRITICAL' : 'INFO'),
         data: Object.keys(eventData).length ? eventData : null
     };
 }

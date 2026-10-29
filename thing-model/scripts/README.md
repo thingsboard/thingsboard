@@ -46,7 +46,7 @@ python thing-model/scripts/simulate_telemetry.py `
 指定 `--tsl` 后，属性/事件定义以本地 TSL 为准：
 
 - struct 属性按 `define.specs` 生成扁平 JSON 对象。
-- 事件 payload 仅包含事件 params 以及 `event_id/event_type/event_ts`，不包含属性数据。
+- 事件 payload 默认放在 `events` 数组中，仅包含事件 params 以及 `event_id/event_type/event_ts`，也兼容用 `id` 表示事件标识（`event_id` 优先），不包含属性数据。
 - 发送真实遥测要求产品已同步（`tbProfileId`、`tbAssetId`、`tsl_schema`）。
 - actions 不模拟，因为行为是平台到设备的 RPC，不是遥测上报。
 
@@ -182,6 +182,8 @@ python thing-model/scripts/simulate_telemetry.py \
 | `--workers` | `10` | 批量发送并发数 |
 | `--seed` | 空 | 随机种子 |
 | `--keep-device` | 关闭 | 退出时保留设备 |
+| `--single-event` | 关闭 | 每次随机发送一个事件对象；默认发送事件数组 |
+| `--events-per-packet` | `4` | 每个事件包内同一 `event_id` 的事件数量 |
 | `--timeout` | `10` | HTTP 超时秒数 |
 
 ## 数据生成规则
@@ -193,7 +195,9 @@ python thing-model/scripts/simulate_telemetry.py \
 - `enum` / `enum_string`：从 mapping 中选择键；`enum` 转为整数，`enum_string` 保留字符串
 - `timestamp`：当前时间
 - `struct`：按 `define.specs` 生成扁平 JSON 对象，跳过嵌套 struct
-- 事件：仅包含事件 params 以及 `event_id/event_type/event_ts`，不包含属性数据；`event_id` 直接使用 TSL `events[].id`，产品未定义事件时生成 `evt-<random>`
+- 事件：每包只选择一个 TSL 事件定义，生成 `--events-per-packet` 个相同 `event_id` 的事件，放进 `{"events": [...]}` 一次发送；每个事件包含事件 params 以及 `event_id/event_type/event_ts`，事件 id 直接使用 TSL `events[].id`（也兼容 `id` 字段，`event_id` 优先），产品未定义事件时生成 `evt-<random>`
+- `--single-event`：退化为每次随机发送一个事件对象
+- 规则链收到 `msg.events` 后按数组校验，归一化为 `events` 数组；要求同一包内 `event_id` 一致，混合事件会被标记为 `events:mixed`；`events[].id` 就是 TSL `events[].id`，不生成随机 id，也不输出 `code`；消息不包含 `level`，由 ingest/event-center 按 `type` 映射
 - `mixed`：属性/事件交替发送；`invalid` 为独立模式，仅发送属性类非法数据
 - actions：不模拟（行为是平台到设备的 RPC，不是遥测上报）
 

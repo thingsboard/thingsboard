@@ -121,7 +121,7 @@ class ThingsBoardClient:
         if response.status_code != 404:
             self._check(response)
 
-    def send_telemetry(self, access_token: str, payload: Dict[str, Any]) -> None:
+    def send_telemetry(self, access_token: str, payload: Any) -> None:
         response = self.session.post(
             f"{self.tb_url}/api/v1/{access_token}/telemetry",
             json=payload,
@@ -168,9 +168,34 @@ class TelemetryGenerator:
                 values[prop["id"]] = value
         return values
 
-    def event(self) -> Dict[str, Any]:
-        values: Dict[str, Any] = {}
+    def event(self, event: Optional[Dict[str, Any]] = None,
+              ts: Optional[int] = None) -> Dict[str, Any]:
+        selected = event
+        if selected is None and self.events:
+            selected = self.rng.choice(self.events)
+        return self._event_values(selected, ts)
+
+    def event_batch(self, count: int = 4) -> Dict[str, Any]:
+        base_ts = int(time.time() * 1000)
         event = self.rng.choice(self.events) if self.events else None
+        return {
+            "events": [
+                self._event_values(event, base_ts + index)
+                for index in range(max(1, count))
+            ]
+        }
+
+    def payload(self, kind: str, event_array: bool = True,
+                events_per_packet: int = 4) -> Any:
+        if kind == "event":
+            if event_array:
+                return self.event_batch(events_per_packet)
+            return self.event()
+        return getattr(self, kind)()
+
+    def _event_values(self, event: Optional[Dict[str, Any]],
+                      ts: Optional[int] = None) -> Dict[str, Any]:
+        values: Dict[str, Any] = {}
         if event:
             event_id = event.get("id", "event")
             event_type = event.get("type") or self._random_event_type()
@@ -184,7 +209,7 @@ class TelemetryGenerator:
         values["event_uid"] = str(uuid.uuid4())
         values["event_id"] = event_id
         values["event_type"] = event_type
-        values["event_ts"] = int(time.time() * 1000)
+        values["event_ts"] = int(time.time() * 1000) if ts is None else ts
         return values
 
     def invalid(self) -> Dict[str, Any]:
@@ -399,6 +424,17 @@ def parse_args() -> argparse.Namespace:
         help="keep the generated test device on exit",
     )
     parser.add_argument(
+        "--single-event",
+        action="store_true",
+        help="send one random event object instead of an event array",
+    )
+    parser.add_argument(
+        "--events-per-packet",
+        type=int,
+        default=4,
+        help="number of same-type events per array packet",
+    )
+    parser.add_argument(
         "--timeout",
         type=float,
         default=10.0,
@@ -449,12 +485,14 @@ def send_payloads(
         sequence: List[str],
         count: int,
         interval: float,
-        device_name: str) -> Dict[str, int]:
+        device_name: str,
+        event_array: bool = True,
+        events_per_packet: int = 4) -> Dict[str, int]:
     sent = {"telemetry": 0, "event": 0, "invalid": 0}
     errors = 0
     for index in range(count):
         kind = sequence[index % len(sequence)]
-        payload = getattr(generator, kind)()
+        payload = generator.payload(kind, event_array, events_per_packet)
         try:
             client.send_telemetry(access_token, payload)
             sent[kind] += 1
@@ -477,6 +515,8 @@ def run_batch(
         raise ApiError("--devices-csv mode requires --count > 0")
     workers = max(1, args.workers)
     sequence = mode_sequence(args.mode)
+    event_array = not args.single_event
+    events_per_packet = args.events_per_packet
     total_sent = {"telemetry": 0, "event": 0, "invalid": 0}
     total_errors = 0
 
@@ -492,7 +532,8 @@ def run_batch(
         client = ThingsBoardClient(args.tb_url, args.thingmodel_url, args.timeout)
         result = send_payloads(
             client, row["access_token"], generator, sequence,
-            args.count, args.interval, device_name)
+            args.count, args.interval, device_name, event_array,
+            events_per_packet)
         return device_name, result
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -597,7 +638,8 @@ def main() -> int:
         index = 0
         while args.count <= 0 or index < args.count:
             kind = sequence[index % len(sequence)]
-            payload = getattr(generator, kind)()
+            payload = generator.payload(
+                kind, not args.single_event, args.events_per_packet)
             try:
                 client.send_telemetry(access_token, payload)
                 sent[kind] += 1
