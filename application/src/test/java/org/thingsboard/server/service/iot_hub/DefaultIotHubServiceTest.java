@@ -510,46 +510,6 @@ class DefaultIotHubServiceTest {
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
 
-    @Test
-    void registerDeviceUpdate_keepsTheInstalledItemAndRecordsTheNewVersion() {
-        mockTenant();
-        DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        IotHubInstalledItem installed = devicePackage(deviceId);
-        installed.setItemType("DEVICE");
-        installed.setItemId(UUID.randomUUID());
-        installed.setVersion("1.0");
-        when(iotHubInstalledItemService.findById(tenantId, installed.getId())).thenReturn(installed);
-        String versionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, installed.getItemId().toString(), "DEVICE", "AM308", "1.1"));
-        DeviceInstalledItemDescriptor updated = new DeviceInstalledItemDescriptor();
-        updated.setCreatedEntityIds(List.of(deviceId));
-
-        InstallItemVersionResult result = service.registerDeviceUpdate(user, installed.getId(), versionId, updated);
-
-        assertThat(result.isSuccess()).isTrue();
-        verify(iotHubInstalledItemService).save(tenantId, installed);
-        assertThat(installed.getItemVersionId()).isEqualTo(UUID.fromString(versionId));
-        assertThat(installed.getVersion()).isEqualTo("1.1");
-        assertThat(installed.getDescriptor()).isSameAs(updated);
-        verify(tbDeviceService, never()).delete(any(Device.class), any());
-    }
-
-    @Test
-    void registerDeviceUpdate_versionOfAnotherItem_isRejected() {
-        mockTenant();
-        IotHubInstalledItem installed = devicePackage(new DeviceId(UUID.randomUUID()));
-        installed.setItemType("DEVICE");
-        installed.setItemId(UUID.randomUUID());
-        when(iotHubInstalledItemService.findById(tenantId, installed.getId())).thenReturn(installed);
-        String versionId = UUID.randomUUID().toString();
-        when(iotHubRestClient.getVersionInfo(versionId)).thenReturn(version(versionId, UUID.randomUUID().toString(), "DEVICE", "Other", "1.0"));
-
-        InstallItemVersionResult result = service.registerDeviceUpdate(user, installed.getId(), versionId, new DeviceInstalledItemDescriptor());
-
-        assertThat(result.isSuccess()).isFalse();
-        verify(iotHubInstalledItemService, never()).save(any(), any());
-    }
-
     private IotHubInstalledItem devicePackage(EntityId... createdEntityIds) {
         DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
         descriptor.setCreatedEntityIds(List.of(createdEntityIds));

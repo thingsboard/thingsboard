@@ -204,12 +204,18 @@ export class IotHubActionsService {
 
   /**
    * A device package is updated by the install wizard of the new version: its steps change what
-   * the package created in place, so the device and its history stay.
+   * the package created in place, so the device and its history stay. When only texts changed,
+   * the wizard records the new version without opening.
    */
   private updateDevice(installedItem: IotHubInstalledItem, versionId: string): Observable<string | boolean> {
     return this.iotHubApiService.getVersionInfo(versionId).pipe(
       switchMap(item => this.openDeviceInstallDialog(item, {
-        update: { installedItemId: installedItem.id.id, descriptor: installedItem.descriptor as DeviceInstalledItemDescriptor }
+        update: {
+          installedItemId: installedItem.id.id,
+          descriptor: installedItem.descriptor as DeviceInstalledItemDescriptor,
+          fromVersionId: installedItem.itemVersionId,
+          fromVersion: installedItem.version
+        }
       })),
       map(result => result === 'installed' ? 'updated' : result),
       // The request has already shown the error

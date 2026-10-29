@@ -61,6 +61,9 @@
       }
 
       @case ('progress') {
+        @if (data.update) {
+          <ng-container *ngTemplateOutlet="updateRows; context: { $implicit: ws }"></ng-container>
+        } @else {
         <div class="flex flex-col p-6">
           @for (ep of ws.entitySteps; track ep.step.name; let i = $index) {
             @if (i > 0) {
@@ -144,6 +147,142 @@
             }
           }
         </div>
+        }
+      }
+    }
+  </div>
+</ng-template>
+
+<!-- Update: an entity someone changed since install, which the user can save before the update overwrites it -->
+<ng-template #modifiedHint let-ep>
+  {{ 'iot-hub.device-update-modified' | translate }}
+  <a class="tb-progress-link" href="#" (click)="$event.preventDefault(); downloadCurrentEntity(ep)">{{ 'iot-hub.device-update-here' | translate }}</a>.
+</ng-template>
+
+<!-- Update: the package's entities and what the update does with them -->
+<ng-template #updateRows let-ws>
+  <div class="flex flex-col p-6">
+    @for (ep of ws.entitySteps; track ep.step.name; let i = $index) {
+      @if (i > 0) {
+        <div class="tb-progress-divider"></div>
+      }
+      @let plan = updatePlanOf(ep);
+      @let label = ('iot-hub.device-install-step-type-' + ep.step.type | translate) + ' — ' + (ep.resolvedName || ep.step.name);
+      @if (ws.reviewing && plan && !plan.confirmed) {
+        <div class="tb-progress-row tb-progress-row-alert">
+          <div class="flex min-w-0 flex-1 items-start gap-4">
+            <div class="tb-progress-icon">
+              <mat-icon class="tb-progress-warning">warning</mat-icon>
+            </div>
+            <div class="flex min-w-0 flex-1 flex-col">
+              <span class="tb-progress-label tb-progress-label-active">{{ label }}</span>
+              @if (plan.existing) {
+                <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">
+                  {{ 'iot-hub.device-install-conflict-exists' | translate:{ type: ('iot-hub.device-install-step-type-' + ep.step.type | translate) } }}
+                </span>
+              }
+              @if (plan.shared) {
+                <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">{{ 'iot-hub.device-update-shared' | translate }}</span>
+              }
+              @if (plan.modified) {
+                <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">
+                  <ng-container *ngTemplateOutlet="modifiedHint; context: { $implicit: ep }"></ng-container>
+                </span>
+              }
+            </div>
+          </div>
+          <div class="flex shrink-0 gap-2">
+            @if (plan.existing) {
+              @if (ep.step.type === 'DASHBOARD') {
+                <button class="tb-progress-action-btn tb-progress-action-primary" (click)="confirmUpdateWarning(ep, 'create-copy')">
+                  {{ 'iot-hub.device-install-create-copy' | translate }}
+                </button>
+              } @else {
+                <button class="tb-progress-action-btn tb-progress-action-primary" (click)="confirmUpdateWarning(ep, 'use-existing')">
+                  {{ 'iot-hub.device-install-use-existing' | translate }}
+                </button>
+              }
+              <button class="tb-progress-action-btn tb-progress-action-warning" (click)="confirmUpdateWarning(ep, 'overwrite')">
+                {{ 'iot-hub.device-install-overwrite' | translate }}
+              </button>
+            } @else {
+              <button class="tb-progress-action-btn tb-progress-action-warning" (click)="confirmUpdateWarning(ep)">
+                {{ 'iot-hub.device-install-overwrite' | translate }}
+              </button>
+            }
+          </div>
+        </div>
+      } @else if (ep.status === 'error') {
+        <div class="tb-progress-row tb-progress-row-error">
+          <div class="tb-progress-icon">
+            <mat-icon class="tb-progress-error">error</mat-icon>
+          </div>
+          <div class="flex min-w-0 flex-1 flex-col">
+            <span class="tb-progress-label tb-progress-label-active">{{ label }}</span>
+            @if (ep.errorMessage) {
+              <span class="tb-progress-alert-msg tb-progress-alert-msg-error">{{ ep.errorMessage }}</span>
+            }
+          </div>
+          <span class="tb-progress-status tb-progress-status-failed">{{ 'iot-hub.device-install-step-error' | translate }}</span>
+        </div>
+      } @else {
+        <div class="tb-progress-row" [class.tb-progress-row-active]="ep.status === 'running'">
+          <div class="tb-progress-icon">
+            @switch (ep.status) {
+              @case ('running') {
+                <mat-spinner diameter="24"></mat-spinner>
+              }
+              @case ('success') {
+                <mat-icon class="tb-progress-success">check_circle</mat-icon>
+              }
+              @default {
+                <div class="tb-progress-pending-circle">{{ i + 1 }}</div>
+              }
+            }
+          </div>
+          <div class="flex min-w-0 flex-1 flex-col">
+            <div class="flex min-w-0 items-center gap-2">
+              <span class="tb-progress-label tb-progress-label-fit"
+                    [class.tb-progress-label-active]="ep.status === 'running'"
+                    [class.tb-progress-label-pending]="!ws.reviewing && (ep.status === 'pending' || ep.status === 'skipped')">{{ label }}</span>
+              @if (plan?.action === 'create' && plan.resolution !== 'use-existing') {
+                <span class="tb-progress-new">{{ 'iot-hub.device-update-new' | translate }}</span>
+              }
+            </div>
+            <!-- A confirmed warning stays visible: the status says the conflict is resolved, the hint what happens -->
+            @if (ws.reviewing && plan?.confirmed) {
+              @if (plan.existing) {
+                <span class="tb-progress-hint">{{ 'iot-hub.device-update-existing-' + plan.resolution | translate }}</span>
+              }
+              @if (plan.shared) {
+                <span class="tb-progress-hint">{{ 'iot-hub.device-update-shared' | translate }}</span>
+              }
+              @if (plan.modified) {
+                <span class="tb-progress-hint">
+                  <ng-container *ngTemplateOutlet="modifiedHint; context: { $implicit: ep }"></ng-container>
+                </span>
+              }
+            }
+          </div>
+          <span class="tb-progress-status">
+            @switch (ep.status) {
+              @case ('running') {
+                <span class="tb-progress-status-progress">{{ 'iot-hub.in-progress' | translate }}</span>
+              }
+              @case ('success') {
+                <span class="tb-progress-status-done">{{ 'iot-hub.done' | translate }}</span>
+              }
+              @case ('skipped') {
+                <span class="tb-progress-status-progress">{{ 'iot-hub.device-update-skipped' | translate }}</span>
+              }
+              @default {
+                @if (ws.reviewing && plan) {
+                  <span class="tb-progress-status-progress">{{ 'iot-hub.device-update-no-conflicts' | translate }}</span>
+                }
+              }
+            }
+          </span>
+        </div>
       }
     }
   </div>
@@ -171,7 +310,14 @@
   </div>
 } @else {
   <div class="tb-device-install-header flex items-center gap-3 py-2 pl-6 pr-2">
-    <h2 class="tb-device-install-title">{{ 'iot-hub.device-install-title' | translate:{ name: packageInfo?.name || data.item.name } }}</h2>
+    <h2 class="tb-device-install-title">
+      @if (data.update) {
+        {{ 'iot-hub.device-update-title' | translate:{ name: packageInfo?.name || data.item.name } }}
+        <span class="tb-device-update-version">{{ data.update.fromVersion }} → {{ data.item.version }}</span>
+      } @else {
+        {{ 'iot-hub.device-install-title' | translate:{ name: packageInfo?.name || data.item.name } }}
+      }
+    </h2>
     <button mat-icon-button (click)="cancel()" tabindex="-1">
       <mat-icon>close</mat-icon>
     </button>
@@ -225,9 +371,24 @@
       }
     </ng-template>
 
+    @if (data.update && currentWizardStep?.type === 'progress') {
+      @let step = currentWizardStep;
+      @if (hasUpdateError(step)) {
+        <div class="tb-update-banner tb-update-banner-error">
+          <mat-icon>error</mat-icon>
+          <span>{{ step.progressError }}</span>
+        </div>
+      } @else if (step.reviewing && !step.checking && unconfirmedUpdateWarnings(step) > 0) {
+        <div class="tb-update-banner tb-update-banner-warning">
+          <mat-icon>warning</mat-icon>
+          <span>{{ 'iot-hub.device-update-confirm-warnings' | translate:{ count: unconfirmedUpdateWarnings(step) } }}</span>
+        </div>
+      }
+    }
+
     <mat-dialog-actions>
       @if (!isFirstWizardStep) {
-        <button mat-stroked-button [disabled]="connectionChecking(currentWizardStep)" (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-stroked-button [disabled]="connectionChecking(currentWizardStep) || isUpdating || currentWizardStep?.checking" (click)="previousStep()">{{ 'action.back' | translate }}</button>
       }
       <span class="flex-1"></span>
       @if (currentWizardStep; as step) {
@@ -264,7 +425,26 @@
             </button>
           }
           @case ('progress') {
-            @if (step.progressError) {
+            @if (data.update && (step.reviewing || step.updating || step.progressError)) {
+              @if (step.progressError && !step.updating) {
+                <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
+                <button mat-flat-button color="primary" (click)="retryUpdate(step)">
+                  {{ 'iot-hub.device-update-try-again' | translate }}
+                </button>
+              } @else if (step.updating) {
+                <button mat-button disabled>{{ 'action.cancel' | translate }}</button>
+                <button mat-stroked-button color="primary" disabled>
+                  {{ 'action.next' | translate }}@if (nextWizardStepLabel) {: {{ nextWizardStepLabel }}}
+                </button>
+              } @else {
+                <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+                <button mat-flat-button color="primary"
+                        [disabled]="step.checking || unconfirmedUpdateWarnings(step) > 0"
+                        (click)="runUpdate(step)">
+                  {{ 'action.update' | translate }}
+                </button>
+              }
+            } @else if (step.progressError) {
               <ng-container *ngTemplateOutlet="closeOrCancel"></ng-container>
               <button mat-flat-button color="primary" (click)="retryEntitySteps(step)">
                 {{ 'action.retry' | translate }}

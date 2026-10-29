@@ -13,7 +13,7 @@ import {
   MpItemVersionView
 } from '@shared/models/iot-hub/iot-hub-version.models';
 import { CreatorView } from '@shared/models/iot-hub/iot-hub-creator.models';
-import { IotHubInstalledItem, IotHubInstalledItemKeptEntities, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { DevicePackageEntityState, DeviceUpdateRequest, DeviceUpdateResult, IotHubInstalledItem, IotHubInstalledItemKeptEntities, InstallItemVersionResult, InstallPlan, InstallPlanResult, UpdateItemVersionResult, ItemPublishedVersionInfo } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { ItemType, ItemTypeFilterInfo, WidgetCategory } from '@shared/models/iot-hub/iot-hub-item.models';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
@@ -180,13 +180,10 @@ export class IotHubApiService {
   public registerDeviceInstall(
     versionId: string,
     descriptor: { type?: string; createdEntityIds: { entityType: string; id: string }[]; dashboardId?: { entityType: string; id: string }; selectedInstallMethod?: string; installState?: Record<string, any> },
-    config?: IotHubRequestConfig,
-    // Set for an update: the installed item takes the version and the descriptor
-    installedItemId?: string
+    config?: IotHubRequestConfig
   ): Observable<InstallItemVersionResult> {
-    const installedItemParam = installedItemId ? `&installedItemId=${installedItemId}` : '';
     return this.http.post<InstallItemVersionResult>(
-      `/api/iot-hub/device/register?versionId=${versionId}${installedItemParam}`,
+      `/api/iot-hub/device/register?versionId=${versionId}`,
       { type: 'DEVICE', ...descriptor },
       { params: this.buildParams(config) }
     );
@@ -268,6 +265,23 @@ export class IotHubApiService {
   public deleteInstalledItem(installedItemId: string, config?: IotHubRequestConfig): Observable<void> {
     return this.http.delete<void>(
       `/api/iot-hub/installedItems/${installedItemId}`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /** The entities of an installed device package as they are now: whether they exist, changed since, or are shared. */
+  public checkDeviceUpdate(installedItemId: string, config?: IotHubRequestConfig): Observable<DevicePackageEntityState[]> {
+    return this.http.get<DevicePackageEntityState[]>(
+      `/api/iot-hub/installedItems/${installedItemId}/deviceUpdate/check`,
+      { params: this.buildParams(config) }
+    );
+  }
+
+  /** Applies a device package update in one transaction: all of it, or nothing. */
+  public updateDevicePackage(installedItemId: string, request: DeviceUpdateRequest, config?: IotHubRequestConfig): Observable<DeviceUpdateResult> {
+    return this.http.post<DeviceUpdateResult>(
+      `/api/iot-hub/installedItems/${installedItemId}/deviceUpdate`,
+      request,
       { params: this.buildParams(config) }
     );
   }

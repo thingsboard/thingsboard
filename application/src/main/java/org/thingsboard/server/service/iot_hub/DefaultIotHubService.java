@@ -133,6 +133,7 @@ public class DefaultIotHubService implements IotHubService {
     private final ConverterService converterService;
     private final TbConverterService tbConverterService;
     private final ProjectInfo projectInfo;
+    private final DevicePackageEntities devicePackageEntities;
 
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
@@ -417,7 +418,7 @@ public class DefaultIotHubService implements IotHubService {
 
             String itemType = installedItem.getItemType();
             if ("DEVICE".equals(itemType)) {
-                // The install wizard of the new version changes the package's entities in place, see registerDeviceUpdate
+                // Updated in one transaction from the install wizard of the new version, see DevicePackageUpdateService
                 throw new IllegalArgumentException("A device package is updated by the install wizard of the new version");
             }
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
@@ -677,6 +678,8 @@ public class DefaultIotHubService implements IotHubService {
             installedItem.setItemName(itemName);
             installedItem.setItemType("DEVICE");
             installedItem.setVersion(version);
+            // So that an update can tell whether someone changed an entity since
+            devicePackageEntities.addChecksums(tenantId, descriptor);
             installedItem.setDescriptor(descriptor);
             try {
                 iotHubInstalledItemService.save(tenantId, installedItem);
@@ -704,41 +707,6 @@ public class DefaultIotHubService implements IotHubService {
             return InstallItemVersionResult.success(descriptor);
         } catch (Exception e) {
             log.error("[{}] Failed to register device package install: {}", tenantId, versionId, e);
-            return InstallItemVersionResult.error(e.getMessage());
-        }
-    }
-
-    @Override
-    public InstallItemVersionResult registerDeviceUpdate(SecurityUser user, IotHubInstalledItemId installedItemId, String versionId,
-                                                         DeviceInstalledItemDescriptor descriptor) {
-        TenantId tenantId = user.getTenantId();
-        log.info("[{}] Registering device package update of {} to version: {}", tenantId, installedItemId, versionId);
-
-        try {
-            IotHubInstalledItem installedItem = iotHubInstalledItemService.findById(tenantId, installedItemId);
-            if (installedItem == null || !"DEVICE".equals(installedItem.getItemType())) {
-                throw new IllegalArgumentException("Installed device package not found");
-            }
-
-            JsonNode versionInfo = iotHubRestClient.getVersionInfo(versionId);
-            if (versionInfo == null) {
-                throw new IllegalArgumentException("Failed to get version info from IoT Hub");
-            }
-            if (!installedItem.getItemId().toString().equals(versionInfo.get("itemId").asText())) {
-                throw new IllegalArgumentException("The version belongs to another item");
-            }
-
-            // The wizard has already changed the entities in place: a failure here must not delete them
-            installedItem.setItemVersionId(UUID.fromString(versionId));
-            installedItem.setItemName(versionInfo.get("name").asText());
-            installedItem.setVersion(versionInfo.get("version").asText());
-            installedItem.setDescriptor(descriptor);
-            iotHubInstalledItemService.save(tenantId, installedItem);
-            log.info("[{}] Registered device package update: {} (version {})", tenantId, installedItem.getItemName(), installedItem.getVersion());
-
-            return InstallItemVersionResult.success(descriptor);
-        } catch (Exception e) {
-            log.error("[{}] Failed to register device package update of {} to version: {}", tenantId, installedItemId, versionId, e);
             return InstallItemVersionResult.error(e.getMessage());
         }
     }
