@@ -5692,7 +5692,7 @@
     "type-aws-kinesis-description": "Dienst für Echtzeit-Video- und Datenströme.",
     "type-ttn": "The Things Stack Sandbox",
     "type-ttn-description": "Offenes und dezentrales LoRaWAN-Netzwerk.",
-    "type-tti": "The Things Stack Cloud",
+    "type-tti": "The Things Stack Cloud & Enterprise",
     "type-tti-description": "Software zum Betrieb privater LoRaWAN-Netzwerke im großen Maßstab.",
     "type-things-stack": "The Things Stack",
     "type-chirpstack": "ChirpStack",

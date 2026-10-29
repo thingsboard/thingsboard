@@ -64,9 +64,6 @@
               </div>
             }
           }
-          @if (checkConnectionTemplate && hasCheckConnectionField(row.fields)) {
-            <ng-container *ngTemplateOutlet="checkConnectionTemplate"></ng-container>
-          }
         </div>
       }
     </ng-template>
@@ -85,7 +82,15 @@
         <!-- typed widget -->
         @switch (field.type) {
           @case (FormFieldType.BOOLEAN) {
-            <mat-checkbox [formControlName]="field.key">{{ field.label }}</mat-checkbox>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide" [formControlName]="field.key">
+                @if (helpTextOf(field)) {
+                  <div [tb-hint-tooltip-icon]="helpTextOf(field)">{{ field.label }}</div>
+                } @else {
+                  {{ field.label }}
+                }
+              </mat-slide-toggle>
+            </div>
           }
           @case (FormFieldType.SELECT) {
             <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
@@ -217,9 +222,6 @@
         }
       }
 
-      @if (field.type === FormFieldType.BOOLEAN && helpTextOf(field)) {
-        <div class="tb-install-form-field-help">{{ helpTextOf(field) }}</div>
-      }
       @if (field.helpImage) {
         <img class="tb-install-form-field-help-image" [src]="imagePath(field.helpImage)" [alt]="field.label">
       }

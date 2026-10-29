@@ -3050,7 +3050,7 @@
         "type-aws-kinesis": "AWS Kinesis",
         "type-ibm-watson-iot": "IBM Watson IoT",
         "type-ttn": "The Things Stack Sandbox",
-        "type-tti": "The Things Stack Cloud",
+        "type-tti": "The Things Stack Cloud & Enterprise",
         "type-chirpstack": "ChirpStack",
         "type-azure-event-hub": "Azure Event Hub",
         "type-azure-iot-hub": "Azure IoT Hub",
