@@ -55,7 +55,7 @@ public class RuleEngineMonitoringControllerTest extends AbstractControllerTest {
     public void givenEndNotAfterStart_whenGetTimeseries_thenBadRequest() throws Exception {
         for (String url : TIMESERIES_URLS) {
             doGet(url + "?startTs=3600000&endTs=0&intervalMs=60000").andExpect(status().isBadRequest());
-            doGet(url + "?startTs=3600000&endTs=3600000").andExpect(status().isBadRequest());
+            doGet(url + "?startTs=3600000&endTs=3600000&intervalMs=60000").andExpect(status().isBadRequest());
         }
     }
 
@@ -83,7 +83,13 @@ public class RuleEngineMonitoringControllerTest extends AbstractControllerTest {
     public void givenValidRange_whenGetTimeseries_thenOk() throws Exception {
         for (String url : TIMESERIES_URLS) {
             doGet(url + "?startTs=0&endTs=3600000&intervalMs=60000").andExpect(status().isOk());
-            doGet(url + "?startTs=0&endTs=3600000").andExpect(status().isOk());
+        }
+    }
+
+    @Test
+    public void givenNoInterval_whenGetTimeseries_thenBadRequest() throws Exception {
+        for (String url : TIMESERIES_URLS) {
+            doGet(url + "?startTs=0&endTs=3600000").andExpect(status().isBadRequest());
         }
     }
 

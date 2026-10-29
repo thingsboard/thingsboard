@@ -227,13 +227,14 @@ public class RuleEngineMonitoringController extends BaseController {
         return dims;
     }
 
-    // Same limits as telemetry queries (BaseTimeseriesService): no intervalMs means the stored buckets are returned as is.
+    // Same limits as telemetry queries (BaseTimeseriesService). intervalMs is required, so a query can't return the raw
+    // per-flush rows of a long range; it is checked here, as a missing @RequestParam would surface as a 500.
     private void validateTimeseriesQuery(long startTs, long endTs, Long intervalMs) throws ThingsboardException {
         if (endTs <= startTs) {
             throw new ThingsboardException("'endTs' must be greater than 'startTs'", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         if (intervalMs == null) {
-            return;
+            throw new ThingsboardException("'intervalMs' is required", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         if (intervalMs < 1) {
             throw new ThingsboardException("'intervalMs' must be greater than 0, but got " + intervalMs, ThingsboardErrorCode.BAD_REQUEST_PARAMS);

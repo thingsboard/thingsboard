@@ -6656,7 +6656,7 @@ public class RestClient implements Closeable {
 
     public List<RuleNodeTsKvEntry> getRuleNodeStatsTimeseries(long startTs, long endTs, String groupBy, List<UUID> queueIds,
                                                               List<UUID> ruleChainIds, List<UUID> ruleNodeIds,
-                                                              List<String> serviceIds, Long intervalMs) {
+                                                              List<String> serviceIds, long intervalMs) {
         Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds);
         params.put("intervalMs", intervalMs);
         return getWithQueryParams("/api/ruleEngineMonitoring/nodeStats/timeseries", params,
@@ -6674,7 +6674,7 @@ public class RestClient implements Closeable {
 
     public List<QueueTimeseriesEntry> getQueueStatsTimeseries(long startTs, long endTs, String groupBy, List<UUID> queueIds,
                                                               List<UUID> ruleChainIds, List<UUID> ruleNodeIds,
-                                                              List<String> serviceIds, Long intervalMs) {
+                                                              List<String> serviceIds, long intervalMs) {
         Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds);
         params.put("intervalMs", intervalMs);
         return getWithQueryParams("/api/ruleEngineMonitoring/queueStats/timeseries", params,
@@ -6691,7 +6691,7 @@ public class RestClient implements Closeable {
     }
 
     public List<QueueLagTimeseriesEntry> getQueueLagTimeseries(long startTs, long endTs, String groupBy, List<UUID> queueIds,
-                                                               Long intervalMs) {
+                                                               long intervalMs) {
         Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, null, null, null);
         params.put("intervalMs", intervalMs);
         return getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/timeseries", params,
