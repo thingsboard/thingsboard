@@ -4072,7 +4072,6 @@
         "community-string": "SNMP bendruomenės eilutė"
       },
       "isgateway": "Yra šliuzas",
-      "activity-time-from-gateway-device": "Aktyvumo laikas iš šliuzo įrenginio",
       "description": "Aprašymas",
       "edge-license-key": "Licencijos raktas",
       "cloud-endpoint": "Debesies galinis taškas",

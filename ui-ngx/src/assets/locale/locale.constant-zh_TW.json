@@ -3321,7 +3321,6 @@
                 "lwm2m-server-public-key-id": "LwM2M 伺服器公鑰或識別碼"
             },
             "isgateway": "是否為閘道器",
-            "activity-time-from-gateway-device": "來自閘道器裝置的活動時間",
             "description": "描述",
             "routing-key": "Edge 金鑰",
             "secret": "Edge 密碼",

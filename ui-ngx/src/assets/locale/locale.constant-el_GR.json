@@ -4583,7 +4583,6 @@
         "community-string": "SNMP κοινόχρηστη συμβολοσειρά"
       },
       "isgateway": "Είναι Πύλη",
-      "activity-time-from-gateway-device": "Χρόνος δραστηριότητας από συσκευή πύλης",
       "description": "Περιγραφή",
       "edge-license-key": "Κλειδί Άδειας",
       "cloud-endpoint": "Σημείο πρόσβασης στο Cloud",

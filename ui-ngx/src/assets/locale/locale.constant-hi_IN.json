@@ -4583,7 +4583,6 @@
         "community-string": "SNMP कम्युनिटी स्ट्रिंग"
       },
       "isgateway": "Gateway है",
-      "activity-time-from-gateway-device": "Gateway डिवाइस से एक्टिविटी समय",
       "description": "वर्णन",
       "edge-license-key": "Edge लाइसेंस कुंजी",
       "cloud-endpoint": "क्लाउड एंडपॉइंट",

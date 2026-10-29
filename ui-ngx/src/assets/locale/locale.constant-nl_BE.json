@@ -3258,7 +3258,6 @@
             },
             "snmp": {},
             "isgateway": "Is Gateway",
-            "activity-time-from-gateway-device": "Activiteitstijd vanaf gateway-device",
             "description": "Omschrijving",
             "edge-license-key": "Licentiesleutel",
             "cloud-endpoint": "Cloud-eindpunt",

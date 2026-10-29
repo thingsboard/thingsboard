@@ -5422,7 +5422,6 @@
         "community-string": "SNMPコミュニティ文字列"
       },
       "isgateway": "Gatewayかどうか",
-      "activity-time-from-gateway-device": "Gatewayデバイスからの活動時間",
       "description": "説明",
       "edge-license-key": "ライセンスキー",
       "cloud-endpoint": "クラウドエンドポイント",
