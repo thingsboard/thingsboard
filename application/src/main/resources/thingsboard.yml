@@ -331,7 +331,8 @@ otel:
         # Job period (ms), measured from the previous start. Runs never overlap. With the Redis buffer, only the
         # node that owns the system rule engine partition runs it.
         interval-ms: "${OTEL_TRACE_PROCESSOR_AGGREGATION_INTERVAL_MS:10000}"
-        # Spans per drain batch. Bounds heap and batch duration, not total throughput.
+        # Max spans taken from the buffer and aggregated in one step. The job repeats steps until all expired
+        # traces are handled, so this bounds memory and step duration, not how much one run processes.
         drain-batch-spans: "${OTEL_TRACE_PROCESSOR_AGGREGATION_DRAIN_BATCH_SPANS:5000}"
       batch:
         # Delay (ms) between two exports of ended spans to the trace buffer
