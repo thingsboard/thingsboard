@@ -44,15 +44,14 @@
               <span translate>self-registration.self-registration-url</span>
               <div class="flex flex-row items-center justify-start">
                 <pre class="tb-highlight flex-1"><code>{{ registerLink }}</code></pre>
-                <button mat-icon-button
-                  type="button"
-                  ngxClipboard
-                  (cbOnSuccess)="onActivationLinkCopied()"
-                  cbContent="{{registerLink}}"
-                  matTooltipPosition="above"
-                  matTooltip="{{ 'user.copy-activation-link' | translate }}">
-                  <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-                </button>
+                <tb-copy-button
+                  miniButton="false"
+                  copyText="{{registerLink}}"
+                  tooltipText="{{ 'user.copy-activation-link' | translate }}"
+                  tooltipPosition="above"
+                  (successCopied)="onActivationLinkCopied()"
+                  icon="content_copy">
+                </tb-copy-button>
               </div>
             </div>
             <div class="flex flex-row gap-2" formGroupName="captcha">

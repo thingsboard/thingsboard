@@ -26,15 +26,14 @@
       <span [innerHTML]="'user.activation-link-text' | translate: {activationLink: activationLink, activationLinkTtl: activationLinkTtl}"></span>
       <div class="flex flex-row items-center justify-start">
         <pre class="tb-highlight flex-1"><code>{{ activationLink }}</code></pre>
-        <button mat-icon-button
-                color="primary"
-                ngxClipboard
-                cbContent="{{ activationLink }}"
-                (cbOnSuccess)="onActivationLinkCopied()"
-                matTooltip="{{ 'user.copy-activation-link' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-        </button>
+        <tb-copy-button
+          miniButton="false"
+          copyText="{{ activationLink }}"
+          tooltipText="{{ 'user.copy-activation-link' | translate }}"
+          tooltipPosition="above"
+          (successCopied)="onActivationLinkCopied()"
+          icon="content_copy">
+        </tb-copy-button>
       </div>
     </div>
   </div>

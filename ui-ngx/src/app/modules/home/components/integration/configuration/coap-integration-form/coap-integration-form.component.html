@@ -51,12 +51,14 @@
         <mat-label translate>integration.coap-endpoint</mat-label>
         <input matInput formControlName="coapEndpoint">
       </mat-form-field>
-      <button mat-icon-button ngxClipboard type="button" color="primary"
-              (cbOnSuccess)="onCoapEndpointCopied()"
-              [cbContent]="coapIntegrationConfigForm.get('coapEndpoint').value"
-              matTooltip="{{'integration.copy-coap-endpoint-url' | translate }}">
-        <mat-icon class="tb-mat-20">content_copy</mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="coapIntegrationConfigForm.get('coapEndpoint').value"
+        tooltipText="{{'integration.copy-coap-endpoint-url' | translate }}"
+        tooltipPosition="above"
+        (successCopied)="onCoapEndpointCopied()"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
   }
   @if (dtlsMode || mixedMode) {
@@ -65,12 +67,14 @@
         <mat-label translate>integration.coap-dtls-endpoint</mat-label>
         <input matInput formControlName="dtlsCoapEndpoint">
       </mat-form-field>
-      <button mat-icon-button ngxClipboard type="button" color="primary"
-              (cbOnSuccess)="onDtlsCoapEndpointCopied()"
-              [cbContent]="coapIntegrationConfigForm.get('dtlsCoapEndpoint').value"
-              matTooltip="{{'integration.copy-coap-dtls-endpoint-url' | translate }}">
-        <mat-icon class="tb-mat-20">content_copy</mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="coapIntegrationConfigForm.get('dtlsCoapEndpoint').value"
+        tooltipText="{{'integration.copy-coap-dtls-endpoint-url' | translate }}"
+        tooltipPosition="above"
+        (successCopied)="onDtlsCoapEndpointCopied()"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
   }
 

@@ -27,12 +27,14 @@
       <mat-label translate>integration.http-endpoint</mat-label>
       <input matInput formControlName="httpEndpoint">
     </mat-form-field>
-    <button mat-icon-button ngxClipboard type="button" color="primary"
-            (cbOnSuccess)="onHttpEndpointCopied()"
-            [cbContent]="kpnIntegrationConfigForm.get('httpEndpoint').value"
-            matTooltip="{{'integration.copy-http-endpoint-url' | translate }}">
-      <mat-icon class="tb-mat-20">content_copy</mat-icon>
-    </button>
+    <tb-copy-button
+      miniButton="false"
+      [copyText]="kpnIntegrationConfigForm.get('httpEndpoint').value"
+      tooltipText="{{'integration.copy-http-endpoint-url' | translate }}"
+      tooltipPosition="above"
+      (successCopied)="onHttpEndpointCopied()"
+      icon="content_copy">
+    </tb-copy-button>
   </div>
 
   <mat-expansion-panel class="expansion-panel-setting" [expanded]="kpnIntegrationConfigForm.get('allowDownlink').value">

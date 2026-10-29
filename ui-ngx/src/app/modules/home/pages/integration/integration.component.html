@@ -134,24 +134,28 @@
               <mat-label translate>integration.integration-key</mat-label>
               <input matInput formControlName="routingKey">
             </mat-form-field>
-            <button mat-icon-button ngxClipboard type="button" color="primary"
-              (cbOnSuccess)="onIntegrationInfoCopied('key')"
-              [cbContent]="entityForm?.get('routingKey').value"
-              matTooltip="{{'integration.copy-integration-key' | translate}}">
-              <mat-icon class="tb-mat-20">content_copy</mat-icon>
-            </button>
+            <tb-copy-button
+              miniButton="false"
+              [copyText]="entityForm?.get('routingKey').value"
+              tooltipText="{{'integration.copy-integration-key' | translate}}"
+              tooltipPosition="above"
+              (successCopied)="onIntegrationInfoCopied('key')"
+              icon="content_copy">
+            </tb-copy-button>
           </div>
           <div class="flex flex-row items-center justify-start">
             <mat-form-field class="mat-block flex-1" appearance="outline">
               <mat-label translate>integration.integration-secret</mat-label>
               <input matInput formControlName="secret">
             </mat-form-field>
-            <button mat-icon-button ngxClipboard type="button" color="primary"
-              (cbOnSuccess)="onIntegrationInfoCopied('secret')"
-              [cbContent]="entityForm?.get('secret').value"
-              matTooltip="{{'integration.copy-integration-secret' | translate}}">
-              <mat-icon class="tb-mat-20">content_copy</mat-icon>
-            </button>
+            <tb-copy-button
+              miniButton="false"
+              [copyText]="entityForm?.get('secret').value"
+              tooltipText="{{'integration.copy-integration-secret' | translate}}"
+              tooltipPosition="above"
+              (successCopied)="onIntegrationInfoCopied('secret')"
+              icon="content_copy">
+            </tb-copy-button>
           </div>
         </section>
       </ng-template>

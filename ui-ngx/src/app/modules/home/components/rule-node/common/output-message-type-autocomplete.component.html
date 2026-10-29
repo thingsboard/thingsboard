@@ -19,17 +19,14 @@
     <mat-label>{{'rule-node-config.message-type-value' | translate}}</mat-label>
     <input matInput type="text" formControlName="messageType">
     @if (messageTypeFormGroup.get('messageType').value) {
-      <button type="button"
-              matSuffix
-              mat-icon-button
-              aria-label="Copy"
-              ngxClipboard
-              [cbContent]="messageTypeFormGroup.get('messageType').value"
-              matTooltip="{{ 'rule-node-config.copy-message-type' | translate }}">
-        <mat-icon aria-hidden="false"
-                  aria-label="help-icon">content_copy
-        </mat-icon>
-      </button>
+      <tb-copy-button
+        matSuffix
+        miniButton="false"
+        [copyText]="messageTypeFormGroup.get('messageType').value"
+        tooltipText="{{ 'rule-node-config.copy-message-type' | translate }}"
+        tooltipPosition="above"
+        icon="content_copy">
+      </tb-copy-button>
     }
     @if (messageTypeFormGroup.get('messageType').hasError('required')) {
       <mat-error>

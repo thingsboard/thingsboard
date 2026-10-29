@@ -237,24 +237,28 @@
         <mat-label translate>edge.edge-key</mat-label>
         <input matInput formControlName="routingKey">
       </mat-form-field>
-      <button mat-icon-button type="button" ngxClipboard
-        (cbOnSuccess)="onEdgeInfoCopied('key')"
-        [cbContent]="entityForm?.get('routingKey').value"
-        matTooltip="{{'edge.copy-edge-key' | translate}}">
-        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="entityForm?.get('routingKey').value"
+        tooltipText="{{'edge.copy-edge-key' | translate}}"
+        tooltipPosition="above"
+        (successCopied)="onEdgeInfoCopied('key')"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
     <div class="flex flex-row">
       <mat-form-field class="mat-block flex-1" appearance="outline">
         <mat-label translate>edge.edge-secret</mat-label>
         <input matInput formControlName="secret">
       </mat-form-field>
-      <button mat-icon-button type="button" ngxClipboard
-        (cbOnSuccess)="onEdgeInfoCopied('secret')"
-        [cbContent]="entityForm?.get('secret').value"
-        matTooltip="{{'edge.copy-edge-secret' | translate}}">
-        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="entityForm?.get('secret').value"
+        tooltipText="{{'edge.copy-edge-secret' | translate}}"
+        tooltipPosition="above"
+        (successCopied)="onEdgeInfoCopied('secret')"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
     <fieldset [disabled]="(isLoading$ | async)" style="min-width: 0;">
       <mat-form-field class="mat-block" appearance="outline">

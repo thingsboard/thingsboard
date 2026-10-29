@@ -25,14 +25,14 @@
     <span innerHTML="{{ translate.get('dashboard.public-dashboard-text', {dashboardTitle: dashboard.title, publicLink: publicLink}) | async }}"></span>
     <div class="flex flex-row items-center justify-start">
       <pre class="tb-highlight flex-1"><code>{{ publicLink }}</code></pre>
-      <button mat-icon-button
-              ngxClipboard
-              (cbOnSuccess)="onPublicLinkCopied($event)"
-              cbContent="{{publicLink}}"
-              matTooltipPosition="above"
-              matTooltip="{{ 'dashboard.copy-public-link' | translate }}">
-        <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
-      </button>
+      <tb-copy-button
+        miniButton="false"
+        copyText="{{publicLink}}"
+        tooltipText="{{ 'dashboard.copy-public-link' | translate }}"
+        tooltipPosition="above"
+        (successCopied)="onPublicLinkCopied($event)"
+        icon="content_copy">
+      </tb-copy-button>
     </div>
     <div class="tb-notice" innerHTML="{{'dashboard.public-dashboard-notice' | translate}}"></div>
     <tb-social-share-panel style="padding-top: 15px;"
