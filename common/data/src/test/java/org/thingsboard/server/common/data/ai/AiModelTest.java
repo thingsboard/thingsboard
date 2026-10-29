@@ -4,10 +4,14 @@ package org.thingsboard.server.common.data.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.TenantId;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,31 +20,46 @@ class AiModelTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void modelJsonCarriesProviderAndModelIdOnlyInsideConfiguration() {
-        JsonNode json = mapper.valueToTree(openAiModel());
+    void infoJsonMatchesModelJsonExceptForNullProviderConfig() {
+        AiModel model = openAiModel();
 
-        assertThat(json.has("provider")).isFalse();
-        assertThat(json.has("modelId")).isFalse();
-        assertThat(json.get("configuration").get("provider").asText()).isEqualTo("OPENAI");
-        assertThat(json.get("configuration").get("modelId").asText()).isEqualTo("gpt-4o");
+        JsonNode infoJson = mapper.valueToTree(AiModelInfo.from(model));
+        ObjectNode expected = mapper.valueToTree(model);
+        ((ObjectNode) expected.get("configuration")).putNull("providerConfig");
+
+        assertThat(infoJson).isEqualTo(expected);
+        assertThat(infoJson.toString()).doesNotContain("test-api-key");
     }
 
     @Test
-    void infoCopiedFromModelCarriesProviderAndModelId() {
-        AiModelInfo info = new AiModelInfo(openAiModel());
+    void modelJsonWritesProviderOnce() throws Exception {
+        String json = mapper.writeValueAsString(openAiModel());
 
-        assertThat(info.getProvider()).isEqualTo(AiProvider.OPENAI);
-        assertThat(info.getModelId()).isEqualTo("gpt-4o");
+        assertThat(json.split("\"provider\"", -1)).hasSize(2);
+        assertThat(mapper.readValue(json, AiModel.class).getConfiguration()).isEqualTo(openAiModel().getConfiguration());
+    }
 
-        JsonNode json = mapper.valueToTree(info);
-        assertThat(json.get("provider").asText()).isEqualTo("OPENAI");
-        assertThat(json.get("modelId").asText()).isEqualTo("gpt-4o");
-        assertThat(json.has("configuration")).isFalse();
+    @Test
+    void infoJsonDeserializesAsInfoAndAsModel() throws Exception {
+        AiModel model = openAiModel();
+        AiModelInfo info = AiModelInfo.from(model);
+        String json = mapper.writeValueAsString(info);
+
+        assertThat(mapper.readValue(json, AiModelInfo.class)).isEqualTo(info);
+
+        AiModel modelFromInfo = mapper.readValue(json, AiModel.class);
+        assertThat(modelFromInfo.getConfiguration().providerConfig()).isNull();
+        assertThat(modelFromInfo.getConfiguration()).isEqualTo(info.configuration());
+        assertThat(modelFromInfo.getName()).isEqualTo(model.getName());
+        assertThat(modelFromInfo.isCustomerAccessEnabled()).isTrue();
     }
 
     private static AiModel openAiModel() {
-        return AiModel.builder()
+        AiModel model = AiModel.builder()
+                .tenantId(TenantId.fromUUID(UUID.randomUUID()))
+                .version(3L)
                 .name("Test model")
+                .customerAccessEnabled(true)
                 .configuration(OpenAiChatModelConfig.builder()
                         .providerConfig(OpenAiProviderConfig.builder()
                                 .baseUrl(OpenAiProviderConfig.OPENAI_OFFICIAL_BASE_URL)
@@ -49,6 +68,9 @@ class AiModelTest {
                         .modelId("gpt-4o")
                         .build())
                 .build();
+        model.setId(new AiModelId(UUID.randomUUID()));
+        model.setCreatedTime(1_700_000_000_000L);
+        return model;
     }
 
 }

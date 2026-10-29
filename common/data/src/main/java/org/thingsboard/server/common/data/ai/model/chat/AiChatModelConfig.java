@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.common.data.ai.model.chat;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,8 +20,6 @@ public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extend
     default AiModelType modelType() {
         return AiModelType.CHAT;
     }
-
-    String modelId();
 
     Integer timeoutSeconds();
 

@@ -120,7 +120,7 @@ class AiModelController extends BaseController {
 
     @ApiOperation(
             value = "Get AI model infos (getAiModelInfos)",
-            notes = "Returns a page of AI model infos: AI models without the configuration and its provider credentials. " +
+            notes = "Returns a page of AI model infos: AI models with the provider credentials removed, so 'configuration.providerConfig' is always null. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -140,7 +140,7 @@ class AiModelController extends BaseController {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), pageLink);
+        return aiModelService.findAiModelsByTenantId(user.getTenantId(), pageLink).mapData(AiModelInfo::from);
     }
 
     @ApiOperation(

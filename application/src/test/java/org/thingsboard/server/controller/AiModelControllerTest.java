@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -708,7 +707,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModelInfos_whenTenantAdmin_shouldReturnAllInfosWithoutConfiguration() throws Exception {
+    public void getAiModelInfos_whenTenantAdmin_shouldReturnAllInfosWithoutProviderConfig() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
@@ -723,12 +722,12 @@ public class AiModelControllerTest extends AbstractControllerTest {
                 .andReturn().getResponse().getContentAsString();
 
         // THEN
-        assertThat(infos.getData()).containsExactlyInAnyOrder(new AiModelInfo(available), new AiModelInfo(unavailable));
+        assertThat(infos.getData()).containsExactlyInAnyOrder(AiModelInfo.from(available), AiModelInfo.from(unavailable));
         assertThat(infos.getData()).allSatisfy(info -> {
-            assertThat(info.getProvider()).isEqualTo(AiProvider.OPENAI);
-            assertThat(info.getModelId()).isEqualTo("gpt-4o");
+            assertThat(info.configuration().provider()).isEqualTo(AiProvider.OPENAI);
+            assertThat(info.configuration().providerConfig()).isNull();
         });
-        assertThat(response).doesNotContain("test-api-key");
+        assertThat(response).contains("\"providerConfig\":null").doesNotContain("test-api-key");
     }
 
     @Test
@@ -764,65 +763,10 @@ public class AiModelControllerTest extends AbstractControllerTest {
                 new PageLink(10, 0, "sonnet"));
 
         // THEN
-        assertThat(byProviderDesc.getData()).containsExactly(new AiModelInfo(geminiModel), new AiModelInfo(anthropicModel));
-        assertThat(byModelIdAsc.getData()).containsExactly(new AiModelInfo(anthropicModel), new AiModelInfo(geminiModel));
-        assertThat(searchByProvider.getData()).containsExactly(new AiModelInfo(geminiModel));
-        assertThat(searchByModelId.getData()).containsExactly(new AiModelInfo(anthropicModel));
-    }
-
-    /**
-     * The infos query mirrors the search and sort rules of the full models query in a separate repository,
-     * so both endpoints must return the same models in the same order for the same parameters.
-     */
-    @Test
-    public void getAiModelInfos_shouldMatchGetAiModelsForSameSearchAndSort() throws Exception {
-        // GIVEN
-        loginTenantAdmin();
-
-        doPost("/api/ai/model", AiModel.builder()
-                .tenantId(tenantId)
-                .name("Support assistant")
-                .configuration(AnthropicChatModelConfig.builder()
-                        .providerConfig(new AnthropicProviderConfig("test-api-key"))
-                        .modelId("claude-sonnet-4-0")
-                        .build())
-                .customerAccessEnabled(true)
-                .build(), AiModel.class);
-        doPost("/api/ai/model", AiModel.builder()
-                .tenantId(tenantId)
-                .name("Internal analytics")
-                .configuration(GoogleAiGeminiChatModelConfig.builder()
-                        .providerConfig(new GoogleAiGeminiProviderConfig("test-api-key"))
-                        .modelId("gemini-2.5-pro")
-                        .build())
-                .build(), AiModel.class);
-        var openAiModel = constructValidOpenAiModel("Report assistant");
-        openAiModel.setCustomerAccessEnabled(true);
-        doPost("/api/ai/model", openAiModel, AiModel.class);
-
-        List<String> searches = Arrays.asList(null, "assistant", "google ai", "sonnet");
-        List<SortOrder> sortOrders = Arrays.asList(null,
-                SortOrder.of("createdTime", SortOrder.Direction.DESC),
-                SortOrder.of("name", SortOrder.Direction.ASC),
-                SortOrder.of("provider", SortOrder.Direction.DESC),
-                SortOrder.of("modelId", SortOrder.Direction.ASC));
-
-        for (String search : searches) {
-            for (SortOrder sortOrder : sortOrders) {
-                var pageLink = new PageLink(10, 0, search, sortOrder);
-
-                // WHEN
-                PageData<AiModel> models = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, pageLink);
-                PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, pageLink);
-
-                // THEN
-                assertThat(infos.getData())
-                        .as("search '%s', sort %s", search, sortOrder)
-                        .extracting(AiModelInfo::getId)
-                        .containsExactlyElementsOf(models.getData().stream().map(AiModel::getId).toList());
-                assertThat(infos.getTotalElements()).isEqualTo(models.getTotalElements());
-            }
-        }
+        assertThat(byProviderDesc.getData()).containsExactly(AiModelInfo.from(geminiModel), AiModelInfo.from(anthropicModel));
+        assertThat(byModelIdAsc.getData()).containsExactly(AiModelInfo.from(anthropicModel), AiModelInfo.from(geminiModel));
+        assertThat(searchByProvider.getData()).containsExactly(AiModelInfo.from(geminiModel));
+        assertThat(searchByModelId.getData()).containsExactly(AiModelInfo.from(anthropicModel));
     }
 
     @Test

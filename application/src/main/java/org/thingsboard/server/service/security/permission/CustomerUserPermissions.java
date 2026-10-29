@@ -11,7 +11,7 @@ import org.thingsboard.server.common.data.HasOwnerId;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TenantEntity;
-import org.thingsboard.server.common.data.ai.AiModelInfo;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -506,7 +506,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (!user.getTenantId().equals(entity.getTenantId())) {
                 return false;
             }
-            if (!(entity instanceof AiModelInfo model) || !model.isCustomerAccessEnabled()) {
+            if (!(entity instanceof AiModel model) || !model.isCustomerAccessEnabled()) {
                 return false;
             }
             return user.getUserPermissions().hasGenericPermission(Resource.AI_MODEL, operation);

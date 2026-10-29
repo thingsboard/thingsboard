@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
-// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.util.concurrent.FluentFuture;
@@ -10,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ai.AiModel;
-import org.thingsboard.server.common.data.ai.AiModelInfo;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -39,7 +37,6 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
 
     private final JpaExecutorService jpaExecutor;
     private final AiModelDao aiModelDao;
-    private final AiModelInfoDao aiModelInfoDao;
 
     @Override
     @TransactionalEventListener
@@ -96,12 +93,6 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink) {
         validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
         return aiModelDao.findAllByTenantId(tenantId, pageLink);
-    }
-
-    @Override
-    public PageData<AiModelInfo> findAiModelInfosByTenantId(TenantId tenantId, PageLink pageLink) {
-        validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
-        return aiModelInfoDao.findByTenantId(tenantId, pageLink);
     }
 
     @Override
