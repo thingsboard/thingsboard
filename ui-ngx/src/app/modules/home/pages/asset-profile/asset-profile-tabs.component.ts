@@ -24,7 +24,7 @@ export class AssetProfileTabsComponent extends EntityTabsComponent<AssetProfile>
 
   resolveTabIndex(tab: string): number {
     if (tab === 'cf') {
-      return 1;
+      return 2;
     } else {
       return super.resolveTabIndex(tab);
     }
