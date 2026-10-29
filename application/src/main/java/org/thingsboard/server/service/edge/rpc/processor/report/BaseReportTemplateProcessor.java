@@ -29,6 +29,8 @@ public abstract class BaseReportTemplateProcessor extends BaseEdgeProcessor {
             if (reportTemplate == null) {
                 throw new RuntimeException("[{" + tenantId + "}] reportTemplateUpdateMsg {" + reportTemplateUpdateMsg + "} cannot be converted to report template");
             }
+            checkEntityTenant(tenantId, reportTemplateId);
+            reportTemplate.setTenantId(tenantId);
             ReportTemplate reportTemplateById = edgeCtx.getReportTemplateService().findReportTemplateById(tenantId, reportTemplateId);
             if (reportTemplateById == null) {
                 created = true;
@@ -48,7 +50,7 @@ public abstract class BaseReportTemplateProcessor extends BaseEdgeProcessor {
 
     protected void deleteReportTemplate(TenantId tenantId, ReportTemplateId reportTemplateId) {
         ReportTemplate reportTemplateToDelete = edgeCtx.getReportTemplateService().findReportTemplateById(tenantId, reportTemplateId);
-        if (reportTemplateToDelete != null) {
+        if (reportTemplateToDelete != null && tenantId.equals(reportTemplateToDelete.getTenantId())) {
             edgeCtx.getReportTemplateService().deleteReportTemplate(tenantId, reportTemplateId);
             pushReportTemplateDeletedEventToRuleEngine(tenantId, reportTemplateToDelete);
         }

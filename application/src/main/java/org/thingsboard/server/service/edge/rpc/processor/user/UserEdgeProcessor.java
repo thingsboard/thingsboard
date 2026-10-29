@@ -38,6 +38,7 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -63,7 +64,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
                     if (userUpdateMsg.hasEntityGroupIdMSB() && userUpdateMsg.hasEntityGroupIdLSB()) {
                         EntityGroupId entityGroupId = new EntityGroupId(
                                 new UUID(userUpdateMsg.getEntityGroupIdMSB(), userUpdateMsg.getEntityGroupIdLSB()));
-                        edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, entityGroupId, userId);
+                        safeRemoveEntityFromGroup(tenantId, entityGroupId, userId);
                         yield Futures.immediateFuture(null);
                     } else if (EdgeVersionComparator.INSTANCE.compare(edgeVersion, EdgeVersion.V_4_3_0) >= 0) {
                         deleteUserAndPushEntityDeletedEventToRuleEngine(tenantId, userId, edge);
@@ -74,7 +75,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
             };
         } catch (DataValidationException | ThingsboardException e) {
             if (e.getMessage().contains("limit reached")) {
-                log.warn("[{}] Number of allowed users violated {}", tenantId, userUpdateMsg, e);
+                log.warn("[{}] Number of allowed users violated, user [{}]", tenantId, userId, e);
                 return Futures.immediateFuture(null);
             } else {
                 return Futures.immediateFailedFuture(e);
@@ -86,7 +87,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
 
     @Override
     public ListenableFuture<Void> processUserCredentialsMsgFromEdge(TenantId tenantId, Edge edge, UserCredentialsUpdateMsg userCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processUserCredentialsMsgFromEdge, userCredentialsUpdateMsg [{}]", tenantId, userCredentialsUpdateMsg);
+        log.debug("[{}] Executing processUserCredentialsMsgFromEdge, userCredentialsUpdateMsg [{}]", tenantId, EdgeMsgSummaryUtils.toSummary(userCredentialsUpdateMsg));
         try {
             edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
@@ -136,7 +137,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         switch (edgeEvent.getAction()) {
             case ADDED, ADDED_TO_ENTITY_GROUP, UPDATED, ASSIGNED_TO_EDGE -> {
                 User user = edgeCtx.getUserService().findUserById(edgeEvent.getTenantId(), userId);
-                if (user != null) {
+                if (user != null && edgeEvent.getTenantId().equals(user.getTenantId())) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

@@ -46,7 +46,7 @@ public class SchedulerEventEdgeProcessor extends BaseSchedulerEventProcessor imp
                 }
                 case ENTITY_DELETED_RPC_MESSAGE -> {
                     SchedulerEvent schedulerEventToDelete = edgeCtx.getSchedulerEventService().findSchedulerEventById(tenantId, schedulerEventId);
-                    if (schedulerEventToDelete != null) {
+                    if (schedulerEventToDelete != null && tenantId.equals(schedulerEventToDelete.getTenantId())) {
                         edgeCtx.getSchedulerEventService().unassignSchedulerEventFromEdge(tenantId, schedulerEventId, edge.getId());
                     }
                     yield Futures.immediateFuture(null);

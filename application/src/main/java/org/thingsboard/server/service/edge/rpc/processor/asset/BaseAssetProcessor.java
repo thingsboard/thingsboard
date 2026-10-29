@@ -36,6 +36,8 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }
+            checkEntityTenant(tenantId, assetId);
+            asset.setTenantId(tenantId);
             Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
             if (assetById == null) {
                 created = true;
@@ -91,7 +93,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
 
     protected void deleteAsset(TenantId tenantId, Edge edge, AssetId assetId) {
         Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
-        if (assetById != null) {
+        if (assetById != null && tenantId.equals(assetById.getTenantId())) {
             edgeCtx.getAssetService().deleteAsset(tenantId, assetId);
             pushEntityEventToRuleEngine(tenantId, edge, assetById, TbMsgType.ENTITY_DELETED);
         }

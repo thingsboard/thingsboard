@@ -20,6 +20,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -61,6 +62,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
@@ -1071,6 +1073,85 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         attributes.put("active", true);
         doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
         verifyEdgeConnected();
+    }
+
+    @Test
+    public void testSendDeviceCredentialsRequestForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceCredentialsRequestMsg(DeviceCredentialsRequestMsg.newBuilder()
+                .setDeviceIdMSB(device.getUuidId().getMostSignificantBits())
+                .setDeviceIdLSB(device.getUuidId().getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testSendAttributesRequestForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        loginDifferentTenant();
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"key1\":\"value1\"}"));
+        loginTenantAdmin();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addAttributesRequestMsg(AttributesRequestMsg.newBuilder()
+                .setEntityType(EntityType.DEVICE.name())
+                .setEntityIdMSB(device.getUuidId().getMostSignificantBits())
+                .setEntityIdLSB(device.getUuidId().getLeastSignificantBits())
+                .setScope(DataConstants.SERVER_SCOPE).build()));
+    }
+
+    @Test
+    public void testSendDeviceUpdateForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Device deviceUpdate = new Device(device);
+        deviceUpdate.setName("Updated Name");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdate, null)));
+
+        loginDifferentTenant();
+        Assert.assertEquals(device.getName(), doGet("/api/device/" + device.getUuidId(), Device.class).getName());
+    }
+
+    @Test
+    public void testSendDeviceDeleteForDeviceOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        DeviceUpdateMsg.Builder deviceDeleteMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceDeleteMsgBuilder.setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE);
+        deviceDeleteMsgBuilder.setIdMSB(device.getUuidId().getMostSignificantBits());
+        deviceDeleteMsgBuilder.setIdLSB(device.getUuidId().getLeastSignificantBits());
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(deviceDeleteMsgBuilder.build()));
+
+        loginDifferentTenant();
+        doGet("/api/device/" + device.getUuidId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSendDeviceWithTenantIdOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setId(new DeviceId(Uuids.timeBased()));
+        device.setTenantId(differentTenantId);
+        device.setName("Edge Device With Different Tenant");
+        device.setType("default");
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, device, null)));
+
+        Assert.assertEquals(tenantId, doGet("/api/device/" + device.getUuidId(), Device.class).getTenantId());
+    }
+
+    @Test
+    public void testSendDeviceUpdateWithCustomerOfDifferentTenantToCloud() throws Exception {
+        loginDifferentTenant();
+        Customer customer = new Customer();
+        customer.setTitle("Different Tenant Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        loginTenantAdmin();
+
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+        Device deviceUpdate = new Device(device);
+        deviceUpdate.setCustomerId(savedCustomer.getId());
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addDeviceUpdateMsg(
+                EdgeMsgConstructorUtils.constructDeviceUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, deviceUpdate, null)));
+
+        Assert.assertEquals(tenantId, doGet("/api/device/" + device.getUuidId(), Device.class).getOwnerId());
     }
 
 }
