@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.tbel;
 
 import com.google.common.collect.Lists;
@@ -983,6 +984,7 @@ public class TbUtilsTest {
             TbUtils.raiseError(message);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
+            Assertions.assertInstanceOf(TbelRaisedErrorException.class, e);
             assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. A value of 4 is invalid."));
         }
         message = "frequency_weighting_type must be 0, 1 or 2.";

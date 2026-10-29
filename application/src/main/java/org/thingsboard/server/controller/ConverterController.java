@@ -38,6 +38,7 @@ import org.thingsboard.integration.api.data.ContentType;
 import org.thingsboard.integration.api.data.IntegrationMetaData;
 import org.thingsboard.integration.api.data.UplinkMetaData;
 import org.thingsboard.script.api.ScriptInvokeService;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EventInfo;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.integration.api.converter.DedicatedConverterUtil.parseUplinkData;
 import static org.thingsboard.server.controller.ControllerConstants.CONVERTER_CONFIGURATION_DESCRIPTION;
@@ -414,7 +416,7 @@ public class ConverterController extends AutoCommitController {
             output = scriptUplinkEvaluator.execute(payload, uplinkMetaData).get();
         } catch (Exception e) {
             log.error("Error evaluating JS UpLink Converter function", e);
-            errorText = e.getMessage();
+            errorText = e instanceof ExecutionException && e.getCause() instanceof TbScriptException ? e.getCause().getMessage() : e.getMessage();
         } finally {
             if (scriptUplinkEvaluator != null) {
                 scriptUplinkEvaluator.destroy();

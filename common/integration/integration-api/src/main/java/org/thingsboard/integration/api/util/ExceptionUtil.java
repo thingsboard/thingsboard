@@ -4,6 +4,7 @@ package org.thingsboard.integration.api.util;
 
 import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -39,6 +40,10 @@ public class ExceptionUtil {
 
     public static String toString(Throwable e, EntityId componentId, boolean stackTraceEnabled) {
         Exception exception = lookupExceptionInCause(e, ScriptException.class, JsonParseException.class, TbRateLimitsException.class);
+        if (exception == null) {
+            // TBEL errors are not wrapped in ScriptException
+            exception = lookupExceptionInCause(e, TbScriptException.class);
+        }
         if (exception != null && StringUtils.isNotEmpty(exception.getMessage())) {
             return exception.getMessage();
         } else {
