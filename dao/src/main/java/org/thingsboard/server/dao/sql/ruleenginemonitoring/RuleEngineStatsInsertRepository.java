@@ -99,12 +99,17 @@ public class RuleEngineStatsInsertRepository {
             return;
         }
         for (String table : STATS_TABLES) {
-            String sql = "DELETE FROM " + table + " WHERE ctid IN (SELECT ctid FROM " + table + " WHERE bucket_time < ? LIMIT ?)";
-            int deleted;
-            do {
-                deleted = jdbcTemplate.update(sql, expTime, batchSize);
-            } while (deleted > 0);
+            deleteInBatches(table, "bucket_time < ?", expTime, batchSize);
         }
+    }
+
+    // Deletes by ctid in batches of at most batchSize rows, so no single statement deletes a whole tenant or window.
+    private void deleteInBatches(String table, String condition, Object arg, int batchSize) {
+        String sql = "DELETE FROM " + table + " WHERE ctid IN (SELECT ctid FROM " + table + " WHERE " + condition + " LIMIT ?)";
+        int deleted;
+        do {
+            deleted = jdbcTemplate.update(sql, arg, batchSize);
+        } while (deleted > 0);
     }
 
     // Install and upgrade create the trace schema; a database built another way (e.g. test suites) may lack it.
@@ -117,9 +122,11 @@ public class RuleEngineStatsInsertRepository {
         if (!statsSchemaExists()) {
             return;
         }
-        jdbcTemplate.update("DELETE FROM rule_node_exec_stats WHERE tenant_id = ?", tenantId);
-        jdbcTemplate.update("DELETE FROM rule_node_queue_stats WHERE tenant_id = ? OR queue_tenant_id = ?", tenantId, tenantId);
-        jdbcTemplate.update("DELETE FROM rule_node_queue_lag_stats WHERE queue_tenant_id = ?", tenantId);
+        // One indexed condition per statement: an OR across tenant_id and queue_tenant_id can't use either index.
+        deleteInBatches("rule_node_exec_stats", "tenant_id = ?", tenantId, BATCH_SIZE);
+        deleteInBatches("rule_node_queue_stats", "tenant_id = ?", tenantId, BATCH_SIZE);
+        deleteInBatches("rule_node_queue_stats", "queue_tenant_id = ?", tenantId, BATCH_SIZE);
+        deleteInBatches("rule_node_queue_lag_stats", "queue_tenant_id = ?", tenantId, BATCH_SIZE);
     }
 
 }

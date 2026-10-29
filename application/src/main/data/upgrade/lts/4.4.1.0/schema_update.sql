@@ -125,6 +125,7 @@ CREATE TABLE IF NOT EXISTS rule_node_queue_stats
                      last_visited_rule_node_id)
 );
 CREATE INDEX IF NOT EXISTS idx_rule_node_queue_stats_tenant_bucket ON rule_node_queue_stats (tenant_id, bucket_time);
+CREATE INDEX IF NOT EXISTS idx_rule_node_queue_stats_queue_tenant_bucket ON rule_node_queue_stats (queue_tenant_id, bucket_time);
 
 CREATE TABLE IF NOT EXISTS rule_node_queue_lag_stats
 (
@@ -135,6 +136,7 @@ CREATE TABLE IF NOT EXISTS rule_node_queue_lag_stats
     CONSTRAINT rule_node_queue_lag_stats_pkey
         PRIMARY KEY (bucket_time, queue_tenant_id, queue_id)
 );
+CREATE INDEX IF NOT EXISTS idx_rule_node_queue_lag_stats_queue_tenant_bucket ON rule_node_queue_lag_stats (queue_tenant_id, bucket_time);
 
 -- Trace group: pre-aggregated path-level rollup (one row per distinct path within a bucket)
 -- A "path" is identified by path_id (root queue + root message type + root rule chain + visited rule nodes)
