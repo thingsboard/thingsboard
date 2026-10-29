@@ -50,13 +50,13 @@ public class OpenTelemetryConfig {
     private int maxAttributeValueLength;
 
     @Value("${otel.processor.trace.batch.schedule-delay-ms:2000}")
-    private long postgresScheduleDelayMs;
+    private long processorScheduleDelayMs;
     @Value("${otel.processor.trace.batch.max-export-batch-size:60000}")
-    private int postgresMaxExportBatchSize;
+    private int processorMaxExportBatchSize;
     @Value("${otel.processor.trace.batch.exporter-timeout-ms:30000}")
-    private long postgresExporterTimeoutMs;
+    private long processorExporterTimeoutMs;
     @Value("${otel.processor.trace.metrics.interval-ms:5000}")
-    private long postgresMetricsIntervalMs;
+    private long processorMetricsIntervalMs;
 
     @Value("${otel.exporter.otlp.enabled:false}")
     private boolean otlpEnabled;
@@ -75,7 +75,7 @@ public class OpenTelemetryConfig {
 
     @Bean
     @ConditionalOnProperty(name = "otel.processor.trace.enabled", havingValue = "true")
-    public SdkMeterProvider postgresMeterProvider(MeterRegistry meterRegistry, TraceExportPressureGate pressureGate) {
+    public SdkMeterProvider processorMeterProvider(MeterRegistry meterRegistry, TraceExportPressureGate pressureGate) {
         Gauge.builder("otel.trace.queueMaxSize", pressureGate::getMaxQueueSize)
                 .tag("processorType", "BatchSpanProcessor")
                 .description("Configured BatchSpanProcessor max queue size")
@@ -83,7 +83,7 @@ public class OpenTelemetryConfig {
         return SdkMeterProvider.builder()
                 .registerMetricReader(
                         PeriodicMetricReader.builder(new MicrometerOpenTelemetryMetricExporter(meterRegistry, "otel.trace."))
-                                .setInterval(Duration.ofMillis(postgresMetricsIntervalMs))
+                                .setInterval(Duration.ofMillis(processorMetricsIntervalMs))
                                 .build())
                 .build();
     }
@@ -93,7 +93,7 @@ public class OpenTelemetryConfig {
     public OpenTelemetry customOpenTelemetry(
             BufferedTraceExporter bufferedTraceExporter,
             TraceExportPressureGate pressureGate,
-            @Autowired(required = false) SdkMeterProvider postgresMeterProvider) {
+            @Autowired(required = false) SdkMeterProvider processorMeterProvider) {
         String serviceId = serviceInfoProvider.getServiceId();
 
         var providerBuilder = SdkTracerProvider.builder()
@@ -105,14 +105,14 @@ public class OpenTelemetryConfig {
 
         var sdkBuilder = OpenTelemetrySdk.builder();
 
-        if (postgresMeterProvider != null) {
+        if (processorMeterProvider != null) {
             providerBuilder.addSpanProcessor(new PressureAwareSpanProcessor(
                     BatchSpanProcessor.builder(bufferedTraceExporter)
-                            .setMeterProvider(postgresMeterProvider)
-                            .setScheduleDelay(postgresScheduleDelayMs, TimeUnit.MILLISECONDS)
+                            .setMeterProvider(processorMeterProvider)
+                            .setScheduleDelay(processorScheduleDelayMs, TimeUnit.MILLISECONDS)
                             .setMaxQueueSize(pressureGate.getMaxQueueSize())
-                            .setMaxExportBatchSize(postgresMaxExportBatchSize)
-                            .setExporterTimeout(postgresExporterTimeoutMs, TimeUnit.MILLISECONDS)
+                            .setMaxExportBatchSize(processorMaxExportBatchSize)
+                            .setExporterTimeout(processorExporterTimeoutMs, TimeUnit.MILLISECONDS)
                             .build(),
                     pressureGate));
         }
@@ -145,7 +145,7 @@ public class OpenTelemetryConfig {
                             .build());
         }
 
-        if (postgresMeterProvider == null && !otlpEnabled) {
+        if (processorMeterProvider == null && !otlpEnabled) {
             log.warn("Tracing is enabled, but both the buffered trace processor (otel.processor.trace.enabled) and the " +
                     "OTLP exporter (otel.exporter.otlp.enabled) are disabled: sampled spans are discarded");
         }
