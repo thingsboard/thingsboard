@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TraceInsertRepository {
 
+    private static final int SPAN_INSERT_BATCH_SIZE = 250;
+
     private static final String SPAN_INSERT_SQL = """
             INSERT INTO span (span_id, trace_id, tenant_id, service_name, parent_span_id, name, kind, attributes_jsonb, events_jsonb, links_jsonb, start_time, end_time, duration, status_code, status_message, created_time)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -128,8 +130,6 @@ public class TraceInsertRepository {
     @Value("${sql.traces.partition_size:24}")
     private int partitionSizeHours;
 
-    @Value("${otel.processor.trace.persistence.postgres.insert-batch-size:250}")
-    private int spanInsertBatchSize;
 
     public void saveSpans(List<SpanEntity> spans) {
         if (CollectionUtils.isEmpty(spans)) {
@@ -164,9 +164,8 @@ public class TraceInsertRepository {
     }
 
     private void insertSpans(List<SpanEntity> spans) {
-        int batchSize = Math.max(1, spanInsertBatchSize);
-        log.debug("Saving {} spans using JDBC batch chunks of {}", spans.size(), batchSize);
-        jdbcTemplate.batchUpdate(SPAN_INSERT_SQL, spans, batchSize, this::bindSpan);
+        log.debug("Saving {} spans using JDBC batch chunks of {}", spans.size(), SPAN_INSERT_BATCH_SIZE);
+        jdbcTemplate.batchUpdate(SPAN_INSERT_SQL, spans, SPAN_INSERT_BATCH_SIZE, this::bindSpan);
     }
 
     // A trace part that arrives after the buffer's quiet window is drained as another fragment of the same trace:

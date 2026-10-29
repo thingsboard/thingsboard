@@ -327,10 +327,6 @@ otel:
         # Caffeine only: span cap. Once reached new spans are rejected ('trace.buffer.rejected'); buffered
         # spans are never dropped.
         max-buffered-spans: "${OTEL_TRACE_PROCESSOR_BUFFER_MAX_BUFFERED_SPANS:300000}"
-      persistence:
-        postgres:
-          # JDBC batch size for span inserts.
-          insert-batch-size: "${OTEL_TRACE_PROCESSOR_POSTGRES_INSERT_BATCH_SIZE:250}"
       aggregation:
         # Job period (ms), measured from the previous start. Runs never overlap. With the Redis buffer, only the
         # node that owns the system rule engine partition runs it.
