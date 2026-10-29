@@ -192,8 +192,8 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
     } else {
       if (!metadata) {
         metadata = {
-          deviceName: 'sensorA',
-          deviceType: 'temp-sensor',
+          deviceName: 'Thermostat-01',
+          deviceType: 'thermostat',
           ss_serialNumber: 'SN111'
         };
       }
