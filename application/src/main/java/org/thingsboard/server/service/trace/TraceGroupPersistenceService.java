@@ -14,6 +14,7 @@ import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup;
 import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 import org.thingsboard.server.dao.sql.trace.TraceDao;
 import org.thingsboard.server.dao.sql.trace.TraceSummaryInfo;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,16 +29,29 @@ import java.util.concurrent.TimeUnit;
 public class TraceGroupPersistenceService {
     private final TraceDao traceDao;
     private final TraceCoverageSettingService traceCoverageSettingService;
+    private final TenantService tenantService;
 
-    public TraceGroupPersistenceService(TraceDao traceDao, TraceCoverageSettingService traceCoverageSettingService) {
+    public TraceGroupPersistenceService(TraceDao traceDao, TraceCoverageSettingService traceCoverageSettingService,
+                                        TenantService tenantService) {
         this.traceDao = traceDao;
         this.traceCoverageSettingService = traceCoverageSettingService;
+        this.tenantService = tenantService;
     }
 
     @Transactional
     public void persist(long bucketTime, long now, Collection<TraceGroupContribution> contributions,
                         Map<String, BufferedTrace> tracesByTraceId,
                         Map<String, TraceSummaryInfo> summariesByTraceId) {
+        if (CollectionUtils.isEmpty(contributions)) {
+            return;
+        }
+        // Traces buffered for a tenant that has since been deleted are dropped, so they aren't written back after the
+        // housekeeper has deleted the tenant's traces.
+        Map<UUID, Boolean> tenantExists = new HashMap<>();
+        contributions = contributions.stream()
+                .filter(c -> tenantExists.computeIfAbsent(c.metrics().getTenantId(),
+                        id -> tenantService.tenantExists(TenantId.fromUUID(id))))
+                .toList();
         if (CollectionUtils.isEmpty(contributions)) {
             return;
         }

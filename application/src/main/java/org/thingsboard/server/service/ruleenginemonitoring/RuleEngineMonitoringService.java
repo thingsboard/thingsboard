@@ -22,6 +22,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.*;
@@ -66,6 +68,7 @@ public class RuleEngineMonitoringService {
 
     private final RuleEngineMonitoringDao dao;
     private final TbTenantProfileCache tenantProfileCache;
+    private final TenantService tenantService;
     private final PartitionService partitionService;
     private final TopicService topicService;
     private final KafkaAdmin kafkaAdmin;
@@ -90,6 +93,7 @@ public class RuleEngineMonitoringService {
 
     public RuleEngineMonitoringService(RuleEngineMonitoringDao dao,
                                        TbTenantProfileCache tenantProfileCache,
+                                       TenantService tenantService,
                                        PartitionService partitionService,
                                        TopicService topicService,
                                        ObjectProvider<KafkaAdmin> kafkaAdminProvider,
@@ -102,6 +106,7 @@ public class RuleEngineMonitoringService {
                                        @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:false}") boolean queueTimeoutLastVisitedRuleNodeEnabled) {
         this.dao = dao;
         this.tenantProfileCache = tenantProfileCache;
+        this.tenantService = tenantService;
         this.partitionService = partitionService;
         this.topicService = topicService;
         this.kafkaAdmin = kafkaAdminProvider.getIfAvailable();
@@ -207,6 +212,8 @@ public class RuleEngineMonitoringService {
                 ruleNodeAccumulator.remove(key, metrics);
             }
         });
+        Predicate<UUID> tenantExists = tenantExistsCheck();
+        snapshot.keySet().removeIf(key -> !tenantExists.test(key.tenantId()));
         log.debug("Rule node exec snapshot has {} keys going to flush", snapshot.size());
 
         if (snapshot.isEmpty()) {
@@ -244,7 +251,8 @@ public class RuleEngineMonitoringService {
                 queueAccumulator.remove(key, metrics);
             }
         });
-
+        Predicate<UUID> tenantExists = tenantExistsCheck();
+        snapshot.keySet().removeIf(key -> !tenantExists.test(key.tenantId()) || !tenantExists.test(key.queueTenantId()));
         log.debug("Queue snapshot has {} keys", snapshot.size());
 
         if (snapshot.isEmpty()) {
@@ -319,7 +327,10 @@ public class RuleEngineMonitoringService {
 
         long startTs = System.currentTimeMillis();
         try {
-            Map<QueueShortInfo, List<String>> queueToGroups = buildQueueConsumerGroups(queueCacheService.getAllQueues());
+            Predicate<UUID> tenantExists = tenantExistsCheck();
+            Map<QueueShortInfo, List<String>> queueToGroups = buildQueueConsumerGroups(queueCacheService.getAllQueues().stream()
+                    .filter(queue -> tenantExists.test(queue.tenantId()))
+                    .toList());
             if (queueToGroups.isEmpty()) {
                 return;
             }
@@ -335,6 +346,16 @@ public class RuleEngineMonitoringService {
         } finally {
             flushQueueLagStatsTimer.record(System.currentTimeMillis() - startTs, MILLISECONDS);
         }
+    }
+
+    // Data recorded for a tenant that has since been deleted is dropped, so a flush doesn't write it back after the
+    // housekeeper has deleted the tenant's stats. Memoized per flush.
+    private Predicate<UUID> tenantExistsCheck() {
+        Map<UUID, Boolean> exists = new HashMap<>();
+        return tenantId -> exists.computeIfAbsent(tenantId, id -> {
+            TenantId tid = TenantId.fromUUID(id);
+            return tid.isSysTenantId() || tenantService.tenantExists(tid);
+        });
     }
 
     private Map<QueueShortInfo, List<String>> buildQueueConsumerGroups(Collection<QueueShortInfo> queues) {

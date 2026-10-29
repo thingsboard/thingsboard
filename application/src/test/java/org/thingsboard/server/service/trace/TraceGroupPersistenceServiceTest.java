@@ -13,6 +13,7 @@ import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup.Rule
 import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 import org.thingsboard.server.dao.sql.trace.TraceDao;
 import org.thingsboard.server.dao.sql.trace.TraceSummaryInfo;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +40,7 @@ class TraceGroupPersistenceServiceTest {
 
     private TraceDao traceDao;
     private TraceCoverageSettingService coverageSettingService;
+    private TenantService tenantService;
     private TraceGroupPersistenceService service;
     private TraceCoverageSetting setting;
 
@@ -46,7 +48,9 @@ class TraceGroupPersistenceServiceTest {
     void setUp() {
         traceDao = mock(TraceDao.class);
         coverageSettingService = mock(TraceCoverageSettingService.class);
-        service = new TraceGroupPersistenceService(traceDao, coverageSettingService);
+        tenantService = mock(TenantService.class);
+        when(tenantService.tenantExists(TenantId.fromUUID(TENANT_ID))).thenReturn(true);
+        service = new TraceGroupPersistenceService(traceDao, coverageSettingService, tenantService);
         setting = TraceCoverageSetting.defaultSetting(TENANT_ID);
         setting.setRelatedTraceSampleIntervalSeconds(SAMPLE_INTERVAL_SECONDS);
         setting.setMaxTraceGroupsPerDay(0);
@@ -69,6 +73,18 @@ class TraceGroupPersistenceServiceTest {
         assertThat(updatedGroups()).isEmpty();
         assertThat(savedSpans()).extracting(SpanEntity::getSpanId).containsExactly("span-1");
         verify(traceDao).upsertTraceSummaries(List.of(summary));
+    }
+
+    @Test
+    void givenDeletedTenant_whenPersist_thenNothingIsSaved() {
+        when(tenantService.tenantExists(TenantId.fromUUID(TENANT_ID))).thenReturn(false);
+
+        service.persist(BUCKET_TIME, NOW, List.of(contribution("path-1", "trace-1")),
+                Map.of("trace-1", trace("trace-1")), Map.of("trace-1", mock(TraceSummaryInfo.class)));
+
+        verify(traceDao, never()).saveTraceGroups(any(), any());
+        verify(traceDao, never()).saveSpans(any());
+        verify(traceDao, never()).upsertTraceSummaries(any());
     }
 
     @Test
