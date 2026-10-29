@@ -6283,8 +6283,7 @@
     "type-rule-chain": "Kural zinciri",
     "type-rule-chain-plural": "Kural zincirleri",
     "type-device": "Cihaz",
-    "type-device-plural": "Cihazlar",
-    "selected": "Seçili"
+    "type-device-plural": "Cihazlar"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -7995,7 +7994,6 @@
     "endpoint-url-pattern": "Uç nokta URL deseni",
     "endpoint-url-pattern-required": "Uç nokta URL deseni gereklidir",
     "request-method": "İstek yöntemi",
-    "use-simple-client-http-factory": "Basit HTTP istemci fabrikasını kullan",
     "ignore-request-body": "İstek içeriği olmadan",
     "request-body-template": "İstek gövdesi şablonu",
     "request-body-template-hint": "Meta veriler için <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code>, mesaj değerleri için <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> kullanın. Boş bırakılırsa istek gövdesi olarak mesaj yükü kullanılır. JSON olmayan yükler için 'Düz metne ayrıştır' seçeneğini etkinleştirin. <br/><br/> <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code> yer tutucusuyla bir gizli değer ekleyebilirsiniz; burada 'name' gizli değerin tanımlayıcısıdır, 'type' ise TEXT veya TEXT_FILE olur. Bu, 'Gizli veriyi kullan' seçeneğini doğrudan desteklemeyen kural düğümü yapılandırma alanlarında kullanışlıdır. Örnek: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8171,7 +8169,6 @@
     "proxy-port-range": "Proxy portu 1 ile 65535 arasında olmalıdır.",
     "proxy-user": "Proxy kullanıcısı",
     "proxy-password": "Proxy parolası",
-    "proxy-scheme": "Proxy şeması",
     "numbers-to-template": "Telefon Numaraları Şablonu",
     "numbers-to-template-required": "Telefon Numaraları Şablonu gereklidir",
     "numbers-to-template-hint": "Virgülle ayrılmış telefon numaraları, metaveriden değer almak için <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code>, mesaj gövdesinden almak için <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> kullanın",
@@ -8956,8 +8953,6 @@
     "single-entity": "Tek öğe",
     "group-entities": "Öğe grubu",
     "entities-group-owner": "Öğe grubunun sahibi",
-    "single-device": "Tek cihaz",
-    "group-of-devices": "Cihaz grubu",
     "devices-group-owner": "Cihaz grubunun sahibi",
     "message-body": "Mesaj içeriği",
     "target": "Hedef",
@@ -11369,22 +11364,6 @@
     "ai-credits-usage": "Yapay zeka kredileri: {{ used }} / {{ max }} kullanıldı",
     "ai-credits-description": "Bu ay toplam <strong>{{ max }}</strong> yapay zeka kredinizden <strong>{{ used }}</strong> tanesini kullandınız. Limit {{ date }} tarihinde sıfırlanır. Yapay zeka kredisi kotanızı artırmak için lütfen sistem yöneticinize başvurun."
   },
-  "solution-template": {
-    "solution-template": "Çözüm şablonu",
-    "solution-templates": "Çözüm şablonları",
-    "management": "Çözüm şablonlarını yönet",
-    "details": "Ayrıntılar",
-    "install": "Yükle",
-    "level": "Seviye",
-    "install-title": "Çözüm şablonu başarıyla yüklendi",
-    "install-failed-title": "Çözüm şablonu yükleme başarısız",
-    "instructions": "Talimatlar",
-    "goto-main-dashboard": "Ana panoya git",
-    "delete": "Sil",
-    "delete-solution-title": "'{{solutionTitle}}' çözümünü silmek istediğinizden emin misiniz?",
-    "delete-solution-text": "Dikkat, onaydan sonra çözüm ve ilgili tüm veriler kurtarılamayacaktır.",
-    "installing": "Çözüm şablonu yükleniyor..."
-  },
   "markdown": {
     "edit": "Düzenle",
     "preview": "Önizleme",
@@ -11401,20 +11380,8 @@
     "app-title": "Uygulama başlığı",
     "favicon": "Web sitesi simgesi",
     "favicon-desc": "Tarayıcı sekmesinde ve yer imlerinde görünen simge. PNG veya ICO, 32×32 px önerilir",
-    "favicon-description": "*.ico, *.gif veya *.png formatında, maksimum boyut {{kbSize}} KB olan bir görsel.",
-    "favicon-size-error": "Web sitesi simgesi çok büyük. İzin verilen maksimum boyut {{kbSize}} KB.",
-    "favicon-type-error": "Geçersiz web sitesi simgesi dosya formatı. Yalnızca ICO, GIF veya PNG görseller kabul edilir.",
-    "drop-favicon-image": "Bir web sitesi simgesi bırakın veya yüklemek için bir dosya seçin.",
-    "drop-favicon-image-or": "Bir web sitesi simgesi sürükleyip bırakın veya",
-    "no-favicon-image": "Simgesi seçilmedi",
     "logo": "Logo",
     "logo-desc": "SVG veya PNG, yükseklik en az 96px, en fazla 200 KB",
-    "logo-description": "Herhangi bir görsel, maksimum boyut {{kbSize}} KB.",
-    "logo-size-error": "Logo çok büyük. İzin verilen maksimum logo boyutu {{kbSize}} KB.",
-    "logo-type-error": "Geçersiz logo dosya formatı. Yalnızca görseller kabul edilir.",
-    "drop-logo-image": "Bir logo bırakın veya yüklemek için bir dosya seçin.",
-    "drop-logo-image-or": "Bir logo sürükleyip bırakın veya",
-    "no-logo-image": "Logo seçilmedi",
     "logo-height": "Logo yüksekliği, px",
     "logo-height-desc": "Logoyu orantılı olarak ölçeklendirir ve ortalar. Yüksek logolar için yüksekliği artırın (en fazla 200px)",
     "collapsed-logo": "Daraltılmış kenar çubuğu logosu",
@@ -11458,11 +11425,9 @@
     "error-verification-url": "Alan adı '/' ve ':' karakterlerini içermemelidir. Örnek: thingsboard.io",
     "show-connectivity-dialog": "Bağlantı iletişim kutusunu göster",
     "show-connectivity-dialog-desc": "Bir cihaz oluşturulduktan sonra bağlantı talimatlarını içeren cihaz bağlantı iletişim kutusunu gösterir",
-    "hide-connectivity-dialog": "Bağlantı durumu iletişim kutusunu gizle",
     "override-trendz-add-on-name": "Trendz Analytics Eklenti adını geçersiz kıl",
     "override-trendz-add-on-name-desc": "Platform genelinde \"Trendz\" eklentisinin adını \"Gelişmiş analizler\" olarak değiştirir",
     "show-platform-name-version-bottom-left-corner": "Platform adını ve sürümünü sol alt köşede göster",
-    "override-trendz-add-on-name-hint": "Etkinleştirildiğinde, 'Trendz analytics' platform genelinde 'Advanced analytics' olarak görünecektir.",
     "show-platform-name-version": "Platform adını ve sürümünü göster",
     "platform-name": "Platform Adı",
     "platform-version": "Platform sürümü",
@@ -12688,9 +12653,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13027,10 +12990,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Kimlik bilgileri",
-      "here-app-id": "HERE uygulama kimliği",
-      "here-app-code": "HERE uygulama kodu",
       "here-api-key": "HERE API anahtarı",
-      "here-use-new-version-api-3": "API sürüm 3'ü kullan",
       "tencent-maps-api-key": "Tencent Maps API Anahtarı",
       "tencent-map-type-roadmap": "Yol Haritası",
       "tencent-map-type-satelite": "Uydu",
@@ -13927,7 +13887,6 @@
       "roles-and-permissions": "Roller ve İzinler",
       "groups": "Gruplar",
       "integrations": "Entegrasyonlar",
-      "solution-templates": "Çözüm şablonları",
       "scheduler": "Zamanlayıcı",
       "white-labeling": "White labeling"
     },
@@ -13941,11 +13900,6 @@
       "critical": "Kritik",
       "assigned-to-me": "Bana atanan",
       "total": "Toplam"
-    },
-    "solution-templates": {
-      "title": "Çözüm şablonları",
-      "prototype-plan": "Prototip planı",
-      "startup-plan": "Girişim planı"
     },
     "getting-started": {
       "get-started": "Başla",
