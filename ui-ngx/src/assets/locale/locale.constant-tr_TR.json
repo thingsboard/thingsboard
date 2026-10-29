@@ -10768,7 +10768,7 @@
     "all": "Tümü",
     "actual": "Güncel",
     "scada": "SCADA sembolü",
-    "deprecated": "Kullanımdan kaldırılmış",
+    "deprecated": "Kullanım dışı",
     "has-basic-mode": "Temel modu var",
     "basic-mode-form-selector": "Temel mod formu seçici",
     "basic-mode": "Temel",
