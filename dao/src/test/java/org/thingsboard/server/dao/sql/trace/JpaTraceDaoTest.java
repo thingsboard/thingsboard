@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
@@ -200,6 +201,19 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
 
         assertEquals(1, search(PATH_ID, false, null, null, null).getTotalElements());
         assertEquals(0, search("unknown-path", false, null, null, null).getTotalElements());
+    }
+
+    @Test
+    public void givenPathSampledOnTwoDays_whenSearchByPathId_thenOnlyItsTracesFromBothBucketsAreReturned() {
+        traceDao.upsertTraceSummaries(List.of(traceSummary(), traceSummaryAt("trace-2", BUCKET + DAY),
+                traceSummaryAt("unrelated", BUCKET + 200)));
+        TraceGroup nextDay = traceGroup(10, 1);
+        nextDay.setBucketTime(BUCKET + DAY);
+        nextDay.setRelatedTraceIds(List.of("trace-2"));
+        traceDao.saveTraceGroups(List.of(traceGroup(10, 1), nextDay), List.of());
+
+        assertThat(search(PATH_ID, false, null, null, null).getData()).extracting(TraceProjection::getTraceId)
+                .containsExactlyInAnyOrder(TRACE_ID, "trace-2");
     }
 
     @Test

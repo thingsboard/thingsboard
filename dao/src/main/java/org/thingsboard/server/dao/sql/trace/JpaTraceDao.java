@@ -21,14 +21,11 @@ import org.thingsboard.server.dao.util.SqlDao;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup.DAY_BUCKET_MS;
 import static org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup.floorToDay;
 
 @DefaultDataSource
@@ -143,30 +140,9 @@ public class JpaTraceDao implements TraceDao {
             }
         }
 
-        Collection<String> pathTraceIds = null;
-        if (pathId != null && !pathId.isEmpty()) {
-            long bucketStart = floorToDay(startTime);
-            long bucketEnd = floorToDay(endTime) + DAY_BUCKET_MS;
-            List<TraceGroup> groups = traceQueryRepository.findTraceGroupsByPathId(tenantId, pathId, bucketStart, bucketEnd);
-            Set<String> ids = new HashSet<>();
-            for (TraceGroup group : groups) {
-                if (group.getRelatedTraceIds() != null) {
-                    for (String id : group.getRelatedTraceIds()) {
-                        if (id != null && !id.isEmpty()) {
-                            ids.add(id);
-                        }
-                    }
-                }
-            }
-            if (ids.isEmpty()) {
-                return new PageData<>(Collections.emptyList(), 0, 0, false);
-            }
-            pathTraceIds = ids;
-        }
-
         Page<TraceProjection> resultPage = traceQueryRepository.findTraces(tenantId, serviceName, startTime, endTime, spanName,
                 queueName, originatorId, messageType, messageId, messageData, messageMetadata, errorsOnly, ruleChainId,
-                ruleNodeId, pathTraceIds, hasTimeOutsByQueue, sortField, sortOrder, PageRequest.of(page, pageSize));
+                ruleNodeId, pathId, hasTimeOutsByQueue, sortField, sortOrder, PageRequest.of(page, pageSize));
         return new PageData<>(resultPage.getContent(), resultPage.getTotalPages(), resultPage.getTotalElements(), resultPage.hasNext());
     }
 

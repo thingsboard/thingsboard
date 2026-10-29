@@ -209,12 +209,12 @@ public class TraceQueryRepository {
     public Page<TraceProjection> findTraces(UUID tenantId, String serviceName, long startTime, long endTime, String spanName,
                                             String queueName, String originatorId, String messageType, String messageId,
                                             String messageData, String messageMetadata, boolean errorsOnly,
-                                            String ruleChainId, String ruleNodeId, Collection<String> pathTraceIds,
+                                            String ruleChainId, String ruleNodeId, String pathId,
                                             boolean hasTimeOutsByQueue, TraceSortField sortField, SortOrder sortOrder, Pageable pageable) {
         MapSqlParameterSource params = new MapSqlParameterSource();
         String filters = buildTraceSummaryFilters(params, tenantId, serviceName, startTime, endTime, spanName, queueName,
                 originatorId, messageType, messageId, messageData, messageMetadata, errorsOnly,
-                ruleChainId, ruleNodeId, pathTraceIds, hasTimeOutsByQueue);
+                ruleChainId, ruleNodeId, pathId, hasTimeOutsByQueue);
 
         Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + filters, params, Long.class);
         long totalElements = total != null ? total : 0L;
@@ -234,7 +234,7 @@ public class TraceQueryRepository {
                                                    long startTime, long endTime, String spanName, String queueName,
                                                    String originatorId, String messageType, String messageId,
                                                    String messageData, String messageMetadata, boolean errorsOnly,
-                                                   String ruleChainId, String ruleNodeId, Collection<String> pathTraceIds,
+                                                   String ruleChainId, String ruleNodeId, String pathId,
                                                    boolean hasTimeOutsByQueue) {
         StringBuilder sql = new StringBuilder();
         sql.append("FROM trace_summary ts ");
@@ -242,9 +242,15 @@ public class TraceQueryRepository {
         sql.append("AND ts.start_time >= :startTime AND ts.start_time <= :endTime ");
         params.addValue("tenantId", tenantId).addValue("startTime", startTime).addValue("endTime", endTime);
 
-        if (pathTraceIds != null && !pathTraceIds.isEmpty()) {
-            sql.append("AND ts.trace_id IN (:pathTraceIds) ");
-            params.addValue("pathTraceIds", pathTraceIds);
+        if (isNotEmpty(pathId)) {
+            // The path's sampled traces, read in SQL: their number grows with the window and the sample interval, so
+            // passing them as bind parameters could exceed Postgres' limit. Day buckets overlapping the window are read.
+            sql.append("AND ts.trace_id IN (SELECT unnest(tg.related_trace_ids) FROM trace_group tg ")
+                    .append("WHERE tg.tenant_id = :tenantId AND tg.path_id = :pathId ")
+                    .append("AND tg.bucket_time >= :pathBucketStart AND tg.bucket_time < :pathBucketEnd) ");
+            params.addValue("pathId", pathId)
+                    .addValue("pathBucketStart", TraceGroup.floorToDay(startTime))
+                    .addValue("pathBucketEnd", TraceGroup.floorToDay(endTime) + TraceGroup.DAY_BUCKET_MS);
         }
         appendJsonbMembership(sql, params, "service_names_jsonb", "serviceName", serviceName);
         if (errorsOnly) {
