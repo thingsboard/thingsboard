@@ -50,10 +50,6 @@ CREATE TABLE IF NOT EXISTS span
 -- Partitions (span_<partition start ms>, sql.traces.partition_size wide) are created on insert and dropped by the
 -- trace TTL cleanup. start_time never changes for a span, so a re-saved span still lands on its existing row.
 
--- Indexes for span table
-CREATE INDEX IF NOT EXISTS idx_span_tenant_end_time
-    ON span (tenant_id, end_time DESC);
-
 -- Pre-aggregated trace summary table (one row per trace, kept current by the aggregation job)
 CREATE TABLE IF NOT EXISTS trace_summary
 (
