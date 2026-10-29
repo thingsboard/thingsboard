@@ -16,6 +16,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { isDefinedAndNotNull } from '@core/utils';
 import { OpcUaSubscription } from '@shared/models/integration.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'tb-opc-ua-subscription',
@@ -43,7 +44,8 @@ export class OpcUaSubscriptionComponent implements ControlValueAccessor, Validat
   private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private translate: TranslateService) {
     this.opcSubscriptionForm = this.fb.group({
       subscription: this.fb.array([], Validators.required)
     });
@@ -119,6 +121,19 @@ export class OpcUaSubscriptionComponent implements ControlValueAccessor, Validat
         required: [value?.required || false]
       }
     );
+  }
+
+  pathWarning(path: string): string {
+    const warnings: string[] = [];
+    if (path?.length) {
+      if (/^\s|\s$/.test(path)) {
+        warnings.push(this.translate.instant('integration.opc-ua-path-whitespace-warning'));
+      }
+      if (path.endsWith('.')) {
+        warnings.push(this.translate.instant('integration.opc-ua-path-trailing-dot-warning'));
+      }
+    }
+    return warnings.join(' ');
   }
 
   removeSubscriptionTag(index: number) {
