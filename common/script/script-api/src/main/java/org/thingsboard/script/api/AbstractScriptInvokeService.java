@@ -38,6 +38,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     private static final String EVAL_RESPONSES = "eval_responses";
     private static final String FAILURES = "failures";
     private static final String TIMEOUTS = "timeouts";
+    private static final String BLOCKED = "blocked";
+    private static final String TIMEOUT_STORM_SUPPRESSED = "timeout_storm_suppressed";
 
     protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
 
@@ -46,6 +48,10 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     private Counter evalResponsesCounter;
     private Counter failuresCounter;
     private Counter timeoutsCounter;
+    private Counter blockedCounter;
+    private Counter timeoutStormSuppressedCounter;
+
+    private TimeoutStormGuard timeoutStormGuard;
 
     private FutureCallback<UUID> evalCallback;
     private FutureCallback<Object> invokeCallback;
@@ -70,6 +76,22 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     protected abstract int getMaxBlackListDurationSec();
 
     protected abstract int getMaxErrors();
+
+    protected boolean isTimeoutStormEnabled() {
+        return false;
+    }
+
+    protected long getTimeoutStormWindowMs() {
+        return 10000;
+    }
+
+    protected int getTimeoutStormMinScripts() {
+        return 3;
+    }
+
+    protected long getTimeoutStormMaxDurationMs() {
+        return 60000;
+    }
 
     protected abstract boolean isStatsEnabled();
 
@@ -96,6 +118,12 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         this.evalResponsesCounter = createCounter(key, EVAL_RESPONSES);
         this.failuresCounter = createCounter(key, FAILURES);
         this.timeoutsCounter = createCounter(key, TIMEOUTS);
+        this.blockedCounter = createCounter(key, BLOCKED);
+        this.timeoutStormSuppressedCounter = createCounter(key, TIMEOUT_STORM_SUPPRESSED);
+        if (isTimeoutStormEnabled()) {
+            this.timeoutStormGuard = new TimeoutStormGuard(getStatsName(), getTimeoutStormWindowMs(),
+                    getTimeoutStormMinScripts(), getTimeoutStormMaxDurationMs());
+        }
         this.evalCallback = new ScriptStatCallback<>(evalResponsesCounter, timeoutsCounter, failuresCounter);
         this.invokeCallback = new ScriptStatCallback<>(invokeResponsesCounter, timeoutsCounter, failuresCounter);
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
@@ -123,9 +151,11 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             int evaluated = evalResponsesCounter.getAndClear();
             int failed = failuresCounter.getAndClear();
             int timedOut = timeoutsCounter.getAndClear();
-            if (pushed > 0 || invoked > 0 || evaluated > 0 || failed > 0 || timedOut > 0) {
-                log.info("{}: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
-                        getStatsName(), pushed, invoked + evaluated, invoked, evaluated, failed, timedOut);
+            int blocked = blockedCounter.getAndClear();
+            int stormSuppressed = timeoutStormSuppressedCounter.getAndClear();
+            if (pushed > 0 || invoked > 0 || evaluated > 0 || failed > 0 || timedOut > 0 || blocked > 0 || stormSuppressed > 0) {
+                log.info("{}: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}] blocked [{}] timeoutStormSuppressed [{}]",
+                        getStatsName(), pushed, invoked + evaluated, invoked, evaluated, failed, timedOut, blocked, stormSuppressed);
             }
         }
     }
@@ -185,6 +215,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
                 return withTimeoutAndStatsCallback(scriptId, task, resultFuture, invokeCallback, getMaxInvokeRequestsTimeout());
             } else {
+                blockedCounter.increment();
                 String message = "Script invocation is blocked due to maximum error count "
                         + getMaxErrors() + ", scriptId " + scriptId + "!";
                 log.warn("[{}] " + message, tenantId);
@@ -230,9 +261,18 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             }
             blockList = timeout || scriptException.getErrorCode() != TbScriptException.ErrorCode.RUNTIME;
         }
+        if (timeout && timeoutStormGuard != null) {
+            TimeoutStormGuard.Decision decision = timeoutStormGuard.onTimeout(scriptId, System.currentTimeMillis());
+            decision.stormScripts().forEach(this::unblockIfTimeoutsOnly);
+            if (decision.suppress()) {
+                timeoutStormSuppressedCounter.increment();
+                log.debug("[{}] Script timeout is not counted towards the blocklist due to timeout storm", scriptId);
+                blockList = false;
+            }
+        }
         if (blockList) {
             BlockedScriptInfo disableListInfo = disabledScripts.computeIfAbsent(scriptId, key -> new BlockedScriptInfo(getMaxBlackListDurationSec()));
-            int counter = disableListInfo.incrementAndGet();
+            int counter = disableListInfo.incrementAndGet(timeout);
             if (log.isDebugEnabled()) {
                 log.debug("Script has exception counter {} on disabledFunctions for id {}, exception {}, cause {}, scriptBody {}",
                         counter, scriptId, t, t.getCause(), scriptBody);
@@ -259,6 +299,13 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
             }
         }
         return Futures.immediateFuture(null);
+    }
+
+    private void unblockIfTimeoutsOnly(UUID scriptId) {
+        BlockedScriptInfo info = disabledScripts.get(scriptId);
+        if (info != null && info.isTimeoutsOnly() && disabledScripts.remove(scriptId, info)) {
+            log.info("[{}] Script is removed from the blocklist: it was blocked only by timeouts of a timeout storm", scriptId);
+        }
     }
 
     private boolean isDisabled(UUID scriptId) {
