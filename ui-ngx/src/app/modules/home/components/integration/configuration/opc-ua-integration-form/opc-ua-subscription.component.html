@@ -7,7 +7,7 @@
 <section [formGroup]="opcSubscriptionForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>integration.subscription-tags</legend>
-    <div class="tb-hint path-format-hint" translate>integration.opc-ua-path-hint</div>
+    <div class="tb-hint !p-0 mb-2" translate>integration.opc-ua-path-hint</div>
     <div class="flex flex-col gap-2">
       @for (subscriptionTag of opcSubscriptionArrayControls; track subscriptionTag; let i = $index) {
         <div class="flex flex-1 flex-row items-center justify-start gap-2"
