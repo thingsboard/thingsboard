@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = ModelConstants.SPAN_TABLE_NAME)
+// The id matches span_pkey (tenant_id, trace_id, span_id, start_time) of the partitioned span table.
 @IdClass(SpanEntityId.class)
 @Data
 @NoArgsConstructor
@@ -29,6 +30,7 @@ public class SpanEntity {
     @Column(name = "trace_id", nullable = false)
     private String traceId;
 
+    @Id
     @Column(name = "tenant_id", columnDefinition = "uuid")
     private UUID tenantId;
 
@@ -53,6 +55,7 @@ public class SpanEntity {
     @Column(name = "links_jsonb", columnDefinition = "jsonb")
     private String linksJsonb;
 
+    @Id
     @Column(name = "start_time", nullable = false)
     private long startTime;
 

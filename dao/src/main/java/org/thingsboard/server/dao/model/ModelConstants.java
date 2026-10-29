@@ -1127,11 +1127,7 @@ public class ModelConstants {
     /**
      * Trace tables constants.
      */
-    public static final String TRACE_TABLE_NAME = "trace";
     public static final String SPAN_TABLE_NAME = "span";
-    public static final String SPAN_ATTRIBUTE_TABLE_NAME = "span_attribute";
-    public static final String SPAN_EVENT_TABLE_NAME = "span_event";
-    public static final String SPAN_LINK_TABLE_NAME = "span_link";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
