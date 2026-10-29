@@ -45,16 +45,15 @@ class V4_4_1_0MigrationTest {
     private V4_4_1_0Migration migration;
 
     @Test
-    void grantsAiModelReadAndInvokeWithoutDroppingExistingOperations() {
+    void grantsAiModelOperationsPerAuthorityWithoutDroppingExistingOperations() {
         givenTrendzApiKey(byAuthority(legacyPermissions(), AUTHORITIES));
 
         migration.apply();
 
         Map<Authority, Map<Resource, Set<Operation>>> byAuthority = savedPermissions();
-        for (Authority authority : AUTHORITIES) {
-            assertEquals(Set.of(Operation.READ, Operation.INVOKE), byAuthority.get(authority).get(Resource.AI_MODEL),
-                    "expected READ and INVOKE on AI_MODEL for " + authority);
-        }
+        assertEquals(Set.of(Operation.READ, Operation.INVOKE), byAuthority.get(Authority.TENANT_ADMIN).get(Resource.AI_MODEL));
+        assertEquals(Set.of(Operation.INVOKE), byAuthority.get(Authority.CUSTOMER_USER).get(Resource.AI_MODEL),
+                "customer users must not get READ on AI_MODEL");
         assertEquals(Set.of(Operation.READ, Operation.READ_TELEMETRY),
                 byAuthority.get(Authority.TENANT_ADMIN).get(Resource.DEVICE),
                 "the operations the key already had must survive");
@@ -81,9 +80,13 @@ class V4_4_1_0MigrationTest {
      */
     @Test
     void alreadyGrantedKeyIsNotSavedAgain() {
-        Map<Resource, Set<Operation>> permissions = legacyPermissions();
-        permissions.put(Resource.AI_MODEL, Set.of(Operation.READ, Operation.INVOKE));
-        givenTrendzApiKey(byAuthority(permissions, AUTHORITIES));
+        Map<Resource, Set<Operation>> tenantAdminPermissions = legacyPermissions();
+        tenantAdminPermissions.put(Resource.AI_MODEL, Set.of(Operation.READ, Operation.INVOKE));
+        Map<Resource, Set<Operation>> customerUserPermissions = legacyPermissions();
+        customerUserPermissions.put(Resource.AI_MODEL, Set.of(Operation.INVOKE));
+        givenTrendzApiKey(new HashMap<>(Map.of(
+                Authority.TENANT_ADMIN, tenantAdminPermissions,
+                Authority.CUSTOMER_USER, customerUserPermissions)));
 
         migration.apply();
 
@@ -131,8 +134,7 @@ class V4_4_1_0MigrationTest {
                 .thenReturn(apiKey);
     }
 
-    // Separate map instances per authority, the way a key deserialized from the permissions column arrives --
-    // buildTrendzPermissions() shares one instance, but that sharing does not survive the JSON round trip.
+    // Separate map instances per authority, the way a key deserialized from the permissions column arrives.
     private Map<Authority, Map<Resource, Set<Operation>>> byAuthority(Map<Resource, Set<Operation>> permissions, List<Authority> authorities) {
         Map<Authority, Map<Resource, Set<Operation>>> byAuthority = new HashMap<>();
         authorities.forEach(authority -> byAuthority.put(authority, new HashMap<>(permissions)));

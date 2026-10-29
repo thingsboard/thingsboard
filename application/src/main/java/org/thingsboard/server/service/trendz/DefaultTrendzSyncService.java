@@ -372,7 +372,7 @@ public class DefaultTrendzSyncService implements TrendzSyncService {
     private AuthorityPermissionsInfo buildTrendzPermissions() {
         Map<Authority, Map<Resource, Set<Operation>>> permissions = new HashMap<>();
 
-        // TENANT_ADMIN + CUSTOMER_USER permissions (same for both)
+        // TENANT_ADMIN + CUSTOMER_USER permissions (shared by both)
         Map<Resource, Set<Operation>> tenantCustomerPermissions = new HashMap<>();
         tenantCustomerPermissions.put(Resource.DEVICE, Set.of(Operation.READ, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_CALCULATED_FIELD));
         tenantCustomerPermissions.put(Resource.ASSET, Set.of(Operation.READ, Operation.READ_ATTRIBUTES, Operation.WRITE_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.WRITE_TELEMETRY, Operation.READ_CALCULATED_FIELD));
@@ -385,10 +385,15 @@ public class DefaultTrendzSyncService implements TrendzSyncService {
         tenantCustomerPermissions.put(Resource.WHITE_LABELING, Set.of(Operation.READ));
         tenantCustomerPermissions.put(Resource.DEVICE_PROFILE, Set.of(Operation.READ, Operation.READ_CALCULATED_FIELD));
         tenantCustomerPermissions.put(Resource.ASSET_PROFILE, Set.of(Operation.READ, Operation.READ_CALCULATED_FIELD));
-        tenantCustomerPermissions.put(Resource.AI_MODEL, Set.of(Operation.READ, Operation.INVOKE));
 
-        permissions.put(Authority.TENANT_ADMIN, tenantCustomerPermissions);
-        permissions.put(Authority.CUSTOMER_USER, tenantCustomerPermissions);
+        // Only tenant administrators list AI models; customer users only call the model chosen for them
+        Map<Resource, Set<Operation>> tenantAdminPermissions = new HashMap<>(tenantCustomerPermissions);
+        tenantAdminPermissions.put(Resource.AI_MODEL, Set.of(Operation.READ, Operation.INVOKE));
+        Map<Resource, Set<Operation>> customerUserPermissions = new HashMap<>(tenantCustomerPermissions);
+        customerUserPermissions.put(Resource.AI_MODEL, Set.of(Operation.INVOKE));
+
+        permissions.put(Authority.TENANT_ADMIN, tenantAdminPermissions);
+        permissions.put(Authority.CUSTOMER_USER, customerUserPermissions);
 
         // SYS_ADMIN permissions
         Map<Resource, Set<Operation>> sysAdminPermissions = new HashMap<>();

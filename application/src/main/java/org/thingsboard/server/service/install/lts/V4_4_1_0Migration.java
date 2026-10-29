@@ -15,7 +15,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,13 +56,14 @@ public class V4_4_1_0Migration implements Migration {
      */
     @Override
     public void apply() {
-        grantAiModelReadAndInvokeToTrendzApiKey();
+        grantAiModelOperationsToTrendzApiKey();
     }
 
     /**
-     * Grants {@link Operation#READ} and {@link Operation#INVOKE} on {@link Resource#AI_MODEL} to the internal Trendz API key.
+     * Grants operations on {@link Resource#AI_MODEL} to the internal Trendz API key: {@link Operation#READ} and
+     * {@link Operation#INVOKE} for tenant administrators, only {@link Operation#INVOKE} for customer users.
      * <p>
-     * Trendz lists AI models and sends chat requests to them through that key, but keys minted before this version were
+     * Trendz lists AI models for tenant administrators and sends chat requests to them for both authorities through that key, but keys minted before this version were
      * created from a {@code buildTrendzPermissions()} that did not include the resource, so every AI model endpoint
      * answered 403. New keys get it from {@code DefaultTrendzSyncService.buildTrendzPermissions()}, which is the source
      * of truth this method mirrors -- keep the two in step.
@@ -74,11 +74,11 @@ public class V4_4_1_0Migration implements Migration {
      * Idempotent: an operation already present is never added twice, and the key is saved only when something actually
      * changed, so a re-run is a no-op.
      */
-    private void grantAiModelReadAndInvokeToTrendzApiKey() {
-        // The operations Trendz needs to list AI models and send chat requests to them.
-        Set<Operation> aiModelOperations = EnumSet.of(Operation.READ, Operation.INVOKE);
+    private void grantAiModelOperationsToTrendzApiKey() {
         // SYS_ADMIN is deliberately absent: AI models are tenant entities.
-        List<Authority> authorities = List.of(Authority.TENANT_ADMIN, Authority.CUSTOMER_USER);
+        Map<Authority, Set<Operation>> aiModelOperationsByAuthority = Map.of(
+                Authority.TENANT_ADMIN, EnumSet.of(Operation.READ, Operation.INVOKE),
+                Authority.CUSTOMER_USER, EnumSet.of(Operation.INVOKE));
 
         ApiKey trendzApiKey = apiKeyService.findInternalApiKeyByDescription(TenantId.SYS_TENANT_ID, TRENDZ_API_KEY_DESCRIPTION);
         if (trendzApiKey == null || trendzApiKey.getPermissions() == null
@@ -91,7 +91,9 @@ public class V4_4_1_0Migration implements Migration {
                 new HashMap<>(trendzApiKey.getPermissions().getOperationsByResource());
         boolean changed = false;
 
-        for (Authority authority : authorities) {
+        for (var entry : aiModelOperationsByAuthority.entrySet()) {
+            Authority authority = entry.getKey();
+            Set<Operation> aiModelOperations = entry.getValue();
             Map<Resource, Set<Operation>> byResource = byAuthority.get(authority);
             if (byResource == null) {
                 continue;
@@ -113,7 +115,7 @@ public class V4_4_1_0Migration implements Migration {
         }
 
         if (!changed) {
-            log.debug("Internal Trendz API key already grants {} on {}", aiModelOperations, Resource.AI_MODEL);
+            log.debug("Internal Trendz API key already grants {} on {}", aiModelOperationsByAuthority, Resource.AI_MODEL);
             return;
         }
 
@@ -121,6 +123,6 @@ public class V4_4_1_0Migration implements Migration {
         // Preserves the key's value, so Trendz keeps authenticating with the secret it already holds, and evicts the
         // key from the cache, which would otherwise keep serving the old permissions for the rest of its TTL.
         apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, trendzApiKey);
-        log.info("Granted {} on {} to the internal Trendz API key", aiModelOperations, Resource.AI_MODEL);
+        log.info("Granted {} on {} to the internal Trendz API key", aiModelOperationsByAuthority, Resource.AI_MODEL);
     }
 }

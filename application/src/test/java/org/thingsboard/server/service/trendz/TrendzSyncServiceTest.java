@@ -36,7 +36,6 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -225,11 +224,10 @@ public class TrendzSyncServiceTest extends AbstractControllerTest {
         assertNotNull(apiKeyByDescription);
         assertTrue(apiKeyByDescription.isInternal());
         assertEquals(DefaultTrendzSyncService.TRENDZ_API_KEY_DESCRIPTION, apiKeyByDescription.getDescription());
-        for (Authority authority : List.of(Authority.TENANT_ADMIN, Authority.CUSTOMER_USER)) {
-            assertEquals(Set.of(Operation.READ, Operation.INVOKE),
-                    apiKeyByDescription.getPermissions().getPermissionsForAuthority(authority).get(Resource.AI_MODEL),
-                    "expected READ and INVOKE on AI_MODEL for " + authority);
-        }
+        assertEquals(Set.of(Operation.READ, Operation.INVOKE),
+                apiKeyByDescription.getPermissions().getPermissionsForAuthority(Authority.TENANT_ADMIN).get(Resource.AI_MODEL));
+        assertEquals(Set.of(Operation.INVOKE),
+                apiKeyByDescription.getPermissions().getPermissionsForAuthority(Authority.CUSTOMER_USER).get(Resource.AI_MODEL));
     }
 
     @Test
