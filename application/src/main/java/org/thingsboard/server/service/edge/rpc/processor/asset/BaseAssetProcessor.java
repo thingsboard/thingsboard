@@ -30,6 +30,8 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }
+            checkEntityTenant(tenantId, assetId);
+            asset.setTenantId(tenantId);
             Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
             if (assetById == null) {
                 created = true;
