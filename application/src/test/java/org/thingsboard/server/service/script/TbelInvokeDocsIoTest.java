@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.script;
 
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.script.api.tbel.TbDate;
 
 import java.nio.charset.StandardCharsets;
@@ -1520,6 +1522,36 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertThatThrownBy(() -> {
             invokeScript(evalScript(decoderStr), msgStr);
         }).hasMessageContaining(message);
+    }
+
+    @Test
+    public void raiseError_MessageOnly_Test() {
+        msgStr = "{}";
+        decoderStr = """
+                    var value = 4;
+                    return raiseError("A value of " + value + " is invalid.");
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).cause()
+                .isInstanceOf(TbScriptException.class)
+                .hasMessage("A value of 4 is invalid.");
+    }
+
+    @Test
+    public void runtimeError_WithoutNearBlock_Test() {
+        msgStr = "{}";
+        decoderStr = "// " + "x".repeat(1000) + "\n" + """
+                    var x = null;
+                    return x.foo;
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).cause()
+                .isInstanceOf(TbScriptException.class)
+                .hasMessageContaining("[Error: null pointer: x.foo]")
+                .hasMessageContaining("[Line: 3, Column: ")
+                .hasMessageNotContaining("[Near");
     }
 
     @Test

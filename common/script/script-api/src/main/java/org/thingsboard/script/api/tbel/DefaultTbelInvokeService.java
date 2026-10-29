@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.script.api.tbel;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
@@ -48,11 +50,14 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 @Slf4j
 @ConditionalOnProperty(prefix = "tbel", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Service
 public class DefaultTbelInvokeService extends AbstractScriptInvokeService implements TbelInvokeService {
+
+    private static final Pattern MVEL_NEAR_BLOCK = Pattern.compile("\\n\\[Near : \\{.*?\\n *\\^", Pattern.DOTALL);
 
     private final ConcurrentMap<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
@@ -215,7 +220,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
             } catch (ScriptMemoryOverflowException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Script memory overflow!"));
             } catch (Exception e) {
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, script.getScriptBody(), e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, script.getScriptBody(), toRuntimeErrorMessage(e), e);
             }
         }));
     }
@@ -234,6 +239,19 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                 lock.unlock();
             }
         }
+    }
+
+    // The message of raiseError() is reported as is. Other MVEL errors keep "[Error: ...]" and "[Line: N, Column: M]",
+    // but not the "[Near ...]" block, whose caret line is padded with the error offset in the whole script.
+    private static String toRuntimeErrorMessage(Exception e) {
+        TbelRaisedErrorException raisedError = ExceptionUtil.lookupException(e, TbelRaisedErrorException.class);
+        if (raisedError != null) {
+            return raisedError.getMessage();
+        }
+        if (e instanceof CompileException) {
+            return MVEL_NEAR_BLOCK.matcher(e.getMessage()).replaceFirst("");
+        }
+        return e.toString();
     }
 
     private static Serializable compileScript(String scriptBody) throws CompileException {

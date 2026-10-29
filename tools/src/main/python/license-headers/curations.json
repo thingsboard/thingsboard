@@ -533,7 +533,7 @@
       "path": "common/integration/integration-api/src/main/java/org/thingsboard/integration/api/util/ExceptionUtil.java",
       "header": "busl",
       "reason": "The PE integration utility was introduced in e3e90e9a96a9ade8e4dc8f97dccd9e6c4b71a839 (2021-11-03), before the matching common/util CE path appeared on the selected mainline in 95f07b39942 (2023-08-15). The later CE match does not establish that this PE utility was inherited from that CE path. Reviewed CE candidate common/util/src/main/java/org/thingsboard/common/util/ExceptionUtil.java at 95f07b39942cdf63d6cb8c95b05d2abe9de2601e (blob 2ec15f3724b7eaa46d5016485d087535570cdb4e).",
-      "contentHash": "sha256:694f9344df39779e731ca8bced08184b4d364b172f7da9b4a3050a1b851c3d37"
+      "contentHash": "sha256:9258cb801952f951c8c8cf6f8167420d611a2deaf3d77934619806dbcbc2a64c"
     },
     {
       "path": "common/integration/integration-api/src/main/java/org/thingsboard/integration/api/util/TbIntegrationExecutorOrIntegrationComponent.java",
