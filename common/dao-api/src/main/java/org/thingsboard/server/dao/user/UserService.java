@@ -78,6 +78,8 @@ public interface UserService extends EntityDaoService {
 
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
+    void updatePasswordHistory(UserCredentials userCredentials);
+
     void deleteUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
     void deleteUser(TenantId tenantId, UserId userId);

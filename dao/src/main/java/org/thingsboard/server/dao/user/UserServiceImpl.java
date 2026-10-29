@@ -795,7 +795,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         }
     }
 
-    private void updatePasswordHistory(UserCredentials userCredentials) {
+    @Override
+    public void updatePasswordHistory(UserCredentials userCredentials) {
         JsonNode additionalInfo = userCredentials.getAdditionalInfo();
         if (!(additionalInfo instanceof ObjectNode)) {
             additionalInfo = JacksonUtil.newObjectNode();

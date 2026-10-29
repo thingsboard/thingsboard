@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
+import static org.thingsboard.server.dao.user.UserServiceImpl.USER_PASSWORD_HISTORY;
 
 @DaoSqlTest
 public class UserEdgeTest extends AbstractEdgeTest {
@@ -492,7 +493,8 @@ public class UserEdgeTest extends AbstractEdgeTest {
         userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
 
         UserUpdateMsg userUpdateMsg = EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUser, entityGroupId);
-        UserCredentialsUpdateMsg userCredentialsMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+        // built directly, because constructUserCredentialsUpdatedMsg drops activation tokens
+        UserCredentialsUpdateMsg userCredentialsMsg = UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentials)).build();
 
         return UplinkMsg.newBuilder()
                 .addUserUpdateMsg(userUpdateMsg)
@@ -556,6 +558,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
         return opt.get();
     }
 
+    @Test
     public void testSendUserCredentialsRequestForUserOfDifferentTenantToCloud() throws Exception {
         loginDifferentTenant();
         UUID userUuid = savedDifferentTenantUser.getUuidId();
@@ -623,6 +626,56 @@ public class UserEdgeTest extends AbstractEdgeTest {
         UserCredentials differentTenantCredentialsAfter = userService.findUserCredentialsByUserId(differentTenantId, savedDifferentTenantUser.getId());
         Assert.assertNotNull(differentTenantCredentialsAfter);
         Assert.assertEquals(differentTenantCredentials.getPassword(), differentTenantCredentialsAfter.getPassword());
+    }
+
+    @Test
+    public void testSendUserCredentialsWithTokensAndLoginStateFromEdgeToCloud() throws Exception {
+        User user = buildUser(Authority.TENANT_ADMIN, null);
+        user.setEmail("edgeCredentialsUser@thingsboard.org");
+        User savedUser = doPost("/api/user?sendActivationMail=false", user, User.class);
+        UserCredentials cloudCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
+        cloudCredentials.setResetToken("cloudResetToken");
+        cloudCredentials.setResetTokenExpTime(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+        cloudCredentials.setFailedLoginAttempts(3);
+        userService.saveUserCredentials(tenantId, cloudCredentials, false);
+
+        UserCredentials edgeCredentials = buildCredentials(cloudCredentials.getId(), savedUser.getId(), true);
+        String edgePassword = passwordEncoder.encode("edgePassword");
+        edgeCredentials.setPassword(edgePassword);
+        edgeCredentials.setActivateToken("edgeActivateToken");
+        edgeCredentials.setResetToken("edgeResetToken");
+        edgeCredentials.setResetTokenExpTime(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+        edgeCredentials.setFailedLoginAttempts(0);
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserCredentialsUpdateMsg(UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(edgeCredentials)).build())
+                .build());
+
+        UserCredentials cloudCredentialsAfter = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
+        Assert.assertEquals(edgePassword, cloudCredentialsAfter.getPassword());
+        Assert.assertTrue(cloudCredentialsAfter.isEnabled());
+        Assert.assertNull(cloudCredentialsAfter.getActivateToken());
+        Assert.assertEquals("cloudResetToken", cloudCredentialsAfter.getResetToken());
+        Assert.assertEquals(Integer.valueOf(3), cloudCredentialsAfter.getFailedLoginAttempts());
+        Assert.assertTrue(cloudCredentialsAfter.getAdditionalInfo().get(USER_PASSWORD_HISTORY).toString().contains(edgePassword));
+    }
+
+    @Test
+    public void testSendUserWithEmailOfDifferentTenantUserFromEdgeToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UserId userId = new UserId(UUID.randomUUID());
+        User user = buildUser(Authority.TENANT_ADMIN, null);
+        user.setId(userId);
+        user.setEmail(savedDifferentTenantUser.getEmail());
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, user, null))
+                .build());
+
+        User savedUser = userService.findUserById(tenantId, userId);
+        Assert.assertNotNull(savedUser);
+        Assert.assertEquals(tenantId, savedUser.getTenantId());
+        Assert.assertNotEquals(savedDifferentTenantUser.getEmail(), savedUser.getEmail());
     }
 
 }

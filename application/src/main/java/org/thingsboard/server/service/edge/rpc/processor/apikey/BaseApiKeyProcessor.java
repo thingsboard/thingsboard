@@ -22,7 +22,7 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
         try {
             ApiKey apiKey = JacksonUtil.fromString(apiKeyUpdateMsg.getEntity(), ApiKey.class, true);
             if (apiKey == null) {
-                throw new RuntimeException("[{" + tenantId + "}] apiKeyUpdateMsg {" + apiKeyUpdateMsg + " } cannot be converted to apiKey");
+                throw new RuntimeException("[{" + tenantId + "}] apiKeyUpdateMsg for apiKey {" + apiKeyId + "} cannot be converted to apiKey");
             }
 
             checkEntityTenant(tenantId, apiKeyId);
@@ -40,7 +40,7 @@ public abstract class BaseApiKeyProcessor extends BaseEdgeProcessor {
             apiKey.setId(apiKeyId);
             edgeCtx.getApiKeyService().saveApiKey(tenantId, apiKey, apiKey.getValue(), false);
         } catch (Exception e) {
-            log.error("[{}] Failed to process apiKey update msg [{}]", tenantId, apiKeyUpdateMsg, e);
+            log.error("[{}] Failed to process apiKey update msg for apiKey [{}]", tenantId, apiKeyId, e);
             throw e;
         }
         return isCreated;

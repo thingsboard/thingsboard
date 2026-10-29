@@ -48,6 +48,7 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 import org.thingsboard.server.service.edge.rpc.DownlinkMessageMapper;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.EdgeSyncCursor;
@@ -497,7 +498,7 @@ public class EdgeGrpcSession implements EdgeSession {
                         ctx.getStatsCounterService().ifPresent(statsCounterService ->
                                 statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED, edge.getTenantId(), getEdgeId(), 1));
                         log.warn("[{}][{}] {} on attempt {}", getTenantId(), getEdgeId(), failureMsg, attempt);
-                        log.debug("[{}][{}] entities in failed batch: {}", getTenantId(), getEdgeId(), copy);
+                        log.debug("[{}][{}] entities in failed batch: {}", getTenantId(), getEdgeId(), EdgeMsgSummaryUtils.toSummary(copy));
                     }
                     log.trace("[{}][{}][{}] downlink msg(s) are going to be send.", getTenantId(), getEdgeId(), copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
@@ -506,7 +507,7 @@ public class EdgeGrpcSession implements EdgeSession {
                                     "env variable on the edge and restart it.", clientMaxInboundMessageSize);
                             String message = String.format("Downlink msg size %s exceeds client max inbound message size %s. " +
                                     "Please increase value of CLOUD_RPC_MAX_INBOUND_MESSAGE_SIZE env variable on the edge and restart it.", downlinkMsg.getSerializedSize(), clientMaxInboundMessageSize);
-                            log.error("[{}][{}][{}] {} Message {}", getTenantId(), getEdgeId(), getSessionId(), message, downlinkMsg);
+                            log.error("[{}][{}][{}] {} Message {}", getTenantId(), getEdgeId(), getSessionId(), message, EdgeMsgSummaryUtils.toSummary(downlinkMsg));
                             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(getTenantId())
                                     .edgeId(getEdgeId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(message).error(error).build());
                             ctx.getStatsCounterService().ifPresent(statsCounterService ->
@@ -521,9 +522,10 @@ public class EdgeGrpcSession implements EdgeSession {
                     if (attempt < MAX_DOWNLINK_ATTEMPTS) {
                         scheduleDownlinkMsgsPackSend(attempt + 1);
                     } else {
-                        String failureMsg = String.format("Failed to deliver messages: %s", copy);
+                        String failedMsgsSummary = EdgeMsgSummaryUtils.toSummary(copy);
+                        String failureMsg = String.format("Failed to deliver messages: %s", failedMsgsSummary);
                         log.warn("[{}][{}] Failed to deliver the batch after {} attempts. Next messages are going to be discarded {}",
-                                getTenantId(), getEdgeId(), MAX_DOWNLINK_ATTEMPTS, copy);
+                                getTenantId(), getEdgeId(), MAX_DOWNLINK_ATTEMPTS, failedMsgsSummary);
                         ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(getTenantId()).edgeId(getEdgeId())
                                 .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg)
                                 .error("Failed to deliver messages after " + MAX_DOWNLINK_ATTEMPTS + " attempts").build());
@@ -574,7 +576,7 @@ public class EdgeGrpcSession implements EdgeSession {
     }
 
     private ConnectResponseMsg processConnect(ConnectRequestMsg request) {
-        log.trace("[{}] processConnect [{}]", getSessionId(), request);
+        log.trace("[{}] processConnect, routing key [{}], edge version [{}]", getSessionId(), request.getEdgeRoutingKey(), request.getEdgeVersion());
         Optional<Edge> optional = ctx.getEdgeService().findEdgeByRoutingKey(TenantId.SYS_TENANT_ID, request.getEdgeRoutingKey());
         if (optional.isPresent()) {
             Edge edge = optional.get();
@@ -601,7 +603,7 @@ public class EdgeGrpcSession implements EdgeSession {
                             .build();
                 }
                 String error = "Failed to validate the edge!";
-                String failureMsg = String.format("%s Provided request secret: %s", error, request.getEdgeSecret());
+                String failureMsg = String.format("%s Provided request secret doesn't match the edge secret.", error);
                 ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                         .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(error).build());
                 return ConnectResponseMsg.newBuilder()

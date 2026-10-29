@@ -52,6 +52,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 
 import java.util.UUID;
 
@@ -100,7 +101,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
 
     @Override
     public ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, deviceCredentialsUpdateMsg);
+        log.debug("[{}] Executing processDeviceCredentialsMsgFromEdge, deviceCredentialsUpdateMsg [{}]", tenantId, EdgeMsgSummaryUtils.toSummary(deviceCredentialsUpdateMsg));
         try {
             edgeSynchronizationManager.getEdgeId().set(edgeId);
 
