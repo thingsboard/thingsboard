@@ -174,6 +174,16 @@ security:
     value_prefix: "${SECURITY_API_KEY_VALUE_PREFIX:tb_}"
     # Length of the auto-generated API key. Max is 255
     value_bytes_size: "${SECURITY_API_KEY_VALUE_BYTES_SIZE:64}"
+  sysadmin_allowlist:
+    # Comma-separated IPv4/IPv6 literals or CIDR blocks allowed to use System Administrator authentication.
+    # Empty (default) = no restriction, equivalent to "0.0.0.0/0,::/0".
+    # Example: "203.0.113.10,198.51.100.0/24,2001:db8::/48"
+    allowed_addresses: "${SECURITY_SYSADMIN_ALLOWLIST_ADDRESSES:}"
+    # Comma-separated CIDRs of reverse proxies / load balancers whose X-Forwarded-For header may be trusted.
+    # Empty (default) = forwarded headers are not trusted; the TCP peer address is used.
+    # Caution: adding loopback or an address range that contains SSRF-capable components (e.g. rule-engine nodes)
+    # lets processes in that range forge the client address with an X-Forwarded-For header.
+    trusted_proxies: "${SECURITY_SYSADMIN_ALLOWLIST_TRUSTED_PROXIES:}"
   # Enable/disable case-sensitive username login
   user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
   claim:

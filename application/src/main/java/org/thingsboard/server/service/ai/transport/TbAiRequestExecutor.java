@@ -185,6 +185,10 @@ public class TbAiRequestExecutor {
         }
         if (context.user() != null && StringUtils.isNotBlank(context.user().getClientAddress())) {
             headers.put(X_FORWARDED_FOR, context.user().getClientAddress());
+            // authenticates this loopback call as a legitimate forwarder: without the per-boot
+            // token, forwarded headers on loopback connections are ignored by the address resolver
+            headers.put(org.thingsboard.server.service.security.ip.InternalForwardingToken.HEADER,
+                    org.thingsboard.server.service.security.ip.InternalForwardingToken.value());
         }
         return headers;
     }
