@@ -6,24 +6,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
-import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.sql.trace.TraceDao;
 
 /**
- * Deletes a deleted tenant's traces and rule engine monitoring stats. The tenant's coverage setting lives in the main
- * database and is removed with the tenant itself.
+ * Deletes a deleted tenant's traces. The tenant's coverage setting lives in the main database and is removed with the
+ * tenant itself; its rule engine stats have their own task ({@link RuleEngineStatsTenantDataDeletionTaskProcessor}).
  */
 @Component
 @RequiredArgsConstructor
 public class TraceTenantDataDeletionTaskProcessor extends HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final TraceDao traceDao;
-    private final RuleEngineMonitoringDao ruleEngineMonitoringDao;
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
         traceDao.deleteByTenantId(task.getTenantId().getId());
-        ruleEngineMonitoringDao.deleteByTenantId(task.getTenantId().getId());
     }
 
     @Override
