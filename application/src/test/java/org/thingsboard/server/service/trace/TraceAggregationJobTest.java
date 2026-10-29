@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -118,8 +119,23 @@ class TraceAggregationJobTest {
         verify(persistenceService, times(2)).persist(anyLong(), anyLong(), any(), any(), any());
     }
 
+    @Test
+    void eachDrainedTraceHasItsPathBuiltOnce() {
+        TraceBuffer buffer = bufferWithBatches(false, 1);
+        stubAggregation();
+        TracePathBuilder pathBuilder = spy(new TracePathBuilder());
+
+        newJob(buffer, pathBuilder).run();
+
+        verify(pathBuilder, times(1)).build(any());
+    }
+
     private TraceAggregationJob newJob(TraceBuffer buffer) {
-        return new TraceAggregationJob(buffer, aggregator, persistenceService, traceSummaryBuilder,
+        return newJob(buffer, new TracePathBuilder());
+    }
+
+    private TraceAggregationJob newJob(TraceBuffer buffer, TracePathBuilder pathBuilder) {
+        return new TraceAggregationJob(buffer, aggregator, persistenceService, traceSummaryBuilder, pathBuilder,
                 partitionService, DRAIN_BATCH_SPANS, AbstractTraceBufferTest.statsFactory(new SimpleMeterRegistry()));
     }
 

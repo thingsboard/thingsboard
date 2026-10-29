@@ -22,7 +22,7 @@ class TraceSummaryBuilderTest {
     private static final UUID QUEUE_ID = UUID.randomUUID();
     private static final UUID RULE_CHAIN_ID = UUID.randomUUID();
 
-    private final TraceSummaryBuilder builder = new TraceSummaryBuilder(new TracePathBuilder());
+    private final TraceSummaryBuilder builder = new TraceSummaryBuilder();
 
     @Test
     void givenSnapshotAndQueueTimeoutSpans_whenBuild_thenTimingAndCountsComeFromRuleNodeSpans() {
@@ -43,8 +43,9 @@ class TraceSummaryBuilderTest {
         timeout.setStatusCode("OK");
         timeout.setAttributesJsonb(JacksonUtil.newObjectNode().put(QUEUE_TIMEOUT, true).put(QUEUE_NAME, "Main"));
 
-        TraceSummaryInfo summary = builder.buildByTraceId(List.of(new BufferedTrace(TENANT_ID, "trace-1", false,
-                new LinkedHashSet<>(List.of(snapshot, first, second, timeout))))).get("trace-1");
+        BufferedTrace trace = new BufferedTrace(TENANT_ID, "trace-1", false, new LinkedHashSet<>(List.of(snapshot, first, second, timeout)));
+        TracePath path = new TracePathBuilder().build(trace).orElseThrow();
+        TraceSummaryInfo summary = builder.buildByTraceId(List.of(new TraceWithPath(trace, path))).get("trace-1");
 
         assertThat(summary.firstSpanName()).isEqualTo("[Root Rule Chain] [first]");
         assertThat(summary.startTime()).isEqualTo(10L);

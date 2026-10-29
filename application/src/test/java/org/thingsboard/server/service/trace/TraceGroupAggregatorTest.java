@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,14 +26,14 @@ class TraceGroupAggregatorTest {
     private static final long BUCKET_TIME = 86_400_000L;
     private static final long NOW = BUCKET_TIME + 1_000L;
 
-    private final TraceGroupAggregator aggregator = new TraceGroupAggregator(new TracePathBuilder());
+    private final TraceGroupAggregator aggregator = new TraceGroupAggregator();
 
     @Test
     void givenTracesOnTheSamePath_whenAggregate_thenOneGroupSumsTheirMetrics() {
         BufferedTrace first = trace("trace-1", span("a", null, NODE_1, 0, 10), span("b", "a", NODE_2, 10, 20));
         BufferedTrace second = trace("trace-2", span("a", null, NODE_1, 0, 10), span("b", "a", NODE_2, 10, 30));
 
-        Map<TraceGroupKey, TraceGroupContribution> result = aggregator.aggregate(List.of(first, second), BUCKET_TIME, NOW);
+        Map<TraceGroupKey, TraceGroupContribution> result = aggregator.aggregate(withPaths(first, second), BUCKET_TIME, NOW);
 
         assertThat(result).hasSize(1);
         TraceGroupContribution contribution = result.values().iterator().next();
@@ -62,7 +63,7 @@ class TraceGroupAggregatorTest {
         BufferedTrace clean = trace("trace-3", span("a", null, NODE_1, 0, 10), span("b", "a", NODE_2, 10, 20));
 
         Map<TraceGroupKey, TraceGroupContribution> result =
-                aggregator.aggregate(List.of(withError, withTimeout, clean), BUCKET_TIME, NOW);
+                aggregator.aggregate(withPaths(withError, withTimeout, clean), BUCKET_TIME, NOW);
 
         assertThat(result).hasSize(1);
         TraceGroup metrics = result.values().iterator().next().metrics();
@@ -76,7 +77,7 @@ class TraceGroupAggregatorTest {
         BufferedTrace first = trace("trace-1", span("a", null, NODE_1, 0, 10), span("b", "a", NODE_2, 10, 20));
         BufferedTrace second = trace("trace-2", span("a", null, NODE_1, 0, 10), span("c", "a", NODE_3, 10, 20));
 
-        Map<TraceGroupKey, TraceGroupContribution> result = aggregator.aggregate(List.of(first, second), BUCKET_TIME, NOW);
+        Map<TraceGroupKey, TraceGroupContribution> result = aggregator.aggregate(withPaths(first, second), BUCKET_TIME, NOW);
 
         assertThat(result).hasSize(2);
         assertThat(result.values()).allSatisfy(contribution -> {
@@ -89,7 +90,15 @@ class TraceGroupAggregatorTest {
     void givenTraceWithoutRuleNodeSpans_whenAggregate_thenItIsSkipped() {
         BufferedTrace unattributed = trace("trace-1", span("s", null, null, 0, 0));
 
-        assertThat(aggregator.aggregate(List.of(unattributed), BUCKET_TIME, NOW)).isEmpty();
+        assertThat(aggregator.aggregate(withPaths(unattributed), BUCKET_TIME, NOW)).isEmpty();
+    }
+
+    // As the aggregation job does: a trace without a buildable path is skipped.
+    private static List<TraceWithPath> withPaths(BufferedTrace... traces) {
+        TracePathBuilder pathBuilder = new TracePathBuilder();
+        return Stream.of(traces)
+                .flatMap(trace -> pathBuilder.build(trace).map(path -> new TraceWithPath(trace, path)).stream())
+                .toList();
     }
 
     private static BufferedTrace trace(String traceId, BufferedSpan... spans) {

@@ -31,6 +31,7 @@ public class TraceAggregationJob {
     private final TraceGroupAggregator aggregator;
     private final TraceGroupPersistenceService persistenceService;
     private final TraceSummaryBuilder traceSummaryBuilder;
+    private final TracePathBuilder tracePathBuilder;
     private final PartitionService partitionService;
 
     private Clock clock = Clock.systemUTC();
@@ -40,13 +41,15 @@ public class TraceAggregationJob {
 
     public TraceAggregationJob(TraceBuffer buffer, TraceGroupAggregator aggregator,
                                TraceGroupPersistenceService persistenceService,
-                               TraceSummaryBuilder traceSummaryBuilder, PartitionService partitionService,
+                               TraceSummaryBuilder traceSummaryBuilder, TracePathBuilder tracePathBuilder,
+                               PartitionService partitionService,
                                @Value("${otel.processor.trace.aggregation.drain-batch-spans:5000}") int drainBatchSpans,
                                StatsFactory statsFactory) {
         this.buffer = buffer;
         this.aggregator = aggregator;
         this.persistenceService = persistenceService;
         this.traceSummaryBuilder = traceSummaryBuilder;
+        this.tracePathBuilder = tracePathBuilder;
         this.partitionService = partitionService;
         this.drainBatchSpans = drainBatchSpans;
         this.runTimer = statsFactory.createTimer("trace.aggregation.duration");
@@ -98,10 +101,14 @@ public class TraceAggregationJob {
 
     private void aggregateAndPersist(List<BufferedTrace> loaded, long now) {
         long bucketTime = TraceGroup.floorToDay(now);
-        Map<TraceGroupKey, TraceGroupContribution> contributions = aggregator.aggregate(loaded, bucketTime, now);
+        // Each path is built once here and shared: building it parses every span and hashes the path.
+        List<TraceWithPath> traces = loaded.stream()
+                .flatMap(trace -> tracePathBuilder.build(trace).map(path -> new TraceWithPath(trace, path)).stream())
+                .toList();
+        Map<TraceGroupKey, TraceGroupContribution> contributions = aggregator.aggregate(traces, bucketTime, now);
         Map<String, BufferedTrace> tracesByTraceId = loaded.stream()
                 .collect(Collectors.toMap(BufferedTrace::traceId, Function.identity(), (a, b) -> a));
-        Map<String, TraceSummaryInfo> summariesByTraceId = traceSummaryBuilder.buildByTraceId(loaded);
+        Map<String, TraceSummaryInfo> summariesByTraceId = traceSummaryBuilder.buildByTraceId(traces);
         persistenceService.persist(bucketTime, now,
                 contributions.values(), tracesByTraceId, summariesByTraceId);
     }

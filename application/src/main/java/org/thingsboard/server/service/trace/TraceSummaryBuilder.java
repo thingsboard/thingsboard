@@ -3,7 +3,6 @@
 package org.thingsboard.server.service.trace;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 import org.thingsboard.server.dao.sql.trace.TraceSummaryInfo;
@@ -27,26 +26,11 @@ import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_
 @Component
 public class TraceSummaryBuilder {
 
-    private final TracePathBuilder tracePathBuilder;
-
-    public TraceSummaryBuilder(TracePathBuilder tracePathBuilder) {
-        this.tracePathBuilder = tracePathBuilder;
-    }
-
-    public Map<String, TraceSummaryInfo> buildByTraceId(List<BufferedTrace> traces) {
+    public Map<String, TraceSummaryInfo> buildByTraceId(Collection<TraceWithPath> traces) {
         Map<String, TraceSummaryInfo> result = new HashMap<>();
-        if (CollectionUtils.isEmpty(traces)) {
-            return result;
-        }
-        for (BufferedTrace trace : traces) {
-            if (trace == null || trace.tenantId() == null || CollectionUtils.isEmpty(trace.spans())) {
-                continue;
-            }
-            TracePath path = tracePathBuilder.build(trace).orElse(null);
-            if (path == null) {
-                continue;
-            }
-            result.put(path.traceId(), build(trace, path));
+        for (TraceWithPath traceWithPath : traces) {
+            TracePath path = traceWithPath.path();
+            result.put(path.traceId(), build(traceWithPath.trace(), path));
         }
         return result;
     }

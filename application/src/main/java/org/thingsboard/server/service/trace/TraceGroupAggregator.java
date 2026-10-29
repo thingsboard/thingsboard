@@ -19,20 +19,12 @@ import java.util.stream.Collectors;
 @Component
 public class TraceGroupAggregator {
 
-    private final TracePathBuilder tracePathBuilder;
-
-    public TraceGroupAggregator(TracePathBuilder tracePathBuilder) {
-        this.tracePathBuilder = tracePathBuilder;
-    }
-
-    public Map<TraceGroupKey, TraceGroupContribution> aggregate(Collection<BufferedTrace> traces,
+    public Map<TraceGroupKey, TraceGroupContribution> aggregate(Collection<TraceWithPath> traces,
                                                                 long bucketTime, long now) {
         Map<TraceGroupKey, Accumulator> accumulators = new HashMap<>();
-        for (BufferedTrace trace : traces) {
-            TracePath path = tracePathBuilder.build(trace).orElse(null);
-            if (path == null) {
-                continue;
-            }
+        for (TraceWithPath traceWithPath : traces) {
+            BufferedTrace trace = traceWithPath.trace();
+            TracePath path = traceWithPath.path();
             TraceGroupKey key = new TraceGroupKey(path.tenantId(), path.pathId());
             accumulators.computeIfAbsent(key, ignored -> new Accumulator(path, bucketTime, now))
                     .add(path, trace);
