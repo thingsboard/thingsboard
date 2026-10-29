@@ -489,18 +489,18 @@ public class CustomerUserPermissions extends AbstractPermissions {
         }
     };
 
-    // Endpoints listing models or returning the configuration with its provider credentials are tenant administrator only.
+    // Customers only call models; listing models and reading their configuration are tenant administrator only.
     // Roles granting ALL include INVOKE, so the model's 'customerAccessEnabled' flag decides which models such users can call.
     private static final PermissionChecker aiModelPermissionChecker = new PermissionChecker() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Resource resource, Operation operation) {
-            return isAllowed(operation) && user.getUserPermissions().hasGenericPermission(resource, operation);
+            return operation == Operation.INVOKE && user.getUserPermissions().hasGenericPermission(resource, operation);
         }
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, TenantEntity entity) {
-            if (!isAllowed(operation)) {
+            if (operation != Operation.INVOKE) {
                 return false;
             }
             if (!user.getTenantId().equals(entity.getTenantId())) {
@@ -510,10 +510,6 @@ public class CustomerUserPermissions extends AbstractPermissions {
                 return false;
             }
             return user.getUserPermissions().hasGenericPermission(Resource.AI_MODEL, operation);
-        }
-
-        private boolean isAllowed(Operation operation) {
-            return operation == Operation.READ || operation == Operation.INVOKE;
         }
     };
 

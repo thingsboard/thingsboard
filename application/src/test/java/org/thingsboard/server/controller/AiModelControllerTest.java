@@ -416,7 +416,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
     /* --- Customer permission tests --- */
 
     @Test
-    public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowReadAndInvokeOnly() throws Exception {
+    public void aiModelPermission_whenCustomerAdminGrantedAll_shouldAllowInvokeOnly() throws Exception {
         // GIVEN
         loginTenantAdmin();
         var modelConfig = constructValidOpenAiModel("Test model");
@@ -426,7 +426,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         // WHEN / THEN
         assertThat(hasAiModelPermission(model, "INVOKE")).isTrue();
-        assertThat(hasAiModelPermission(model, "READ")).isTrue();
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
         assertThat(hasAiModelPermission(model, "WRITE")).isFalse();
         assertThat(hasAiModelPermission(model, "DELETE")).isFalse();
     }
@@ -448,14 +448,14 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void aiModelPermission_whenReadOnlyCustomerUser_shouldAllowReadOnly() throws Exception {
+    public void aiModelPermission_whenReadOnlyCustomerUser_shouldDenyReadAndInvoke() throws Exception {
         // GIVEN
         loginTenantAdmin();
         var model = saveModelWithBlockedBaseUrl();
         loginReadOnlyCustomerUser();
 
         // WHEN / THEN
-        assertThat(hasAiModelPermission(model, "READ")).isTrue();
+        assertThat(hasAiModelPermission(model, "READ")).isFalse();
         assertThat(hasAiModelPermission(model, "INVOKE")).isFalse();
     }
 
