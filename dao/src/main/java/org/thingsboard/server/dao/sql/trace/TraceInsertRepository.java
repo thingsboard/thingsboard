@@ -44,7 +44,7 @@ public class TraceInsertRepository {
             ON CONFLICT (tenant_id, trace_id, span_id, start_time) DO NOTHING
             """;
 
-    private static final String TRACE_SUMMARY_INSERT_SQL = """
+    private static final String TRACE_SUMMARY_UPSERT_SQL = """
             INSERT INTO trace_summary (
                 trace_id, tenant_id, service_names_jsonb, start_time, end_time, duration,
                 span_count, error_count, created_time, first_span_name,
@@ -53,8 +53,34 @@ public class TraceInsertRepository {
                 rule_chain_ids_jsonb, rule_node_ids_jsonb, message_types_jsonb, message_ids_jsonb,
                 has_errors, has_queue_timeouts, last_updated
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, extract(epoch FROM now())::bigint * 1000)
-            ON CONFLICT (tenant_id, trace_id) DO NOTHING
-            """;
+            ON CONFLICT (tenant_id, trace_id) DO UPDATE SET
+                start_time = LEAST(trace_summary.start_time, EXCLUDED.start_time),
+                end_time = GREATEST(trace_summary.end_time, EXCLUDED.end_time),
+                duration = GREATEST(trace_summary.end_time, EXCLUDED.end_time) - LEAST(trace_summary.start_time, EXCLUDED.start_time),
+                span_count = trace_summary.span_count + EXCLUDED.span_count,
+                error_count = trace_summary.error_count + EXCLUDED.error_count,
+                total_span_time = COALESCE(trace_summary.total_span_time, 0) + COALESCE(EXCLUDED.total_span_time, 0),
+                in_queue_time = COALESCE(trace_summary.in_queue_time, 0) + COALESCE(EXCLUDED.in_queue_time, 0),
+                first_span_name = %s,
+                root_queue_id = %s,
+                root_message_type = %s,
+                root_rule_chain_id = %s,
+                service_names_jsonb = %s,
+                originator_ids_jsonb = %s,
+                queue_names_jsonb = %s,
+                rule_chain_ids_jsonb = %s,
+                rule_node_ids_jsonb = %s,
+                message_types_jsonb = %s,
+                message_ids_jsonb = %s,
+                has_errors = trace_summary.has_errors OR EXCLUDED.has_errors,
+                has_queue_timeouts = trace_summary.has_queue_timeouts OR EXCLUDED.has_queue_timeouts,
+                last_updated = EXCLUDED.last_updated
+            """.formatted(
+            fromEarlierFragment("first_span_name"), fromEarlierFragment("root_queue_id"),
+            fromEarlierFragment("root_message_type"), fromEarlierFragment("root_rule_chain_id"),
+            jsonbUnion("service_names_jsonb"), jsonbUnion("originator_ids_jsonb"), jsonbUnion("queue_names_jsonb"),
+            jsonbUnion("rule_chain_ids_jsonb"), jsonbUnion("rule_node_ids_jsonb"), jsonbUnion("message_types_jsonb"),
+            jsonbUnion("message_ids_jsonb"));
 
     private static final String TRACE_GROUP_INSERT_SQL = """
             INSERT INTO trace_group (bucket_time, tenant_id, path_id, root_queue_id, root_message_type,
@@ -121,13 +147,25 @@ public class TraceInsertRepository {
                 jdbcTemplate.batchUpdate(SPAN_INSERT_SQL, spans, batchSize, this::bindSpan));
     }
 
+    // A trace part that arrives after the buffer's quiet window is drained as another fragment of the same trace:
+    // merge it into the stored summary. The root fields come from whichever fragment started first.
+    private static String fromEarlierFragment(String column) {
+        return "CASE WHEN EXCLUDED.start_time < trace_summary.start_time THEN EXCLUDED.%1$s ELSE trace_summary.%1$s END"
+                .formatted(column);
+    }
+
+    private static String jsonbUnion(String column) {
+        return "(SELECT COALESCE(jsonb_agg(DISTINCT e), '[]'::jsonb) FROM jsonb_array_elements(trace_summary.%1$s || EXCLUDED.%1$s) e)"
+                .formatted(column);
+    }
+
     public int upsertTraceSummaries(Collection<TraceSummaryInfo> summaries) {
         if (CollectionUtils.isEmpty(summaries)) {
             return 0;
         }
         List<TraceSummaryInfo> summaryList = new ArrayList<>(summaries);
         int[][] updateCounts = transactionTemplate.execute(status ->
-                jdbcTemplate.batchUpdate(TRACE_SUMMARY_INSERT_SQL, summaryList, summaryList.size(), this::bindTraceSummary));
+                jdbcTemplate.batchUpdate(TRACE_SUMMARY_UPSERT_SQL, summaryList, summaryList.size(), this::bindTraceSummary));
         int count = 0;
         for (int[] batch : updateCounts) {
             for (int updateCount : batch) {

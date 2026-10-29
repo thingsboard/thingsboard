@@ -125,7 +125,6 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     @Test
     public void givenTraceSummary_whenFindTraceByIdAndSearch_thenTraceIsReturned() {
         assertEquals(1, traceDao.upsertTraceSummaries(List.of(traceSummary())));
-        assertEquals(0, traceDao.upsertTraceSummaries(List.of(traceSummary())));
 
         TraceProjection trace = traceDao.findTraceById(tenantId, TRACE_ID);
         assertNotNull(trace);
@@ -139,6 +138,35 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         assertEquals(1, page.getTotalElements());
         assertEquals(TRACE_ID, page.getData().get(0).getTraceId());
         assertEquals(0, search(null, false, UUID.randomUUID().toString(), null, null).getTotalElements());
+    }
+
+    @Test
+    public void givenLateTraceFragment_whenUpsertTraceSummary_thenItIsMergedIntoTheStoredSummary() {
+        traceDao.upsertTraceSummaries(List.of(traceSummary()));
+        String lateNodeId = UUID.randomUUID().toString();
+        TraceSummaryInfo late = new TraceSummaryInfo(TRACE_ID, tenantId, List.of("svc"), BUCKET + 500, BUCKET + 900, 400, 2, 1,
+                BUCKET + 500, "Late Node", 300, 50, null, "LATE_TYPE", null, List.of(), List.of("Main"),
+                List.of(), List.of(lateNodeId), List.of("POST_TELEMETRY_REQUEST"), List.of(), false, true);
+
+        assertEquals(1, traceDao.upsertTraceSummaries(List.of(late)));
+
+        Map<String, Object> row = jdbcTemplate.queryForMap("SELECT * FROM trace_summary WHERE tenant_id = ? AND trace_id = ?", tenantId, TRACE_ID);
+        assertEquals(BUCKET + 100, row.get("start_time"));
+        assertEquals(BUCKET + 900, row.get("end_time"));
+        assertEquals(800L, row.get("duration"));
+        assertEquals(5, row.get("span_count"));
+        assertEquals(2, row.get("error_count"));
+        assertEquals(380L, row.get("total_span_time"));
+        assertEquals(70L, row.get("in_queue_time"));
+        assertEquals("Rule Node", row.get("first_span_name"));
+        assertEquals("POST_TELEMETRY_REQUEST", row.get("root_message_type"));
+        assertEquals(true, row.get("has_errors"));
+        assertEquals(true, row.get("has_queue_timeouts"));
+        assertEquals(Integer.valueOf(2), jdbcTemplate.queryForObject("SELECT jsonb_array_length(rule_node_ids_jsonb) FROM trace_summary WHERE trace_id = ?",
+                Integer.class, TRACE_ID));
+        assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject("SELECT jsonb_array_length(message_types_jsonb) FROM trace_summary WHERE trace_id = ?",
+                Integer.class, TRACE_ID));
+        assertEquals(1, search(null, false, lateNodeId, null, null).getTotalElements());
     }
 
     @Test
