@@ -10,6 +10,13 @@ import io.opentelemetry.api.trace.TraceState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.BufferedSpan;
 
+import java.util.UUID;
+
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSAGE_TYPE;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_CHAIN_ID;
+import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_NODE_ID;
+
 public final class TraceUtils {
     // Span names the rule engine produces itself, rather than one per rule node.
     public static final String QUEUE_TIMEOUT_SPAN_NAME = "Queue Message Processing Time Out";
@@ -81,5 +88,32 @@ public final class TraceUtils {
         }
         String text = value.asText();
         return text.isEmpty() ? null : text;
+    }
+
+    /**
+     * A span of one rule node execution: not a queue-timeout or message snapshot span, and carrying the rule node
+     * attributes. Trace paths and summaries are built from these spans only.
+     */
+    public static boolean isRuleNodeSpan(BufferedSpan span) {
+        return !QUEUE_TIMEOUT_SPAN_NAME.equals(span.getName())
+                && spanUuid(span, QUEUE_ID) != null
+                && spanUuid(span, RULE_CHAIN_ID) != null
+                && spanUuid(span, RULE_NODE_ID) != null
+                && spanString(span, MESSAGE_TYPE) != null;
+    }
+
+    /**
+     * The attribute as a UUID, or null when it is missing or not a UUID.
+     */
+    public static UUID spanUuid(BufferedSpan span, String attributeKey) {
+        String value = spanString(span, attributeKey);
+        if (value == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

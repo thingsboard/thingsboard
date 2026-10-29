@@ -28,6 +28,7 @@ import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.MESSA
 import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.QUEUE_ID;
 import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_CHAIN_ID;
 import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.RULE_NODE_ID;
+import static org.thingsboard.server.service.trace.TraceUtils.spanUuid;
 
 @Slf4j
 @Component
@@ -39,11 +40,7 @@ public class TracePathBuilder {
         }
 
         List<BufferedSpan> pathSpans = trace.spans().stream()
-                .filter(span -> !TraceUtils.QUEUE_TIMEOUT_SPAN_NAME.equals(span.getName()))
-                .filter(span -> spanUuid(span, QUEUE_ID) != null
-                        && spanUuid(span, RULE_CHAIN_ID) != null
-                        && spanUuid(span, RULE_NODE_ID) != null
-                        && TraceUtils.spanString(span, MESSAGE_TYPE) != null)
+                .filter(TraceUtils::isRuleNodeSpan)
                 .toList();
         if (pathSpans.isEmpty()) {
             log.warn("Trace [{}] has no rule-node spans after filtering; skipping", trace.traceId());
@@ -193,17 +190,5 @@ public class TracePathBuilder {
 
     private static String uuidStr(UUID uuid) {
         return uuid == null ? "" : uuid.toString();
-    }
-
-    private static UUID spanUuid(BufferedSpan span, String attributeKey) {
-        String value = TraceUtils.spanString(span, attributeKey);
-        if (value == null) {
-            return null;
-        }
-        try {
-            return UUID.fromString(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
     }
 }

@@ -53,16 +53,19 @@ public class TraceSummaryBuilder {
 
     TraceSummaryInfo build(BufferedTrace trace, TracePath path) {
         Collection<BufferedSpan> spans = trace.spans();
-        long startTime = spans.stream().mapToLong(TraceSummaryBuilder::spanStartTime).min().orElse(0L);
-        long endTime = spans.stream().mapToLong(TraceSummaryBuilder::spanEndTime).max().orElse(startTime);
-        int errorCount = (int) spans.stream().filter(TraceUtils::isErrorSpan).count();
+        // Timing, counts and the first span come from the rule node spans, like the path and its in-queue time, so a
+        // message snapshot or queue-timeout span doesn't skew them. The searchable attributes still cover every span.
+        List<BufferedSpan> ruleNodeSpans = spans.stream().filter(TraceUtils::isRuleNodeSpan).toList();
+        long startTime = ruleNodeSpans.stream().mapToLong(TraceSummaryBuilder::spanStartTime).min().orElse(0L);
+        long endTime = ruleNodeSpans.stream().mapToLong(TraceSummaryBuilder::spanEndTime).max().orElse(startTime);
+        int errorCount = (int) ruleNodeSpans.stream().filter(TraceUtils::isErrorSpan).count();
         long createdTime = spans.stream().mapToLong(BufferedSpan::getCreatedTime).min().orElse(0L);
-        String firstSpanName = spans.stream()
+        String firstSpanName = ruleNodeSpans.stream()
                 .min(Comparator.comparingLong(TraceSummaryBuilder::spanStartTime)
                         .thenComparingLong(BufferedSpan::getCreatedTime))
                 .map(BufferedSpan::getName)
                 .orElse(null);
-        long totalSpanTime = spans.stream().mapToLong(TraceUtils::spanDuration).sum();
+        long totalSpanTime = ruleNodeSpans.stream().mapToLong(TraceUtils::spanDuration).sum();
         return new TraceSummaryInfo(
                 trace.traceId(),
                 trace.tenantId(),
@@ -70,7 +73,7 @@ public class TraceSummaryBuilder {
                 startTime,
                 endTime,
                 Math.max(endTime - startTime, 0L),
-                spans.size(),
+                ruleNodeSpans.size(),
                 errorCount,
                 createdTime,
                 firstSpanName,
