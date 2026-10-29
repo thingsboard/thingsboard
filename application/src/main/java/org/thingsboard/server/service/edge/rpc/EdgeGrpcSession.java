@@ -76,6 +76,7 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
+import org.thingsboard.server.service.edge.EdgeMsgSummaryUtils;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
@@ -340,7 +341,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     }
 
     private ConnectResponseMsg processConnect(ConnectRequestMsg request) {
-        log.trace("[{}] processConnect [{}]", sessionId, request);
+        log.trace("[{}] processConnect, routing key [{}], edge version [{}]", sessionId, request.getEdgeRoutingKey(), request.getEdgeVersion());
         Optional<Edge> optional = ctx.getEdgeService().findEdgeByRoutingKey(TenantId.SYS_TENANT_ID, request.getEdgeRoutingKey());
         if (optional.isPresent()) {
             edge = optional.get();
@@ -358,7 +359,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                             .build();
                 }
                 String error = "Failed to validate the edge!";
-                String failureMsg = String.format("%s Provided request secret: %s", error, request.getEdgeSecret());
+                String failureMsg = String.format("%s Provided request secret doesn't match the edge secret.", error);
                 ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                         .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(error).build());
                 return ConnectResponseMsg.newBuilder()
@@ -464,7 +465,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                         ctx.getStatsCounterService().ifPresent(statsCounterService ->
                                 statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED, edge.getTenantId(), edge.getId(), 1));
                         log.warn("[{}][{}] {} on attempt {}", tenantId, edge.getId(), failureMsg, attempt);
-                        log.debug("[{}][{}] entities in failed batch: {}", tenantId, edge.getId(), copy);
+                        log.debug("[{}][{}] entities in failed batch: {}", tenantId, edge.getId(), EdgeMsgSummaryUtils.toSummary(copy));
                     }
                     log.trace("[{}][{}][{}] downlink msg(s) are going to be send.", tenantId, edge.getId(), copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
@@ -473,7 +474,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                                     "env variable on the edge and restart it.", clientMaxInboundMessageSize);
                             String message = String.format("Downlink msg size %s exceeds client max inbound message size %s. " +
                                     "Please increase value of CLOUD_RPC_MAX_INBOUND_MESSAGE_SIZE env variable on the edge and restart it.", downlinkMsg.getSerializedSize(), clientMaxInboundMessageSize);
-                            log.error("[{}][{}][{}] {} Message {}", tenantId, edge.getId(), sessionId, message, downlinkMsg);
+                            log.error("[{}][{}][{}] {} Message {}", tenantId, edge.getId(), sessionId, message, EdgeMsgSummaryUtils.toSummary(downlinkMsg));
                             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId)
                                     .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(message).error(error).build());
                             ctx.getStatsCounterService().ifPresent(statsCounterService ->
@@ -488,9 +489,10 @@ public abstract class EdgeGrpcSession implements Closeable {
                     if (attempt < MAX_DOWNLINK_ATTEMPTS) {
                         scheduleDownlinkMsgsPackSend(attempt + 1);
                     } else {
-                        String failureMsg = String.format("Failed to deliver messages: %s", copy);
+                        String failedMsgsSummary = EdgeMsgSummaryUtils.toSummary(copy);
+                        String failureMsg = String.format("Failed to deliver messages: %s", failedMsgsSummary);
                         log.warn("[{}][{}] Failed to deliver the batch after {} attempts. Next messages are going to be discarded {}",
-                                tenantId, edge.getId(), MAX_DOWNLINK_ATTEMPTS, copy);
+                                tenantId, edge.getId(), MAX_DOWNLINK_ATTEMPTS, failedMsgsSummary);
                         ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                                 .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg)
                                 .error("Failed to deliver messages after " + MAX_DOWNLINK_ATTEMPTS + " attempts").build());
@@ -944,7 +946,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                 }
             }
         } catch (Exception e) {
-            String failureMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
+            String failureMsg = String.format("Can't process uplink msg [%s] from edge", EdgeMsgSummaryUtils.toSummary(uplinkMsg));
             log.trace("[{}][{}] Can't process uplink msg [{}]", tenantId, edge.getId(), uplinkMsg, e);
             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                     .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(e.getMessage()).build());
