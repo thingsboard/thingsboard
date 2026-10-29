@@ -8,8 +8,6 @@ package org.thingsboard.server.dao.sql.trace;
 public enum TraceSortField {
     START_TIME("ts.start_time", false),
     END_TIME("ts.end_time", false),
-    FIRST_SPAN_NAME("(SELECT sp.name FROM span sp WHERE sp.trace_id = ts.trace_id AND sp.tenant_id = ts.tenant_id " +
-            "ORDER BY sp.start_time ASC LIMIT 1)", false),
     DURATION("ts.duration", false),
     SPAN_COUNT("ts.span_count", false),
     ERROR_COUNT("ts.error_count", false),
