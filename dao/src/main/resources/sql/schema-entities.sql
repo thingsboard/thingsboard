@@ -1446,6 +1446,8 @@ CREATE TABLE IF NOT EXISTS trace_group
     rule_node_path_metrics_jsonb    jsonb        NOT NULL DEFAULT '{}'::jsonb,
     CONSTRAINT trace_group_pkey PRIMARY KEY (bucket_time, tenant_id, path_id)
 );
+-- The PK leads with bucket_time for the TTL cleanup; reads and tenant deletion are per tenant over a bucket range.
+CREATE INDEX IF NOT EXISTS idx_trace_group_tenant_bucket ON trace_group (tenant_id, bucket_time);
 
 CREATE TABLE IF NOT EXISTS calculated_field (
     id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
