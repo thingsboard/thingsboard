@@ -37,7 +37,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         try {
             User user = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
             if (user == null) {
-                throw new IllegalArgumentException(String.format("[%s] Failed to parse User from UserUpdateMsg: %s", tenantId, userUpdateMsg));
+                throw new IllegalArgumentException(String.format("[%s] Failed to parse User from UserUpdateMsg for user %s", tenantId, userId));
             }
             if (user.getAuthority() != Authority.TENANT_ADMIN && user.getAuthority() != Authority.CUSTOMER_USER) {
                 throw new DataValidationException("User authority " + user.getAuthority() + " is not allowed!");
@@ -67,7 +67,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                 edgeCtx.getUserService().saveUser(tenantId, user, false);
             }
         } catch (Exception e) {
-            log.error("[{}] Failed to process user update msg [{}]", tenantId, userUpdateMsg, e);
+            log.error("[{}] Failed to process user update msg for user [{}]", tenantId, userId, e);
             throw e;
         }
 
@@ -117,12 +117,11 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
     protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg updateMsg) {
         UserCredentials edgeUserCredentials = JacksonUtil.fromString(updateMsg.getEntity(), UserCredentials.class, true);
         if (edgeUserCredentials == null) {
-            throw new IllegalArgumentException(String.format("[%s] Failed to parse UserCredentials from updateMsg: %s", tenantId, updateMsg));
+            throw new IllegalArgumentException(String.format("[%s] Failed to parse UserCredentials from UserCredentialsUpdateMsg", tenantId));
         }
         User user = edgeCtx.getUserService().findUserById(tenantId, edgeUserCredentials.getUserId());
         if (user == null || !tenantId.equals(user.getTenantId())) {
-            log.warn("[{}] Can't find user by id [{}] skipping credentials update. UserCredentialsUpdateMsg [{}]",
-                    tenantId, edgeUserCredentials.getUserId(), updateMsg);
+            log.warn("[{}] Can't find user by id [{}] skipping credentials update", tenantId, edgeUserCredentials.getUserId());
             return;
         }
         if (edgeUserCredentials.getId() != null) {
@@ -159,8 +158,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             }
             edgeCtx.getUserService().saveUserCredentials(tenantId, updatedUserCredentials, false);
         } catch (Exception e) {
-            log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
-                    tenantId, user.getName(), updateMsg, e);
+            log.error("[{}] Can't update user credentials for user [{}]", tenantId, user.getName(), e);
             throw new RuntimeException(e);
         }
     }
