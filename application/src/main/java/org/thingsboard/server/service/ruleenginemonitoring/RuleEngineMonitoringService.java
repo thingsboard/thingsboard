@@ -9,14 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.DefaultCounter;
@@ -39,7 +37,6 @@ import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueStatsRow;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,9 +61,8 @@ public class RuleEngineMonitoringService {
     private static final String NULL_QUEUE_NAME_KEY = " :null-queue";
     // An accumulator entry with nothing recorded for this many flushes in a row is removed.
     private static final int MAX_IDLE_FLUSHES = 3;
-    // Only evicts entries of deleted or idle rule nodes: a rule node never changes its rule chain, and the rule chain
-    // cache is also cleared on every rule chain change.
-    private static final long CACHE_IDLE_EXPIRY_MIN = 30;
+    // Only evicts the exec keys of deleted or idle rule nodes.
+    private static final long EXEC_KEY_CACHE_IDLE_EXPIRY_MIN = 30;
 
     private final RuleEngineMonitoringDao dao;
     private final TenantService tenantService;
@@ -74,7 +70,6 @@ public class RuleEngineMonitoringService {
     private final TopicService topicService;
     private final KafkaAdmin kafkaAdmin;
     private final QueueCacheService queueCacheService;
-    private final Cache<UUID, UUID> ruleChainByRuleNodeCache;
     private final Cache<RuleNodeId, ConcurrentHashMap<String, RuleNodeExecKey>> execKeyCache;
     private final boolean queueTimeoutLastVisitedRuleNodeEnabled;
     private final int ruleNodeMaxKeys;
@@ -110,11 +105,8 @@ public class RuleEngineMonitoringService {
         this.ruleNodeMaxKeys = ruleNodeMaxKeys;
         this.queueMaxKeys = queueMaxKeys;
         this.queueCacheService = queueCacheService;
-        this.ruleChainByRuleNodeCache = Caffeine.newBuilder()
-                .expireAfterAccess(CACHE_IDLE_EXPIRY_MIN, MINUTES)
-                .build();
         this.execKeyCache = Caffeine.newBuilder()
-                .expireAfterAccess(CACHE_IDLE_EXPIRY_MIN, MINUTES)
+                .expireAfterAccess(EXEC_KEY_CACHE_IDLE_EXPIRY_MIN, MINUTES)
                 .build();
         this.flushRuleNodeStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "ruleNode");
         this.flushQueueStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "queue");
@@ -126,17 +118,6 @@ public class RuleEngineMonitoringService {
         statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "ruleNode", ruleNodeAccumulator, Map::size);
         statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "queue", queueAccumulator, Map::size);
         statsFactory.createGauge("ruleNodeExecStatsAccumulatorKeys", "execKey", execKeyCache, Cache::estimatedSize);
-    }
-
-    @EventListener(ComponentLifecycleMsg.class)
-    public void onComponentLifecycleEvent(ComponentLifecycleMsg event) {
-        switch (event.getEntityId().getEntityType()) {
-            case RULE_CHAIN -> {
-                switch (event.getEvent()) {
-                    case CREATED, UPDATED, DELETED -> ruleChainByRuleNodeCache.invalidateAll();
-                }
-            }
-        }
     }
 
     public void recordRuleNodeExec(UUID tenantId, RuleNode self, String queueName, String serviceId,
@@ -450,26 +431,9 @@ public class RuleEngineMonitoringService {
         }
     }
 
+    // Once per flush, for the timed-out messages' last visited rule nodes only: one batched lookup, not cached.
     private Map<UUID, UUID> getRuleChainIds(Set<UUID> ruleNodeIds) {
-        Map<UUID, UUID> result = new HashMap<>();
-        Set<UUID> missing = new HashSet<>();
-        for (UUID id : ruleNodeIds) {
-            UUID cached = ruleChainByRuleNodeCache.getIfPresent(id);
-            if (cached != null) {
-                result.put(id, cached);
-            } else {
-                missing.add(id);
-            }
-        }
-        if (!missing.isEmpty()) {
-            Map<UUID, UUID> loaded = new HashMap<>(dao.findRuleChainIdsByRuleNodeIds(missing));
-            for (UUID id : missing) {
-                loaded.putIfAbsent(id, NULL_RULE_CHAIN_UUID);
-            }
-            ruleChainByRuleNodeCache.putAll(loaded);
-            result.putAll(loaded);
-        }
-        return result;
+        return ruleNodeIds.isEmpty() ? Map.of() : dao.findRuleChainIdsByRuleNodeIds(ruleNodeIds);
     }
 
     private List<RuleNodeExecStatsRow> buildRuleNodeExecRows(Map<RuleNodeExecKey, RuleNodeExecMetrics.Snapshot> snapshot,
