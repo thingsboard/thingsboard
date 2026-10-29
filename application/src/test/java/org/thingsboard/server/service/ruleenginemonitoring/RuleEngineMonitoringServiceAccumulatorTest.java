@@ -17,7 +17,6 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueStatsRow;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleNodeExecStatsRow;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -54,6 +53,7 @@ class RuleEngineMonitoringServiceAccumulatorTest {
     private final UUID tenantId = UUID.randomUUID();
     private final RuleEngineMonitoringDao dao = Mockito.mock(RuleEngineMonitoringDao.class);
     private final TenantService tenantService = Mockito.mock(TenantService.class);
+    private final QueueCacheService queueCacheService = Mockito.mock(QueueCacheService.class);
     private final AtomicLong flushedExecs = new AtomicLong();
     private final AtomicLong flushedErrors = new AtomicLong();
     private final AtomicLong flushedDurationMs = new AtomicLong();
@@ -79,9 +79,9 @@ class RuleEngineMonitoringServiceAccumulatorTest {
         @SuppressWarnings("unchecked")
         ObjectProvider<KafkaAdmin> kafkaAdminProvider = Mockito.mock(ObjectProvider.class);
         Mockito.when(tenantService.tenantExists(Mockito.any())).thenReturn(true);
-        service = new RuleEngineMonitoringService(dao, Mockito.mock(TbTenantProfileCache.class), tenantService,
+        service = new RuleEngineMonitoringService(dao, tenantService,
                 Mockito.mock(PartitionService.class), Mockito.mock(TopicService.class), kafkaAdminProvider,
-                Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), Mockito.mock(QueueCacheService.class),
+                Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), queueCacheService,
                 30, 30, 1_000_000, 1_000_000, false);
     }
 
@@ -126,6 +126,27 @@ class RuleEngineMonitoringServiceAccumulatorTest {
         service.recordRuleNodeExec(tenantId, ruleNode, "Main", "svc", 5, false);
         service.flushRuleNodeStats();
         assertThat(flushedExecs.get()).isEqualTo(2);
+    }
+
+    @Test
+    void givenRuleNodeExecs_whenFlushed_thenQueueIdComesFromQueueCacheOrFallsBackToOthers() {
+        UUID mainQueueId = UUID.randomUUID();
+        Mockito.when(queueCacheService.getQueueId(tenantId, "Main")).thenReturn(mainQueueId);
+        List<UUID> queueIds = new java.util.ArrayList<>();
+        Mockito.doAnswer(invocation -> {
+            List<RuleNodeExecStatsRow> rows = invocation.getArgument(0);
+            rows.forEach(row -> queueIds.add(row.queueId()));
+            return null;
+        }).when(dao).saveRuleNodeStats(Mockito.anyList());
+        RuleNode ruleNode = ruleNode();
+        service.recordRuleNodeExec(tenantId, ruleNode, "Main", "svc", 5, false);
+        service.recordRuleNodeExec(tenantId, ruleNode, "Unknown", "svc", 5, false);
+        service.recordRuleNodeExec(tenantId, ruleNode, null, "svc", 5, false);
+
+        service.flushRuleNodeStats();
+
+        assertThat(queueIds).containsExactlyInAnyOrder(mainQueueId, RuleEngineMonitoringService.OTHERS_QUEUE_UUID,
+                RuleEngineMonitoringService.NULL_QUEUE_UUID);
     }
 
     @Test

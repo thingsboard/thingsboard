@@ -13,7 +13,6 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -45,8 +44,7 @@ class RuleEngineMonitoringServiceQueueOutcomesTest {
         queue.setName("Main");
         @SuppressWarnings("unchecked")
         ObjectProvider<KafkaAdmin> kafkaAdminProvider = Mockito.mock(ObjectProvider.class);
-        service = new RuleEngineMonitoringService(Mockito.mock(RuleEngineMonitoringDao.class), Mockito.mock(TbTenantProfileCache.class),
-                Mockito.mock(TenantService.class),
+        service = new RuleEngineMonitoringService(Mockito.mock(RuleEngineMonitoringDao.class), Mockito.mock(TenantService.class),
                 Mockito.mock(PartitionService.class), Mockito.mock(TopicService.class), kafkaAdminProvider,
                 Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), Mockito.mock(QueueCacheService.class),
                 30, 30, 1_000_000, 1_000_000, false);

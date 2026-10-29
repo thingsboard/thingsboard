@@ -12,7 +12,6 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueLagStatsRow;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueShortInfo;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -50,8 +49,7 @@ class RuleEngineMonitoringServiceQueueLagTest {
         Mockito.when(queueCacheService.getAllQueues()).thenReturn(List.of(main, hp));
         RuleEngineMonitoringDao dao = Mockito.mock(RuleEngineMonitoringDao.class);
 
-        RuleEngineMonitoringService service = new RuleEngineMonitoringService(dao, Mockito.mock(TbTenantProfileCache.class),
-                Mockito.mock(TenantService.class),
+        RuleEngineMonitoringService service = new RuleEngineMonitoringService(dao, Mockito.mock(TenantService.class),
                 partitionService, topicService, kafkaAdminProvider,
                 Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), queueCacheService,
                 30, 30, 1_000_000, 1_000_000, false);

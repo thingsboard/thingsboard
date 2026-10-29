@@ -21,7 +21,6 @@ import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -67,7 +66,6 @@ public class RuleEngineMonitoringService {
     private static final int MAX_IDLE_FLUSHES = 3;
 
     private final RuleEngineMonitoringDao dao;
-    private final TbTenantProfileCache tenantProfileCache;
     private final TenantService tenantService;
     private final PartitionService partitionService;
     private final TopicService topicService;
@@ -91,7 +89,6 @@ public class RuleEngineMonitoringService {
     private final DefaultCounter queueLagFlushRowsCounter;
 
     public RuleEngineMonitoringService(RuleEngineMonitoringDao dao,
-                                       TbTenantProfileCache tenantProfileCache,
                                        TenantService tenantService,
                                        PartitionService partitionService,
                                        TopicService topicService,
@@ -104,7 +101,6 @@ public class RuleEngineMonitoringService {
                                        @Value("${rule-node-exec-stats.queue-max-keys:1000000}") int queueMaxKeys,
                                        @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:false}") boolean queueTimeoutLastVisitedRuleNodeEnabled) {
         this.dao = dao;
-        this.tenantProfileCache = tenantProfileCache;
         this.tenantService = tenantService;
         this.partitionService = partitionService;
         this.topicService = topicService;
@@ -217,8 +213,7 @@ public class RuleEngineMonitoringService {
         }
 
         long bucketTime = System.currentTimeMillis();
-        Map<UUID, Map<String, UUID>> queueNameToIdByTenant = buildTenantQueueMap(snapshot.keySet());
-        List<RuleNodeExecStatsRow> rows = buildRuleNodeExecRows(snapshot, queueNameToIdByTenant, bucketTime);
+        List<RuleNodeExecStatsRow> rows = buildRuleNodeExecRows(snapshot, bucketTime);
 
         if (rows.isEmpty()) {
             return;
@@ -454,38 +449,6 @@ public class RuleEngineMonitoringService {
         }
     }
 
-    private Map<UUID, Map<String, UUID>> buildTenantQueueMap(Set<RuleNodeExecKey> keys) {
-        List<UUID> tenantIds = keys.stream()
-                .map(RuleNodeExecKey::tenantId)
-                .distinct()
-                .collect(Collectors.toList());
-        log.debug("Building tenant queue map for tenant ids {}", tenantIds);
-
-        Collection<QueueShortInfo> allQueues = queueCacheService.getAllQueues();
-        log.debug("Found all queues: {}", allQueues);
-
-        Map<String, UUID> systemQueueNameToId = allQueues.stream()
-                .filter(q -> TenantId.SYS_TENANT_ID.getId().equals(q.tenantId()))
-                .collect(Collectors.toMap(QueueShortInfo::name, QueueShortInfo::id, (a, b) -> a));
-
-        Map<UUID, Map<String, UUID>> result = new HashMap<>();
-
-        for (UUID tenantId : tenantIds) {
-            if (TenantId.SYS_TENANT_ID.getId().equals(QueueOwners.resolveQueueTenantId(tenantProfileCache, tenantId))) {
-                result.put(tenantId, systemQueueNameToId);
-            } else {
-                Map<String, UUID> tenantQueues = allQueues.stream()
-                        .filter(q -> tenantId.equals(q.tenantId()))
-                        .collect(Collectors.toMap(QueueShortInfo::name, QueueShortInfo::id));
-                result.put(tenantId, tenantQueues);
-            }
-        }
-
-        log.debug("Built tenant queue map {}", result);
-
-        return result;
-    }
-
     private Map<UUID, UUID> getRuleChainIds(Set<UUID> ruleNodeIds) {
         Map<UUID, UUID> result = new HashMap<>();
         Set<UUID> missing = new HashSet<>();
@@ -509,7 +472,6 @@ public class RuleEngineMonitoringService {
     }
 
     private List<RuleNodeExecStatsRow> buildRuleNodeExecRows(Map<RuleNodeExecKey, RuleNodeExecMetrics.Snapshot> snapshot,
-                                                             Map<UUID, Map<String, UUID>> queueNameToIdByTenant,
                                                              long bucketTime) {
         List<RuleNodeExecStatsRow> rows = new ArrayList<>();
         Map<RuleNodeExecKey, RuleNodeExecStatsRow> metricsFromOthersQueue = new HashMap<>();
@@ -517,7 +479,7 @@ public class RuleEngineMonitoringService {
         for (Map.Entry<RuleNodeExecKey, RuleNodeExecMetrics.Snapshot> entry : snapshot.entrySet()) {
             RuleNodeExecKey key = entry.getKey();
             RuleNodeExecMetrics.Snapshot metrics = entry.getValue();
-            UUID queueId = resolveQueueId(key, queueNameToIdByTenant);
+            UUID queueId = resolveQueueId(key);
 
             if (OTHERS_QUEUE_UUID.equals(queueId)) {
                 mergeIntoOthers(key, metrics, bucketTime, metricsFromOthersQueue);
@@ -530,12 +492,12 @@ public class RuleEngineMonitoringService {
         return rows;
     }
 
-    private UUID resolveQueueId(RuleNodeExecKey key, Map<UUID, Map<String, UUID>> queueNameToIdByTenant) {
+    private UUID resolveQueueId(RuleNodeExecKey key) {
         if (key.queueName() == null) {
             return NULL_QUEUE_UUID;
         }
 
-        UUID queueId = queueNameToIdByTenant.getOrDefault(key.tenantId(), Map.of()).get(key.queueName());
+        UUID queueId = queueCacheService.getQueueId(key.tenantId(), key.queueName());
 
         if (queueId == null) {
             log.debug("Queue not found for RuleNodeExecKey: {}", key);

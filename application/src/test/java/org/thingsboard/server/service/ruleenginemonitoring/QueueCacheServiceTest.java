@@ -48,6 +48,15 @@ class QueueCacheServiceTest {
     }
 
     @Test
+    void givenDuplicateQueueNameOfIsolatedTenant_whenGetQueueId_thenFirstQueueWins() {
+        QueueShortInfo duplicate = new QueueShortInfo(UUID.randomUUID(), isolatedTenantId, "Main", 10, false);
+        when(dao.findAllQueuesShortInfo()).thenReturn(List.of(systemMain, isolatedMain, duplicate));
+        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
+
+        assertThat(service.getQueueId(isolatedTenantId, "Main")).isEqualTo(isolatedMain.id());
+    }
+
+    @Test
     void givenTenantWithoutProfile_whenGetQueueId_thenSystemQueuesAreUsed() {
         QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
 
