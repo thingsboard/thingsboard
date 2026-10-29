@@ -437,6 +437,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
         return opt.get();
     }
 
+    @Test
     public void testSendUserCredentialsRequestForUserOfDifferentTenantToCloud() throws Exception {
         loginDifferentTenant();
         UUID userUuid = savedDifferentTenantUser.getUuidId();
