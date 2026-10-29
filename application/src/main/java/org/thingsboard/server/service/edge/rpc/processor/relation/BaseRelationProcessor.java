@@ -31,7 +31,9 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    edgeCtx.getRelationService().deleteRelation(tenantId, entityRelation);
+                    if (isEntityExists(tenantId, entityRelation.getTo()) && isEntityExists(tenantId, entityRelation.getFrom())) {
+                        edgeCtx.getRelationService().deleteRelation(tenantId, entityRelation);
+                    }
                     break;
                 case UNRECOGNIZED:
                 default:

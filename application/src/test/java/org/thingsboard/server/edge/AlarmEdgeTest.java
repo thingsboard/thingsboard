@@ -27,6 +27,7 @@ import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -220,6 +221,22 @@ public class AlarmEdgeTest extends AbstractEdgeTest {
         alarmComment.setComment(new TextNode("AlarmComment"));
         alarmComment.setCreatedTime(Uuids.unixTimestamp(uuid));
         return alarmComment;
+    }
+
+    @Test
+    public void testSendAlarmForEntityOfDifferentTenantToCloud() throws Exception {
+        Device device = saveDifferentTenantDevice();
+        Alarm alarm = new Alarm();
+        alarm.setId(new AlarmId(Uuids.timeBased()));
+        alarm.setTenantId(differentTenantId);
+        alarm.setOriginator(device.getId());
+        alarm.setType("Edge Alarm");
+        alarm.setSeverity(AlarmSeverity.CRITICAL);
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addAlarmUpdateMsg(
+                EdgeMsgConstructorUtils.constructAlarmUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, alarm)));
+
+        loginDifferentTenant();
+        doGet("/api/alarm/" + alarm.getUuidId()).andExpect(status().isNotFound());
     }
 
 }
