@@ -52,7 +52,7 @@ class TraceCleanUpServiceTest {
         service.cleanUp();
 
         verify(traceDao).cleanUp(NOW - 7 * DAY_MS, NOW - 30 * DAY_MS, 500);
-        verify(ruleEngineMonitoringDao).cleanUp(NOW - 14 * DAY_MS, 500);
+        verify(ruleEngineMonitoringDao).cleanUp(NOW - 14 * DAY_MS);
         verify(traceDao, never()).cleanUpPartitionsCache(anyLong());
     }
 
@@ -63,8 +63,9 @@ class TraceCleanUpServiceTest {
         service.cleanUp();
 
         verify(traceDao).cleanUpPartitionsCache(NOW - 7 * DAY_MS);
+        verify(ruleEngineMonitoringDao).cleanUpPartitionsCache(NOW - 14 * DAY_MS);
         verify(traceDao, never()).cleanUp(anyLong(), anyLong(), anyInt());
-        verify(ruleEngineMonitoringDao, never()).cleanUp(anyLong(), anyInt());
+        verify(ruleEngineMonitoringDao, never()).cleanUp(anyLong());
     }
 
     @Test
@@ -74,7 +75,7 @@ class TraceCleanUpServiceTest {
 
         service.cleanUp();
 
-        verify(ruleEngineMonitoringDao).cleanUp(NOW - 14 * DAY_MS, 500);
+        verify(ruleEngineMonitoringDao).cleanUp(NOW - 14 * DAY_MS);
     }
 
     @Test

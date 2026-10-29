@@ -14,8 +14,8 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Expires traces and rule engine monitoring stats. Spans go a whole partition at a time, so the spans TTL is accurate
- * to sql.traces.partition_size.
+ * Expires traces and rule engine monitoring stats. Spans and stats go a whole partition at a time, so their TTLs are
+ * accurate to sql.traces.partition_size and sql.traces.rule_engine_stats_partition_size.
  */
 @Service
 @ConditionalOnExpression("${sql.ttl.traces.enabled:true}")
@@ -45,9 +45,11 @@ public class TraceCleanUpService extends AbstractCleanUpService {
     public void cleanUp() {
         long now = getCurrentTimeMillis();
         long spansExpTime = expTime(now, spansTtlInSec);
+        long ruleEngineStatsExpTime = expTime(now, ruleEngineStatsTtlInSec);
         if (!isSystemTenantPartitionMine()) {
             // Another node drops the partitions; just forget the ones it will have dropped.
             traceDao.cleanUpPartitionsCache(spansExpTime);
+            ruleEngineMonitoringDao.cleanUpPartitionsCache(ruleEngineStatsExpTime);
             return;
         }
         // Separate tries: a failure in one cleanup must not skip the other.
@@ -58,7 +60,7 @@ public class TraceCleanUpService extends AbstractCleanUpService {
             log.error("Failed to clean up traces", e);
         }
         try {
-            ruleEngineMonitoringDao.cleanUp(expTime(now, ruleEngineStatsTtlInSec), removalBatchSize);
+            ruleEngineMonitoringDao.cleanUp(ruleEngineStatsExpTime);
         } catch (Exception e) {
             log.error("Failed to clean up rule engine stats", e);
         }

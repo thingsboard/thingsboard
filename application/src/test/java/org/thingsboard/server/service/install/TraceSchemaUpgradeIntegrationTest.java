@@ -6,6 +6,8 @@ import org.junit.After;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
+import org.thingsboard.server.dao.sql.trace.TraceDao;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.install.lts.MigrationService;
@@ -31,11 +33,18 @@ public class TraceSchemaUpgradeIntegrationTest extends AbstractControllerTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private MigrationService migrationService;
+    @Autowired
+    private TraceDao traceDao;
+    @Autowired
+    private RuleEngineMonitoringDao ruleEngineMonitoringDao;
 
     @After
     public void restoreTraceTables() {
         // The suite DB is built from schema-entities.sql with these tables; put them back whatever the test did.
         migrationService.applyMigrations("4.4.1.0", "4.4.1.0", true, () -> {});
+        // The partitions went with the dropped tables; later tests in this context must create them again.
+        traceDao.cleanUpPartitionsCache(Long.MAX_VALUE);
+        ruleEngineMonitoringDao.cleanUpPartitionsCache(Long.MAX_VALUE);
     }
 
     @Test

@@ -36,7 +36,9 @@ public interface RuleEngineMonitoringDao {
     /**
      * Deletes, in batches, all rule engine stats bucketed before {@code expTime}.
      */
-    void cleanUp(long expTime, int batchSize);
+    void cleanUp(long expTime);
+
+    void cleanUpPartitionsCache(long expTime);
 
     List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query);
 

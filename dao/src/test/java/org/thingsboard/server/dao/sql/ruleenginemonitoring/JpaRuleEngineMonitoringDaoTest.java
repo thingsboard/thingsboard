@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -36,6 +37,7 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
 
     private static final long T0 = 14_166_666L * 120_000L; // aligned to the 1- and 2-minute buckets used below
     private static final long MINUTE = 60_000L;
+    private static final long DAY = 86_400_000L;
 
     @Autowired
     private RuleEngineMonitoringDao dao;
@@ -202,18 +204,30 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void givenOldAndRecentStats_whenCleanUp_thenOnlyExpiredStatsAreRemoved() {
-        dao.saveRuleNodeStats(List.of(ruleNodeRow(T0, "svc-1", 1, 0, 10, 10), ruleNodeRow(T0 + 10 * MINUTE, "svc-1", 1, 0, 10, 10)));
-        dao.saveQueueStats(List.of(new QueueStatsRow(T0, tenantId, tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0),
-                new QueueStatsRow(T0 + 10 * MINUTE, tenantId, tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0)));
-        dao.saveQueueLagStats(List.of(new QueueLagStatsRow(T0, tenantId, queueId, 5),
-                new QueueLagStatsRow(T0 + 10 * MINUTE, tenantId, queueId, 5)));
+    public void givenOldAndRecentStats_whenCleanUp_thenOnlyExpiredPartitionsAreDropped() {
+        // Daily partitions (sql.traces.rule_engine_stats_partition_size): the old rows are a day before the recent ones.
+        long old = T0 - DAY;
+        dao.saveRuleNodeStats(List.of(ruleNodeRow(old, "svc-1", 1, 0, 10, 10), ruleNodeRow(T0, "svc-1", 1, 0, 10, 10)));
+        dao.saveQueueStats(List.of(new QueueStatsRow(old, tenantId, tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0),
+                new QueueStatsRow(T0, tenantId, tenantId, queueId, ruleChainId, ruleNodeId, "svc-1", 1, 0, 0)));
+        dao.saveQueueLagStats(List.of(new QueueLagStatsRow(old, tenantId, queueId, 5),
+                new QueueLagStatsRow(T0, tenantId, queueId, 5)));
 
-        dao.cleanUp(T0 + MINUTE, 1);
+        dao.cleanUp(floorToDay(T0) + 1); // a partition is dropped once it ends before the expiry time
 
         for (String table : List.of("rule_node_exec_stats", "rule_node_queue_stats", "rule_node_queue_lag_stats")) {
-            assertEquals(table, List.of(T0 + 10 * MINUTE), jdbcTemplate.queryForList("SELECT bucket_time FROM " + table, Long.class));
+            assertEquals(table, List.of(T0), jdbcTemplate.queryForList("SELECT bucket_time FROM " + table, Long.class));
+            assertFalse(table, partitionExists(table + "_" + floorToDay(old)));
+            assertTrue(table, partitionExists(table + "_" + floorToDay(T0)));
         }
+    }
+
+    private boolean partitionExists(String partition) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT to_regclass(?) IS NOT NULL", Boolean.class, partition));
+    }
+
+    private static long floorToDay(long ts) {
+        return ts - ts % DAY;
     }
 
     @Test

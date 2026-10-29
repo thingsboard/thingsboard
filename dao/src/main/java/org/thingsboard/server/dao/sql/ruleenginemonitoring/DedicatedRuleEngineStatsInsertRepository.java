@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedEventsSqlPartitioningRepository;
 
 import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_JDBC_TEMPLATE;
 
@@ -13,8 +14,9 @@ import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVEN
 @Repository
 public class DedicatedRuleEngineStatsInsertRepository extends RuleEngineStatsInsertRepository {
 
-    public DedicatedRuleEngineStatsInsertRepository(@Qualifier(EVENTS_JDBC_TEMPLATE) JdbcTemplate jdbcTemplate) {
-        super(jdbcTemplate);
+    public DedicatedRuleEngineStatsInsertRepository(@Qualifier(EVENTS_JDBC_TEMPLATE) JdbcTemplate jdbcTemplate,
+                                                    DedicatedEventsSqlPartitioningRepository partitioningRepository) {
+        super(jdbcTemplate, partitioningRepository);
     }
 
 }

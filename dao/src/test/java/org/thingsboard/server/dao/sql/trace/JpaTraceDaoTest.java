@@ -14,6 +14,7 @@ import org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup;
 import org.thingsboard.server.dao.model.sql.trace.SpanAttributeEntity;
 import org.thingsboard.server.dao.model.sql.trace.SpanEntity;
 import org.thingsboard.server.dao.model.sql.trace.TraceProjection;
+import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
 
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,8 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     private TraceDao traceDao;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private RuleEngineMonitoringDao ruleEngineMonitoringDao;
 
     private final UUID tenantId = UUID.randomUUID();
     private final UUID ruleNodeId = UUID.randomUUID();
@@ -51,6 +54,7 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
         TraceTestTables.truncate(jdbcTemplate);
         // The span partitions went with a dropped or truncated table; the next test must create them again.
         traceDao.cleanUpPartitionsCache(Long.MAX_VALUE);
+        ruleEngineMonitoringDao.cleanUpPartitionsCache(Long.MAX_VALUE);
     }
 
     @Test

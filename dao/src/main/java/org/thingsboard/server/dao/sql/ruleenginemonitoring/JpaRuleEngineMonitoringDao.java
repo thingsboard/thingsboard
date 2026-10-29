@@ -71,8 +71,13 @@ public class JpaRuleEngineMonitoringDao implements RuleEngineMonitoringDao {
     }
 
     @Override
-    public void cleanUp(long expTime, int batchSize) {
-        statsInsertRepository.cleanUp(expTime, batchSize);
+    public void cleanUp(long expTime) {
+        statsInsertRepository.cleanUp(expTime);
+    }
+
+    @Override
+    public void cleanUpPartitionsCache(long expTime) {
+        statsInsertRepository.cleanUpPartitionsCache(expTime);
     }
 
     @Override
