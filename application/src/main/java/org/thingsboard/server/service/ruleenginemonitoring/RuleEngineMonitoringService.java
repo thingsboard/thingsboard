@@ -64,6 +64,9 @@ public class RuleEngineMonitoringService {
     private static final String NULL_QUEUE_NAME_KEY = " :null-queue";
     // An accumulator entry with nothing recorded for this many flushes in a row is removed.
     private static final int MAX_IDLE_FLUSHES = 3;
+    // Only evicts entries of deleted or idle rule nodes: a rule node never changes its rule chain, and the rule chain
+    // cache is also cleared on every rule chain change.
+    private static final long CACHE_IDLE_EXPIRY_MIN = 30;
 
     private final RuleEngineMonitoringDao dao;
     private final TenantService tenantService;
@@ -95,8 +98,6 @@ public class RuleEngineMonitoringService {
                                        ObjectProvider<KafkaAdmin> kafkaAdminProvider,
                                        StatsFactory statsFactory,
                                        QueueCacheService queueCacheService,
-                                       @Value("${rule-node-exec-stats.rule-chain-cache-ttl-min:30}") int ruleChainCacheTtlMin,
-                                       @Value("${rule-node-exec-stats.exec-key-cache-ttl-min:30}") int execKeyCacheTtlMin,
                                        @Value("${rule-node-exec-stats.exec-max-keys:1000000}") int ruleNodeMaxKeys,
                                        @Value("${rule-node-exec-stats.queue-max-keys:1000000}") int queueMaxKeys,
                                        @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:false}") boolean queueTimeoutLastVisitedRuleNodeEnabled) {
@@ -110,10 +111,10 @@ public class RuleEngineMonitoringService {
         this.queueMaxKeys = queueMaxKeys;
         this.queueCacheService = queueCacheService;
         this.ruleChainByRuleNodeCache = Caffeine.newBuilder()
-                .expireAfterWrite(ruleChainCacheTtlMin, MINUTES)
+                .expireAfterAccess(CACHE_IDLE_EXPIRY_MIN, MINUTES)
                 .build();
         this.execKeyCache = Caffeine.newBuilder()
-                .expireAfterAccess(execKeyCacheTtlMin, MINUTES)
+                .expireAfterAccess(CACHE_IDLE_EXPIRY_MIN, MINUTES)
                 .build();
         this.flushRuleNodeStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "ruleNode");
         this.flushQueueStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "queue");

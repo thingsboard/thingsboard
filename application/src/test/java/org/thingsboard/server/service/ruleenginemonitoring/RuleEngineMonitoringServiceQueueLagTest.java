@@ -52,7 +52,7 @@ class RuleEngineMonitoringServiceQueueLagTest {
         RuleEngineMonitoringService service = new RuleEngineMonitoringService(dao, Mockito.mock(TenantService.class),
                 partitionService, topicService, kafkaAdminProvider,
                 Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), queueCacheService,
-                30, 30, 1_000_000, 1_000_000, false);
+                1_000_000, 1_000_000, false);
 
         service.flushQueueLagStats();
 

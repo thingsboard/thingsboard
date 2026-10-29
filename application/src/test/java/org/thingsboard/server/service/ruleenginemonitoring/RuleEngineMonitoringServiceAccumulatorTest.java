@@ -82,7 +82,7 @@ class RuleEngineMonitoringServiceAccumulatorTest {
         service = new RuleEngineMonitoringService(dao, tenantService,
                 Mockito.mock(PartitionService.class), Mockito.mock(TopicService.class), kafkaAdminProvider,
                 Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), queueCacheService,
-                30, 30, 1_000_000, 1_000_000, false);
+                1_000_000, 1_000_000, false);
     }
 
     @Test

@@ -47,7 +47,7 @@ class RuleEngineMonitoringServiceQueueOutcomesTest {
         service = new RuleEngineMonitoringService(Mockito.mock(RuleEngineMonitoringDao.class), Mockito.mock(TenantService.class),
                 Mockito.mock(PartitionService.class), Mockito.mock(TopicService.class), kafkaAdminProvider,
                 Mockito.mock(StatsFactory.class, Mockito.RETURNS_DEEP_STUBS), Mockito.mock(QueueCacheService.class),
-                30, 30, 1_000_000, 1_000_000, false);
+                1_000_000, 1_000_000, false);
     }
 
     @Test

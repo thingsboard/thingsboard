@@ -379,12 +379,8 @@ otel:
 rule-node-exec-stats:
   # Enables collection of rule node and queue execution statistics
   enabled: "${RULE_NODE_EXEC_STATS_ENABLED:false}"
-  # TTL (minutes) of the rule node to rule chain cache
-  rule-chain-cache-ttl-min: "${RULE_NODE_EXEC_STATS_RULE_CHAIN_CACHE_TTL_MIN:30}"
   # Interval (ms) at which the rule node statistics are written to the database
   exec-flush-interval-ms: "${RULE_NODE_EXEC_STATS_EXEC_FLUSH_INTERVAL_MS:60000}"
-  # TTL for the per-rule-node exec key cache (idle nodes are evicted after this period)
-  exec-key-cache-ttl-min: "${RULE_NODE_EXEC_STATS_EXEC_KEY_CACHE_TTL_MIN:30}"
   # Max number of distinct keys in the rule node exec metrics accumulator per flush interval; new keys beyond this are dropped
   exec-max-keys: "${RULE_NODE_EXEC_STATS_EXEC_MAX_KEYS:1000000}"
   # Interval (ms) at which the queue statistics are written to the database
