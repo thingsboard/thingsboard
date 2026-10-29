@@ -375,11 +375,6 @@ otel:
         # Interval (ms) at which the OTLP exporter metrics are sent to the collector
         interval-ms: "${OTEL_OTLP_METRICS_INTERVAL_MS:5000}"
 
-# Queue name to queue id cache used by rule engine monitoring
-queue-cache:
-  # Time (minutes) after which the cached queues are loaded again
-  ttl-min: "${QUEUE_CACHE_TTL_MIN:30}"
-
 # Rule engine monitoring: rule node and queue execution statistics
 rule-node-exec-stats:
   # Enables collection of rule node and queue execution statistics

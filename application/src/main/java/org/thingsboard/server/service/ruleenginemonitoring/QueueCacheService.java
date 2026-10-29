@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.ruleenginemonitoring;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueShortInfo;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.RuleEngineMonitoringDao;
@@ -18,26 +18,18 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 @Slf4j
 @Service
 @TbRuleEngineComponent
+@RequiredArgsConstructor
 public class QueueCacheService {
     private final RuleEngineMonitoringDao dao;
     private final TbTenantProfileCache tenantProfileCache;
-    private final long queueCacheTtlMs;
     // Only reloads and invalidations take the lock; lookups (one per exported span) read the snapshot lock-free.
     private final Lock queueUpdateLock = new ReentrantLock();
+    // Loaded on first use and kept until a queue changes: every rule engine node gets each queue update and delete
+    // notification, which invalidates it.
     private volatile QueuesSnapshot snapshot;
-
-    public QueueCacheService(RuleEngineMonitoringDao dao,
-                             TbTenantProfileCache tenantProfileCache,
-                             @Value("${queue-cache.ttl-min:30}") int queueCacheTtlMin) {
-        this.dao = dao;
-        this.tenantProfileCache = tenantProfileCache;
-        this.queueCacheTtlMs = MINUTES.toMillis(queueCacheTtlMin);
-    }
 
     public UUID getQueueId(UUID tenantId, String queueName) {
         if (tenantId == null || queueName == null) {
@@ -63,14 +55,14 @@ public class QueueCacheService {
 
     private QueuesSnapshot getSnapshot() {
         QueuesSnapshot current = snapshot;
-        if (current != null && !isExpired(current)) {
+        if (current != null) {
             return current;
         }
         queueUpdateLock.lock();
         try {
             current = snapshot;
-            if (current == null || isExpired(current)) {
-                current = QueuesSnapshot.of(dao.findAllQueuesShortInfo(), System.currentTimeMillis());
+            if (current == null) {
+                current = QueuesSnapshot.of(dao.findAllQueuesShortInfo());
                 snapshot = current;
                 log.debug("Reloaded queues {}", current.queues());
             }
@@ -80,22 +72,18 @@ public class QueueCacheService {
         }
     }
 
-    private boolean isExpired(QueuesSnapshot snapshot) {
-        return System.currentTimeMillis() - snapshot.loadedAtMs() > queueCacheTtlMs;
-    }
-
     private record QueueNameKey(UUID tenantId, String name) {
     }
 
-    private record QueuesSnapshot(List<QueueShortInfo> queues, Map<QueueNameKey, UUID> queueIds, long loadedAtMs) {
+    private record QueuesSnapshot(List<QueueShortInfo> queues, Map<QueueNameKey, UUID> queueIds) {
 
-        static QueuesSnapshot of(Collection<QueueShortInfo> loaded, long loadedAtMs) {
+        static QueuesSnapshot of(Collection<QueueShortInfo> loaded) {
             Map<QueueNameKey, UUID> queueIds = new HashMap<>();
             for (QueueShortInfo queue : loaded) {
                 // first one wins, as the former linear scan did
                 queueIds.putIfAbsent(new QueueNameKey(queue.tenantId(), queue.name()), queue.id());
             }
-            return new QueuesSnapshot(List.copyOf(loaded), Map.copyOf(queueIds), loadedAtMs);
+            return new QueuesSnapshot(List.copyOf(loaded), Map.copyOf(queueIds));
         }
     }
 }

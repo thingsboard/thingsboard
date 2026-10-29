@@ -39,7 +39,7 @@ class QueueCacheServiceTest {
 
     @Test
     void givenSharedAndIsolatedTenants_whenGetQueueId_thenEachResolvesItsOwnQueueOwner() {
-        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
+        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache);
 
         assertThat(service.getQueueId(sharedTenantId, "Main")).isEqualTo(systemMain.id());
         assertThat(service.getQueueId(isolatedTenantId, "Main")).isEqualTo(isolatedMain.id());
@@ -51,21 +51,21 @@ class QueueCacheServiceTest {
     void givenDuplicateQueueNameOfIsolatedTenant_whenGetQueueId_thenFirstQueueWins() {
         QueueShortInfo duplicate = new QueueShortInfo(UUID.randomUUID(), isolatedTenantId, "Main", 10, false);
         when(dao.findAllQueuesShortInfo()).thenReturn(List.of(systemMain, isolatedMain, duplicate));
-        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
+        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache);
 
         assertThat(service.getQueueId(isolatedTenantId, "Main")).isEqualTo(isolatedMain.id());
     }
 
     @Test
     void givenTenantWithoutProfile_whenGetQueueId_thenSystemQueuesAreUsed() {
-        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
+        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache);
 
         assertThat(service.getQueueId(UUID.randomUUID(), "Main")).isEqualTo(systemMain.id());
     }
 
     @Test
     void givenLoadedQueues_whenLookedUpRepeatedly_thenLoadedOnceUntilInvalidated() {
-        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 30);
+        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache);
 
         for (int i = 0; i < 1000; i++) {
             service.getQueueId(sharedTenantId, "Main");
@@ -74,17 +74,6 @@ class QueueCacheServiceTest {
 
         service.invalidateQueues();
         service.getQueueId(sharedTenantId, "Main");
-        verify(dao, times(2)).findAllQueuesShortInfo();
-    }
-
-    @Test
-    void givenZeroTtl_whenLookedUp_thenReloadedEachTime() throws Exception {
-        QueueCacheService service = new QueueCacheService(dao, tenantProfileCache, 0);
-
-        service.getQueueId(sharedTenantId, "Main");
-        Thread.sleep(2);
-        service.getQueueId(sharedTenantId, "Main");
-
         verify(dao, times(2)).findAllQueuesShortInfo();
     }
 
