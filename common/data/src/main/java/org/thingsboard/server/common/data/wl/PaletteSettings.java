@@ -11,9 +11,9 @@ import org.thingsboard.server.common.data.StringUtils;
 @Data
 @EqualsAndHashCode
 public class PaletteSettings {
-    @Schema(description = "Primary palette JSON", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Primary palette JSON")
     private Palette primaryPalette;
-    @Schema(description = "Accent palette JSON", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Accent palette JSON")
     private Palette accentPalette;
 
     public PaletteSettings merge(PaletteSettings otherPaletteSettings) {
