@@ -1,0 +1,52 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<button color="primary"
+        matTooltip="{{ buttonDisplayValue }}"
+        matTooltipPosition="above"
+        mat-stroked-button
+        [disabled]="disabled"
+        (click)="toggleAssetFilterPanel($event)">
+  <mat-icon>filter_list</mat-icon>{{ buttonDisplayValue }}
+</button>
+<ng-template #assetFilterPanel>
+  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
+    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border" [formGroup]="assetInfoFilterForm">
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>asset-profile.asset-profile</div>
+        <tb-asset-profile-autocomplete
+          class="flex-1"
+          formControlName="assetProfileId"
+          [inlineField]="true"
+          [displayAllOnEmpty]="true"
+          (assetProfileChanged)="assetProfileChanged($event)"
+          [editProfileEnabled]="false"
+          [addNewProfile]="false">
+        </tb-asset-profile-autocomplete>
+      </div>
+    </div>
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+              mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
+      <button type="button"
+              mat-button
+              (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="assetInfoFilterForm.invalid || !assetInfoFilterForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>

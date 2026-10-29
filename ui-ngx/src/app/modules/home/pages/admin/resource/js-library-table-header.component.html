@@ -1,21 +1,16 @@
 <!--
 
     SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-    SPDX-License-Identifier: Apache-2.0
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<mat-form-field class="mat-block" subscriptSizing="dynamic">
-  <mat-label translate>javascript.script-type</mat-label>
-  <mat-select [ngModel]="entitiesTableConfig.componentsData.resourceSubType"
-              (ngModelChange)="jsResourceSubTypeChanged($event)"
-              placeholder="{{ 'javascript.javascript-type' | translate }}">
-    <mat-option value="">
-      {{ "javascript.all-types" | translate }}
-    </mat-option>
-    @for (jsResourceSubType of jsResourceSubTypes; track jsResourceSubType) {
-      <mat-option [value]="jsResourceSubType">
-        {{ resourceSubTypesTranslationMap.get(jsResourceSubType) | translate }}
-      </mat-option>
-    }
-  </mat-select>
-</mat-form-field>
+<tb-resource-type-filter [types]="jsResourceSubTypes"
+                         [typeTranslations]="resourceSubTypesTranslationMap"
+                         typeTitle="javascript.script-type"
+                         allTypesTitle="javascript.all-types"
+                         resourceFilterTitle="javascript.javascript-library-filter-title"
+                         filterTitle="javascript.filter-title"
+                         [ngModel]="entitiesTableConfig.componentsData.resourceSubType"
+                         (ngModelChange)="jsResourceSubTypeChanged($event)">
+</tb-resource-type-filter>
