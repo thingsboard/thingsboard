@@ -9138,6 +9138,7 @@
         "vertical": "Vertical",
         "dashboard": "Dashboard",
         "timewindow": "Time window",
+        "different-time-ranges-hint": "Report components use different time windows, so the report time range is undefined and the ${reportStartTime} and ${reportEndTime} variables render empty.",
         "export-failed-error": "Unable to export report template: {{error}}",
         "report-template-file": "Report template file",
         "invalid-report-template-file-error": "Unable to import report template: Invalid report template data structure.",
@@ -9266,7 +9267,8 @@
             "footer-2": "Footer 2",
             "footer-3": "Footer 3",
             "page-number": "Page number",
-            "created-time": "Created time"
+            "created-time": "Created time",
+            "time-range": "Time range"
         }
     },
     "scheduled-report": {

@@ -13,7 +13,8 @@
   </div>
   <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'data'">
     <div class="tb-form-row space-between">
-      <div>{{ 'report-template.timewindow' | translate }}</div>
+      <div tb-hint-tooltip-icon="{{ differentReportTimeRanges ? ('report-template.different-time-ranges-hint' | translate) : null }}"
+           hintIcon="warning">{{ 'report-template.timewindow' | translate }}</div>
       <tb-timewindow asButton="true"
         aggregation
         strokedButton
@@ -33,7 +34,7 @@
           appearance="outline" subscriptSizing="dynamic"
           brackets="curly"
           predefinedValuesButton
-        [predefinedValues]="['entityName', 'entityLabel']"></tb-string-pattern-autocomplete>
+        [predefinedValues]="['entityName', 'entityLabel', 'reportStartTime', 'reportEndTime']"></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="titleFont"
           [allowedFontWeights]="['normal', 'bold', '500']"
           [allowedFontStyles]="['normal', 'italic']"

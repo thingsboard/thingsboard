@@ -61,6 +61,7 @@ public class CsvReportService extends AbstractReportService {
 
         log.trace("[{}] Executing generateReport, reportRequest [{}]", tenantId, task);
         ReportTemplateConfig configuration = task.getReportTemplateConfig();
+        resolveReportTimeRange(ctx);
 
         EntityData stateEntity = task.getOriginator() != null ? entityDataFromEntityId(task.getOriginator()) : null;
 
