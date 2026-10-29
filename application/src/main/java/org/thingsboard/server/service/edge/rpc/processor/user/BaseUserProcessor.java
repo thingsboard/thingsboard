@@ -76,7 +76,8 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
 
     private boolean updateUserEmailIfDuplicateExists(TenantId tenantId, UserId userId, User user) {
         String email = user.getEmail();
-        User userByEmail = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, email);
+        // email is unique across all tenants
+        User userByEmail = edgeCtx.getUserService().findUserByEmail(tenantId, email);
 
         if (userByEmail != null && !userByEmail.getId().equals(user.getId())) {
             String[] splitEmail = email.split("@");

@@ -540,4 +540,23 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(cloudCredentialsAfter.getAdditionalInfo().get(USER_PASSWORD_HISTORY).toString().contains(edgePassword));
     }
 
+    @Test
+    public void testSendUserWithEmailOfDifferentTenantUserFromEdgeToCloud() throws Exception {
+        loginDifferentTenant();
+        loginTenantAdmin();
+        UserId userId = new UserId(UUID.randomUUID());
+        User user = buildUser(Authority.TENANT_ADMIN, null);
+        user.setId(userId);
+        user.setEmail(savedDifferentTenantUser.getEmail());
+
+        sendUplinkMsg(UplinkMsg.newBuilder()
+                .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, user))
+                .build());
+
+        User savedUser = userService.findUserById(tenantId, userId);
+        Assert.assertNotNull(savedUser);
+        Assert.assertEquals(tenantId, savedUser.getTenantId());
+        Assert.assertNotEquals(savedDifferentTenantUser.getEmail(), savedUser.getEmail());
+    }
+
 }
