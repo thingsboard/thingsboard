@@ -49,8 +49,10 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -446,4 +448,30 @@ public class EdgeMsgConstructorUtilsTest {
         Assertions.assertTrue(json.get("version") == null || json.get("version").isNull(),
                 "RuleChainMetaData version should be null in serialized message");
     }
+
+    @Test
+    public void testUserCredentialsUpdatedMsgWithoutTokens() {
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setUserId(new UserId(UUID.randomUUID()));
+        userCredentials.setEnabled(true);
+        userCredentials.setPassword("$2a$10$passwordHash");
+        userCredentials.setActivateToken("activateToken");
+        userCredentials.setActivateTokenExpTime(System.currentTimeMillis());
+        userCredentials.setResetToken("resetToken");
+        userCredentials.setResetTokenExpTime(System.currentTimeMillis());
+
+        UserCredentialsUpdateMsg userCredentialsUpdateMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+        UserCredentials sentUserCredentials = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
+
+        Assertions.assertNotNull(sentUserCredentials);
+        Assertions.assertEquals(userCredentials.getUserId(), sentUserCredentials.getUserId());
+        Assertions.assertEquals(userCredentials.getPassword(), sentUserCredentials.getPassword());
+        Assertions.assertTrue(sentUserCredentials.isEnabled());
+        Assertions.assertNull(sentUserCredentials.getActivateToken());
+        Assertions.assertNull(sentUserCredentials.getActivateTokenExpTime());
+        Assertions.assertNull(sentUserCredentials.getResetToken());
+        Assertions.assertNull(sentUserCredentials.getResetTokenExpTime());
+        Assertions.assertEquals("resetToken", userCredentials.getResetToken());
+    }
+
 }

@@ -374,7 +374,8 @@ public class UserEdgeTest extends AbstractEdgeTest {
         userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
 
         UserUpdateMsg userUpdateMsg = EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUser);
-        UserCredentialsUpdateMsg userCredentialsMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+        // built directly, because constructUserCredentialsUpdatedMsg drops activation tokens
+        UserCredentialsUpdateMsg userCredentialsMsg = UserCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(userCredentials)).build();
 
         return UplinkMsg.newBuilder()
                 .addUserUpdateMsg(userUpdateMsg)
