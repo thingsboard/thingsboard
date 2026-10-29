@@ -25,5 +25,6 @@ public class TbEmail {
     private final List<ReportId> reports;
     private final Map<String, String> images;
     private final boolean html;
+    private final boolean addFileName;
 
 }
