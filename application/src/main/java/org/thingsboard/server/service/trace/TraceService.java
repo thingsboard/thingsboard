@@ -93,17 +93,11 @@ public class TraceService {
             return new ArrayList<>();
         }
 
-        Map<String, List<SpanAttributeEntity>> attributesBySpanId = new HashMap<>();
-        List<SpanAttributeEntity> attributes = traceDao.findSpanAttributesByTraceId(tenantId.getId(), query.getTraceId());
-        for (SpanAttributeEntity attribute : attributes) {
-            attributesBySpanId.computeIfAbsent(attribute.getSpanId(), ignored -> new ArrayList<>()).add(attribute);
-        }
-
         Map<String, SpanTreeNode> nodeMap = new HashMap<>();
 
+        // Attributes come from the rows already loaded, not from a second query of the same spans.
         for (SpanEntity span : spans) {
-            List<SpanAttributeEntity> spanAttributes = attributesBySpanId.getOrDefault(span.getSpanId(), new ArrayList<>());
-            nodeMap.put(span.getSpanId(), TraceDtoMapper.toSpanTreeNode(span, spanAttributes));
+            nodeMap.put(span.getSpanId(), TraceDtoMapper.toSpanTreeNode(span, SpanAttributeEntity.fromSpan(span)));
         }
 
         List<SpanTreeNode> rootNodes = new ArrayList<>();

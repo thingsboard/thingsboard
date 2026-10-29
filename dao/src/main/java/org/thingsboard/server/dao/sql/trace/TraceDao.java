@@ -47,8 +47,6 @@ public interface TraceDao {
 
     List<SpanAttributeEntity> findSpanAttributes(UUID tenantId, String spanId, String traceId);
 
-    List<SpanAttributeEntity> findSpanAttributesByTraceId(UUID tenantId, String traceId);
-
     List<SpanEventEntity> findSpanEvents(UUID tenantId, String spanId, String traceId);
 
     List<SpanLinkEntity> findSpanLinks(UUID tenantId, String spanId, String traceId);

@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.sql.ruleenginemonitoring.TraceGroup.floorToDay;
 
@@ -100,15 +99,7 @@ public class JpaTraceDao implements TraceDao {
         if (spans.isEmpty()) {
             return Collections.emptyList();
         }
-        return toSpanAttributes(spans.get(0));
-    }
-
-    @Override
-    public List<SpanAttributeEntity> findSpanAttributesByTraceId(UUID tenantId, String traceId) {
-        return spanRepository.findByTenantIdAndTraceId(tenantId, traceId).stream()
-                .map(this::toSpanAttributes)
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        return SpanAttributeEntity.fromSpan(spans.get(0));
     }
 
     @Override
@@ -161,41 +152,6 @@ public class JpaTraceDao implements TraceDao {
         traceInsertRepository.cleanUpPartitionsCache(spansExpTime);
     }
 
-    private List<SpanAttributeEntity> toSpanAttributes(SpanEntity span) {
-        Map<String, Object> attributes = parseJsonObject(span.getAttributesJsonb());
-        if (attributes.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<SpanAttributeEntity> result = new ArrayList<>(attributes.size());
-        attributes.forEach((key, value) -> {
-            SpanAttributeEntity attr = new SpanAttributeEntity();
-            attr.setSpanId(span.getSpanId());
-            attr.setTraceId(span.getTraceId());
-            attr.setAttributeKey(key);
-            attr.setCreatedTime(span.getCreatedTime());
-            if (value instanceof Boolean boolValue) {
-                attr.setAttributeValueType("BOOLEAN");
-                attr.setAttributeValueBoolean(boolValue);
-            } else if (value instanceof Number numberValue) {
-                attr.setAttributeValueType("DOUBLE");
-                attr.setAttributeValueNumber(numberValue.doubleValue());
-            } else if (value != null) {
-                attr.setAttributeValueType("STRING");
-                if (value instanceof Map<?, ?> || value instanceof List<?>) {
-                    attr.setAttributeValueString(JacksonUtil.toString(value));
-                } else {
-                    attr.setAttributeValueString(String.valueOf(value));
-                }
-            } else {
-                attr.setAttributeValueType("STRING");
-                attr.setAttributeValueString(null);
-            }
-            result.add(attr);
-        });
-        return result;
-    }
-
     private List<SpanEventEntity> toSpanEvents(SpanEntity span) {
         List<Map<String, Object>> events = parseJsonArray(span.getEventsJsonb());
         if (events.isEmpty()) {
@@ -246,19 +202,6 @@ public class JpaTraceDao implements TraceDao {
             result.add(entity);
         }
         return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> parseJsonObject(String json) {
-        if (json == null || json.isBlank()) {
-            return Collections.emptyMap();
-        }
-        try {
-            Object value = JacksonUtil.OBJECT_MAPPER.readValue(json, Map.class);
-            return value instanceof Map<?, ?> map ? (Map<String, Object>) map : Collections.emptyMap();
-        } catch (Exception e) {
-            return Collections.emptyMap();
-        }
     }
 
     @SuppressWarnings("unchecked")
