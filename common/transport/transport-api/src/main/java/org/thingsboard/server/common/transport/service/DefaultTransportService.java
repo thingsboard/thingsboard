@@ -4,6 +4,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -62,6 +63,7 @@ import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
+import org.thingsboard.server.common.transport.auth.cache.TokenValidationCacheService;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -147,6 +149,8 @@ public class DefaultTransportService extends TransportActivityManager implements
     private boolean statsEnabled;
     @Value("${transport.callback_thread_pool_size:20}")
     private int callbackThreadPoolSize;
+    @Value("${transport.validation.profile_negotiation_enabled:false}")
+    private boolean profileNegotiationEnabled;
 
     private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
@@ -168,6 +172,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     private final TransportResourceCache transportResourceCache;
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final EntityLimitsCache entityLimitsCache;
+    private final TokenValidationCacheService tokenValidationCacheService;
 
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
@@ -341,9 +346,74 @@ public class DefaultTransportService extends TransportActivityManager implements
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceTokenRequestMsg msg,
                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
+        String token = msg.getToken();
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
-                TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(msg).build());
-        doProcess(transportType, protoMsg, callback);
+                TransportApiRequestMsg.newBuilder().setValidateTokenRequestMsg(
+                        msg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
+        if (!tokenValidationCacheService.isEnabled()) {
+            doProcess(transportType, protoMsg, null, callback);
+            return;
+        }
+        // L2 cache I/O runs on the cache's own bounded executor; a saturated executor completes immediately as a miss.
+        // The continuation is handed to the callback executor and never runs on a cache I/O thread: on a miss it
+        // performs the core request (a Kafka send that can block), and a hit may resolve the device profile with a
+        // blocking round trip. The directExecutor callback itself only enqueues, which is cheap and non-blocking.
+        Futures.addCallback(tokenValidationCacheService.lookupAsync(token), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Optional<TransportProtos.TokenValidationCacheEntryProto> cached) {
+                dispatchTokenValidation(transportType, protoMsg, token, cached, callback);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                dispatchTokenValidation(transportType, protoMsg, token, Optional.empty(), callback);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private void dispatchTokenValidation(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String token,
+                                         Optional<TransportProtos.TokenValidationCacheEntryProto> cached,
+                                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        try {
+            transportCallbackExecutor.execute(() -> continueTokenValidation(transportType, protoMsg, token, cached, callback));
+        } catch (Throwable t) {
+            callback.onError(t);
+        }
+    }
+
+    private void continueTokenValidation(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String token,
+                                         Optional<TransportProtos.TokenValidationCacheEntryProto> cached,
+                                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        try {
+            if (cached.isEmpty()) {
+                doProcess(transportType, protoMsg, token, callback);
+                return;
+            }
+            TransportProtos.ValidateDeviceCredentialsResponseMsg cachedMsg = cached.get().getResponse();
+            if (!cachedMsg.hasDeviceInfo()) {
+                callback.onSuccess(ValidateDeviceCredentialsResponse.builder().build());
+                return;
+            }
+            ValidateDeviceCredentialsResponse response = null;
+            Throwable hitFailure = null;
+            try {
+                response = toValidateResponse(cachedMsg, transportType, true);
+            } catch (Throwable t) {
+                hitFailure = t;
+            }
+            if (response != null && response.getDeviceProfile() != null) {
+                callback.onSuccess(response);
+            } else {
+                // the cached entry points at a device profile that no longer resolves (e.g. the device was moved and
+                // the old profile deleted): drop the entry and fall through to a regular core validation, so the
+                // device keeps working off the fresh state instead of failing on the same entry until the TTL
+                log.debug("Token validation cache hit could not resolve the device profile, falling back to core validation", hitFailure);
+                tokenValidationCacheService.evictAsync(token);
+                doProcess(transportType, protoMsg, token, callback);
+            }
+        } catch (Throwable t) {
+            callback.onError(t);
+        }
     }
 
     @Override
@@ -351,67 +421,90 @@ public class DefaultTransportService extends TransportActivityManager implements
                         TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
         TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(),
-                TransportApiRequestMsg.newBuilder().setValidateBasicMqttCredRequestMsg(msg).build());
-        doProcess(transportType, protoMsg, callback);
+                TransportApiRequestMsg.newBuilder().setValidateBasicMqttCredRequestMsg(
+                        msg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
+        doProcess(transportType, protoMsg, null, callback);
     }
 
     @Override
     public void process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg requestMsg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", requestMsg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(requestMsg).build());
-        ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
-            TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
-            ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
-            if (msg.hasDeviceInfo()) {
-                result.credentials(msg.getCredentialsBody());
-                TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
-                result.deviceInfo(tdi);
-                if (msg.hasDeviceProfile()) {
-                    DeviceProfile profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), msg.getDeviceProfile());
-                    result.deviceProfile(profile);
-                }
-            }
-            return result.build();
-        }, MoreExecutors.directExecutor());
-        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateDeviceLwM2MCredentialsRequestMsg(
+                requestMsg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
+        doProcess(DeviceTransportType.DEFAULT, protoMsg, null, callback);
     }
 
     @Override
     public void process(DeviceTransportType transportType, TransportProtos.ValidateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(msg).build());
-        doProcess(transportType, protoMsg, callback);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateX509CertRequestMsg(
+                msg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
+        doProcess(transportType, protoMsg, null, callback);
     }
 
     @Override
     public void process(DeviceTransportType transportType, TransportProtos.ValidateOrCreateDeviceX509CertRequestMsg msg, TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
         log.trace("Processing msg: {}", msg);
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateOrCreateX509CertRequestMsg(msg).build());
-        doProcess(transportType, protoMsg, callback);
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setValidateOrCreateX509CertRequestMsg(
+                msg.toBuilder().setSupportsDeviceProfileCaching(profileNegotiationEnabled).build()).build());
+        doProcess(transportType, protoMsg, null, callback);
     }
 
-    private void doProcess(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg,
+    private void doProcess(DeviceTransportType transportType, TbProtoQueueMsg<TransportApiRequestMsg> protoMsg, String cacheToken,
                            TransportServiceCallback<ValidateDeviceCredentialsResponse> callback) {
+        // The transform must not run on directExecutor: the request template completes futures on its single internal
+        // loop thread, and toValidateResponse may resolve an unseen device profile with a blocking getEntityProfile()
+        // through the same template, which only that loop thread can complete.
         ListenableFuture<ValidateDeviceCredentialsResponse> response = Futures.transform(transportApiRequestTemplate.send(protoMsg), tmp -> {
             TransportProtos.ValidateDeviceCredentialsResponseMsg msg = tmp.getValue().getValidateCredResponseMsg();
-            ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
-            if (msg.hasDeviceInfo()) {
-                result.credentials(msg.getCredentialsBody());
-                TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
-                result.deviceInfo(tdi);
-                if (msg.hasDeviceProfile()) {
-                    DeviceProfile profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), msg.getDeviceProfile());
-                    if (transportType != DeviceTransportType.DEFAULT
-                            && profile != null && profile.getTransportType() != DeviceTransportType.DEFAULT && profile.getTransportType() != transportType) {
-                        log.debug("[{}] Device profile [{}] has different transport type: {}, expected: {}", tdi.getDeviceId(), tdi.getDeviceProfileId(), profile.getTransportType(), transportType);
-                        throw new IllegalStateException("Device profile has different transport type: " + profile.getTransportType() + ". Expected: " + transportType);
-                    }
-                    result.deviceProfile(profile);
+            if (cacheToken != null) {
+                tokenValidationCacheService.store(cacheToken, msg);
+            }
+            return toValidateResponse(msg, transportType, isProfileOmittedByCore(msg));
+        }, transportCallbackExecutor);
+        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+    }
+
+    /**
+     * The core omits the device profile only when the transport negotiated it and the profile was found (VALIDATION_OK).
+     * Any other response without a profile keeps the legacy behavior: no profile is resolved.
+     */
+    private boolean isProfileOmittedByCore(TransportProtos.ValidateDeviceCredentialsResponseMsg msg) {
+        return profileNegotiationEnabled && msg.getResult() == TransportProtos.CredentialsValidationResult.VALIDATION_OK;
+    }
+
+    /**
+     * @param resolveMissingProfile whether a response without a device profile should resolve it from the local
+     *                              profile cache (may block on a core round-trip for an unseen profile)
+     */
+    ValidateDeviceCredentialsResponse toValidateResponse(TransportProtos.ValidateDeviceCredentialsResponseMsg msg, DeviceTransportType transportType,
+                                                         boolean resolveMissingProfile) {
+        ValidateDeviceCredentialsResponse.ValidateDeviceCredentialsResponseBuilder result = ValidateDeviceCredentialsResponse.builder();
+        if (msg.hasDeviceInfo()) {
+            result.credentials(msg.getCredentialsBody());
+            TransportDeviceInfo tdi = getTransportDeviceInfo(msg.getDeviceInfo());
+            result.deviceInfo(tdi);
+            DeviceProfile profile = null;
+            if (msg.hasDeviceProfile()) {
+                profile = deviceProfileCache.getOrCreate(tdi.getDeviceProfileId(), msg.getDeviceProfile());
+            } else if (resolveMissingProfile) {
+                profile = deviceProfileCache.get(tdi.getDeviceProfileId());
+                long msgVersion = msg.getDeviceProfileVersion();
+                if (profile != null && msgVersion > 0 && profile.getVersion() != null && msgVersion > profile.getVersion()) {
+                    deviceProfileCache.evict(tdi.getDeviceProfileId());
+                    profile = deviceProfileCache.get(tdi.getDeviceProfileId());
                 }
             }
-            return result.build();
-        }, MoreExecutors.directExecutor());
-        AsyncCallbackTemplate.withCallback(response, callback::onSuccess, callback::onError, transportCallbackExecutor);
+            if (profile != null) {
+                if (transportType != DeviceTransportType.DEFAULT
+                        && profile.getTransportType() != DeviceTransportType.DEFAULT && profile.getTransportType() != transportType) {
+                    log.debug("[{}] Device profile [{}] has different transport type: {}, expected: {}", tdi.getDeviceId(), tdi.getDeviceProfileId(), profile.getTransportType(), transportType);
+                    throw new IllegalStateException("Device profile has different transport type: " + profile.getTransportType() + ". Expected: " + transportType);
+                }
+                result.deviceProfile(profile);
+            }
+        }
+        return result.build();
     }
 
     @Override

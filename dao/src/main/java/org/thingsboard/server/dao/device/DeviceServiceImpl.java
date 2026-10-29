@@ -10,9 +10,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.device.DeviceCacheEvictEvent;
@@ -78,6 +81,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -109,6 +113,9 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     private final DeviceDataValidator deviceValidator;
     private final EntityCountService countService;
     private final JpaExecutorService executor;
+
+    @Autowired(required = false)
+    private List<DeviceCredentialsEvictionHook> credentialsEvictionHooks = Collections.emptyList();
 
     @Override
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
@@ -594,11 +601,44 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         // result device object will have different tenant id and will not remove entity from cache
         publishEvictEvent(oldTenantEvent);
         publishEvictEvent(newTenantEvent);
+        evictCredentialsFromValidationCaches(tenantId, savedDevice.getId());
 
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entity(savedDevice)
                 .entityId(savedDevice.getId()).body(JacksonUtil.toString(oldTenant)).actionType(ActionType.ASSIGNED_TO_TENANT).build());
 
         return savedDevice;
+    }
+
+    /**
+     * Tenant reassignment keeps the device credentials, so the credentials eviction hooks are not triggered by a
+     * credentials save. Without this, a transport-side cached validation result would keep serving the old tenant
+     * until its TTL. The event carries no old id and is not a delete (see {@link DeviceCredentialsEvictionHook}), so
+     * hooks invalidate the cached entry with a short-lived tombstone (no revoked marker): the credentials stay valid.
+     * Runs after commit when a transaction is active. Fail-open.
+     */
+    void evictCredentialsFromValidationCaches(TenantId tenantId, DeviceId deviceId) {
+        if (credentialsEvictionHooks.isEmpty()) {
+            return;
+        }
+        try {
+            DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
+            if (credentials == null || StringUtils.isEmpty(credentials.getCredentialsId())) {
+                return;
+            }
+            DeviceCredentialsEvictEvent event = new DeviceCredentialsEvictEvent(credentials.getCredentialsId(), null, false);
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        DeviceCredentialsEvictionHooks.invokeAll(credentialsEvictionHooks, event);
+                    }
+                });
+            } else {
+                DeviceCredentialsEvictionHooks.invokeAll(credentialsEvictionHooks, event);
+            }
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to evict device credentials from validation caches after tenant reassignment", tenantId, deviceId, e);
+        }
     }
 
     @Override
