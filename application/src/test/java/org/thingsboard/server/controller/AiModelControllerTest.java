@@ -670,29 +670,6 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModels_testFilterByCustomerAccessEnabled() throws Exception {
-        // GIVEN
-        loginTenantAdmin();
-
-        var available = constructValidOpenAiModel("Available model");
-        available.setCustomerAccessEnabled(true);
-        available = doPost("/api/ai/model", available, AiModel.class);
-        var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
-
-        // WHEN
-        PageData<AiModel> onlyAvailable = doGetTypedWithPageLink("/api/ai/model?customerAccessEnabled=true&", new TypeReference<>() {}, new PageLink(10));
-        PageData<AiModel> onlyUnavailable = doGetTypedWithPageLink("/api/ai/model?customerAccessEnabled=false&", new TypeReference<>() {}, new PageLink(10));
-        PageData<AiModel> all = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, new PageLink(10));
-
-        // THEN
-        assertThat(onlyAvailable.getData()).containsExactly(available);
-        assertThat(onlyUnavailable.getData()).containsExactly(unavailable);
-        assertThat(all.getData()).containsExactlyInAnyOrder(available, unavailable);
-    }
-
-    /* --- Get infos API tests --- */
-
-    @Test
     public void getAiModelInfos_whenUserIsSysAdmin_shouldReturnForbidden() throws Exception {
         // GIVEN
         loginSysAdmin();
@@ -717,22 +694,21 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void getAiModelInfos_whenReadOnlyCustomerUser_shouldReturnCustomerAccessibleInfos() throws Exception {
+    public void getAiModelInfos_whenCustomerUser_shouldReturnForbidden() throws Exception {
         // GIVEN
         loginTenantAdmin();
-        var accessible = saveModelWithBlockedBaseUrl("Accessible model", true);
-        saveModelWithBlockedBaseUrl("Not accessible model", false);
-        loginReadOnlyCustomerUser();
+        saveModelWithBlockedBaseUrl("Accessible model", true);
+        loginCustomerAdminUser();
 
         // WHEN
-        PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
+        ResultActions result = doGet("/api/ai/model/infos?pageSize=10&page=0");
 
         // THEN
-        assertThat(infos.getData()).containsExactly(new AiModelInfo(accessible));
+        result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
     }
 
     @Test
-    public void getAiModelInfos_whenTenantAdmin_shouldReturnInfosFilteredByCustomerAccessEnabled() throws Exception {
+    public void getAiModelInfos_whenTenantAdmin_shouldReturnAllInfosWithoutConfiguration() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
@@ -742,14 +718,17 @@ public class AiModelControllerTest extends AbstractControllerTest {
         var unavailable = doPost("/api/ai/model", constructValidOpenAiModel("Unavailable model"), AiModel.class);
 
         // WHEN
-        PageData<AiModelInfo> onlyAvailable = doGetTypedWithPageLink("/api/ai/model/infos?customerAccessEnabled=true&", new TypeReference<>() {}, new PageLink(10));
-        PageData<AiModelInfo> all = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
+        PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, new PageLink(10));
+        String response = doGet("/api/ai/model/infos?pageSize=10&page=0").andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
 
         // THEN
-        assertThat(onlyAvailable.getData()).containsExactly(new AiModelInfo(available));
-        assertThat(all.getData()).containsExactlyInAnyOrder(new AiModelInfo(available), new AiModelInfo(unavailable));
-        assertThat(onlyAvailable.getData().get(0).getProvider()).isEqualTo(AiProvider.OPENAI);
-        assertThat(onlyAvailable.getData().get(0).getModelId()).isEqualTo("gpt-4o");
+        assertThat(infos.getData()).containsExactlyInAnyOrder(new AiModelInfo(available), new AiModelInfo(unavailable));
+        assertThat(infos.getData()).allSatisfy(info -> {
+            assertThat(info.getProvider()).isEqualTo(AiProvider.OPENAI);
+            assertThat(info.getModelId()).isEqualTo("gpt-4o");
+        });
+        assertThat(response).doesNotContain("test-api-key");
     }
 
     @Test
@@ -792,11 +771,11 @@ public class AiModelControllerTest extends AbstractControllerTest {
     }
 
     /**
-     * The infos query mirrors the filter, search and sort rules of the full models query in a separate repository,
+     * The infos query mirrors the search and sort rules of the full models query in a separate repository,
      * so both endpoints must return the same models in the same order for the same parameters.
      */
     @Test
-    public void getAiModelInfos_shouldMatchGetAiModelsForSameFilterSearchAndSort() throws Exception {
+    public void getAiModelInfos_shouldMatchGetAiModelsForSameSearchAndSort() throws Exception {
         // GIVEN
         loginTenantAdmin();
 
@@ -821,7 +800,6 @@ public class AiModelControllerTest extends AbstractControllerTest {
         openAiModel.setCustomerAccessEnabled(true);
         doPost("/api/ai/model", openAiModel, AiModel.class);
 
-        List<String> filters = List.of("", "customerAccessEnabled=true&", "customerAccessEnabled=false&");
         List<String> searches = Arrays.asList(null, "assistant", "google ai", "sonnet");
         List<SortOrder> sortOrders = Arrays.asList(null,
                 SortOrder.of("createdTime", SortOrder.Direction.DESC),
@@ -829,42 +807,22 @@ public class AiModelControllerTest extends AbstractControllerTest {
                 SortOrder.of("provider", SortOrder.Direction.DESC),
                 SortOrder.of("modelId", SortOrder.Direction.ASC));
 
-        for (String filter : filters) {
-            for (String search : searches) {
-                for (SortOrder sortOrder : sortOrders) {
-                    var pageLink = new PageLink(10, 0, search, sortOrder);
+        for (String search : searches) {
+            for (SortOrder sortOrder : sortOrders) {
+                var pageLink = new PageLink(10, 0, search, sortOrder);
 
-                    // WHEN
-                    PageData<AiModel> models = doGetTypedWithPageLink("/api/ai/model?" + filter, new TypeReference<>() {}, pageLink);
-                    PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?" + filter, new TypeReference<>() {}, pageLink);
+                // WHEN
+                PageData<AiModel> models = doGetTypedWithPageLink("/api/ai/model?", new TypeReference<>() {}, pageLink);
+                PageData<AiModelInfo> infos = doGetTypedWithPageLink("/api/ai/model/infos?", new TypeReference<>() {}, pageLink);
 
-                    // THEN
-                    assertThat(infos.getData())
-                            .as("filter '%s', search '%s', sort %s", filter, search, sortOrder)
-                            .extracting(AiModelInfo::getId)
-                            .containsExactlyElementsOf(models.getData().stream().map(AiModel::getId).toList());
-                    assertThat(infos.getTotalElements()).isEqualTo(models.getTotalElements());
-                }
+                // THEN
+                assertThat(infos.getData())
+                        .as("search '%s', sort %s", search, sortOrder)
+                        .extracting(AiModelInfo::getId)
+                        .containsExactlyElementsOf(models.getData().stream().map(AiModel::getId).toList());
+                assertThat(infos.getTotalElements()).isEqualTo(models.getTotalElements());
             }
         }
-    }
-
-    @Test
-    public void getAiModelInfos_whenCustomerAdmin_shouldReturnOnlyCustomerAccessibleInfosWithoutConfiguration() throws Exception {
-        // GIVEN
-        loginTenantAdmin();
-        var accessible = saveModelWithBlockedBaseUrl("Accessible model", true);
-        var notAccessible = saveModelWithBlockedBaseUrl("Not accessible model", false);
-        loginCustomerAdminUser();
-
-        // WHEN
-        String response = doGet("/api/ai/model/infos?pageSize=10&page=0&customerAccessEnabled=false").andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-
-        // THEN
-        assertThat(response).contains(accessible.getId().getId().toString())
-                .doesNotContain(notAccessible.getId().getId().toString())
-                .doesNotContain("test-api-key");
     }
 
     @Test

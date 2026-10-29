@@ -25,7 +25,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.AI_MODEL_PROVIDER_
 interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, ExportableEntityRepository<AiModelEntity> {
 
     String FIND_BY_TENANT_ID_WHERE = " WHERE model.tenant_id = :tenantId" +
-            " AND (CAST(:customerAccessEnabled AS BOOLEAN) IS NULL OR model.customer_access_enabled = CAST(:customerAccessEnabled AS BOOLEAN))" +
             " AND (:textSearch IS NULL" +
             " OR model.name ILIKE '%' || :textSearch || '%'" +
             " OR REPLACE(" + AI_MODEL_PROVIDER_EXPRESSION + ", '_', ' ') ILIKE '%' || :textSearch || '%'" +
@@ -40,10 +39,7 @@ interface AiModelRepository extends JpaRepository<AiModelEntity, UUID>, Exportab
             countQuery = "SELECT COUNT(*) FROM ai_model model" + FIND_BY_TENANT_ID_WHERE,
             nativeQuery = true
     )
-    Page<AiModelEntity> findByTenantId(@Param("tenantId") UUID tenantId,
-                                       @Param("customerAccessEnabled") Boolean customerAccessEnabled,
-                                       @Param("textSearch") String textSearch,
-                                       Pageable pageable);
+    Page<AiModelEntity> findByTenantId(@Param("tenantId") UUID tenantId, @Param("textSearch") String textSearch, Pageable pageable);
 
     @Query("SELECT ai_model.id FROM AiModelEntity ai_model WHERE ai_model.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);

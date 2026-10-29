@@ -110,23 +110,20 @@ class AiModelController extends BaseController {
             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "provider", "modelId"}))
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-            @RequestParam(required = false) String sortOrder,
-            @Parameter(description = "Filter by the 'customer access enabled' flag; all models are returned when omitted")
-            @RequestParam(required = false) Boolean customerAccessEnabled
+            @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return aiModelService.findAiModelsByTenantId(user.getTenantId(), customerAccessEnabled, pageLink);
+        return aiModelService.findAiModelsByTenantId(user.getTenantId(), pageLink);
     }
 
     @ApiOperation(
             value = "Get AI model infos (getAiModelInfos)",
             notes = "Returns a page of AI model infos: AI models without the configuration and its provider credentials. " +
-                    "Customer users only get the models with customer access enabled. " +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH
     )
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping("/infos")
     public PageData<AiModelInfo> getAiModelInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
@@ -138,14 +135,12 @@ class AiModelController extends BaseController {
             @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "provider", "modelId"}))
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-            @RequestParam(required = false) String sortOrder,
-            @Parameter(description = "Filter by the 'customer access enabled' flag; all models are returned when omitted. Ignored for customer users")
-            @RequestParam(required = false) Boolean customerAccessEnabled
+            @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
         var user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI_MODEL, Operation.READ);
         var pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), user.isCustomerUser() ? Boolean.TRUE : customerAccessEnabled, pageLink);
+        return aiModelService.findAiModelInfosByTenantId(user.getTenantId(), pageLink);
     }
 
     @ApiOperation(

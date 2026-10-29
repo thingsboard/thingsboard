@@ -26,9 +26,9 @@ class JpaAiModelInfoDao extends JpaAbstractDao<AiModelInfoEntity, AiModelInfo> i
     private final AiModelInfoRepository aiModelInfoRepository;
 
     @Override
-    public PageData<AiModelInfo> findByTenantId(TenantId tenantId, Boolean customerAccessEnabled, PageLink pageLink) {
+    public PageData<AiModelInfo> findByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(aiModelInfoRepository.findByTenantId(
-                tenantId.getId(), customerAccessEnabled, StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink))
+                tenantId.getId(), StringUtils.defaultIfEmpty(pageLink.getTextSearch(), null), DaoUtil.toPageable(pageLink))
         );
     }
 

@@ -14,13 +14,11 @@ import java.util.UUID;
 interface AiModelInfoRepository extends JpaRepository<AiModelInfoEntity, UUID> {
 
     @Query("SELECT m FROM AiModelInfoEntity m WHERE m.tenantId = :tenantId " +
-            "AND (:customerAccessEnabled IS NULL OR m.customerAccessEnabled = :customerAccessEnabled) " +
             "AND (:textSearch IS NULL " +
             "OR ilike(m.name, CONCAT('%', :textSearch, '%')) = true " +
             "OR ilike(REPLACE(m.provider, '_', ' '), CONCAT('%', :textSearch, '%')) = true " +
             "OR ilike(m.modelId, CONCAT('%', :textSearch, '%')) = true)")
     Page<AiModelInfoEntity> findByTenantId(@Param("tenantId") UUID tenantId,
-                                           @Param("customerAccessEnabled") Boolean customerAccessEnabled,
                                            @Param("textSearch") String textSearch,
                                            Pageable pageable);
 
