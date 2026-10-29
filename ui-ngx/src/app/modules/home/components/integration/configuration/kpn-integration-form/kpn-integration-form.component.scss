@@ -15,6 +15,12 @@
       }
     }
   }
+
+  .no-security-warning {
+    .mat-icon {
+      color: #FAA405;
+    }
+  }
 }
 
 :host ::ng-deep {
