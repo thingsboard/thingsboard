@@ -222,6 +222,23 @@ public class JpaTraceDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void givenPayloadOnlyInSnapshotSpanBeforeRuleNodeSpans_whenSearchByMessageData_thenTraceIsFound() {
+        // The summary starts at the first rule node span; the snapshot span holding the payload starts before it.
+        traceDao.upsertTraceSummaries(List.of(traceSummary()));
+        SpanEntity snapshot = spanAt("snapshot", BUCKET + 90);
+        snapshot.setAttributesJsonb("{\"input.msg.data\":\"{\\\"humidity\\\":17}\"}");
+        traceDao.saveSpans(List.of(snapshot));
+
+        assertEquals(1, search(null, false, null, null, "humidity").getTotalElements());
+
+        // A span outside the margin isn't read: the bound is what lets Postgres prune the span partitions.
+        SpanEntity distant = spanAt("distant", BUCKET + 100 - 2 * 3_600_000L);
+        distant.setAttributesJsonb("{\"input.msg.data\":\"pressure\"}");
+        traceDao.saveSpans(List.of(distant));
+        assertEquals(0, search(null, false, null, null, "pressure").getTotalElements());
+    }
+
+    @Test
     public void givenTraceDataOfTwoTenants_whenDeleteByTenantId_thenOnlyThatTenantsDataIsRemoved() {
         UUID otherTenantId = UUID.randomUUID();
         traceDao.upsertTraceSummaries(List.of(traceSummary()));

@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT_MSG_DATA;
 import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT_MSG_METADATA;
@@ -43,6 +44,8 @@ import static org.thingsboard.server.common.data.trace.TraceSpanAttributes.INPUT
 @SqlDao
 @RequiredArgsConstructor
 public class TraceQueryRepository {
+
+    private static final long SPAN_TIME_BOUND_MARGIN_MS = TimeUnit.HOURS.toMillis(1);
 
     private static final String TRACE_GROUP_COLUMNS = """
             root_queue_id, root_message_type, root_rule_chain_id,
@@ -257,7 +260,8 @@ public class TraceQueryRepository {
         appendJsonbMembership(sql, params, "queue_names_jsonb", "queueName", queueName);
         appendJsonbMembership(sql, params, "rule_node_ids_jsonb", "filterRuleNodeId", ruleNodeId);
         if (isNotEmpty(spanName)) {
-            sql.append("AND EXISTS (SELECT 1 FROM span sp WHERE sp.trace_id = ts.trace_id AND sp.tenant_id = ts.tenant_id AND sp.name = :spanName) ");
+            sql.append("AND EXISTS (SELECT 1 FROM span sp WHERE sp.trace_id = ts.trace_id AND sp.tenant_id = ts.tenant_id ")
+                    .append(spanTimeBound("sp")).append("AND sp.name = :spanName) ");
             params.addValue("spanName", spanName);
         }
         appendSpanAttributeLike(sql, params, INPUT_MSG_DATA, "messageData", messageData);
@@ -272,9 +276,18 @@ public class TraceQueryRepository {
         }
     }
 
+    // Bounds a span subquery to the trace's time range so Postgres prunes it to the span partitions of that range.
+    // The margin keeps the spans outside the summary's rule node envelope: the message snapshot span (searched by
+    // messageData/messageMetadata) starts just before it, and queue-timeout spans come after it.
+    private static String spanTimeBound(String alias) {
+        return "AND " + alias + ".start_time BETWEEN ts.start_time - " + SPAN_TIME_BOUND_MARGIN_MS +
+                " AND COALESCE(ts.end_time, ts.start_time) + " + SPAN_TIME_BOUND_MARGIN_MS + " ";
+    }
+
     private static void appendSpanAttributeLike(StringBuilder sql, MapSqlParameterSource params, String attributeKey, String paramName, String value) {
         if (isNotEmpty(value)) {
             sql.append("AND EXISTS (SELECT 1 FROM span s WHERE s.trace_id = ts.trace_id AND s.tenant_id = ts.tenant_id ")
+                    .append(spanTimeBound("s"))
                     .append("AND COALESCE(s.attributes_jsonb ->> '").append(attributeKey).append("', '') LIKE :").append(paramName)
                     .append(" ESCAPE '\\') ");
             params.addValue(paramName, "%" + value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
