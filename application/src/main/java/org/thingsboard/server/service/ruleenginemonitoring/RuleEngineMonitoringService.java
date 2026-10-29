@@ -95,7 +95,7 @@ public class RuleEngineMonitoringService {
                                        QueueCacheService queueCacheService,
                                        @Value("${rule-node-exec-stats.exec-max-keys:1000000}") int ruleNodeMaxKeys,
                                        @Value("${rule-node-exec-stats.queue-max-keys:1000000}") int queueMaxKeys,
-                                       @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:false}") boolean queueTimeoutLastVisitedRuleNodeEnabled) {
+                                       @Value("${rule-node-exec-stats.queue-timeout-last-visited-rule-node-enabled:true}") boolean queueTimeoutLastVisitedRuleNodeEnabled) {
         this.dao = dao;
         this.tenantService = tenantService;
         this.partitionService = partitionService;
