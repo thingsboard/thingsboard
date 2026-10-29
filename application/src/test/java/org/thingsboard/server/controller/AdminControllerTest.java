@@ -10,16 +10,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.secret.SecretConfigurationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -43,6 +53,9 @@ public class AdminControllerTest extends AbstractControllerTest {
 
     @MockitoBean
     private SecretConfigurationService secretConfigurationService;
+
+    @Autowired
+    private ApiKeyService apiKeyService;
 
     @Test
     public void testFindAdminSettingsByKey() throws Exception {
@@ -221,6 +234,41 @@ public class AdminControllerTest extends AbstractControllerTest {
         assertThat(jwtSettings).isEqualTo(newJwtSettings);
 
         resetJwtSettingsToDefault();
+    }
+
+    @Test
+    public void testJwtSettingsUnavailableToApiKey() throws Exception {
+        loginSysAdmin();
+        AdminSettings jwtAdminSettings = doGet("/api/admin/settings/jwt", AdminSettings.class);
+        ApiKey apiKey = saveSysAdminInternalApiKey();
+        resetTokens();
+        setApiKey(apiKey.getValue());
+        try {
+            // The key does pass ADMIN_SETTINGS: only the JWT settings are closed to it.
+            doGetWithApiKey("/api/admin/settings/general").andExpect(status().isOk());
+
+            doGetWithApiKey("/api/admin/jwtSettings").andExpect(status().isForbidden());
+            doGetWithApiKey("/api/admin/settings/jwt").andExpect(status().isForbidden());
+            doPostWithApiKey("/api/admin/jwtSettings", defaultJwtSettings, null).andExpect(status().isForbidden());
+            doPostWithApiKey("/api/admin/settings", jwtAdminSettings, null).andExpect(status().isForbidden());
+        } finally {
+            resetApiKey();
+            apiKeyService.deleteApiKey(TenantId.SYS_TENANT_ID, apiKey, true);
+        }
+    }
+
+    private ApiKey saveSysAdminInternalApiKey() {
+        AuthorityPermissionsInfo permissions = new AuthorityPermissionsInfo();
+        permissions.setOperationsByResource(Map.of(Authority.SYS_ADMIN,
+                Map.of(Resource.ADMIN_SETTINGS, Set.of(Operation.READ, Operation.WRITE))));
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setTenantId(TenantId.SYS_TENANT_ID);
+        apiKeyInfo.setUserId(currentUserId);
+        apiKeyInfo.setDescription("Internal API key with admin settings access");
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setInternal(true);
+        apiKeyInfo.setPermissions(permissions);
+        return apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, apiKeyInfo);
     }
 
 }

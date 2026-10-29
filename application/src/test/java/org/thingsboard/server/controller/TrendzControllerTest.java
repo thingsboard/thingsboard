@@ -8,21 +8,33 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.common.data.permission.AuthorityPermissionsInfo;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.trendz.TrendzConfiguration;
 import org.thingsboard.server.common.data.trendz.TrendzHealthcheckResult;
 import org.thingsboard.server.common.data.trendz.TrendzSettings;
 import org.thingsboard.server.common.data.trendz.TrendzSynchronizationResult;
 import org.thingsboard.server.common.data.trendz.TrendzSynchronizationResultType;
 import org.thingsboard.server.common.data.trendz.TrendzSynchronizationStatus;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.dao.trendz.TrendzSyncService;
+
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.trendz.TrendzSyncService.TRENDZ_API_KEY_DESCRIPTION;
 
 @DaoSqlTest
 public class TrendzControllerTest extends AbstractControllerTest {
@@ -32,6 +44,9 @@ public class TrendzControllerTest extends AbstractControllerTest {
 
     @Autowired
     private TrendzSettingsService trendzSettingsService;
+
+    @Autowired
+    private ApiKeyService apiKeyService;
 
     private static final String TB_URL = "https://tb.example.com";
     private static final String TRENDZ_URL = "https://trendz.example.com";
@@ -74,6 +89,53 @@ public class TrendzControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
 
         doGet("/api/trendz/config").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetTrendzConfig_asTrendzApiKeyWithoutAdminSettings() throws Exception {
+        trendzSettingsService.saveTrendzSettings(new TrendzSettings(new TrendzConfiguration(TRENDZ_URL, TB_URL), null));
+        ApiKey apiKey = saveSysAdminInternalApiKey(TRENDZ_API_KEY_DESCRIPTION);
+        resetTokens();
+        setApiKey(apiKey.getValue());
+        try {
+            TrendzConfiguration result = doGetWithApiKey("/api/trendz/config", TrendzConfiguration.class);
+            assertThat(result.trendzUrl()).isEqualTo(TRENDZ_URL);
+
+            // Admitted by identity to this one endpoint, the key still reads no admin settings.
+            doGetWithApiKey("/api/admin/settings/general").andExpect(status().isForbidden());
+            doGetWithApiKey("/api/admin/settings/mail").andExpect(status().isForbidden());
+        } finally {
+            resetApiKey();
+            apiKeyService.deleteApiKey(TenantId.SYS_TENANT_ID, apiKey, true);
+        }
+    }
+
+    @Test
+    public void testGetTrendzConfig_asOtherInternalApiKey_forbidden() throws Exception {
+        ApiKey apiKey = saveSysAdminInternalApiKey("Some other internal API key");
+        resetTokens();
+        setApiKey(apiKey.getValue());
+        try {
+            doGetWithApiKey("/api/trendz/config").andExpect(status().isForbidden());
+        } finally {
+            resetApiKey();
+            apiKeyService.deleteApiKey(TenantId.SYS_TENANT_ID, apiKey, true);
+        }
+    }
+
+    // The sysadmin part of what DefaultTrendzSyncService grants the Trendz key, minus ADMIN_SETTINGS.
+    private ApiKey saveSysAdminInternalApiKey(String description) {
+        AuthorityPermissionsInfo permissions = new AuthorityPermissionsInfo();
+        permissions.setOperationsByResource(Map.of(Authority.SYS_ADMIN,
+                Map.of(Resource.WIDGETS_BUNDLE, Set.of(Operation.READ))));
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setTenantId(TenantId.SYS_TENANT_ID);
+        apiKeyInfo.setUserId(currentUserId);
+        apiKeyInfo.setDescription(description);
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setInternal(true);
+        apiKeyInfo.setPermissions(permissions);
+        return apiKeyService.saveApiKey(TenantId.SYS_TENANT_ID, apiKeyInfo);
     }
 
     @Test

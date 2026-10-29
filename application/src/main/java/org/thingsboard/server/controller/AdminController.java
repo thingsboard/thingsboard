@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -69,6 +70,7 @@ import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
+import org.thingsboard.server.service.security.auth.pat.ApiKeyAuthenticationToken;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
 import org.thingsboard.server.service.security.auth.oauth2.PrevUriValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -86,6 +88,7 @@ import java.util.Optional;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService.ADMIN_SETTINGS_JWT_KEY;
 import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_COOKIE_NAME;
 import static org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2AuthorizationRequestRepository.PREV_URI_PARAMETER;
 
@@ -134,6 +137,9 @@ public class AdminController extends BaseController {
             @PathVariable("key") String key,
             @Parameter(description = "Deprecated, not used.")
             @RequestParam(required = false, defaultValue = "false") boolean systemByDefault) throws Exception {
+        if (ADMIN_SETTINGS_JWT_KEY.equals(key)) {
+            checkJwtSettingsAccess();
+        }
         Authority authority = getCurrentUser().getAuthority();
         AdminSettings adminSettings;
         if (Authority.SYS_ADMIN.equals(authority)) {
@@ -158,6 +164,9 @@ public class AdminController extends BaseController {
     public AdminSettings saveAdminSettings(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the Administration Settings.")
             @RequestBody AdminSettings adminSettings) throws Exception {
+        if (ADMIN_SETTINGS_JWT_KEY.equals(adminSettings.getKey())) {
+            checkJwtSettingsAccess();
+        }
         Authority authority = getCurrentUser().getAuthority();
         TenantId tenantId = getTenantId();
         adminSettings.setTenantId(tenantId);
@@ -199,6 +208,7 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping(value = "/jwtSettings")
     public JwtSettings getJwtSettings() throws ThingsboardException {
+        checkJwtSettingsAccess();
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         return checkNotNull(jwtSettingsService.getJwtSettings());
     }
@@ -210,6 +220,7 @@ public class AdminController extends BaseController {
     public JwtPair saveJwtSettings(
             @Parameter(description = "A JSON value representing the JWT Settings.")
             @RequestBody JwtSettings jwtSettings) throws ThingsboardException {
+        checkJwtSettingsAccess();
         SecurityUser securityUser = getCurrentUser();
         accessControlService.checkPermission(securityUser, Resource.ADMIN_SETTINGS, Operation.WRITE);
         checkNotNull(jwtSettingsService.saveJwtSettings(jwtSettings));
@@ -567,6 +578,17 @@ public class AdminController extends BaseController {
                 .filter(PrevUriValidator::isValid)
                 .orElse(DEFAULT_PREV_URI);
         return baseUrl + prevUri;
+    }
+
+    /**
+     * The JWT settings hold the key every session token is signed with, so whoever reads them can mint a token for any
+     * user, sysadmin included. They are left to an interactive session: never an API key, whatever permissions it
+     * carries.
+     */
+    private void checkJwtSettingsAccess() throws ThingsboardException {
+        if (SecurityContextHolder.getContext().getAuthentication() instanceof ApiKeyAuthenticationToken) {
+            throw new ThingsboardException("JWT settings are not available with an API key!", ThingsboardErrorCode.PERMISSION_DENIED);
+        }
     }
 
     private AdminSettings getTenantAdminSettings(TenantId tenantId, String key, boolean systemByDefault) throws Exception {
