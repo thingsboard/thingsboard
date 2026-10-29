@@ -400,6 +400,8 @@ public class EdgeGrpcSession implements EdgeSession {
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                     .setSyncCompletedMsg(SyncCompletedMsg.newBuilder().build())
                     .build();
+            ctx.getStatsCounterService().ifPresent(statsCounterService ->
+                    statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_ADDED, getTenantId(), getEdgeId(), 1));
             Futures.addCallback(sendDownlinkMsgsPack(Collections.singletonList(syncCompleteDownlinkMsg)), new FutureCallback<>() {
                 @Override
                 public void onSuccess(Boolean isInterrupted) {
@@ -436,6 +438,12 @@ public class EdgeGrpcSession implements EdgeSession {
                 }
                 log.trace("[{}][{}][{}] event(s) are going to be processed.", tenantId, edge.getId(), pageData.getData().size());
                 List<DownlinkMsg> downlinkMsgsPack = downlinkMessageMapper.convertToDownlinkMsgsPack(state, pageData.getData());
+                if (!(fetcher instanceof GeneralEdgeEventFetcher) && !downlinkMsgsPack.isEmpty()) {
+                    // sync messages are built on the fly and never saved to the edge queue, so they are counted as added here;
+                    // otherwise every sync would show up as pushed without being added
+                    ctx.getStatsCounterService().ifPresent(statsCounterService ->
+                            statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_ADDED, tenantId, edge.getId(), downlinkMsgsPack.size()));
+                }
                 Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Boolean isInterrupted) {

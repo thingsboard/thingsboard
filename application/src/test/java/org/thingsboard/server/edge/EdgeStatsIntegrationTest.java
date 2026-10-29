@@ -88,6 +88,21 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
         });
     }
 
+    @Test
+    public void testSyncMsgsCountedAsAdded() throws Exception {
+        statsCounterService.clear(edge.getId());
+
+        doPost("/api/edge/sync/" + edge.getId());
+
+        // sync messages never go through the edge queue, yet every pushed one must also be counted as added
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            MsgCounters counters = statsCounterService.getMsgCountersByEdge().get(edge.getId());
+            Assert.assertNotNull(counters);
+            Assert.assertTrue(counters.getMsgsPushed().get() > 0);
+            assertEquals(counters.getMsgsAdded().get(), counters.getMsgsPushed().get());
+        });
+    }
+
     private long getStatsLongValue(List<TsKvEntry> stats, EdgeStatsKey key) {
         return stats.stream().filter(e -> e.getKey().equals(key.getKey())).findFirst().get().getLongValue().orElse(0L);
     }
