@@ -28,9 +28,9 @@
             </mat-slide-toggle>
           </div>
           @if (!mobileAppSettingsForm.get('useSystemSettings').value && !setBaseURL) {
-            <div class="tb-form-hint flex items-center gap-2">
+            <div class="tb-form-hint tb-primary-fill tb-form-hint-warning">
               <mat-icon>warning</mat-icon>
-              <span class="flex-1">
+              <span>
                 {{'admin.mobile-app.warning-not-set-white-labeling' | translate }} <a routerLink="/white-labeling/loginWhiteLabel" translate>admin.mobile-app.base-url</a>
               </span>
             </div>

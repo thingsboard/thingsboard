@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 :host {
   .tb-template-header {
     position: sticky;
@@ -8,9 +9,8 @@
     padding-bottom: 12px;
     background-color: var(--mat-dialog-container-color, white);
 
-    .tb-hint-available-params {
-      color: rgba(0, 0, 0, 0.54);
-      letter-spacing: 0.4px;
+    .tb-form-hint {
+      align-items: center;
 
       .content {
         vertical-align: middle;

@@ -15,8 +15,9 @@
         </div>
       }
       @case (ReprocessingState.CONFIG) {
-        <div class="tb-form-hint tb-form-panel-hint tb-primary-fill">
-          {{ 'calculated-fields.hint.reprocessing' | translate }}
+        <div class="tb-form-hint tb-primary-fill">
+          <mat-icon>info_outline</mat-icon>
+          <span>{{ 'calculated-fields.hint.reprocessing' | translate }}</span>
         </div>
         <tb-timewindow [(ngModel)]="timeWindow"
           [panelMode]="false"

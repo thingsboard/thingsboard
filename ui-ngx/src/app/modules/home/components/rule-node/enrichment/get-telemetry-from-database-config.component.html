@@ -152,7 +152,8 @@
         </tb-toggle-select>
       </div>
       <div class="tb-form-hint tb-primary-fill hint-container">
-        {{ deduplicationStrategiesHintTranslations.get(getTelemetryFromDatabaseConfigForm.get('fetchMode').value) | translate }}
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ deduplicationStrategiesHintTranslations.get(getTelemetryFromDatabaseConfigForm.get('fetchMode').value) | translate }}</span>
       </div>
     </div>
     @if (getTelemetryFromDatabaseConfigForm.get('fetchMode').value === fetchMode.ALL) {
