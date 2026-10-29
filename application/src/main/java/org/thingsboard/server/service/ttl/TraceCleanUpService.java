@@ -50,12 +50,17 @@ public class TraceCleanUpService extends AbstractCleanUpService {
             traceDao.cleanUpPartitionsCache(spansExpTime);
             return;
         }
+        // Separate tries: a failure in one cleanup must not skip the other.
         try {
             log.debug("Cleaning up traces before {} and trace groups before {}", spansExpTime, expTime(now, traceGroupsTtlInSec));
             traceDao.cleanUp(spansExpTime, expTime(now, traceGroupsTtlInSec), removalBatchSize);
+        } catch (Exception e) {
+            log.error("Failed to clean up traces", e);
+        }
+        try {
             ruleEngineMonitoringDao.cleanUp(expTime(now, ruleEngineStatsTtlInSec), removalBatchSize);
         } catch (Exception e) {
-            log.error("Failed to clean up traces and rule engine stats", e);
+            log.error("Failed to clean up rule engine stats", e);
         }
     }
 

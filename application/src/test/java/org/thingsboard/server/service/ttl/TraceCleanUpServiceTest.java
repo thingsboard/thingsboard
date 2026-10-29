@@ -68,6 +68,16 @@ class TraceCleanUpServiceTest {
     }
 
     @Test
+    void givenTraceCleanUpFails_whenCleanUp_thenRuleEngineStatsAreStillCleanedUp() {
+        when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
+        Mockito.doThrow(new RuntimeException("partition drop failed")).when(traceDao).cleanUp(anyLong(), anyLong(), anyInt());
+
+        service.cleanUp();
+
+        verify(ruleEngineMonitoringDao).cleanUp(NOW - 14 * DAY_MS, 500);
+    }
+
+    @Test
     void givenZeroTtl_whenCleanUp_thenThatDataIsKept() {
         ReflectionTestUtils.setField(service, "traceGroupsTtlInSec", 0L);
         when(partitionService.isSystemTenantPartitionMine(ServiceType.TB_CORE)).thenReturn(true);
