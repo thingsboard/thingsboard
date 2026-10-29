@@ -12,7 +12,6 @@ import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitor
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringQueueOption;
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringRuleNodeOption;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
@@ -108,7 +107,7 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void givenQueueLagStats_whenFindTimeseriesTableAndLast_thenLagIsReturned() {
+    public void givenQueueLagStats_whenFindTimeseriesAndLast_thenLagIsReturned() {
         long now = System.currentTimeMillis();
         dao.saveQueueLagStats(List.of(
                 new QueueLagStatsRow(now - 2 * MINUTE, tenantId, queueId, 100),
@@ -120,24 +119,20 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
         assertEquals(Long.valueOf(100), series.get(0).lag());
         assertEquals(queueId, series.get(0).queueId());
 
-        List<QueueLagTableEntry> table = dao.findQueueLagTable(new QueueLagTableQuery(tenantId, now - 3 * MINUTE, now, Set.of(), null));
-        assertEquals(1, table.size());
-        assertEquals(Long.valueOf(140), table.get(0).lag());
-
         assertEquals(Long.valueOf(40), dao.findLastQueueLag(tenantId, List.of(queueId), 5 * MINUTE));
         assertEquals(Long.valueOf(40), dao.findLastQueueLag(tenantId, null, 5 * MINUTE));
         assertNull(dao.findLastQueueLag(UUID.randomUUID(), null, 5 * MINUTE));
     }
 
     @Test
-    public void givenSystemQueueLag_whenFindIsolatedTenantsLagTable_thenSystemRowsAreExcluded() {
+    public void givenSystemQueueLag_whenFindIsolatedTenantsLagTimeseries_thenSystemRowsAreExcluded() {
         dao.saveQueueLagStats(List.of(new QueueLagStatsRow(T0, tenantId, queueId, 5),
                 new QueueLagStatsRow(T0, TenantId.SYS_TENANT_ID.getId(), UUID.randomUUID(), 1000)));
 
-        List<QueueLagTableEntry> table = dao.findQueueLagTable(new QueueLagTableQuery(tenantId, T0, T0 + MINUTE, Set.of(), null));
+        List<QueueLagTimeseriesEntry> series = dao.findQueueLagTimeseries(new QueueLagTimeseriesQuery(tenantId, T0, T0 + MINUTE, Set.of(), null, null));
 
-        assertEquals(1, table.size());
-        assertEquals(Long.valueOf(5), table.get(0).lag());
+        assertEquals(1, series.size());
+        assertEquals(Long.valueOf(5), series.get(0).lag());
     }
 
     @Test
@@ -164,8 +159,8 @@ public class JpaRuleEngineMonitoringDaoTest extends AbstractJpaDaoTest {
                 Set.of(RuleNodeDimension.RULE_NODE_ID), null, null, null, null)));
         assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findRuleNodeTable(new RuleNodeTableQuery(tenantId, T0, T0 + MINUTE,
                 Set.of(RuleNodeDimension.LAST_VISITED_RULE_NODE_ID), null, null, null, null)));
-        assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findQueueLagTable(new QueueLagTableQuery(tenantId, T0, T0 + MINUTE,
-                Set.of(RuleNodeDimension.SERVICE_ID), null)));
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> dao.findQueueLagTimeseries(new QueueLagTimeseriesQuery(tenantId, T0, T0 + MINUTE,
+                Set.of(RuleNodeDimension.SERVICE_ID), null, null)));
     }
 
     @Test

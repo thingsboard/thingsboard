@@ -245,7 +245,6 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsDelta;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsTableRow;
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
@@ -6697,13 +6696,6 @@ public class RestClient implements Closeable {
         params.put("intervalMs", intervalMs);
         return getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/timeseries", params,
                 new ParameterizedTypeReference<List<QueueLagTimeseriesEntry>>() {
-                });
-    }
-
-    public List<QueueLagTableEntry> getQueueLagTable(long startTs, long endTs, String groupBy, List<UUID> queueIds) {
-        return getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/table",
-                statsParams(startTs, endTs, groupBy, queueIds, null, null, null),
-                new ParameterizedTypeReference<List<QueueLagTableEntry>>() {
                 });
     }
 

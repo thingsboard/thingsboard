@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsDelta;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsTableRow;
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
@@ -133,19 +132,6 @@ public class RuleEngineMonitoringController extends BaseController {
         UUID tenantId = getTenantId().getId();
         return queryService.getQueueLagTimeseries(
                 tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds, intervalMs);
-    }
-
-    @GetMapping("/queueLagStats/table")
-    public List<QueueLagTableEntry> getQueueLagTable(
-            @RequestParam long startTs,
-            @RequestParam long endTs,
-            @RequestParam(required = false) String groupBy,
-            @RequestParam(required = false) List<UUID> queueIds
-    ) throws ThingsboardException {
-        checkRuleChainPermission(Operation.READ);
-        UUID tenantId = getTenantId().getId();
-        return queryService.getQueueLagTable(
-                tenantId, startTs, endTs, parseLagGroupBy(groupBy), queueIds);
     }
 
     @GetMapping("/queueLagStats/last")

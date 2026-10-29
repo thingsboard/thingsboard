@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.dao.sql.ruleenginemonitoring;
 
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
@@ -40,8 +39,6 @@ public interface RuleEngineMonitoringDao {
     void cleanUp(long expTime, int batchSize);
 
     List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query);
-
-    List<QueueLagTableEntry> findQueueLagTable(QueueLagTableQuery query);
 
     /**
      * Sum of each queue's latest lag; a queue with no row in the last {@code staleAfterMs} counts as 0.

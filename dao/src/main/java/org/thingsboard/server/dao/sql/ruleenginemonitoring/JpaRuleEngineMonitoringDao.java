@@ -8,7 +8,6 @@ import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitor
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringQueueOption;
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringRuleNodeOption;
 import org.thingsboard.server.dao.config.DefaultDataSource;
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
@@ -79,11 +78,6 @@ public class JpaRuleEngineMonitoringDao implements RuleEngineMonitoringDao {
     @Override
     public List<QueueLagTimeseriesEntry> findQueueLagTimeseries(QueueLagTimeseriesQuery query) {
         return statsQueryRepository.findQueueLagTimeseries(query);
-    }
-
-    @Override
-    public List<QueueLagTableEntry> findQueueLagTable(QueueLagTableQuery query) {
-        return statsQueryRepository.findQueueLagTable(query);
     }
 
     @Override

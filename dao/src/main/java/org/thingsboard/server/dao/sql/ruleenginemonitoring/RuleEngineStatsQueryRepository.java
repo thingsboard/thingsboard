@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.config.DefaultDataSource;
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
@@ -58,9 +57,6 @@ public class RuleEngineStatsQueryRepository {
 
     private static final RowMapper<QueueLagTimeseriesEntry> QUEUE_LAG_TS_MAPPER = (rs, rowNum) -> new QueueLagTimeseriesEntry(
             getLong(rs, "bucket_time"), getLong(rs, "lag"), getUuid(rs, "queue_tenant_id"), getUuid(rs, "queue_id"));
-
-    private static final RowMapper<QueueLagTableEntry> QUEUE_LAG_TABLE_MAPPER = (rs, rowNum) -> new QueueLagTableEntry(
-            getLong(rs, "lag"), getUuid(rs, "queue_tenant_id"), getUuid(rs, "queue_id"));
 
     private static final Set<RuleNodeDimension> RULE_NODE_STATS_DIMENSIONS = EnumSet.of(RuleNodeDimension.TENANT_ID,
             RuleNodeDimension.SERVICE_ID, RuleNodeDimension.QUEUE_ID, RuleNodeDimension.RULE_CHAIN_ID, RuleNodeDimension.RULE_NODE_ID);
@@ -229,28 +225,6 @@ public class RuleEngineStatsQueryRepository {
         appendIn(sql, params, "queue_id", "queueIds", query.queueIds());
         appendTimeseriesGroupBy(sql, bucketExpr, groupBy);
         return jdbcTemplate.query(sql.toString(), params, QUEUE_LAG_TS_MAPPER);
-    }
-
-    public List<QueueLagTableEntry> findQueueLagTable(QueueLagTableQuery query) {
-        Set<RuleNodeDimension> groupBy = query.groupBy();
-        requireDimensions(groupBy, QUEUE_LAG_STATS_DIMENSIONS);
-
-        StringBuilder sql = new StringBuilder("""
-                SELECT SUM(lag)  AS lag,
-                       %s        AS queue_tenant_id,
-                       %s        AS queue_id
-                FROM rule_node_queue_lag_stats
-                WHERE bucket_time >= :startTs
-                  AND bucket_time < :endTs
-                  AND queue_tenant_id = :tenantId
-                """.formatted(
-                groupBy.contains(RuleNodeDimension.QUEUE_TENANT_ID) ? "queue_tenant_id" : "CAST(NULL AS uuid)",
-                groupBy.contains(RuleNodeDimension.QUEUE_ID) ? "queue_id" : "CAST(NULL AS uuid)"
-        ));
-        MapSqlParameterSource params = timeRangeParams(query.startTs(), query.endTs()).addValue("tenantId", query.tenantId());
-        appendIn(sql, params, "queue_id", "queueIds", query.queueIds());
-        appendTableGroupBy(sql, groupBy);
-        return jdbcTemplate.query(sql.toString(), params, QUEUE_LAG_TABLE_MAPPER);
     }
 
     public Long findLastQueueLag(UUID tenantId, List<UUID> queueIds, long staleAfterMs) {

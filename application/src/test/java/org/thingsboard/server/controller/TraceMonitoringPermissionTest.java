@@ -52,7 +52,6 @@ public class TraceMonitoringPermissionTest extends AbstractControllerTest {
             "/api/ruleEngineMonitoring/queueStats/timeseries?" + TS_RANGE,
             "/api/ruleEngineMonitoring/queueStats/table?" + TS_RANGE,
             "/api/ruleEngineMonitoring/queueLagStats/timeseries?" + TS_RANGE,
-            "/api/ruleEngineMonitoring/queueLagStats/table?" + TS_RANGE,
             "/api/ruleEngineMonitoring/queueLagStats/last",
             "/api/ruleEngineMonitoring/stats/table?" + TS_RANGE,
             "/api/ruleEngineMonitoring/stats/table/compare?" + TS_RANGE + "&compareStartTs=0&compareEndTs=1000");

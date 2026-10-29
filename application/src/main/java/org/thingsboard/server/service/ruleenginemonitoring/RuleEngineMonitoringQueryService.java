@@ -9,13 +9,11 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsDelta;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsTableRow;
 import org.thingsboard.server.common.data.ruleenginemonitoring.MetricDelta;
-import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTableRow;
 import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTsKvEntry;
-import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueLagTableQuery;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueLagTimeseriesQuery;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueTableQuery;
 import org.thingsboard.server.dao.sql.ruleenginemonitoring.QueueTimeseriesQuery;
@@ -120,14 +118,6 @@ public class RuleEngineMonitoringQueryService {
 
     private UUID resolveQueueTenantId(UUID tenantId) {
         return QueueOwners.resolveQueueTenantId(tenantProfileCache, tenantId);
-    }
-
-    public List<QueueLagTableEntry> getQueueLagTable(
-            UUID tenantId, long startTs, long endTs,
-            Set<RuleNodeDimension> dims,
-            List<UUID> queueIds) {
-        return dao.findQueueLagTable(
-                new QueueLagTableQuery(resolveQueueTenantId(tenantId), startTs, endTs, dims, queueIds));
     }
 
     public Long getCurrentQueueLag(UUID tenantId, List<UUID> queueIds) {
