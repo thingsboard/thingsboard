@@ -12,6 +12,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.AiModelInfo;
+import org.thingsboard.server.common.data.ai.dto.TbChatPrompt;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
 import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
 import org.thingsboard.server.common.data.ai.dto.TbContent;
@@ -38,6 +39,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -273,11 +275,11 @@ public class AiModelControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
 
         // WHEN
-        ResultActions result = doPost("/api/ai/model/chat", constructChatRequest());
+        ResultActions result = doPost("/api/ai/model/chat", constructChatPrompt());
 
         // THEN
         result.andExpect(status().isBadRequest())
-                .andExpect(statusReason(is("Validation error: chatModelConfig must not be null")));
+                .andExpect(statusReason(containsString("chatModelConfig")));
     }
 
     /* --- Chat with saved model API tests --- */
@@ -288,7 +290,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         // WHEN
-        ResultActions result = doPost("/api/ai/model/" + Uuids.timeBased() + "/chat", constructChatRequest());
+        ResultActions result = doPost("/api/ai/model/" + Uuids.timeBased() + "/chat", constructChatPrompt());
 
         // THEN
         result.andExpect(status().isForbidden()).andExpect(statusReason(equalTo(msgErrorPermission)));
@@ -302,7 +304,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         var nonexistentModelId = new AiModelId(Uuids.timeBased());
 
         // WHEN
-        ResultActions result = doPost("/api/ai/model/" + nonexistentModelId + "/chat", constructChatRequest());
+        ResultActions result = doPost("/api/ai/model/" + nonexistentModelId + "/chat", constructChatPrompt());
 
         // THEN
         result.andExpect(status().isNotFound())
@@ -318,7 +320,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         try {
             // WHEN
-            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatRequest(), TbChatResponse.class, status().isOk());
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt(), TbChatResponse.class, status().isOk());
 
             // THEN
             assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
@@ -336,7 +338,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         loginCustomerAdminUser();
 
         // WHEN
-        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt());
 
         // THEN
         result.andExpect(status().isForbidden())
@@ -352,7 +354,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         try {
             // WHEN
-            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatRequest(), TbChatResponse.class, status().isOk());
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt(), TbChatResponse.class, status().isOk());
 
             // THEN
             assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
@@ -372,7 +374,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
 
         try {
             // WHEN
-            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatRequest(), TbChatResponse.class, status().isOk());
+            TbChatResponse response = doPostAsync("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt(), TbChatResponse.class, status().isOk());
 
             // THEN
             assertThat(response).isInstanceOf(TbChatResponse.Failure.class);
@@ -390,7 +392,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         loginCustomerUser();
 
         // WHEN
-        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt());
 
         // THEN
         result.andExpect(status().isForbidden())
@@ -405,7 +407,7 @@ public class AiModelControllerTest extends AbstractControllerTest {
         loginReadOnlyCustomerUser();
 
         // WHEN
-        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatRequest());
+        ResultActions result = doPost("/api/ai/model/" + model.getId() + "/chat", constructChatPrompt());
 
         // THEN
         result.andExpect(status().isForbidden())
@@ -1057,8 +1059,8 @@ public class AiModelControllerTest extends AbstractControllerTest {
         return doPost("/api/ai/model", model, AiModel.class);
     }
 
-    private TbChatRequest constructChatRequest() {
-        return new TbChatRequest(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))), null);
+    private TbChatPrompt constructChatPrompt() {
+        return new TbChatPrompt(null, new TbUserMessage(List.of(new TbContent.TbTextContent("hi"))));
     }
 
     // The default Customer User role, which grants read-only operations on all resources

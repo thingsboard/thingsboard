@@ -4,6 +4,7 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import dev.langchain4j.model.chat.request.ChatRequest;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.AiModelInfo;
+import org.thingsboard.server.common.data.ai.dto.TbChatPrompt;
 import org.thingsboard.server.common.data.ai.dto.TbChatRequest;
 import org.thingsboard.server.common.data.ai.dto.TbChatResponse;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
@@ -180,10 +182,7 @@ class AiModelController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/chat")
     public DeferredResult<TbChatResponse> sendChatRequest(@Valid @RequestBody TbChatRequest tbChatRequest) throws ThingsboardException {
-        if (tbChatRequest.chatModelConfig() == null) {
-            throw new ThingsboardException("Validation error: chatModelConfig must not be null", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-        return executeChatRequest(tbChatRequest.chatModelConfig(), tbChatRequest);
+        return executeChatRequest(tbChatRequest.chatModelConfig(), tbChatRequest.toLangChainChatRequest());
     }
 
     @ApiOperation(
@@ -204,18 +203,18 @@ class AiModelController extends BaseController {
                     example = "de7900d4-30e2-11f0-9cd2-0242ac120002"
             )
             @PathVariable UUID modelUuid,
-            @Valid @RequestBody TbChatRequest tbChatRequest
+            @Valid @RequestBody TbChatPrompt tbChatPrompt
     ) throws ThingsboardException {
         AiModel model = checkAiModelId(new AiModelId(modelUuid), Operation.INVOKE);
         if (!(model.getConfiguration() instanceof AiChatModelConfig<?> chatModelConfig)) {
             throw new ThingsboardException("AI model with id [" + modelUuid + "] is not a chat model", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        return executeChatRequest(chatModelConfig, tbChatRequest);
+        return executeChatRequest(chatModelConfig, tbChatPrompt.toLangChainChatRequest());
     }
 
-    private DeferredResult<TbChatResponse> executeChatRequest(AiChatModelConfig<?> chatModelConfig, TbChatRequest tbChatRequest) throws ThingsboardException {
+    private DeferredResult<TbChatResponse> executeChatRequest(AiChatModelConfig<?> chatModelConfig, ChatRequest chatRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
-        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(user.getTenantId(), chatModelConfig, tbChatRequest.toLangChainChatRequest())
+        ListenableFuture<TbChatResponse> future = aiChatModelService.sendChatRequestAsync(user.getTenantId(), chatModelConfig, chatRequest)
                 .transform(chatResponse -> (TbChatResponse) new TbChatResponse.Success(chatResponse.aiMessage().text()), directExecutor())
                 .catching(Throwable.class, ex -> toFailure(user, ex), directExecutor());
 
