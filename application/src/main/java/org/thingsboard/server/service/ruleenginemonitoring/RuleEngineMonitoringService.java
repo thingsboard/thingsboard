@@ -85,7 +85,6 @@ public class RuleEngineMonitoringService {
     private final Timer flushRuleNodeStatsTimer;
     private final Timer flushQueueStatsTimer;
     private final Timer flushQueueLagStatsTimer;
-    private final Timer recordRuleNodeExecTimer;
     private final Timer recordQueueOutcomesTimer;
     private final DefaultCounter ruleNodeFlushRowsCounter;
     private final DefaultCounter queueFlushRowsCounter;
@@ -123,7 +122,6 @@ public class RuleEngineMonitoringService {
         this.flushRuleNodeStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "ruleNode");
         this.flushQueueStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "queue");
         this.flushQueueLagStatsTimer = statsFactory.createTimer("ruleNodeExecStatsFlushDuration", "statsName", "queueLag");
-        this.recordRuleNodeExecTimer = statsFactory.createTimer("ruleNodeExecStatsRecordDuration", "statsName", "ruleNode");
         this.recordQueueOutcomesTimer = statsFactory.createTimer("ruleNodeExecStatsRecordDuration", "statsName", "queue");
         this.ruleNodeFlushRowsCounter = statsFactory.createDefaultCounter("ruleNodeExecStatsFlushRows", "statsName", "ruleNode");
         this.queueFlushRowsCounter = statsFactory.createDefaultCounter("ruleNodeExecStatsFlushRows", "statsName", "queue");
@@ -146,7 +144,7 @@ public class RuleEngineMonitoringService {
 
     public void recordRuleNodeExec(UUID tenantId, RuleNode self, String queueName, String serviceId,
                                    long durationMs, boolean isFailure) {
-        long startTs = System.currentTimeMillis();
+        // Not timed: this runs per message per rule node and takes microseconds; the flush timers show the cost.
         try {
             RuleNodeExecKey key = resolveExecKey(tenantId, self, queueName, serviceId);
             while (true) {
@@ -166,8 +164,6 @@ public class RuleEngineMonitoringService {
             }
         } catch (Exception e) {
             log.error("Failed to record rule node exec", e);
-        } finally {
-            recordRuleNodeExecTimer.record(System.currentTimeMillis() - startTs, MILLISECONDS);
         }
     }
 
@@ -176,7 +172,7 @@ public class RuleEngineMonitoringService {
      * ({@code toReprocess}, which may include successes, e.g. with RETRY_ALL), so a message counts once, with its final result.
      */
     public void recordQueueOutcomes(TbMsgPackProcessingContext packCtx, Queue queue, String serviceId, Set<UUID> toReprocess) {
-        long startTs = System.currentTimeMillis();
+        long startNs = System.nanoTime();
         try {
             UUID queueTenantId = queue.getTenantId().getId();
             UUID queueId = queue.getId().getId();
@@ -197,7 +193,7 @@ public class RuleEngineMonitoringService {
         } catch (Exception e) {
             log.error("Failed to record queue outcomes", e);
         } finally {
-            recordQueueOutcomesTimer.record(System.currentTimeMillis() - startTs, MILLISECONDS);
+            recordQueueOutcomesTimer.record(System.nanoTime() - startNs, NANOSECONDS);
         }
     }
 
