@@ -5578,6 +5578,7 @@
         "credentials": "Credentials",
         "credentials-type": "Credentials type",
         "credentials-type-required": "Credentials type is required.",
+        "downlink-credentials": "Downlink credentials",
         "username": "Username",
         "username-required": "Username is required.",
         "password": "Password",
