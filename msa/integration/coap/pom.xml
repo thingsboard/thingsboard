@@ -10,7 +10,7 @@
 
 <parent>
     <groupId>org.thingsboard.msa</groupId>
-    <version>4.4.0.1</version>
+    <version>4.4.0.2</version>
     <artifactId>integration</artifactId>
 </parent>
 
