@@ -2125,7 +2125,7 @@
     "update-raw-payload": "Payload RAW mis à jour"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Texte",
     "binary": "Binaire (Base64)",
     "hex": "Binaire (Hex)"
@@ -3078,9 +3078,9 @@
     "mqtt-device-payload-type-json": "JSON",
     "mqtt-device-payload-type-proto": "Protobuf",
     "mqtt-enable-compatibility-with-json-payload-format": "Activer la compatibilité avec d’autres formats de charge utile.",
-    "mqtt-enable-compatibility-with-json-payload-format-hint": "Lorsqu’activé, la plateforme utilisera par défaut le format de charge utile Protobuf. En cas d’échec du parsing, elle tentera d’utiliser le format JSON. Utile pour la rétrocompatibilité lors des mises à jour du firmware. Par exemple, la version initiale du firmware utilise Json, tandis que la nouvelle version utilise Protobuf. Pendant la mise à jour du parc d’appareils, il est nécessaire de supporter les deux formats simultanément. Ce mode introduit une légère dégradation des performances, il est donc recommandé de le désactiver une fois tous les appareils mis à jour.",
-    "mqtt-use-json-format-for-default-downlink-topics": "Utiliser le format Json pour les topics descendants par défaut",
-    "mqtt-use-json-format-for-default-downlink-topics-hint": "Lorsqu’activé, la plateforme utilisera le format de charge utile Json pour envoyer des attributs et des RPC via les topics suivants : <b>v1/devices/me/attributes/response/$request_id</b>, <b>v1/devices/me/attributes</b>, <b>v1/devices/me/rpc/request/$request_id</b>, <b>v1/devices/me/rpc/response/$request_id</b>. Ce paramètre n’affecte pas les abonnements aux attributs et RPC utilisant les nouveaux topics (v2) : <b>v2/a/res/$request_id</b>, <b>v2/a</b>, <b>v2/r/req/$request_id</b>, <b>v2/r/res/$request_id</b>. Où <b>$request_id</b> est un identifiant de requête entier.",
+    "mqtt-enable-compatibility-with-json-payload-format-hint": "Lorsqu’activé, la plateforme utilisera par défaut le format de charge utile Protobuf. En cas d’échec du parsing, elle tentera d’utiliser le format JSON. Utile pour la rétrocompatibilité lors des mises à jour du firmware. Par exemple, la version initiale du firmware utilise JSON, tandis que la nouvelle version utilise Protobuf. Pendant la mise à jour du parc d’appareils, il est nécessaire de supporter les deux formats simultanément. Ce mode introduit une légère dégradation des performances, il est donc recommandé de le désactiver une fois tous les appareils mis à jour.",
+    "mqtt-use-json-format-for-default-downlink-topics": "Utiliser le format JSON pour les topics descendants par défaut",
+    "mqtt-use-json-format-for-default-downlink-topics-hint": "Lorsqu’activé, la plateforme utilisera le format de charge utile JSON pour envoyer des attributs et des RPC via les topics suivants : <b>v1/devices/me/attributes/response/$request_id</b>, <b>v1/devices/me/attributes</b>, <b>v1/devices/me/rpc/request/$request_id</b>, <b>v1/devices/me/rpc/response/$request_id</b>. Ce paramètre n’affecte pas les abonnements aux attributs et RPC utilisant les nouveaux topics (v2) : <b>v2/a/res/$request_id</b>, <b>v2/a</b>, <b>v2/r/req/$request_id</b>, <b>v2/r/res/$request_id</b>. Où <b>$request_id</b> est un identifiant de requête entier.",
     "mqtt-send-ack-on-validation-exception": "Envoyer PUBACK en cas d’échec de validation de message PUBLISH",
     "mqtt-send-ack-on-validation-exception-hint": "Par défaut, la plateforme ferme la session MQTT en cas d’échec de validation du message. Lorsqu’activé, elle envoie un accusé de réception (PUBACK) au lieu de fermer la session.",
     "mqtt-protocol-version": "Version du protocole",
@@ -5016,7 +5016,7 @@
     "mapping": "Mappage",
     "topic-filter": "Filtre de sujet",
     "converter-type": "Type de convertisseur",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Expression JSON du nom de l’appareil",
     "topic-name-expression": "Expression du nom de l’appareil dans le sujet",
     "json-type-expression": "Expression JSON du type de l’appareil",

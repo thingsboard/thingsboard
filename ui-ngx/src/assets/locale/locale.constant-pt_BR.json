@@ -2125,7 +2125,7 @@
     "update-raw-payload": "Payload RAW atualizado"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Texto",
     "binary": "Binário (Base64)",
     "hex": "Binário (Hex)"
@@ -3078,9 +3078,9 @@
     "mqtt-device-payload-type-json": "JSON",
     "mqtt-device-payload-type-proto": "Protobuf",
     "mqtt-enable-compatibility-with-json-payload-format": "Habilitar compatibilidade com outros formatos de payload.",
-    "mqtt-enable-compatibility-with-json-payload-format-hint": "Quando habilitado, a plataforma usará o formato de payload Protobuf por padrão. Se o parsing falhar, a plataforma tentará usar o formato de payload JSON. Útil para compatibilidade retroativa durante atualizações de firmware. Por exemplo, a versão inicial do firmware usa Json, enquanto a nova versão usa Protobuf. Durante o processo de atualização de firmware de um conjunto de dispositivos, é necessário suportar Protobuf e JSON simultaneamente. O modo de compatibilidade introduz uma leve degradação de desempenho, portanto recomenda-se desabilitar este modo assim que todos os dispositivos estiverem atualizados.",
-    "mqtt-use-json-format-for-default-downlink-topics": "Usar formato Json para tópicos de downlink padrão",
-    "mqtt-use-json-format-for-default-downlink-topics-hint": "Quando habilitado, a plataforma usará o formato de payload Json para enviar atributos e RPC pelos seguintes tópicos: <b>v1/devices/me/attributes/response/$request_id</b>, <b>v1/devices/me/attributes</b>, <b>v1/devices/me/rpc/request/$request_id</b>, <b>v1/devices/me/rpc/response/$request_id</b>. Esta configuração não afeta as assinaturas de atributos e rpc enviadas usando os novos tópicos (v2): <b>v2/a/res/$request_id</b>, <b>v2/a</b>, <b>v2/r/req/$request_id</b>, <b>v2/r/res/$request_id</b>. Onde <b>$request_id</b> é um identificador de solicitação inteiro.",
+    "mqtt-enable-compatibility-with-json-payload-format-hint": "Quando habilitado, a plataforma usará o formato de payload Protobuf por padrão. Se o parsing falhar, a plataforma tentará usar o formato de payload JSON. Útil para compatibilidade retroativa durante atualizações de firmware. Por exemplo, a versão inicial do firmware usa JSON, enquanto a nova versão usa Protobuf. Durante o processo de atualização de firmware de um conjunto de dispositivos, é necessário suportar Protobuf e JSON simultaneamente. O modo de compatibilidade introduz uma leve degradação de desempenho, portanto recomenda-se desabilitar este modo assim que todos os dispositivos estiverem atualizados.",
+    "mqtt-use-json-format-for-default-downlink-topics": "Usar formato JSON para tópicos de downlink padrão",
+    "mqtt-use-json-format-for-default-downlink-topics-hint": "Quando habilitado, a plataforma usará o formato de payload JSON para enviar atributos e RPC pelos seguintes tópicos: <b>v1/devices/me/attributes/response/$request_id</b>, <b>v1/devices/me/attributes</b>, <b>v1/devices/me/rpc/request/$request_id</b>, <b>v1/devices/me/rpc/response/$request_id</b>. Esta configuração não afeta as assinaturas de atributos e rpc enviadas usando os novos tópicos (v2): <b>v2/a/res/$request_id</b>, <b>v2/a</b>, <b>v2/r/req/$request_id</b>, <b>v2/r/res/$request_id</b>. Onde <b>$request_id</b> é um identificador de solicitação inteiro.",
     "mqtt-send-ack-on-validation-exception": "Enviar PUBACK em caso de falha de validação de mensagem PUBLISH",
     "mqtt-send-ack-on-validation-exception-hint": "Por padrão, a plataforma encerrará a sessão MQTT em caso de falha de validação de mensagem. Quando habilitado, a plataforma enviará confirmação de publicação em vez de encerrar a sessão.",
     "mqtt-protocol-version": "Versão do protocolo",
@@ -3369,7 +3369,7 @@
       "fw-update-resource-required": "O recurso CoAP de atualização de firmware é obrigatório.",
       "sw-update-resource": "Recurso CoAP de atualização de software",
       "sw-update-resource-required": "O recurso CoAP de atualização de software é obrigatório.",
-      "config-json-tab": "Perfil de dispositivo de configuração Json",
+      "config-json-tab": "Perfil de dispositivo de configuração JSON",
       "attributes-name": {
         "min-period": "Período mínimo",
         "max-period": "Período máximo",
@@ -5016,7 +5016,7 @@
     "mapping": "Mapeamento",
     "topic-filter": "Filtro de tópico",
     "converter-type": "Tipo de conversor",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Expressão JSON de nome do dispositivo",
     "topic-name-expression": "Expressão de tópico de nome do dispositivo",
     "json-type-expression": "Expressão JSON de tipo do dispositivo",

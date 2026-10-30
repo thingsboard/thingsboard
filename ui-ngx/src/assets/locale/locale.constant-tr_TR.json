@@ -2127,7 +2127,7 @@
     "update-raw-payload": "Güncellenmiş RAW yük"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Metin",
     "binary": "İkili (Base64)",
     "hex": "İkili (Hex)"
@@ -3371,7 +3371,7 @@
       "fw-update-resource-required": "Ürün yazılımı güncelleme CoAP kaynağı gereklidir.",
       "sw-update-resource": "Yazılım güncelleme CoAP kaynağı",
       "sw-update-resource-required": "Yazılım güncelleme CoAP kaynağı gereklidir.",
-      "config-json-tab": "Json Yapılandırma Profil Cihazı",
+      "config-json-tab": "JSON Yapılandırma Profil Cihazı",
       "attributes-name": {
         "min-period": "Minimum süre",
         "max-period": "Maksimum süre",
@@ -5018,16 +5018,16 @@
     "mapping": "Eşleme",
     "topic-filter": "Konu filtresi",
     "converter-type": "Dönüştürücü türü",
-    "converter-json": "Json",
-    "json-name-expression": "Cihaz adı json ifadesi",
+    "converter-json": "JSON",
+    "json-name-expression": "Cihaz adı JSON ifadesi",
     "topic-name-expression": "Cihaz adı konu ifadesi",
-    "json-type-expression": "Cihaz türü json ifadesi",
+    "json-type-expression": "Cihaz türü JSON ifadesi",
     "topic-type-expression": "Cihaz türü konu ifadesi",
     "attribute-key-expression": "Öznitelik anahtar ifadesi",
-    "attr-json-key-expression": "Öznitelik anahtar json ifadesi",
+    "attr-json-key-expression": "Öznitelik anahtar JSON ifadesi",
     "attr-topic-key-expression": "Öznitelik anahtar konu ifadesi",
     "request-id-expression": "İstek ID ifadesi",
-    "request-id-json-expression": "İstek ID json ifadesi",
+    "request-id-json-expression": "İstek ID JSON ifadesi",
     "request-id-topic-expression": "İstek ID konu ifadesi",
     "response-topic-expression": "Yanıt konu ifadesi",
     "value-expression": "Değer ifadesi",
@@ -7470,7 +7470,7 @@
     "relation-filters": "İlişki filtreleri",
     "relation-filter": "İlişki filtresi",
     "additional-info": "Ek bilgi (JSON)",
-    "invalid-additional-info": "Ek bilgi json'u ayrıştırılamadı.",
+    "invalid-additional-info": "Ek bilgi JSON'u ayrıştırılamadı.",
     "no-relations-text": "İlişki bulunamadı",
     "not": "Değil",
     "copy-type": "Türü kopyala"
