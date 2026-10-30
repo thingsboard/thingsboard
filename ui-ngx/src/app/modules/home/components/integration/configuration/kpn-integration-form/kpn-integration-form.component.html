@@ -37,8 +37,8 @@
                        hint="{{ 'integration.kpn-security-header-hint' | translate }}">
   </tb-secret-key-input>
   @if (noSecurity) {
-    <div class="tb-form-hint tb-primary-fill no-security-warning my-2 flex items-center gap-2">
-      <mat-icon class="tb-mat-20">warning</mat-icon>
+    <div class="tb-form-hint tb-primary-fill my-2 flex items-center gap-2">
+      <mat-icon class="tb-mat-20 text-[#FAA405]">warning</mat-icon>
       <span>{{ 'integration.kpn-no-security-warning' | translate }}</span>
     </div>
   }
@@ -48,28 +48,26 @@
       <mat-panel-title translate>integration.kpn-https-destination-settings</mat-panel-title>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-      <section class="expansion-panel-setting-content">
-        <div class="flex flex-col gap-2">
-          <tb-secret-key-input formControlName="destinationSharedSecret" class="mat-block" appearance="outline"
-                               label="{{ 'integration.destination-shared-secret' | translate }}"
-                               hint="{{ 'integration.kpn-destination-shared-secret-hint' | translate }}">
-          </tb-secret-key-input>
-          <div class="tb-form-panel stroked">
-            <div class="flex flex-col gap-1">
-              <div class="tb-form-panel-title" translate>integration.kpn-additional-headers-filter</div>
-              <div class="tb-form-panel-hint" translate>integration.kpn-additional-headers-filter-hint</div>
-            </div>
-            <tb-key-val-map
-              noDataText="integration.no-headers-filter"
-              keyPlaceholderText="integration.header"
-              isStrokedButton="true"
-              appearance="outline"
-              formControlName="additionalHeadersFilter">
-            </tb-key-val-map>
-            @if (kpnIntegrationConfigForm.get('additionalHeadersFilter').hasError('securityHeaderDuplicate')) {
-              <mat-error>{{ 'integration.kpn-security-header-duplicate' | translate }}</mat-error>
-            }
+      <section class="expansion-panel-setting-content !flex flex-col gap-2">
+        <tb-secret-key-input formControlName="destinationSharedSecret" class="mat-block" appearance="outline"
+                             label="{{ 'integration.destination-shared-secret' | translate }}"
+                             hint="{{ 'integration.kpn-destination-shared-secret-hint' | translate }}">
+        </tb-secret-key-input>
+        <div class="tb-form-panel stroked">
+          <div class="flex flex-col gap-1">
+            <div class="tb-form-panel-title" translate>integration.kpn-additional-headers-filter</div>
+            <div class="tb-form-panel-hint" translate>integration.kpn-additional-headers-filter-hint</div>
           </div>
+          <tb-key-val-map
+            noDataText="integration.no-headers-filter"
+            keyPlaceholderText="integration.header"
+            isStrokedButton="true"
+            appearance="outline"
+            formControlName="additionalHeadersFilter">
+          </tb-key-val-map>
+          @if (kpnIntegrationConfigForm.get('additionalHeadersFilter').hasError('securityHeaderDuplicate')) {
+            <mat-error>{{ 'integration.kpn-security-header-duplicate' | translate }}</mat-error>
+          }
         </div>
       </section>
     </ng-template>

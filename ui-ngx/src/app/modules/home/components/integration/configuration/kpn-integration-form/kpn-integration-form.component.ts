@@ -34,7 +34,7 @@ interface KpnIntegrationFormValue extends Omit<KpnIntegration, 'enableSecurity' 
 @Component({
     selector: 'tb-kpn-integration-form',
     templateUrl: './kpn-integration-form.component.html',
-    styleUrls: ['./kpn-integration-form.component.scss'],
+    styleUrls: [],
     providers: [{
             provide: NG_VALUE_ACCESSOR,
             useExisting: forwardRef(() => KpnIntegrationFormComponent),
@@ -62,8 +62,6 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
 
   private integrationType = IntegrationType.KPN;
   private securityHeaderName = 'X-Things-Secret';
-
-  private inactiveHeadersFilter: {[key: string]: string} = {};
 
   private propagateChangePending = false;
   private propagateChange = (v: any) => { };
@@ -179,7 +177,6 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
   }
 
   private configToFormValue({enableSecurity, headersFilter, ...config}: KpnIntegration): KpnIntegrationFormValue {
-    this.inactiveHeadersFilter = enableSecurity ? {} : headersFilter ?? {};
     const additionalHeadersFilter = enableSecurity ? {...headersFilter} : {};
     const securityHeaderKey = Object.keys(additionalHeadersFilter).find(key => this.isSecurityHeader(key));
     let securityHeader = '';
@@ -196,7 +193,7 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
       headersFilter[this.securityHeaderName] = securityHeader.trim();
     }
     const enableSecurity = Object.keys(headersFilter).length > 0;
-    return {...config, enableSecurity, headersFilter: enableSecurity ? headersFilter : this.inactiveHeadersFilter};
+    return {...config, enableSecurity, headersFilter};
   }
 
   private additionalHeadersFilterValidator(control: AbstractControl): ValidationErrors | null {
