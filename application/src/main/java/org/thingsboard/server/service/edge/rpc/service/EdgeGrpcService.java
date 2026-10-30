@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.service;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -39,9 +40,11 @@ import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
@@ -94,6 +97,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TelemetrySubscriptionService tsSubService;
     private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
+    private final PartitionService partitionService;
 
     private final ConcurrentMap<EdgeId, PendingDisconnect> pendingDisconnectNotifications = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
@@ -198,20 +202,21 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = state.getEdge();
         TenantId tenantId = state.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, state.getSessionId(), edgeId);
-        if (sessions.hasByEdgeId(edgeId)) {
-            EdgeGrpcSessionManager existingSession = sessions.getByEdgeId(edgeId);
-            if (existingSession != null) {
-                UUID sessionId = existingSession.getState().getSessionId();
-                log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, state.getSessionId(), sessionId, edgeId);
-                existingSession.destroyAndMarkAsZombieIfFailed();
-                sessions.removeBySessionId(sessionId);
-            }
+        // Swap first, destroy after: while the slow teardown runs, the replaced session is no longer current, so its own
+        // late disconnect takes the stale-session path instead of clearing the state of this connect.
+        EdgeGrpcSessionManager replaced = sessions.put(edgeSession);
+        if (replaced != null) {
+            UUID replacedSessionId = replaced.getState().getSessionId();
+            log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, state.getSessionId(), replacedSessionId, edgeId);
+            sessions.removeBySessionId(replacedSessionId);
+            replaced.destroyAndMarkAsZombieIfFailed();
         }
-        sessions.put(edgeSession);
+        // Claim ownership before active=true: the previous node reads this entry on disconnect to decide
+        // whether to clear the flag.
+        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         save(tenantId, edgeId, ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, LAST_CONNECT_TIME, lastConnectTs);
-        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         // If the edge reconnected within the disconnect-notification delay window, suppress the pending
         // "disconnected" notification - the drop was transient (debounce for flapping edges).
         cancelPendingDisconnectNotification(edgeId);
@@ -228,11 +233,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeGrpcSessionManager toRemove = sessions.removeByEdgeIdIfCurrent(edgeId, sessionId);
         if (toRemove != null) {
             sessions.removeBySessionId(sessionId);
-            save(tenantId, edgeId, ACTIVITY_STATE, false);
-            long lastDisconnectTs = System.currentTimeMillis();
-            save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
-            pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
-            scheduleDisconnectNotification(edge);
+            // Skip all disconnect side effects if a newer session already owns the edge, on this or another node.
+            // The local check and the inactive write are atomic with a same-node reconnect.
+            if (!isOwnedByAnotherNode(edgeId) && sessions.runIfNoSession(edgeId, () -> save(tenantId, edgeId, ACTIVITY_STATE, false))) {
+                long lastDisconnectTs = System.currentTimeMillis();
+                save(tenantId, edgeId, LAST_DISCONNECT_TIME, lastDisconnectTs);
+                pushRuleEngineMessage(tenantId, edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
+                scheduleDisconnectNotification(edge);
+            }
             // lag measured by this session is stale once it is gone, so the next stats report counts the backlog instead
             ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.resetLagMeasured(edgeId));
             toRemove.onEdgeDisconnect();
@@ -427,6 +435,21 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private boolean isOwnedByThisNode(EdgeId edgeId) {
         TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
         return wrapper != null && serviceInfoProvider.getServiceId().equals(wrapper.get());
+    }
+
+    // The edge's cache entry names another node that is still a live TB-Core service. No entry, or an entry naming
+    // a node that has left the cluster, does not count: the cache has no TTL by default and only the owner evicts it,
+    // so honouring a dead owner would keep the edge marked active forever.
+    private boolean isOwnedByAnotherNode(EdgeId edgeId) {
+        TbCacheValueWrapper<String> wrapper = edgeIdServiceIdCache.get(edgeId);
+        if (wrapper == null) {
+            return false;
+        }
+        String ownerServiceId = wrapper.get();
+        if (ownerServiceId == null || serviceInfoProvider.getServiceId().equals(ownerServiceId)) {
+            return false;
+        }
+        return partitionService.getAllServiceIds(ServiceType.TB_CORE).contains(ownerServiceId);
     }
 
     // The edge has a live owner somewhere in the cluster (the cache is cluster-wide), regardless of which node.

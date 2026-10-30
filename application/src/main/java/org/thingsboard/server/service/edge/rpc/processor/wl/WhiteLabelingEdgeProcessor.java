@@ -65,6 +65,9 @@ public class WhiteLabelingEdgeProcessor extends BaseEdgeProcessor {
                     if (whiteLabeling == null) {
                         return null;
                     }
+                    if (isSystemMailTemplates(whiteLabeling.getType(), tenantId)) {
+                        return null;
+                    }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     WhiteLabelingProto whiteLabelingProto = EdgeMsgConstructorUtils.constructWhiteLabeling(msgType, whiteLabeling);
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
@@ -80,6 +83,9 @@ public class WhiteLabelingEdgeProcessor extends BaseEdgeProcessor {
                 }
                 case DELETED -> {
                     WhiteLabeling whiteLabeling = JacksonUtil.convertValue(edgeEvent.getBody(), WhiteLabeling.class);
+                    if (whiteLabeling != null && isSystemMailTemplates(whiteLabeling.getType(), whiteLabeling.getTenantId())) {
+                        return null;
+                    }
                     WhiteLabelingProto whiteLabelingProto = EdgeMsgConstructorUtils.constructWhiteLabeling(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, whiteLabeling);
                     return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
@@ -90,6 +96,12 @@ public class WhiteLabelingEdgeProcessor extends BaseEdgeProcessor {
             log.error("Can't process white labeling msg [{}]", edgeEvent, e);
         }
         return null;
+    }
+
+    private boolean isSystemMailTemplates(WhiteLabelingType type, TenantId tenantId) {
+        // System mail templates are not synced to the Edge. The Edge is a thin mail client: it
+        // delegates every send to the Cloud, which renders with its own templates.
+        return WhiteLabelingType.MAIL_TEMPLATES.equals(type) && TenantId.SYS_TENANT_ID.equals(tenantId);
     }
 
     private WhiteLabelingType getWhiteLabelingType(EdgeEventType type) {

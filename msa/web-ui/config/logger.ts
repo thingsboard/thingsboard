@@ -3,11 +3,10 @@
 import config from 'config';
 import path from 'path';
 import DailyRotateFile from 'winston-daily-rotate-file';
-import { createLogger, format, transports }  from 'winston';
-import * as Transport from 'winston-transport';
+import { createLogger, format, transport, transports }  from 'winston';
 const { combine, timestamp, label, printf, splat } = format;
 
-const loggerTransports: Array<Transport> = [];
+const loggerTransports: Array<transport> = [];
 
 if (process.env.NODE_ENV !== 'production' || process.env.DOCKER_MODE === 'true') {
     loggerTransports.push(new transports.Console({
