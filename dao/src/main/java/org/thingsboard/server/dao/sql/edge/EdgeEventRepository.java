@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.edge;
 
 import org.springframework.data.domain.Page;
@@ -31,4 +32,12 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
                                                             @Param("seqIdStart") Long seqIdStart,
                                                             @Param("seqIdEnd") Long seqIdEnd,
                                                             Pageable pageable);
+
+    @Query(value = "SELECT count(*) FROM (SELECT 1 FROM edge_event e WHERE e.tenant_id = :tenantId AND e.edge_id = :edgeId " +
+            "AND e.created_time >= :startTime AND e.seq_id > :seqIdStart LIMIT :limit) pending", nativeQuery = true)
+    long countEdgeEvents(@Param("tenantId") UUID tenantId,
+                         @Param("edgeId") UUID edgeId,
+                         @Param("seqIdStart") long seqIdStart,
+                         @Param("startTime") long startTime,
+                         @Param("limit") int limit);
 }

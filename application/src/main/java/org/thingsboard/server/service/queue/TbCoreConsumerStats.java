@@ -30,6 +30,7 @@ public class TbCoreConsumerStats {
     public static final String DEVICE_DISCONNECTS = "deviceDisconnect";
     public static final String DEVICE_INACTIVITIES = "deviceInactivity";
     public static final String DEVICE_INACTIVITY_TIMEOUT_UPDATES = "deviceInactivityTimeoutUpdate";
+    public static final String EDGE_STATS = "edgeStats";
 
     // PE
     public static final String TO_CORE_NF_INTEGRATION_DOWNLINK = "coreNfIntDlnk";
@@ -63,6 +64,7 @@ public class TbCoreConsumerStats {
     private final StatsCounter deviceDisconnectsCounter;
     private final StatsCounter deviceInactivitiesCounter;
     private final StatsCounter deviceInactivityTimeoutUpdatesCounter;
+    private final StatsCounter edgeStatsCounter;
 
     // PE
     private final StatsCounter schedulerMsgCounter;
@@ -101,6 +103,7 @@ public class TbCoreConsumerStats {
         this.deviceDisconnectsCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_DISCONNECTS));
         this.deviceInactivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITIES));
         this.deviceInactivityTimeoutUpdatesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITY_TIMEOUT_UPDATES));
+        this.edgeStatsCounter = register(statsFactory.createStatsCounter(statsKey, EDGE_STATS));
 
         // PE
         this.schedulerMsgCounter = register(statsFactory.createStatsCounter(statsKey, SCHEDULER));
@@ -169,6 +172,11 @@ public class TbCoreConsumerStats {
     public void log(TransportProtos.DeviceActivityProto msg) {
         totalCounter.increment();
         deviceActivitiesCounter.increment();
+    }
+
+    public void log(TransportProtos.EdgeStatsMsgProto msg) {
+        totalCounter.increment();
+        edgeStatsCounter.increment();
     }
 
     public void log(TransportProtos.DeviceDisconnectProto msg) {

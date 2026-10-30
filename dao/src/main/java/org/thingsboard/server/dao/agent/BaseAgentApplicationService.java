@@ -263,6 +263,17 @@ public class BaseAgentApplicationService extends AbstractCachedEntityService<Age
     }
 
     @Override
+    public List<AgentApplicationInfo> findInfosByRelatedEntityIds(TenantId tenantId, EntityType relatedEntityType, List<EntityId> relatedEntityIds) {
+        log.trace("Executing findInfosByRelatedEntityIds, tenantId [{}], type [{}], ids [{}]", tenantId, relatedEntityType, relatedEntityIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        if (relatedEntityIds.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> ids = relatedEntityIds.stream().map(EntityId::getId).toList();
+        return agentApplicationDao.findInfosByRelatedEntityIds(tenantId, relatedEntityType.name(), ids);
+    }
+
+    @Override
     public PageData<EntityInfo> findRelatedEntityCandidates(TenantId tenantId, EntityType relatedEntityType, EntityId currentEntityId, PageLink pageLink) {
         log.trace("Executing findRelatedEntityCandidates, tenantId [{}], type [{}], currentEntityId [{}], pageLink [{}]",
                 tenantId, relatedEntityType, currentEntityId, pageLink);

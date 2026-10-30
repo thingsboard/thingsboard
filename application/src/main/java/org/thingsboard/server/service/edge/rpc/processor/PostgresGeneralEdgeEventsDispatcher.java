@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,9 +35,6 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 @RequiredArgsConstructor
 public class PostgresGeneralEdgeEventsDispatcher implements EdgeEventsDispatcher {
-
-    private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
-    private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
 
     private final EdgeSession session;
     private final EdgeContextComponent ctx;
@@ -144,8 +143,8 @@ public class PostgresGeneralEdgeEventsDispatcher implements EdgeEventsDispatcher
         newStartSeqId = pair.getSecond();
         log.trace("[{}] updateQueueStartTsAndSeqId [{}][{}][{}]", session.getState().getSessionId(), edgeId, newStartTs, newStartSeqId);
         List<AttributeKvEntry> attributes = List.of(
-                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()),
-                new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_SEQ_ID_ATTR_KEY, newStartSeqId), System.currentTimeMillis())
+                new BaseAttributeKvEntry(new LongDataEntry(DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()),
+                new BaseAttributeKvEntry(new LongDataEntry(DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY, newStartSeqId), System.currentTimeMillis())
         );
         return ctx.getAttributesService().save(tenantId, edgeId, AttributeScope.SERVER_SCOPE, attributes);
     }
@@ -168,16 +167,16 @@ public class PostgresGeneralEdgeEventsDispatcher implements EdgeEventsDispatcher
 
     private ListenableFuture<Pair<Long, Long>> getQueueStartTsAndSeqId(TenantId tenantId, EdgeId edgeId, UUID sessionId) {
         ListenableFuture<List<AttributeKvEntry>> future = ctx.getAttributesService()
-                .find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, Arrays.asList(QUEUE_START_TS_ATTR_KEY, QUEUE_START_SEQ_ID_ATTR_KEY));
+                .find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, Arrays.asList(DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY, DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY));
 
         return Futures.transform(future, attributeKvEntries -> {
             long startTs = 0L;
             long startSeqId = 0L;
             for (AttributeKvEntry attributeKvEntry : attributeKvEntries) {
-                if (QUEUE_START_TS_ATTR_KEY.equals(attributeKvEntry.getKey())) {
+                if (DataConstants.EDGE_QUEUE_START_TS_ATTR_KEY.equals(attributeKvEntry.getKey())) {
                     startTs = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
                 }
-                if (QUEUE_START_SEQ_ID_ATTR_KEY.equals(attributeKvEntry.getKey())) {
+                if (DataConstants.EDGE_QUEUE_START_SEQ_ID_ATTR_KEY.equals(attributeKvEntry.getKey())) {
                     startSeqId = attributeKvEntry.getLongValue().isPresent() ? attributeKvEntry.getLongValue().get() : 0L;
                 }
             }

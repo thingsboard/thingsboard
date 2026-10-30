@@ -2059,6 +2059,11 @@ edges:
     ttl: "${EDGES_STATS_TTL:30}"
     # How often to report edge communication stats in milliseconds
     report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:600000}"
+    # Upper bound when counting pending downlink events for an edge whose lag was not measured by a live session (Postgres edge events only).
+    # A reported downlinkMsgsLag equal to this value means "at least this many"
+    max-lag-count: "${EDGES_STATS_MAX_LAG_COUNT:100000}"
+    # How often the edge's core partition owner saves the stats aggregated from all nodes, in milliseconds
+    flush-interval-millis: "${EDGES_STATS_FLUSH_INTERVAL_MS:60000}"
 
 license:
     secret: "${TB_LICENSE_SECRET:}" # license secret obtained from ThingsBoard License Portal (https://license.thingsboard.io)
