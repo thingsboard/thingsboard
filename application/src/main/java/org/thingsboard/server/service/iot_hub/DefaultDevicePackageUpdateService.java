@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.subscription.SubscriptionException;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.converter.ConverterService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -56,12 +57,13 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.secret.SecretConfigurationService;
+import org.thingsboard.server.dao.subscription.PlatformFeature;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.integration.IntegrationManagerService;
+import org.thingsboard.server.service.entitiy.integration.TbIntegrationService;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -73,10 +75,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,7 +108,6 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             "DOWNLINK_CONVERTER", "downlinkConverter",
             "INTEGRATION", "integration");
     private static final Pattern ENTITY_PLACEHOLDER = Pattern.compile("\\$\\{([A-Za-z]+)\\.([A-Za-z]+)}");
-    private static final int INTEGRATION_VALIDATION_TIMEOUT_SEC = 20;
     private static final String UNEXPECTED_ERROR = "Failed to update the device package";
 
     private final IotHubInstalledItemService installedItemService;
@@ -121,8 +122,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     private final TbRuleChainService tbRuleChainService;
     private final ConverterService converterService;
     private final IntegrationService integrationService;
-    private final IntegrationManagerService integrationManagerService;
-    private final SecretConfigurationService secretConfigurationService;
+    private final TbIntegrationService tbIntegrationService;
+    private final SubscriptionService subscriptionService;
     private final AttributesService attributesService;
     private final TelemetrySubscriptionService telemetryService;
     private final TransactionTemplate transactionTemplate;
@@ -166,6 +167,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 throw new IllegalArgumentException("The version belongs to another item");
             }
             validatePlan(devicePackage, request);
+            checkFeatures(tenantId, request);
             validateIntegrations(tenantId, request);
             applied = transactionTemplate.execute(status -> applySteps(tenantId, devicePackage, request, versionInfo));
         } catch (StepFailure e) {
@@ -229,6 +231,15 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         }
     }
 
+    /** Integrations and converters are saved as through their API, which needs the feature in the tenant's plan. */
+    private void checkFeatures(TenantId tenantId, DeviceUpdateRequest request) {
+        boolean savesIntegrations = request.getSteps().stream().anyMatch(step -> step.getAction() != DeviceUpdateRequest.Action.KEEP
+                && ("INTEGRATION".equals(step.getType()) || step.getType().endsWith("_CONVERTER")));
+        if (savesIntegrations) {
+            subscriptionService.checkFeatureAllowed(tenantId, PlatformFeature.INTEGRATIONS);
+        }
+    }
+
     /** The configuration of an integration is checked by a remote call, so before the transaction. */
     private void validateIntegrations(TenantId tenantId, DeviceUpdateRequest request) throws Exception {
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
@@ -240,12 +251,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             body.remove(List.of("id", "defaultConverterId", "downlinkConverterId"));
             Integration integration = JacksonUtil.treeToValue(body, Integration.class);
             integration.setTenantId(tenantId);
-            if (integration.isEdgeTemplate()) {
-                continue;
-            }
             try {
-                secretConfigurationService.replaceSecretUsages(tenantId, integration.getConfiguration());
-                integrationManagerService.validateIntegrationConfiguration(integration).get(INTEGRATION_VALIDATION_TIMEOUT_SEC, TimeUnit.SECONDS);
+                tbIntegrationService.validateIntegrationConfiguration(tenantId, integration);
             } catch (ExecutionException e) {
                 // What the integration reports, e.g. wrong credentials, is what the user has to fix
                 Throwable cause = e.getCause() != null ? e.getCause() : e;
@@ -257,6 +264,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     }
 
     private Applied applySteps(TenantId tenantId, DevicePackage devicePackage, DeviceUpdateRequest request, JsonNode versionInfo) {
+        IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
         DeviceInstalledItemDescriptor previous = devicePackage.descriptor();
         Map<String, ObjectNode> aliasOutputs = new HashMap<>();
         Map<String, ObjectNode> outputs = new LinkedHashMap<>();
@@ -270,7 +278,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         }
         List<EntityId> stepEntityIds = new ArrayList<>();
         List<SavedEntity> saved = new ArrayList<>();
-        List<DeviceUpdateRequest.Step> afterCommitSteps = new ArrayList<>();
+        List<DeviceUpdateRequest.Step> connectorSteps = new ArrayList<>();
+        List<StepAttributes> attributes = new ArrayList<>();
         DashboardId dashboardId = null;
 
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
@@ -278,8 +287,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 if ("GATEWAY_CONNECTOR".equals(step.getType())) {
                     // A connector lives in the gateway's attributes, which aren't transactional: saved after commit
                     if (step.getAction() != DeviceUpdateRequest.Action.KEEP) {
-                        DeviceUpdateRequest.Step resolved = copyWithEntity(step, resolvePlaceholders(step.getEntity(), aliasOutputs));
-                        afterCommitSteps.add(resolved);
+                        connectorSteps.add(copyWithEntity(step, resolvePlaceholders(step.getEntity(), aliasOutputs)));
                     }
                     continue;
                 }
@@ -307,11 +315,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 if (result.saved() != null) {
                     saved.add(result.saved());
                 }
-                if (step.getAction() == DeviceUpdateRequest.Action.CREATE && ("DEVICE".equals(step.getType()) || "GATEWAY".equals(step.getType()))) {
-                    // Its attributes are saved after commit, once the device exists
-                    DeviceUpdateRequest.Step created = copyWithEntity(step, null);
-                    created.setEntityId(result.entityId().getId());
-                    afterCommitSteps.add(created);
+                if (step.getAction() != DeviceUpdateRequest.Action.KEEP && !"use-existing".equals(step.getResolution())) {
+                    // As at install, the step's attributes go with the entity it saved; written after commit
+                    attributes.add(new StepAttributes(step.getName(), result.entityId(), step.getServerAttributes(), step.getSharedAttributes()));
                 }
             } catch (StepFailure e) {
                 throw e;
@@ -328,13 +334,29 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         Map<String, JsonNode> state = new LinkedHashMap<>(installState);
         descriptor.setInstallState(state);
 
-        IotHubInstalledItem installedItem = devicePackage.installedItem();
         installedItem.setItemVersionId(UUID.fromString(request.getVersionId()));
         installedItem.setItemName(versionInfo.get("name").asText());
         installedItem.setVersion(versionInfo.get("version").asText());
         installedItem.setDescriptor(descriptor);
         installedItemService.save(tenantId, installedItem);
-        return new Applied(descriptor, outputs, saved, afterCommitSteps, aliasOutputs);
+        // Resolved once every entity is saved: attributes may refer to a later step's entity
+        List<StepAttributes> resolvedAttributes = attributes.stream().map(a -> new StepAttributes(a.stepName(), a.entityId(),
+                resolvePlaceholders(a.server(), aliasOutputs), resolvePlaceholders(a.shared(), aliasOutputs))).toList();
+        return new Applied(descriptor, outputs, saved, connectorSteps, resolvedAttributes, aliasOutputs);
+    }
+
+    /**
+     * Another update of the package, e.g. a second click or another tab, waits here until this one commits, and then
+     * fails: the plan was made for the version installed before. Without it both would create the new entities.
+     */
+    private IotHubInstalledItem lockInstalledItem(TenantId tenantId, DevicePackage devicePackage, DeviceUpdateRequest request) {
+        IotHubInstalledItem installedItem = installedItemService.findByIdForUpdate(tenantId, devicePackage.installedItem().getId());
+        UUID planned = request.getFromVersionId() != null ? request.getFromVersionId() : devicePackage.installedItem().getItemVersionId();
+        if (installedItem == null || !planned.equals(installedItem.getItemVersionId())
+                || !Objects.equals(devicePackage.installedItem().getItemVersionId(), installedItem.getItemVersionId())) {
+            throw new IllegalArgumentException("The package was updated meanwhile. Check the update again.");
+        }
+        return installedItem;
     }
 
     private StepResult applyStep(TenantId tenantId, DeviceUpdateRequest.Step step, JsonNode entity) throws ThingsboardException {
@@ -674,17 +696,19 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 log.warn("[{}] Failed to log the device package update of {}", tenantId, saved.id(), e);
             }
         }
-        for (DeviceUpdateRequest.Step step : applied.afterCommitSteps()) {
+        for (StepAttributes step : applied.attributes()) {
             try {
-                if ("GATEWAY_CONNECTOR".equals(step.getType())) {
-                    saveConnector(tenantId, applied.aliasOutputs().get("gateway"), step.getEntity());
-                } else {
-                    DeviceId deviceId = new DeviceId(step.getEntityId());
-                    saveAttributes(tenantId, deviceId, AttributeScope.SERVER_SCOPE, step.getServerAttributes());
-                    saveAttributes(tenantId, deviceId, AttributeScope.SHARED_SCOPE, step.getSharedAttributes());
-                }
+                saveAttributes(tenantId, step.entityId(), AttributeScope.SERVER_SCOPE, step.server());
+                saveAttributes(tenantId, step.entityId(), AttributeScope.SHARED_SCOPE, step.shared());
             } catch (Exception e) {
-                log.warn("[{}] Failed to save the attributes of device package step [{}]", tenantId, step.getName(), e);
+                log.warn("[{}] Failed to save the attributes of device package step [{}]", tenantId, step.stepName(), e);
+            }
+        }
+        for (DeviceUpdateRequest.Step step : applied.connectorSteps()) {
+            try {
+                saveConnector(tenantId, applied.aliasOutputs().get("gateway"), step.getEntity());
+            } catch (Exception e) {
+                log.warn("[{}] Failed to save the gateway connector of device package step [{}]", tenantId, step.getName(), e);
             }
         }
     }
@@ -732,7 +756,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         if (e instanceof EntityVersionMismatchException) {
             return "Someone changed it while you were reviewing the update. Check the update again.";
         }
-        if (e instanceof DataValidationException || e instanceof EntitiesLimitExceededException || e instanceof IllegalArgumentException) {
+        if (e instanceof DataValidationException || e instanceof EntitiesLimitExceededException || e instanceof IllegalArgumentException
+                || e instanceof SubscriptionException) {
             return e.getMessage();
         }
         if (e instanceof ThingsboardException te && te.getErrorCode() != ThingsboardErrorCode.GENERAL) {
@@ -770,8 +795,12 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     private record SavedEntity(EntityId id, Object entity, boolean created) {
     }
 
+    private record StepAttributes(String stepName, EntityId entityId, JsonNode server, JsonNode shared) {
+    }
+
     private record Applied(DeviceInstalledItemDescriptor descriptor, Map<String, ObjectNode> outputs, List<SavedEntity> saved,
-                           List<DeviceUpdateRequest.Step> afterCommitSteps, Map<String, ObjectNode> aliasOutputs) {
+                           List<DeviceUpdateRequest.Step> connectorSteps, List<StepAttributes> attributes,
+                           Map<String, ObjectNode> aliasOutputs) {
     }
 
     /** A step that failed: the transaction rolls back, and the wizard shows which step it was. */

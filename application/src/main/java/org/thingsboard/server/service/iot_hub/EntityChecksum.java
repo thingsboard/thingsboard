@@ -21,12 +21,13 @@ import java.util.Set;
 /**
  * The checksum of an entity as the server stores it, kept in the install state of a device package. A different
  * checksum later means someone changed the entity, even a widget resized. The fields the server sets, and the name,
- * which an update keeps, don't count.
+ * which an update keeps, don't count, nor do the debug settings, which the user turns on without changing what the
+ * entity does, and whether a profile is the default one, which changes when another profile becomes the default.
  */
 final class EntityChecksum {
 
     private static final Set<String> SKIPPED_KEYS = Set.of("id", "name", "title", "version", "createdTime", "tenantId",
-            "customerId", "ownerId", "assignedCustomers", "externalId", "ruleChainId", "resources");
+            "customerId", "ownerId", "assignedCustomers", "externalId", "ruleChainId", "resources", "debugMode", "debugSettings", "default");
 
     private EntityChecksum() {
     }

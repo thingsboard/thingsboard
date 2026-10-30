@@ -56,6 +56,7 @@ export interface DeviceUpdateStep {
   confirmed?: boolean;
   entity?: any;
   credentials?: any;
+  // OVERWRITE and CREATE: the attributes the saved entity gets, as at install
   serverAttributes?: any;
   sharedAttributes?: any;
   resolution?: string;
@@ -63,6 +64,8 @@ export interface DeviceUpdateStep {
 
 export interface DeviceUpdateRequest {
   versionId: string;
+  // The version installed when the update was planned: the server refuses the update if the package changed since
+  fromVersionId?: string;
   // The install method of the new version's steps
   selectedInstallMethod?: string;
   installState: Record<string, any>;

@@ -20,7 +20,9 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.converter.Converter;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -32,6 +34,9 @@ import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.subscription.SubscriptionErrorCode;
+import org.thingsboard.server.common.data.subscription.SubscriptionException;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.dao.converter.ConverterService;
@@ -42,9 +47,13 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.integration.IntegrationService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.dao.subscription.PlatformFeature;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
+import org.thingsboard.server.service.entitiy.integration.TbIntegrationService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +64,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -68,6 +79,7 @@ class DefaultDevicePackageUpdateServiceTest {
     private final SecurityUser user = mock(SecurityUser.class);
     private final UUID itemId = UUID.randomUUID();
     private final String versionId = UUID.randomUUID().toString();
+    private final UUID installedVersionId = UUID.randomUUID();
     private final DeviceProfileId profileId = new DeviceProfileId(UUID.randomUUID());
     private final DashboardId dashboardId = new DashboardId(UUID.randomUUID());
     private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
@@ -97,6 +109,12 @@ class DefaultDevicePackageUpdateServiceTest {
     private EntityService entityService;
     @Mock
     private TbLogEntityActionService logEntityActionService;
+    @Mock
+    private TbIntegrationService tbIntegrationService;
+    @Mock
+    private SubscriptionService subscriptionService;
+    @Mock
+    private TelemetrySubscriptionService telemetryService;
 
     @InjectMocks
     private DefaultDevicePackageUpdateService service;
@@ -122,8 +140,10 @@ class DefaultDevicePackageUpdateServiceTest {
         installedItem.setItemId(itemId);
         installedItem.setItemType("DEVICE");
         installedItem.setVersion("1.0.0");
+        installedItem.setItemVersionId(installedVersionId);
         installedItem.setDescriptor(descriptor);
         when(installedItemService.findById(tenantId, installedItem.getId())).thenReturn(installedItem);
+        when(installedItemService.findByIdForUpdate(tenantId, installedItem.getId())).thenReturn(installedItem);
 
         ObjectNode versionInfo = JacksonUtil.newObjectNode();
         versionInfo.put("itemId", itemId.toString());
@@ -299,6 +319,82 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(result.isSuccess()).isFalse();
         verify(transactionTemplate, never()).execute(any());
+    }
+
+    @Test
+    void anotherUpdateCommittedMeanwhile_failsWithoutChanges() {
+        // E.g. a second click: it waits for the first one's lock and finds the package on another version
+        IotHubInstalledItem updated = new IotHubInstalledItem();
+        updated.setId(installedItem.getId());
+        updated.setItemVersionId(UUID.fromString(versionId));
+        when(installedItemService.findByIdForUpdate(tenantId, installedItem.getId())).thenReturn(updated);
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+                create("Uplink", "UPLINK_CONVERTER", JacksonUtil.newObjectNode().put("name", "Uplink for TTN"))));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).contains("Check the update again");
+        verify(converterService, never()).saveConverter(any());
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void planOfAnotherInstalledVersion_isRejected() {
+        DeviceUpdateRequest request = request(keep("AM308", "DEVICE", deviceId));
+        request.setFromVersionId(UUID.randomUUID());
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void integrationsNotInThePlan_areRefused() {
+        doThrow(new SubscriptionException("Integrations feature is disabled!", SubscriptionErrorCode.FEATURE_DISABLED))
+                .when(subscriptionService).checkFeatureAllowed(tenantId, PlatformFeature.INTEGRATIONS);
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(
+                create("Uplink", "UPLINK_CONVERTER", JacksonUtil.newObjectNode().put("name", "Uplink for TTN"))));
+
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getErrorMessage()).isEqualTo("Integrations feature is disabled!");
+        verify(transactionTemplate, never()).execute(any());
+    }
+
+    @Test
+    void attributesOfAnOverwrittenEntity_areSavedAfterCommit() {
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(7L));
+        when(dashboardService.saveDashboard(any(Dashboard.class))).thenAnswer(i -> i.getArgument(0));
+        DeviceUpdateRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 7L, JacksonUtil.newObjectNode().put("title", "d"));
+        step.setServerAttributes(JacksonUtil.newObjectNode().put("deviceId", "${device.id}"));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId), step));
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<AttributesSaveRequest> saved = ArgumentCaptor.forClass(AttributesSaveRequest.class);
+        verify(telemetryService).saveAttributes(saved.capture());
+        assertThat(saved.getValue().getEntityId()).isEqualTo(dashboardId);
+        assertThat(saved.getValue().getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
+        assertThat(saved.getValue().getEntries().get(0).getValueAsString()).isEqualTo(deviceId.getId().toString());
+    }
+
+    @Test
+    void checksum_ignoresDebugSettingsAndTheDefaultProfile() {
+        Converter converter = new Converter();
+        converter.setName("Uplink");
+        converter.setConfiguration(JacksonUtil.newObjectNode().put("decoder", "return {};"));
+        String installed = EntityChecksum.of(converter);
+        converter.setDebugMode(true);
+        converter.setDebugSettings(DebugSettings.all());
+        assertThat(EntityChecksum.of(converter)).isEqualTo(installed);
+        converter.setConfiguration(JacksonUtil.newObjectNode().put("decoder", "return {a: 1};"));
+        assertThat(EntityChecksum.of(converter)).isNotEqualTo(installed);
+
+        DeviceProfile profile = profile(1L, "AM308");
+        String profileChecksum = EntityChecksum.of(profile);
+        profile.setDefault(true);
+        assertThat(EntityChecksum.of(profile)).isEqualTo(profileChecksum);
     }
 
     @Test

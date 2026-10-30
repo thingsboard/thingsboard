@@ -18,6 +18,8 @@ import java.util.UUID;
 public class DeviceUpdateRequest {
 
     private String versionId;
+    // The version installed when the wizard planned the update; the update fails if the package changed since
+    private UUID fromVersionId;
     // The install method of the new version's steps; the installed one when not set
     private String selectedInstallMethod;
     // The form values of the install state, by step: the server adds the entities to it
@@ -51,7 +53,8 @@ public class DeviceUpdateRequest {
         private JsonNode entity;
         // DEVICE and GATEWAY: the credentials template, if any
         private JsonNode credentials;
-        // DEVICE and GATEWAY created by this update: attributes, saved after the transaction
+        // OVERWRITE and CREATE: the attributes of the saved entity, written after the transaction. Like the entity,
+        // they may keep ${<alias>.<property>} of an entity this update creates.
         private JsonNode serverAttributes;
         private JsonNode sharedAttributes;
         // The resolution the install state records for it
