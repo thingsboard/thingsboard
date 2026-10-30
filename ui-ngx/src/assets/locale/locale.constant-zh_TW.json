@@ -2127,7 +2127,7 @@
         "update-raw-payload": "更新後的原始承載資料"
     },
     "content-type": {
-        "json": "Json",
+        "json": "JSON",
         "text": "文字",
         "binary": "二進位（Base64）",
         "hex": "二進位（十六進位）"
@@ -3080,9 +3080,9 @@
         "mqtt-device-payload-type-json": "JSON",
         "mqtt-device-payload-type-proto": "Protobuf",
         "mqtt-enable-compatibility-with-json-payload-format": "啟用與其他承載資料格式的相容性。",
-        "mqtt-enable-compatibility-with-json-payload-format-hint": "啟用後，平台將預設使用 Protobuf 承載資料格式。如果解析失敗，平台將嘗試使用 JSON 承載資料格式。適用於韌體更新期間的向後相容性。例如，初始版本的韌體使用 Json，而新版本使用 Protobuf。在裝置群的韌體更新過程中，需要同時支援 Protobuf 和 JSON。相容模式會引入輕微的效能下降，因此建議在所有裝置更新完成後停用此模式。",
-        "mqtt-use-json-format-for-default-downlink-topics": "對預設下行主題使用 Json 格式",
-        "mqtt-use-json-format-for-default-downlink-topics-hint": "啟用後，平台將使用 Json 承載資料格式透過以下主題推送屬性和 RPC：<b>v1/devices/me/attributes/response/$request_id</b>、<b>v1/devices/me/attributes</b>、<b>v1/devices/me/rpc/request/$request_id</b>、<b>v1/devices/me/rpc/response/$request_id</b>。此設定不影響使用新 (v2) 主題傳送的屬性和 RPC 訂閱：<b>v2/a/res/$request_id</b>、<b>v2/a</b>、<b>v2/r/req/$request_id</b>、<b>v2/r/res/$request_id</b>。其中 <b>$request_id</b> 是整數請求識別碼。",
+        "mqtt-enable-compatibility-with-json-payload-format-hint": "啟用後，平台將預設使用 Protobuf 承載資料格式。如果解析失敗，平台將嘗試使用 JSON 承載資料格式。適用於韌體更新期間的向後相容性。例如，初始版本的韌體使用 JSON，而新版本使用 Protobuf。在裝置群的韌體更新過程中，需要同時支援 Protobuf 和 JSON。相容模式會引入輕微的效能下降，因此建議在所有裝置更新完成後停用此模式。",
+        "mqtt-use-json-format-for-default-downlink-topics": "對預設下行主題使用 JSON 格式",
+        "mqtt-use-json-format-for-default-downlink-topics-hint": "啟用後，平台將使用 JSON 承載資料格式透過以下主題推送屬性和 RPC：<b>v1/devices/me/attributes/response/$request_id</b>、<b>v1/devices/me/attributes</b>、<b>v1/devices/me/rpc/request/$request_id</b>、<b>v1/devices/me/rpc/response/$request_id</b>。此設定不影響使用新 (v2) 主題傳送的屬性和 RPC 訂閱：<b>v2/a/res/$request_id</b>、<b>v2/a</b>、<b>v2/r/req/$request_id</b>、<b>v2/r/res/$request_id</b>。其中 <b>$request_id</b> 是整數請求識別碼。",
         "mqtt-send-ack-on-validation-exception": "在 PUBLISH 訊息驗證失敗時傳送 PUBACK",
         "mqtt-send-ack-on-validation-exception-hint": "預設情況下，平台在訊息驗證失敗時將關閉 MQTT 工作階段。啟用後，平台將傳送發布確認而不是關閉工作階段。",
         "mqtt-protocol-version": "協定版本",
@@ -5018,7 +5018,7 @@
         "mapping": "對應",
         "topic-filter": "主題篩選器",
         "converter-type": "轉換器類型",
-        "converter-json": "Json",
+        "converter-json": "JSON",
         "json-name-expression": "裝置名稱 JSON 表示式",
         "topic-name-expression": "裝置名稱主題表示式",
         "json-type-expression": "裝置類型 JSON 表示式",
