@@ -346,7 +346,8 @@ export interface EntityStepOutput {
   baseUrl?: string;
 }
 
-export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'conflict';
+// skipped: a step of an update that failed, so nothing was changed
+export type EntityStepStatus = 'pending' | 'running' | 'success' | 'error' | 'conflict' | 'skipped';
 
 export type ConflictType = 'use-or-overwrite' | 'overwrite-or-copy';
 

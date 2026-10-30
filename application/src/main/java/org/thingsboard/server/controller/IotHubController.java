@@ -38,6 +38,10 @@ import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.system.ResolvedBaseUrl;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+import org.thingsboard.server.service.iot_hub.DevicePackageEntityState;
+import org.thingsboard.server.service.iot_hub.DevicePackageUpdateService;
+import org.thingsboard.server.service.iot_hub.DeviceUpdateRequest;
+import org.thingsboard.server.service.iot_hub.DeviceUpdateResult;
 import org.thingsboard.server.service.iot_hub.InstalledItemKeptEntities;
 import org.thingsboard.server.service.iot_hub.InstallItemVersionResult;
 import org.thingsboard.server.service.iot_hub.InstallPlan;
@@ -54,6 +58,7 @@ import org.thingsboard.server.service.iot_hub.IotHubService;
 public class IotHubController extends BaseController {
 
     private final IotHubService iotHubService;
+    private final DevicePackageUpdateService devicePackageUpdateService;
     private final IotHubInstalledItemService iotHubInstalledItemService;
     private final DeviceConnectivityService deviceConnectivityService;
     private final SystemSecurityService systemSecurityService;
@@ -96,6 +101,23 @@ public class IotHubController extends BaseController {
         checkAllPermissions();
         DeviceInstalledItemDescriptor descriptor = JacksonUtil.treeToValue(body, DeviceInstalledItemDescriptor.class);
         return iotHubService.registerDeviceInstall(getCurrentUser(), versionId, descriptor);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping("/installedItems/{installedItemId}/deviceUpdate/check")
+    @ResponseBody
+    public List<DevicePackageEntityState> checkDeviceUpdate(@PathVariable UUID installedItemId) throws ThingsboardException {
+        checkAllPermissions();
+        return devicePackageUpdateService.check(getCurrentUser(), new IotHubInstalledItemId(installedItemId));
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/installedItems/{installedItemId}/deviceUpdate")
+    @ResponseBody
+    public DeviceUpdateResult updateDevicePackage(@PathVariable UUID installedItemId,
+                                                  @RequestBody DeviceUpdateRequest request) throws ThingsboardException {
+        checkAllPermissions();
+        return devicePackageUpdateService.apply(getCurrentUser(), new IotHubInstalledItemId(installedItemId), request);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

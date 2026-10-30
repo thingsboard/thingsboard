@@ -35,6 +35,54 @@ export interface DeviceInstalledItemDescriptor {
   installState?: Record<string, any>;
 }
 
+/** An entity of an installed device package as the server finds it before an update. */
+export interface DevicePackageEntityState {
+  stepName: string;
+  entityId: { entityType: string; id: string };
+  exists: boolean;
+  version?: number;
+  // Changed since the package installed or last updated it; null when the server has no checksum of it
+  modified?: boolean | null;
+  shared: boolean;
+}
+
+/** A step of a device package update, with its entity resolved from the template of the new version. */
+export interface DeviceUpdateStep {
+  name: string;
+  type: string;
+  action: 'KEEP' | 'OVERWRITE' | 'CREATE';
+  entityId?: string;
+  expectedVersion?: number;
+  confirmed?: boolean;
+  entity?: any;
+  credentials?: any;
+  // OVERWRITE and CREATE: the attributes the saved entity gets, as at install
+  serverAttributes?: any;
+  sharedAttributes?: any;
+  resolution?: string;
+  // KEEP: the install state entry of the entity, when the new version renamed its step
+  previousStepName?: string;
+}
+
+export interface DeviceUpdateRequest {
+  versionId: string;
+  // The version installed when the update was planned: the server refuses the update if the package changed since
+  fromVersionId?: string;
+  // The install method of the new version's steps
+  selectedInstallMethod?: string;
+  installState: Record<string, any>;
+  steps: DeviceUpdateStep[];
+}
+
+/** All of the update was applied, or none of it: failedStep names the step that failed, if one did. */
+export interface DeviceUpdateResult {
+  success: boolean;
+  errorMessage?: string;
+  failedStep?: string;
+  descriptor?: DeviceInstalledItemDescriptor;
+  outputs?: Record<string, any>;
+}
+
 export interface SolutionTemplateInstalledItemDescriptor {
   type: 'SOLUTION_TEMPLATE';
   createdEntityIds: { entityType: string; id: string }[];

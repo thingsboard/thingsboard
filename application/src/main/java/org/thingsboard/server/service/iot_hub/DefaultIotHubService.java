@@ -133,6 +133,7 @@ public class DefaultIotHubService implements IotHubService {
     private final ConverterService converterService;
     private final TbConverterService tbConverterService;
     private final ProjectInfo projectInfo;
+    private final DevicePackageEntities devicePackageEntities;
 
     // Field names of the marketplace version JSON payload. Both the install path and the
     // install-plan resolver parse the same shape, so the contract lives here in one place.
@@ -416,6 +417,10 @@ public class DefaultIotHubService implements IotHubService {
             }
 
             String itemType = installedItem.getItemType();
+            if ("DEVICE".equals(itemType)) {
+                // Updated in one transaction from the install wizard of the new version, see DevicePackageUpdateService
+                throw new IllegalArgumentException("A device package is updated by the install wizard of the new version");
+            }
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
 
             // Skip checksum validation for solution templates
@@ -460,12 +465,6 @@ public class DefaultIotHubService implements IotHubService {
                 case "CALCULATED_FIELD" -> updateCalculatedField(user, tenantId, (CalculatedFieldInstalledItemDescriptor) descriptor, fileData);
                 case "ALARM_RULE" -> updateAlarmRule(user, tenantId, (AlarmRuleInstalledItemDescriptor) descriptor, fileData);
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
-                case "DEVICE" -> {
-                    DeviceInstalledItemDescriptor dd = (DeviceInstalledItemDescriptor) descriptor;
-                    deleteDevicePackageEntities(tenantId, installedItemId, dd.getCreatedEntityIds(), user);
-                    dd.setCreatedEntityIds(null);
-                    dd.setDashboardId(null);
-                }
                 case "SOLUTION_TEMPLATE" -> {
                     SolutionTemplateInstalledItemDescriptor stDescriptor = (SolutionTemplateInstalledItemDescriptor) descriptor;
                     solutionService.deleteSolution(tenantId, stDescriptor, user);
@@ -679,6 +678,8 @@ public class DefaultIotHubService implements IotHubService {
             installedItem.setItemName(itemName);
             installedItem.setItemType("DEVICE");
             installedItem.setVersion(version);
+            // So that an update can tell whether someone changed an entity since
+            devicePackageEntities.addChecksums(tenantId, descriptor);
             installedItem.setDescriptor(descriptor);
             try {
                 iotHubInstalledItemService.save(tenantId, installedItem);

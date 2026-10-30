@@ -495,6 +495,21 @@ class DefaultIotHubServiceTest {
         assertThat(kept.getUsedByItemsCount()).isZero();
     }
 
+    @Test
+    void updateItemVersion_devicePackage_deletesNothing() {
+        mockTenant();
+        IotHubInstalledItem installed = devicePackage(new DeviceId(UUID.randomUUID()), new DashboardId(UUID.randomUUID()));
+        installed.setItemType("DEVICE");
+        when(iotHubInstalledItemService.findById(tenantId, installed.getId())).thenReturn(installed);
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, installed.getId(), UUID.randomUUID().toString(), true, null);
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
+        verify(tbDashboardService, never()).delete(any(), any());
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
     private IotHubInstalledItem devicePackage(EntityId... createdEntityIds) {
         DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
         descriptor.setCreatedEntityIds(List.of(createdEntityIds));
