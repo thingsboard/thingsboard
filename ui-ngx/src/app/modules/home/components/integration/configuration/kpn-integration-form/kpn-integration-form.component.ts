@@ -60,11 +60,25 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
   @Input()
   routingKey: string;
 
+  @Input()
+  set isSetDownlink(value: boolean) {
+    if (this.isSetDownlinkValue !== value) {
+      this.isSetDownlinkValue = value;
+      this.updateCredentialsValidators();
+    }
+  }
+
+  get isSetDownlink(): boolean {
+    return this.isSetDownlinkValue;
+  }
+
   private integrationType = IntegrationType.KPN;
   private securityHeaderName = 'X-Things-Secret';
+  private isSetDownlinkValue = false;
 
   private propagateChangePending = false;
   private propagateChange = (v: any) => { };
+  private validatorChange = () => { };
 
   constructor(private fb: UntypedFormBuilder,
               private store: Store<AppState>,
@@ -86,20 +100,14 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
       securityHeader: [''],
       destinationSharedSecret: [''],
       additionalHeadersFilter: [{}, (control: AbstractControl) => this.additionalHeadersFilterValidator(control)],
-      allowDownlink: [false],
-      apiId:[],
-      apiKey:[]
+      apiId: [],
+      apiKey: []
     });
     this.kpnIntegrationConfigForm.get('baseUrl').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       const httpEndpoint = integrationEndPointUrl(this.integrationType, value, this.routingKey);
       this.kpnIntegrationConfigForm.get('httpEndpoint').patchValue(httpEndpoint);
-    });
-    this.kpnIntegrationConfigForm.get('allowDownlink').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.updateEnableFields();
     });
     this.kpnIntegrationConfigForm.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -109,6 +117,7 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
       this.updateModels(value);
     });
     this.kpnIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
+    this.updateCredentialsValidators();
   }
 
   writeValue(value: KpnIntegration) {
@@ -118,9 +127,6 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
         Object.keys(formValue.additionalHeadersFilter).length > 0;
       this.kpnIntegrationConfigForm.reset(formValue, {emitEvent: false});
       this.updateNoSecurity(this.kpnIntegrationConfigForm.getRawValue());
-      if (!this.disabled) {
-        this.updateEnableFields();
-      }
     } else {
       this.propagateChangePending = true;
     }
@@ -138,13 +144,16 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
 
   registerOnTouched(fn: any) { }
 
+  registerOnValidatorChange(fn: () => void) {
+    this.validatorChange = fn;
+  }
+
   setDisabledState(isDisabled: boolean) {
     this.disabled = isDisabled;
     if (isDisabled) {
       this.kpnIntegrationConfigForm.disable({emitEvent: false});
     } else {
       this.kpnIntegrationConfigForm.enable({emitEvent: false});
-      this.updateEnableFields();
       this.kpnIntegrationConfigForm.get('httpEndpoint').disable({emitEvent: false});
     }
   }
@@ -204,21 +213,14 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
     return key.toLowerCase() === this.securityHeaderName.toLowerCase();
   }
 
-  private updateEnableFields() {
-    const allowDownlink = this.kpnIntegrationConfigForm.get('allowDownlink').value;
-    if (allowDownlink) {
-      this.kpnIntegrationConfigForm.get('apiId').enable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiKey').enable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiId').setValidators(Validators.required);
-      this.kpnIntegrationConfigForm.get('apiKey').setValidators(Validators.required);
-    } else {
-      this.kpnIntegrationConfigForm.get('apiId').disable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiKey').disable({emitEvent: false});
-      this.kpnIntegrationConfigForm.get('apiId').clearValidators();
-      this.kpnIntegrationConfigForm.get('apiKey').clearValidators();
-
+  private updateCredentialsValidators() {
+    if (this.kpnIntegrationConfigForm) {
+      const validators = this.isSetDownlink ? [Validators.required] : [];
+      this.kpnIntegrationConfigForm.get('apiId').setValidators(validators);
+      this.kpnIntegrationConfigForm.get('apiKey').setValidators(validators);
+      this.kpnIntegrationConfigForm.get('apiId').updateValueAndValidity({emitEvent: false});
+      this.kpnIntegrationConfigForm.get('apiKey').updateValueAndValidity({emitEvent: false});
+      this.validatorChange();
     }
-    this.kpnIntegrationConfigForm.get('apiId').updateValueAndValidity({emitEvent: false});
-    this.kpnIntegrationConfigForm.get('apiKey').updateValueAndValidity({emitEvent: false});
   }
 }
