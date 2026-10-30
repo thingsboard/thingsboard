@@ -196,11 +196,19 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
     @Override
     public void reportActivity() {
+        int active = 0;
+        int activeDtls = 0;
         for (TbCoapClientState state : clients.values()) {
             if (state.getSession() != null) {
                 transportService.recordActivity(state.getSession());
+                if (state.isDtls()) {
+                    activeDtls++;
+                } else {
+                    active++;
+                }
             }
         }
+        transportContext.updateActiveSessions(active, activeDtls);
     }
 
     private void onUplink(TbCoapClientState client, boolean notifyOtherServers, long uplinkTs) {
