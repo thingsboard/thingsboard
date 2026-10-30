@@ -69,7 +69,6 @@ export class ThingParkIntegrationFormComponent extends IntegrationForm implement
       baseUrl: [baseUrl(), baseURLValidators],
       httpEndpoint: [{value: integrationEndPointUrl(this.integrationType, baseUrl(), this.routingKey), disabled: true}],
       enableSecurity: [false],
-      replaceNoContentToOk: [false],
       downlinkUrl: ['https://api.thingpark.com/thingpark/lrc/rest/downlink', downlinkUrlValidators],
       enableSecurityNew: [{value: false, disabled: true}],
       asId: [{value: '', disabled: true}, Validators.required],

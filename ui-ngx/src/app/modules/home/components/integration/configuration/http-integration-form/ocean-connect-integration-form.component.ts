@@ -27,6 +27,7 @@ import { HttpIntegrationFormComponent } from './http-integration-form.component'
 export class OceanConnectIntegrationFormComponent extends HttpIntegrationFormComponent {
 
   showSecurity = false;
+  showReplaceNoContentToOk = false;
 
   protected integrationType = IntegrationType.OCEANCONNECT;
 
