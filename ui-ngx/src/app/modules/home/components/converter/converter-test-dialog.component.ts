@@ -271,7 +271,7 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
         return of('');
       }
       return beautifyJs(JSON.stringify({
-        deviceName: 'Thermometer',
+        deviceName: 'Thermostat-01',
         deviceType: 'thermostat',
         serialNumber: 'SN-12345',
         temperature: 25.5
