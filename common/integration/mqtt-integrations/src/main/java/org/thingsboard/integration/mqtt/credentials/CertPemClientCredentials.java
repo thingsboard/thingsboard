@@ -52,6 +52,7 @@ public class CertPemClientCredentials implements MqttClientCredentials {
         try {
             Security.addProvider(new BouncyCastleProvider());
             return Optional.of(SslContextBuilder.forClient()
+                    .endpointIdentificationAlgorithm(null)
                     .keyManager(createAndInitKeyManagerFactory())
                     .trustManager(createAndInitTrustManagerFactory())
                     .clientAuth(ClientAuth.REQUIRE)

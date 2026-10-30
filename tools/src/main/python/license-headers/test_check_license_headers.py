@@ -8,8 +8,11 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
+import subprocess
 import tempfile
 import textwrap
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -20,11 +23,23 @@ import check_license_headers as p
 def temporary_directory(test):
     directory = tempfile.TemporaryDirectory()
     test.addCleanup(directory.cleanup)
-    return Path(directory.name)
+    return Path(directory.name).resolve()
+
+
+def rename_sources(lineage):
+    return {name: chain.source for name, chain in lineage.renames.items()}
+
+
+def rename_origins(lineage):
+    return {name: (chain.source, chain.origin) for name, chain in lineage.renames.items()}
 
 
 def this_repository():
     return Path(p.git(Path(__file__).parent, "rev-parse", "--show-toplevel").decode().strip())
+
+
+MERGE_FILE_OBJECT_ID = b"object-id" in subprocess.run(["git", "merge-file", "-h"], capture_output=True).stdout
+requires_merge_file_object_id = unittest.skipUnless(MERGE_FILE_OBJECT_ID, p.MERGE_FILE_REQUIREMENT)
 
 
 def fixture_plugin(version="0"):
@@ -47,10 +62,21 @@ class GitFixture:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
 
-    def commit(self, message):
+    def commit(self, message, *options):
         self("add", ".")
-        self("commit", "-m", message)
+        self("commit", *options, "-m", message)
         return self("rev-parse", "HEAD")
+
+    def sign_with_new_ssh_key(self, test):
+        if shutil.which("ssh-keygen") is None:
+            test.skipTest("ssh-keygen is not available")
+        keys = temporary_directory(test)
+        subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "test", "-f", str(keys / "key")],
+                       check=True, capture_output=True)
+        (keys / "allowed_signers").write_text("test@example.invalid " + (keys / "key.pub").read_text())
+        self("config", "gpg.format", "ssh")
+        self("config", "user.signingkey", str(keys / "key.pub"))
+        self("config", "gpg.ssh.allowedSignersFile", str(keys / "allowed_signers"))
 
 
 class DecisionTests(unittest.TestCase):
@@ -94,6 +120,35 @@ class DecisionTests(unittest.TestCase):
         row = self.new(deleted=deleted)
         self.assertEqual(("unresolved", "CE history had this path"), (row["status"], row["reason"]))
         self.assertEqual(deleted, row["historicalCandidate"])
+
+    def test_every_rename_from_ce_needs_header_less_similarity(self):
+        version = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40}
+        first = {"commit": "d" * 40, "from": "source.java", "to": "middle.java", "similarity": 100}
+        second = {"commit": "e" * 40, "from": "middle.java", "to": "a.java", "similarity": p.SIMILARITY}
+        row = self.new(current="ce-modified", renamed_from=(version,), renames=(first, second))
+        self.assertEqual(("match", "ce-modified", "renamed from CE source.java"),
+                         (row["status"], row["expectedHeader"], row["reason"]))
+        self.assertEqual(([version], [first, second]), (row["renamedFrom"], row["renames"]))
+        weak = second | {"similarity": p.SIMILARITY - 1}
+        row = self.new(current="ce-modified", renamed_from=(version,), renames=(first, weak), copies=(self.COPY,))
+        self.assertEqual(("unresolved", None, None), (row["status"], row["expectedHeader"], row["suggestedHeader"]))
+        self.assertEqual(([version], [first, weak], [self.COPY]),
+                         (row["renameCandidates"], row["renames"], row["copyCandidates"]))
+        self.assertEqual(f"renamed from CE source.java, but the rename of middle.java in eeeeeeeeeee "
+                         f"is {p.SIMILARITY - 1}% similar without the header, less than {p.SIMILARITY}%", row["reason"])
+
+    def test_rename_from_a_file_added_outside_ce_needs_a_decision(self):
+        version = {"path": "source.java", "ref": "a" * 40, "blob": "c" * 40}
+        rename = {"commit": "d" * 40, "from": "source.java", "to": "a.java", "similarity": 100}
+        evidence = dict(current=p.NON_CE, renamed_from=(version,), renames=(rename,))
+        row = self.new(**evidence, rename_origin="downstream")
+        self.assertEqual(("unresolved", None), (row["status"], row["expectedHeader"]))
+        self.assertEqual("renamed from source.java in ddddddddddd, but that file was added outside CE "
+                         f"and is less than {p.SIMILARITY}% similar to the CE source.java", row["reason"])
+        self.assertEqual(([version], [rename]), (row["renameCandidates"], row["renames"]))
+        row = self.new(**evidence, rename_origin="ambiguous")
+        self.assertEqual(("unresolved", "renamed from source.java, but parallel branches added a file of its rename chain"),
+                         (row["status"], row["reason"]))
 
     def test_descriptor_of_a_module_absent_in_ce_is_non_ce_despite_similar_ce_descriptors(self):
         copy = self.COPY | {"path": "transport/mqtt/pom.xml"}
@@ -319,6 +374,11 @@ class InputTests(unittest.TestCase):
                          p.split_removed(b"<!--\n  SPDX\n-->\n<!--\n  Old\n-->\nbody\n", b"<!--\n  Old\n-->\nbody\n")[1])
         self.assertEqual(b"/**\n * SPDX\n */\n", p.split_removed(b"/**\n * SPDX\n */\n/**\n * Old\n */\n", b"/**\n * Old\n */\n")[1])
 
+    def test_an_empty_side_is_not_similar(self):
+        tool = SimpleNamespace(contents={"empty": b"\n", "full": b"content\n"})
+        self.assertEqual(0, p.normalized_similarity(tool, "empty", "full"))
+        self.assertEqual(0, p.normalized_similarity(tool, "full", "empty"))
+
     def test_hash_contracts(self):
         self.assertEqual(p.comparison_hash(b"a\r\nb\r\n"), p.comparison_hash(b"a\nb\n"))
         self.assertNotEqual(p.raw_hash(b"a\r\n"), p.raw_hash(b"a\n"))
@@ -491,6 +551,187 @@ class GitHistoryTests(unittest.TestCase):
         self.assertEqual([(removal, git("rev-parse", f"{removal}:Kept.java"))], lineage.versions("Kept.java"))
         self.assertEqual([], lineage.versions("Gone.java"))
 
+    def test_lineage_follows_renames_of_ce_paths_after_the_ce_base(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        body = "".join(f"CE line {index}\n" for index in range(20))
+        git.write("Base.java", body)
+        git.write("Other.java", "other " + body)
+        git.write("Merged.java", "merged " + body)
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "Base.java", "Middle.java")
+        git.commit("rename")
+        git("mv", "Middle.java", "Final.java")
+        git.write("Final.java", body + "downstream change\n")
+        git.commit("rename and change")
+        git("checkout", "-b", "side")
+        git("rm", "-q", "Merged.java")
+        git.commit("side deletion")
+        git.write("Added.java", "merged " + body)
+        git.commit("unrelated addition")
+        git("checkout", "downstream")
+        git("merge", "--no-ff", "side", "-m", "integrate side")
+        git("mv", "Other.java", "Squashed.java")
+        squash = git.commit("relicensing")
+        head = git("rev-parse", "HEAD")
+        self.assertEqual({"Final.java": "Base.java", "Squashed.java": "Other.java"},
+                         rename_sources(p.Lineage.load(git.root, head, [base])))
+        with patch.object(p, "RELICENSING_COMMIT", squash):
+            self.assertEqual({"Final.java": "Base.java"}, rename_sources(p.Lineage.load(git.root, head, [base])))
+
+    def test_lineage_follows_only_the_file_that_reaches_head(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        body = "".join(f"CE line {index}\n" for index in range(20))
+        git.write("A.java", body)
+        git.write("Reused.java", "reused " + body)
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        git.commit("rename")
+        git("rm", "-q", "B.java")
+        git.commit("delete")
+        git.write("B.java", "".join(f"unrelated line {index}\n" for index in range(20)))
+        git.commit("unrelated file at the renamed path")
+        git("rm", "-q", "Reused.java")
+        git.commit("delete a CE path")
+        git.write("Reused.java", "".join(f"downstream line {index}\n" for index in range(20)))
+        git.commit("reuse the CE path")
+        git("mv", "Reused.java", "Moved.java")
+        git.commit("rename the reused path")
+        self.assertEqual({"Moved.java": ("Reused.java", "downstream")},
+                         rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
+    def test_lineage_keeps_a_chain_whose_path_is_reused_after_the_rename(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("A.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        first = git.commit("rename")
+        git("mv", "B.java", "C.java")
+        second = git.commit("rename again")
+        git.write("B.java", "".join(f"unrelated line {index}\n" for index in range(20)))
+        git.commit("new file at the intermediate path")
+        lineage = p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])
+        self.assertEqual({"C.java": ("A.java", "ce")}, rename_origins(lineage))
+        self.assertEqual([first, second], [hop.commit for hop in lineage.renames["C.java"].hops])
+
+    def test_lineage_links_renames_by_ancestry(self):
+        for merged_into_mainline in (True, False):
+            with self.subTest(merged_into_mainline=merged_into_mainline):
+                git = GitFixture(temporary_directory(self), "ce")
+                git.write("A.java", "".join(f"CE line {index}\n" for index in range(20)))
+                base = git.commit("CE base")
+                git("checkout", "-b", "feature")
+                git.write("B.java", "".join(f"downstream line {index}\n" for index in range(20)))
+                git.commit("downstream file")
+                git("mv", "B.java", "C.java")
+                git.commit("rename the downstream file")
+                git("checkout", "-b", "mainline", base)
+                git("mv", "A.java", "B.java")
+                git.commit("rename the CE file")
+                if not merged_into_mainline:
+                    git("checkout", "feature")
+                git("merge", "--no-ff", "feature" if merged_into_mainline else "mainline", "-m", "merge")
+                lineage = p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])
+                self.assertEqual({"B.java": ("A.java", "ce")}, rename_origins(lineage))
+
+    def test_lineage_ignores_log_settings_of_the_user(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("A.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        git.sign_with_new_ssh_key(self)
+        try:
+            git.commit("rename", "-S")
+        except p.Failure as e:
+            self.skipTest(f"git cannot sign with an SSH key: {e}")
+        git("config", "log.follow", "true")
+        git("config", "log.showSignature", "true")
+        self.assertEqual({"B.java": ("A.java", "ce")},
+                         rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
+    def test_lineage_follows_the_side_of_a_merge_that_kept_the_file(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        body = "".join(f"CE line {index}\n" for index in range(20))
+        git.write("A.java", body)
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        git.commit("rename")
+        git("checkout", "-b", "cleanup")
+        git("rm", "-q", "B.java")
+        git.commit("delete the renamed file")
+        git("checkout", "downstream")
+        git.write("B.java", body + "downstream change\n")
+        git.commit("change the renamed file")
+        subprocess.run(["git", "merge", "--no-ff", "cleanup", "-m", "merge"], cwd=git.root, capture_output=True)
+        git("checkout", "downstream", "--", "B.java")
+        git.commit("keep the changed file")
+        self.assertEqual({"B.java": ("A.java", "ce")},
+                         rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
+    def test_lineage_marks_parallel_creations_of_a_path_as_ambiguous(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("A.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "A.java", "B.java")
+        git.commit("rename")
+        git("checkout", "-b", "side", base)
+        git.write("X.java", "".join(f"downstream line {index}\n" for index in range(20)))
+        git.commit("parallel file")
+        git("mv", "X.java", "B.java")
+        git.commit("rename the parallel file")
+        git("checkout", "downstream")
+        subprocess.run(["git", "merge", "--no-ff", "side", "-m", "merge"], cwd=git.root, capture_output=True)
+        git.write("B.java", "".join(f"resolved line {index}\n" for index in range(20)))
+        git.commit("resolve")
+        self.assertEqual({"B.java": ("A.java", "ambiguous")},
+                         rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
+    def test_lineage_records_where_a_rename_source_was_added(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        body = "".join(f"CE line {index}\n" for index in range(20))
+        git.write("Restored.java", body)
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("rm", "-q", "Restored.java")
+        deletion = git.commit("delete a CE file")
+        git("revert", "--no-edit", deletion)
+        git("mv", "Restored.java", "Moved.java")
+        git.commit("rename the restored file")
+        git.write("Util.java", "".join(f"downstream line {index}\n" for index in range(20)))
+        git.commit("downstream file")
+        git("mv", "Util.java", "PeUtil.java")
+        git.commit("rename the downstream file")
+        git("checkout", "ce")
+        git.write("Util.java", "".join(f"unrelated CE line {index}\n" for index in range(20)))
+        later = git.commit("CE file at the old downstream path")
+        git("checkout", "downstream")
+        git("merge", "--no-ff", "ce", "-m", "merge CE")
+        self.assertEqual({"Moved.java": ("Restored.java", "downstream"), "PeUtil.java": ("Util.java", "downstream")},
+                         rename_origins(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [later])))
+
+    def test_lineage_keeps_a_rename_whose_path_changed_only_on_another_branch(self):
+        git = GitFixture(temporary_directory(self), "ce")
+        git.write("Theme.java", "".join(f"CE line {index}\n" for index in range(20)))
+        base = git.commit("CE base")
+        git("checkout", "-b", "downstream")
+        git("mv", "Theme.java", "Constants.java")
+        git.commit("rename")
+        git("checkout", "-b", "side", base)
+        git.write("Constants.java", "".join(f"unrelated line {index}\n" for index in range(20)))
+        git.commit("unrelated file")
+        git("rm", "-q", "Constants.java")
+        git.commit("revert")
+        git("checkout", "downstream")
+        git("merge", "--no-ff", "side", "-m", "integrate side")
+        self.assertEqual({"Constants.java": "Theme.java"},
+                         rename_sources(p.Lineage.load(git.root, git("rev-parse", "HEAD"), [base])))
+
+    @requires_merge_file_object_id
     def test_merge_blobs_returns_only_clean_merges(self):
         git = GitFixture(temporary_directory(self), "main")
         git.write("File.java", "one\ntwo\nthree\nfour\nfive\n")
@@ -505,6 +746,25 @@ class GitHistoryTests(unittest.TestCase):
         ours, theirs = blob("ONE\ntwo\nthree\nfour\nfive\n"), blob("one\ntwo\nthree\nfour\nFIVE\n")
         self.assertEqual(b"ONE\ntwo\nthree\nfour\nFIVE\n", p.merge_blobs(git.root, ours, base, theirs))
         self.assertIsNone(p.merge_blobs(git.root, ours, base, blob("uno\ntwo\nthree\nfour\nfive\n")))
+
+    @requires_merge_file_object_id
+    def test_merge_blobs_does_not_merge_binary_blobs(self):
+        git = GitFixture(temporary_directory(self), "main")
+        git.write("File.java", "one\0two\n")
+        git.commit("base")
+        base = git("rev-parse", "HEAD:File.java")
+        git.write("File.java", "ONE\0two\n")
+        git.commit("change")
+        self.assertIsNone(p.merge_blobs(git.root, git("rev-parse", "HEAD:File.java"), base, base))
+
+    def test_merge_blobs_fails_without_object_id_support(self):
+        usage = subprocess.CompletedProcess([], 129, b"", b"error: unknown option `object-id'")
+        with (patch.object(p, "run", side_effect=[usage, subprocess.CompletedProcess([], 0, b"git version 2.39.5\n", b"")]),
+              self.assertRaisesRegex(p.Failure, "needs Git 2.43 or later, found git version 2.39.5")):
+            p.merge_blobs(Path("."), "a", "b", "c")
+
+    def test_merge_file_probe_detects_object_id_support(self):
+        self.assertEqual(MERGE_FILE_OBJECT_ID, p.merge_file_object_id_supported())
 
     def test_ignore_filter_keeps_tracked_and_unignored_files(self):
         repo = temporary_directory(self)
@@ -580,6 +840,9 @@ class CheckCommandTests(unittest.TestCase):
     LINES = "".join(f"line {index}\n" for index in range(10))
 
     def setUp(self):
+        probe = patch.object(p, "merge_file_object_id_supported", return_value=True)
+        probe.start()
+        self.addCleanup(probe.stop)
         self.repo = temporary_directory(self)
         self.git = git = GitFixture(self.repo, "master")
         self.body = "CE source implementation\n" * 20
@@ -624,6 +887,7 @@ class CheckCommandTests(unittest.TestCase):
             return {key: recognized((tool.root / tool.paths[key]).read_bytes()) for key in keys}
 
         def strip_headers(tool):
+            self.stripped = set(tool.paths.values())
             tool.removed = {key: split(body)[0] for key, body in tool.contents.items()}
             tool.stacked = set()
             for key, body in list(tool.contents.items()):
@@ -651,6 +915,7 @@ class CheckCommandTests(unittest.TestCase):
     def rows(self, report):
         return {row["path"]: row for row in report["files"]}
 
+    @requires_merge_file_object_id
     def test_relicensed_branch_passes(self):
         code, report, _ = self.check()
         self.assertEqual(0, code)
@@ -665,6 +930,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual({"path": "Fixed.java", "ref": self.fix, "blob": self.git("rev-parse", f"{self.fix}:Fixed.java")},
                          rows["Fixed.java"]["identicalTo"])
 
+    @requires_merge_file_object_id
     def test_fix_restamps_decided_headers_only(self):
         self.git.write("Base.java", FOREIGN_LINE.decode() + "base implementation\n")
         self.git.write("New.java", fixture("apache") + "TB feature\n")
@@ -691,6 +957,7 @@ class CheckCommandTests(unittest.TestCase):
         self.assertEqual([], report["restamped"])
         self.assertEqual({"match": 5, "mismatch": 1}, report["summary"])
 
+    @requires_merge_file_object_id
     def test_ce_evidence_for_new_paths_needs_a_decision(self):
         self.git.write("Copy.java", fixture(p.NON_CE) + self.body)
         self.git.write("Deleted.java", fixture(p.NON_CE) + "removed CE source\n")
@@ -704,6 +971,148 @@ class CheckCommandTests(unittest.TestCase):
                          rows["Deleted.java"]["historicalCandidate"])
         self.assertIn("Needs a decision (2)\n", output)
 
+    @requires_merge_file_object_id
+    def test_renamed_ce_file_is_ce_modified(self):
+        self.git("mv", "Source.java", "Moved.java")
+        self.git.write("Moved.java", fixture("ce-modified") + self.body + "TB change\n")
+        self.git.commit("rename CE file")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual(("match", "ce-modified", "renamed from CE Source.java"),
+                         (row["status"], row["expectedHeader"], row["reason"]))
+        self.assertEqual({"Source.java"}, {version["path"] for version in row["renamedFrom"]})
+
+    @requires_merge_file_object_id
+    def test_growth_after_a_rename_from_ce_does_not_matter(self):
+        self.git("mv", "Source.java", "Moved.java")
+        self.git.write("Moved.java", fixture("ce-modified") + self.body)
+        rename = self.git.commit("rename CE file")
+        growth = "".join(f"TB implementation {index}\n" for index in range(200))
+        self.git.write("Moved.java", fixture("ce-modified") + self.body + growth)
+        self.git.commit("grow the renamed file")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual(("match", "ce-modified"), (row["status"], row["expectedHeader"]))
+        self.assertEqual([{"commit": rename, "from": "Source.java", "to": "Moved.java", "similarity": 100}],
+                         row["renames"])
+
+    def rename_with_a_shared_large_header(self, *moves):
+        padding = "// " + "shared downstream notice " * 120 + "\n"
+        self.git.write("Source.java", padding + self.body)
+        self.git.commit("large header on the CE file")
+        for source, target in moves[:-1]:
+            self.git("mv", source, target)
+            self.git.commit("rename")
+        source, target = moves[-1]
+        rewritten = padding + "".join(f"TB implementation {index}\n" for index in range(20))
+        self.git("mv", source, target)
+        self.git.write(target, rewritten)
+        self.git.commit("rename and rewrite")
+        return rewritten
+
+    @requires_merge_file_object_id
+    def test_rename_from_ce_below_the_threshold_needs_a_decision(self):
+        rewritten = self.rename_with_a_shared_large_header(("Source.java", "Moved.java"))
+        scope = [name if name != "Source.java" else "Moved.java" for name in self.scope]
+        for args in ((), ("--fix",)):
+            code, report, output = self.check(*args, scope=scope)
+            row = self.rows(report)["Moved.java"]
+            self.assertEqual((1, "unresolved"), (code, row["status"]))
+            self.assertEqual({"Source.java"}, {candidate["path"] for candidate in row["renameCandidates"]})
+            self.assertLess(row["renames"][0]["similarity"], p.SIMILARITY)
+            self.assertEqual([], report["restamped"])
+            weakest = row["renames"][0]
+            self.assertIn(f"    renamed from CE Source.java, but the rename of Source.java in {weakest['commit'][:11]} "
+                          f"is {weakest['similarity']}% similar without the header, less than {p.SIMILARITY}%\n"
+                          "    rename source in CE: Source.java at ", output)
+        self.assertEqual(rewritten, (self.repo / "Moved.java").read_text())
+
+    @requires_merge_file_object_id
+    def test_every_rename_of_a_chain_needs_the_threshold(self):
+        self.rename_with_a_shared_large_header(("Source.java", "Middle.java"), ("Middle.java", "Final.java"))
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Final.java" for name in self.scope])
+        row = self.rows(report)["Final.java"]
+        self.assertEqual("unresolved", row["status"])
+        self.assertEqual([("Source.java", "Middle.java"), ("Middle.java", "Final.java")],
+                         [(rename["from"], rename["to"]) for rename in row["renames"]])
+        self.assertEqual(100, row["renames"][0]["similarity"])
+        self.assertLess(row["renames"][1]["similarity"], p.SIMILARITY)
+
+    @requires_merge_file_object_id
+    def test_rename_through_a_file_type_outside_the_scope_needs_a_decision(self):
+        self.git("mv", "Source.java", "Notes.txt")
+        self.git.commit("rename to an unsupported type")
+        self.git("mv", "Notes.txt", "Moved.java")
+        self.git.commit("rename back")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual("unresolved", row["status"])
+        self.assertIn("Notes.txt", row["reason"])
+        self.assertEqual([("Source.java", "Notes.txt"), ("Notes.txt", "Moved.java")],
+                         [(rename["from"], rename["to"]) for rename in row["renames"]])
+        self.assertFalse([path for path in self.stripped if path.endswith(".txt")])
+
+    @requires_merge_file_object_id
+    def test_rename_source_added_outside_ce_needs_ce_content(self):
+        git = self.git
+        twin = fixture(p.NON_CE) + self.body
+        git.write("Twin.java", twin)
+        git.write("Util.java", fixture(p.NON_CE) + "".join(f"TB utility {index}\n" for index in range(20)))
+        git.commit("downstream files")
+        git("mv", "Twin.java", "Middle.java")
+        git("mv", "Util.java", "PeUtil.java")
+        git.commit("rename the downstream files")
+        git.write("Middle.java", fixture(p.NON_CE) + "".join(f"TB rewrite {index}\n" for index in range(20)))
+        git.commit("rewrite the renamed twin")
+        git("mv", "Middle.java", "Renamed.java")
+        git.commit("rename the twin again")
+        git("checkout", "lts-4.3")
+        git.write("Twin.java", fixture("apache") + self.body)
+        git.write("Util.java", fixture("apache") + "".join(f"CE helper {index}\n" for index in range(20)))
+        git.commit("CE files at the old downstream paths")
+        git("checkout", "master")
+        git("merge", "--no-ff", "lts-4.3", "-m", "integrate CE files")
+        _, report, _ = self.check(scope=self.scope + ["PeUtil.java", "Renamed.java", "Twin.java", "Util.java"])
+        rows = self.rows(report)
+        self.assertEqual(("ce-modified", "renamed from CE Twin.java"),
+                         (rows["Renamed.java"]["expectedHeader"], rows["Renamed.java"]["reason"]))
+        self.assertEqual("unresolved", rows["PeUtil.java"]["status"])
+        self.assertIn("but that file was added outside CE", rows["PeUtil.java"]["reason"])
+
+    @requires_merge_file_object_id
+    def test_rename_source_added_by_a_merge_needs_ce_content(self):
+        git = self.git
+        git("checkout", "-b", "side")
+        git.write("Side.java", fixture(p.NON_CE) + "side\n")
+        git.commit("side")
+        git("checkout", "master")
+        git("merge", "--no-ff", "--no-commit", "side")
+        git.write("Util.java", fixture(p.NON_CE) + "".join(f"TB utility {index}\n" for index in range(20)))
+        git.commit("merge side, adding a downstream file")
+        git("mv", "Util.java", "PeUtil.java")
+        git.commit("rename the downstream file")
+        git("checkout", "lts-4.3")
+        git.write("Util.java", fixture("apache") + "".join(f"CE helper {index}\n" for index in range(20)))
+        git.commit("CE file at the old downstream path")
+        git("checkout", "master")
+        git("merge", "--no-ff", "lts-4.3", "-m", "integrate CE")
+        _, report, _ = self.check(scope=self.scope + ["PeUtil.java", "Side.java", "Util.java"])
+        row = self.rows(report)["PeUtil.java"]
+        self.assertEqual("unresolved", row["status"])
+        self.assertIn("but that file was added outside CE", row["reason"])
+
+    @requires_merge_file_object_id
+    def test_restored_ce_file_renamed_downstream_is_ce_modified(self):
+        self.git("rm", "-q", "Source.java")
+        deletion = self.git.commit("delete a CE file")
+        self.git("revert", "--no-edit", deletion)
+        self.git("mv", "Source.java", "Moved.java")
+        self.git.commit("rename the restored file")
+        _, report, _ = self.check(scope=[name if name != "Source.java" else "Moved.java" for name in self.scope])
+        row = self.rows(report)["Moved.java"]
+        self.assertEqual(("ce-modified", "renamed from CE Source.java"), (row["expectedHeader"], row["reason"]))
+
+    @requires_merge_file_object_id
     def test_fix_removes_redundant_and_orphaned_curations(self):
         self.git.write("Copy.java", fixture(p.NON_CE) + self.body)
 
@@ -736,6 +1145,14 @@ class CheckCommandTests(unittest.TestCase):
         self.assertIn("Removed curations (2)\n", output)
         code, report, _ = self.check("--fix", scope=scope)
         self.assertEqual((0, []), (code, report["removedCurations"]))
+
+    def test_git_without_merge_file_object_id_fails_at_startup(self):
+        with patch.object(p, "merge_file_object_id_supported", return_value=False):
+            code, report, output = self.check("--ce-ref", "lts-4.3", "--ce-remote", str(self.repo))
+        self.assertEqual((2, None), (code, report))
+        self.assertNotIn("Fetching", output)
+        self.assertIn(f"Error: git merge-file does not support --object-id. {p.MERGE_FILE_REQUIREMENT}, found git version",
+                      output)
 
     def test_missing_relicensing_commit_fails_before_the_scan(self):
         self.relicensing = "0" * 40

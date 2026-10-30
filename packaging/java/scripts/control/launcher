@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+[ -z "$CONF_FOLDER" ] && CONF_FOLDER=${pkg.installFolder}/conf
+jarfile=${pkg.installFolder}/bin/${pkg.name}.jar
+
+[ -r "$CONF_FOLDER/${pkg.name}.conf" ] && source "$CONF_FOLDER/${pkg.name}.conf"
+
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    javaexe="$JAVA_HOME/bin/java"
+else
+    javaexe=java
+fi
+
+require_java_25() {
+    local javaVersion javaMajor
+    javaVersion=$(JAVA_TOOL_OPTIONS= JDK_JAVA_OPTIONS= "$1" -version 2>&1 | sed -n 's/.*version "\([^"]*\)".*/\1/p' | head -n 1)
+    javaMajor=$(echo "$javaVersion" | sed -e 's/^1\.//' -e 's/^\([0-9]*\).*/\1/')
+    if [ -z "$javaMajor" ] || [ "$javaMajor" -lt 25 ]; then
+        echo "${pkg.name} requires Java 25 or later, but '$1' is ${javaVersion:-not a working Java}." >&2
+        echo "Select Java 25 with 'update-alternatives --config java' (deb) or 'alternatives --config java' (rpm), or set JAVA_HOME in $CONF_FOLDER/${pkg.name}.conf." >&2
+        exit 78
+    fi
+}
+
+require_java_25 "$javaexe"
+
+cd "$(dirname "$jarfile")" || exit 1
+exec "$javaexe" $JAVA_OPTS -jar "$jarfile" $RUN_ARGS "$@"

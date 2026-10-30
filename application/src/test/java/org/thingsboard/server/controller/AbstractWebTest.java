@@ -46,12 +46,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
@@ -334,14 +336,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     };
 
     @Autowired
-    void setConverters(HttpMessageConverter<?>[] converters) {
+    void setConverters(RequestMappingHandlerAdapter handlerAdapter) {
+        List<HttpMessageConverter<?>> converters = handlerAdapter.getMessageConverters();
 
-        this.mappingJackson2HttpMessageConverter = Arrays.stream(converters)
+        this.mappingJackson2HttpMessageConverter = converters.stream()
                 .filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
                 .findAny()
                 .get();
 
-        this.stringHttpMessageConverter = Arrays.stream(converters)
+        this.stringHttpMessageConverter = converters.stream()
                 .filter(hmc -> hmc instanceof StringHttpMessageConverter)
                 .findAny()
                 .get();
@@ -761,7 +764,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doPost("/api/auth/logout").andExpect(status().isOk());
     }
 
-    protected void setJwtToken(MockHttpServletRequestBuilder request) {
+    protected void setJwtToken(AbstractMockHttpServletRequestBuilder<?> request) {
         if (this.token != null) {
             request.header(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER, BEARER_HEADER_PREFIX + this.token);
         }

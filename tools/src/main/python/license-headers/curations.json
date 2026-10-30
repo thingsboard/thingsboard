@@ -11,7 +11,7 @@
       "path": "application/src/main/java/org/thingsboard/server/service/edge/DefaultEdgeLicenseService.java",
       "header": "ce-modified",
       "reason": "Retained CE file subsequently deleted on the selected lts-4.2 mainline. PE retains the CE implementation with HTTP client migration, timeout and request-handling changes. Reviewed against last CE path version 3af76140cd7dd2968cdba2875a92eccbbcfc05fe^1 (blob 034ac5148483fda6234c6fae2a46cf601396606a); absence from the selected CE tree does not change origin.",
-      "contentHash": "sha256:eecfaa3b7a1a6e24f09816fbce577ddad12ce5fc0a0ccb14391982673adc081f"
+      "contentHash": "sha256:e0bb8888308be0e7cd40e4b5fcc938df2069eb044232c1bbe83c2fc2b294f494"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/edge/EdgeLicenseService.java",
@@ -48,24 +48,6 @@
       "header": "busl",
       "reason": "PE-specific service adapter/message SecretEdgeProcessor.java. Reviewed methods bind the common framework to PE integration, scheduler, encryption/secret, group, or customer-parent behavior. This is a new typed PE extension, not a relocation of the candidate CE implementation. Reviewed candidate application/src/main/java/org/thingsboard/server/service/edge/rpc/processor/queue/QueueEdgeProcessor.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 8e5a65b588937e5703ff87f301be023d27ce1808).",
       "contentHash": "sha256:6f960791993777f636b230e3829422af292370a5b5a113b082dc2d05ee151491"
-    },
-    {
-      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Migration.java",
-      "header": "ce-modified",
-      "reason": "CE interface application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigration.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigration.java at 5954190c32f (blob f0cadee1f657ab6d1a0f670f1166ef3140ec4438); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:c12598c1c6ccd66fe6cfd7833fe1624d379c937151df7d13bf162212cb7344aa"
-    },
-    {
-      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/MigrationService.java",
-      "header": "ce-modified",
-      "reason": "CE service application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsMigrationService.java at 5954190c32f (blob 2f063c3a1a469cb578503bdf548f5e1a4cfb4035); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:f72de342ef3308706b866bb311ede8c07c4027a2b413154a4002807561887ed3"
-    },
-    {
-      "path": "application/src/main/java/org/thingsboard/server/service/install/lts/Version.java",
-      "header": "ce-modified",
-      "reason": "CE class application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/main/java/org/thingsboard/server/service/install/lts/LtsVersion.java at 5954190c32f (blob fa59efcc5a2d50079e495e42c141139fc57f178b); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:d7698c48f928583c2ade63ed5f16620677bb6d0a59376d9dbe1fb1ee1457a095"
     },
     {
       "path": "application/src/main/java/org/thingsboard/server/service/integration/rpc/IntegrationSessionCaffeineCache.java",
@@ -132,24 +114,6 @@
       "header": "busl",
       "reason": "PE WebSocket logs subscription command added in 4005afabb81 as part of the PE agent feature introduced on lts-4.4, which has no counterpart in CE. The candidate CE application/src/main/java/org/thingsboard/server/service/ws/notification/cmd/NotificationsUnsubCmd.java shares only the WebSocket command boilerplate. Reviewed candidate at a0aff29ef42d3636473b017115a9334b48d54d15 (blob 1a7a6119358).",
       "contentHash": "sha256:fd319f8910fa50f4db8dd30fe3f90e60e34910e1ddc0bb9db390db64f56b27db"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationIntegrationTest.java",
-      "header": "ce-modified",
-      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java at 5954190c32f (blob cf60ec2e4b5fce7a55862805e9bd959c125ce17e); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:24cb205ad1c7a7577284aa2fca5b245d60e0c554accfe9f26021a6d60e0807ce"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationServiceTest.java",
-      "header": "ce-modified",
-      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationServiceTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationServiceTest.java at 5954190c32f (blob 18ee8b6506742c7bf3e39a8fe0e5d9e9370e5614); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:1ba9703bfe4a8fdb30ef11d151c9de62b4f89279ad030738021986db9fd64d8d"
-    },
-    {
-      "path": "application/src/test/java/org/thingsboard/server/service/install/lts/VersionTest.java",
-      "header": "ce-modified",
-      "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsVersionTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsVersionTest.java at 5954190c32f (blob f3d280a915e59fb37e93c45e6404b09728a772a8); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:6a1b1d2f264dbae3ad420d9eef4466449a50f9f721c7256441a4aab0e4a87037"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/install/update/DefaultDataUpdateServiceTest.java",
@@ -545,7 +509,7 @@
       "path": "common/integration/mqtt-integrations/src/main/java/org/thingsboard/integration/mqtt/credentials/CertPemClientCredentials.java",
       "header": "busl",
       "reason": "Retained PE MQTT integration client-certificate credentials from the original integration credential family. Similar CE rule-engine credential implementations do not establish CE origin for that earlier PE family; PE supplies its client-certificate configuration. Reviewed CE candidate rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/credentials/CertPemCredentials.java at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 46d844d2c4aff3d5af24802dfee974f0af416113).",
-      "contentHash": "sha256:d4ae03b84f499bede7580d21ed131995793ee01d9a5bbd602f48a1a47325e896"
+      "contentHash": "sha256:abe439078bde5c247ab2d091d2aba5828360276d09dc604d7952ada12dab5e25"
     },
     {
       "path": "common/queue/src/main/java/org/thingsboard/server/queue/settings/TbQueueIntegrationApiSettings.java",
@@ -1094,12 +1058,6 @@
       "contentHash": "sha256:d052fff33aea9d375bbfa2c1655bc016a7d4232cc1aed77be9534dc23f6068e9"
     },
     {
-      "path": "monitoring/src/main/java/org/thingsboard/monitoring/service/integration/impl/HttpIntegrationHealthChecker.java",
-      "header": "busl",
-      "reason": "New PE file implementing a PE feature. It was written by adapting CE monitoring/src/main/java/org/thingsboard/monitoring/service/transport/impl/HttpTransportHealthChecker.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
-      "contentHash": "sha256:7a4b0c71c3185997d717d3ff197f7734826141bb89347b054dd5277a5979e8da"
-    },
-    {
       "path": "monitoring/src/main/java/org/thingsboard/monitoring/service/integration/impl/MqttIntegrationHealthChecker.java",
       "header": "busl",
       "reason": "New PE file implementing a PE feature. It was written by adapting CE monitoring/src/main/java/org/thingsboard/monitoring/service/transport/impl/MqttTransportHealthChecker.java, which PE still carries at its own path, so this is not a CE file with PE modifications. Adaptation from CE does not make it CE-derived. Maintainer rule (2026-09-09): a file that exists in CE and carries PE changes is modified CE; a file that does not exist in CE and implements a PE feature is PE-only, however closely it resembles a CE file.",
@@ -1223,7 +1181,7 @@
       "path": "report/src/main/resources/tb-report.yml",
       "header": "busl",
       "reason": "Launch, logging or runtime scaffolding for a PE service. Maintainer explicitly resolved this PE module scaffolding as PE-only; matching CE startup/logging conventions do not override that decision. Reviewed similarity candidate edqs/src/main/resources/edqs.yml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob cad0fcaccc785af0853c77f05d385adb4c102f67).",
-      "contentHash": "sha256:64e2775735521015bd88c79f68db101ff69f536c681db8239764c434205a0583"
+      "contentHash": "sha256:af66b4f07cc43e0af1fc0f2f39f9c2b1220c22ed6ecefab56bd3260cceab6b50"
     },
     {
       "path": "rule-engine/rule-engine-components/src/main/java/org/thingsboard/rule/engine/metadata/TbGetCustomerAttributeNodeConfiguration.java",

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.user;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
@@ -68,8 +69,6 @@ public class JpaUserSettingsDaoTest extends AbstractJpaDaoTest {
         assertNull(retrievedUserSettings2);
     }
 
-    // If Hibernate fail to bind JSON path please check the hypersistence-utils-hibernate-XX artifact name and version in the dependency management
-    // Example: java.lang.ClassCastException: class [Ljava.lang.String; cannot be cast to class [B ([Ljava.lang.String; and [B are in module java.base of loader 'bootstrap')
     @Test
     public void testFindByTypeAndJsonPath() {
         UserSettings userSettings = createUserSettings(user.getId());

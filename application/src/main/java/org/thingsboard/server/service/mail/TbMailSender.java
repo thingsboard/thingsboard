@@ -106,6 +106,8 @@ public class TbMailSender extends JavaMailSenderImpl {
             }
         }
         javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", enableTls);
+        // Angus Mail checks the server identity unless this is set
+        javaMailProperties.put(MAIL_PROP + protocol + ".ssl.checkserveridentity", "false");
         if (enableTls && jsonConfig.has("tlsVersion") && !jsonConfig.get("tlsVersion").isNull()) {
             String tlsVersion = jsonConfig.get("tlsVersion").asText();
             if (StringUtils.isNoneEmpty(tlsVersion)) {

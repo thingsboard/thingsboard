@@ -249,7 +249,7 @@ public abstract class AbstractMqttIntegration<T extends MqttIntegrationMsg> exte
     protected Optional<SslContext> initSslContext(MqttClientConfiguration configuration) throws SSLException {
         Optional<SslContext> result = configuration.getCredentials().initSslContext();
         if (configuration.isSsl() && result.isEmpty()) {
-            result = Optional.of(SslContextBuilder.forClient().build());
+            result = Optional.of(SslContextBuilder.forClient().endpointIdentificationAlgorithm(null).build());
         }
         return result;
     }

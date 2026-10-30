@@ -4,8 +4,10 @@ After=syslog.target
 
 [Service]
 User=${pkg.user}
-ExecStart=${pkg.installFolder}/bin/${pkg.name}.jar
+ExecStart=${pkg.installFolder}/bin/${pkg.name}
 SuccessExitStatus=143
+# The launcher exits with 78 when the selected Java is older than 25; restarting cannot fix that.
+RestartPreventExitStatus=78
 
 # Service shall be restarted in 30 seconds when the service process exits, is killed, or a timeout is reached.
 # Restart parameter default value 'no'

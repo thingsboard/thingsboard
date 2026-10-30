@@ -8,6 +8,9 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8082}"
+  tomcat:
+    # Maximum number of GET and POST request parameters Tomcat parses per request
+    max-parameter-count: "${SERVER_TOMCAT_MAX_PARAMETER_COUNT:10000}"
 
 integration:
   routingKey: "${INTEGRATION_ROUTING_KEY:PUT_YOUR_ROUTING_KEY_HERE}"
@@ -25,8 +28,8 @@ integration:
 spring:
   autoconfigure:
     exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
 
 storage:
   # Location of the folder to store data files
