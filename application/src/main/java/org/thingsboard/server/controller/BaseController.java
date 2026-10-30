@@ -694,6 +694,12 @@ public abstract class BaseController {
         }
     }
 
+    protected void validateTimeRange(long startTime, long endTime) throws ThingsboardException {
+        if (startTime >= endTime) {
+            throw new ThingsboardException("Start time must be less than end time", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+    }
+
     static void checkParameter(String name, String param) throws ThingsboardException {
         if (StringUtils.isBlank(param)) {
             throw new ThingsboardException("Parameter '" + name + "' can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);

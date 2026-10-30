@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 syntax = "proto3";
 package msgqueue;
 
@@ -22,6 +23,12 @@ message TbMsgProcessingStackItemProto {
 message TbMsgProcessingCtxProto {
     int32 ruleNodeExecCounter = 1;
     repeated TbMsgProcessingStackItemProto stack = 2;
+    bool traceAuthorized = 3;
+    // Trace state of a traced message; empty when the message is not traced.
+    string traceId = 4;
+    string traceparent = 5;
+    string spanOnRetry = 6;
+    bool traceRecordMsgPayload = 7;
 }
 
 message TbMsgProto {

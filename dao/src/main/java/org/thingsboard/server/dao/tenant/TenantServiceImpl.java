@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.TenantDataValidator;
+import org.thingsboard.server.dao.sql.tracecoverage.TraceCoverageSettingDao;
 import org.thingsboard.server.dao.translation.CustomTranslationService;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
@@ -90,6 +91,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private IotHubInstalledItemService iotHubInstalledItemService;
     @Autowired
     private AgentAppEventService agentAppEventService;
+    @Autowired
+    private TraceCoverageSettingDao traceCoverageSettingDao;
     @Autowired
     private TenantDataValidator tenantValidator;
     @Autowired
@@ -204,6 +207,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         encryptionService.deleteEncryptionKeyByTenantId(tenantId);
         iotHubInstalledItemService.deleteByTenantId(tenantId);
         agentAppEventService.deleteByTenantId(tenantId);
+        traceCoverageSettingDao.removeByTenantId(tenantId.getId());
 
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));

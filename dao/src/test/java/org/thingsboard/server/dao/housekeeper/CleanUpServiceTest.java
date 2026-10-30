@@ -173,6 +173,30 @@ class CleanUpServiceTest {
     }
 
     @Test
+    void tenantDeletionEnqueuesTraceTenantDataDeletionTask() {
+        cleanUpService.handleEntityDeletionEvent(DeleteEntityEvent.<Object>builder()
+                .tenantId(tenantId)
+                .entityId(tenantId)
+                .build());
+
+        HousekeeperTask task = submittedTask(HousekeeperTaskType.DELETE_TRACE_TENANT_DATA);
+        assertThat(task.getTenantId()).isEqualTo(tenantId);
+        assertThat(task.getEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    void tenantDeletionEnqueuesRuleEngineStatsTenantDataDeletionTask() {
+        cleanUpService.handleEntityDeletionEvent(DeleteEntityEvent.<Object>builder()
+                .tenantId(tenantId)
+                .entityId(tenantId)
+                .build());
+
+        HousekeeperTask task = submittedTask(HousekeeperTaskType.DELETE_RULE_ENGINE_STATS_TENANT_DATA);
+        assertThat(task.getTenantId()).isEqualTo(tenantId);
+        assertThat(task.getEntityId()).isEqualTo(tenantId);
+    }
+
+    @Test
     void allCleanupTasksAreStillEnqueued_whenRelationCleanupFails() {
         User user = user(tenantId);
         doThrow(new RuntimeException("DB is down")).when(relationService).deleteEntityRelations(tenantId, user.getId());

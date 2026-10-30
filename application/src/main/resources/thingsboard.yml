@@ -299,6 +299,97 @@ ui:
     # Base URL for solution templates docs
     docs_base_url: "${UI_SOLUTION_TEMPLATES_DOCS_BASE_URL:https://thingsboard.io/docs/pe}"
 
+# OpenTelemetry tracing configuration.
+# Tracing is created only when OTEL_TRACING_ENABLED=true; it works with either cache type.
+otel:
+  tracing:
+    # Enables rule chain tracing: messages are sampled per the tenant trace coverage setting. The spans go to the
+    # buffered trace processor (stored in ThingsBoard) and, when enabled, to the OTLP exporter
+    enabled: "${OTEL_TRACING_ENABLED:false}"
+    span-limits:
+      # Max length (chars) of any span attribute value; longer values are truncated. Bounds heap held by queued
+      # spans when message payload recording is on.
+      max-attribute-value-length: "${OTEL_TRACING_SPAN_LIMITS_MAX_ATTRIBUTE_VALUE_LENGTH:4096}"
+  processor:
+    trace:
+      # Buffered trace processor that stores the spans in ThingsBoard. Buffer backend follows 'cache.type': redis
+      # (shared) or caffeine (local; single-node deployments only). Disable only to send the spans to the OTLP
+      # exporter alone.
+      enabled: "${OTEL_TRACE_PROCESSOR_ENABLED:true}"
+      buffer:
+        # Max spans kept for one trace; further spans of that trace are dropped ('trace.export.limit.reached')
+        max-spans-per-trace: "${OTEL_TRACE_PROCESSOR_BUFFER_MAX_SPANS_PER_TRACE:200}"
+        # Quiet time (ms) after a trace's last span before the job may drain it. Sets buffer residency.
+        trace-ttl-ms: "${OTEL_TRACE_PROCESSOR_BUFFER_TRACE_TTL_MS:60000}"
+        # Redis only: hard expiry (ms) stamped once at creation, never refreshed. Safety net for a job that
+        # stopped draining; keep well above trace-ttl-ms plus drain lag. 0 disables.
+        redis-key-ttl-ms: "${OTEL_TRACE_PROCESSOR_BUFFER_REDIS_KEY_TTL_MS:1800000}"
+        # Caffeine only: span cap. Once reached new spans are rejected ('trace.buffer.rejected'); buffered
+        # spans are never dropped.
+        max-buffered-spans: "${OTEL_TRACE_PROCESSOR_BUFFER_MAX_BUFFERED_SPANS:300000}"
+      aggregation:
+        # Job period (ms), measured from the previous start. Runs never overlap. With the Redis buffer, only the
+        # node that owns the system rule engine partition runs it.
+        interval-ms: "${OTEL_TRACE_PROCESSOR_AGGREGATION_INTERVAL_MS:10000}"
+        # Max spans taken from the buffer and aggregated in one step. The job repeats steps until all expired
+        # traces are handled, so this bounds memory and step duration, not how much one run processes.
+        drain-batch-spans: "${OTEL_TRACE_PROCESSOR_AGGREGATION_DRAIN_BATCH_SPANS:5000}"
+      batch:
+        # Delay (ms) between two exports of ended spans to the trace buffer
+        schedule-delay-ms: "${OTEL_TRACE_PROCESSOR_BATCH_SCHEDULE_DELAY_MS:2000}"
+        # Max spans queued for export to the trace buffer. Rounded up to a power of two (100000 -> 131072), as
+        # OpenTelemetry sizes the queue that way; the pressure thresholds use the rounded value.
+        max-queue-size: "${OTEL_TRACE_PROCESSOR_BATCH_MAX_QUEUE_SIZE:131072}"
+        # Max spans in one export to the trace buffer
+        max-export-batch-size: "${OTEL_TRACE_PROCESSOR_BATCH_MAX_EXPORT_BATCH_SIZE:60000}"
+        # Max time (ms) for one export to the trace buffer before it is cancelled
+        exporter-timeout-ms: "${OTEL_TRACE_PROCESSOR_BATCH_EXPORTER_TIMEOUT_MS:30000}"
+      metrics:
+        # Interval (ms) at which the span export metrics are published to the platform metrics ('otel.trace.*')
+        interval-ms: "${OTEL_TRACE_PROCESSOR_METRICS_INTERVAL_MS:5000}"
+      pressure:
+        # Percentages of 'batch.max-queue-size', measured on ended spans queued for export. New trace ids stop first
+        # so in-flight traces can finish.
+        trace-id-max-queue-usage-pct: "${OTEL_TRACE_PROCESSOR_PRESSURE_TRACE_ID_MAX_QUEUE_USAGE_PCT:50}"
+        # Queue usage at which new spans of in-flight traces are dropped as well
+        span-max-queue-usage-pct: "${OTEL_TRACE_PROCESSOR_PRESSURE_SPAN_MAX_QUEUE_USAGE_PCT:100}"
+  exporter:
+    otlp:
+      # Enables an additional export of the spans to an OpenTelemetry collector over OTLP gRPC
+      enabled: "${OTEL_EXPORTER_OTLP_ENABLED:false}"
+      # OTLP gRPC endpoint of the OpenTelemetry collector
+      endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}"
+      batch:
+        # Delay (ms) between two exports to the collector
+        schedule-delay-ms: "${OTEL_OTLP_BATCH_SCHEDULE_DELAY_MS:2000}"
+        # Max spans queued for the collector; further spans are dropped
+        max-queue-size: "${OTEL_OTLP_BATCH_MAX_QUEUE_SIZE:10000}"
+        # Max spans in one export to the collector
+        max-export-batch-size: "${OTEL_OTLP_BATCH_MAX_EXPORT_BATCH_SIZE:10000}"
+        # Max time (ms) for one export to the collector before it is cancelled
+        exporter-timeout-ms: "${OTEL_OTLP_BATCH_EXPORTER_TIMEOUT_MS:10000}"
+      metrics:
+        # Interval (ms) at which the OTLP exporter metrics are sent to the collector
+        interval-ms: "${OTEL_OTLP_METRICS_INTERVAL_MS:5000}"
+
+# Rule engine monitoring: rule node and queue execution statistics
+rule-node-exec-stats:
+  # Enables collection of rule node and queue execution statistics
+  enabled: "${RULE_NODE_EXEC_STATS_ENABLED:false}"
+  # Interval (ms) at which the rule node statistics are written to the database
+  exec-flush-interval-ms: "${RULE_NODE_EXEC_STATS_EXEC_FLUSH_INTERVAL_MS:60000}"
+  # Max number of distinct keys in the rule node exec metrics accumulator per flush interval; new keys beyond this are dropped
+  exec-max-keys: "${RULE_NODE_EXEC_STATS_EXEC_MAX_KEYS:1000000}"
+  # Interval (ms) at which the queue statistics are written to the database
+  queue-flush-interval-ms: "${RULE_NODE_EXEC_STATS_QUEUE_FLUSH_INTERVAL_MS:60000}"
+  # Max number of distinct keys in the queue metrics accumulator per flush interval; new keys beyond this are dropped
+  queue-max-keys: "${RULE_NODE_EXEC_STATS_QUEUE_MAX_KEYS:1000000}"
+  # Groups queue timeout metrics by the last visited rule node (and its rule chain). Enabled by default
+  queue-timeout-last-visited-rule-node-enabled: "${RULE_NODE_EXEC_STATS_QUEUE_TIMEOUT_LAST_VISITED_RULE_NODE_ENABLED:true}"
+  # Interval between queue lag collection runs (Kafka deployments only). Only the node that owns the system rule
+  # engine partition collects and writes lag.
+  queue-lag-flush-interval-ms: "${RULE_NODE_EXEC_STATS_QUEUE_LAG_FLUSH_INTERVAL_MS:60000}"
+
 # Database parameters
 # Selects the storage backend (SQL, Cassandra, or TimescaleDB) for time-series and latest telemetry data and the maximum query intervals,
 # and configures optional Citus (distributed PostgreSQL) support.
@@ -539,6 +630,9 @@ sql:
     partition_size: "${SQL_REPORTS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
   notifications:
     partition_size: "${SQL_NOTIFICATIONS_PARTITION_SIZE_HOURS:168}" # Default value - 1 week
+  traces:
+    partition_size: "${SQL_TRACES_PARTITION_SIZE_HOURS:24}" # Number of hours per span table partition. Default value - 1 day
+    rule_engine_stats_partition_size: "${SQL_TRACES_RULE_ENGINE_STATS_PARTITION_SIZE_HOURS:24}" # Number of hours per rule_node_* stats table partition. Default value - 1 day
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
   batch_sort: "${SQL_BATCH_SORT:true}"
   # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -610,6 +704,14 @@ sql:
     api_keys:
       enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
       checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+    traces:
+      enabled: "${SQL_TTL_TRACES_ENABLED:true}" # Enable/disable TTL (Time To Live) for traces and rule engine monitoring stats
+      execution_interval_ms: "${SQL_TTL_TRACES_EXECUTION_INTERVAL_MS:3600000}" # Default value - 1 hour (max random initial delay and fixed period)
+      # Spans and trace summaries, by span start time; 0 disables. Accurate to sql.traces.partition_size. Default value - 7 days
+      spans_ttl: "${SQL_TTL_TRACES_SPANS_SECS:604800}"
+      trace_groups_ttl: "${SQL_TTL_TRACES_GROUPS_SECS:604800}" # Execution path day buckets; 0 disables. Default value - 7 days
+      rule_engine_stats_ttl: "${SQL_TTL_RULE_ENGINE_STATS_SECS:2592000}" # rule_node_* stats; 0 disables. Accurate to sql.traces.rule_engine_stats_partition_size. Default value - 30 days
+      removal_batch_size: "${SQL_TTL_TRACES_REMOVAL_BATCH_SIZE:10000}" # Batch size for trace summary and trace group records removal
     agent_bulk_actions:
       enabled: "${SQL_TTL_AGENT_BULK_ACTIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for agent bulk action records
       ttl: "${SQL_TTL_AGENT_BULK_ACTIONS_SECS:604800}" # Default value - 7 days; removing a bulk action also removes the agent app events it created, so those events are retained for the shorter of this TTL and 'agent_app_events.ttl'
@@ -1253,7 +1355,7 @@ spring:
     events:
       # Enable dedicated datasource (a separate database) for events and audit logs.
       # Before enabling this, make sure you have set up the following tables in the new DB:
-      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, converter_debug_event, integration_debug_event, raw_data_event, audit_log, cf_debug_event
+      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, converter_debug_event, integration_debug_event, raw_data_event, audit_log, cf_debug_event, span, trace_summary, trace_group, rule_node_exec_stats, rule_node_queue_stats, rule_node_queue_lag_stats
       enabled: "${SPRING_DEDICATED_EVENTS_DATASOURCE_ENABLED:false}"
       # Database driver for Spring JPA for events datasource
       driverClassName: "${SPRING_EVENTS_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}"

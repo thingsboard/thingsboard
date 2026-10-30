@@ -243,6 +243,14 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsDelta;
+import org.thingsboard.server.common.data.ruleenginemonitoring.MergedStatsTableRow;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueLagTimeseriesEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTableEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.QueueTimeseriesEntry;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleEngineMonitoringFilters;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTableRow;
+import org.thingsboard.server.common.data.ruleenginemonitoring.RuleNodeTsKvEntry;
 import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.common.data.scheduler.SchedulerEventInfo;
 import org.thingsboard.server.common.data.secret.Secret;
@@ -271,6 +279,16 @@ import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.trace.SpanAttributeDTO;
+import org.thingsboard.server.common.data.trace.SpanDTO;
+import org.thingsboard.server.common.data.trace.SpanEventDTO;
+import org.thingsboard.server.common.data.trace.SpanLinkDTO;
+import org.thingsboard.server.common.data.trace.SpanTreeNode;
+import org.thingsboard.server.common.data.trace.Trace;
+import org.thingsboard.server.common.data.trace.TraceCoverageSetting;
+import org.thingsboard.server.common.data.trace.TraceFilters;
+import org.thingsboard.server.common.data.trace.TracePathDTO;
+import org.thingsboard.server.common.data.trace.TracePathDetailsDTO;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
@@ -284,6 +302,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -6539,6 +6558,205 @@ public class RestClient implements Closeable {
 
     public void deleteJob(JobId jobId) {
         restTemplate.delete(baseURL + "/api/job/{id}", jobId.getId());
+    }
+
+    public TraceCoverageSetting getTraceCoverageSetting() {
+        return restTemplate.getForObject(baseURL + "/api/traces/coverage", TraceCoverageSetting.class);
+    }
+
+    public TraceCoverageSetting saveTraceCoverageSetting(TraceCoverageSetting setting) {
+        return restTemplate.postForObject(baseURL + "/api/traces/coverage", setting, TraceCoverageSetting.class);
+    }
+
+    public Optional<Trace> getTrace(String traceId) {
+        try {
+            return Optional.ofNullable(restTemplate.getForObject(baseURL + "/api/traces/{traceId}", Trace.class, traceId));
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw exception;
+        }
+    }
+
+    public List<SpanDTO> getTraceSpans(String traceId) {
+        return restTemplate.exchange(baseURL + "/api/traces/{traceId}/spans", HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<SpanDTO>>() {
+                }, traceId).getBody();
+    }
+
+    public List<SpanTreeNode> getTraceSpansTree(String traceId) {
+        return restTemplate.exchange(baseURL + "/api/traces/{traceId}/spans/tree", HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<SpanTreeNode>>() {
+                }, traceId).getBody();
+    }
+
+    public List<SpanAttributeDTO> getSpanAttributes(String traceId, String spanId) {
+        return restTemplate.exchange(baseURL + "/api/traces/{traceId}/spans/{spanId}/attributes", HttpMethod.GET,
+                HttpEntity.EMPTY, new ParameterizedTypeReference<List<SpanAttributeDTO>>() {
+                }, traceId, spanId).getBody();
+    }
+
+    public List<SpanEventDTO> getSpanEvents(String traceId, String spanId) {
+        return restTemplate.exchange(baseURL + "/api/traces/{traceId}/spans/{spanId}/events", HttpMethod.GET,
+                HttpEntity.EMPTY, new ParameterizedTypeReference<List<SpanEventDTO>>() {
+                }, traceId, spanId).getBody();
+    }
+
+    public List<SpanLinkDTO> getSpanLinks(String traceId, String spanId) {
+        return restTemplate.exchange(baseURL + "/api/traces/{traceId}/spans/{spanId}/links", HttpMethod.GET,
+                HttpEntity.EMPTY, new ParameterizedTypeReference<List<SpanLinkDTO>>() {
+                }, traceId, spanId).getBody();
+    }
+
+    public TraceFilters getTraceFilters() {
+        return restTemplate.getForObject(baseURL + "/api/traces/filters", TraceFilters.class);
+    }
+
+    /**
+     * @param filters optional search parameters of {@code GET /api/traces}, by name (e.g. "originatorId",
+     *                "errorsOnly", "ruleNodeId", "pathId", "sortBy", "sortOrder"); null values are skipped
+     */
+    public PageData<Trace> searchTraces(long startTime, long endTime, int page, int pageSize, Map<String, ?> filters) {
+        Map<String, Object> params = new HashMap<>(filters != null ? filters : Map.of());
+        params.put("startTime", startTime);
+        params.put("endTime", endTime);
+        params.put("page", page);
+        params.put("pageSize", pageSize);
+        return getWithQueryParams("/api/traces", params, new ParameterizedTypeReference<PageData<Trace>>() {
+        });
+    }
+
+    /**
+     * @param filters optional parameters of {@code GET /api/traces/paths}, by name (e.g. "rootQueueId",
+     *                "rootRuleChainId", "ruleNodeId", "errorsOnly", "sortBy", "sortOrder"); null values are skipped
+     */
+    public PageData<TracePathDTO> getTracePaths(long startTime, long endTime, int page, int pageSize, Map<String, ?> filters) {
+        Map<String, Object> params = new HashMap<>(filters != null ? filters : Map.of());
+        params.put("startTime", startTime);
+        params.put("endTime", endTime);
+        params.put("page", page);
+        params.put("pageSize", pageSize);
+        return getWithQueryParams("/api/traces/paths", params, new ParameterizedTypeReference<PageData<TracePathDTO>>() {
+        });
+    }
+
+    public TraceFilters getTracePathFilters() {
+        return restTemplate.getForObject(baseURL + "/api/traces/paths/filters", TraceFilters.class);
+    }
+
+    public TracePathDetailsDTO getTracePathDetails(String pathId, long startTime, long endTime) {
+        return restTemplate.getForObject(baseURL + "/api/traces/paths/{pathId}?startTime={startTime}&endTime={endTime}",
+                TracePathDetailsDTO.class, pathId, startTime, endTime);
+    }
+
+    public RuleEngineMonitoringFilters getRuleEngineMonitoringFilters() {
+        return restTemplate.getForObject(baseURL + "/api/ruleEngineMonitoring/filters", RuleEngineMonitoringFilters.class);
+    }
+
+    public List<RuleNodeTsKvEntry> getRuleNodeStatsTimeseries(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                              List<UUID> ruleChainIds, List<UUID> ruleNodeIds,
+                                                              List<String> serviceIds, long intervalMs) {
+        Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds);
+        params.put("intervalMs", intervalMs);
+        return getWithQueryParams("/api/ruleEngineMonitoring/nodeStats/timeseries", params,
+                new ParameterizedTypeReference<List<RuleNodeTsKvEntry>>() {
+                });
+    }
+
+    public List<RuleNodeTableRow> getRuleNodeStatsTable(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                        List<UUID> ruleChainIds, List<UUID> ruleNodeIds, List<String> serviceIds) {
+        return getWithQueryParams("/api/ruleEngineMonitoring/nodeStats/table",
+                statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds),
+                new ParameterizedTypeReference<List<RuleNodeTableRow>>() {
+                });
+    }
+
+    public List<QueueTimeseriesEntry> getQueueStatsTimeseries(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                              List<UUID> ruleChainIds, List<UUID> ruleNodeIds,
+                                                              List<String> serviceIds, long intervalMs) {
+        Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds);
+        params.put("intervalMs", intervalMs);
+        return getWithQueryParams("/api/ruleEngineMonitoring/queueStats/timeseries", params,
+                new ParameterizedTypeReference<List<QueueTimeseriesEntry>>() {
+                });
+    }
+
+    public List<QueueTableEntry> getQueueStatsTable(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                    List<UUID> ruleChainIds, List<UUID> ruleNodeIds, List<String> serviceIds) {
+        return getWithQueryParams("/api/ruleEngineMonitoring/queueStats/table",
+                statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds),
+                new ParameterizedTypeReference<List<QueueTableEntry>>() {
+                });
+    }
+
+    public List<QueueLagTimeseriesEntry> getQueueLagTimeseries(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                               long intervalMs) {
+        Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, null, null, null);
+        params.put("intervalMs", intervalMs);
+        return getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/timeseries", params,
+                new ParameterizedTypeReference<List<QueueLagTimeseriesEntry>>() {
+                });
+    }
+
+    public Long getCurrentQueueLag(List<UUID> queueIds) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("queueIds", queueIds);
+        return getWithQueryParams("/api/ruleEngineMonitoring/queueLagStats/last", params,
+                new ParameterizedTypeReference<Long>() {
+                });
+    }
+
+    public List<MergedStatsTableRow> getMergedStatsTable(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                         List<UUID> ruleChainIds, List<UUID> ruleNodeIds, List<String> serviceIds) {
+        return getWithQueryParams("/api/ruleEngineMonitoring/stats/table",
+                statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds),
+                new ParameterizedTypeReference<List<MergedStatsTableRow>>() {
+                });
+    }
+
+    public List<MergedStatsDelta> getMergedStatsTableCompare(long startTs, long endTs, long compareStartTs, long compareEndTs,
+                                                             String groupBy, List<UUID> queueIds, List<UUID> ruleChainIds,
+                                                             List<UUID> ruleNodeIds, List<String> serviceIds) {
+        Map<String, Object> params = statsParams(startTs, endTs, groupBy, queueIds, ruleChainIds, ruleNodeIds, serviceIds);
+        params.put("compareStartTs", compareStartTs);
+        params.put("compareEndTs", compareEndTs);
+        return getWithQueryParams("/api/ruleEngineMonitoring/stats/table/compare", params,
+                new ParameterizedTypeReference<List<MergedStatsDelta>>() {
+                });
+    }
+
+    private static Map<String, Object> statsParams(long startTs, long endTs, String groupBy, List<UUID> queueIds,
+                                                   List<UUID> ruleChainIds, List<UUID> ruleNodeIds, List<String> serviceIds) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("startTs", startTs);
+        params.put("endTs", endTs);
+        params.put("groupBy", groupBy);
+        params.put("queueIds", queueIds);
+        params.put("ruleChainIds", ruleChainIds);
+        params.put("ruleNodeIds", ruleNodeIds);
+        params.put("serviceIds", serviceIds);
+        return params;
+    }
+
+    // Builds "?name={name}&..." for every non-null value; lists are sent comma-separated.
+    private <T> T getWithQueryParams(String path, Map<String, ?> params, ParameterizedTypeReference<T> responseType) {
+        Map<String, String> uriVariables = new HashMap<>();
+        StringBuilder url = new StringBuilder(baseURL).append(path);
+        char separator = '?';
+        for (Map.Entry<String, ?> param : params.entrySet()) {
+            Object value = param.getValue();
+            if (value == null || (value instanceof Collection<?> values && values.isEmpty())) {
+                continue;
+            }
+            String stringValue = value instanceof Collection<?> values
+                    ? values.stream().map(String::valueOf).collect(Collectors.joining(","))
+                    : String.valueOf(value);
+            uriVariables.put(param.getKey(), stringValue);
+            url.append(separator).append(param.getKey()).append("={").append(param.getKey()).append('}');
+            separator = '&';
+        }
+        return restTemplate.exchange(url.toString(), HttpMethod.GET, HttpEntity.EMPTY, responseType, uriVariables).getBody();
     }
 
     @SneakyThrows

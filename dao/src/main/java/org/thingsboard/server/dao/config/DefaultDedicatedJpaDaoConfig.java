@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.config;
 
 import org.springframework.context.annotation.Configuration;
@@ -8,7 +9,7 @@ import org.springframework.data.repository.config.BootstrapMode;
 
 @DefaultDataSource
 @Configuration
-@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit"}, bootstrapMode = BootstrapMode.LAZY)
+@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit", "org.thingsboard.server.dao.sql.trace"}, bootstrapMode = BootstrapMode.LAZY)
 public class DefaultDedicatedJpaDaoConfig {
 
 }

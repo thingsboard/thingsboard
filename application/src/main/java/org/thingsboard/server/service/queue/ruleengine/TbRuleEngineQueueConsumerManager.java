@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.queue.ruleengine;
 
 import com.google.protobuf.ProtocolStringList;
@@ -31,10 +32,13 @@ import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContextFactory;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
+import org.thingsboard.server.service.queue.TraceRetryMetadata;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategy;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
+import org.thingsboard.server.service.ruleenginemonitoring.RuleEngineMonitoringService;
+import org.thingsboard.server.service.trace.TraceMessageService;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +62,8 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     private final TbRuleEngineConsumerContext ctx;
     private final TbRuleEngineConsumerStats stats;
     private final TbMsgPackProcessingContextFactory packProcessingContextFactory;
+    private final TraceMessageService traceMessageService;
+    private final RuleEngineMonitoringService ruleEngineMonitoringService;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public TbRuleEngineQueueConsumerManager(TbRuleEngineConsumerContext ctx,
@@ -63,7 +71,9 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                                             ExecutorService consumerExecutor,
                                             ScheduledExecutorService scheduler,
                                             ExecutorService taskExecutor,
-                                            TbMsgPackProcessingContextFactory packProcessingContextFactory) {
+                                            TbMsgPackProcessingContextFactory packProcessingContextFactory,
+                                            TraceMessageService traceMessageService,
+                                            RuleEngineMonitoringService ruleEngineMonitoringService) {
         super(queueKey, null, null,
                 (queueConfig, tpi) -> {
                     Integer partitionId = tpi != null ? tpi.getPartition().orElse(-1) : null;
@@ -73,6 +83,8 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         this.ctx = ctx;
         this.stats = new TbRuleEngineConsumerStats(queueKey, ctx.getStatsFactory());
         this.packProcessingContextFactory = packProcessingContextFactory;
+        this.traceMessageService = traceMessageService;
+        this.ruleEngineMonitoringService = ruleEngineMonitoringService;
     }
 
     public void delete(boolean drainQueue) {
@@ -124,8 +136,20 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);
         submitStrategy.init(msgs);
+        ConcurrentMap<UUID, TraceRetryMetadata> msgIdToTraceId = null;
+        if (traceMessageService != null) {
+            msgIdToTraceId = new ConcurrentHashMap<>();
+        }
+        // Each attempt gets a new pack context, so the retry flag has to outlive it: a retry must not re-sample traces.
+        boolean retry = false;
         while (!stopped && !consumer.isStopped()) {
             TbMsgPackProcessingContext packCtx = packProcessingContextFactory.create(queue.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
+            packCtx.setMsgIdAndTraceIdMap(msgIdToTraceId);
+            packCtx.setHasRetry(retry);
+            // Decide trace-id coverage for the whole pack once, before per-message submission.
+            if (traceMessageService != null) {
+                traceMessageService.onMessagePack(queue.getTenantId(), packCtx);
+            }
             submitStrategy.submitAttempt((id, msg) -> submitMessage(packCtx, id, msg));
 
             final boolean timeout = !packCtx.await(queue.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);
@@ -133,6 +157,9 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
             TbRuleEngineProcessingResult result = new TbRuleEngineProcessingResult(queue.getName(), timeout, packCtx);
             if (timeout) {
                 printFirstOrAll(packCtx, packCtx.getPendingMap(), "Timeout");
+                if (traceMessageService != null) {
+                    traceMessageService.onTimeout(packCtx);
+                }
             }
             if (!packCtx.getFailedMap().isEmpty()) {
                 printFirstOrAll(packCtx, packCtx.getFailedMap(), "Failed");
@@ -144,6 +171,8 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 stats.log(result, decision.isCommit());
             }
 
+            reportToRuleEngineMonitoring(packCtx, queue, decision.isCommit() ? Set.of() : decision.getReprocessMap().keySet());
+
             packCtx.cleanup();
 
             if (decision.isCommit()) {
@@ -151,8 +180,20 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 consumer.commit();
                 break;
             } else {
+                retry = true;
                 submitStrategy.update(decision.getReprocessMap());
             }
+        }
+    }
+
+    private void reportToRuleEngineMonitoring(TbMsgPackProcessingContext packCtx, Queue queue, Set<UUID> toReprocess) {
+        try {
+            if (ruleEngineMonitoringService == null) {
+                return;
+            }
+            ruleEngineMonitoringService.recordQueueOutcomes(packCtx, queue, ctx.getServiceInfoProvider().getServiceId(), toReprocess);
+        } catch (Exception e) {
+            log.error("Failed to report queue outcome to monitoring service", e);
         }
     }
 
@@ -173,7 +214,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 new TbMsgPackCallback(id, tenantId, packCtx);
         try {
             if (!toRuleEngineMsg.getTbMsg().isEmpty() || toRuleEngineMsg.hasTbMsgProto()) {
-                forwardToRuleEngineActor(config.getName(), tenantId, toRuleEngineMsg, callback);
+                forwardToRuleEngineActor(packCtx, config.getName(), tenantId, toRuleEngineMsg, callback);
             } else {
                 callback.onSuccess();
             }
@@ -182,8 +223,11 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         }
     }
 
-    private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
+    private void forwardToRuleEngineActor(TbMsgPackProcessingContext packCtx, String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
         TbMsg tbMsg = ProtoUtils.fromTbMsgProto(queueName, toRuleEngineMsg, callback);
+        if (traceMessageService != null) {
+            traceMessageService.onForwardToRuleEngineActor(tenantId, packCtx, tbMsg);
+        }
         QueueToRuleEngineMsg msg;
         ProtocolStringList relationTypesList = toRuleEngineMsg.getRelationTypesList();
         Set<String> relationTypes;

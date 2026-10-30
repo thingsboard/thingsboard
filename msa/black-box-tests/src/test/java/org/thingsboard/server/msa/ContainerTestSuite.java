@@ -139,6 +139,13 @@ public class ContainerTestSuite {
             replaceInFile(targetDir + "tb-node.env", "TB_LICENSE_SECRET=YOUR_LICENSE_KEY_HERE",
                     "TB_LICENSE_SECRET=", "YOUR_LICENSE_KEY_HERE");
             addToFile(targetDir, "tb-node.env", Map.of("NON_PRODUCTION_USE", "true"));
+            // Rule chain tracing and rule engine statistics are off by default; the short flush intervals let
+            // the monitoring tests see the statistics within their timeout.
+            addToFile(targetDir, "tb-node.env", Map.of(
+                    "OTEL_TRACING_ENABLED", "true",
+                    "RULE_NODE_EXEC_STATS_ENABLED", "true",
+                    "RULE_NODE_EXEC_STATS_EXEC_FLUSH_INTERVAL_MS", "5000",
+                    "RULE_NODE_EXEC_STATS_QUEUE_FLUSH_INTERVAL_MS", "5000"));
 
             if (IS_HYBRID_MODE) {
                 composeFiles.add(new File(targetDir + "advanced/docker-compose.cassandra.volumes.yml"));

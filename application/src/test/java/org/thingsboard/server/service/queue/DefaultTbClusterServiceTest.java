@@ -169,6 +169,21 @@ public class DefaultTbClusterServiceTest {
     }
 
     @Test
+    public void testOnQueuesUpdateAndDeleteDoNotBroadcastLifecycleEvents() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet(MONOLITH));
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(MONOLITH));
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(MONOLITH));
+        when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(mock(TbQueueProducer.class));
+
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
+        clusterService.onQueuesDelete(List.of(createTestQueue()));
+
+        // The queue update/delete notifications already reach every rule engine; a lifecycle broadcast for a system
+        // queue only made AppActor log "Message has system tenant id" on each node.
+        verify(clusterService, never()).broadcastEntityStateChangeEvent(any(), any(), any());
+    }
+
+    @Test
     public void testOnQueueChangeMultipleMonoliths() {
         String monolith1 = MONOLITH + 1;
         String monolith2 = MONOLITH + 2;

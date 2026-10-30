@@ -302,6 +302,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             int relationsCount = relationsByTypes.size();
             if (relationsCount == 0) {
                 log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
+
                 if (relationTypes.contains(TbNodeConnectionType.FAILURE)) {
                     RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
                     if (ruleNodeCtx != null) {
@@ -335,22 +336,33 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     private void putToQueue(TopicPartitionInfo tpi, TbMsg msg, TbQueueCallback callbackWrapper, EntityId target) {
+        UUID childMsgId = UUID.randomUUID();
+
+        TbMsg childMsg;
         switch (target.getEntityType()) {
             case RULE_NODE:
-                putToQueue(tpi, msg.copy()
-                        .id(UUID.randomUUID())
+                childMsg = msg.copy()
+                        .id(childMsgId)
                         .ruleChainId(entityId)
                         .ruleNodeId(new RuleNodeId(target.getId()))
-                        .build(), callbackWrapper);
+                        .build();
                 break;
             case RULE_CHAIN:
-                putToQueue(tpi, msg.copy()
-                        .id(UUID.randomUUID())
+                childMsg = msg.copy()
+                        .id(childMsgId)
                         .ruleChainId(new RuleChainId(target.getId()))
                         .resetRuleNodeId()
-                        .build(), callbackWrapper);
+                        .build();
                 break;
+            default:
+                throw new IllegalArgumentException("Unsupported target entity type: " + target.getEntityType());
         }
+
+        if (childMsg.isTraced() && systemContext.getTraceMessageService() != null) {
+            systemContext.getTraceMessageService().onPutToQueue(msg, childMsg);
+        }
+
+        putToQueue(tpi, childMsg, callbackWrapper);
     }
 
     private void pushToTarget(TopicPartitionInfo tpi, TbMsg msg, EntityId target, String fromRelationType) {
