@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -11,11 +12,32 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
+import java.util.UUID;
+
 @JsonDeserialize(using = AliasEntityIdDeserializer.class)
 @JsonSerialize(using = AliasEntityIdSerializer.class)
 @Schema
 public interface AliasEntityId extends EntityId {
 
+    // The schema follows AliasEntityIdSerializer/AliasEntityIdDeserializer rather
+    // than the getters: entityType carries either an EntityType or an
+    // AliasEntityType name, id is only required for an EntityType, and
+    // aliasEntityType is never written.
+    @Override
+    @Schema(implementation = String.class, requiredMode = Schema.RequiredMode.REQUIRED,
+            description = "Entity type (EntityType) or alias resolved for the current user (AliasEntityType: " +
+                    "CURRENT_CUSTOMER, CURRENT_TENANT, CURRENT_USER, CURRENT_USER_OWNER)",
+            example = "DEVICE")
+    EntityType getEntityType();
+
+    @Override
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+            description = "ID of the entity, time-based UUID v1. Required for an entity type; for " +
+                    "CURRENT_CUSTOMER, the customer used when the current user does not belong to one",
+            example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    UUID getId();
+
+    @Schema(hidden = true)
     AliasEntityType getAliasEntityType();
 
     EntityId defaultEntityId();
