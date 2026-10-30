@@ -269,7 +269,8 @@ public class SwaggerConfiguration {
 
         var requestBody = new RequestBody().description("Refresh token request")
                 .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
-                        new MediaType().schema(new Schema<JsonNode>().addProperty("refreshToken", new Schema<>().type("string")))));
+                        new MediaType().schema(new Schema<JsonNode>().types(Set.of("object"))
+                                .addProperty("refreshToken", new Schema<>().types(Set.of("string"))))));
 
         operation.requestBody(requestBody);
 
@@ -361,9 +362,11 @@ public class SwaggerConfiguration {
         };
     }
 
+    // The document is OpenAPI 3.1 (see springDocProperties above), which serializes
+    // Schema.types; a schema built with Schema.type(...) is written without a type.
     private void addDefaultSchemas(OpenAPI openAPI) {
         Schema<?> errorCodeSchema = new Schema<>()
-                .type("integer")
+                .types(Set.of("integer"))
                 .description("Platform error code")
                 ._enum(Arrays.stream(ThingsboardErrorCode.values())
                         .map(ThingsboardErrorCode::getErrorCode)
@@ -378,7 +381,7 @@ public class SwaggerConfiguration {
     }
 
     private static void registerSchema(Components components, String name, Class<?> cls) {
-        ResolvedSchema resolved = ModelConverters.getInstance()
+        ResolvedSchema resolved = ModelConverters.getInstance(true)
                 .readAllAsResolvedSchema(new AnnotatedType().type(cls));
         components.addSchemas(name, resolved.schema);
         if (resolved.referencedSchemas != null) {
