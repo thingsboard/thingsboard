@@ -36,9 +36,4 @@ export class SigfoxIntegrationFormComponent extends HttpIntegrationFormComponent
     super(fb, store, translate);
   }
 
-  ngOnInit() {
-    super.ngOnInit();
-    this.baseHttpIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
-  }
-
 }

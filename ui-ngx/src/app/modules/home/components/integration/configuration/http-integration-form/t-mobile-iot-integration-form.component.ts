@@ -41,7 +41,6 @@ export class TMobileIotIntegrationFormComponent extends HttpIntegrationFormCompo
     super.ngOnInit();
     this.baseHttpIntegrationConfigForm.removeControl('enableSecurity', {emitEvent: false});
     this.baseHttpIntegrationConfigForm.removeControl('headersFilter', {emitEvent: false});
-    this.baseHttpIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
   }
 }
 

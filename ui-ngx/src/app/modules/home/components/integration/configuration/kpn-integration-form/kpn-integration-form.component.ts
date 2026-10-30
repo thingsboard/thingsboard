@@ -95,7 +95,6 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
     ).subscribe(() => {
       this.updateModels(this.kpnIntegrationConfigForm.getRawValue());
     });
-    this.kpnIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
   }
 
   writeValue(value: KpnIntegration) {
