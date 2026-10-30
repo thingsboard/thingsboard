@@ -87,6 +87,8 @@ import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AZUR
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE;
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_MQTT_UPLINK_CONVERTER_MESSAGE;
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_MQTT_UPLINK_CONVERTER_METADATA;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_SIGFOX_UPLINK_CONVERTER_MESSAGE;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_THINGSPARK_UPLINK_CONVERTER_MESSAGE;
@@ -125,6 +127,7 @@ public class ConverterController extends AutoCommitController {
 
     private static final Map<IntegrationType, String> converterDefaultMessages = ImmutableMap.<IntegrationType, String>builder()
             .put(IntegrationType.LORIOT, DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE)
+            .put(IntegrationType.MQTT, DEFAULT_MQTT_UPLINK_CONVERTER_MESSAGE)
             .put(IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_MESSAGE)
             .put(IntegrationType.TTI, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE)
             .put(IntegrationType.TTN, DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE)
@@ -139,7 +142,8 @@ public class ConverterController extends AutoCommitController {
             .build();
 
     private final static Map<IntegrationType, String> converterDefaultMetadatas = Map.of(
-            IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA
+            IntegrationType.SIGFOX, DEFAULT_SIGFOX_UPLINK_CONVERTER_METADATA,
+            IntegrationType.MQTT, DEFAULT_MQTT_UPLINK_CONVERTER_METADATA
     );
 
     public static final String CONVERTER_ID = "converterId";
