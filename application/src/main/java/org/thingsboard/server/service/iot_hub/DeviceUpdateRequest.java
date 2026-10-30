@@ -59,6 +59,8 @@ public class DeviceUpdateRequest {
         private JsonNode sharedAttributes;
         // The resolution the install state records for it
         private String resolution;
+        // KEEP: the install state entry of the entity, when the new version renamed its step
+        private String previousStepName;
     }
 
 }

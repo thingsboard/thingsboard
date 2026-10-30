@@ -224,6 +224,23 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void keptEntityOfARenamedStep_keepsTheChecksumUnderTheNewName() {
+        ObjectNode dashboardState = JacksonUtil.newObjectNode().put("checksum", "installed").put("resolution", "created");
+        dashboardState.set("entityOutput", JacksonUtil.newObjectNode().put("id", dashboardId.getId().toString()));
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", dashboardState));
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+        DeviceUpdateRequest.Step overview = keep("Overview", "DASHBOARD", dashboardId);
+        overview.setPreviousStepName("Dashboard");
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(overview));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getInstallState().get("Overview").get("checksum").asText()).isEqualTo("installed");
+        assertThat(descriptor.getInstallState()).doesNotContainKey("Dashboard");
+    }
+
+    @Test
     void failedStep_rollsBackAndReportsTheStep() {
         when(deviceProfileService.findDeviceProfileById(tenantId, profileId)).thenReturn(profile(3L, "AM308"));
         when(deviceProfileService.saveDeviceProfile(any())).thenAnswer(i -> i.getArgument(0));

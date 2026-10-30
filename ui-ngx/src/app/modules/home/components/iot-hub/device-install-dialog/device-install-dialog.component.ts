@@ -78,6 +78,8 @@ interface PreviousEntity {
   shared: boolean;
   // What the install state records for it, so that the next update decides again
   resolution: string;
+  // The install state entry it was found under: the installed step's name when the new version renamed it
+  stateKey: string;
   // What the server's check found for it
   state?: DevicePackageEntityState;
 }
@@ -1848,6 +1850,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         useExisting: stored.state.resolution === 'use-existing',
         shared: !!this.updateStates.get(key)?.shared,
         resolution: stored.state.resolution || 'created',
+        stateKey: key,
         state: this.updateStates.get(key)
       };
     } catch (e: any) {
@@ -2069,10 +2072,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return plan.action === 'keep' ? base : { ...base, action: 'OVERWRITE', entity: this.resolveTemplateJson(this.zipFiles.get(step.template)) };
     }
     if (plan.action === 'keep') {
-      return { ...base, entityId: plan.previous.output.id };
+      // A renamed step: the server takes the kept entity's checksum from the installed step's entry
+      const previousStepName = plan.previous.stateKey !== step.name ? plan.previous.stateKey : undefined;
+      return { ...base, entityId: plan.previous.output.id, previousStepName };
     }
     if (plan.resolution === 'use-existing') {
-      return { ...base, entityId: plan.existing.id, confirmed: true };
+      // The package's own entity, under a step that wasn't matched to its installed one, stays the package's
+      const resolution = this.isPackageEntity(plan.existing.id) ? 'created' : base.resolution;
+      return { ...base, resolution, entityId: plan.existing.id, confirmed: true };
     }
     const overwritten = plan.action === 'overwrite' ? plan.previous.output : plan.resolution === 'overwrite' ? plan.existing : null;
     const entity = this.buildEntityBody(ws, step, overwritten);
@@ -2283,12 +2290,25 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
   }
 
-  /** Update: the step of the installed version that a step of the new one replaces: same type and name, or the only one of its type. */
+  /**
+   * Update: the step of the installed version that a step of the new one replaces: same type and name, or, when the
+   * new version renamed it, the only installed step of its type that no step of the new version has the name of.
+   */
   private findPreviousStep(step: DeviceInstallStep): DeviceInstallStep | undefined {
     const previousSteps = (this.previousPackageInfo?.installSteps[this.selectedInstallMethod] ?? []).filter(s => s.type === step.type);
     const steps = (this.packageInfo.installSteps[this.selectedInstallMethod] ?? []).filter(s => s.type === step.type);
-    return previousSteps.find(s => s.name === step.name) ??
-      (previousSteps.length === 1 && steps.length === 1 ? previousSteps[0] : undefined);
+    const sameName = previousSteps.find(s => s.name === step.name);
+    if (sameName) {
+      return sameName;
+    }
+    const unmatchedPrevious = previousSteps.filter(p => !steps.some(s => s.name === p.name));
+    const unmatched = steps.filter(s => !previousSteps.some(p => p.name === s.name));
+    return unmatchedPrevious.length === 1 && unmatched.length === 1 ? unmatchedPrevious[0] : undefined;
+  }
+
+  /** Update: true when the entity is one the installed package created. */
+  private isPackageEntity(id: string): boolean {
+    return !!this.data.update?.descriptor.createdEntityIds?.some(created => created.id === id);
   }
 
   /** Update: the install state of a step of the new version, under its name or under the installed step it replaces. */

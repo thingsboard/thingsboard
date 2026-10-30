@@ -301,7 +301,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 state.put("resolution", step.getResolution() != null ? step.getResolution() : "created");
                 // A kept entity keeps the checksum of what the package left: the current one would take the
                 // user's changes for the package's, and the next update would overwrite them without a warning
-                String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ? previousChecksum(previous, step.getName()) : result.checksum();
+                String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ?
+                        previousChecksum(previous, step.getPreviousStepName() != null ? step.getPreviousStepName() : step.getName()) :
+                        result.checksum();
                 if (checksum != null) {
                     state.put("checksum", checksum);
                 }

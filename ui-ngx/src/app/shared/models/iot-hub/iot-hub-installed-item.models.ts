@@ -60,6 +60,8 @@ export interface DeviceUpdateStep {
   serverAttributes?: any;
   sharedAttributes?: any;
   resolution?: string;
+  // KEEP: the install state entry of the entity, when the new version renamed its step
+  previousStepName?: string;
 }
 
 export interface DeviceUpdateRequest {
