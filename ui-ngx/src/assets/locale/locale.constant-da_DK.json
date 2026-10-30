@@ -2127,7 +2127,7 @@
     "update-raw-payload": "Opdateret RAW-payload"
   },
   "content-type": {
-    "json": "Json",
+    "json": "JSON",
     "text": "Tekst",
     "binary": "Binær (Base64)",
     "hex": "Binær (Hex)"
