@@ -137,7 +137,7 @@
       "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationIntegrationTest.java",
       "header": "ce-modified",
       "reason": "CE test application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java renamed in 7a926f2c1f2 when the Lts prefix was dropped from migrations, with PE changes on top. Reviewed against CE application/src/test/java/org/thingsboard/server/service/install/lts/LtsMigrationIntegrationTest.java at 5954190c32f (blob cf60ec2e4b5fce7a55862805e9bd959c125ce17e); a renamed CE file stays CE-derived.",
-      "contentHash": "sha256:24cb205ad1c7a7577284aa2fca5b245d60e0c554accfe9f26021a6d60e0807ce"
+      "contentHash": "sha256:ae735844638945a2ed5de3ce596a538df0228cdd1c9b74ac800053a204fab656"
     },
     {
       "path": "application/src/test/java/org/thingsboard/server/service/install/lts/MigrationServiceTest.java",
@@ -1133,7 +1133,7 @@
       "path": "msa/black-box-tests/src/test/resources/black-box.xml",
       "header": "busl",
       "reason": "PE black-box test setup and logging/suite configuration. This selects the PE test environment and scenarios using shared configuration syntax. Curated as PE-only test scaffolding consistently with the maintainer decision for PE module launch/logging files. Reviewed similarity candidate msa/black-box-tests/src/test/resources/connectivity.xml at 0d3b41e002f958887a317ca8366fdc4efa549058 (blob 7cd96bb429343ed9153b67281b1e48602beb28c7).",
-      "contentHash": "sha256:2a0dca3720c2f97ea0c782b69e2ff574656838600f459b31ff2ccff857147695"
+      "contentHash": "sha256:99630b8ec909061809ef7690bb79a07a872b987ea5ebb8a75942d407a6f9f436"
     },
     {
       "path": "msa/black-box-tests/src/test/resources/solutionTemplates.xml",
