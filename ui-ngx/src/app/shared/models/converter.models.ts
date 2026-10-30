@@ -28,7 +28,8 @@ export const IntegrationTbelDefaultDecodersUrl = new Map<IntegrationType, string
   [IntegrationType.KPN, '/assets/converters/tbel-kpn-decoder.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/tbel-thingpark-decoder.raw'],
   [IntegrationType.TPE, '/assets/converters/tbel-tpe-decoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-decoder.raw']
+  [IntegrationType.MQTT, '/assets/converters/tbel-mqtt-decoder.raw'],
+  [IntegrationType.HTTP, '/assets/converters/tbel-http-decoder.raw']
 ]);
 
 export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>([
@@ -38,7 +39,8 @@ export const IntegrationJSDefaultDecodersUrl = new Map<IntegrationType, string>(
   [IntegrationType.TTN, '/assets/converters/js-ttn-decoder.raw'],
   [IntegrationType.THINGPARK, '/assets/converters/js-thingpark-decoder.raw'],
   [IntegrationType.TPE, '/assets/converters/js-tpe-decoder.raw'],
-  [IntegrationType.MQTT, '/assets/converters/js-mqtt-decoder.raw']
+  [IntegrationType.MQTT, '/assets/converters/js-mqtt-decoder.raw'],
+  [IntegrationType.HTTP, '/assets/converters/js-http-decoder.raw']
 ]);
 
 export const IntegrationTbelDefaultEncodersUrl = new Map<IntegrationType, string>([
