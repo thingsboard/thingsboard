@@ -35,6 +35,7 @@ export interface SysParamsState {
   allowKeyFiltersOrConditions: boolean;
   nullsOrderStrategy: NullsOrderStrategy;
   edqsEnabled: boolean;
+  extensionsEnabled: boolean;
   iotHubBaseUrl: string;
   licenseVersion: number;
   edgeEnabled: boolean;

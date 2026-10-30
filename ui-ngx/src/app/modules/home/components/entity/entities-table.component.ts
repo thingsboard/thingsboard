@@ -121,6 +121,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   @ViewChild('entityTableHeader', {static: true}) entityTableHeaderAnchor: TbAnchorComponent;
 
+  @ViewChild('entityTableFooter', {static: true}) entityTableFooterAnchor: TbAnchorComponent;
+
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -250,6 +252,13 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       const componentRef = viewContainerRef.createComponent(this.entitiesTableConfig.headerComponent);
       const headerComponent = componentRef.instance;
       headerComponent.entitiesTableConfig = this.entitiesTableConfig;
+    }
+    if (this.entitiesTableConfig.footerComponent) {
+      const viewContainerRef = this.entityTableFooterAnchor.viewContainerRef;
+      viewContainerRef.clear();
+      const componentRef = viewContainerRef.createComponent(this.entitiesTableConfig.footerComponent);
+      const footerComponent = componentRef.instance;
+      footerComponent.entitiesTableConfig = this.entitiesTableConfig;
     }
 
     this.entitiesTableConfig.setTable(this);

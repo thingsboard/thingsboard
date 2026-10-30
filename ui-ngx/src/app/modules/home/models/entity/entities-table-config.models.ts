@@ -15,6 +15,7 @@ import { EntityAction } from './entity-component.models';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
+import { EntityTableFooterComponent } from '@home/components/entity/entity-table-footer.component';
 import { ActivatedRoute } from '@angular/router';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
@@ -237,6 +238,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   addActionDescriptors: Array<HeaderActionDescriptor> = [];
   headerButtonDescriptors: Array<HeaderActionDescriptor> = [];
   headerComponent: Type<EntityTableHeaderComponent<T, P, L>>;
+  footerComponent: Type<EntityTableFooterComponent<T, P, L>>;
   addEntity: CreateEntityOperation<T> = null;
   addDialogOwnerAndGroupWizard = true;
   dataSource: (dataLoadedFunction: (col?: number, row?: number) => void)

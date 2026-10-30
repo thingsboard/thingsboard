@@ -9,6 +9,17 @@ import { RateLimitsType } from './rate-limits/rate-limits.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
+// The API stores the extension CPU quota in millicores (Kubernetes-native, always an integer), but people
+// think in CPU cores — the smallest tier is 0.25 CPU. The form shows cores and converts on the way in/out;
+// nothing outside this component ever sees the core value.
+const MILLICORES_IN_CPU = 1000;
+
+const millicoresToCpu = (millicores: number): number =>
+  isDefinedAndNotNull(millicores) ? millicores / MILLICORES_IN_CPU : millicores;
+
+const cpuToMillicores = (cpu: number): number =>
+  isDefinedAndNotNull(cpu) ? Math.round(cpu * MILLICORES_IN_CPU) : cpu;
+
 @Component({
     selector: 'tb-default-tenant-profile-configuration',
     templateUrl: './default-tenant-profile-configuration.component.html',
@@ -48,6 +59,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxIntegrations: [0, [Validators.required, Validators.min(0)]],
       maxConverters: [0, [Validators.required, Validators.min(0)]],
       maxSchedulerEvents: [0, [Validators.required, Validators.min(0)]],
+      maxExtensions: [0, [Validators.required, Validators.min(0)]],
+      maxExtensionCpuMillicores: [0, [Validators.required, Validators.min(0)]],
+      maxExtensionMemoryMb: [0, [Validators.required, Validators.min(0)]],
       maxAgents: [0, [Validators.required, Validators.min(0)]],
       maxAgentApplications: [0, [Validators.required, Validators.min(0)]],
       maxGeneratedReports: [0, [Validators.required, Validators.min(0)]],
@@ -180,7 +194,11 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
         value.smsEnabled = true;
       }
       this.maxSmsValidation(value.smsEnabled);
-      this.tenantProfileConfigurationForm.patchValue(value, {emitEvent: false});
+      const formValue: DefaultTenantProfileConfiguration = {...value};
+      if (isDefinedAndNotNull(formValue.maxExtensionCpuMillicores)) {
+        formValue.maxExtensionCpuMillicores = millicoresToCpu(formValue.maxExtensionCpuMillicores);
+      }
+      this.tenantProfileConfigurationForm.patchValue(formValue, {emitEvent: false});
     }
   }
 
@@ -188,6 +206,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
     let configuration: DefaultTenantProfileConfiguration = null;
     if (this.tenantProfileConfigurationForm.valid) {
       configuration = this.tenantProfileConfigurationForm.getRawValue();
+      configuration.maxExtensionCpuMillicores = cpuToMillicores(configuration.maxExtensionCpuMillicores);
     }
     this.propagateChange(configuration);
   }

@@ -1302,6 +1302,7 @@ audit-log:
       "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels.
       "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels.
       "ai_model": "${AUDIT_LOG_MASK_AI_MODEL:W}" # AI model logging levels.
+      "extension": "${AUDIT_LOG_MASK_EXTENSION:W}" # Extension logging levels (containerSpec.env is scrubbed from the logged entity).
       "role": "${AUDIT_LOG_MASK_ROLE:W}" # Roles logging levels.
       "group_permission": "${AUDIT_LOG_MASK_GROUP_PERMISSION:W}" # Group permission logging levels.
       "report_template": "${AUDIT_LOG_MASK_REPORT_TEMPLATE:W}" # Report template logging levels.
@@ -2794,3 +2795,283 @@ iot-hub:
   max-uncompressed-entry-bytes: "${IOT_HUB_MAX_UNCOMPRESSED_ENTRY_BYTES:52428800}" # maximum uncompressed size in bytes for any single entry inside a solution template archive.
   max-archive-entry-count: "${IOT_HUB_MAX_ARCHIVE_ENTRY_COUNT:10000}" # maximum number of entries allowed inside a solution template archive.
   max-install-timeout-ms: "${IOT_HUB_MAX_INSTALL_TIMEOUT_MS:60000}" # upper clamp in milliseconds for the post-install wait declared in a solution template's solution.json. Prevents a malicious or misconfigured template from pinning an HTTP worker thread.
+
+# Extensions feature: tenant-authored REST-API services run on Kubernetes.
+extensions:
+  # Infrastructure mode — the single switch that selects the deployment substrate and its defaults.
+  #   disabled       = the whole feature is off (no Extension controller, no reconciler).
+  #   docker-compose = run each extension as a container on a Docker Engine (single host).
+  #   private-cloud  = Kubernetes, one cluster shared with TB core (extensions in their own namespace).
+  #   public-cloud   = Kubernetes, a separate isolated cluster for untrusted tenant code.
+  # The lower-level extensions.* knobs below stay available as advanced overrides on top of the mode.
+  mode: "${TB_EXTENSIONS_MODE:disabled}"
+  # Per-tenant limits live in the tenant profile, not here: maxExtensions plus the aggregate CPU/memory
+  # quotas (maxExtensionCpuMillicores / maxExtensionMemoryMb). They default to room for exactly one
+  # extension of the default tier, so an untouched profile is already bounded. On Kubernetes the
+  # namespace ResourceQuota below (extensions.k8s.resources.namespace-quota) is the cluster-wide backstop.
+  # Optional server-side salt for the spec-hash stamped on the workload. Blank = plain SHA-256
+  # (default). Set a high-entropy secret in untrusted multi-tenant deployments so the hash on the
+  # Deployment annotation / Docker label is a keyed HMAC, not a brute-forceable fingerprint of
+  # resolved secret values. Changing it re-renders every workload once on the next apply.
+  spec-hash-salt: "${TB_EXTENSIONS_SPEC_HASH_SALT:}"
+  slug:
+    # Whether the routing slug gets a random -<4hex> suffix for system-wide uniqueness + unguessability.
+    # Empty = derive from mode (on for public-cloud, off for private-cloud / docker-compose). Override
+    # with true/false to force it (e.g. true for a multi-tenant private cloud).
+    enforce-suffix: "${TB_EXTENSIONS_SLUG_ENFORCE_SUFFIX:}"
+  image:
+    # Comma-separated trusted registry/repository prefixes. When set, an extension image must start with
+    # one of them (clean 400 otherwise). Empty = allow any registry (NOT recommended for multi-tenant).
+    allowed-registries: "${TB_EXTENSIONS_IMAGE_ALLOWED_REGISTRIES:}"
+    # true -> pull on every apply (Docker) and render imagePullPolicy: Always (Kubernetes), so each
+    # deploy re-authenticates against the registry. Keep this on for multi-tenant installs: a cached
+    # image is a property of the shared host/node, so reusing it would let a tenant run an image:tag
+    # another tenant pulled with credentials it does not hold. false restores 'reuse the local copy
+    # unless the tag is latest' — only for single-tenant installs that need starts to survive an
+    # unreachable registry. Changing this re-converges existing workloads (it feeds the spec-hash).
+    always-pull: "${TB_EXTENSIONS_IMAGE_ALWAYS_PULL:true}"
+  logs:
+    # Reading logs is the only read path a user can trigger in a tight loop: the UI dialog polls for as
+    # long as it stays open, and on Kubernetes every call is a pod LIST plus a log GET per pod against the
+    # API server. Left unguarded, a handful of open dialogs turns into steady API-server load, and a slow
+    # orchestrator turns into parked HTTP threads. The knobs below bound all three: repeats, concurrency
+    # and memory.
+    #
+    # How long a fetched tail is reused. Repeat polls inside this window are served from memory and cost
+    # the orchestrator nothing. Keep it well below the UI poll interval's usefulness threshold — a few
+    # seconds of staleness in a log tail is not noticeable. 0 disables the cache.
+    cache-ttl-ms: "${TB_EXTENSIONS_LOGS_CACHE_TTL_MS:3000}"
+    # Responses larger than this are served but never stored. The big ones are rare and the expensive
+    # ones to hold, so this — not the 1 MiB response ceiling — is what sizes the cache in practice.
+    cache-max-entry-chars: "${TB_EXTENSIONS_LOGS_CACHE_MAX_ENTRY_CHARS:131072}"
+    # Hard ceiling on total cached log text (characters ~ bytes for ASCII logs). A backstop, not the
+    # working bound: with a 3 s TTL the cache only ever holds what is being viewed right now.
+    cache-max-total-chars: "${TB_EXTENSIONS_LOGS_CACHE_MAX_TOTAL_CHARS:8388608}"
+    # Log reads run on their own small pool instead of the caller's HTTP thread. This is the bulkhead: a
+    # stalled orchestrator can exhaust these threads without touching the rest of the REST API. Requests
+    # for the SAME extension are collapsed into one call before reaching the pool, so this bounds distinct
+    # extensions read at once, not concurrent viewers.
+    max-concurrent-reads: "${TB_EXTENSIONS_LOGS_MAX_CONCURRENT_READS:4}"
+    # How long a caller waits for a read before giving up. On timeout the read keeps running and the
+    # client's next poll joins it, so a slow orchestrator costs a retry, not a duplicate call.
+    read-timeout-ms: "${TB_EXTENSIONS_LOGS_READ_TIMEOUT_MS:20000}"
+    # Kubernetes only: the tail is applied per pod, so this caps the API-server round-trips per request
+    # for a multi-replica extension. Pods beyond it are named in the response, not read. 0 = no cap.
+    max-pods: "${TB_EXTENSIONS_LOGS_MAX_PODS:5}"
+    # Per-user rate limit on GET /api/extension/{id}/logs, "capacity:periodSeconds" (over it -> HTTP 429).
+    # The UI polls every 5 s while the dialog is open, so the default leaves room for one open dialog plus
+    # manual refreshes. Note it is enforced per tb-core node, so with N nodes behind a load balancer the
+    # effective ceiling is N times this. Empty disables it.
+    rate-limit: "${TB_EXTENSIONS_LOGS_RATE_LIMIT:20:60}"
+  k8s:
+    # Kubernetes backend settings. Active when extensions.mode is private-cloud or public-cloud.
+    namespace:
+      # Single dedicated namespace shared by every tenant's extension pods.
+      name: "${TB_EXTENSIONS_K8S_NAMESPACE:tb-extensions}"
+      # true -> reconciler creates the namespace if missing (needs cluster-scoped RBAC).
+      auto-create: "${TB_EXTENSIONS_K8S_NAMESPACE_AUTO_CREATE:false}"
+    network-policy:
+      # true -> apply a per-extension NetworkPolicy restricting pod ingress to that extension's
+      # container port. Rendered with the actual containerSpec.port, not the Service port.
+      enabled: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_ENABLED:true}"
+      # Egress containment for tenant pods: open | baseline | restricted.
+      #   open       = no egress rules (tenant pod can reach anything, incl. the cloud metadata endpoint).
+      #   baseline   = allow DNS + all egress EXCEPT blocked-egress-cidrs (blocks IPv4 link-local
+      #                metadata/credential endpoints by default). Default.
+      #   restricted = deny all egress except DNS + allowed-egress-cidrs (set these to TB + required deps).
+      egress-policy: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_EGRESS:baseline}"
+      # CIDRs blocked in 'baseline' mode. Defaults to IPv4 + IPv6 link-local so IMDS, ECS/EKS credential
+      # endpoints and other metadata services are not reachable (169.254.0.0/16 plus the AWS IMDS IPv6
+      # address fd00:ec2::254/128 for dual-stack clusters). IPv4 and IPv6 entries are applied to separate
+      # rules automatically. Add pod/service CIDRs to also cut east-west traffic to other tenants' pods.
+      blocked-egress-cidrs: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_BLOCKED_CIDRS:169.254.0.0/16,fd00:ec2::254/128}"
+      # CIDRs allowed in 'restricted' mode besides DNS, e.g. the TB core and any required backends.
+      allowed-egress-cidrs: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_ALLOWED_CIDRS:}"
+      # Optional "labelKey=labelValue" scoping allowed INGRESS to a source namespace (e.g. the
+      # ingress-controller namespace). Empty = no namespace restriction. NOTE: a namespace selector
+      # alone cannot isolate tenants that share one namespace; use from-pod-selector for that.
+      from-namespace-selector: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_FROM_NS:}"
+      # "labelKey=labelValue" scoping allowed INGRESS to source PODS. Defaults to the reference
+      # catch-all router so that, in the shared namespace, only the router may reach a tenant pod —
+      # one tenant cannot connect directly to another's pod. If set together with
+      # from-namespace-selector, both apply as AND (that pod in that namespace). Set empty to allow
+      # all sources. If you route through your OWN edge proxy instead of the reference router,
+      # override this to match its pod label (and namespace) or it will block legitimate traffic.
+      # Health/liveness probes come from the kubelet and are not affected.
+      from-pod-selector: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_FROM_POD:app.kubernetes.io/name=tb-ext-router}"
+      # "labelKey=labelValue" pair identifying the cluster DNS pods that the always-allowed port-53 egress
+      # rule targets. The defaults are the conventional CoreDNS labels (kubeadm, EKS, GKE). Override both
+      # on clusters that label DNS differently, e.g. OpenShift:
+      #   dns-namespace-selector: kubernetes.io/metadata.name=openshift-dns
+      #   dns-pod-selector: dns.operator.openshift.io/daemonset-dns=default
+      # Set BOTH to empty to fall back to an unscoped DNS rule (any destination on port 53 — not recommended).
+      # Only load-bearing under egress-policy=restricted; under 'baseline' the wide rule already covers DNS.
+      dns-namespace-selector: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_DNS_NS:kubernetes.io/metadata.name=kube-system}"
+      # Pod label selector of the DNS pods themselves, paired with the namespace selector above.
+      dns-pod-selector: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_DNS_POD:k8s-app=kube-dns}"
+      # Cluster IP range of the kube-dns Service, added to the port-53 rule NEXT TO the selectors above.
+      # SET THIS ON AWS EKS when using egress-policy=restricted, or DNS will be denied.
+      # Why: a pod resolves through the kube-dns Service ClusterIP (e.g. 10.100.0.10), not a CoreDNS pod
+      # IP. Most CNIs match egress after kube-proxy rewrites that address, so the pod selector applies.
+      # The AWS VPC CNI matches it BEFORE the rewrite, against the ClusterIP, which no pod or namespace
+      # selector can match — the rule then denies DNS and pods fail with
+      #   "recv() failed (111: Connection refused) while resolving, resolver: 10.100.0.10:53".
+      # Empty by default: the range is cluster-specific (EKS commonly 10.100.0.0/16, kubeadm 10.96.0.0/12)
+      # and tb-core cannot read it — the reconciler Role is scoped to the extensions namespace on purpose.
+      # Find it with: kubectl -n kube-system get svc kube-dns -o jsonpath='{.spec.clusterIP}'
+      # Only load-bearing under egress-policy=restricted; 'baseline' already allows port 53 anywhere.
+      dns-service-cidrs: "${TB_EXTENSIONS_K8S_NETWORK_POLICY_DNS_CIDRS:}"
+    cluster:
+      # How tb-core authenticates to the Kubernetes API server. Each of the cluster.* properties below
+      # applies to ONLY one mode (stated per property); in other modes it is ignored.
+      #   in-cluster = tb-core runs inside the target cluster. Uses the pod ServiceAccount token + CA
+      #                automatically; reads NO other cluster.* property and TLS is always verified.
+      #   kubeconfig = read a kubeconfig file (kubeconfig-path). All connection + TLS settings come from
+      #                inside that file; no other cluster.* property here applies. If the file itself
+      #                sets insecure-skip-tls-verify: true, verification is off — keep it false there and
+      #                use certificate-authority-data instead.
+      #   endpoint   = separate cluster reached with explicit master-url + token + CA (ca-cert /
+      #                ca-cert-path), or insecure-skip-tls-verify. These four apply only in this mode.
+      mode: "${TB_EXTENSIONS_K8S_CLUSTER_MODE:in-cluster}"
+      # Path to a kubeconfig file. Used only in 'kubeconfig' mode.
+      kubeconfig-path: "${TB_EXTENSIONS_K8S_KUBECONFIG_PATH:}"
+      # Kubernetes API server URL. Used only in 'endpoint' mode.
+      master-url: "${TB_EXTENSIONS_K8S_MASTER_URL:}"
+      # Service account bearer token to authenticate against the API server. Used only in 'endpoint' mode.
+      token: "${TB_EXTENSIONS_K8S_TOKEN:}"
+      # TLS: base64-encoded PEM of the API server CA used to verify it (as in kubeconfig
+      # certificate-authority-data). Used only in 'endpoint' mode. Alternative to ca-cert-path.
+      ca-cert: "${TB_EXTENSIONS_K8S_CA_CERT:}"
+      # TLS: path to a PEM file with the API server CA. Used only in 'endpoint' mode. Alternative to ca-cert.
+      ca-cert-path: "${TB_EXTENSIONS_K8S_CA_CERT_PATH:}"
+      # DANGER: skip API-server certificate verification (MITM-exposed). Used only in 'endpoint' mode
+      # (in 'kubeconfig' mode set this inside the kubeconfig file; in 'in-cluster' mode it does not apply).
+      # Leave false in production; provide ca-cert/ca-cert-path instead.
+      insecure-skip-tls-verify: "${TB_EXTENSIONS_K8S_INSECURE_SKIP_TLS_VERIFY:false}"
+      # Kubernetes client timeouts (ms). These bound how long a caller thread can sit waiting on the API
+      # server — a Tomcat HTTP worker for /logs and /status, an ext-reconcile worker for an apply. The
+      # values match the client library defaults; they are spelled out so they are visible and tunable.
+      # Raise request-timeout-ms on a slow or distant API server; lowering it fails slow calls sooner.
+      connect-timeout-ms: "${TB_EXTENSIONS_K8S_CONNECT_TIMEOUT_MS:10000}"
+      # Max time (ms) for one API server call, from the sent request to the finished response.
+      request-timeout-ms: "${TB_EXTENSIONS_K8S_REQUEST_TIMEOUT_MS:10000}"
+    # How extension pods reach TB for the auth callback; must resolve from the pods' cluster.
+    # Both of these live in the extensions.k8s block, so the K8S-qualified env-var name is the one to use
+    # (it is what an operator writes by analogy with TB_EXTENSIONS_K8S_NAMESPACE and the docker block's
+    # TB_EXTENSIONS_DOCKER_TB_INTERNAL_URL). The unqualified names are kept as a fallback so existing
+    # manifests keep working; they are deprecated and will be removed in a future release.
+    tb-internal-url: "${TB_EXTENSIONS_K8S_TB_INTERNAL_URL:${TB_EXTENSIONS_TB_INTERNAL_URL:http://tb-node:8080}}"
+    # Health endpoint probed by readiness/liveness.
+    health-path: "${TB_EXTENSIONS_K8S_HEALTH_PATH:${TB_EXTENSIONS_HEALTH_PATH:/api/health}}"
+    resources:
+      # Per-container CPU ceiling: the validator rejects any request/limit above it, and it becomes
+      # the namespace LimitRange max. Kubernetes quantity notation.
+      max-cpu: "${TB_EXTENSIONS_K8S_RESOURCES_MAX_CPU:4}"
+      # Per-container memory ceiling; enforced the same way as max-cpu. Kubernetes quantity notation.
+      max-memory: "${TB_EXTENSIONS_K8S_RESOURCES_MAX_MEMORY:8Gi}"
+      # Cluster-level backstop: a ResourceQuota + LimitRange created on the (auto-created) namespace.
+      namespace-quota:
+        # true -> create/update the ResourceQuota and LimitRange on the extensions namespace.
+        enabled: "${TB_EXTENSIONS_K8S_RESOURCES_QUOTA_ENABLED:true}"
+        # Total CPU limit across all extension pods in the namespace. Kubernetes quantity notation.
+        cpu: "${TB_EXTENSIONS_K8S_RESOURCES_QUOTA_CPU:32}"
+        # Total memory limit across all extension pods in the namespace. Kubernetes quantity notation.
+        memory: "${TB_EXTENSIONS_K8S_RESOURCES_QUOTA_MEMORY:64Gi}"
+        # Max number of extension pods allowed in the namespace.
+        pods: "${TB_EXTENSIONS_K8S_RESOURCES_QUOTA_PODS:100}"
+  docker:
+    # Docker Engine backend settings. Active when extensions.mode is docker-compose.
+    # How TB core reaches the Docker daemon. A mounted unix socket for a co-located daemon, or
+    # tcp://host:2376 (+ tls-verify/cert-path) for a remote one. The TB core container must be able
+    # to reach this — mount /var/run/docker.sock or expose the daemon over TLS.
+    host: "${TB_EXTENSIONS_DOCKER_HOST:unix:///var/run/docker.sock}"
+    # TLS for a tcp:// daemon endpoint. When true, cert-path must hold ca.pem/cert.pem/key.pem.
+    tls-verify: "${TB_EXTENSIONS_DOCKER_TLS_VERIFY:false}"
+    # Folder holding ca.pem, cert.pem and key.pem for a tls-verify connection. Empty = no client TLS.
+    cert-path: "${TB_EXTENSIONS_DOCKER_CERT_PATH:}"
+    # Pin the Docker Engine API version (e.g. 1.43). Empty = negotiate automatically.
+    api-version: "${TB_EXTENSIONS_DOCKER_API_VERSION:}"
+    # HTTP client tuning for the daemon connection.
+    max-connections: "${TB_EXTENSIONS_DOCKER_MAX_CONNECTIONS:100}"
+    # Max time (s) to open the connection to the daemon before the call fails.
+    connect-timeout-seconds: "${TB_EXTENSIONS_DOCKER_CONNECT_TIMEOUT_SECONDS:10}"
+    # Max time (s) to wait for the daemon to answer a call once the connection is open.
+    response-timeout-seconds: "${TB_EXTENSIONS_DOCKER_RESPONSE_TIMEOUT_SECONDS:45}"
+    # Graceful stop timeout (seconds) before the daemon kills a container on stop/restart/recreate.
+    stop-timeout-seconds: "${TB_EXTENSIONS_DOCKER_STOP_TIMEOUT_SECONDS:10}"
+    # How extension containers reach TB for the auth callback; must resolve from the shared network
+    # (e.g. the TB core service name on a docker-compose network).
+    tb-internal-url: "${TB_EXTENSIONS_DOCKER_TB_INTERNAL_URL:http://tb-core:8080}"
+    # Max time (ms) to wait while reading a container's log tail (GET .../deployments/logs).
+    log-timeout-ms: "${TB_EXTENSIONS_DOCKER_LOG_TIMEOUT_MS:15000}"
+    # Max processes/threads per extension container (0 = no limit). A shared Docker host has one global
+    # pid_max, so without this a fork bomb in one tenant's container stops the daemon, tb-core and every
+    # other tenant from forking.
+    pids-limit: "${TB_EXTENSIONS_DOCKER_PIDS_LIMIT:256}"
+    # nofile ulimit (soft = hard) per extension container (0 = daemon default).
+    open-files-limit: "${TB_EXTENSIONS_DOCKER_OPEN_FILES_LIMIT:1024}"
+    log:
+      # Log rotation applied to every managed container (json-file driver). Without it the daemon default
+      # is unbounded and one chatty container can fill the host disk shared with tb-core and the database.
+      # Empty max-size = do not set a log config (use the daemon default).
+      max-size: "${TB_EXTENSIONS_DOCKER_LOG_MAX_SIZE:10m}"
+      # How many rotated log files the daemon keeps per container.
+      max-files: "${TB_EXTENSIONS_DOCKER_LOG_MAX_FILES:3}"
+    image:
+      # Max time (ms) to wait for an image pull before failing the apply. For a private registry, TB
+      # passes the extension's registryAuth (username/password resolved from a ThingsBoard Secret) to
+      # the daemon on pull; images without registryAuth use no auth and fall back to the daemon's own
+      # host login (docker login).
+      pull-timeout-ms: "${TB_EXTENSIONS_DOCKER_IMAGE_PULL_TIMEOUT_MS:300000}"
+    network:
+      # Shared user-defined bridge network every extension container joins. The router must also be
+      # attached to it so it can resolve tb-ext-{slug} by Docker's embedded DNS.
+      name: "${TB_EXTENSIONS_DOCKER_NETWORK_NAME:tb-extensions}"
+      # true -> create the network if missing. false -> the operator pre-creates it (docker network
+      # create tb-extensions) and TB only logs a warning if it is absent.
+      auto-create: "${TB_EXTENSIONS_DOCKER_NETWORK_AUTO_CREATE:false}"
+      # true -> create the network as 'internal', the closest Docker equivalent of the K8s 'restricted'
+      # egress policy: containers on it have no route off the bridge, so they cannot reach the cloud
+      # metadata endpoint (169.254.169.254 — instance-profile credentials), the Docker host or the
+      # internet, while container-to-container traffic (router -> extension) keeps working. Off by
+      # default because it also cuts outbound calls the extension itself may need. Applies only to a
+      # network TB creates (auto-create=true); for a pre-created network set --internal yourself, or
+      # block 169.254.0.0/16 and fd00:ec2::254/128 on the bridge with iptables/nftables. Docker cannot
+      # change this flag on a live network, so if the network already exists and is NOT internal while
+      # this is true, TB fails to start rather than run with egress silently open.
+      internal: "${TB_EXTENSIONS_DOCKER_NETWORK_INTERNAL:false}"
+  reconcile:
+    # Periodic resync interval (ms), shared by both backends. Each cycle re-applies the extensions this
+    # node owns (heals ones stuck FAILED after a transient outage) and removes orphaned workloads whose
+    # extension row is gone (failed teardown). 0 disables the periodic resync; a resync still runs on
+    # every partition change. This is the only resync key; it applies to both backends.
+    resync-interval-ms: "${TB_EXTENSIONS_RECONCILE_RESYNC_INTERVAL_MS:300000}"
+  routing:
+    # Routing is operator-owned: TB renders NO routing object. Run the reference catch-all router
+    # (ext/deploy/hosted-nginx for the manifests, ext/deploy/eks-prod for the EKS variant) or wire
+    # the equivalent location blocks into your own edge nginx. The router MUST front the data plane
+    # with an auth_request to TB's /api/ext-auth (the caller must present a valid X-Authorization
+    # whose tenant owns the slug) — see ext/docs/routing-and-auth-overview.md for the contract.
+    # Public path prefix; the router strips /api/extension/route/{slug} before forwarding to the pod. Used by TB
+    # only to build the public URL in /api/extension/{id}/status; keep your router in sync with it.
+    base-path: "${TB_EXTENSIONS_ROUTING_BASE_PATH:/api/extension/route}"
+    # In-cluster URL of the operator's router, used by TB itself to fetch an extension's OpenAPI
+    # specification for the platform "API docs" page (GET /api/extension/{id}/api-docs). TB forwards
+    # the caller's credential, so the router authorizes the fetch exactly like a data-plane call
+    # (no new trust link). Empty disables the endpoint. Example: http://tb-ext-router.tb-extensions.svc.cluster.local:8080
+    router-internal-url: "${TB_EXTENSIONS_ROUTING_ROUTER_INTERNAL_URL:}"
+  docs:
+    # Connect / time-to-response-headers timeout (ms) for the OpenAPI specification fetch above.
+    fetch-timeout-ms: "${TB_EXTENSIONS_DOCS_FETCH_TIMEOUT_MS:10000}"
+    # Wall-clock ceiling (ms) for one fetch INCLUDING the body. The timeout above is an idle timeout, so
+    # an extension that trickles one byte every few seconds would otherwise hold the request forever.
+    fetch-deadline-ms: "${TB_EXTENSIONS_DOCS_FETCH_DEADLINE_MS:30000}"
+    # Per-user rate limit on GET /api/extension/{id}/api-docs, "capacity:periodSeconds" (over it -> HTTP
+    # 429). The fetch reads a tenant-controlled body (capped at 5 MiB) through the router, so it is bounded
+    # the same way as log reads. Enforced per tb-core node. Empty disables it.
+    rate-limit: "${TB_EXTENSIONS_DOCS_RATE_LIMIT:20:60}"
+  status:
+    # Status collector poll interval (ms).
+    poll-interval-ms: "${TB_EXTENSIONS_STATUS_POLL_INTERVAL_MS:10000}"
+    # Hysteresis: number of consecutive polls that must agree before the stored extension status changes.
+    hysteresis-polls: "${TB_EXTENSIONS_STATUS_HYSTERESIS_POLLS:2}"

@@ -1,0 +1,63 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  // usage and the still-deployable sizes share one line; both halves wrap on their own when narrow
+  .tb-extension-quota {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: baseline;
+    gap: 8px 24px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
+  .tb-extension-quota-usage,
+  .tb-extension-quota-sizes {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: baseline;
+    gap: 8px 20px;
+  }
+
+  // the hint icon belongs to the label, so it sits right next to it, not a full gap away
+  .tb-extension-quota-sizes {
+    gap: 8px 12px;
+  }
+
+  .tb-quota-hint-icon {
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    font-size: 16px;
+    color: rgba(0, 0, 0, 0.38);
+  }
+
+  .tb-extension-quota-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .tb-extension-quota-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .tb-quota-label {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .tb-quota-value {
+    font-size: 14px;
+  }
+
+  .tb-quota-chip {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1b5e20;
+    background-color: rgba(27, 94, 32, 0.12);
+  }
+}

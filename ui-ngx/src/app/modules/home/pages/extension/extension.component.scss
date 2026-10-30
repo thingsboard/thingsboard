@@ -1,0 +1,81 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  .tb-extension-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+
+    .tb-status-item {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      span {
+        font-size: 14px;
+      }
+
+      .tb-state-chip {
+        display: inline-block;
+        align-self: flex-start;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .tb-extension-url {
+    margin-top: 12px;
+
+    label {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.54);
+      display: block;
+    }
+
+    .tb-extension-url-value {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      span {
+        font-size: 14px;
+        word-break: break-all;
+      }
+    }
+  }
+
+  .tb-extension-last-error {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: rgba(183, 28, 28, 0.08);
+
+    label {
+      font-size: 12px;
+      color: #b71c1c;
+      display: block;
+    }
+
+    span {
+      font-size: 13px;
+      color: #b71c1c;
+      word-break: break-word;
+    }
+
+    .tb-error-time {
+      color: rgba(183, 28, 28, 0.7);
+    }
+  }
+
+  .tb-extension-env-panel {
+    margin-bottom: 16px;
+  }
+}
