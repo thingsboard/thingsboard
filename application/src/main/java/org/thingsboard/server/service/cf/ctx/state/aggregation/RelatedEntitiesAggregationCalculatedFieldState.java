@@ -123,8 +123,11 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
 
     @Override
     public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
-        lastArgsRefreshTs = System.currentTimeMillis();
-        return super.update(argumentValues, ctx);
+        Map<String, ArgumentEntry> updatedArguments = super.update(argumentValues, ctx);
+        if (!updatedArguments.isEmpty()) {
+            lastArgsRefreshTs = System.currentTimeMillis();
+        }
+        return updatedArguments;
     }
 
     public List<EntityId> checkRelatedEntities(List<EntityId> relatedEntities) {
@@ -172,7 +175,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     public void scheduleReevaluation() {
-        ScheduledFuture<?> future = ctx.scheduleReevaluation(getEnforcedDeduplicationIntervalMillis(), actorCtx);
+        ScheduledFuture<?> future = ctx.scheduleReevaluation(getEnforcedDeduplicationIntervalMillis() + 1, actorCtx);
         if (future != null) {
             reevaluationFuture = future;
         }
@@ -198,7 +201,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     private boolean shouldRecalculate() {
-        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - getEnforcedDeduplicationIntervalMillis();
+        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - getEnforcedDeduplicationIntervalMillis() + 5;
         boolean argsUpdatedDuringInterval = lastArgsRefreshTs > lastMetricsEvalTs;
         return intervalPassed && argsUpdatedDuringInterval;
     }

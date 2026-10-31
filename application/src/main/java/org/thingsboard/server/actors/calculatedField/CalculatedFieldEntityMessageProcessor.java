@@ -421,6 +421,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (newArgValues.isEmpty()) {
             log.debug("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess();
+            return;
         }
         CalculatedFieldState state = states.get(ctx.getCfId());
         boolean justRestored = false;
