@@ -69,7 +69,7 @@ public class X509_NoTrustLwM2MIntegrationTest extends AbstractSecurityLwM2MInteg
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
         MvcResult result = createDeviceWithMvcResult(deviceCredentials, clientEndpoint, deviceProfile.getId());
         assertEquals(HttpServletResponse.SC_BAD_REQUEST, result.getResponse().getStatus());
-        String msgExpected = "LwM2M client X509 certificate must be in DER-encoded X509v3 format and support only EC algorithm and then encoded to Base64 format!";
+        String msgExpected = "LwM2M client X509 certificate must be a Base64-encoded DER X509 certificate!";
         assertTrue(result.getResponse().getContentAsString().contains(msgExpected));
     }
 
