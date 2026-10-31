@@ -74,6 +74,9 @@ redis:
     nodes: "${REDIS_NODES:}"
     # Maximum number of redirects to follow when executing commands across the cluster.
     max-redirects: "${REDIS_MAX_REDIRECTS:12}"
+    # Period in seconds of the background refresh of the cluster slot map. It finds slots that moved to another node
+    # (after a failover, or when a node gets a new IP) even before a command to the old node fails. Set 0 to disable.
+    topology-refresh-period-sec: "${REDIS_CLUSTER_TOPOLOGY_REFRESH_PERIOD_SEC:30}"
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   sentinel:
