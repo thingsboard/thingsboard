@@ -116,6 +116,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     public void createTimeSeriesSubscriptions(Map<EntityData, Map<String, Long>> entityKeyStates, long startTs, long endTs, boolean resultToLatestValues) {
+        clearEntitySubscriptions();
         entityKeyStates.forEach((entityData, keyStates) -> {
             int subIdx = sessionRef.getSessionSubIdSeq().incrementAndGet();
             subToEntityIdMap.put(subIdx, entityData.getEntityId());
@@ -125,6 +126,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     private void createSubscriptions(List<EntityKey> keys, boolean latestValues, long startTs, long endTs) {
+        clearEntitySubscriptions();
         Map<EntityKeyType, List<EntityKey>> keysByType = getEntityKeyByTypeMap(keys);
         for (EntityData entityData : data.getData()) {
             List<TbSubscription> entitySubscriptions = addSubscriptions(entityData, keysByType, latestValues, startTs, endTs);
