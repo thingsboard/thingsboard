@@ -17,6 +17,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.sql.KeysetPages;
+import org.thingsboard.server.dao.sql.citus.CitusSettings;
+import org.thingsboard.server.dao.sql.citus.CitusShardKeysetPages;
 
 import java.util.List;
 import java.util.Map;
@@ -29,15 +31,19 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
 
     private final String COUNT_QUERY = "SELECT count(id) FROM device;";
     // keyset pages over the primary key and the (tenant_id, id) index, see KeysetPages
-    private static final String DEVICE_ID_INFO_SELECT = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ";
+    private static final String DEVICE_ID_INFO_COLUMNS = "tenant_id as tenantId, customer_id as customerId, id as id";
+    private static final String DEVICE_ID_INFO_SELECT = "SELECT " + DEVICE_ID_INFO_COLUMNS + " FROM device ";
     private static final String PROFILE_DEVICE_ID_INFO_SELECT =
             "SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = :tenantId ";
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final CitusSettings citusSettings;
 
-    public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
+    public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate,
+                                         CitusSettings citusSettings) {
         super(jdbcTemplate, transactionTemplate);
         this.jdbcTemplate = jdbcTemplate;
+        this.citusSettings = citusSettings;
     }
 
     @Override
@@ -48,6 +54,15 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
 
     @Override
     public void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer) {
+        if (citusSettings.isEnabled()) {
+            // on Citus plain keyset pages fan out to every shard; page one shard's hash range at a time instead
+            List<int[]> shardRanges = CitusShardKeysetPages.shardHashRanges(jdbcTemplate, "device");
+            if (!shardRanges.isEmpty()) {
+                CitusShardKeysetPages.forEachPage(jdbcTemplate, DEVICE_ID_INFO_COLUMNS, "device", shardRanges, pageSize,
+                        this::mapDeviceIdInfo, pageConsumer);
+                return;
+            }
+        }
         KeysetPages.forEachPage(jdbcTemplate, DEVICE_ID_INFO_SELECT + "ORDER BY id LIMIT :limit",
                 DEVICE_ID_INFO_SELECT + "WHERE id > :lastId ORDER BY id LIMIT :limit",
                 Map.of(), pageSize, this::mapDeviceIdInfo, pageConsumer);
