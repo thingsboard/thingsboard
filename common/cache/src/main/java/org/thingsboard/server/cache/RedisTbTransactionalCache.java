@@ -45,6 +45,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Autowired
     private FstStatsService fstStatsService;
+    @Autowired(required = false)
+    private RedisCircuitBreaker circuitBreaker;
 
     @Getter
     private final String cacheName;
@@ -106,24 +108,29 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public TbCacheValueWrapper<V> get(K key) {
-        if (!cacheEnabled) {
-            return null;
-        }
-        try (var connection = connectionFactory.getConnection()) {
-            byte[] rawValue = doGet(key, connection);
-            if (rawValue == null || rawValue.length == 0) {
+        try {
+            if (!cacheEnabled) {
                 return null;
-            } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
-                return SimpleTbCacheValueWrapper.empty();
-            } else {
-                long startTime = System.nanoTime();
-                V value = valueSerializer.deserialize(key, rawValue);
-                if (value != null) {
-                    fstStatsService.recordDecodeTime(value.getClass(), startTime);
-                    fstStatsService.incrementDecode(value.getClass());
-                }
-                return SimpleTbCacheValueWrapper.wrap(value);
             }
+            try (var connection = connectionFactory.getConnection()) {
+                byte[] rawValue = doGet(key, connection);
+                if (rawValue == null || rawValue.length == 0) {
+                    return null;
+                } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
+                    return SimpleTbCacheValueWrapper.empty();
+                } else {
+                    long startTime = System.nanoTime();
+                    V value = valueSerializer.deserialize(key, rawValue);
+                    if (value != null) {
+                        fstStatsService.recordDecodeTime(value.getClass(), startTime);
+                        fstStatsService.incrementDecode(value.getClass());
+                    }
+                    return SimpleTbCacheValueWrapper.wrap(value);
+                }
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
@@ -133,11 +140,16 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public void put(K key, V value) {
-        if (!cacheEnabled) {
-            return;
-        }
-        try (var connection = connectionFactory.getConnection()) {
-            put(key, value, connection);
+        try {
+            if (!cacheEnabled) {
+                return;
+            }
+            try (var connection = connectionFactory.getConnection()) {
+                put(key, value, connection);
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
@@ -147,80 +159,115 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public void putIfAbsent(K key, V value) {
-        if (!cacheEnabled) {
-            return;
-        }
-        try (var connection = connectionFactory.getConnection()) {
-            put(connection, key, value, RedisStringCommands.SetOption.SET_IF_ABSENT);
+        try {
+            if (!cacheEnabled) {
+                return;
+            }
+            try (var connection = connectionFactory.getConnection()) {
+                put(connection, key, value, RedisStringCommands.SetOption.SET_IF_ABSENT);
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
     @Override
     public void evict(K key) {
-        if (!cacheEnabled) {
-            return;
-        }
-        try (var connection = connectionFactory.getConnection()) {
-            connection.keyCommands().del(getRawKey(key));
+        try {
+            if (!cacheEnabled) {
+                return;
+            }
+            try (var connection = connectionFactory.getConnection()) {
+                connection.keyCommands().del(getRawKey(key));
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
     @Override
     public void evict(Collection<K> keys) {
-        if (!cacheEnabled) {
-            return;
-        }
-        //Redis expects at least 1 key to delete. Otherwise - ERR wrong number of arguments for 'del' command
-        if (keys.isEmpty()) {
-            return;
-        }
-        try (var connection = connectionFactory.getConnection()) {
-            connection.keyCommands().del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
+        try {
+            if (!cacheEnabled) {
+                return;
+            }
+            //Redis expects at least 1 key to delete. Otherwise - ERR wrong number of arguments for 'del' command
+            if (keys.isEmpty()) {
+                return;
+            }
+            try (var connection = connectionFactory.getConnection()) {
+                connection.keyCommands().del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
     @Override
     public void evictOrPut(K key, V value) {
-        if (!cacheEnabled) {
-            return;
-        }
-        try (var connection = connectionFactory.getConnection()) {
-            var rawKey = getRawKey(key);
-            var records = connection.keyCommands().del(rawKey);
-            if (records == null || records == 0) {
-                //We need to put the value in case of Redis, because evict will NOT cancel concurrent transaction used to "get" the missing value from cache.
-                connection.stringCommands().set(rawKey, getRawValue(value), evictExpiration, RedisStringCommands.SetOption.UPSERT);
+        try {
+            if (!cacheEnabled) {
+                return;
             }
+            try (var connection = connectionFactory.getConnection()) {
+                var rawKey = getRawKey(key);
+                var records = connection.keyCommands().del(rawKey);
+                if (records == null || records == 0) {
+                    //We need to put the value in case of Redis, because evict will NOT cancel concurrent transaction used to "get" the missing value from cache.
+                    connection.stringCommands().set(rawKey, getRawValue(value), evictExpiration, RedisStringCommands.SetOption.UPSERT);
+                }
+            }
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
         }
     }
 
     @Override
     public void evictByPrefix(String prefix) {
-        if (!cacheEnabled) {
-            return;
-        }
-        byte[] rawPrefix = StringRedisSerializer.UTF_8.serialize(rawKeyPrefix + prefix);
-        byte[] rawBatchSize = StringRedisSerializer.UTF_8.serialize(String.valueOf(1000));
-        // The script has no keys, so the cluster client cannot route it: run it on the node that owns the prefix slot.
-        retryOnClusterTopologyChange(() -> {
-            try (var connection = getConnection(rawPrefix)) {
-                executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
+        try {
+            if (!cacheEnabled) {
+                return;
             }
-            return null;
-        });
+            byte[] rawPrefix = StringRedisSerializer.UTF_8.serialize(rawKeyPrefix + prefix);
+            byte[] rawBatchSize = StringRedisSerializer.UTF_8.serialize(String.valueOf(1000));
+            // The script has no keys, so the cluster client cannot route it: run it on the node that owns the prefix slot.
+            retryOnClusterTopologyChange(() -> {
+                try (var connection = getConnection(rawPrefix)) {
+                    executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
+                }
+                return null;
+            });
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
+        }
     }
 
     @Override
     public TbCacheTransaction<K, V> newTransactionForKey(K key) {
-        byte[][] rawKey = new byte[][]{getRawKey(key)};
-        RedisConnection connection = watch(rawKey);
-        return new RedisTbCacheTransaction<>(this, connection);
+        try {
+            byte[][] rawKey = new byte[][]{getRawKey(key)};
+            RedisConnection connection = watch(rawKey);
+            return new RedisTbCacheTransaction<>(this, connection);
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
+        }
     }
 
     @Override
     public TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys) {
-        RedisConnection connection = watch(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
-        return new RedisTbCacheTransaction<>(this, connection);
+        try {
+            RedisConnection connection = watch(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
+            return new RedisTbCacheTransaction<>(this, connection);
+        } catch (RuntimeException e) {
+            recordFailure(e);
+            throw e;
+        }
     }
 
     @Override
@@ -291,6 +338,15 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     private JedisCluster getNativeCluster() {
         return ((JedisClusterConnection) connectionFactory.getClusterConnection()).getNativeConnection();
+    }
+
+    /**
+     * Reports a failed cache operation to the {@link RedisCircuitBreaker}, which opens when Redis looks unavailable.
+     */
+    void recordFailure(Throwable error) {
+        if (circuitBreaker != null) {
+            circuitBreaker.recordFailure(error);
+        }
     }
 
     protected byte[] getRawKey(K key) {

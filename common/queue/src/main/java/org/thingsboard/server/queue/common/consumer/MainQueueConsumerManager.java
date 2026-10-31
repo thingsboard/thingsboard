@@ -210,6 +210,11 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         try {
             while (!stopped && !consumer.isStopped()) {
                 try {
+                    if (isConsumptionPaused()) {
+                        // Do not poll: the messages stay in the queue and are consumed after the pause.
+                        Thread.sleep(config.getPollInterval());
+                        continue;
+                    }
                     List<M> msgs = consumer.poll(config.getPollInterval());
                     if (msgs.isEmpty()) {
                         continue;
@@ -236,6 +241,15 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
             }
             consumer.unsubscribe();
         }
+    }
+
+    /**
+     * Lets subclasses stop consuming while a dependency is unavailable. Safe because consumers are assigned their
+     * partitions directly: a consumer that stops polling does not leave a consumer group, and resumes from its last
+     * committed offset.
+     */
+    protected boolean isConsumptionPaused() {
+        return false;
     }
 
     protected void processMsgs(List<M> msgs, TbQueueConsumer<M> consumer, ConsumerKey consumerKey, C config) throws Exception {
