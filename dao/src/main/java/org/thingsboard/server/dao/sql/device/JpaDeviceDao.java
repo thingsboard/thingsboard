@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
@@ -301,6 +302,16 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink) {
         log.debug("Find profile device id infos by tenantId[{}], pageLink [{}]", tenantId, pageLink);
         return nativeDeviceRepository.findProfileEntityIdInfosByTenantId(tenantId, DaoUtil.toPageable(pageLink));
+    }
+
+    @Override
+    public void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer) {
+        nativeDeviceRepository.findAllDeviceIdInfos(fetchSize, consumer);
+    }
+
+    @Override
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
+        nativeDeviceRepository.findProfileEntityIdInfosByTenantId(tenantId, fetchSize, consumer);
     }
 
     @Override

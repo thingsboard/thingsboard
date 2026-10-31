@@ -36,11 +36,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 
 @Service("CalculatedFieldDaoService")
 @Slf4j
@@ -135,6 +137,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         return calculatedFieldDao.findCalculatedFieldsByEntityId(tenantId, entityId);
     }
 
+    @Deprecated(since = "4.4", forRemoval = true)
     @Override
     public PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink) {
         log.trace("Executing findAll, pageLink [{}]", pageLink);
@@ -142,12 +145,28 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         return calculatedFieldDao.findAll(pageLink);
     }
 
+    @Deprecated(since = "4.4", forRemoval = true)
     @Override
     public PageData<CalculatedField> findCalculatedFieldsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAllByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return calculatedFieldDao.findAllByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public void findAllCalculatedFields(int pageSize, Consumer<List<CalculatedField>> pageConsumer) {
+        log.trace("Executing findAllCalculatedFields, pageSize [{}]", pageSize);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        calculatedFieldDao.findAllCalculatedFields(pageSize, pageConsumer);
+    }
+
+    @Override
+    public void findCalculatedFieldsByTenantId(TenantId tenantId, int pageSize, Consumer<List<CalculatedField>> pageConsumer) {
+        log.trace("Executing findCalculatedFieldsByTenantId, tenantId [{}], pageSize [{}]", tenantId, pageSize);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        calculatedFieldDao.findCalculatedFieldsByTenantId(tenantId, pageSize, pageConsumer);
     }
 
     @Override

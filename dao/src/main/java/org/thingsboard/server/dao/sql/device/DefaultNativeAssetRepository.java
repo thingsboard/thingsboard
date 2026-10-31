@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.device;
 
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +18,15 @@ import org.thingsboard.server.common.data.page.PageData;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Repository
 @Slf4j
 public class DefaultNativeAssetRepository extends AbstractNativeRepository implements NativeAssetRepository {
 
     private final String COUNT_QUERY = "SELECT count(id) FROM asset;";
+    private static final String PROFILE_ASSET_ID_INFO_BY_TENANT_QUERY =
+            "SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = ?";
 
     public DefaultNativeAssetRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
         super(jdbcTemplate, transactionTemplate);
@@ -39,6 +43,11 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
         String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
         String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM asset WHERE tenant_id = '%s';", tenantId);
         return find(COUNT_QUERY_BY_TENANT, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
+    }
+
+    @Override
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
+        stream(PROFILE_ASSET_ID_INFO_BY_TENANT_QUERY, fetchSize, DefaultNativeAssetRepository::toInfo, consumer, tenantId);
     }
 
     private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {

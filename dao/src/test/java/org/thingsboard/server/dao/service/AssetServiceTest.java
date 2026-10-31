@@ -20,6 +20,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -548,6 +549,41 @@ public class AssetServiceTest extends AbstractServiceTest {
                 .hasMessage("Can't delete asset that has entity views or is referenced in calculated fields!");
 
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
+    }
+
+    @Test
+    public void testFindProfileEntityIdInfosByTenantIdStreamsOnlyTenantAssets() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("Stream customer " + StringUtils.randomAlphabetic(8));
+        CustomerId customerId = customerService.saveCustomer(customer).getId();
+        Asset tenantAsset1 = saveAsset(tenantId, null, "Stream tenant asset 1");
+        Asset tenantAsset2 = saveAsset(tenantId, null, "Stream tenant asset 2");
+        Asset customerAsset = saveAsset(tenantId, customerId, "Stream customer asset");
+        TenantId otherTenantId = createTenant().getId();
+        saveAsset(otherTenantId, null, "Stream other tenant asset");
+
+        List<ProfileEntityIdInfo> found = new ArrayList<>();
+        // fetch size below the row count forces several cursor round trips
+        assetService.findProfileEntityIdInfosByTenantId(tenantId, 2, found::add);
+
+        assertThat(found).containsExactlyInAnyOrder(
+                ProfileEntityIdInfo.create(tenantId.getId(), tenantId, tenantAsset1.getAssetProfileId(), tenantAsset1.getId()),
+                ProfileEntityIdInfo.create(tenantId.getId(), tenantId, tenantAsset2.getAssetProfileId(), tenantAsset2.getId()),
+                ProfileEntityIdInfo.create(tenantId.getId(), customerId, customerAsset.getAssetProfileId(), customerAsset.getId()));
+
+        List<ProfileEntityIdInfo> noAssets = new ArrayList<>();
+        assetService.findProfileEntityIdInfosByTenantId(createTenant().getId(), 2, noAssets::add);
+        assertThat(noAssets).isEmpty();
+    }
+
+    private Asset saveAsset(TenantId tenantId, CustomerId customerId, String name) {
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setCustomerId(customerId);
+        asset.setName(name);
+        asset.setType("default");
+        return assetService.saveAsset(asset);
     }
 
 }

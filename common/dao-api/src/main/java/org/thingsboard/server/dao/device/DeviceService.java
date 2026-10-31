@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public interface DeviceService extends EntityDaoService {
 
@@ -70,13 +71,42 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<DeviceInfo> findDeviceInfosByFilter(DeviceInfoFilter filter, PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findAllDeviceIdInfos(int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
+
+    /**
+     * Passes every device of every tenant to {@code consumer} in one database pass (a cursor reading {@code fetchSize} rows
+     * per round trip), in no particular order, with no OFFSET and no count. The consumer runs while the cursor holds its
+     * connection, so it must only do fast in-memory work.
+     */
+    void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink);
+
+    /**
+     * Passes every device of the tenant to {@code consumer} in one database pass (a cursor reading {@code fetchSize} rows per
+     * round trip), with no OFFSET and no count. The consumer runs while the cursor holds its connection, so it must only do
+     * fast in-memory work.
+     */
+    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink);
 

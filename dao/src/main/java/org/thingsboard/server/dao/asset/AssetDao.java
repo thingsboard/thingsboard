@@ -22,6 +22,7 @@ import org.thingsboard.server.dao.TenantEntityDao;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * The Interface AssetDao.
@@ -152,6 +153,8 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao<Asset>, Exportable
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
 
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink);
+
+    void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
 
     List<AssetCacheInfo> findAssetCacheInfosByRelationType(String relationType, UUID id, int batchSize);
 

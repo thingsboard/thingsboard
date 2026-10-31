@@ -19,12 +19,16 @@ import org.thingsboard.server.common.data.page.PageData;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Repository
 @Slf4j
 public class DefaultNativeDeviceRepository extends AbstractNativeRepository implements NativeDeviceRepository {
 
     private final String COUNT_QUERY = "SELECT count(id) FROM device;";
+    private static final String ALL_DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device";
+    private static final String PROFILE_DEVICE_ID_INFO_BY_TENANT_QUERY =
+            "SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = ?";
 
     public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
         super(jdbcTemplate, transactionTemplate);
@@ -34,6 +38,11 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
     public PageData<DeviceIdInfo> findDeviceIdInfos(Pageable pageable) {
         String DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
         return find(COUNT_QUERY, DEVICE_ID_INFO_QUERY, pageable, this::mapDeviceIdInfo);
+    }
+
+    @Override
+    public void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer) {
+        stream(ALL_DEVICE_ID_INFO_QUERY, fetchSize, this::mapDeviceIdInfo, consumer);
     }
 
     private DeviceIdInfo mapDeviceIdInfo(Map<String, Object> row) {
@@ -54,6 +63,11 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
         String PROFILE_DEVICE_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
         String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM device WHERE tenant_id = '%s';", tenantId);
         return find(COUNT_QUERY_BY_TENANT, PROFILE_DEVICE_ID_INFO_QUERY, pageable, DefaultNativeDeviceRepository::toInfo);
+    }
+
+    @Override
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
+        stream(PROFILE_DEVICE_ID_INFO_BY_TENANT_QUERY, fetchSize, DefaultNativeDeviceRepository::toInfo, consumer, tenantId);
     }
 
     private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {
