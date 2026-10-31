@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.state;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -21,6 +23,7 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,6 +31,9 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.rule.trigger.DeviceActivityTrigger;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
@@ -44,6 +50,7 @@ import org.thingsboard.server.queue.usagestats.DefaultTbApiUsageReportClient;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +63,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,6 +74,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -1121,6 +1130,66 @@ class DefaultDeviceStateServiceTest {
                 .longs(n)
                 .boxed()
                 .toList();
+    }
+
+    @Test
+    void givenDevicesStreamedFromDb_whenOnAddedPartitions_thenFetchesStateOnlyForDevicesOfAddedPartitions() {
+        // GIVEN
+        DeviceId otherPartitionDeviceId = DeviceId.fromString("d6f1c2a4-42e5-11f0-9fe2-0242ac120002");
+        DeviceId unresolvableDeviceId = DeviceId.fromString("e1a7b3c8-42e5-11f0-9fe2-0242ac120002");
+        TopicPartitionInfo otherTpi = TopicPartitionInfo.builder().topic("tb_core").partition(1).myPartition(false).build();
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, otherPartitionDeviceId)).willReturn(otherTpi);
+        given(partitionService.resolve(ServiceType.TB_CORE, tenantId, unresolvableDeviceId)).willThrow(new IllegalStateException("no tenant"));
+        willAnswer(invocation -> {
+            Consumer<List<DeviceIdInfo>> pageConsumer = invocation.getArgument(1);
+            pageConsumer.accept(List.of(
+                    new DeviceIdInfo(tenantId.getId(), null, otherPartitionDeviceId.getId()),
+                    new DeviceIdInfo(tenantId.getId(), null, unresolvableDeviceId.getId())));
+            pageConsumer.accept(List.of(new DeviceIdInfo(tenantId.getId(), null, deviceId.getId())));
+            return null;
+        }).given(deviceService).findAllDeviceIdInfos(eq(50000), any());
+        given(entityQueryRepository.findEntityDataByQueryInternal(any())).willReturn(PageData.emptyPageData());
+
+        // WHEN
+        var fetchTasks = service.onAddedPartitions(Set.of(tpi));
+
+        // THEN
+        assertThat(fetchTasks).containsOnlyKeys(tpi);
+        ArgumentCaptor<EntityDataQuery> queryCaptor = ArgumentCaptor.forClass(EntityDataQuery.class);
+        then(entityQueryRepository).should().findEntityDataByQueryInternal(queryCaptor.capture());
+        assertThat(((EntityListFilter) queryCaptor.getValue().getEntityFilter()).getEntityList()).containsExactly(deviceId.getId().toString());
+    }
+
+    @Test
+    void givenMoreDevicesThanOnePack_whenOnAddedPartitions_thenFetchesStatesPackByPack() {
+        // GIVEN
+        List<DeviceId> deviceIds = new ArrayList<>();
+        for (int i = 0; i < 2500; i++) {
+            DeviceId id = new DeviceId(UUID.randomUUID());
+            deviceIds.add(id);
+            given(partitionService.resolve(ServiceType.TB_CORE, tenantId, id)).willReturn(tpi);
+        }
+        List<Integer> packSizesSeenDuringScan = new ArrayList<>();
+        willAnswer(invocation -> {
+            Consumer<List<DeviceIdInfo>> pageConsumer = invocation.getArgument(1);
+            // pages of 700 do not line up with the 1000-device packs
+            for (List<DeviceId> page : Lists.partition(deviceIds, 700)) {
+                pageConsumer.accept(page.stream().map(id -> new DeviceIdInfo(tenantId.getId(), null, id.getId())).toList());
+            }
+            return null;
+        }).given(deviceService).findAllDeviceIdInfos(eq(50000), any());
+        given(entityQueryRepository.findEntityDataByQueryInternal(any())).willAnswer(invocation -> {
+            EntityDataQuery query = invocation.getArgument(0);
+            packSizesSeenDuringScan.add(((EntityListFilter) query.getEntityFilter()).getEntityList().size());
+            return PageData.emptyPageData();
+        });
+
+        // WHEN
+        var fetchTasks = service.onAddedPartitions(Set.of(tpi));
+
+        // THEN full packs of 1000 are fetched while the pages are read, the remainder after the last page
+        assertThat(packSizesSeenDuringScan).containsExactly(1000, 1000, 500);
+        assertThat(fetchTasks.get(tpi)).hasSize(3);
     }
 
 }

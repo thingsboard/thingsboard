@@ -41,6 +41,9 @@ CREATE INDEX IF NOT EXISTS idx_device_type ON device(tenant_id, type);
 
 CREATE INDEX IF NOT EXISTS idx_device_device_profile_id ON device(tenant_id, device_profile_id);
 
+-- Keyset paging over a tenant's devices (WHERE tenant_id = ? AND id > ? ORDER BY id LIMIT ?) on startup and partition rebalance
+CREATE INDEX IF NOT EXISTS idx_device_tenant_id_id ON device(tenant_id, id);
+
 CREATE INDEX IF NOT EXISTS idx_asset_customer_id ON asset(tenant_id, customer_id);
 
 CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, customer_id, type);
@@ -48,6 +51,9 @@ CREATE INDEX IF NOT EXISTS idx_asset_customer_id_and_type ON asset(tenant_id, cu
 CREATE INDEX IF NOT EXISTS idx_asset_type ON asset(tenant_id, type);
 
 CREATE INDEX IF NOT EXISTS idx_asset_profile_id ON asset(tenant_id, asset_profile_id);
+
+-- Keyset paging over a tenant's assets (WHERE tenant_id = ? AND id > ? ORDER BY id LIMIT ?) on startup and partition rebalance
+CREATE INDEX IF NOT EXISTS idx_asset_tenant_id_id ON asset(tenant_id, id);
 
 CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);
 

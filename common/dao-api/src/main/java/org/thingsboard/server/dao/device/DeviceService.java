@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public interface DeviceService extends EntityDaoService {
 
@@ -70,13 +71,40 @@ public interface DeviceService extends EntityDaoService {
 
     PageData<DeviceInfo> findDeviceInfosByFilter(DeviceInfoFilter filter, PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findAllDeviceIdInfos(int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
+
+    /**
+     * Passes all devices to {@code pageConsumer} page by page: keyset pages of up to {@code pageSize} rows by id, with no
+     * OFFSET and no count. A page is handed over after its query has finished, so no database connection or transaction is
+     * held while the consumer runs.
+     */
+    void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink);
 
+    /**
+     * @deprecated reads one page per call with OFFSET and a full count, so iterating all pages costs O(N²/pageSize) rows;
+     * use {@link #findProfileEntityIdInfosByTenantId(TenantId, int, Consumer)} instead. Scheduled for removal in the next major release.
+     */
+    @Deprecated(since = "4.4", forRemoval = true)
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink);
+
+    /**
+     * Same as {@link #findAllDeviceIdInfos(int, Consumer)}, limited to one tenant (keyset pages over the {@code (tenant_id, id)} index).
+     */
+    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink);
 
