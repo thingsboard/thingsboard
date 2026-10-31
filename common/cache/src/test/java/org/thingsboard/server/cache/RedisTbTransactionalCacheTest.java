@@ -4,19 +4,29 @@ package org.thingsboard.server.cache;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.redis.ClusterRedirectException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisScriptingCommands;
 import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.connection.jedis.JedisClusterConnection;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisMovedDataException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -71,6 +81,87 @@ class RedisTbTransactionalCacheTest {
 
         assertThat(scanPrefix).isEqualTo("citus:" + CACHE_NAME + "device_");
         assertThat(rawKeyString(cache, "device_1")).startsWith(scanPrefix);
+    }
+
+    @Test
+    void givenClusterTopologyError_whenRetryOnClusterTopologyChange_thenRenewsSlotMapAndRetriesOnce() {
+        TestRedisCache cache = createCache("");
+        TbJedisCluster cluster = mockCluster();
+        AtomicInteger attempts = new AtomicInteger();
+
+        String result = cache.retryOnClusterTopologyChange(() -> {
+            if (attempts.incrementAndGet() == 1) {
+                throw new JedisConnectionException("Failed to connect to 10.0.0.1:6379.");
+            }
+            return "ok";
+        });
+
+        assertThat(result).isEqualTo("ok");
+        assertThat(attempts).hasValue(2);
+        verify(cluster).renewSlotCache();
+    }
+
+    @Test
+    void givenClusterTopologyErrorTwice_whenRetryOnClusterTopologyChange_thenThrowsAfterOneRetry() {
+        TestRedisCache cache = createCache("");
+        TbJedisCluster cluster = mockCluster();
+        AtomicInteger attempts = new AtomicInteger();
+
+        assertThatThrownBy(() -> cache.retryOnClusterTopologyChange(() -> {
+            attempts.incrementAndGet();
+            throw new ClusterRedirectException(2050, "10.0.0.2", 6379, null);
+        })).isInstanceOf(ClusterRedirectException.class);
+
+        assertThat(attempts).hasValue(2);
+        verify(cluster).renewSlotCache();
+    }
+
+    @Test
+    void givenOtherError_whenRetryOnClusterTopologyChange_thenThrowsWithoutRenewing() {
+        TestRedisCache cache = createCache("");
+        TbJedisCluster cluster = mockCluster();
+        AtomicInteger attempts = new AtomicInteger();
+
+        assertThatThrownBy(() -> cache.retryOnClusterTopologyChange(() -> {
+            attempts.incrementAndGet();
+            throw new InvalidDataAccessApiUsageException("NOSCRIPT");
+        })).isInstanceOf(InvalidDataAccessApiUsageException.class);
+
+        assertThat(attempts).hasValue(1);
+        verify(cluster, never()).renewSlotCache();
+    }
+
+    @Test
+    void givenStandaloneRedis_whenRetryOnClusterTopologyChange_thenThrowsWithoutRetry() {
+        TestRedisCache cache = createCache("");
+        AtomicInteger attempts = new AtomicInteger();
+
+        assertThatThrownBy(() -> cache.retryOnClusterTopologyChange(() -> {
+            attempts.incrementAndGet();
+            throw new RedisConnectionFailureException("Connection refused");
+        })).isInstanceOf(RedisConnectionFailureException.class);
+
+        assertThat(attempts).hasValue(1);
+        verify(connectionFactory, never()).getClusterConnection();
+    }
+
+    @Test
+    void isClusterTopologyError() {
+        assertThat(RedisTbTransactionalCache.isClusterTopologyError(new JedisConnectionException("refused"))).isTrue();
+        assertThat(RedisTbTransactionalCache.isClusterTopologyError(new JedisMovedDataException("MOVED 2050 10.0.0.2:6379", new HostAndPort("10.0.0.2", 6379), 2050))).isTrue();
+        assertThat(RedisTbTransactionalCache.isClusterTopologyError(new RedisConnectionFailureException("refused"))).isTrue();
+        assertThat(RedisTbTransactionalCache.isClusterTopologyError(new ClusterRedirectException(2050, "10.0.0.2", 6379, null))).isTrue();
+        assertThat(RedisTbTransactionalCache.isClusterTopologyError(new InvalidDataAccessApiUsageException("NOSCRIPT"))).isFalse();
+        assertThat(RedisTbTransactionalCache.isClusterTopologyError(new IllegalStateException())).isFalse();
+    }
+
+    private TbJedisCluster mockCluster() {
+        TbJedisCluster cluster = mock(TbJedisCluster.class);
+        JedisClusterConnection clusterConnection = mock(JedisClusterConnection.class);
+        when(clusterConnection.getNativeConnection()).thenReturn(cluster);
+        when(connectionFactory.isRedisClusterAware()).thenReturn(true);
+        when(connectionFactory.getClusterConnection()).thenReturn(clusterConnection);
+        return cluster;
     }
 
     private TestRedisCache createCache(String keyPrefix) {
