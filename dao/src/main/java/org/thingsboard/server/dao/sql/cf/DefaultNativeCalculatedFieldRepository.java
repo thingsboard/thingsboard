@@ -20,14 +20,13 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.sql.KeysetPages;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
 
     private final String CF_COUNT_QUERY = "SELECT count(id) FROM calculated_field;";
     private final String CF_QUERY = "SELECT * FROM calculated_field ORDER BY created_time ASC LIMIT %s OFFSET %s";
-    // keyset pages over the primary key and the (tenant_id, id) index: each page is a short range scan, no OFFSET and no count
+    // keyset pages over the primary key and the (tenant_id, id) index, see KeysetPages
     private static final String CF_FIRST_PAGE_QUERY = "SELECT * FROM calculated_field ORDER BY id LIMIT :limit";
     private static final String CF_NEXT_PAGE_QUERY = "SELECT * FROM calculated_field WHERE id > :lastId ORDER BY id LIMIT :limit";
     private static final String CF_BY_TENANT_FIRST_PAGE_QUERY = "SELECT * FROM calculated_field WHERE tenant_id = :tenantId ORDER BY id LIMIT :limit";
@@ -64,36 +63,14 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
 
     @Override
     public void findAllCalculatedFields(int pageSize, Consumer<List<CalculatedField>> pageConsumer) {
-        forEachPage(pageSize, pageConsumer, lastId -> lastId == null ?
-                jdbcTemplate.queryForList(CF_FIRST_PAGE_QUERY, Map.of("limit", pageSize)) :
-                jdbcTemplate.queryForList(CF_NEXT_PAGE_QUERY, Map.of("lastId", lastId, "limit", pageSize)));
+        KeysetPages.forEachPage(jdbcTemplate, CF_FIRST_PAGE_QUERY, CF_NEXT_PAGE_QUERY, Map.of(), pageSize,
+                DefaultNativeCalculatedFieldRepository::toCalculatedField, pageConsumer);
     }
 
     @Override
     public void findCalculatedFieldsByTenantId(UUID tenantId, int pageSize, Consumer<List<CalculatedField>> pageConsumer) {
-        forEachPage(pageSize, pageConsumer, lastId -> lastId == null ?
-                jdbcTemplate.queryForList(CF_BY_TENANT_FIRST_PAGE_QUERY, Map.of("tenantId", tenantId, "limit", pageSize)) :
-                jdbcTemplate.queryForList(CF_BY_TENANT_NEXT_PAGE_QUERY, Map.of("tenantId", tenantId, "lastId", lastId, "limit", pageSize)));
-    }
-
-    /**
-     * Reads keyset pages ({@code fetchPage} gets the last id of the previous page, null for the first one) until a page comes
-     * back shorter than {@code pageSize}. Each page is handed to the consumer after its query has finished, so no database
-     * connection is held while the consumer runs. Rows with an unreadable configuration are left out of the page.
-     */
-    private static void forEachPage(int pageSize, Consumer<List<CalculatedField>> pageConsumer, Function<UUID, List<Map<String, Object>>> fetchPage) {
-        UUID lastId = null;
-        while (true) {
-            List<Map<String, Object>> rows = fetchPage.apply(lastId);
-            List<CalculatedField> page = rows.stream().map(DefaultNativeCalculatedFieldRepository::toCalculatedField).filter(Objects::nonNull).toList();
-            if (!page.isEmpty()) {
-                pageConsumer.accept(page);
-            }
-            if (rows.size() < pageSize) {
-                return;
-            }
-            lastId = (UUID) rows.get(rows.size() - 1).get("id");
-        }
+        KeysetPages.forEachPage(jdbcTemplate, CF_BY_TENANT_FIRST_PAGE_QUERY, CF_BY_TENANT_NEXT_PAGE_QUERY, Map.of("tenantId", tenantId), pageSize,
+                DefaultNativeCalculatedFieldRepository::toCalculatedField, pageConsumer);
     }
 
     private static CalculatedField toCalculatedField(Map<String, Object> row) {

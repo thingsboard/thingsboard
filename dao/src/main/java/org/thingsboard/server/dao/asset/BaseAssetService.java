@@ -281,11 +281,11 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
-    public void findProfileEntityIdInfosByTenantId(TenantId tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
-        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId [{}], fetchSize [{}]", tenantId, fetchSize);
+    public void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId [{}], pageSize [{}]", tenantId, pageSize);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validatePositiveNumber(fetchSize, "Incorrect fetch size " + fetchSize);
-        assetDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), fetchSize, consumer);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        assetDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageSize, pageConsumer);
     }
 
     @Override

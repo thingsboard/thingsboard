@@ -16,7 +16,9 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.sql.KeysetPages;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -26,12 +28,16 @@ import java.util.function.Consumer;
 public class DefaultNativeDeviceRepository extends AbstractNativeRepository implements NativeDeviceRepository {
 
     private final String COUNT_QUERY = "SELECT count(id) FROM device;";
-    private static final String ALL_DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device";
-    private static final String PROFILE_DEVICE_ID_INFO_BY_TENANT_QUERY =
-            "SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = ?";
+    // keyset pages over the primary key and the (tenant_id, id) index, see KeysetPages
+    private static final String DEVICE_ID_INFO_SELECT = "SELECT tenant_id as tenantId, customer_id as customerId, id as id FROM device ";
+    private static final String PROFILE_DEVICE_ID_INFO_SELECT =
+            "SELECT tenant_id as tenantId, customer_id as customerId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = :tenantId ";
+
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public DefaultNativeDeviceRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
         super(jdbcTemplate, transactionTemplate);
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -41,8 +47,10 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
     }
 
     @Override
-    public void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer) {
-        stream(ALL_DEVICE_ID_INFO_QUERY, fetchSize, this::mapDeviceIdInfo, consumer);
+    public void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer) {
+        KeysetPages.forEachPage(jdbcTemplate, DEVICE_ID_INFO_SELECT + "ORDER BY id LIMIT :limit",
+                DEVICE_ID_INFO_SELECT + "WHERE id > :lastId ORDER BY id LIMIT :limit",
+                Map.of(), pageSize, this::mapDeviceIdInfo, pageConsumer);
     }
 
     private DeviceIdInfo mapDeviceIdInfo(Map<String, Object> row) {
@@ -66,8 +74,10 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
     }
 
     @Override
-    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
-        stream(PROFILE_DEVICE_ID_INFO_BY_TENANT_QUERY, fetchSize, DefaultNativeDeviceRepository::toInfo, consumer, tenantId);
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        KeysetPages.forEachPage(jdbcTemplate, PROFILE_DEVICE_ID_INFO_SELECT + "ORDER BY id LIMIT :limit",
+                PROFILE_DEVICE_ID_INFO_SELECT + "AND id > :lastId ORDER BY id LIMIT :limit",
+                Map.of("tenantId", tenantId), pageSize, DefaultNativeDeviceRepository::toInfo, pageConsumer);
     }
 
     private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {

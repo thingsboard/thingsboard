@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.state;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -1140,10 +1141,11 @@ class DefaultDeviceStateServiceTest {
         given(partitionService.resolve(ServiceType.TB_CORE, tenantId, otherPartitionDeviceId)).willReturn(otherTpi);
         given(partitionService.resolve(ServiceType.TB_CORE, tenantId, unresolvableDeviceId)).willThrow(new IllegalStateException("no tenant"));
         willAnswer(invocation -> {
-            Consumer<DeviceIdInfo> consumer = invocation.getArgument(1);
-            consumer.accept(new DeviceIdInfo(tenantId.getId(), null, otherPartitionDeviceId.getId()));
-            consumer.accept(new DeviceIdInfo(tenantId.getId(), null, unresolvableDeviceId.getId()));
-            consumer.accept(new DeviceIdInfo(tenantId.getId(), null, deviceId.getId()));
+            Consumer<List<DeviceIdInfo>> pageConsumer = invocation.getArgument(1);
+            pageConsumer.accept(List.of(
+                    new DeviceIdInfo(tenantId.getId(), null, otherPartitionDeviceId.getId()),
+                    new DeviceIdInfo(tenantId.getId(), null, unresolvableDeviceId.getId())));
+            pageConsumer.accept(List.of(new DeviceIdInfo(tenantId.getId(), null, deviceId.getId())));
             return null;
         }).given(deviceService).findAllDeviceIdInfos(eq(50000), any());
         given(entityQueryRepository.findEntityDataByQueryInternal(any())).willReturn(PageData.emptyPageData());
@@ -1169,9 +1171,10 @@ class DefaultDeviceStateServiceTest {
         }
         List<Integer> packSizesSeenDuringScan = new ArrayList<>();
         willAnswer(invocation -> {
-            Consumer<DeviceIdInfo> consumer = invocation.getArgument(1);
-            for (DeviceId id : deviceIds) {
-                consumer.accept(new DeviceIdInfo(tenantId.getId(), null, id.getId()));
+            Consumer<List<DeviceIdInfo>> pageConsumer = invocation.getArgument(1);
+            // pages of 700 do not line up with the 1000-device packs
+            for (List<DeviceId> page : Lists.partition(deviceIds, 700)) {
+                pageConsumer.accept(page.stream().map(id -> new DeviceIdInfo(tenantId.getId(), null, id.getId())).toList());
             }
             return null;
         }).given(deviceService).findAllDeviceIdInfos(eq(50000), any());
@@ -1184,7 +1187,7 @@ class DefaultDeviceStateServiceTest {
         // WHEN
         var fetchTasks = service.onAddedPartitions(Set.of(tpi));
 
-        // THEN full packs of 1000 are fetched while the scan runs, the remainder after it
+        // THEN full packs of 1000 are fetched while the pages are read, the remainder after the last page
         assertThat(packSizesSeenDuringScan).containsExactly(1000, 1000, 500);
         assertThat(fetchTasks.get(tpi)).hasSize(3);
     }

@@ -224,8 +224,8 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     }
 
     @Override
-    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
-        nativeAssetRepository.findProfileEntityIdInfosByTenantId(tenantId, fetchSize, consumer);
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        nativeAssetRepository.findProfileEntityIdInfosByTenantId(tenantId, pageSize, pageConsumer);
     }
 
     @Override

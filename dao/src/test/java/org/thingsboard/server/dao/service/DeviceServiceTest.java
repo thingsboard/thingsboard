@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -114,8 +113,6 @@ public class DeviceServiceTest extends AbstractServiceTest {
     private EntityGroupService entityGroupService;
     @Autowired
     private OwnerService ownerService;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     private final IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
@@ -436,7 +433,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindAllDeviceIdInfosStreamsEveryDeviceOnce() {
+    public void testFindAllDeviceIdInfosReturnsEveryDeviceOnce() {
         CustomerId customerId = saveCustomer(tenantId);
         Device tenantDevice1 = saveDevice(tenantId, "Stream tenant device 1");
         Device tenantDevice2 = saveDevice(tenantId, "Stream tenant device 2");
@@ -450,21 +447,24 @@ public class DeviceServiceTest extends AbstractServiceTest {
                 otherTenantDevice1.getId(), new DeviceIdInfo(anotherTenantId.getId(), NULL_UUID, otherTenantDevice1.getUuidId()),
                 otherTenantDevice2.getId(), new DeviceIdInfo(anotherTenantId.getId(), NULL_UUID, otherTenantDevice2.getUuidId()));
 
-        // fetch size below the row count forces several cursor round trips; the large one reads everything in one go
-        for (int fetchSize : new int[]{2, 1000}) {
+        // a page size below the row count forces several keyset pages; the large one reads everything in one page
+        for (int pageSize : new int[]{2, 1000}) {
             List<DeviceIdInfo> found = new ArrayList<>();
-            deviceService.findAllDeviceIdInfos(fetchSize, found::add);
+            deviceService.findAllDeviceIdInfos(pageSize, page -> {
+                assertThat(page).hasSizeLessThanOrEqualTo(pageSize);
+                found.addAll(page);
+            });
 
             // the table may hold devices of other tests: check ours are there, exactly once, with correct ids
             assertThat(found).extracting(DeviceIdInfo::getDeviceId).doesNotHaveDuplicates();
             assertThat(found).filteredOn(info -> expected.containsKey(info.getDeviceId()))
-                    .as("fetchSize %s", fetchSize)
+                    .as("pageSize %s", pageSize)
                     .containsExactlyInAnyOrderElementsOf(expected.values());
         }
     }
 
     @Test
-    public void testFindProfileEntityIdInfosByTenantIdStreamsOnlyTenantDevices() {
+    public void testFindProfileEntityIdInfosByTenantIdReturnsOnlyTenantDevices() {
         CustomerId customerId = saveCustomer(tenantId);
         Device tenantDevice1 = saveDevice(tenantId, "Profile stream tenant device 1");
         Device tenantDevice2 = saveDevice(tenantId, "Profile stream tenant device 2");
@@ -472,7 +472,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         saveDevice(anotherTenantId, "Profile stream other tenant device");
 
         List<ProfileEntityIdInfo> found = new ArrayList<>();
-        deviceService.findProfileEntityIdInfosByTenantId(tenantId, 2, found::add);
+        deviceService.findProfileEntityIdInfosByTenantId(tenantId, 2, found::addAll);
 
         assertThat(found).containsExactlyInAnyOrder(
                 ProfileEntityIdInfo.create(tenantId.getId(), tenantId, tenantDevice1.getDeviceProfileId(), tenantDevice1.getId()),
@@ -483,7 +483,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     @Test
     public void testFindProfileEntityIdInfosByTenantIdWithoutDevicesNeverCallsConsumer() {
         List<ProfileEntityIdInfo> found = new ArrayList<>();
-        deviceService.findProfileEntityIdInfosByTenantId(anotherTenantId, 2, found::add);
+        deviceService.findProfileEntityIdInfosByTenantId(anotherTenantId, 2, found::addAll);
         assertThat(found).isEmpty();
     }
 
@@ -493,28 +493,30 @@ public class DeviceServiceTest extends AbstractServiceTest {
         saveDevice(tenantId, "Failing consumer device 2");
         List<DeviceIdInfo> seen = new ArrayList<>();
 
-        assertThatThrownBy(() -> deviceService.findAllDeviceIdInfos(1, info -> {
-            seen.add(info);
+        assertThatThrownBy(() -> deviceService.findAllDeviceIdInfos(1, page -> {
+            seen.addAll(page);
             throw new IllegalStateException("consumer failure");
         })).hasRootCauseInstanceOf(IllegalStateException.class).hasRootCauseMessage("consumer failure");
         assertThat(seen).hasSize(1);
     }
 
     @Test
-    public void testFindAllDeviceIdInfosReadsThroughServerSideCursor() {
-        saveDevice(tenantId, "Cursor device 1");
-        saveDevice(tenantId, "Cursor device 2");
-        List<String> openPortals = new ArrayList<>();
+    public void testFindProfileEntityIdInfosByTenantIdDoesNotSkipDevicesWhenReadDevicesAreDeleted() {
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            devices.add(saveDevice(tenantId, "Keyset device " + i));
+        }
+        List<ProfileEntityIdInfo> found = new ArrayList<>();
 
-        // the consumer runs inside the streaming transaction, so this query uses the same connection and sees the
-        // suspended named portal of the device scan; without a fetch size the driver reads all rows at once and keeps no portal
-        deviceService.findAllDeviceIdInfos(1, info -> {
-            if (openPortals.isEmpty()) {
-                openPortals.addAll(jdbcTemplate.queryForList("SELECT statement FROM pg_cursors WHERE name <> ''", String.class));
-            }
+        // deleting already returned devices between pages shifts every later row back with OFFSET paging (and skips one per
+        // delete); keyset paging continues after the last returned id, so the remaining devices are all read
+        deviceService.findProfileEntityIdInfosByTenantId(tenantId, 2, page -> {
+            found.addAll(page);
+            page.forEach(info -> deviceService.deleteDevice(tenantId, (DeviceId) info.getEntityId()));
         });
 
-        assertThat(openPortals).anySatisfy(statement -> assertThat(statement).contains("FROM device"));
+        assertThat(found).extracting(ProfileEntityIdInfo::getEntityId)
+                .containsExactlyInAnyOrderElementsOf(devices.stream().map(Device::getId).toList());
     }
 
     private CustomerId saveCustomer(TenantId tenantId) {

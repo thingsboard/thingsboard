@@ -552,7 +552,7 @@ public class AssetServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindProfileEntityIdInfosByTenantIdStreamsOnlyTenantAssets() {
+    public void testFindProfileEntityIdInfosByTenantIdReturnsOnlyTenantAssets() {
         Customer customer = new Customer();
         customer.setTenantId(tenantId);
         customer.setTitle("Stream customer " + StringUtils.randomAlphabetic(8));
@@ -564,8 +564,8 @@ public class AssetServiceTest extends AbstractServiceTest {
         saveAsset(otherTenantId, null, "Stream other tenant asset");
 
         List<ProfileEntityIdInfo> found = new ArrayList<>();
-        // fetch size below the row count forces several cursor round trips
-        assetService.findProfileEntityIdInfosByTenantId(tenantId, 2, found::add);
+        // a page size below the row count forces several keyset pages
+        assetService.findProfileEntityIdInfosByTenantId(tenantId, 2, found::addAll);
 
         assertThat(found).containsExactlyInAnyOrder(
                 ProfileEntityIdInfo.create(tenantId.getId(), tenantId, tenantAsset1.getAssetProfileId(), tenantAsset1.getId()),
@@ -573,7 +573,7 @@ public class AssetServiceTest extends AbstractServiceTest {
                 ProfileEntityIdInfo.create(tenantId.getId(), customerId, customerAsset.getAssetProfileId(), customerAsset.getId()));
 
         List<ProfileEntityIdInfo> noAssets = new ArrayList<>();
-        assetService.findProfileEntityIdInfosByTenantId(createTenant().getId(), 2, noAssets::add);
+        assetService.findProfileEntityIdInfosByTenantId(createTenant().getId(), 2, noAssets::addAll);
         assertThat(noAssets).isEmpty();
     }
 

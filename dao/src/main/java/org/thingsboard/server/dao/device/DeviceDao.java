@@ -209,9 +209,9 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao<Device>, Exporta
 
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink);
 
-    void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer);
+    void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer);
 
-    void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
+    void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
     Map<String, Long> countDevicesPerTransportType();
 

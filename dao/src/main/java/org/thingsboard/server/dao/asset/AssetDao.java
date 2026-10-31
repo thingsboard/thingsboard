@@ -154,7 +154,7 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao<Asset>, Exportable
 
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, PageLink pageLink);
 
-    void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
+    void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
     List<AssetCacheInfo> findAssetCacheInfosByRelationType(String relationType, UUID id, int batchSize);
 

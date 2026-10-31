@@ -305,13 +305,13 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer) {
-        nativeDeviceRepository.findAllDeviceIdInfos(fetchSize, consumer);
+    public void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer) {
+        nativeDeviceRepository.findAllDeviceIdInfos(pageSize, pageConsumer);
     }
 
     @Override
-    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
-        nativeDeviceRepository.findProfileEntityIdInfosByTenantId(tenantId, fetchSize, consumer);
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        nativeDeviceRepository.findProfileEntityIdInfosByTenantId(tenantId, pageSize, pageConsumer);
     }
 
     @Override

@@ -79,11 +79,11 @@ public interface DeviceService extends EntityDaoService {
     PageData<DeviceIdInfo> findDeviceIdInfos(PageLink pageLink);
 
     /**
-     * Passes every device of every tenant to {@code consumer} in one database pass (a cursor reading {@code fetchSize} rows
-     * per round trip), in no particular order, with no OFFSET and no count. The consumer runs while the cursor holds its
-     * connection, so it must only do fast in-memory work.
+     * Passes all devices to {@code pageConsumer} page by page: keyset pages of up to {@code pageSize} rows by id, with no
+     * OFFSET and no count. A page is handed over after its query has finished, so no database connection or transaction is
+     * held while the consumer runs.
      */
-    void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer);
+    void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
@@ -102,11 +102,9 @@ public interface DeviceService extends EntityDaoService {
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink);
 
     /**
-     * Passes every device of the tenant to {@code consumer} in one database pass (a cursor reading {@code fetchSize} rows per
-     * round trip), with no OFFSET and no count. The consumer runs while the cursor holds its connection, so it must only do
-     * fast in-memory work.
+     * Same as {@link #findAllDeviceIdInfos(int, Consumer)}, limited to one tenant (keyset pages over the {@code (tenant_id, id)} index).
      */
-    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
+    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
     PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink);
 

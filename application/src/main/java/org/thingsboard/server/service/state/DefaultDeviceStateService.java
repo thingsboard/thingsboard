@@ -404,12 +404,11 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Override
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
         var result = new HashMap<TopicPartitionInfo, List<ListenableFuture<?>>>();
-        // The scan holds one DB connection until it ends, so the consumer only hashes the id and buffers it. Only the current,
-        // not yet full, pack of every added partition is buffered: a full pack goes to the executor right away (non-blocking).
+        // Only the current, not yet full, pack of every added partition is buffered: a full pack goes to the executor right away.
         Map<TopicPartitionInfo, List<DeviceIdInfo>> currentPacks = new HashMap<>();
         Map<TopicPartitionInfo, AtomicInteger> initializedCounters = new HashMap<>();
 
-        deviceService.findAllDeviceIdInfos(initFetchPackSize, idInfo -> {
+        deviceService.findAllDeviceIdInfos(initFetchPackSize, page -> page.forEach(idInfo -> {
             TopicPartitionInfo tpi;
             try {
                 tpi = partitionService.resolve(ServiceType.TB_CORE, idInfo.getTenantId(), idInfo.getDeviceId());
@@ -426,7 +425,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     submitDevicePack(tpi, pack, initializedCounters.computeIfAbsent(tpi, tmp -> new AtomicInteger()), result);
                 }
             }
-        });
+        }));
         currentPacks.forEach((tpi, pack) -> submitDevicePack(tpi, pack, initializedCounters.computeIfAbsent(tpi, tmp -> new AtomicInteger()), result));
         return result;
     }

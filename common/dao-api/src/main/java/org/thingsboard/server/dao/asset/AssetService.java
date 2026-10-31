@@ -68,11 +68,11 @@ public interface AssetService extends EntityDaoService {
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink);
 
     /**
-     * Passes every asset of the tenant to {@code consumer} in one database pass (a cursor reading {@code fetchSize} rows per
-     * round trip), with no OFFSET and no count. The consumer runs while the cursor holds its connection, so it must only do
-     * fast in-memory work.
+     * Passes all assets of the tenant to {@code pageConsumer} page by page: keyset pages of up to {@code pageSize} rows over the
+     * {@code (tenant_id, id)} index, with no OFFSET and no count. A page is handed over after its query has finished, so no
+     * database connection or transaction is held while the consumer runs.
      */
-    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
+    void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
     PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(TenantId tenantId, AssetProfileId assetProfileId, PageLink pageLink);
 

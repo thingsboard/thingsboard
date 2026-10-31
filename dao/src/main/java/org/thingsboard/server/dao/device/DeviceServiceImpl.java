@@ -407,10 +407,10 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
-    public void findAllDeviceIdInfos(int fetchSize, Consumer<DeviceIdInfo> consumer) {
-        log.trace("Executing findAllDeviceIdInfos, fetchSize [{}]", fetchSize);
-        validatePositiveNumber(fetchSize, "Incorrect fetch size " + fetchSize);
-        deviceDao.findAllDeviceIdInfos(fetchSize, consumer);
+    public void findAllDeviceIdInfos(int pageSize, Consumer<List<DeviceIdInfo>> pageConsumer) {
+        log.trace("Executing findAllDeviceIdInfos, pageSize [{}]", pageSize);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        deviceDao.findAllDeviceIdInfos(pageSize, pageConsumer);
     }
 
     @Override
@@ -440,11 +440,11 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
-    public void findProfileEntityIdInfosByTenantId(TenantId tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
-        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId [{}], fetchSize [{}]", tenantId, fetchSize);
+    public void findProfileEntityIdInfosByTenantId(TenantId tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId [{}], pageSize [{}]", tenantId, pageSize);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validatePositiveNumber(fetchSize, "Incorrect fetch size " + fetchSize);
-        deviceDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), fetchSize, consumer);
+        validatePositiveNumber(pageSize, "Incorrect page size " + pageSize);
+        deviceDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageSize, pageConsumer);
     }
 
     @Override

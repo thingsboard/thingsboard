@@ -823,8 +823,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void initEntitiesCache() {
-        deviceService.findProfileEntityIdInfosByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), this::cacheProfileEntity);
-        assetService.findProfileEntityIdInfosByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), this::cacheProfileEntity);
+        deviceService.findProfileEntityIdInfosByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), page -> page.forEach(this::cacheProfileEntity));
+        assetService.findProfileEntityIdInfosByTenantId(tenantId, cfSettings.getInitTenantFetchPackSize(), page -> page.forEach(this::cacheProfileEntity));
 
         PageDataIterable<Customer> customers = new PageDataIterable<>(pageLink -> customerService.findCustomersByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         for (Customer customer : customers) {

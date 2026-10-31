@@ -15,7 +15,9 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.dao.sql.KeysetPages;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -25,11 +27,15 @@ import java.util.function.Consumer;
 public class DefaultNativeAssetRepository extends AbstractNativeRepository implements NativeAssetRepository {
 
     private final String COUNT_QUERY = "SELECT count(id) FROM asset;";
-    private static final String PROFILE_ASSET_ID_INFO_BY_TENANT_QUERY =
-            "SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = ?";
+    // keyset pages over the (tenant_id, id) index, see KeysetPages
+    private static final String PROFILE_ASSET_ID_INFO_SELECT =
+            "SELECT tenant_id as tenantId, customer_id as customerId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = :tenantId ";
+
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public DefaultNativeAssetRepository(NamedParameterJdbcTemplate jdbcTemplate, TransactionTemplate transactionTemplate) {
         super(jdbcTemplate, transactionTemplate);
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -46,8 +52,10 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
     }
 
     @Override
-    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer) {
-        stream(PROFILE_ASSET_ID_INFO_BY_TENANT_QUERY, fetchSize, DefaultNativeAssetRepository::toInfo, consumer, tenantId);
+    public void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer) {
+        KeysetPages.forEachPage(jdbcTemplate, PROFILE_ASSET_ID_INFO_SELECT + "ORDER BY id LIMIT :limit",
+                PROFILE_ASSET_ID_INFO_SELECT + "AND id > :lastId ORDER BY id LIMIT :limit",
+                Map.of("tenantId", tenantId), pageSize, DefaultNativeAssetRepository::toInfo, pageConsumer);
     }
 
     private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {

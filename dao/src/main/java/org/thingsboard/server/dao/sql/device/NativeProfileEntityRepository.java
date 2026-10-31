@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.page.PageData;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -16,6 +17,6 @@ public interface NativeProfileEntityRepository {
 
     PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable);
 
-    void findProfileEntityIdInfosByTenantId(UUID tenantId, int fetchSize, Consumer<ProfileEntityIdInfo> consumer);
+    void findProfileEntityIdInfosByTenantId(UUID tenantId, int pageSize, Consumer<List<ProfileEntityIdInfo>> pageConsumer);
 
 }
