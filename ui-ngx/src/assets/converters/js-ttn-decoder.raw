@@ -214,6 +214,9 @@ function lansitecBeaconList(beacons) {
 
 // Decoded from the raw bytes by the datasheet where the codec gets it wrong.
 function lansitecRawValues(values, b, model) {
+    if (b.length == 0) {
+        return;
+    }
     var type = (b[0] >> 4) & 0x0F;
     if (LANSITEC_GATEWAYS.indexOf(model) >= 0) {
         lansitecGatewayRawValues(values, b, model, type);
@@ -389,13 +392,12 @@ function lansitecBadgeRawValues(values, b, type) {
 // it is not and the message is 8 bytes. The codec always reads the SNR, so with VER 0 the next fields are shifted.
 // TEMP_INT bit 7 is the sign, TEMP_FRA the hundredths.
 function lansitecTemperatureHumidityRawValues(values, b) {
-    var offset = 3;
-    if ((b[0] & 0x0F) == 1) {
-        values.loraSnr = lansitecSnr(b, 3);
-        offset = 5;
-    }
+    var offset = (b[0] & 0x0F) == 1 ? 5 : 3;
     if (b.length < offset + 3) {
         return;
+    }
+    if (offset == 5) {
+        values.loraSnr = lansitecSnr(b, 3);
     }
     var temperature = (b[offset] & 0x7F) + b[offset + 1] / 100;
     if ((b[offset] & 0x80) != 0) {
@@ -410,7 +412,7 @@ var attributes = {};
 var history = [];
 if (metadata.payloadFormat == 'JSON') {
     values = decodeToJson(payload);
-    if (metadata.brandId == 'lansitec' && values.bytes != null) {
+    if (metadata.brandId == 'lansitec' && values.bytes != null && typeof values.bytes === 'object' && !Array.isArray(values.bytes)) {
         // The Lansitec codecs put everything in "bytes" and get some fields wrong: see the Lansitec block above.
         var raw = values.bytes;
         values = lansitecValues(raw, metadata.modelId);
