@@ -10,10 +10,14 @@ import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 
 public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
 
     private static final ImmutableMap<String, String> KEYS_MAPPING;
+
+    // Proto3 JSON writes 64-bit integers as strings, so these numeric fields arrive as "868100000".
+    private static final Set<String> INT64_KEYS = Set.of("frequency");
 
     static {
         KEYS_MAPPING = new ImmutableMap.Builder<String, String>()
@@ -82,6 +86,7 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
 
     @Override
     protected void postMapping(Map<String, Object> kvMap) {
+        INT64_KEYS.forEach(key -> kvMap.computeIfPresent(key, (k, value) -> value instanceof String str ? parseLong(str, value) : value));
         long ts = 0;
         if (kvMap.containsKey("uplinkMessageReceivedAt")) {
             var uplinkMessageReceivedAtTs = parseDateToTimestamp(kvMap.get("uplinkMessageReceivedAt").toString());
@@ -103,6 +108,14 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
             ts = System.currentTimeMillis();
         }
         kvMap.put("ts", ts);
+    }
+
+    private static Object parseLong(String str, Object defaultValue) {
+        try {
+            return Long.parseLong(str);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     @Override

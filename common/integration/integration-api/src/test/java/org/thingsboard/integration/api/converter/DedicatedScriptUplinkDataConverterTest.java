@@ -48,7 +48,7 @@ public class DedicatedScriptUplinkDataConverterTest {
     @ParameterizedTest
     @ValueSource(strings = {"01020304", "01a44d4c"})
     public void parseUplinkDataKeepsStringIdentifiersInAttributesTest(String devAddr) throws Exception {
-        setConfig(Set.of("devAddr", "eui", "fCnt", "rssi", "snr"), null);
+        setConfig(Set.of("devAddr", "eui", "fCnt", "rssi", "snr", "frequency"), null);
 
         UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrapThingsStack(devAddr));
 
@@ -58,6 +58,7 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertKv(attributes.get("fCnt"), LONG_V, 101L);
         assertKv(attributes.get("rssi"), LONG_V, -22L);
         assertKv(attributes.get("snr"), DOUBLE_V, 11.0);
+        assertKv(attributes.get("frequency"), LONG_V, 868100000L);
     }
 
     @ParameterizedTest
@@ -289,6 +290,7 @@ public class DedicatedScriptUplinkDataConverterTest {
         ObjectNode endDeviceIds = (ObjectNode) payload.get("end_device_ids");
         endDeviceIds.put("dev_addr", devAddr);
         endDeviceIds.put("dev_eui", "1000000000000001");
+        ((ObjectNode) payload.at("/uplink_message/settings")).put("frequency", "868100000");
         return thingsStackUnwrapper.unwrap(JacksonUtil.writeValueAsBytes(payload), new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond();
     }
 
