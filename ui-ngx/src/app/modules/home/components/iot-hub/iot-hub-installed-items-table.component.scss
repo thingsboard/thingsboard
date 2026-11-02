@@ -126,9 +126,9 @@
   font-weight: 500;
   line-height: 20px;
   letter-spacing: 0.25px;
-  color: rgba(0, 0, 0, 0.76);
+  color: var(--tb-primary-500);
   background: none;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--tb-primary-500);
   border-radius: 4px;
   padding: 6px 12px;
   cursor: pointer;
@@ -143,7 +143,7 @@
   }
 
   &:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: color-mix(in srgb, var(--tb-primary-500) 8%, transparent);
   }
 }
 

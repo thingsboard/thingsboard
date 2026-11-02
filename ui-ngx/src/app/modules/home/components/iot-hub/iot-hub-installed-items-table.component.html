@@ -45,19 +45,17 @@
             @if (getPublishedVersionInfo(item); as pubInfo) {
               @if (pubInfo.publishedVersionId !== item.itemVersionId) {
                 <div class="flex items-center gap-3">
+                  <!-- The details of the new version offer the update -->
                   @if (!itemVersion) {
                     <button class="tb-installed-version-btn" (click)="viewUpdateDetails(pubInfo, item)">
                       <mat-icon>arrow_upward</mat-icon>
                       v{{ pubInfo.publishedVersion }} {{ 'iot-hub.available' | translate }}
                     </button>
-                  }
-                  <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateItem(item, pubInfo)">
-                    @if (itemVersion) {
+                  } @else {
+                    <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateItem(item, pubInfo)">
                       {{ 'iot-hub.update-to-version' | translate:{ version: pubInfo.publishedVersion } }}
-                    } @else {
-                      {{ 'iot-hub.update' | translate }}
-                    }
-                  </button>
+                    </button>
+                  }
                 </div>
               } @else {
                 <span class="tb-installed-up-to-date">
