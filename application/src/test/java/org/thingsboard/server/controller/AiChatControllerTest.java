@@ -3,6 +3,7 @@
 package org.thingsboard.server.controller;
 
 import org.thingsboard.server.service.ai.transport.TbAiTurnContext;
+import org.thingsboard.server.service.ai.transport.TbAiTurnLink;
 import org.thingsboard.ai.common.channel.ChannelProtocol;
 import org.thingsboard.ai.common.channel.ChatOperationRequest;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,6 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 public class AiChatControllerTest extends AbstractAiControllerTest {
+
+    private static final JsonNode TOOL_CARDS = JacksonUtil.newObjectNode().put("toolCards", true);
 
     @MockitoBean
     private TbApiUsageReportClient apiUsageReportClient;
@@ -103,14 +106,14 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID chatId = UUID.randomUUID();
         ArrayNode messages = chatMessages();
-        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null), success(messages));
+        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS), success(messages));
 
         // WHEN
         JsonNode result = doGet("/api/ai/chats/" + chatId + "/messages", JsonNode.class);
 
         // THEN
         assertThat(result).isEqualTo(messages);
-        verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null));
+        verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS));
     }
 
     @Test
@@ -138,7 +141,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 ServerSentEvent.<String>builder().event("message").data("Creating a high-temperature alarm rule...").build(),
                 ServerSentEvent.<String>builder().event("creditsUsed").data("{\"creditsUsed\":5}").build()
         );
-        given(tbAiTransport.sendChatMessage(eq(chatId), eq(requestBody), any(TbAiTurnContext.class))).willReturn(upstream);
+        given(tbAiTransport.sendChatMessage(eq(chatId), eq(requestBody), any(TbAiTurnContext.class), any(TbAiTurnLink.class))).willReturn(upstream);
 
         // WHEN
         MvcResult asyncStart = mockMvc.perform(sendMessageRequest(chatId, requestBody, acceptLanguage))
@@ -156,10 +159,37 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         verify(apiUsageReportClient).report(any(), any(), eq(ApiUsageRecordKey.AI_CREDITS_COUNT), eq(5L));
 
         ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
-        verify(tbAiTransport).sendChatMessage(eq(chatId), eq(requestBody), context.capture());
+        verify(tbAiTransport).sendChatMessage(eq(chatId), eq(requestBody), context.capture(), any(TbAiTurnLink.class));
         assertThat(context.getValue().tbAccessToken()).isEqualTo("Bearer " + token);
         assertThat(context.getValue().acceptLanguage()).isEqualTo(acceptLanguage);
         assertTokenProviderBelongsToTenantAdmin(context.getValue().tokenProvider());
+    }
+
+    @Test
+    public void shouldStreamTheResumedTurnWithoutCheckingCredits_whenResumeChat() throws Exception {
+        // GIVEN — the browser reloaded while the assistant was still working, and AI credits ran out meanwhile
+        loginTenantAdmin();
+        UUID chatId = UUID.randomUUID();
+        givenAiCreditsExhausted();
+        Flux<ServerSentEvent<String>> upstream = Flux.just(
+                ServerSentEvent.<String>builder().event("turnResumed").data("{}").build(),
+                ServerSentEvent.<String>builder().event("assistantMessage").data("{\"message\":\"Done.\"}").build()
+        );
+        given(tbAiTransport.resumeChat(eq(chatId), any(TbAiTurnContext.class), any(TbAiTurnLink.class))).willReturn(upstream);
+
+        // WHEN
+        MvcResult asyncStart = mockMvc.perform(resumeRequest(chatId))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        String body = mockMvc.perform(asyncDispatch(asyncStart))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // THEN
+        assertThat(body).contains("event:turnResumed", "Done.");
+        ArgumentCaptor<TbAiTurnContext> context = ArgumentCaptor.forClass(TbAiTurnContext.class);
+        verify(tbAiTransport).resumeChat(eq(chatId), context.capture(), any(TbAiTurnLink.class));
+        assertThat(context.getValue().tbAccessToken()).isEqualTo("Bearer " + token);
     }
 
     // ------------------------------------------------------------------------
@@ -224,7 +254,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
         loginTenantAdmin();
         UUID chatId = UUID.randomUUID();
         String error = "Chat service unavailable";
-        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null), failure(error));
+        givenOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS), failure(error));
 
         // WHEN
         doGet("/api/ai/chats/" + chatId + "/messages")
@@ -232,7 +262,7 @@ public class AiChatControllerTest extends AbstractAiControllerTest {
                 .andExpect(statusReason(equalTo(error)));
 
         // THEN
-        verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, null));
+        verifyOperation(ChannelProtocol.CHAT_MESSAGES, new ChatOperationRequest(chatId, TOOL_CARDS));
     }
 
     // ------------------------------------------------------------------------

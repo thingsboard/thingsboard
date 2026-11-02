@@ -10,11 +10,13 @@ import {
   OnInit,
   SecurityContext,
   signal,
+  untracked,
   ViewChild
 } from '@angular/core';
-import { ChatMessage } from '@shared/models/solution-creator.models';
-import { Observable, of, Subject } from 'rxjs';
-import { concatMap, finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import { Observable, of, Subject, throwError, timer } from 'rxjs';
+import { concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AiChatService } from '@core/http/ai-chat.service';
 import {
   AiAssistantPromptExample,
@@ -145,11 +147,20 @@ export class AiAssistantPanelComponent implements OnInit {
   private cancelMessage$ = new Subject<void>();
   private sessionAffectedEntities: EntityId[] = [];
   private messageCancelled = false;
+  private resumeOnOpen = false;
+
+  private static readonly RESUME_ATTEMPTS = 4;
+  private static readonly RESUME_DELAY_MS = 2000;
 
   private openEffect = effect(() => {
     if (this.panelService.open()) {
       this.dropChatFromOtherContext();
       this.loadChats();
+      const chatId = untracked(() => this.chatId());
+      if (this.resumeOnOpen && chatId) {
+        this.resumeOnOpen = false;
+        this.loadChat$.next(chatId);
+      }
     } else {
       this.slideDone.set(false);
       this.suspendOnClose();
@@ -177,7 +188,8 @@ export class AiAssistantPanelComponent implements OnInit {
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(messages => {
-      this.messages.set(messages);
+      this.showHistory(messages);
+      this.resumeTurn(this.chatId());
     });
   }
 
@@ -224,10 +236,16 @@ export class AiAssistantPanelComponent implements OnInit {
   }
 
   sendMsgFromUser(msg: string): void {
-    this.messages.update(list => [...list, {from: 'USER', content: msg}]);
+    const userMessage: ChatMessage = {from: 'USER', content: msg};
+    this.messages.update(list => [...list, userMessage]);
     this.sendMessage(msg).subscribe({
       error: (err) => {
-        this.messages.update(list => list.slice(0, -1));
+        if (this.isConnectionLost(err) && this.chatId()) {
+          this.showErrorToast(this.translate.instant('ai-assistant.connection-lost'));
+          this.resumeTurn(this.chatId(), true);
+          return;
+        }
+        this.messages.update(list => list.filter(message => message !== userMessage));
         setTimeout(() => {
           this.showErrorMessage(err);
         }, 0);
@@ -254,13 +272,11 @@ export class AiAssistantPanelComponent implements OnInit {
     this.promptInput?.reset();
   }
 
-  // Keeps the open chat so reopening shows it right away, unless an interrupted reply left it stale.
+  // Keeps the open chat so reopening shows it right away. A reply interrupted by closing keeps running on the
+  // server, so reopening reloads the chat and follows that reply.
   private suspendOnClose(): void {
-    if (this.loading()) {
-      this.reset();
-    } else {
-      this.cancelActiveMessage();
-    }
+    this.resumeOnOpen = this.loading();
+    this.cancelActiveMessage();
   }
 
   private dropChatFromOtherContext(): void {
@@ -377,6 +393,90 @@ export class AiAssistantPanelComponent implements OnInit {
     const chatId = this.chatId();
     const alreadySent = chatId ? this.panelService.getSentClientContext(chatId) : undefined;
     return (!chatId || !isEqual(currentContext, alreadySent)) ? currentContext : undefined;
+  }
+
+  private showHistory(messages: ChatMessage[]): void {
+    const completed: Record<string, ToolExecutionResult> = {};
+    for (const message of messages) {
+      if (message.from === 'APPROVAL' && (message as ApprovalChatMessage).result) {
+        const result = (message as ApprovalChatMessage).result;
+        completed[result.executionId] = result;
+      }
+    }
+    this.completedExecutions.set(completed);
+    this.messages.set(messages);
+  }
+
+  // Follows the reply still running in the chat, if any: after a reload, a reopened panel or a lost connection.
+  // The server replays the whole reply, so what the history already shows of it is dropped first.
+  private resumeTurn(chatId: string, afterConnectionLoss = false): void {
+    if (!chatId) {
+      return;
+    }
+    let resumed = false;
+    this.messageCancelled = false;
+    this.sessionAffectedEntities = [];
+    const attempt$ = timer(afterConnectionLoss ? AiAssistantPanelComponent.RESUME_DELAY_MS : 0).pipe(
+      tap(() => {
+        if (afterConnectionLoss) {
+          this.initLoadingState();
+        }
+      }),
+      switchMap(() => this.aiChat.resumeChat(chatId, {ignoreLoading: true, ignoreErrors: true}))
+    );
+    attempt$.pipe(
+      retry({
+        count: afterConnectionLoss ? AiAssistantPanelComponent.RESUME_ATTEMPTS : 0,
+        delay: (error, attempt) => this.isConnectionLost(error)
+          ? timer(attempt * AiAssistantPanelComponent.RESUME_DELAY_MS)
+          : throwError(() => error)
+      }),
+      takeUntil(this.cancelMessage$),
+      concatMap(event => {
+        if (event.event === 'turnResumed') {
+          resumed = true;
+          this.initLoadingState();
+          this.dropRunningReply();
+          return of(event);
+        }
+        return this.handleChatEvent(event);
+      }),
+      finalize(() => {
+        if (resumed || afterConnectionLoss) {
+          this.stopLoadingState();
+        }
+      })
+    ).subscribe({
+      error: () => {
+        if (afterConnectionLoss) {
+          this.showErrorToast(this.translate.instant('ai-assistant.reconnect-failed'));
+        }
+      },
+      complete: () => {
+        if (this.messageCancelled || this.chatId() !== chatId) {
+          return;
+        }
+        if (this.sessionAffectedEntities.length) {
+          this.panelService.emitUpdatedData(this.sessionAffectedEntities);
+        }
+        if (resumed || afterConnectionLoss) {
+          this.aiChat.getChatMessages(chatId, {ignoreLoading: true, ignoreErrors: true})
+            .pipe(takeUntil(this.cancelMessage$))
+            .subscribe(messages => this.showHistory(messages));
+        }
+      }
+    });
+  }
+
+  private dropRunningReply(): void {
+    this.messages.update(list => {
+      const lastUser = list.map(message => message.from).lastIndexOf('USER');
+      return lastUser >= 0 ? list.slice(0, lastUser + 1) : list;
+    });
+  }
+
+  private isConnectionLost(error: any): boolean {
+    return error instanceof HttpErrorResponse && error.status === 0;
   }
 
   private handleChatEvent(chatMsg: ChatEvent): Observable<ChatEvent> {

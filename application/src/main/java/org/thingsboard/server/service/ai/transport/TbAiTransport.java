@@ -10,6 +10,12 @@ import java.util.UUID;
 
 public interface TbAiTransport {
 
-    Flux<ServerSentEvent<String>> sendChatMessage(UUID chatId, JsonNode request, TbAiTurnContext context);
+    Flux<ServerSentEvent<String>> sendChatMessage(UUID chatId, JsonNode request, TbAiTurnContext context, TbAiTurnLink link);
+
+    /**
+     * Follows the turn running in the chat: a {@code turnResumed} event, every event of the turn so far, then the live
+     * ones. Completes at once when no turn is running or when TB AI cannot resume turns.
+     */
+    Flux<ServerSentEvent<String>> resumeChat(UUID chatId, TbAiTurnContext context, TbAiTurnLink link);
 
 }
