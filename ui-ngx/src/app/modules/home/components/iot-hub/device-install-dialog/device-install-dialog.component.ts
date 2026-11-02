@@ -2344,7 +2344,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const installState = this.data.update?.descriptor.installState ?? {};
     const previousStep = this.findPreviousStep(step);
     const keys = [...(previousStep ? this.stateKeysOf(previousStep) : []), ...this.stateKeysOf(step)];
-    if (!previousStep && step.id) {
+    if (!this.previousPackageInfo && step.id) {
       keys.push(step.name, this.resolveVariables(step.name));
     }
     const key = keys.find(k => k && installState[k]);

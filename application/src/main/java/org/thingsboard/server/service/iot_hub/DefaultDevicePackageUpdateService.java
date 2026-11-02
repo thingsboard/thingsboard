@@ -271,6 +271,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     private Applied applySteps(TenantId tenantId, DevicePackage devicePackage, DeviceUpdateRequest request, JsonNode versionInfo) {
         IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
         DeviceInstalledItemDescriptor previous = devicePackage.descriptor();
+        Set<UUID> ownedIds = createdIds(previous).keySet();
         Map<String, ObjectNode> aliasOutputs = new HashMap<>();
         Map<String, ObjectNode> outputs = new LinkedHashMap<>();
         Map<String, ObjectNode> installState = new LinkedHashMap<>();
@@ -303,7 +304,10 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 outputs.put(step.getName(), output);
                 ObjectNode state = JacksonUtil.newObjectNode();
                 state.set("entityOutput", output);
-                state.put("resolution", step.getResolution() != null ? step.getResolution() : "created");
+                // The package's own entity stays the package's, whatever the request says, so later versions update it
+                boolean owned = step.getEntityId() != null && ownedIds.contains(step.getEntityId());
+                String resolution = step.getResolution() == null || (owned && "use-existing".equals(step.getResolution())) ? "created" : step.getResolution();
+                state.put("resolution", resolution);
                 // A kept entity keeps the checksum of what the package left: the current one would take the
                 // user's changes for the package's, and the next update would overwrite them without a warning
                 String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ? previousChecksum(previous, step.getEntityId()) : result.checksum();
@@ -311,7 +315,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                     state.put("checksum", checksum);
                 }
                 installState.put(step.getId() != null ? step.getId() : step.getName(), state);
-                if (!"use-existing".equals(step.getResolution())) {
+                if (!"use-existing".equals(resolution)) {
                     stepEntityIds.add(result.entityId());
                 }
                 if (result.entityId() instanceof DashboardId id) {
@@ -320,7 +324,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 if (result.saved() != null) {
                     saved.add(result.saved());
                 }
-                if (step.getAction() != DeviceUpdateRequest.Action.KEEP && !"use-existing".equals(step.getResolution())) {
+                if (step.getAction() != DeviceUpdateRequest.Action.KEEP && !"use-existing".equals(resolution)) {
                     // As at install, the step's attributes go with the entity it saved; written after commit
                     attributes.add(new StepAttributes(step.getName(), result.entityId(), step.getServerAttributes(), step.getSharedAttributes()));
                 }

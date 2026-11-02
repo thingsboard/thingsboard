@@ -257,6 +257,20 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void useExistingOfAPackageEntity_staysThePackages() {
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+        DeviceUpdateRequest.Step step = keep("Overview", "DASHBOARD", dashboardId);
+        step.setResolution("use-existing");
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getInstallState().get("Overview").get("resolution").asText()).isEqualTo("created");
+        assertThat(descriptor.getCreatedEntityIds()).contains(dashboardId);
+    }
+
+    @Test
     void twoStepsWithOneKey_areRejected() {
         DeviceUpdateRequest.Step first = keep("Overview", "DASHBOARD", dashboardId);
         first.setId("main-dashboard");
