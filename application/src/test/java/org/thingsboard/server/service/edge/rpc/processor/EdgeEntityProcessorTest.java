@@ -3,6 +3,7 @@
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,6 +87,7 @@ public class EdgeEntityProcessorTest {
         ReflectionTestUtils.setField(processor, "edgeCtx", edgeCtx);
         ReflectionTestUtils.setField(processor, "dbCallbackExecutorService", dbCallbackExecutorService);
         ReflectionTestUtils.setField(processor, "ownersCacheService", ownersCacheService);
+        ReflectionTestUtils.setField(processor, "ownerChangeExecutor", MoreExecutors.newDirectExecutorService());
         // Run all listenable-future callbacks inline so ordering is deterministic.
         lenient().doAnswer(inv -> {
             ((Runnable) inv.getArgument(0)).run();
@@ -131,7 +133,7 @@ public class EdgeEntityProcessorTest {
     }
 
     @Test
-    public void edgeMovedUpToTenantKeepsCustomerDeviceGroupButDropsCustomerUsersAndScheduler() {
+    public void edgeMovedUpToTenantKeepsCustomerDeviceGroupAndLeavesCustomerUsersAndSchedulerToOwnerChangeJob() {
         CustomerId customerA = new CustomerId(UUID.randomUUID());
         Edge edge = new Edge(edgeId);
         edge.setTenantId(tenantId);
@@ -166,15 +168,16 @@ public class EdgeEntityProcessorTest {
 
         Object rows = ReflectionTestUtils.invokeMethod(processor, "collectRowsOfRemovedCustomers", tenantId, edge, List.of(customerA));
 
-        // the tenant edge never holds Customer A, so a re-sent scheduler or user would be rejected there
+        // the tenant edge never holds Customer A, so a re-sent scheduler or user would be rejected there;
+        // both are profile-stamped, so the edge's EDGE_OWNER_CHANGE job unassigns them, not this processor
         List<?> kept = ReflectionTestUtils.invokeMethod(rows, "kept");
         Map<EntityType, List<EntityGroup>> groupsToRemove = ReflectionTestUtils.invokeMethod(rows, "groupsToRemove");
         List<SchedulerEventInfo> schedulerEventsToRemove = ReflectionTestUtils.invokeMethod(rows, "schedulerEventsToRemove");
         assertThat(kept).hasSize(1);
         assertThat((Object) ReflectionTestUtils.invokeMethod(kept.get(0), "entityId")).isEqualTo(devices.getId());
-        assertThat(groupsToRemove.get(EntityType.USER)).containsExactly(users);
+        assertThat(groupsToRemove.get(EntityType.USER)).isEmpty();
         assertThat(groupsToRemove.get(EntityType.DEVICE)).isEmpty();
-        assertThat(schedulerEventsToRemove).containsExactly(event);
+        assertThat(schedulerEventsToRemove).isEmpty();
     }
 
     @Test
