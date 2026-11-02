@@ -2086,7 +2086,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return { ...base, entityId: plan.previous.output.id };
     }
     if (plan.resolution === 'use-existing') {
-      return { ...base, entityId: plan.existing.id, confirmed: true };
+      // The package's own entity, under a step not matched to its installed one (e.g. renamed without an id),
+      // stays the package's, so later versions still update it
+      const resolution = this.isPackageEntity(plan.existing.id) ? 'created' : base.resolution;
+      return { ...base, resolution, entityId: plan.existing.id, confirmed: true };
     }
     const overwritten = plan.action === 'overwrite' ? plan.previous.output : plan.resolution === 'overwrite' ? plan.existing : null;
     const entity = this.buildEntityBody(ws, step, overwritten);
@@ -2322,16 +2325,28 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return new Set(fields.map(field => field.key).filter(key => !previousKeys.has(key)));
   }
 
+  /** Update: true when the entity is one the installed package created. */
+  private isPackageEntity(id: string): boolean {
+    return !!this.data.update?.descriptor.createdEntityIds?.some(created => created.id === id);
+  }
+
   /** The keys the install state may keep a step under: its id, or else its name, as written or resolved. */
   private stateKeysOf(step: DeviceInstallStep): string[] {
     return step.id ? [step.id] : [step.name, this.resolveVariables(step.name)];
   }
 
-  /** Update: the install state of a step of the new version, under the key of the installed step it replaces. */
+  /**
+   * Update: the install state of a step of the new version, under the key of the installed step it replaces.
+   * Without the installed version's steps (e.g. it can't be downloaded any more), a step that has gained an id
+   * is also looked up under its own name, which the installed version keyed it by.
+   */
   private storedStateOf(step: DeviceInstallStep): { key: string; state: any } | undefined {
     const installState = this.data.update?.descriptor.installState ?? {};
     const previousStep = this.findPreviousStep(step);
     const keys = [...(previousStep ? this.stateKeysOf(previousStep) : []), ...this.stateKeysOf(step)];
+    if (!previousStep && step.id) {
+      keys.push(step.name, this.resolveVariables(step.name));
+    }
     const key = keys.find(k => k && installState[k]);
     return key ? { key, state: installState[key] } : undefined;
   }
