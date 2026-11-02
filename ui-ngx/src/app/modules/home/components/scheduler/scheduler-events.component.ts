@@ -101,7 +101,7 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
   replaceComponent: Type<any>;
 
   @ViewChild('replaceComponentAnchor', {static: true}) replaceComponentAnchor: TbAnchorComponent;
-  @ViewChild('schedulerEventWidgetContainer', {static: true}) schedulerEventWidgetContainerRef: ElementRef;
+  @ViewChild('schedulerEventWidgetContainer') schedulerEventWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -200,11 +200,6 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
     } else {
       this.modeHandler = SchedulerModeHandler.create(this, this.router, this.route);
       this.modeHandler.initialize(this.schedulerEventService, this.userPermissionsService, this.customTranslatePipe);
-
-      if (this.displayPagination) {
-        this.setupResizeObserver();
-      }
-
       this.setupCalendarOptions();
     }
   }
@@ -267,6 +262,10 @@ export class SchedulerEventsComponent extends PageComponent implements OnInit, A
 
   ngAfterViewInit(): void {
     if (!this.showData) return;
+
+    if (this.displayPagination) {
+      this.setupResizeObserver();
+    }
 
     this.setupTextSearchSubscription();
     this.setupSortAndPaginatorSubscriptions();
