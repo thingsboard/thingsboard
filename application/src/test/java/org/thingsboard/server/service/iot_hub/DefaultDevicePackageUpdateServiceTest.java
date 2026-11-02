@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.iot_hub;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.common.data.subscription.SubscriptionException;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
@@ -165,6 +167,7 @@ class DefaultDevicePackageUpdateServiceTest {
         device.setTenantId(tenantId);
         device.setName("AM308");
         when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+        when(installedItemService.findByTenantId(any(), any(), any(), any())).thenReturn(new PageData<>());
     }
 
     @Test
@@ -350,6 +353,40 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void overwrittenSharedConverter_isRecordedAsDefaultAndOtherPackagesTakeItsChecksum() {
+        ConverterId converterId = new ConverterId(UUID.randomUUID());
+        Converter current = new Converter(converterId);
+        current.setTenantId(tenantId);
+        current.setName("Uplink data converter for TTN my-app");
+        current.setVersion(4L);
+        when(converterService.findConverterById(tenantId, converterId)).thenReturn(current);
+        when(converterService.saveConverter(any())).thenAnswer(i -> i.getArgument(0));
+        // The package that created the converter records its checksum; one that took it as it was records none
+        ObjectNode created = JacksonUtil.newObjectNode().put("checksum", "before").put("resolution", "created");
+        created.set("entityOutput", JacksonUtil.newObjectNode().put("id", converterId.getId().toString()));
+        ObjectNode usedExisting = JacksonUtil.newObjectNode().put("resolution", "use-existing");
+        usedExisting.set("entityOutput", JacksonUtil.newObjectNode().put("id", converterId.getId().toString()));
+        IotHubInstalledItem creator = otherPackage(Map.of("Uplink", created));
+        IotHubInstalledItem taker = otherPackage(Map.of("Uplink", usedExisting));
+        when(installedItemService.findByTenantId(any(), any(), any(), any()))
+                .thenReturn(new PageData<>(List.of(installedItem, creator, taker), 1, 3, false));
+        DeviceUpdateRequest.Step step = overwrite("Uplink", "UPLINK_CONVERTER", converterId, 4L,
+                JacksonUtil.newObjectNode().put("name", "Uplink").set("configuration", JacksonUtil.newObjectNode().put("tbelDecoder", "return {};")));
+        step.setConfirmed(true);
+        step.setDefaultConverter(true);
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("Uplink");
+        assertThat(state.get("defaultConverter").asBoolean()).isTrue();
+        assertThat(created.get("checksum").asText()).isEqualTo(state.get("checksum").asText());
+        assertThat(usedExisting.has("checksum")).isFalse();
+        verify(installedItemService).save(tenantId, creator);
+        verify(installedItemService, never()).save(tenantId, taker);
+    }
+
+    @Test
     void overwritingAnEntityOfAnotherPackage_needsAConfirmation() {
         DashboardId foreign = new DashboardId(UUID.randomUUID());
 
@@ -458,6 +495,22 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void checksum_ignoresTheMetadataOfAnIntegration() {
+        Integration integration = new Integration();
+        integration.setName("TTN my-app");
+        ObjectNode configuration = JacksonUtil.newObjectNode().put("host", "eu1.cloud.thethings.network");
+        configuration.set("metadata", JacksonUtil.newObjectNode());
+        integration.setConfiguration(configuration);
+        String installed = EntityChecksum.of(integration);
+        // Another package on the integration adds its profile name
+        ((ObjectNode) configuration.get("metadata")).put("profile.milesight-iot-am308", "AM308");
+        assertThat(EntityChecksum.of(integration)).isEqualTo(installed);
+        assertThat(integration.getConfiguration().get("metadata").has("profile.milesight-iot-am308")).isTrue();
+        configuration.put("host", "nam1.cloud.thethings.network");
+        assertThat(EntityChecksum.of(integration)).isNotEqualTo(installed);
+    }
+
+    @Test
     void userMessage_showsValidationMessagesAndHidesInternalOnes() {
         assertThat(DefaultDevicePackageUpdateService.userMessage(new DataValidationException("Rule chains limit reached")))
                 .isEqualTo("Rule chains limit reached");
@@ -476,6 +529,17 @@ class DefaultDevicePackageUpdateServiceTest {
 
         assertThat(resolved.get("a").asText()).isEqualTo("123");
         assertThat(resolved.get("b").asText()).isEqualTo("x 123 ${gateway.id}");
+    }
+
+    private IotHubInstalledItem otherPackage(Map<String, JsonNode> installState) {
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setInstallState(installState);
+        IotHubInstalledItem item = new IotHubInstalledItem();
+        item.setId(new IotHubInstalledItemId(UUID.randomUUID()));
+        item.setTenantId(tenantId);
+        item.setItemType("DEVICE");
+        item.setDescriptor(descriptor);
+        return item;
     }
 
     private DeviceProfile profile(Long version, String name) {

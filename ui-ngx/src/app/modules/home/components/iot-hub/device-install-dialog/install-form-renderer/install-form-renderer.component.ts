@@ -138,6 +138,18 @@ export class InstallFormRendererComponent implements OnChanges {
     control.markAsDirty();
   }
 
+  /** A resettable field the user changed shows a button that puts its defaultValue back. */
+  canResetToDefault(field: FormFieldDefinition): boolean {
+    const control = this.formGroup.controls[field.key];
+    return !!field.resettable && !!control?.enabled && control.value !== (field.defaultValue ?? '');
+  }
+
+  resetToDefault(field: FormFieldDefinition): void {
+    const control = this.formGroup.controls[field.key];
+    control.setValue(field.defaultValue ?? '');
+    control.markAsDirty();
+  }
+
   onFocus(field: FormFieldDefinition): void {
     const control = this.formGroup.controls[field.key];
     this.focusedControl = control ?? null;

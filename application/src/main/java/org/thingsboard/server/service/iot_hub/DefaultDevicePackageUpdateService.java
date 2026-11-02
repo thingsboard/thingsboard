@@ -42,6 +42,8 @@ import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -286,6 +288,8 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         List<SavedEntity> saved = new ArrayList<>();
         List<DeviceUpdateRequest.Step> connectorSteps = new ArrayList<>();
         List<StepAttributes> attributes = new ArrayList<>();
+        // The checksums of the entities this update overwrote, which other packages may record too
+        Map<UUID, String> overwrittenChecksums = new HashMap<>();
         DashboardId dashboardId = null;
 
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
@@ -313,6 +317,12 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ? previousChecksum(previous, step.getEntityId()) : result.checksum();
                 if (checksum != null) {
                     state.put("checksum", checksum);
+                }
+                if (step.isDefaultConverter()) {
+                    state.put("defaultConverter", true);
+                }
+                if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE && result.checksum() != null) {
+                    overwrittenChecksums.put(result.entityId().getId(), result.checksum());
                 }
                 installState.put(step.getId() != null ? step.getId() : step.getName(), state);
                 if (!"use-existing".equals(resolution)) {
@@ -348,10 +358,53 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         installedItem.setVersion(versionInfo.get("version").asText());
         installedItem.setDescriptor(descriptor);
         installedItemService.save(tenantId, installedItem);
+        refreshChecksumsOfOtherPackages(tenantId, installedItem.getId(), overwrittenChecksums);
         // Resolved once every entity is saved: attributes may refer to a later step's entity
         List<StepAttributes> resolvedAttributes = attributes.stream().map(a -> new StepAttributes(a.stepName(), a.entityId(),
                 resolvePlaceholders(a.server(), aliasOutputs), resolvePlaceholders(a.shared(), aliasOutputs))).toList();
         return new Applied(descriptor, outputs, saved, connectorSteps, resolvedAttributes, aliasOutputs);
+    }
+
+    /**
+     * Another package that recorded the checksum of an entity this update overwrote, e.g. a shared converter, records the
+     * new one: the update was confirmed for all packages using the entity, so their next update sees no change by someone else.
+     */
+    private void refreshChecksumsOfOtherPackages(TenantId tenantId, IotHubInstalledItemId installedItemId, Map<UUID, String> checksums) {
+        if (checksums.isEmpty()) {
+            return;
+        }
+        PageLink pageLink = new PageLink(100);
+        PageData<IotHubInstalledItem> page;
+        do {
+            page = installedItemService.findByTenantId(tenantId, List.of("DEVICE"), null, pageLink);
+            for (IotHubInstalledItem item : page.getData()) {
+                if (!item.getId().equals(installedItemId) && item.getDescriptor() instanceof DeviceInstalledItemDescriptor descriptor
+                        && descriptor.getInstallState() != null && refreshChecksums(descriptor.getInstallState(), checksums)) {
+                    installedItemService.save(tenantId, item);
+                }
+            }
+            pageLink = pageLink.nextPageLink();
+        } while (page.hasNext());
+    }
+
+    private static boolean refreshChecksums(Map<String, JsonNode> installState, Map<UUID, String> checksums) {
+        boolean changed = false;
+        for (JsonNode state : installState.values()) {
+            String checksum = checksums.get(toUuid(state.path("entityOutput").path("id").asText()));
+            if (checksum != null && state.has("checksum") && state instanceof ObjectNode objectState) {
+                objectState.put("checksum", checksum);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private static UUID toUuid(String id) {
+        try {
+            return UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /**
