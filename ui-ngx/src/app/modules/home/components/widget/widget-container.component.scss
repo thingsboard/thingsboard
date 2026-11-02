@@ -11,7 +11,6 @@
   inset: 0;
   margin: 0;
   overflow: hidden;
-  isolation: isolate;
   outline: none;
 
   transition: all .2s ease-in-out;
@@ -28,6 +27,7 @@
 div.tb-widget {
   display: flex;
   flex-direction: column;
+  isolation: isolate;
   .tb-widget-header {
     display: flex;
     flex-direction: row;
