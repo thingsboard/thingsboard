@@ -452,7 +452,13 @@ if (history.length == 0) {
 history.push({ ts: metadata.ts, values: values });
 return { profile: profile, telemetry: history };
 
-// The payload is UTF-8: a codec value can have a unit like ℃.
+// A codec value can have a unit like ℃. Where the payload comes as UTF-8 bytes, they are decoded; where it already
+// comes as characters, the decoding fails and the text is taken as it is.
 function decodeToJson(payload) {
-    return JSON.parse(decodeURIComponent(escape(String.fromCharCode.apply(String, payload))));
+    var text = String.fromCharCode.apply(String, payload);
+    try {
+        text = decodeURIComponent(escape(text));
+    } catch (e) {
+    }
+    return JSON.parse(text);
 }
