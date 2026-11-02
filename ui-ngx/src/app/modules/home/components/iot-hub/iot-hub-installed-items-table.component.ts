@@ -242,16 +242,6 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     });
   }
 
-  viewUpdateDetails(publishedInfo: ItemPublishedVersionInfo, installedItem: IotHubInstalledItem): void {
-    this.iotHubApiService.getVersionInfo(publishedInfo.publishedVersionId, {ignoreLoading: true}).subscribe(versionView => {
-      this.iotHubActions.openItemDetail(versionView, installedItem).subscribe(result => {
-        if (result === 'updated' || result === 'deleted') {
-          this.loadData();
-        }
-      });
-    });
-  }
-
   updateItem(item: IotHubInstalledItem, publishedInfo: ItemPublishedVersionInfo): void {
     this.iotHubActions.updateItem(item, publishedInfo.publishedVersion, publishedInfo.publishedVersionId).subscribe(result => {
       if (result === 'updated') {

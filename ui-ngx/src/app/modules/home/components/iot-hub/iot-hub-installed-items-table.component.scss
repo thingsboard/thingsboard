@@ -126,6 +126,11 @@
   padding: 6px 12px;
   height: auto;
   --mat-button-outlined-outline-color: var(--mat-button-outlined-label-text-color);
+
+  mat-icon {
+    color: inherit !important;
+    --mat-icon-color: currentColor;
+  }
 }
 
 // "Up to date" — Design: 14px Medium, #198038, gap-8, py-6
