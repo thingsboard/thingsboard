@@ -74,6 +74,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
   publishedVersionMap = new Map<string, ItemPublishedVersionInfo>();
   // Installed device packages whose default converter differs from ThingsBoard's default converter now
   converterUpdates = new Set<string>();
+  private converterCheckRun = 0;
   updatesChecked = false;
   isCheckingUpdates = false;
 
@@ -277,34 +278,46 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
    * ThingsBoard's default converter now. ThingsBoard's default changes with ThingsBoard, so the package has no new version for it.
    */
   private async checkConverterUpdates(): Promise<void> {
-    const updates = new Set<string>();
+    // A later load (another page, sort or search) starts another run: an earlier one finishing last mustn't win
+    const run = ++this.converterCheckRun;
+    // The package's default converter of each DEVICE package on the page
+    const checks: { itemId: string; converterId: string }[] = [];
     // Over all installed packages, not only this page's, as the update dialog decides
     let ownDefaultConverterIds: Set<string> | undefined;
     for (const item of this.dataSource) {
       const states = item.itemType === 'DEVICE' ? Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {}) : [];
       for (const state of states) {
-        let id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
+        const id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
+        if (!id) {
+          continue;
+        }
         // A converter taken as it was counts only when a package installed it as its default converter
-        if (id && state.resolution === 'use-existing') {
+        if (state.resolution === 'use-existing') {
           ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
           if (!ownDefaultConverterIds.has(id)) {
-            id = undefined;
+            continue;
           }
         }
-        const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true, ignoreLoading: true}))
-          .catch(() => null) : null;
-        if (converter) {
-          const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
-            converter.configuration.scriptLang, converter.name);
-          if (defaultConverter && differsFromDefaultConverter(converter, defaultConverter)) {
-            updates.add(item.id.id);
-          }
-        }
+        checks.push({ itemId: item.id.id, converterId: id });
       }
     }
-    this.converterUpdates = updates;
+    const changed = await Promise.all(checks.map(async ({ itemId, converterId }) => {
+      const converter = await firstValueFrom(this.converterService.getConverter(converterId, {ignoreErrors: true, ignoreLoading: true}))
+        .catch(() => null);
+      if (!converter) {
+        return null;
+      }
+      const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
+        converter.configuration.scriptLang, converter.name);
+      return defaultConverter && differsFromDefaultConverter(converter, defaultConverter) ? itemId : null;
+    }));
+    if (run !== this.converterCheckRun) {
+      return;
+    }
+    this.converterUpdates = new Set(changed.filter(itemId => !!itemId));
     this.cd.markForCheck();
   }
+
 
   getPublishedVersionInfo(item: IotHubInstalledItem): ItemPublishedVersionInfo | undefined {
     return this.publishedVersionMap.get(item.itemId);

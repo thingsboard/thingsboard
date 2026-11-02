@@ -555,6 +555,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.wizardSteps[this.stepper.selectedIndex + 1]?.label || '';
   }
 
+  /** Update: coming back to the Update step checks the update again, e.g. with the configuration changed. */
+  private resetUpdatePlan(ws: WizardStep): void {
+    if (ws.type === 'progress' && !ws.progressDone && !ws.updating && !ws.checking) {
+      ws.entitySteps = null;
+      ws.reviewing = false;
+      ws.progressError = null;
+    }
+  }
+
   previousStep(): void {
     if (!this.stepper || this.stepper.selectedIndex <= 0) {
       return;
@@ -564,12 +573,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (step.updating || step.checking) {
         return;
       }
-      if (!step.progressDone) {
-        // Coming back to it checks the update again, e.g. with the configuration changed
-        step.entitySteps = null;
-        step.reviewing = false;
-        step.progressError = null;
-      }
+      this.resetUpdatePlan(step);
       this.stepper.previous();
     } else if (step?.type === 'progress' && step.progressError) {
       this.goBackToForm();
@@ -700,6 +704,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   onStepSelectionChange(event: StepperSelectionEvent): void {
     if (event.selectedIndex <= event.previouslySelectedIndex) {
+      // Back through the stepper header too, not only the Back button: the Update step checks the update again
+      if (this.data.update) {
+        this.wizardSteps.slice(event.selectedIndex + 1).forEach(ws => this.resetUpdatePlan(ws));
+      }
       return;
     }
     // Forward moves can come from the stepper header, which bypasses nextStep(),
