@@ -6325,7 +6325,7 @@
         "items-per-page": "Items per page",
         "filter": "Filter",
         "clear-filters": "Clear filters",
-        "available": "Available",
+        "available": "available",
         "items-page-desc-widgets": "Jumpstart your IoT journey with pre-configured widgets designed for your industry. Deploy proven architectures instantly and focus your energy on what matters: your unique business logic.",
         "items-page-desc-solution-templates": "Complete IoT solution packages with dashboards, rule chains, and device configurations. Get started with proven architectures.",
         "items-page-desc-calculated-fields": "Use pre-configured Calculated Fields to automate complex metrics like fuel efficiency or power factor. Skip the manual logic and keep your dashboards clean and actionable.",
