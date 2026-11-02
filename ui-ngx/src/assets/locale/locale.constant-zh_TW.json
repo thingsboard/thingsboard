@@ -8617,6 +8617,8 @@
         "model": "模型",
         "name": "名稱",
         "ai-provider": "AI 提供者",
+        "customer-access": "客戶存取",
+        "customer-access-hint": "允許客戶使用者向此模型傳送聊天請求，例如從 Trendz Analytics 傳送。模型設定與憑證永遠不會公開。",
         "no-found": "找不到 AI 模型",
         "list": "{ count, plural, =1 {1 個模型} other {模型清單（# 個）} }",
         "selected-fields": "已選擇 { count, plural, =1 {1 個模型} other {# 個模型} }",
@@ -14020,7 +14022,8 @@
                 "SHARE_GROUP": "共用群組",
                 "ASSIGN_TO_TENANT": "指派給租戶",
                 "READ_CALCULATED_FIELD": "讀取計算欄位與警報規則",
-                "WRITE_CALCULATED_FIELD": "寫入計算欄位與警報規則"
+                "WRITE_CALCULATED_FIELD": "寫入計算欄位與警報規則",
+                "INVOKE": "呼叫"
             }
         }
     },

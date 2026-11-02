@@ -1882,6 +1882,8 @@
     "model": "Model",
     "name": "Navn",
     "ai-provider": "AI-udbyder",
+    "customer-access": "Kundeadgang",
+    "customer-access-hint": "Giver kundebrugere mulighed for at sende chatforespørgsler til denne model, f.eks. fra Trendz Analytics. Modellens konfiguration og legitimationsoplysninger vises aldrig.",
     "no-found": "Ingen AI-modeller fundet",
     "list": "{ count, plural, =1 {Én model} other {Liste med # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 model} other {# modeller} } valgt",
@@ -8850,7 +8852,8 @@
         "SHARE_GROUP": "Del gruppe",
         "ASSIGN_TO_TENANT": "Tildel til lejer",
         "READ_CALCULATED_FIELD": "Læs beregnede felter og alarmregler",
-        "WRITE_CALCULATED_FIELD": "Skriv beregnede felter og alarmregler"
+        "WRITE_CALCULATED_FIELD": "Skriv beregnede felter og alarmregler",
+        "INVOKE": "Kald"
       }
     }
   },

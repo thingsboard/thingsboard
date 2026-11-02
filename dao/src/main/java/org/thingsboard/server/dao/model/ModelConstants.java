@@ -1085,6 +1085,7 @@ public class ModelConstants {
     public static final String AI_MODEL_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
     public static final String AI_MODEL_NAME_COLUMN_NAME = NAME_PROPERTY;
     public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
+    public static final String AI_MODEL_CUSTOMER_ACCESS_ENABLED_COLUMN_NAME = "customer_access_enabled";
 
     /**
      * Api Key constants.

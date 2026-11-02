@@ -1767,6 +1767,8 @@
     "model": "Modell",
     "name": "Navn",
     "ai-provider": "AI-leverandør",
+    "customer-access": "Kundetilgang",
+    "customer-access-hint": "Lar kundebrukere sende chatforespørsler til denne modellen, f.eks. fra Trendz Analytics. Modellens konfigurasjon og legitimasjon blir aldri eksponert.",
     "no-found": "Fant ingen AI-modeller",
     "list": "{ count, plural, =1 {Én modell} other {Liste over # modeller} }",
     "selected-fields": "{ count, plural, =1 {1 modell} other {# modeller} } valgt",
@@ -7679,7 +7681,8 @@
         "SHARE_GROUP": "Del gruppe",
         "ASSIGN_TO_TENANT": "Tildel til leietaker",
         "READ_CALCULATED_FIELD": "Les kalkulert felt",
-        "WRITE_CALCULATED_FIELD": "Skriv kalkulert felt"
+        "WRITE_CALCULATED_FIELD": "Skriv kalkulert felt",
+        "INVOKE": "Kall"
       }
     }
   },

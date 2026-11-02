@@ -31,7 +31,8 @@ public enum Operation {
     SHARE_GROUP(true),
     ASSIGN_TO_TENANT,
     READ_CALCULATED_FIELD(true),
-    WRITE_CALCULATED_FIELD(true);
+    WRITE_CALCULATED_FIELD(true),
+    INVOKE;
 
     public static Set<Operation> defaultEntityOperations = new HashSet<>(Arrays.asList(ALL, READ, WRITE,
             CREATE, DELETE, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CHANGE_OWNER));
