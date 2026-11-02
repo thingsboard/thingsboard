@@ -4,6 +4,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Streams;
@@ -40,6 +41,7 @@ import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -98,6 +100,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final String DEFAULT_V2_CONFIGURATION = "converters/default-converters-v2-configuration.json";
     private static final String THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD = "payload/things_stack_repository_device_payload.json";
     private static final String THINGS_STACK_MANUAL_DEVICE_PAYLOAD = "payload/things_stack_manual_device_payload.json";
+    private static final String THINGS_STACK_LANSITEC_UPLINKS = "payload/things_stack_lansitec_uplinks.json";
 
     @Before
     public void beforeTest() throws Exception {
@@ -730,6 +733,69 @@ public class ConverterControllerTest extends AbstractControllerTest {
                         .isEqualTo(JacksonUtil.toJsonNode(expectedResult));
             }
         }
+    }
+
+    // Uplinks of Lansitec devices registered from the LoRaWAN Device Repository, as The Things Stack sent them
+    // (Simulate uplink), and the keys the default converters decode from them. The keys the integration adds to
+    // every uplink (rssi, fCnt...) are not listed. TBEL gives integers as doubles, so numbers are compared by value.
+    private static final Set<String> THINGS_STACK_UPLINK_KEYS = Set.of("fCnt", "data", "rssi", "snr", "channel", "consumedAirtime");
+
+    @Test
+    public void testThingsStackDefaultConvertersDecodeLansitecDevices() throws IOException {
+        JsonNode defaultConfigurations = JacksonUtil.toJsonNode(readResource(DEFAULT_V2_CONFIGURATION));
+        JsonNode cases = JacksonUtil.toJsonNode(readResource(THINGS_STACK_LANSITEC_UPLINKS));
+        for (IntegrationType integrationType : List.of(IntegrationType.TTN, IntegrationType.TTI)) {
+            Converter converter = createConverter(defaultConfigurations.get(integrationType.name()), integrationType, 2);
+            for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+                String decoderFileName = "converters/" + scriptLang.name().toLowerCase() + "-" + integrationType.name().toLowerCase() + "-decoder.raw";
+                for (JsonNode testCase : cases) {
+                    String description = integrationType + " " + scriptLang + " " + testCase.get("name").asText();
+                    JsonNode result = JacksonUtil.toJsonNode(decode(decoderFileName, testCase.get("uplink").toString(), converter, scriptLang, Map.of()));
+                    JsonNode decoded = testCase.get("decoded");
+                    assertThat(result.get("profile")).as(description).isEqualTo(decoded.get("profile"));
+
+                    JsonNode telemetry = result.get("telemetry");
+                    if (telemetry != null && telemetry.isArray()) {
+                        telemetry = telemetry.get(telemetry.size() - 1);
+                    }
+                    JsonNode telemetryValues = telemetry != null && telemetry.has("values") ? telemetry.get("values") : JacksonUtil.newObjectNode();
+                    ObjectNode lansitecTelemetry = JacksonUtil.newObjectNode();
+                    telemetryValues.fields().forEachRemaining(e -> {
+                        if (!THINGS_STACK_UPLINK_KEYS.contains(e.getKey())) {
+                            lansitecTelemetry.set(e.getKey(), e.getValue());
+                        }
+                    });
+                    assertThat(numbersByValue(lansitecTelemetry)).as(description + " telemetry")
+                            .isEqualTo(numbersByValue(decoded.has("telemetry") ? decoded.get("telemetry") : JacksonUtil.newObjectNode()));
+
+                    if (decoded.has("attributes")) {
+                        ObjectNode attributes = JacksonUtil.newObjectNode();
+                        decoded.get("attributes").fieldNames().forEachRemaining(key -> attributes.set(key, result.get("attributes").get(key)));
+                        assertThat(numbersByValue(attributes)).as(description + " attributes").isEqualTo(numbersByValue(decoded.get("attributes")));
+                    }
+                }
+            }
+        }
+    }
+
+    private static JsonNode numbersByValue(JsonNode node) {
+        if (node == null) {
+            return null;
+        }
+        if (node.isNumber()) {
+            return JacksonUtil.toJsonNode(node.decimalValue().setScale(6, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString());
+        }
+        if (node.isObject()) {
+            ObjectNode copy = JacksonUtil.newObjectNode();
+            node.fields().forEachRemaining(e -> copy.set(e.getKey(), numbersByValue(e.getValue())));
+            return copy;
+        }
+        if (node.isArray()) {
+            ArrayNode copy = JacksonUtil.newArrayNode();
+            node.forEach(item -> copy.add(numbersByValue(item)));
+            return copy;
+        }
+        return node;
     }
 
     private String readResource(String name) throws IOException {
