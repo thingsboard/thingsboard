@@ -713,17 +713,24 @@ public class DefaultIotHubService implements IotHubService {
 
     /**
      * Deletes what a device package created, except the entities another installed device package
-     * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package.
+     * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package,
+     * and the ones the user had before and the package took as they were (use existing).
      */
     private void deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
-                                             List<EntityId> createdEntityIds, SecurityUser user) {
+                                             DeviceInstalledItemDescriptor descriptor, SecurityUser user) {
+        List<EntityId> createdEntityIds = descriptor.getCreatedEntityIds();
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
             return;
         }
+        Set<UUID> usedExisting = usedExistingIds(descriptor);
         Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId);
         List<EntityId> reversed = new ArrayList<>(createdEntityIds);
         Collections.reverse(reversed);
         for (EntityId entityId : reversed) {
+            if (usedExisting.contains(entityId.getId())) {
+                log.info("[{}] Kept {} {}: the package took it as it was", tenantId, entityId.getEntityType(), entityId.getId());
+                continue;
+            }
             Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
             if (usedBy != null) {
                 log.info("[{}] Kept {} {}: installed device packages {} use it", tenantId, entityId.getEntityType(), entityId.getId(), usedBy);
@@ -746,17 +753,34 @@ public class DefaultIotHubService implements IotHubService {
         }
         List<InstalledItemKeptEntities.KeptEntity> kept = new ArrayList<>();
         Set<IotHubInstalledItemId> usedByItems = new HashSet<>();
+        int usedExistingCount = 0;
         if (installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
+            Set<UUID> usedExisting = usedExistingIds(dd);
             Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId);
             for (EntityId entityId : dd.getCreatedEntityIds()) {
                 Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
-                if (usedBy != null) {
+                boolean taken = usedExisting.contains(entityId.getId());
+                if (usedBy != null || taken) {
                     kept.add(new InstalledItemKeptEntities.KeptEntity(entityId, entityService.fetchEntityName(tenantId, entityId).orElse(null)));
+                }
+                if (usedBy != null) {
                     usedByItems.addAll(usedBy);
+                }
+                if (taken) {
+                    usedExistingCount++;
                 }
             }
         }
-        return new InstalledItemKeptEntities(kept, usedByItems.size());
+        return new InstalledItemKeptEntities(kept, usedByItems.size(), usedExistingCount);
+    }
+
+    /** The entities the package took as they were at install (use existing); none for installs before 4.4.1 kept them. */
+    private static Set<UUID> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
+        Set<UUID> ids = new HashSet<>();
+        if (descriptor.getUsedExistingEntityIds() != null) {
+            descriptor.getUsedExistingEntityIds().forEach(id -> ids.add(id.getId()));
+        }
+        return ids;
     }
 
     private Map<UUID, Set<IotHubInstalledItemId>> findEntitiesOfOtherDevicePackages(TenantId tenantId, IotHubInstalledItemId installedItemId) {
@@ -854,7 +878,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
             }
         } else if (descriptor instanceof DeviceInstalledItemDescriptor dd) {
-            deleteDevicePackageEntities(tenantId, installedItemId, dd.getCreatedEntityIds(), user);
+            deleteDevicePackageEntities(tenantId, installedItemId, dd, user);
         } else if (descriptor instanceof SolutionTemplateInstalledItemDescriptor st) {
             try {
                 solutionService.deleteSolution(tenantId, st, user);

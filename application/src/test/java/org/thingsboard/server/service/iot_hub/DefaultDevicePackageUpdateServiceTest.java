@@ -308,7 +308,7 @@ class DefaultDevicePackageUpdateServiceTest {
         Dashboard shared = dashboard(9L);
         DevicePackageEntities.Snapshot snapshot = new DevicePackageEntities.Snapshot(shared, null);
         when(packageEntities.load(tenantId, dashboardId)).thenReturn(snapshot);
-        when(iotHubService.findKeptEntities(tenantId, installedItem.getId())).thenReturn(new InstalledItemKeptEntities(List.of(), 0));
+        when(iotHubService.findKeptEntities(tenantId, installedItem.getId())).thenReturn(new InstalledItemKeptEntities(List.of(), 0, 0));
         // This package recorded the dashboard as it left it; the other one overwrote it since and recorded the new one
         ObjectNode own = stateOf(dashboardId, "created").put("checksum", "as-this-package-left-it");
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", own));

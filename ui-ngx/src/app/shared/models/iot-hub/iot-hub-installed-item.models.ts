@@ -166,6 +166,8 @@ export interface IotHubKeptEntity {
 export interface IotHubInstalledItemKeptEntities {
   entities: IotHubKeptEntity[];
   usedByItemsCount: number;
+  // Of the kept entities, the ones the user had before and the package took as they were
+  usedExistingCount: number;
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
