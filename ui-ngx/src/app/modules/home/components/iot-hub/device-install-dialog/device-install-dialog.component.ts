@@ -78,8 +78,6 @@ interface PreviousEntity {
   shared: boolean;
   // What the install state records for it, so that the next update decides again
   resolution: string;
-  // The install state entry it was found under: the installed step's name when the new version renamed it
-  stateKey: string;
   // What the server's check found for it
   state?: DevicePackageEntityState;
 }
@@ -984,9 +982,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (data.entityOutput) {
         // Find the step type alias from the raw steps to set the correct entity output key
         const rawSteps = this.packageInfo.installSteps[this.selectedInstallMethod] || [];
-        const matchingStep = rawSteps.find(s => s.name === stepName || this.resolveVariables(s.name) === stepName) ??
-          // Update: a step the new version renamed
-          (this.data.update ? rawSteps.find(s => this.findPreviousStep(s)?.name === stepName) : undefined);
+        const matchingStep = rawSteps.find(s => this.stateKeysOf(s).includes(stepName)) ??
+          // Update: a step the new version renamed or gave an id
+          (this.data.update ? rawSteps.find(s => this.storedStateOf(s)?.key === stepName) : undefined);
         if (matchingStep) {
           const alias = stepTypeAliasMap[matchingStep.type];
           if (alias) {
@@ -1085,6 +1083,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.wizardSteps.push({
           type: 'form',
           label: step.name,
+          stateKey: step.id,
           rawSteps: [step],
           completed: this.reviewMode
         });
@@ -1358,7 +1357,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ws.entitySteps = ws.rawSteps.map(s => {
       const alias = stepTypeAliasMap[s.type];
       const output = alias ? this.entityOutputs.get(alias) : null;
-      const storedState = this.data.installState?.[s.name] || this.data.installState?.[this.resolveVariables(s.name)];
+      const key = this.stateKeysOf(s).find(k => this.data.installState?.[k]);
+      const storedState = key ? this.data.installState[key] : undefined;
       return {
         step: s,
         status: 'success' as const,
@@ -1850,7 +1850,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         useExisting: stored.state.resolution === 'use-existing',
         shared: !!this.updateStates.get(key)?.shared,
         resolution: stored.state.resolution || 'created',
-        stateKey: key,
         state: this.updateStates.get(key)
       };
     } catch (e: any) {
@@ -2064,6 +2063,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): DeviceUpdateStep {
     const base: DeviceUpdateStep = {
       name: step.name,
+      id: step.id,
       type: step.type,
       action: 'KEEP',
       resolution: plan.previous?.resolution ?? plan.resolution ?? 'created'
@@ -2072,14 +2072,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       return plan.action === 'keep' ? base : { ...base, action: 'OVERWRITE', entity: this.resolveTemplateJson(this.zipFiles.get(step.template)) };
     }
     if (plan.action === 'keep') {
-      // A renamed step: the server takes the kept entity's checksum from the installed step's entry
-      const previousStepName = plan.previous.stateKey !== step.name ? plan.previous.stateKey : undefined;
-      return { ...base, entityId: plan.previous.output.id, previousStepName };
+      return { ...base, entityId: plan.previous.output.id };
     }
     if (plan.resolution === 'use-existing') {
-      // The package's own entity, under a step that wasn't matched to its installed one, stays the package's
-      const resolution = this.isPackageEntity(plan.existing.id) ? 'created' : base.resolution;
-      return { ...base, resolution, entityId: plan.existing.id, confirmed: true };
+      return { ...base, entityId: plan.existing.id, confirmed: true };
     }
     const overwritten = plan.action === 'overwrite' ? plan.previous.output : plan.resolution === 'overwrite' ? plan.existing : null;
     const entity = this.buildEntityBody(ws, step, overwritten);
@@ -2233,10 +2229,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       if (step.type !== InstallStepType.GATEWAY_CONNECTOR && !stored?.entityOutput?.id) {
         return false;
       }
-      steps.push({ name: step.name, type: step.type, action: 'KEEP', entityId: stored?.entityOutput?.id,
+      steps.push({ name: step.name, id: step.id, type: step.type, action: 'KEEP', entityId: stored?.entityOutput?.id,
         resolution: stored?.resolution ?? 'created', confirmed: true });
     }
-    // Under the new version's names, as the wizard would store them
+    // Under the new version's keys, as the wizard would store them
     const formState: Record<string, any> = {};
     if (installState[TRANSPORT_STEP_STATE_KEY]?.formValues) {
       formState[TRANSPORT_STEP_STATE_KEY] = { formValues: installState[TRANSPORT_STEP_STATE_KEY].formValues };
@@ -2244,7 +2240,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
       const formValues = step.type === InstallStepType.SHOW_FORM ? this.storedStateOf(step)?.state.formValues : undefined;
       if (formValues) {
-        formState[step.name] = { formValues };
+        formState[step.id ?? step.name] = { formValues };
       }
     }
     try {
@@ -2291,30 +2287,25 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * Update: the step of the installed version that a step of the new one replaces: same type and name, or, when the
-   * new version renamed it, the only installed step of its type that no step of the new version has the name of.
+   * Update: the step of the installed version that a step of the new one replaces: of the same type, with the same id,
+   * or with the same name when either has no id. A step renamed without an id isn't matched: it is a new step.
    */
   private findPreviousStep(step: DeviceInstallStep): DeviceInstallStep | undefined {
-    const previousSteps = (this.previousPackageInfo?.installSteps[this.selectedInstallMethod] ?? []).filter(s => s.type === step.type);
-    const steps = (this.packageInfo.installSteps[this.selectedInstallMethod] ?? []).filter(s => s.type === step.type);
-    const sameName = previousSteps.find(s => s.name === step.name);
-    if (sameName) {
-      return sameName;
-    }
-    const unmatchedPrevious = previousSteps.filter(p => !steps.some(s => s.name === p.name));
-    const unmatched = steps.filter(s => !previousSteps.some(p => p.name === s.name));
-    return unmatchedPrevious.length === 1 && unmatched.length === 1 ? unmatchedPrevious[0] : undefined;
+    return (this.previousPackageInfo?.installSteps[this.selectedInstallMethod] ?? [])
+      .find(s => s.type === step.type && (s.id && step.id ? s.id === step.id : s.name === step.name));
   }
 
-  /** Update: true when the entity is one the installed package created. */
-  private isPackageEntity(id: string): boolean {
-    return !!this.data.update?.descriptor.createdEntityIds?.some(created => created.id === id);
+  /** The keys the install state may keep a step under: its id, or else its name, as written or resolved. */
+  private stateKeysOf(step: DeviceInstallStep): string[] {
+    return step.id ? [step.id] : [step.name, this.resolveVariables(step.name)];
   }
 
-  /** Update: the install state of a step of the new version, under its name or under the installed step it replaces. */
+  /** Update: the install state of a step of the new version, under the key of the installed step it replaces. */
   private storedStateOf(step: DeviceInstallStep): { key: string; state: any } | undefined {
     const installState = this.data.update?.descriptor.installState ?? {};
-    const key = [step.name, this.resolveVariables(step.name), this.findPreviousStep(step)?.name].find(name => name && installState[name]);
+    const previousStep = this.findPreviousStep(step);
+    const keys = [...(previousStep ? this.stateKeysOf(previousStep) : []), ...this.stateKeysOf(step)];
+    const key = keys.find(k => k && installState[k]);
     return key ? { key, state: installState[key] } : undefined;
   }
 
@@ -2547,7 +2538,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       } else if (ws.type === 'progress' && ws.entitySteps) {
         for (const ep of ws.entitySteps) {
           if (ep.status === 'success' && ep.entityOutput) {
-            state[ep.step.name] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created' };
+            state[ep.step.id ?? ep.step.name] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created' };
           }
         }
       }

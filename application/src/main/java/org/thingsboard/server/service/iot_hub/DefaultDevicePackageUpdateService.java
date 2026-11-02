@@ -203,9 +203,14 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             throw new IllegalArgumentException("The update has no steps");
         }
         Set<UUID> ownedIds = createdIds(devicePackage.descriptor()).keySet();
+        Set<String> stateKeys = new HashSet<>();
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
             if (step.getName() == null || step.getAction() == null || !isKnownType(step.getType())) {
                 throw new IllegalArgumentException("Invalid update step: " + step.getName());
+            }
+            // The key of the step's install state
+            if (!stateKeys.add(step.getId() != null ? step.getId() : step.getName())) {
+                throw new IllegalArgumentException("Duplicate update step: " + step.getName());
             }
             boolean deviceOrGateway = "DEVICE".equals(step.getType()) || "GATEWAY".equals(step.getType());
             switch (step.getAction()) {
@@ -301,13 +306,11 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 state.put("resolution", step.getResolution() != null ? step.getResolution() : "created");
                 // A kept entity keeps the checksum of what the package left: the current one would take the
                 // user's changes for the package's, and the next update would overwrite them without a warning
-                String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ?
-                        previousChecksum(previous, step.getPreviousStepName() != null ? step.getPreviousStepName() : step.getName()) :
-                        result.checksum();
+                String checksum = step.getAction() == DeviceUpdateRequest.Action.KEEP ? previousChecksum(previous, step.getEntityId()) : result.checksum();
                 if (checksum != null) {
                     state.put("checksum", checksum);
                 }
-                installState.put(step.getName(), state);
+                installState.put(step.getId() != null ? step.getId() : step.getName(), state);
                 if (!"use-existing".equals(step.getResolution())) {
                     stepEntityIds.add(result.entityId());
                 }
@@ -585,10 +588,18 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return new StepResult(id, output(id, name), null, null);
     }
 
-    private static String previousChecksum(DeviceInstalledItemDescriptor previous, String stepName) {
-        JsonNode checksum = previous.getInstallState() != null && previous.getInstallState().get(stepName) != null ?
-                previous.getInstallState().get(stepName).get("checksum") : null;
-        return checksum != null && checksum.isTextual() ? checksum.asText() : null;
+    /** The checksum the installed version recorded for the entity, under whichever step it was installed with. */
+    private static String previousChecksum(DeviceInstalledItemDescriptor previous, UUID entityId) {
+        if (previous.getInstallState() == null || entityId == null) {
+            return null;
+        }
+        for (JsonNode state : previous.getInstallState().values()) {
+            JsonNode checksum = state.get("checksum");
+            if (entityId.toString().equals(state.path("entityOutput").path("id").asText()) && checksum != null && checksum.isTextual()) {
+                return checksum.asText();
+            }
+        }
+        return null;
     }
 
     /**

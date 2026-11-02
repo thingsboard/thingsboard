@@ -224,20 +224,49 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
-    void keptEntityOfARenamedStep_keepsTheChecksumUnderTheNewName() {
+    void keptEntityOfAStepWithAnId_keepsItsChecksumUnderTheId() {
+        // Installed by a version whose step had no id: the entry is under the step's name
         ObjectNode dashboardState = JacksonUtil.newObjectNode().put("checksum", "installed").put("resolution", "created");
         dashboardState.set("entityOutput", JacksonUtil.newObjectNode().put("id", dashboardId.getId().toString()));
         ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", dashboardState));
         when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
         DeviceUpdateRequest.Step overview = keep("Overview", "DASHBOARD", dashboardId);
-        overview.setPreviousStepName("Dashboard");
+        overview.setId("main-dashboard");
 
         DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(overview));
 
         assertThat(result.isSuccess()).isTrue();
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        assertThat(descriptor.getInstallState().get("Overview").get("checksum").asText()).isEqualTo("installed");
-        assertThat(descriptor.getInstallState()).doesNotContainKey("Dashboard");
+        assertThat(descriptor.getInstallState().get("main-dashboard").get("checksum").asText()).isEqualTo("installed");
+        assertThat(descriptor.getInstallState()).doesNotContainKeys("Dashboard", "Overview");
+    }
+
+    @Test
+    void keptEntity_doesNotTakeTheChecksumOfAnotherEntity() {
+        // The entry under the step's key was recorded for an entity deleted since
+        ObjectNode dashboardState = JacksonUtil.newObjectNode().put("checksum", "of-the-deleted-one").put("resolution", "created");
+        dashboardState.set("entityOutput", JacksonUtil.newObjectNode().put("id", UUID.randomUUID().toString()));
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", dashboardState));
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getInstallState().get("Dashboard").has("checksum")).isFalse();
+    }
+
+    @Test
+    void twoStepsWithOneKey_areRejected() {
+        DeviceUpdateRequest.Step first = keep("Overview", "DASHBOARD", dashboardId);
+        first.setId("main-dashboard");
+        DeviceUpdateRequest.Step second = keep("Details", "DASHBOARD", dashboardId);
+        second.setId("main-dashboard");
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(first, second));
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(installedItemService, never()).save(any(), any());
     }
 
     @Test

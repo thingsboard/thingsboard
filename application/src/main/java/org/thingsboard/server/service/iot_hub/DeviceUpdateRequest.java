@@ -38,6 +38,8 @@ public class DeviceUpdateRequest {
     @Data
     public static class Step {
         private String name;
+        // The package step's id, which keys its install state; the name when not set
+        private String id;
         // InstallStepType of the package: DEVICE_PROFILE, DEVICE, GATEWAY, GATEWAY_CONNECTOR, DASHBOARD, RULE_CHAIN,
         // UPLINK_CONVERTER, DOWNLINK_CONVERTER, INTEGRATION
         private String type;
@@ -59,8 +61,6 @@ public class DeviceUpdateRequest {
         private JsonNode sharedAttributes;
         // The resolution the install state records for it
         private String resolution;
-        // KEEP: the install state entry of the entity, when the new version renamed its step
-        private String previousStepName;
     }
 
 }
