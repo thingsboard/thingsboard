@@ -587,8 +587,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         Integration current = id != null ? integrationService.findIntegrationById(tenantId, id) : null;
         if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
             existing(tenantId, current, step);
-            if (mergeMetadata(current, step.getMetadata())) {
-                Integration result = integrationService.saveIntegration(current);
+            Integration merged = withMergedMetadata(current, step.getMetadata());
+            if (merged != null) {
+                Integration result = integrationService.saveIntegration(merged);
                 return savedResult(tenantId, result.getId(), result, step, integrationOutput(result));
             }
             return new StepResult(id, integrationOutput(current), null, null);
@@ -611,14 +612,18 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         return savedResult(tenantId, result.getId(), result, step, integrationOutput(result));
     }
 
-    /** Merges the step's metadata entries into the integration's; true when that changed it. */
-    private static boolean mergeMetadata(Integration integration, JsonNode entries) {
+    /**
+     * A copy of the integration with the step's metadata entries merged into its metadata; null when that changes nothing.
+     * A copy: the integration may be the cache's own instance, which a rolled back update must not change.
+     */
+    private static Integration withMergedMetadata(Integration integration, JsonNode entries) {
         if (entries == null || !entries.isObject() || entries.isEmpty()) {
-            return false;
+            return null;
         }
-        ObjectNode configuration = integration.getConfiguration() != null && integration.getConfiguration().isObject() ?
-                (ObjectNode) integration.getConfiguration() : JacksonUtil.newObjectNode();
-        ObjectNode metadata = configuration.get("metadata") instanceof ObjectNode current ? current.deepCopy() : JacksonUtil.newObjectNode();
+        Integration copy = new Integration(integration);
+        ObjectNode configuration = copy.getConfiguration() instanceof ObjectNode current ? current : JacksonUtil.newObjectNode();
+        JsonNode before = configuration.get("metadata");
+        ObjectNode metadata = before instanceof ObjectNode current ? current.deepCopy() : JacksonUtil.newObjectNode();
         entries.fields().forEachRemaining(entry -> {
             if (entry.getValue() == null || entry.getValue().isNull()) {
                 metadata.remove(entry.getKey());
@@ -626,13 +631,14 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 metadata.put(entry.getKey(), entry.getValue().asText());
             }
         });
-        if (metadata.equals(configuration.get("metadata")) || (metadata.isEmpty() && configuration.get("metadata") == null)) {
-            return false;
+        if (metadata.equals(before) || (metadata.isEmpty() && before == null)) {
+            return null;
         }
         configuration.set("metadata", metadata);
-        integration.setConfiguration(configuration);
-        return true;
+        copy.setConfiguration(configuration);
+        return copy;
     }
+
 
     /**
      * The overwritten entity keeps its id and its current name (the user may have renamed it). The version the

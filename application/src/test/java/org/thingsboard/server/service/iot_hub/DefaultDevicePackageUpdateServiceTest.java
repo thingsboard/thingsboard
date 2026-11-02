@@ -392,6 +392,9 @@ class DefaultDevicePackageUpdateServiceTest {
         assertThat(metadata.get("profile.other-model").asText()).isEqualTo("Other");
         assertThat(metadata.get("profile.lansitec-badge").asText()).isEqualTo("Badge");
         assertThat(metadata.has("profile.milesight-iot-am308")).isFalse();
+        // A copy is saved: the integration read, possibly the cache's own instance, stays as it is until the commit
+        assertThat(saved.getValue()).isNotSameAs(current);
+        assertThat(current.getConfiguration().get("metadata").has("profile.lansitec-badge")).isFalse();
         assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN").get("resolution").asText())
                 .isEqualTo("use-existing");
     }

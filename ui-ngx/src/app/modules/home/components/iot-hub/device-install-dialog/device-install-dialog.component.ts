@@ -1247,6 +1247,10 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // Also when the new version renamed the step
       storedValues = this.storedStateOf(ws.rawSteps[0])?.state.formValues;
       ws.newFieldKeys = this.newFieldKeysOf(ws.rawSteps[0], packageFields);
+      // E.g. the profile name the integration maps the devices to: the device profile keeps the name it was installed
+      // with, so the field shows that one and can't be changed
+      const locked = this.integrationMetadataFieldKeys();
+      ws.formFields = ws.formFields.map(field => locked.has(field.key) ? { ...field, readOnly: true, resettable: false } : field);
     }
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
@@ -1860,6 +1864,22 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.formValues = {};
       this.entityOutputs.clear();
     }
+  }
+
+  /** Update: the form fields the INTEGRATION steps' metadata entries are made of, e.g. ${profileName}. */
+  private integrationMetadataFieldKeys(): Set<string> {
+    const keys = new Set<string>();
+    for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
+      if (step.type !== InstallStepType.INTEGRATION) {
+        continue;
+      }
+      for (const [key, value] of Object.entries(step.metadata ?? {})) {
+        for (const match of `${key} ${value ?? ''}`.matchAll(/\$\{([^}.]+)}/g)) {
+          keys.add(match[1]);
+        }
+      }
+    }
+    return keys;
   }
 
   private integrationMetadataOf(step: DeviceInstallStep): Record<string, string | null> | undefined {
