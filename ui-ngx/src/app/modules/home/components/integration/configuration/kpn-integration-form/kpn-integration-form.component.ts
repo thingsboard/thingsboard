@@ -116,7 +116,6 @@ export class KpnIntegrationFormComponent extends IntegrationForm implements Cont
       this.updateNoSecurity(value);
       this.updateModels(value);
     });
-    this.kpnIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
     this.updateCredentialsValidators();
   }
 
