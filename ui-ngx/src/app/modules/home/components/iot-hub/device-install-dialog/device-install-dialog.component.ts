@@ -200,6 +200,8 @@ export interface WizardStep {
   extraFormFields?: FormFieldDefinition[];
   // Key of the step's form values in the install state; the label when not set
   stateKey?: string;
+  // Update: the keys of the form's fields the installed version didn't have
+  newFieldKeys?: Set<string>;
   formGroup?: UntypedFormGroup;
   // Connection check of the integration the form configures; null when the form configures none
   connectionCheck?: ConnectionCheck | null;
@@ -1230,6 +1232,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     } else if (this.data.update && ws.stateKey !== TRANSPORT_STEP_STATE_KEY && ws.rawSteps[0]) {
       // Also when the new version renamed the step
       storedValues = this.storedStateOf(ws.rawSteps[0])?.state.formValues;
+      ws.newFieldKeys = this.newFieldKeysOf(ws.rawSteps[0], packageFields);
     }
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
@@ -1940,6 +1943,14 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /** A translated text with a link written as <a>…</a>, which the translation may put anywhere in it, split around the link. */
+  /** Update: what the update did with the entity of a row, once it succeeded. */
+  updateOutcomeOf(plan: EntityStepPlan | undefined): string {
+    if (!plan || plan.action === 'keep' || plan.resolution === 'use-existing') {
+      return 'iot-hub.device-update-not-changed';
+    }
+    return plan.action === 'overwrite' || plan.resolution === 'overwrite' ? 'iot-hub.device-update-updated' : 'iot-hub.device-update-created';
+  }
+
   textWithLink(key: string): { before: string; link: string; after: string } {
     const text: string = this.translate.instant(key);
     const match = /^([\s\S]*)<a>([\s\S]*)<\/a>([\s\S]*)$/.exec(text);
@@ -2293,6 +2304,22 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private findPreviousStep(step: DeviceInstallStep): DeviceInstallStep | undefined {
     return (this.previousPackageInfo?.installSteps[this.selectedInstallMethod] ?? [])
       .find(s => s.type === step.type && (s.id && step.id ? s.id === step.id : s.name === step.name));
+  }
+
+  /** Update: the fields of a form step the installed version's form didn't have; all of them for a new form step. */
+  private newFieldKeysOf(step: DeviceInstallStep, fields: FormFieldDefinition[]): Set<string> {
+    if (!this.previousPackageInfo) {
+      return new Set();
+    }
+    const previousStep = this.findPreviousStep(step);
+    let previousKeys = new Set<string>();
+    try {
+      const previousForm = previousStep ? JSON.parse(this.previousFiles.get(previousStep.file) || '[]') as FormFieldDefinition[] : [];
+      previousKeys = new Set(previousForm.map(field => field.key));
+    } catch {
+      return new Set();
+    }
+    return new Set(fields.map(field => field.key).filter(key => !previousKeys.has(key)));
   }
 
   /** The keys the install state may keep a step under: its id, or else its name, as written or resolved. */

@@ -49,6 +49,8 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() resolveImagePath?: (path: string) => string;
   /** When true, PASSWORD inputs render unmasked by default (used by review mode). */
   @Input() reviewMode = false;
+  /** Update: the fields the installed version's form didn't have, highlighted as new. */
+  @Input() newFieldKeys?: Set<string>;
 
   passwordVisible: Record<string, boolean> = {};
   // Fields in render order: consecutive fields of a group form a section, and consecutive fields
@@ -169,5 +171,9 @@ export class InstallFormRendererComponent implements OnChanges {
 
   imagePath(path: string): string {
     return this.resolveImagePath ? this.resolveImagePath(path) : path;
+  }
+
+  isNewRow(row: { fields: FormFieldDefinition[] }): boolean {
+    return !!this.newFieldKeys?.size && row.fields.some(field => this.newFieldKeys.has(field.key));
   }
 }

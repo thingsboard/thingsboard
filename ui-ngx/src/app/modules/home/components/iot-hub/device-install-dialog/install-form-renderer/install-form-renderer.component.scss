@@ -14,3 +14,23 @@
   max-width: 100%;
   margin-top: 8px;
 }
+
+// Update: a field the installed version didn't have
+.tb-install-form-row-new {
+  padding: 8px 12px;
+  border-left: 3px solid #305680;
+  border-radius: 4px;
+  background: rgba(48, 86, 128, 0.04);
+}
+
+.tb-install-form-new {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: #305680;
+  background: rgba(48, 86, 128, 0.08);
+  border-radius: 4px;
+  padding: 2px 8px;
+}

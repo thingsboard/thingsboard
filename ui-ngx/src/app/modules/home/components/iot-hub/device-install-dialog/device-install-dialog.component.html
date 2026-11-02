@@ -55,7 +55,8 @@
             [fields]="ws.formFields"
             [formGroup]="ws.formGroup"
             [resolveImagePath]="resolveImagePathFn"
-            [reviewMode]="reviewMode">
+            [reviewMode]="reviewMode"
+            [newFieldKeys]="ws.newFieldKeys">
           </tb-install-form-renderer>
         </div>
       }
@@ -270,7 +271,7 @@
                 <span class="tb-progress-status-progress">{{ 'iot-hub.in-progress' | translate }}</span>
               }
               @case ('success') {
-                <span class="tb-progress-status-done">{{ 'iot-hub.done' | translate }}</span>
+                <span class="tb-progress-status-done">{{ updateOutcomeOf(plan) | translate }}</span>
               }
               @case ('skipped') {
                 <span class="tb-progress-status-progress">{{ 'iot-hub.device-update-skipped' | translate }}</span>

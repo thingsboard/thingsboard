@@ -36,7 +36,10 @@
 
     <ng-template #rowsTemplate let-rows>
       @for (row of rows; track row.fields[0].key) {
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2" [class.tb-install-form-row-new]="isNewRow(row)">
+          @if (isNewRow(row)) {
+            <span class="tb-install-form-new">{{ 'iot-hub.device-update-new' | translate }}</span>
+          }
           @if (row.fields.length > 1) {
             <div class="flex gap-4">
               @for (field of row.fields; track field.key) {
