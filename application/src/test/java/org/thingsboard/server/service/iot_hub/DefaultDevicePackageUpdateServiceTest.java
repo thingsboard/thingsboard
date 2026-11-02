@@ -135,7 +135,9 @@ class DefaultDevicePackageUpdateServiceTest {
         descriptor.setSelectedInstallMethod("INTEGRATION_TTN");
         descriptor.setCreatedEntityIds(List.of(profileId, deviceId, dashboardId, integrationId));
         descriptor.setDashboardId(dashboardId);
-        descriptor.setInstallState(Map.of());
+        // The package created these entities
+        descriptor.setInstallState(Map.of("Profile", stateOf(profileId, "created"), "AM308", stateOf(deviceId, "created"),
+                "Dashboard", stateOf(dashboardId, "created"), "Integration", stateOf(integrationId, "created")));
         installedItem = new IotHubInstalledItem();
         installedItem.setId(new IotHubInstalledItemId(UUID.randomUUID()));
         installedItem.setTenantId(tenantId);
@@ -271,6 +273,32 @@ class DefaultDevicePackageUpdateServiceTest {
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
         assertThat(descriptor.getInstallState().get("Overview").get("resolution").asText()).isEqualTo("created");
         assertThat(descriptor.getCreatedEntityIds()).contains(dashboardId);
+    }
+
+    @Test
+    void useExistingAtInstall_staysUseExisting() {
+        // At install the user picked their own dashboard: the install adds it to createdEntityIds too
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", stateOf(dashboardId, "use-existing")));
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        step.setResolution("use-existing");
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getInstallState().get("Dashboard").get("resolution").asText()).isEqualTo("use-existing");
+    }
+
+    @Test
+    void overwritingAnEntityUsedAtInstall_needsAConfirmation() {
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", stateOf(dashboardId, "use-existing")));
+        DeviceUpdateRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 9L, JacksonUtil.newObjectNode().put("title", "Dashboard"));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(installedItemService, never()).save(any(), any());
     }
 
     @Test
@@ -591,6 +619,13 @@ class DefaultDevicePackageUpdateServiceTest {
         step.setType(type);
         step.setAction(action);
         return step;
+    }
+
+
+    private static ObjectNode stateOf(EntityId id, String resolution) {
+        ObjectNode state = JacksonUtil.newObjectNode().put("resolution", resolution);
+        state.set("entityOutput", JacksonUtil.newObjectNode().put("id", id.getId().toString()));
+        return state;
     }
 
 }

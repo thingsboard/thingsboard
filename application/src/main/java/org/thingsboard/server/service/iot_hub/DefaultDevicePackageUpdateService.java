@@ -204,7 +204,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         if (request.getSteps() == null || request.getSteps().isEmpty()) {
             throw new IllegalArgumentException("The update has no steps");
         }
-        Set<UUID> ownedIds = createdIds(devicePackage.descriptor()).keySet();
+        Set<UUID> ownedIds = ownedIds(devicePackage.descriptor());
         Set<String> stateKeys = new HashSet<>();
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
             if (step.getName() == null || step.getAction() == null || !isKnownType(step.getType())) {
@@ -273,7 +273,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     private Applied applySteps(TenantId tenantId, DevicePackage devicePackage, DeviceUpdateRequest request, JsonNode versionInfo) {
         IotHubInstalledItem installedItem = lockInstalledItem(tenantId, devicePackage, request);
         DeviceInstalledItemDescriptor previous = devicePackage.descriptor();
-        Set<UUID> ownedIds = createdIds(previous).keySet();
+        Set<UUID> ownedIds = ownedIds(previous);
         Map<String, ObjectNode> aliasOutputs = new HashMap<>();
         Map<String, ObjectNode> outputs = new LinkedHashMap<>();
         Map<String, ObjectNode> installState = new LinkedHashMap<>();
@@ -838,6 +838,26 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
 
     private static boolean isKnownType(String type) {
         return type != null && (STEP_ALIASES.containsKey(type) || "GATEWAY_CONNECTOR".equals(type));
+    }
+
+    /**
+     * The entities the package owns: those its install state records, except the ones the user chose to use as they
+     * were. Not createdEntityIds: the install adds the use-existing ones to it too.
+     */
+    private static Set<UUID> ownedIds(DeviceInstalledItemDescriptor descriptor) {
+        Set<UUID> ids = new HashSet<>();
+        if (descriptor.getInstallState() != null) {
+            descriptor.getInstallState().values().forEach(state -> {
+                JsonNode id = state.path("entityOutput").path("id");
+                if (id.isTextual() && !"use-existing".equals(state.path("resolution").asText())) {
+                    try {
+                        ids.add(UUID.fromString(id.asText()));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            });
+        }
+        return ids;
     }
 
     private static Map<UUID, EntityId> createdIds(DeviceInstalledItemDescriptor descriptor) {

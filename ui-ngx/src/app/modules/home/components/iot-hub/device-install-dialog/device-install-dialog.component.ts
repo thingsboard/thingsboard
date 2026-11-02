@@ -2429,9 +2429,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return new Set(fields.map(field => field.key).filter(key => !previousKeys.has(key)));
   }
 
-  /** Update: true when the entity is one the installed package created. */
+  /**
+   * Update: true when the entity is one the installed package owns: its install state records it, and not as one
+   * the user chose to use as it was. Not createdEntityIds: the install adds the use-existing ones to it too.
+   */
   private isPackageEntity(id: string): boolean {
-    return !!this.data.update?.descriptor.createdEntityIds?.some(created => created.id === id);
+    return Object.values(this.data.update?.descriptor.installState ?? {})
+      .some(state => state?.entityOutput?.id === id && state.resolution !== 'use-existing');
   }
 
   /** The keys the install state may keep a step under: its id, or else its name, as written or resolved. */
