@@ -6545,7 +6545,6 @@
         "device-update-existing-create-copy": "Already exists. A copy will be created.",
         "device-update-confirm-warnings": "Confirm { count, plural, =1 {1 warning} other {# warnings} } to enable Update",
         "device-update-skipped": "Not changed",
-        "device-update-new-field": "New in {{version}}.",
         "device-update-updated": "Updated",
         "device-update-created": "Created",
         "device-update-try-again": "Try again",

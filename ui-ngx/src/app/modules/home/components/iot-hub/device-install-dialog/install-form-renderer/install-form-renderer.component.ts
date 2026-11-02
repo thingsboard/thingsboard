@@ -51,8 +51,6 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() reviewMode = false;
   /** Update: the fields the installed version's form didn't have, highlighted as new. */
   @Input() newFieldKeys?: Set<string>;
-  /** Update: the text the hint of a new field starts with. */
-  @Input() newFieldHint = '';
 
   passwordVisible: Record<string, boolean> = {};
   // Fields in render order: consecutive fields of a group form a section, and consecutive fields

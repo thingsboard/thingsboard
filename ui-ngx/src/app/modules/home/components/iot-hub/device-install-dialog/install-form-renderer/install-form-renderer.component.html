@@ -95,19 +95,14 @@
           @case (FormFieldType.SELECT) {
             <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
-              <mat-label>{{ field.label }}</mat-label>
+              <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <mat-select [formControlName]="field.key">
                 @for (opt of field.options; track opt.value) {
                   <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                 }
               </mat-select>
-              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>
-                  @if (isNewField(field)) {
-                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
-                  }
-                  {{ helpTextOf(field) }}
-                </mat-hint>
+              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -117,7 +112,7 @@
           @case (FormFieldType.STRING_AUTOCOMPLETE) {
             <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
-              <mat-label>{{ field.label }}</mat-label>
+              <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''" [matAutocomplete]="auto"
                      [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                      data-lpignore="true" data-1p-ignore data-bwignore>
@@ -126,13 +121,8 @@
                   <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                 }
               </mat-autocomplete>
-              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>
-                  @if (isNewField(field)) {
-                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
-                  }
-                  {{ helpTextOf(field) }}
-                </mat-hint>
+              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -148,7 +138,7 @@
           @case (FormFieldType.PASSWORD) {
             <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
-              <mat-label>{{ field.label }}</mat-label>
+              <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
                      [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                      [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
@@ -165,13 +155,8 @@
                   <mat-icon>autorenew</mat-icon>
                 </button>
               }
-              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>
-                  @if (isNewField(field)) {
-                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
-                  }
-                  {{ helpTextOf(field) }}
-                </mat-hint>
+              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -187,17 +172,12 @@
           @case (FormFieldType.INTEGER) {
             <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
-              <mat-label>{{ field.label }}</mat-label>
+              <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput type="number" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                      [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                      data-lpignore="true" data-1p-ignore data-bwignore>
-              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>
-                  @if (isNewField(field)) {
-                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
-                  }
-                  {{ helpTextOf(field) }}
-                </mat-hint>
+              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -213,7 +193,7 @@
           @default {
             <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
-              <mat-label>{{ field.label }}</mat-label>
+              <mat-label>{{ field.label }}@if (isNewField(field)) {<span> · {{ 'iot-hub.device-update-new' | translate }}</span>}</mat-label>
               <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                      [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                      autocomplete="new-username" data-lpignore="true" data-1p-ignore data-bwignore>
@@ -225,13 +205,8 @@
                   <mat-icon>autorenew</mat-icon>
                 </button>
               }
-              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>
-                  @if (isNewField(field)) {
-                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
-                  }
-                  {{ helpTextOf(field) }}
-                </mat-hint>
+              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
