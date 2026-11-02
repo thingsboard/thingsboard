@@ -13,6 +13,47 @@
     } @else {
       @switch (job.type) {
         @case (JobType.CF_REPROCESSING) {
+          <ng-container *ngTemplateOutlet="entityTaskMetrics"></ng-container>
+        }
+        @case (JobType.EDGE_PROFILE_APPLY) {
+          <ng-container *ngTemplateOutlet="entityTaskMetrics"></ng-container>
+        }
+        @case(JobType.REPORT) {
+          <div class="flex min-h-28 flex-1 flex-col items-center justify-center gap-2 rounded"
+            [class.tb-primary-fill]="job.status === JobStatus.COMPLETED"
+            [class.task-result-bg]="job.status !== JobStatus.COMPLETED">
+            @switch (job.status) {
+              @case (JobStatus.COMPLETED) {
+                <tb-icon color="primary">check_circle_outline</tb-icon>
+                <div class="flex flex-col items-center">
+                  <span class="metrics">{{ 'task.report-generate-successfully' | translate }}</span>
+                </div>
+              }
+              @case (JobStatus.RUNNING) {
+                <tb-icon color="primary">hourglass_top</tb-icon>
+                <div class="flex flex-col items-center">
+                  <span class="metrics">{{ 'task.report-generate-in-progress' | translate }}</span>
+                </div>
+              }
+              @case (JobStatus.CANCELLED) {
+                <tb-icon style="color: rgba(0, 0, 0, 0.54)">cancel</tb-icon>
+                <div class="flex flex-col items-center">
+                  <span class="metrics">{{ 'task.generate-report-canceled' | translate }}</span>
+                </div>
+              }
+              @case (JobStatus.FAILED) {
+                <tb-icon class="warn">warning</tb-icon>
+                <div class="flex flex-col items-center px-2">
+                  <div class="metrics info text-center">{{ job.result.results[0].error }}</div>
+                </div>
+              }
+            }
+          </div>
+        }
+      }
+    }
+  </div>
+  <ng-template #entityTaskMetrics>
           @if (job.status === JobStatus.COMPLETED || job.status === JobStatus.FAILED) {
             <div class="metrics my-3 flex justify-between gap-4">
               <span> {{ 'task.time-taken' | translate }}:</span>
@@ -68,42 +109,7 @@
               }
             </table>
           }
-        }
-        @case(JobType.REPORT) {
-          <div class="flex min-h-28 flex-1 flex-col items-center justify-center gap-2 rounded"
-            [class.tb-primary-fill]="job.status === JobStatus.COMPLETED"
-            [class.task-result-bg]="job.status !== JobStatus.COMPLETED">
-            @switch (job.status) {
-              @case (JobStatus.COMPLETED) {
-                <tb-icon color="primary">check_circle_outline</tb-icon>
-                <div class="flex flex-col items-center">
-                  <span class="metrics">{{ 'task.report-generate-successfully' | translate }}</span>
-                </div>
-              }
-              @case (JobStatus.RUNNING) {
-                <tb-icon color="primary">hourglass_top</tb-icon>
-                <div class="flex flex-col items-center">
-                  <span class="metrics">{{ 'task.report-generate-in-progress' | translate }}</span>
-                </div>
-              }
-              @case (JobStatus.CANCELLED) {
-                <tb-icon style="color: rgba(0, 0, 0, 0.54)">cancel</tb-icon>
-                <div class="flex flex-col items-center">
-                  <span class="metrics">{{ 'task.generate-report-canceled' | translate }}</span>
-                </div>
-              }
-              @case (JobStatus.FAILED) {
-                <tb-icon class="warn">warning</tb-icon>
-                <div class="flex flex-col items-center px-2">
-                  <div class="metrics info text-center">{{ job.result.results[0].error }}</div>
-                </div>
-              }
-            }
-          </div>
-        }
-      }
-    }
-  </div>
+  </ng-template>
   <div class="flex h-10 items-end justify-end gap-4">
     @if (job.type === JobType.REPORT && job.status === JobStatus.COMPLETED) {
       <button mat-raised-button
@@ -124,6 +130,14 @@
     @if (job.status === JobStatus.FAILED && hasWritePermission && job.result.failedCount <= 100) {
       @switch (job.type) {
         @case (JobType.CF_REPROCESSING) {
+          <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="reprocess()">
+            {{ 'task.reprocess' | translate : {count: job.result.failedCount ?? 0} }}
+          </button>
+        }
+        @case (JobType.EDGE_PROFILE_APPLY) {
           <button mat-raised-button
             color="primary"
             type="button"

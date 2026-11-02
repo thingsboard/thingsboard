@@ -1991,13 +1991,10 @@ edges:
   # Enable/disable Edge instance
   enabled: "${EDGES_ENABLED:true}"
   profile:
-    applier:
-      # Threads that push edge profile assignments out to the profile's edges. The work is per-edge and database
-      # bound; raise this if fan-outs visibly lag behind profile edits on a large installation.
-      pool_size: "${EDGES_PROFILE_APPLIER_POOL_SIZE:1}"
-      # Maximum queued fan-outs. Past this point new ones are dropped with a warning rather than run on the calling
-      # request's thread; re-applying the affected edge profile finishes whatever was dropped.
-      queue_capacity: "${EDGES_PROFILE_APPLIER_QUEUE_CAPACITY:10000}"
+    # Maximum time in milliseconds to apply an edge profile change to one edge (one task of an edge profile apply job)
+    apply_task_timeout_ms: "${EDGES_PROFILE_APPLY_TASK_TIMEOUT_MS:120000}"
+    # Maximum time in milliseconds to wait for another edge profile change in progress on the same edge
+    apply_lock_timeout_ms: "${EDGES_PROFILE_APPLY_LOCK_TIMEOUT_MS:60000}"
   rpc:
     # RPC port bind
     port: "${EDGES_RPC_PORT:7070}"

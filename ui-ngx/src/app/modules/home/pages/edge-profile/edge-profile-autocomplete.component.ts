@@ -143,7 +143,7 @@ export class EdgeProfileAutocompleteComponent implements ControlValueAccessor, O
 
   selectDefaultEdgeProfileIfNeeded(): void {
     if (this.selectDefaultProfile && !this.modelValue) {
-      this.edgeProfileService.getDefaultEdgeProfile().subscribe(profile => {
+      this.edgeProfileService.getDefaultEdgeProfileInfo().subscribe(profile => {
         if (profile) {
           this.selectEdgeProfileFormGroup.get('edgeProfile').patchValue(profile, { emitEvent: false });
           this.updateView(profile);
@@ -164,7 +164,7 @@ export class EdgeProfileAutocompleteComponent implements ControlValueAccessor, O
   writeValue(value: EdgeProfileId | null): void {
     this.searchText = '';
     if (value != null) {
-      this.edgeProfileService.getEdgeProfile(value.id).subscribe(profile => {
+      this.edgeProfileService.getEdgeProfileInfo(value.id).subscribe(profile => {
         this.modelValue = new EdgeProfileId(profile.id.id);
         this.selectEdgeProfileFormGroup.get('edgeProfile').patchValue(profile, { emitEvent: false });
         this.edgeProfileChanged.emit(profile);
@@ -203,7 +203,7 @@ export class EdgeProfileAutocompleteComponent implements ControlValueAccessor, O
       property: 'name',
       direction: Direction.ASC
     });
-    return this.edgeProfileService.getEdgeProfiles(pageLink, { ignoreLoading: true }).pipe(
+    return this.edgeProfileService.getEdgeProfileInfos(pageLink, { ignoreLoading: true }).pipe(
       catchError(() => of(emptyPageData<EdgeProfile>())),
       map(pageData => pageData.data)
     );

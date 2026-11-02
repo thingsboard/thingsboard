@@ -349,6 +349,10 @@ export class TaskManagerTableConfigResolver {
         title = this.translate.instant('task.cancel-task-report-title');
         message = this.translate.instant('task.cancel-task-report-text');
         break;
+      case JobType.EDGE_PROFILE_APPLY:
+        title = this.translate.instant('task.cancel-task-edge-profile-apply-title');
+        message = this.translate.instant('task.cancel-task-edge-profile-apply-text');
+        break;
     }
     this.dialogService.dialog.open<CancelTaskDialogComponent, CancelTaskDialogData, boolean>(CancelTaskDialogComponent, {
       disableClose: true,

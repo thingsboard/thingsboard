@@ -4,6 +4,9 @@ package org.thingsboard.server.dao.edge;
 
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileData;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EdgeProfileId;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.IntegrationId;
@@ -38,9 +41,17 @@ public interface EdgeProfileService extends EntityDaoService {
 
     PageData<EdgeProfile> findEdgeProfilesByTenantId(TenantId tenantId, PageLink pageLink);
 
+    EdgeProfileInfo findEdgeProfileInfoById(TenantId tenantId, EdgeProfileId edgeProfileId);
+
+    EdgeProfileInfo findDefaultEdgeProfileInfo(TenantId tenantId);
+
+    PageData<EdgeProfileInfo> findEdgeProfileInfosByTenantId(TenantId tenantId, PageLink pageLink);
+
     void deleteEdgeProfile(TenantId tenantId, EdgeProfileId edgeProfileId);
 
     void deleteEdgeProfilesByTenantId(TenantId tenantId);
+
+    EdgeProfile addRows(TenantId tenantId, EdgeProfileId edgeProfileId, EdgeProfileData rows);
 
     EdgeProfile addRuleChain(TenantId tenantId, EdgeProfileId edgeProfileId, RuleChainId ruleChainId);
 
@@ -59,5 +70,7 @@ public interface EdgeProfileService extends EntityDaoService {
     EdgeProfile addSchedulerEvent(TenantId tenantId, EdgeProfileId edgeProfileId, SchedulerEventId schedulerEventId);
 
     EdgeProfile removeSchedulerEvent(TenantId tenantId, EdgeProfileId edgeProfileId, SchedulerEventId schedulerEventId);
+
+    void lockEdgeForApply(TenantId tenantId, EdgeId edgeId, long timeoutMs);
 
 }

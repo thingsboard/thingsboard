@@ -38,12 +38,13 @@ public interface EdgeDao extends Dao<Edge>, TenantEntityDao<Edge> {
 
     PageData<Edge> findEdgesByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId, PageLink pageLink);
 
-    PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId, PageLink pageLink);
+    List<UUID> updateTypeByEdgeProfileId(UUID tenantId, UUID edgeProfileId, String type);
+
+    List<Edge> findEdgesByTenantIdAndIds(UUID tenantId, List<UUID> edgeIds);
 
     long countByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId);
 
     boolean existsByTenantIdAndEdgeProfileId(UUID tenantId, UUID edgeProfileId);
-
 
     ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> edgeIds);
 

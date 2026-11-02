@@ -5,6 +5,7 @@ package org.thingsboard.server.dao.edge;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -257,13 +258,23 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         }
     }
 
-    // an update that carries neither a profile nor a type keeps the profile the edge already has, rather than moving it to the default
+    // an update without a profile id never creates a profile: same or no type keeps the current one, another type must name an existing profile
     private EdgeProfileId currentProfileId(Edge edge) {
-        if (edge.getEdgeProfileId() != null || edge.getId() == null || StringUtils.isNotEmpty(edge.getType())) {
+        if (edge.getEdgeProfileId() != null || edge.getId() == null) {
             return edge.getEdgeProfileId();
         }
         Edge stored = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
-        return stored != null ? stored.getEdgeProfileId() : null;
+        if (stored == null) {
+            return null;
+        }
+        if (StringUtils.isEmpty(edge.getType()) || edge.getType().equals(stored.getType())) {
+            return stored.getEdgeProfileId();
+        }
+        EdgeProfile profile = edgeProfileService.findEdgeProfileByName(edge.getTenantId(), edge.getType());
+        if (profile == null) {
+            throw new DataValidationException("Edge profile [" + edge.getType() + "] does not exist!");
+        }
+        return profile.getId();
     }
 
     @Override
@@ -330,15 +341,6 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
-    public PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink) {
-        log.trace("Executing findEdgeIdsByTenantIdAndEdgeProfileId, tenantId [{}], edgeProfileId [{}], pageLink [{}]", tenantId, edgeProfileId, pageLink);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(edgeProfileId, id -> BaseEdgeProfileService.INCORRECT_EDGE_PROFILE_ID + id);
-        validatePageLink(pageLink);
-        return edgeDao.findEdgeIdsByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId(), pageLink);
-    }
-
-    @Override
     public long countByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId) {
         return edgeDao.countByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId());
     }
@@ -349,18 +351,17 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
-    public void updateTypeByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, String type) {
+    public void updateTypeByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, String type, String oldType) {
         log.trace("Executing updateTypeByEdgeProfileId, tenantId [{}], edgeProfileId [{}], type [{}]", tenantId, edgeProfileId, type);
-        // one save per edge, not a bulk update: EDQS, edge state sourcing and the edge session all listen to SaveEntityEvent
-        for (Edge edge : new PageDataIterable<>(link -> edgeDao.findEdgesByTenantIdAndEdgeProfileId(tenantId.getId(), edgeProfileId.getId(), link), 1024)) {
-            if (type.equals(edge.getType())) {
-                continue;
+        // one bulk update, then a SaveEntityEvent per edge: EDQS, edge state sourcing and the edge session all listen to it
+        List<UUID> renamedIds = edgeDao.updateTypeByEdgeProfileId(tenantId.getId(), edgeProfileId.getId(), type);
+        for (List<UUID> chunk : Lists.partition(renamedIds, 1024)) {
+            for (Edge savedEdge : edgeDao.findEdgesByTenantIdAndIds(tenantId.getId(), chunk)) {
+                Edge oldEdge = new Edge(savedEdge);
+                oldEdge.setType(oldType);
+                publishEvictEvent(new EdgeCacheEvictEvent(tenantId, savedEdge.getName(), null));
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedEdge.getId()).entity(savedEdge).oldEntity(oldEdge).created(false).build());
             }
-            Edge oldEdge = new Edge(edge);
-            edge.setType(type);
-            Edge savedEdge = edgeDao.save(tenantId, edge);
-            publishEvictEvent(new EdgeCacheEvictEvent(tenantId, savedEdge.getName(), null));
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedEdge.getId()).entity(savedEdge).oldEntity(oldEdge).created(false).build());
         }
     }
 

@@ -5,10 +5,12 @@ package org.thingsboard.server.service.entitiy.edge.profile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileData;
 import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.SchedulerEventId;
+import org.thingsboard.server.common.data.job.Job;
 
 public interface TbEdgeProfileService {
 
@@ -17,6 +19,8 @@ public interface TbEdgeProfileService {
     void delete(EdgeProfile edgeProfile, User user);
 
     EdgeProfile setDefaultEdgeProfile(EdgeProfile edgeProfile, EdgeProfile previousDefaultEdgeProfile, User user);
+
+    EdgeProfile addRows(EdgeProfile edgeProfile, EdgeProfileData rows, User user);
 
     EdgeProfile addRuleChain(EdgeProfile edgeProfile, RuleChainId ruleChainId, User user);
 
@@ -36,6 +40,8 @@ public interface TbEdgeProfileService {
 
     EdgeProfile removeSchedulerEvent(EdgeProfile edgeProfile, SchedulerEventId schedulerEventId, User user);
 
-    void reapply(EdgeProfile edgeProfile, User user);
+    Job reapply(EdgeProfile edgeProfile, User user);
+
+    Job getLatestJob(EdgeProfile edgeProfile);
 
 }

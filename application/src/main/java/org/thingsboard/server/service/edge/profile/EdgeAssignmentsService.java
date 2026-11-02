@@ -16,6 +16,7 @@ import org.thingsboard.server.common.data.edge.EdgeProfileEntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.group.EntityGroupInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.permission.MergedGroupTypePermissionInfo;
 import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.permission.Operation;
@@ -69,32 +71,49 @@ public class EdgeAssignmentsService {
     private final OwnersCacheService ownersCacheService;
     private final RelationService relationService;
 
-    public EdgeAssignments forProfile(TenantId tenantId, EdgeProfile profile) {
+    public EdgeAssignments forProfile(TenantId tenantId, EdgeProfile profile) throws Exception {
         EdgeAssignments result = header(profile);
         result.setEdgesCount(edgeService.countByTenantIdAndEdgeProfileId(tenantId, profile.getId()));
         Map<EntityId, String> owners = new HashMap<>();
-        for (RuleChainId id : profile.getProfileData().getRuleChainIds()) {
-            RuleChain rc = ruleChainService.findRuleChainById(tenantId, id);
+        EdgeProfileData data = profile.getProfileData();
+
+        List<RuleChainId> ruleChainIds = data.getRuleChainIds();
+        Map<RuleChainId, RuleChain> ruleChains = ruleChainIds.isEmpty() ? Map.of()
+                : byId(ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds), RuleChain::getId);
+        for (RuleChainId id : ruleChainIds) {
+            RuleChain rc = ruleChains.get(id);
             if (rc != null) {
                 result.getRuleChains().add(ruleChainRow(rc, id.equals(profile.getRootRuleChainId()), null));
             }
         }
-        for (EdgeProfileEntityGroup g : profile.getProfileData().getEntityGroups()) {
-            EntityGroup group = entityGroupService.findEntityGroupById(tenantId, g.getEntityGroupId());
+
+        List<EntityGroupId> groupIds = data.getEntityGroups().stream().map(EdgeProfileEntityGroup::getEntityGroupId).toList();
+        Map<EntityGroupId, EntityGroupInfo> groups = groupIds.isEmpty() ? Map.of()
+                : byId(entityGroupService.findEntityGroupInfosByIds(tenantId, groupIds, new PageLink(groupIds.size())).getData(), EntityGroupInfo::getId);
+        for (EntityGroupId id : groupIds) {
+            EntityGroupInfo group = groups.get(id);
             if (group != null) {
                 result.getEntityGroups().add(groupRow(tenantId, group, null, owners));
             }
         }
-        for (IntegrationId id : profile.getProfileData().getIntegrationIds()) {
-            Integration integration = integrationService.findIntegrationById(tenantId, id);
+
+        List<IntegrationId> integrationIds = data.getIntegrationIds();
+        Map<IntegrationId, Integration> integrations = integrationIds.isEmpty() ? Map.of()
+                : byId(integrationService.findIntegrationsByIdsAsync(tenantId, integrationIds).get(), Integration::getId);
+        for (IntegrationId id : integrationIds) {
+            Integration integration = integrations.get(id);
             if (integration != null) {
-                result.getIntegrations().add(simpleRow(id, integration.getName(), tenantId, "Tenant", null));
+                result.getIntegrations().add(simpleRow(id, integration.getName(), tenantId, null, null));
             }
         }
-        for (SchedulerEventId id : profile.getProfileData().getSchedulerEventIds()) {
-            SchedulerEventInfo event = schedulerEventService.findSchedulerEventInfoById(tenantId, id);
+
+        List<SchedulerEventId> eventIds = data.getSchedulerEventIds();
+        Map<SchedulerEventId, SchedulerEventInfo> events = eventIds.isEmpty() ? Map.of()
+                : byId(schedulerEventService.findSchedulerEventInfoByIdsAsync(tenantId, eventIds).get(), SchedulerEventInfo::getId);
+        for (SchedulerEventId id : eventIds) {
+            SchedulerEventInfo event = events.get(id);
             if (event != null) {
-                EntityId owner = EdgeProfileApplier.ownerOf(tenantId, event.getCustomerId());
+                EntityId owner = EdgeProfileRows.ownerOf(tenantId, event.getCustomerId());
                 result.getSchedulerEvents().add(simpleRow(id, event.getName(), owner, ownerName(tenantId, owner, owners), null));
             }
         }
@@ -131,13 +150,13 @@ public class EdgeAssignmentsService {
         }
         if (tenantAdmin && permissions.hasGenericPermission(Resource.INTEGRATION, Operation.READ)) {
             for (Integration integration : new PageDataIterable<>(link -> integrationService.findIntegrationsByTenantIdAndEdgeId(tenantId, edge.getId(), link), PAGE_SIZE)) {
-                result.getIntegrations().add(simpleRow(integration.getId(), integration.getName(), tenantId, "Tenant", source(edgeRelations, profile, integration.getId())));
+                result.getIntegrations().add(simpleRow(integration.getId(), integration.getName(), tenantId, null, source(edgeRelations, profile, integration.getId())));
             }
         }
         if (permissions.hasGenericPermission(Resource.SCHEDULER_EVENT, Operation.READ)) {
             Set<EntityId> visibleOwners = tenantAdmin ? null : visibleOwners(tenantId, user);
             for (SchedulerEventInfo event : new PageDataIterable<>(link -> schedulerEventService.findSchedulerEventInfosByTenantIdAndEdgeId(tenantId, edge.getId(), link), PAGE_SIZE)) {
-                EntityId owner = EdgeProfileApplier.ownerOf(tenantId, event.getCustomerId());
+                EntityId owner = EdgeProfileRows.ownerOf(tenantId, event.getCustomerId());
                 if (visibleOwners != null && !visibleOwners.contains(owner)) {
                     continue;
                 }
@@ -174,7 +193,7 @@ public class EdgeAssignmentsService {
             return EdgeAssignmentSource.EDGE;
         }
         EntityRelation relation = edgeRelations.get(id);
-        return relation != null && EdgeProfileApplier.isStampedBy(relation, profile.getId())
+        return relation != null && EdgeProfileRows.isStampedBy(relation, profile.getId())
                 ? EdgeAssignmentSource.PROFILE : EdgeAssignmentSource.EDGE;
     }
 
@@ -210,7 +229,7 @@ public class EdgeAssignmentsService {
 
     private String ownerName(TenantId tenantId, EntityId ownerId, Map<EntityId, String> cache) {
         if (ownerId == null || EntityType.TENANT.equals(ownerId.getEntityType())) {
-            return "Tenant";
+            return null;
         }
         return cache.computeIfAbsent(ownerId, id -> {
             Customer customer = customerService.findCustomerById(tenantId, new CustomerId(id.getId()));
@@ -218,4 +237,7 @@ public class EdgeAssignmentsService {
         });
     }
 
+    private static <I, E> Map<I, E> byId(List<E> entities, Function<E, I> idOf) {
+        return entities.stream().collect(Collectors.toMap(idOf, Function.identity(), (a, b) -> a));
+    }
 }

@@ -57,7 +57,7 @@ public class Job extends BaseData<JobId> implements TenantEntity, HasOwnerId {
 
     public static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Set.of(
             EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE,
-            EntityType.REPORT_TEMPLATE
+            EntityType.REPORT_TEMPLATE, EntityType.EDGE_PROFILE, EntityType.CUSTOMER, EntityType.EDGE
     );
 
     @Builder(toBuilder = true)
@@ -76,6 +76,7 @@ public class Job extends BaseData<JobId> implements TenantEntity, HasOwnerId {
         this.result = switch (type) {
             case CF_REPROCESSING -> new CfReprocessingJobResult();
             case REPORT -> new ReportJobResult();
+            case EDGE_PROFILE_APPLY -> new EdgeProfileApplyJobResult();
             case DUMMY -> new DummyJobResult();
         };
     }

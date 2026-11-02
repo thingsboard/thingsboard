@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.EdgeProfileEntity;
+import org.thingsboard.server.dao.model.sql.EdgeProfileInfoEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,13 @@ public interface EdgeProfileRepository extends JpaRepository<EdgeProfileEntity, 
     Page<EdgeProfileEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                            @Param("textSearch") String textSearch,
                                            Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.EdgeProfileInfoEntity(p.id, p.createdTime, p.version, p.tenantId, p.name, p.description, p.isDefault) " +
+            "FROM EdgeProfileEntity p WHERE p.tenantId = :tenantId " +
+            "AND (:textSearch IS NULL OR ilike(p.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<EdgeProfileInfoEntity> findInfosByTenantId(@Param("tenantId") UUID tenantId,
+                                                    @Param("textSearch") String textSearch,
+                                                    Pageable pageable);
 
     EdgeProfileEntity findByTenantIdAndName(UUID tenantId, String name);
 

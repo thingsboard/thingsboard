@@ -156,6 +156,7 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.put(EntityType.API_USAGE_STATE, apiUsageStateEntityFields);
         allowedEntityFieldMap.put(EntityType.DEVICE_PROFILE, Set.of(CREATED_TIME, NAME, TYPE));
         allowedEntityFieldMap.put(EntityType.ASSET_PROFILE, Set.of(CREATED_TIME, NAME));
+        allowedEntityFieldMap.put(EntityType.EDGE_PROFILE, Set.of(CREATED_TIME, NAME));
         allowedEntityFieldMap.put(EntityType.QUEUE_STATS, new HashSet<>(Arrays.asList(CREATED_TIME, QUEUE_NAME, SERVICE_ID)));
         allowedEntityFieldMap.put(EntityType.REPORT, new HashSet<>(Arrays.asList(CREATED_TIME, NAME)));
         allowedEntityFieldMap.put(EntityType.REPORT_TEMPLATE, new HashSet<>(Arrays.asList(CREATED_TIME, NAME, TYPE, FORMAT)));

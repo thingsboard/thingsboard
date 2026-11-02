@@ -418,6 +418,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
+        entityTableMap.put(EntityType.EDGE_PROFILE, "edge_profile");
         entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
         entityTableMap.put(EntityType.QUEUE_STATS, "queue_stats");
         entityTableMap.put(EntityType.REPORT_TEMPLATE, "report_template");
@@ -433,6 +434,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityNameColumns.put(EntityType.ASSET_PROFILE, "name");
         entityNameColumns.put(EntityType.ASSET, "name");
         entityNameColumns.put(EntityType.DEVICE_PROFILE, "name");
+        entityNameColumns.put(EntityType.EDGE_PROFILE, "name");
         entityNameColumns.put(EntityType.USER, "email");
         entityNameColumns.put(EntityType.TENANT_PROFILE, "name");
         entityNameColumns.put(EntityType.TENANT, "title");
@@ -1011,6 +1013,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case CONVERTER:
             case DEVICE_PROFILE:
             case ASSET_PROFILE:
+            case EDGE_PROFILE:
             case RULE_CHAIN:
             case TENANT:
             case TENANT_PROFILE:

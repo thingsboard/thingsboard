@@ -16,6 +16,7 @@ import {
   sectionRows
 } from '@shared/models/edge-profile.models';
 import { EdgeProfileService } from '@core/http/edge-profile.service';
+import { EdgeProfileJobStatusComponent } from '@home/components/edge/edge-profile-job-status.component';
 import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { groupResourceByGroupType, Operation, Resource } from '@shared/models/security.models';
 import { Authority } from '@shared/models/authority.enum';
@@ -78,6 +79,7 @@ export class EdgeAssignmentsComponent implements OnChanges {
   textSearchMode = false;
 
   @ViewChild('searchInput') searchInputField: ElementRef;
+  @ViewChild('jobStatus') jobStatus: EdgeProfileJobStatusComponent;
 
   // filteredRows() is reached only from template bindings, so without this every change-detection pass would re-filter
   // and re-sort every section — and a pass fires on each keystroke in the search box
@@ -126,6 +128,7 @@ export class EdgeAssignmentsComponent implements OnChanges {
 
   private reloadAfterChange() {
     this.reload();
+    this.jobStatus?.refresh();
     this.assignmentsChanged.emit();
   }
 
@@ -248,13 +251,19 @@ export class EdgeAssignmentsComponent implements OnChanges {
     if (row.name.toLowerCase().includes(text)) {
       return true;
     }
-    if (!this.isRuleChains(section) && row.ownerName?.toLowerCase().includes(text)) {
+    if (!this.isRuleChains(section) && this.ownerLabel(row).toLowerCase().includes(text)) {
       return true;
     }
     return !this.isProfile && this.sourceLabel(row).toLowerCase().includes(text);
   }
 
   // the Source column shows the profile name for a profile row and "This edge" for a local one
+  ownerLabel(row: EdgeAssignmentRow): string {
+    return row.ownerId?.entityType === EntityType.TENANT
+      ? this.translate.instant('tenant.tenant')
+      : (row.ownerName ?? '');
+  }
+
   sourceLabel(row: EdgeAssignmentRow): string {
     return row.source === EdgeAssignmentSource.PROFILE
       ? (this.assignments?.edgeProfileName ?? '')

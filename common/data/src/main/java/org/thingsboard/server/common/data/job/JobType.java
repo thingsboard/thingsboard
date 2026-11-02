@@ -12,6 +12,7 @@ public enum JobType {
 
     CF_REPROCESSING("Calculated field reprocessing"),
     REPORT("Report generation"),
+    EDGE_PROFILE_APPLY("Edge profile apply"),
     DUMMY("Dummy job");
 
     private final String title;

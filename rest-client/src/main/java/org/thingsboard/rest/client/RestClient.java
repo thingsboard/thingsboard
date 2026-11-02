@@ -115,6 +115,8 @@ import org.thingsboard.server.common.data.edge.EdgeAssignments;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeProfile;
+import org.thingsboard.server.common.data.edge.EdgeProfileData;
+import org.thingsboard.server.common.data.edge.EdgeProfileInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.event.EventType;
@@ -3526,6 +3528,33 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
+    public Optional<EdgeProfileInfo> getEdgeProfileInfoById(EdgeProfileId edgeProfileId) {
+        try {
+            ResponseEntity<EdgeProfileInfo> edgeProfileInfo = restTemplate.getForEntity(baseURL + "/api/edgeProfile/info/{edgeProfileId}", EdgeProfileInfo.class, edgeProfileId.getId());
+            return Optional.ofNullable(edgeProfileInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public EdgeProfileInfo getDefaultEdgeProfileInfo() {
+        return restTemplate.getForEntity(baseURL + "/api/edgeProfile/info/default", EdgeProfileInfo.class).getBody();
+    }
+
+    public PageData<EdgeProfileInfo> getEdgeProfileInfos(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/edgeProfileInfos?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<EdgeProfileInfo>>() {
+                }, params).getBody();
+    }
+
     public EdgeProfile saveEdgeProfile(EdgeProfile edgeProfile) {
         return restTemplate.postForEntity(baseURL + "/api/edgeProfile", edgeProfile, EdgeProfile.class).getBody();
     }
@@ -3546,7 +3575,7 @@ public class RestClient implements Closeable {
 
     public EdgeProfile setEdgeProfileRootRuleChain(EdgeProfileId edgeProfileId, RuleChainId ruleChainId) {
         return restTemplate.postForEntity(
-                baseURL + "/api/edgeProfile/{edgeProfileId}/{ruleChainId}/root",
+                baseURL + "/api/edgeProfile/{edgeProfileId}/ruleChain/{ruleChainId}/root",
                 HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), ruleChainId.getId()).getBody();
     }
 
@@ -3586,6 +3615,10 @@ public class RestClient implements Closeable {
                 HttpMethod.DELETE, HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), integrationId.getId()).getBody();
     }
 
+    public EdgeProfile addRowsToEdgeProfile(EdgeProfileId edgeProfileId, EdgeProfileData rows) {
+        return restTemplate.postForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}/rows", rows, EdgeProfile.class, edgeProfileId.getId()).getBody();
+    }
+
     public EdgeProfile addSchedulerEventToEdgeProfile(EdgeProfileId edgeProfileId, SchedulerEventId schedulerEventId) {
         return restTemplate.postForEntity(
                 baseURL + "/api/edgeProfile/{edgeProfileId}/schedulerEvent/{schedulerEventId}",
@@ -3598,9 +3631,14 @@ public class RestClient implements Closeable {
                 HttpMethod.DELETE, HttpEntity.EMPTY, EdgeProfile.class, edgeProfileId.getId(), schedulerEventId.getId()).getBody();
     }
 
-    public void applyEdgeProfile(EdgeProfileId edgeProfileId) {
-        restTemplate.postForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}/apply",
-                HttpEntity.EMPTY, Void.class, edgeProfileId.getId());
+    public Job applyEdgeProfile(EdgeProfileId edgeProfileId) {
+        return restTemplate.postForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}/apply",
+                HttpEntity.EMPTY, Job.class, edgeProfileId.getId()).getBody();
+    }
+
+    public Optional<Job> getEdgeProfileJob(EdgeProfileId edgeProfileId) {
+        return Optional.ofNullable(restTemplate.getForEntity(baseURL + "/api/edgeProfile/{edgeProfileId}/job",
+                Job.class, edgeProfileId.getId()).getBody());
     }
 
     // Agent Controller

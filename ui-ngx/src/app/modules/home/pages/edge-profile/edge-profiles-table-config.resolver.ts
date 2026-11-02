@@ -27,6 +27,12 @@ import { EdgeProfileTabsComponent } from '@home/pages/edge-profile/edge-profile-
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Direction } from '@shared/models/page/sort-order';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { MatDialog } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
+import {
+  EdgeProfileDialogComponent,
+  EdgeProfileDialogData
+} from '@home/pages/edge-profile/edge-profile-dialog.component';
 
 @Injectable()
 export class EdgeProfilesTableConfigResolver {
@@ -40,6 +46,7 @@ export class EdgeProfilesTableConfigResolver {
               private datePipe: DatePipe,
               private router: Router,
               private dialogService: DialogService,
+              private dialog: MatDialog,
               private importExportService: ImportExportService) {
     this.config.entityType = EntityType.EDGE_PROFILE;
     this.config.entityComponent = EdgeProfileComponent;
@@ -84,6 +91,7 @@ export class EdgeProfilesTableConfigResolver {
     this.config.deleteEntitiesTitle = count => this.translate.instant('edge-profile.delete-edge-profiles-title', {count});
     this.config.deleteEntitiesContent = () => this.translate.instant('edge-profile.delete-edge-profiles-text');
 
+    this.config.addEntity = () => this.addEdgeProfile();
     this.config.entitiesFetchFunction = pageLink => this.edgeProfileService.getEdgeProfiles(pageLink);
     this.config.loadEntity = id => this.edgeProfileService.getEdgeProfile(id.id);
     this.config.saveEntity = profile => this.edgeProfileService.saveEdgeProfile(profile);
@@ -107,6 +115,14 @@ export class EdgeProfilesTableConfigResolver {
 
   private isTenantAdmin(): boolean {
     return getCurrentAuthUser(this.store).authority === Authority.TENANT_ADMIN;
+  }
+
+  private addEdgeProfile(): Observable<EdgeProfile> {
+    return this.dialog.open<EdgeProfileDialogComponent, EdgeProfileDialogData, EdgeProfile>(EdgeProfileDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {edgeProfile: {} as EdgeProfile, isAdd: true}
+    }).afterClosed();
   }
 
   setDefaultEdgeProfile($event: Event, profile: EdgeProfile) {

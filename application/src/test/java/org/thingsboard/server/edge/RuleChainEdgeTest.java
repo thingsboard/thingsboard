@@ -4,6 +4,7 @@
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -219,7 +221,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
         // set new root on the profile -> edge receives the chain flagged root
         edgeImitator.expectMessageAmount(2);
-        doPost("/api/edgeProfile/" + profile.getUuidId() + "/" + savedRuleChain.getUuidId() + "/root", "", EdgeProfile.class);
+        doPost("/api/edgeProfile/" + profile.getUuidId() + "/ruleChain/" + savedRuleChain.getUuidId() + "/root", "", EdgeProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
         Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
@@ -227,11 +229,22 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(ruleChainMsg);
         Assert.assertTrue(ruleChainMsg.isRoot());
         Assert.assertEquals(savedRuleChain.getId(), ruleChainMsg.getId());
-        Assert.assertEquals(savedRuleChain.getId(), doGet("/api/edge/" + edge.getUuidId(), Edge.class).getRootRuleChainId());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() ->
+                savedRuleChain.getId().equals(doGet("/api/edge/" + edge.getUuidId(), Edge.class).getRootRuleChainId()));
+
+        // metadata update of the current root -> edge still receives the chain flagged root
+        edgeImitator.expectMessageAmount(2);
+        createRuleChainMetadata(savedRuleChain);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
+        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
+        ruleChainMsg = JacksonUtil.fromString(ruleChainUpdateMsgOpt.get().getEntity(), RuleChain.class, true);
+        Assert.assertNotNull(ruleChainMsg);
+        Assert.assertTrue(ruleChainMsg.isRoot());
 
         // revert root on the profile
         edgeImitator.expectMessageAmount(1);
-        doPost("/api/edgeProfile/" + profile.getUuidId() + "/" + originalRoot.getId() + "/root", "", EdgeProfile.class);
+        doPost("/api/edgeProfile/" + profile.getUuidId() + "/ruleChain/" + originalRoot.getId() + "/root", "", EdgeProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         // remove from profile -> stamped relation unassigned

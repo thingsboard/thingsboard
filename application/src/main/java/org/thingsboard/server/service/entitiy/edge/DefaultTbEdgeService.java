@@ -73,7 +73,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
             }
 
             if (ActionType.ADDED.equals(actionType)) {
-                savedEdge = edgeProfileApplier.applyToEdge(tenantId, savedEdge, true);
+                savedEdge = applied(edgeProfileApplier.applyToEdge(tenantId, edgeId, true, false, null), savedEdge);
                 edgeService.assignTenantAdministratorsAndUsersGroupToEdge(tenantId, savedEdge.getId());
                 if (EntityType.CUSTOMER.equals(edge.getOwnerId().getEntityType())) {
                     Customer customerById = customerService.findCustomerById(tenantId, new CustomerId(edge.getOwnerId().getId()));
@@ -81,7 +81,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
                 }
             } else if (profileChanged) {
                 // doSaveEdge already wrote the new root onto savedEdge, so the applier must be told to push it
-                savedEdge = edgeProfileApplier.applyToEdge(tenantId, savedEdge, false, true, previousProfileId);
+                savedEdge = applied(edgeProfileApplier.applyToEdge(tenantId, edgeId, false, true, previousProfileId), savedEdge);
             }
 
             if (oldEdgeName != null && !oldEdgeName.equals(savedEdge.getName())) {
@@ -139,6 +139,10 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.EDGE), ActionType.UPDATED, user, e, edgeId.toString());
             throw e;
         }
+    }
+
+    private static Edge applied(Edge applied, Edge saved) {
+        return applied != null ? applied : saved;
     }
 
 }

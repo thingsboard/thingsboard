@@ -55,13 +55,11 @@ public interface EdgeService extends EntityDaoService {
 
     PageData<Edge> findEdgesByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink);
 
-    PageData<EdgeId> findEdgeIdsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, PageLink pageLink);
-
     long countByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId);
 
     boolean existsByTenantIdAndEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId);
 
-    void updateTypeByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, String type);
+    void updateTypeByEdgeProfileId(TenantId tenantId, EdgeProfileId edgeProfileId, String type, String oldType);
 
     ListenableFuture<List<Edge>> findEdgesByTenantIdAndIdsAsync(TenantId tenantId, List<EdgeId> edgeIds);
 

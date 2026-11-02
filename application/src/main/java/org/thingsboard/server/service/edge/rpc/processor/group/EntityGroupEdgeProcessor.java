@@ -68,7 +68,7 @@ public class EntityGroupEdgeProcessor extends BaseEdgeProcessor {
             return List.of();
         }
         Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edgeId);
-        if (edge == null || !edgeCtx.getEdgeProfileApplier().isEligible(tenantId, groupOwnerId, edge.getOwnerId(), false)) {
+        if (edge == null || !edgeCtx.getEdgeProfileEligibility().isEligible(tenantId, groupOwnerId, edge.getOwnerId(), false)) {
             return List.of();
         }
         Set<EntityId> heldByEdge = ownersCacheService.fetchOwnersHierarchy(tenantId, edge.getOwnerId());

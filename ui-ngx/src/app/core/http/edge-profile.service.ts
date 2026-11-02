@@ -6,8 +6,9 @@ import { Observable } from 'rxjs';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { EdgeAssignments, EdgeProfile } from '@shared/models/edge-profile.models';
+import { EdgeAssignments, EdgeProfile, EdgeProfileData } from '@shared/models/edge-profile.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { Job } from '@shared/models/job.models';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,18 @@ export class EdgeProfileService {
 
   public getDefaultEdgeProfile(config?: RequestConfig): Observable<EdgeProfile> {
     return this.http.get<EdgeProfile>('/api/edgeProfile/default', defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeProfileInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<EdgeProfile>> {
+    return this.http.get<PageData<EdgeProfile>>(`/api/edgeProfileInfos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getEdgeProfileInfo(edgeProfileId: string, config?: RequestConfig): Observable<EdgeProfile> {
+    return this.http.get<EdgeProfile>(`/api/edgeProfile/info/${edgeProfileId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getDefaultEdgeProfileInfo(config?: RequestConfig): Observable<EdgeProfile> {
+    return this.http.get<EdgeProfile>('/api/edgeProfile/info/default', defaultHttpOptionsFromConfig(config));
   }
 
   public saveEdgeProfile(edgeProfile: EdgeProfile, config?: RequestConfig): Observable<EdgeProfile> {
@@ -54,7 +67,7 @@ export class EdgeProfileService {
   }
 
   public setRootRuleChain(edgeProfileId: string, ruleChainId: string, config?: RequestConfig): Observable<EdgeProfile> {
-    return this.http.post<EdgeProfile>(`/api/edgeProfile/${edgeProfileId}/${ruleChainId}/root`, null, defaultHttpOptionsFromConfig(config));
+    return this.http.post<EdgeProfile>(`/api/edgeProfile/${edgeProfileId}/ruleChain/${ruleChainId}/root`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public addEntityGroup(edgeProfileId: string, entityGroupId: string, groupType: EntityType, config?: RequestConfig): Observable<EdgeProfile> {
@@ -75,6 +88,10 @@ export class EdgeProfileService {
     return this.http.delete<EdgeProfile>(`/api/edgeProfile/${edgeProfileId}/integration/${integrationId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public addRows(edgeProfileId: string, rows: EdgeProfileData, config?: RequestConfig): Observable<EdgeProfile> {
+    return this.http.post<EdgeProfile>(`/api/edgeProfile/${edgeProfileId}/rows`, rows, defaultHttpOptionsFromConfig(config));
+  }
+
   public addSchedulerEvent(edgeProfileId: string, schedulerEventId: string, config?: RequestConfig): Observable<EdgeProfile> {
     return this.http.post<EdgeProfile>(`/api/edgeProfile/${edgeProfileId}/schedulerEvent/${schedulerEventId}`, null, defaultHttpOptionsFromConfig(config));
   }
@@ -83,7 +100,11 @@ export class EdgeProfileService {
     return this.http.delete<EdgeProfile>(`/api/edgeProfile/${edgeProfileId}/schedulerEvent/${schedulerEventId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public applyEdgeProfile(edgeProfileId: string, config?: RequestConfig) {
-    return this.http.post(`/api/edgeProfile/${edgeProfileId}/apply`, null, defaultHttpOptionsFromConfig(config));
+  public applyEdgeProfile(edgeProfileId: string, config?: RequestConfig): Observable<Job> {
+    return this.http.post<Job>(`/api/edgeProfile/${edgeProfileId}/apply`, null, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLatestEdgeProfileJob(edgeProfileId: string, config?: RequestConfig): Observable<Job> {
+    return this.http.get<Job>(`/api/edgeProfile/${edgeProfileId}/job`, defaultHttpOptionsFromConfig(config));
   }
 }

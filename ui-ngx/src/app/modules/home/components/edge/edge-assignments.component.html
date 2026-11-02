@@ -11,6 +11,7 @@
         <mat-icon>info</mat-icon>
         <span>{{ 'edge-profile.applied-to-edges' | translate: {count: assignments.edgesCount} }}</span>
       </div>
+      <tb-edge-profile-job-status #jobStatus [edgeProfileId]="entityId?.id"></tb-edge-profile-job-status>
     } @else if (assignments.edgeProfileName) {
       <div class="tb-banner locked flex flex-row flex-wrap items-center gap-2">
         <mat-icon>lock_outline</mat-icon>
@@ -140,7 +141,7 @@
                         </mat-icon>
                       </td>
                     } @else {
-                      <td class="tb-col-owner"><span class="tb-ellipsis" [matTooltip]="row.ownerName">{{ row.ownerName }}</span></td>
+                      <td class="tb-col-owner"><span class="tb-ellipsis" [matTooltip]="ownerLabel(row)">{{ ownerLabel(row) }}</span></td>
                     }
                     <td class="tb-actions">
                       @if (isRuleChains(section)) {
