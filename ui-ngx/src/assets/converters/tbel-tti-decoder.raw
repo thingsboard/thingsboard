@@ -222,7 +222,15 @@ function lansitecRawValues(values, b, model) {
         lansitecBadgeRawValues(values, b, type);
     } else if (model == "temperature-humidity-sensor" && type == 2) {
         lansitecTemperatureHumidityRawValues(values, b);
+    } else if (model == "socket-sync-bluetooth-gateway" && type == 2 && b.length >= 8) {
+        // No datasheet: the codec reads the heartbeat as the compact gateway's (4.4.2), SNR in bytes 3-4 unsigned.
+        values.loraSnr = lansitecSnr(b, 3);
     }
+}
+
+// IEEE 754 float, big-endian at offset: false when its exponent is 0xFF (NaN or infinity).
+function lansitecFloatIsNumber(b, offset) {
+    return !((b[offset] & 0x7F) == 0x7F && (b[offset + 1] & 0x80) != 0);
 }
 
 // SNR, unit 0.01 dB, -3000 to 3000: signed. The codecs read it unsigned.
@@ -336,7 +344,8 @@ function lansitecBadgeRawValues(values, b, type) {
         // 5.3: Flag (Type bits 3-0) 0x1 means GNSS positioning failed. Longitude and latitude are IEEE 754 floats
         // (the codec divides the mantissa by 0x7fffff instead of 2^23), time is UTC seconds (the codec adds 8 hours).
         // Rounded to 6 decimals (about 0.1 m), as a double: the float has no more precision.
-        if ((b[0] & 0x0F) == 0) {
+        // An exponent of 0xFF is not a number (NaN or infinity): parseBytesToFloat fails on NaN, so no position.
+        if ((b[0] & 0x0F) == 0 && lansitecFloatIsNumber(b, 1) && lansitecFloatIsNumber(b, 5)) {
             values.longitude = toFixed(parseBytesToFloat(b, 1, 4, true) * 1.0, 6);
             values.latitude = toFixed(parseBytesToFloat(b, 5, 4, true) * 1.0, 6);
             values.gnssTime = parseBytesToLong(b, 9, 4, true) * 1000;

@@ -224,6 +224,9 @@ function lansitecRawValues(values, b, model) {
         lansitecBadgeRawValues(values, b, type);
     } else if (model == 'temperature-humidity-sensor' && type == 2) {
         lansitecTemperatureHumidityRawValues(values, b);
+    } else if (model == 'socket-sync-bluetooth-gateway' && type == 2 && b.length >= 8) {
+        // No datasheet: the codec reads the heartbeat as the compact gateway's (4.4.2), SNR in bytes 3-4 unsigned.
+        values.loraSnr = lansitecSnr(b, 3);
     }
 }
 
@@ -265,6 +268,11 @@ function lansitecUint(b, offset, length) {
 }
 
 // IEEE 754 single precision, big-endian, rounded to 6 decimals (about 0.1 m) as in the TBEL converter.
+// IEEE 754 float, big-endian at offset: false when its exponent is 0xFF (NaN or infinity).
+function lansitecFloatIsNumber(b, offset) {
+    return !((b[offset] & 0x7F) == 0x7F && (b[offset + 1] & 0x80) != 0);
+}
+
 function lansitecFloat(b, offset) {
     var bits = lansitecUint(b, offset, 4);
     var exponent = Math.floor(bits / 8388608) % 256;
@@ -380,7 +388,8 @@ function lansitecBadgeRawValues(values, b, type) {
     } else if (type == 3 && b.length >= 13) {
         // 5.3: Flag (Type bits 3-0) 0x1 means GNSS positioning failed. Longitude and latitude are IEEE 754 floats
         // (the codec divides the mantissa by 0x7fffff instead of 2^23), time is UTC seconds (the codec adds 8 hours).
-        if ((b[0] & 0x0F) == 0) {
+        // An exponent of 0xFF is not a number (NaN or infinity): no position, as in the TBEL converter.
+        if ((b[0] & 0x0F) == 0 && lansitecFloatIsNumber(b, 1) && lansitecFloatIsNumber(b, 5)) {
             values.longitude = lansitecFloat(b, 1);
             values.latitude = lansitecFloat(b, 5);
             values.gnssTime = lansitecUint(b, 9, 4) * 1000;
@@ -454,13 +463,6 @@ if (history.length == 0) {
 history.push({ ts: metadata.ts, values: values });
 return { profile: profile, telemetry: history };
 
-// A codec value can have a unit like ℃. Where the payload comes as UTF-8 bytes, they are decoded; where it already
-// comes as characters, the decoding fails and the text is taken as it is.
 function decodeToJson(payload) {
-    var text = String.fromCharCode.apply(String, payload);
-    try {
-        text = decodeURIComponent(escape(text));
-    } catch (e) {
-    }
-    return JSON.parse(text);
+    return JSON.parse(String.fromCharCode.apply(String, payload));
 }

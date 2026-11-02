@@ -756,8 +756,35 @@ public class ConverterControllerTest extends AbstractControllerTest {
                         .isEqualTo(numbersByValue(decoded.has("telemetry") ? decoded.get("telemetry") : JacksonUtil.newObjectNode()));
                 assertThat(numbersByValue(withoutKeys(result.get("attributes"), THINGS_STACK_ATTRIBUTE_KEYS))).as(caseDescription + " attributes")
                         .isEqualTo(numbersByValue(decoded.has("attributes") ? decoded.get("attributes") : JacksonUtil.newObjectNode()));
+
+                // The integration's own keys keep their values: the Lansitec keys must not overwrite them
+                JsonNode uplinkMessage = testCase.get("uplink").get("uplink_message");
+                JsonNode gateway = null;
+                for (JsonNode rx : uplinkMessage.get("rx_metadata")) {
+                    if (gateway == null || rx.get("rssi").asDouble() > gateway.get("rssi").asDouble()) {
+                        gateway = rx;
+                    }
+                }
+                JsonNode values = telemetryValues(result);
+                assertThat(sameValue(values.get("rssi"), gateway.get("rssi"))).as(caseDescription + " rssi " + values.get("rssi")).isTrue();
+                assertThat(sameValue(values.get("snr"), gateway.get("snr"))).as(caseDescription + " snr " + values.get("snr")).isTrue();
+                JsonNode firmwareVersion = result.get("attributes").get("firmwareVersion");
+                assertThat(sameValue(firmwareVersion, uplinkMessage.get("version_ids").get("firmware_version")))
+                        .as(caseDescription + " firmwareVersion " + firmwareVersion).isTrue();
             }
         });
+    }
+
+    // Equal as numbers when both are numbers or number texts (the integration may write "1.0" as 1), else as texts
+    private static boolean sameValue(JsonNode actual, JsonNode expected) {
+        if (actual == null || expected == null) {
+            return actual == expected;
+        }
+        try {
+            return new java.math.BigDecimal(actual.asText()).compareTo(new java.math.BigDecimal(expected.asText())) == 0;
+        } catch (NumberFormatException e) {
+            return actual.asText().equals(expected.asText());
+        }
     }
 
     // A frame too short for its message type, and bytes that are not an object: the uplink is still converted
@@ -812,7 +839,11 @@ public class ConverterControllerTest extends AbstractControllerTest {
         if (telemetry != null && telemetry.isArray()) {
             telemetry = telemetry.get(telemetry.size() - 1);
         }
-        return telemetry != null && telemetry.has("values") ? telemetry.get("values") : JacksonUtil.newObjectNode();
+        if (telemetry == null) {
+            return JacksonUtil.newObjectNode();
+        }
+        // {ts, values}, or only the integration's keys when the script gave attributes and no telemetry
+        return telemetry.has("values") ? telemetry.get("values") : telemetry;
     }
 
     private static ObjectNode withoutKeys(JsonNode node, Set<String> keys) {
