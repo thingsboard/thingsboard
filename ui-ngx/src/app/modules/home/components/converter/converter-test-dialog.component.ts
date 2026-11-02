@@ -161,12 +161,7 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
       }
       if (debugIn.inMetadata) {
         try {
-          metadata = JSON.parse(debugIn.inMetadata);
-          Object.keys(metadata).forEach(function (key) {
-            if (isObject(metadata[key])) {
-              metadata[key] = JSON.stringify(metadata[key]);
-            }
-          });
+          metadata = this.stringifyMetadataValues(JSON.parse(debugIn.inMetadata));
         } catch (e) { /* empty */ }
       }
       if (!this.isDecoder) {
@@ -437,7 +432,7 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
         ).subscribe((value) => {
           this.converterTestFormGroup.patchValue({
             payload: value,
-            metadata: value.metadata
+            metadata: this.stringifyMetadataValues(value.metadata)
           }, {emitEvent: false});
           this.currentOriginalMsg.payload = msg.payload;
           this.currentOriginalMsg.metadata = msg.metadata;
@@ -446,9 +441,20 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
     }
   }
 
+  private stringifyMetadataValues(metadata: Record<string, any>): Record<string, string> {
+    if (!metadata) {
+      return metadata;
+    }
+    const result: Record<string, string> = {};
+    Object.keys(metadata).forEach((key) => {
+      result[key] = isObject(metadata[key]) ? JSON.stringify(metadata[key]) : metadata[key];
+    });
+    return result;
+  }
+
   private testConverter(): Observable<TestConverterResult> {
     if (this.checkInputParamErrors()) {
-      const metadata: Record<string, string> = this.converterTestFormGroup.get('metadata').value;
+      const metadata: Record<string, any> = {...this.converterTestFormGroup.get('metadata').value};
       Object.keys(metadata).forEach(function (key) {
         try {
           metadata[key] = JSON.parse(metadata[key]);
