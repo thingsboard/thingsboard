@@ -64,6 +64,8 @@ export interface DeviceUpdateStep {
   resolution?: string;
   // The package step's id, which keys its install state; the name when not set
   id?: string;
+  // INTEGRATION: the step's metadata entries, which a KEEP merges into the integration; null removes an entry
+  metadata?: Record<string, string | null>;
   // The step takes ThingsBoard's default converter: its install state says so, for the update check
   defaultConverter?: boolean;
 }

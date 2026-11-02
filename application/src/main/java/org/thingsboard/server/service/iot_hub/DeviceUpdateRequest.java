@@ -61,6 +61,9 @@ public class DeviceUpdateRequest {
         private JsonNode sharedAttributes;
         // The resolution the install state records for it
         private String resolution;
+        // INTEGRATION: the step's metadata entries, which the package's converter reads. A KEEP merges them into the
+        // integration, e.g. one the package took as it was; null removes an entry
+        private JsonNode metadata;
         // UPLINK_CONVERTER: the step takes ThingsBoard's default converter, which the install state records for the update check
         private boolean defaultConverter;
     }

@@ -18,8 +18,7 @@ import {
   DeviceInstalledItemDescriptor,
   DevicePackageEntityState,
   DeviceUpdateResult,
-  DeviceUpdateStep,
-  IotHubInstalledItem
+  DeviceUpdateStep
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -40,8 +39,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { IntegrationType } from '@shared/models/integration.models';
-import { differsFromDefaultConverter, isOwnDefaultConverter, loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
-import { PageData } from '@shared/models/page/page-data';
+import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
 import {
   cleanFormFieldValue,
   DeviceInstallStep,
@@ -1843,19 +1841,42 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   private withStepMetadata(step: DeviceInstallStep, metadata: Record<string, string> | null | undefined): Record<string, string> {
     const merged = { ...(metadata ?? {}) };
-    for (const [rawKey, rawValue] of Object.entries(step.metadata ?? {})) {
-      const key = this.resolveVariables(rawKey);
-      const value = this.resolveVariables(String(rawValue ?? ''));
-      if (!value || value.includes('${')) {
-        continue;
-      }
-      if (value === key.substring(key.indexOf('.') + 1)) {
+    for (const [key, value] of Object.entries(this.stepMetadataEntries(step))) {
+      if (value === null) {
         delete merged[key];
       } else {
         merged[key] = value;
       }
     }
     return merged;
+  }
+
+  /** The metadata entries resolved with the form values the package was installed with, as the text-only update has no forms. */
+  private metadataWithInstalledValues(step: DeviceInstallStep): Record<string, string | null> | undefined {
+    this.restoreInstallState(this.data.update.descriptor.installState ?? {});
+    try {
+      return this.integrationMetadataOf(step);
+    } finally {
+      this.formValues = {};
+      this.entityOutputs.clear();
+    }
+  }
+
+  private integrationMetadataOf(step: DeviceInstallStep): Record<string, string | null> | undefined {
+    return step.type === InstallStepType.INTEGRATION && step.metadata ? this.stepMetadataEntries(step) : undefined;
+  }
+
+  /** The INTEGRATION step's metadata entries, resolved: null for a self-mapping, whose earlier value is removed. */
+  private stepMetadataEntries(step: DeviceInstallStep): Record<string, string | null> {
+    const entries: Record<string, string | null> = {};
+    for (const [rawKey, rawValue] of Object.entries(step.metadata ?? {})) {
+      const key = this.resolveVariables(rawKey);
+      const value = this.resolveVariables(String(rawValue ?? ''));
+      if (value && !value.includes('${')) {
+        entries[key] = value === key.substring(key.indexOf('.') + 1) ? null : value;
+      }
+    }
+    return entries;
   }
 
   /** An integration taken as it is still gets the step's metadata: the package's converter reads it. */
@@ -2138,7 +2159,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       type: step.type,
       action: 'KEEP',
       resolution: plan.previous?.resolution ?? plan.resolution ?? 'created',
-      defaultConverter: step.default || undefined
+      defaultConverter: step.default || undefined,
+      // A kept integration, e.g. one the package took as it was, gets them merged by the server: the converter reads them
+      metadata: this.integrationMetadataOf(step)
     };
     if (step.type === InstallStepType.GATEWAY_CONNECTOR) {
       return plan.action === 'keep' ? base : { ...base, action: 'OVERWRITE', entity: this.resolveTemplateJson(this.zipFiles.get(step.template)) };
@@ -2288,13 +2311,17 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    */
   private async checkDefaultConverters(): Promise<void> {
     this.restoreInstallState(this.data.update.descriptor.installState ?? {});
+    let ownDefaultConverterIds: Set<string> | undefined;
     try {
       for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
         const stored = step.default ? this.storedStateOf(step)?.state : undefined;
         let id: string = stored?.entityOutput?.id;
         // A converter taken as it was may be any converter with that name: only another package's default one is checked
-        if (id && stored.resolution === 'use-existing' && !(await this.isInstalledDefaultConverter(id))) {
-          id = undefined;
+        if (id && stored.resolution === 'use-existing') {
+          ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
+          if (!ownDefaultConverterIds.has(id)) {
+            id = undefined;
+          }
         }
         const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
         if (converter) {
@@ -2361,7 +2388,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return false;
       }
       steps.push({ name: step.name, id: step.id, type: step.type, action: 'KEEP', entityId: stored?.entityOutput?.id,
-        resolution: stored?.resolution ?? 'created', confirmed: true, defaultConverter: step.default || undefined });
+        resolution: stored?.resolution ?? 'created', confirmed: true, defaultConverter: step.default || undefined,
+        metadata: this.metadataWithInstalledValues(step) });
     }
     // Under the new version's keys, as the wizard would store them
     const formState: Record<string, any> = {};
@@ -2442,19 +2470,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return new Set(fields.map(field => field.key).filter(key => !previousKeys.has(key)));
   }
 
-  /** True when a device package installed the converter itself, as its default converter. */
-  private async isInstalledDefaultConverter(id: string): Promise<boolean> {
-    let pageLink = new PageLink(100);
-    let page: PageData<IotHubInstalledItem>;
-    do {
-      page = await firstValueFrom(this.iotHubApiService.getInstalledItems(pageLink, 'DEVICE', undefined, { ignoreLoading: true }));
-      if (page.data.some(item => isOwnDefaultConverter(item, id))) {
-        return true;
-      }
-      pageLink = pageLink.nextPageLink();
-    } while (page.hasNext);
-    return false;
-  }
+
 
   /**
    * Update: true when the entity is one the installed package owns: it created it, not the user chose to use it as it was.
@@ -2508,24 +2524,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return files.some(file => !isEqual(
       this.resolvePackageFile(this.zipFiles, step[file], this.formValues),
       this.resolvePackageFile(this.previousFiles, previousStep[file], previousFormValues)
-    )) || !isEqual(
-      // An INTEGRATION step's metadata entries, which the package's converter reads, are written when it is overwritten
-      this.resolveStepMetadata(step.metadata, this.formValues),
-      this.resolveStepMetadata(previousStep.metadata, previousFormValues)
-    );
+    ));
   }
 
-  /** The metadata entries of a step, resolved with the given form values. */
-  private resolveStepMetadata(metadata: Record<string, any> | undefined, formValues: Record<string, any>): Record<string, string> {
-    const committedValues = this.formValues;
-    this.formValues = formValues;
-    try {
-      return Object.fromEntries(Object.entries(metadata ?? {})
-        .map(([key, value]) => [this.resolveVariables(key), this.resolveVariables(String(value ?? ''))]));
-    } finally {
-      this.formValues = committedValues;
-    }
-  }
 
   /** Update: the form values the installed version was installed with. */
   private previousFormValues(): Record<string, any> {

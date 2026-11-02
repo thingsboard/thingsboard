@@ -7,6 +7,9 @@ import { IntegrationType } from '@shared/models/integration.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { isEqual } from '@core/utils';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
+import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { PageLink } from '@shared/models/page/page-link';
+import { PageData } from '@shared/models/page/page-data';
 
 const DEFAULT_CONVERTERS_V2_CONFIGURATION_URL = '/assets/converters/default-converters-v2-configuration.json';
 
@@ -58,9 +61,24 @@ export const differsFromDefaultConverter = (converter: Converter, defaultConvert
 };
 
 /**
- * True when the device package installed the converter itself as its default converter, not one it took as it was:
- * only such a converter is ThingsBoard's default one, which a new ThingsBoard version may change.
+ * The converters device packages installed themselves as their default converter, not ones they took as they were, of
+ * all installed device packages: only such a converter is ThingsBoard's default one, which a new ThingsBoard version
+ * may change. The installed items table and the update dialog both decide by it.
  */
-export const isOwnDefaultConverter = (item: IotHubInstalledItem, converterId: string): boolean =>
-  item.itemType === 'DEVICE' && Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})
-    .some(state => state?.defaultConverter && state.entityOutput?.id === converterId && state.resolution !== 'use-existing');
+export const loadOwnDefaultConverterIds = async (iotHubApiService: IotHubApiService): Promise<Set<string>> => {
+  const ids = new Set<string>();
+  let pageLink = new PageLink(100);
+  let page: PageData<IotHubInstalledItem>;
+  do {
+    page = await firstValueFrom(iotHubApiService.getInstalledItems(pageLink, 'DEVICE', undefined, { ignoreLoading: true }));
+    for (const item of page.data) {
+      for (const state of Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})) {
+        if (state?.defaultConverter && state.entityOutput?.id && state.resolution !== 'use-existing') {
+          ids.add(state.entityOutput.id);
+        }
+      }
+    }
+    pageLink = pageLink.nextPageLink();
+  } while (page.hasNext);
+  return ids;
+};

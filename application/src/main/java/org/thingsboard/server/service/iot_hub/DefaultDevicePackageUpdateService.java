@@ -587,6 +587,10 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         Integration current = id != null ? integrationService.findIntegrationById(tenantId, id) : null;
         if (step.getAction() == DeviceUpdateRequest.Action.KEEP) {
             existing(tenantId, current, step);
+            if (mergeMetadata(current, step.getMetadata())) {
+                Integration result = integrationService.saveIntegration(current);
+                return savedResult(tenantId, result.getId(), result, step, integrationOutput(result));
+            }
             return new StepResult(id, integrationOutput(current), null, null);
         }
         Integration integration = JacksonUtil.treeToValue(entity, Integration.class);
@@ -605,6 +609,29 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         }
         Integration result = integrationService.saveIntegration(integration);
         return savedResult(tenantId, result.getId(), result, step, integrationOutput(result));
+    }
+
+    /** Merges the step's metadata entries into the integration's; true when that changed it. */
+    private static boolean mergeMetadata(Integration integration, JsonNode entries) {
+        if (entries == null || !entries.isObject() || entries.isEmpty()) {
+            return false;
+        }
+        ObjectNode configuration = integration.getConfiguration() != null && integration.getConfiguration().isObject() ?
+                (ObjectNode) integration.getConfiguration() : JacksonUtil.newObjectNode();
+        ObjectNode metadata = configuration.get("metadata") instanceof ObjectNode current ? current.deepCopy() : JacksonUtil.newObjectNode();
+        entries.fields().forEachRemaining(entry -> {
+            if (entry.getValue() == null || entry.getValue().isNull()) {
+                metadata.remove(entry.getKey());
+            } else {
+                metadata.put(entry.getKey(), entry.getValue().asText());
+            }
+        });
+        if (metadata.equals(configuration.get("metadata")) || (metadata.isEmpty() && configuration.get("metadata") == null)) {
+            return false;
+        }
+        configuration.set("metadata", metadata);
+        integration.setConfiguration(configuration);
+        return true;
     }
 
     /**

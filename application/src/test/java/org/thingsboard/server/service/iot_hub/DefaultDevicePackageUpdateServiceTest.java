@@ -365,6 +365,57 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void keptIntegration_getsTheStepsMetadataEntries() {
+        // Taken as it was at install: other packages' entries stay, the step's are merged, a null one is removed
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("TTN", stateOf(integrationId, "use-existing")));
+        Integration current = new Integration();
+        current.setId(integrationId);
+        current.setTenantId(tenantId);
+        current.setName("TTN my-app");
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.set("metadata", JacksonUtil.newObjectNode().put("profile.other-model", "Other").put("profile.milesight-iot-am308", "AM308"));
+        current.setConfiguration(configuration);
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(current);
+        when(integrationService.saveIntegration(any())).thenAnswer(i -> i.getArgument(0));
+        DeviceUpdateRequest.Step step = keep("TTN", "INTEGRATION", integrationId);
+        step.setResolution("use-existing");
+        ObjectNode entries = JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge");
+        entries.putNull("profile.milesight-iot-am308");
+        step.setMetadata(entries);
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        ArgumentCaptor<Integration> saved = ArgumentCaptor.forClass(Integration.class);
+        verify(integrationService).saveIntegration(saved.capture());
+        JsonNode metadata = saved.getValue().getConfiguration().get("metadata");
+        assertThat(metadata.get("profile.other-model").asText()).isEqualTo("Other");
+        assertThat(metadata.get("profile.lansitec-badge").asText()).isEqualTo("Badge");
+        assertThat(metadata.has("profile.milesight-iot-am308")).isFalse();
+        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN").get("resolution").asText())
+                .isEqualTo("use-existing");
+    }
+
+    @Test
+    void keptIntegrationWithTheEntriesItHas_isNotSaved() {
+        Integration current = new Integration();
+        current.setId(integrationId);
+        current.setTenantId(tenantId);
+        current.setName("TTN my-app");
+        ObjectNode configuration = JacksonUtil.newObjectNode();
+        configuration.set("metadata", JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
+        current.setConfiguration(configuration);
+        when(integrationService.findIntegrationById(tenantId, integrationId)).thenReturn(current);
+        DeviceUpdateRequest.Step step = keep("TTN", "INTEGRATION", integrationId);
+        step.setMetadata(JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        verify(integrationService, never()).saveIntegration(any());
+    }
+
+    @Test
     void twoStepsWithOneKey_areRejected() {
         DeviceUpdateRequest.Step first = keep("Overview", "DASHBOARD", dashboardId);
         first.setId("main-dashboard");

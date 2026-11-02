@@ -38,7 +38,7 @@ import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { ConverterService } from '@core/http/converter.service';
 import { ResourcesService } from '@core/services/resources.service';
-import { differsFromDefaultConverter, isOwnDefaultConverter, loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
+import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -278,13 +278,18 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
    */
   private async checkConverterUpdates(): Promise<void> {
     const updates = new Set<string>();
+    // Over all installed packages, not only this page's, as the update dialog decides
+    let ownDefaultConverterIds: Set<string> | undefined;
     for (const item of this.dataSource) {
       const states = item.itemType === 'DEVICE' ? Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {}) : [];
       for (const state of states) {
         let id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
         // A converter taken as it was counts only when a package installed it as its default converter
-        if (id && state.resolution === 'use-existing' && !this.dataSource.some(other => isOwnDefaultConverter(other, id))) {
-          id = undefined;
+        if (id && state.resolution === 'use-existing') {
+          ownDefaultConverterIds ??= await loadOwnDefaultConverterIds(this.iotHubApiService);
+          if (!ownDefaultConverterIds.has(id)) {
+            id = undefined;
+          }
         }
         const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true, ignoreLoading: true}))
           .catch(() => null) : null;
