@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Applies {@link LtsMigration} beans (in version order) for an LTS upgrade. Each migration has up to four idempotent
+ * Applies {@link Migration} beans (in version order) for an upgrade. Each migration has up to four idempotent
  * parts: (1) its {@code schema_update.sql} DDL, run via {@link #executeSchemaSql} (absent file = no-op); (2)
- * {@link LtsMigration#apply()}, schema-coupled changes that must be atomic with the DDL; (3)
- * {@link LtsMigration#applyAfterCommit()}, the heavy backfill, run outside the DDL transaction and self-committing in
+ * {@link Migration#apply()}, schema-coupled changes that must be atomic with the DDL; (3)
+ * {@link Migration#applyAfterCommit()}, the heavy backfill, run outside the DDL transaction and self-committing in
  * chunks; and (4) recording the version, which callers must delay until (2) and (3) -- and anything else they
  * interpose -- have succeeded (see {@link #recordVersions}).
  * <p>
@@ -42,7 +42,7 @@ import java.util.Set;
  *   <li><b>Offline major upgrade</b> -- runs in the install/upgrade process (node not serving), split across that
  *   process's schema and data phases: {@link #runSchemaMigrations} (DDL only) runs with the rest of the schema
  *   upgrade, then {@link #runDataMigrations} (apply() + backfill) runs later, after the install flow has created the
- *   new tables, views/functions and indexes the data migrations may depend on. Neither records the LTS version; the
+ *   new tables, views/functions and indexes the data migrations may depend on. Neither records the migration version; the
  *   offline upgrade flow tracks the package version itself.</li>
  * </ul>
  * <p>
@@ -56,12 +56,12 @@ import java.util.Set;
 @Slf4j
 @Component
 @TbCoreComponent
-public class LtsMigrationService {
+public class MigrationService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
 
     /** A migration paired with its parsed version, so the version is parsed exactly once per bean. */
-    private record VersionedMigration(LtsVersion version, LtsMigration migration) {}
+    private record VersionedMigration(Version version, Migration migration) {}
 
     private final JdbcTemplate jdbcTemplate;
     private final InstallScripts installScripts;
@@ -69,27 +69,27 @@ public class LtsMigrationService {
     private final TransactionTemplate transactionTemplate;
     private final List<VersionedMigration> migrations;
 
-    public LtsMigrationService(JdbcTemplate jdbcTemplate,
-                               InstallScripts installScripts,
-                               DatabaseSchemaSettingsService schemaSettingsService,
-                               PlatformTransactionManager transactionManager,
-                               List<LtsMigration> migrations) {
+    public MigrationService(JdbcTemplate jdbcTemplate,
+                            InstallScripts installScripts,
+                            DatabaseSchemaSettingsService schemaSettingsService,
+                            PlatformTransactionManager transactionManager,
+                            List<Migration> migrations) {
         this.jdbcTemplate = jdbcTemplate;
         this.installScripts = installScripts;
         this.schemaSettingsService = schemaSettingsService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.migrations = validateAndSort(migrations);
-        log.info("Discovered {} LTS migration(s): {}", this.migrations.size(),
+        log.info("Discovered {} migration(s): {}", this.migrations.size(),
                 this.migrations.stream().map(versionedMigration -> versionedMigration.migration().getVersion()).toList());
     }
 
-    private static List<VersionedMigration> validateAndSort(List<LtsMigration> migrations) {
+    private static List<VersionedMigration> validateAndSort(List<Migration> migrations) {
         Set<String> seen = new HashSet<>();
         List<VersionedMigration> versioned = new ArrayList<>();
-        for (LtsMigration migration : migrations) {
-            LtsVersion version = LtsVersion.parse(migration.getVersion()); // fail loud on unparseable version
+        for (Migration migration : migrations) {
+            Version version = Version.parse(migration.getVersion()); // fail loud on unparseable version
             if (!seen.add(migration.getVersion())) {
-                throw new IllegalStateException("Duplicate LTS migration version: " + migration.getVersion());
+                throw new IllegalStateException("Duplicate migration version: " + migration.getVersion());
             }
             versioned.add(new VersionedMigration(version, migration));
         }
@@ -110,17 +110,17 @@ public class LtsMigrationService {
     public List<String> applyMigrations(String fromVersion, String toVersion, boolean forcedRun, Runnable afterSchemaPhase) {
         List<VersionedMigration> selected = select(fromVersion, toVersion, forcedRun);
         for (VersionedMigration versionedMigration : selected) {
-            LtsMigration migration = versionedMigration.migration();
+            Migration migration = versionedMigration.migration();
             transactionTemplate.executeWithoutResult(status -> {
                 executeSchemaSql(migration.getVersion());
                 migration.apply();
             });
-            log.info("Applied LTS schema update {}", migration.getVersion());
+            log.info("Applied schema update {}", migration.getVersion());
         }
         afterSchemaPhase.run();
         List<String> appliedVersions = new ArrayList<>();
         for (VersionedMigration versionedMigration : selected) {
-            LtsMigration migration = versionedMigration.migration();
+            Migration migration = versionedMigration.migration();
             migration.applyAfterCommit(); // outside the schema transaction (see class doc)
             appliedVersions.add(migration.getVersion());
         }
@@ -130,12 +130,12 @@ public class LtsMigrationService {
     /**
      * Records the versions {@link #applyMigrations} returned, once the caller's own post-schema work has succeeded.
      * Stamped together rather than one per backfill, so a later failure re-runs the earlier migrations' backfills on
-     * the next startup - which {@link LtsMigration#applyAfterCommit} is required to tolerate.
+     * the next startup - which {@link Migration#applyAfterCommit} is required to tolerate.
      */
     public void recordVersions(List<String> versions) {
         for (String version : versions) {
             schemaSettingsService.updateSchemaVersion(version);
-            log.info("Applied LTS migration {}", version);
+            log.info("Applied migration {}", version);
         }
     }
 
@@ -150,7 +150,7 @@ public class LtsMigrationService {
         for (VersionedMigration versionedMigration : select(fromVersion, toVersion, forcedRun)) {
             String version = versionedMigration.migration().getVersion();
             transactionTemplate.executeWithoutResult(status -> executeSchemaSql(version));
-            log.info("Applied LTS schema migration {}", version);
+            log.info("Applied schema migration {}", version);
         }
     }
 
@@ -163,16 +163,16 @@ public class LtsMigrationService {
      */
     public void runDataMigrations(String fromVersion, String toVersion, boolean forcedRun) {
         for (VersionedMigration versionedMigration : select(fromVersion, toVersion, forcedRun)) {
-            LtsMigration migration = versionedMigration.migration();
+            Migration migration = versionedMigration.migration();
             migration.apply();
             migration.applyAfterCommit();
-            log.info("Applied LTS data migration {}", migration.getVersion());
+            log.info("Applied data migration {}", migration.getVersion());
         }
     }
 
     private List<VersionedMigration> select(String fromVersion, String toVersion, boolean forcedRun) {
-        LtsVersion from = LtsVersion.parse(fromVersion);
-        LtsVersion to = LtsVersion.parse(toVersion);
+        Version from = Version.parse(fromVersion);
+        Version to = Version.parse(toVersion);
         // Select every migration in the (from, to] range, regardless of family. On a cross-family offline
         // upgrade (e.g. 4.3.x -> 4.4) this is what makes the real in-range older-family beans run: it picks the
         // 4.3.1.x schema/data changes the source has not yet passed AND the new target-family beans, each exactly
@@ -184,8 +184,8 @@ public class LtsMigrationService {
         // range. A reproduction-duplicate bean (one that re-does an older bean's work on a newer-family branch)
         // must sit STRICTLY BELOW the minimum supported upgrade source, so it can never be selected together with
         // the bean it duplicates. The pairs today are 4.2.2.3 <-> 4.3.1.3 and 4.2.2.4 <-> 4.3.1.4, and the
-        // supported-source floor is 4.3.0.0 (SUPPORTED_VERSIONS_FOR_UPGRADE), well above both 4.2.2.x beans.
-        // LtsMigrationServiceTest guards this.
+        // supported-source floor is 4.3.0.0 (SUPPORTED_FAMILIES_FOR_UPGRADE), well above both 4.2.2.x beans.
+        // MigrationServiceTest guards this.
         //
         // A forced run takes the closed [from, to] instead, so the source version's own migration re-runs rather than
         // the range being empty -- see the class doc. It does not weaken that invariant in any new way: forcing
@@ -202,14 +202,14 @@ public class LtsMigrationService {
     private void executeSchemaSql(String version) {
         Path sqlFile = Paths.get(installScripts.getDataDir(), "upgrade", "lts", version, SCHEMA_UPDATE_SQL);
         if (!Files.exists(sqlFile)) {
-            log.trace("No LTS schema update file for version {} at {}", version, sqlFile);
+            log.trace("No schema update file for version {} at {}", version, sqlFile);
             return;
         }
         try {
             jdbcTemplate.execute(Files.readString(sqlFile));
-            log.info("Applied LTS SQL schema update from {}", sqlFile);
+            log.info("Applied SQL schema update from {}", sqlFile);
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read LTS schema update file: " + sqlFile, e);
+            throw new UncheckedIOException("Failed to read schema update file: " + sqlFile, e);
         }
     }
 }

@@ -21,7 +21,7 @@
     <div style="height: 4px;"></div>
   }
   <div mat-dialog-content class="flex flex-col">
-    <mat-form-field>
+    <mat-form-field appearance="outline">
       <mat-label>{{ 'device-profile.lwm2m.server-type' | translate }}</mat-label>
       <mat-select formControlName="serverType">
         @for (serverType of serverTypes; track serverType) {

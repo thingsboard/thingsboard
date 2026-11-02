@@ -45,6 +45,7 @@ import {
   TargetDevice,
   TargetDeviceType,
   Widget,
+  widgetActionSources,
   WidgetConfig,
   WidgetConfigMode,
   WidgetSize,
@@ -690,11 +691,13 @@ export class DashboardUtilsService {
       };
       // Stable per state: an unchanged page keeps its rendered instance, a changed one is re-rendered.
       const widgetId = htmlPageWidgetId(stateId);
+      const actions = {...layout.gridSettings?.htmlPageConfig?.actions};
+      delete actions[widgetActionSources.headerButton.value];
       const config = mergeDeep({},
         htmlPageDefaultConfig,
         {
           settings: layout.gridSettings?.htmlPageConfig?.settings || mergeDeep({} as HtmlContainerWidgetSettings, htmlContainerDefaultSettings),
-          actions: layout.gridSettings?.htmlPageConfig?.actions
+          actions
         }
       );
       result.widget = {

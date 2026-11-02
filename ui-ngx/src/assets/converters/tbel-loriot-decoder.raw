@@ -52,6 +52,13 @@ function decodePayload(input) {
     // };
 }
 
+// Process only LORIOT uplink messages: cmd is 'rx', or 'gw' when gateway info is included.
+// Skip downlink confirmations (e.g. cmd == 'txd') and other events so they
+// are not stored as telemetry. Returning an empty array yields no uplink data.
+if (metadata.cmd != 'rx' && metadata.cmd != 'gw') {
+    return [];
+}
+
 var result = decodePayload(payload);
 // Uncomment this code block to overwrite values set in the main configuration window. Useful if you extract device/asset/customer/group names from the payload;
 // result.type = 'DEVICE'; // Entity type allows you to choose type of created entity. Can be 'DEVICE' or 'ASSET'.

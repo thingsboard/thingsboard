@@ -53,7 +53,8 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
 
     @Before
     public void setUp() throws Exception {
-        loginSysAdmin();
+        // Deep link host is derived from the login white-labeling base URL; start from system defaults
+        resetSysAdminWhiteLabelingSettings();
 
         MobileApp androidApp = validMobileApp( "my.android.package", PlatformType.ANDROID);
         StoreInfo androidStoreInfo = StoreInfo.builder()

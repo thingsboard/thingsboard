@@ -164,6 +164,14 @@ public abstract class AbstractIntegrationTest extends AbstractControllerTest {
         return targetMsgs;
     }
 
+    /**
+     * Waits until the latest lifecycle event says the integration is running.
+     * <p>
+     * An integration that is created disabled and then enabled right away gets two lifecycle messages, CREATED and UPDATED.
+     * The CREATED task reads the configuration when it runs. If the enable is already committed by then, that task
+     * starts the integration and persists STARTED, and the UPDATED task that follows persists UPDATED on the running
+     * integration. So the latest event can be either STARTED or UPDATED, and both mean the integration is up.
+     */
     protected void waitUntilIntegrationStarted(TenantId tenantId, IntegrationId integrationId) {
         Awaitility
                 .await()
@@ -176,8 +184,11 @@ public abstract class AbstractIntegrationTest extends AbstractControllerTest {
                     }
 
                     EventInfo event = events.getData().stream().max(Comparator.comparingLong(EventInfo::getCreatedTime)).orElse(null);
-                    return event != null
-                            && "STARTED".equals(event.getBody().get("event").asText())
+                    if (event == null) {
+                        return false;
+                    }
+                    String eventType = event.getBody().get("event").asText();
+                    return ("STARTED".equals(eventType) || "UPDATED".equals(eventType))
                             && "true".equals(event.getBody().get("success").asText());
                 });
     }

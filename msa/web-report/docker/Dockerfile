@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BUSL-1.1
 #
 
-FROM thingsboard/node:22.22.2-bookworm-slim
+FROM thingsboard/node:22.23.4-bookworm-slim
 
 ARG TARGETPLATFORM
 ARG DEBIAN_FRONTEND=noninteractive

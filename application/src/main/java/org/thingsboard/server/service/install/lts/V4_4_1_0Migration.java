@@ -12,25 +12,26 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.update.EdgeProfileMigrationService;
 
 /**
- * LTS migration for version {@code 4.4.1.0}.
+ * Migration for version {@code 4.4.1.0}.
  * <p>
- * {@link LtsMigrationService} selects migrations from the injected {@link LtsMigration} beans, not from the on-disk
- * {@code data/upgrade/lts/<version>/} directories. So this bean is what makes the runner discover version
- * {@code 4.4.1.0} and execute its {@code data/upgrade/lts/4.4.1.0/schema_update.sql}, which creates the
- * {@code edge_profile} table and links {@code edge} to it.
+ * {@link MigrationService} selects migrations from the injected {@link Migration} beans, not from the
+ * on-disk {@code data/upgrade/lts/<version>/} directories. So this bean is what makes the runner discover
+ * version {@code 4.4.1.0} and execute its {@code data/upgrade/lts/4.4.1.0/schema_update.sql}, which creates the
+ * {@code edge_profile} table, links {@code edge} to it, and adds the {@code idx_calculated_field_tenant_id_id}
+ * index used by tenant-scoped calculated field paging. {@link #applyAfterCommit()} then backfills the edge profiles.
  * <p>
- * Edge profiles ride the {@code 4.4.1.0} slot rather than {@code 4.4.0.0} because the feature ships in 4.4.1 only:
- * an installation upgraded to 4.4.0 must not gain the table or the profiles, and must still pick both up when it
- * later moves to 4.4.1. {@link LtsVersion#isInRange} is exclusive at the lower bound, so every source below
- * {@code 4.4.1.0} selects this migration exactly once.
+ * Both changes need a slot of their own rather than {@code 4.4.0.0}: that version is already released, and
+ * {@link Version#isInRange} is exclusive at the lower bound, so an installation already on {@code 4.4.0.0}
+ * would never pick up a change added there. Edge profiles ship in 4.4.1 only: an installation upgraded to 4.4.0
+ * must not gain the table or the profiles, and must still pick both up when it later moves to 4.4.1.
  * <p>
- * The dir/bean consistency (both ways) is guarded by a test in {@code LtsMigrationIntegrationTest}.
+ * The dir/bean consistency (both ways) is guarded by a test in {@code MigrationIntegrationTest}.
  */
 @Slf4j
 @Component
 @TbCoreComponent
 @RequiredArgsConstructor
-public class V4_4_1_0Migration implements LtsMigration {
+public class V4_4_1_0Migration implements Migration {
 
     private static final int TENANT_PAGE_SIZE = 1000;
 

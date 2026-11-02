@@ -35,30 +35,19 @@
     </button>
   </div>
 
-  <mat-expansion-panel class="expansion-panel-setting" [expanded]="kpnIntegrationConfigForm.get('allowDownlink').value">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="flex flex-col items-start justify-start gap-2">
-        <mat-slide-toggle formControlName="allowDownlink" (click)="$event.stopPropagation()">
-          {{ 'integration.allow-downlink' | translate }}
-        </mat-slide-toggle>
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <ng-template matExpansionPanelContent>
-      <section class="expansion-panel-setting-content">
-        <fieldset class="fields-group">
-          <legend class="group-title" translate>integration.credentials</legend>
-          <div class="flex flex-col gt-xs:gap-2">
-            <tb-secret-key-input formControlName="apiId" class="mat-block flex-1" appearance="outline"
-                                 label="{{ 'integration.api-id' | translate }}">
-            </tb-secret-key-input>
-            <tb-secret-key-input formControlName="apiKey" class="mat-block flex-1" appearance="outline"
-                                 label="{{ 'integration.api-key' | translate }}">
-            </tb-secret-key-input>
-          </div>
-        </fieldset>
-      </section>
-    </ng-template>
-  </mat-expansion-panel>
+  @if (isSetDownlink) {
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>integration.downlink-credentials</legend>
+      <div class="flex flex-col gt-xs:gap-2">
+        <tb-secret-key-input formControlName="apiId" class="mat-block flex-1" appearance="outline"
+                             label="{{ 'integration.api-id' | translate }}">
+        </tb-secret-key-input>
+        <tb-secret-key-input formControlName="apiKey" class="mat-block flex-1" appearance="outline"
+                             label="{{ 'integration.api-key' | translate }}">
+        </tb-secret-key-input>
+      </div>
+    </fieldset>
+  }
 
   <mat-expansion-panel class="expansion-panel-setting"
                        [expanded]="kpnIntegrationConfigForm.get('enableSecurity').value">

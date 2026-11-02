@@ -4,7 +4,7 @@ package org.thingsboard.server.service.install;
 
 /**
  * The statements that reach {@code tb_cluster} from Java. The DDL is a hand-kept copy of the block in
- * {@code schema-entities.sql}; {@code LtsMigrationIntegrationTest} pins the copies against it.
+ * {@code schema-entities.sql}; {@code MigrationIntegrationTest} pins the copies against it.
  */
 public final class TbClusterSchema {
 

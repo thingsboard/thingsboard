@@ -11,7 +11,7 @@
 
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.4.0.1-SNAPSHOT</version>
+        <version>4.4.1-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -251,6 +251,11 @@
         <dependency>
             <groupId>org.eclipse.leshan</groupId>
             <artifactId>leshan-client-cf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-pubsub</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <profiles>

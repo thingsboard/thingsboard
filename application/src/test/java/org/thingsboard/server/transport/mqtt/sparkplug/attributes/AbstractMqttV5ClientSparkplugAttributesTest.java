@@ -13,6 +13,8 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -332,6 +334,31 @@ public abstract class AbstractMqttV5ClientSparkplugAttributesTest extends Abstra
                 });
         Assert.assertEquals(metricKey, mqttCallback.getMessageArrivedMetrics().get(0).getName());
         Assert.assertTrue(expectedValue == mqttCallback.getMessageArrivedMetrics().get(0).getDoubleValue());
+    }
+
+    protected void processClientWithCorrectAccessTokenPublishNCMD_DoubleType_SendAndReceiveDoubleValueOk() throws Exception {
+        clientWithCorrectNodeAccessTokenWithNDEATH();
+        MetricDataType metricDataType = MetricDataType.Double;
+        String metricKey = "MyDouble_SendAndReceive";
+        double metricValue = nextDouble();
+        connectionWithNBirth(metricDataType, metricKey, metricValue);
+        Assert.assertTrue("Connection node is failed", client.isConnected());
+        awaitForDeviceActorToReceiveSubscription(savedGateway.getId(), FeatureType.ATTRIBUTES, 1);
+
+        Set<String> keyAttributesSet = Set.of(metricKey);
+        String urlTemplateTs =
+                "/api/plugins/telemetry/DEVICE/" + savedGateway.getId().getId()
+                        + "/values/timeseries"
+                        + "?keys=" + String.join(",", keyAttributesSet)
+                        + "&useStrictDataTypes=true";
+
+        Map<String, Object> lastTimeseriesTs = doGetAsyncTyped(urlTemplateTs, new TypeReference<>() {});
+        Object metricValueTs =
+                ((Map<?, ?>) ((List<?>) lastTimeseriesTs.get(metricKey)).getFirst()).get("value");
+
+        Assert.assertNotNull(metricValueTs);
+        Assert.assertEquals(Double.class, metricValueTs.getClass());
+        Assert.assertEquals(metricValue, metricValueTs);
     }
 
     protected void processClientWithCorrectAccessTokenPublishNCMD_StringType_IfMetricFailedTypeCheck_SendValueOk() throws Exception {

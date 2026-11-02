@@ -13,14 +13,14 @@ The **Widget Editor** will open, pre-populated with default **Control** template
 ```html
     <form #rpcForm="ngForm" (submit)="sendCommand()">
       <div class="mat-content mat-padding flex flex-col">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>RPC method</mat-label>
           <input matInput required name="rpcMethod" #rpcMethodField="ngModel" [(ngModel)]="rpcMethod"/>
           <mat-error *ngIf="rpcMethodField.hasError('required')">
             RPC method name is required.
           </mat-error>
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label>RPC params</mat-label>
           <input matInput required name="rpcParams" #rpcParamsField="ngModel" [(ngModel)]="rpcParams"/>
           <mat-error *ngIf="rpcParamsField.hasError('required')">

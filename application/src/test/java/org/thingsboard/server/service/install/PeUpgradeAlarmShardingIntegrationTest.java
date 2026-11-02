@@ -19,7 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * CE-to-PE twin of the 4.3.1.4 alarm-sharding coverage in {@code LtsMigrationIntegrationTest}: the same schema
+ * CE-to-PE twin of the 4.3.1.4 alarm-sharding coverage in {@code MigrationIntegrationTest}: the same schema
  * change (alarm_comment FK drop, entity_alarm.originator_id ADD COLUMN) plus the deliberately single-statement
  * originator backfill live in upgrade/pe/schema_update.sql and are executed by no other test. The whole file is
  * idempotent by design (SqlDatabaseUpgradeService sends it as one execute), so the test runs it verbatim — twice,

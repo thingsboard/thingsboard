@@ -68,6 +68,7 @@ import org.thingsboard.server.service.edge.profile.EdgeProfileEligibility;
 import org.thingsboard.server.service.edge.rpc.CustomersHierarchyEdgeService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
+import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ai.AiModelProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmProcessor;
@@ -184,6 +185,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private TbRpcService tbRpcService;
 
     @Autowired
     private DomainService domainService;

@@ -130,7 +130,7 @@ class SqlEntityDatabaseSchemaServiceClusterIdTest extends AbstractPostgresContai
                 .hasCauseInstanceOf(SQLException.class);
     }
 
-    /** The production DDL, not retyped: LtsMigrationIntegrationTest pins these constants against schema-entities.sql. */
+    /** The production DDL, not retyped: MigrationIntegrationTest pins these constants against schema-entities.sql. */
     private static List<String> productionClusterDdl() {
         return List.of(TbClusterSchema.CREATE_CLUSTER_TABLE_QUERY, TbClusterSchema.CREATE_CLUSTER_SINGLE_ROW_INDEX_QUERY);
     }

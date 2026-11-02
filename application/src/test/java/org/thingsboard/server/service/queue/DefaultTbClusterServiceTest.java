@@ -46,6 +46,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.group.EntityGroupService;
@@ -58,6 +59,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
@@ -95,6 +97,8 @@ public class DefaultTbClusterServiceTest {
     public static final String RULE_ENGINE = "rule_engine";
 
     public static final String TRANSPORT = "transport";
+
+    public static final String UNKNOWN_SERVICE_ID = "not-a-cluster-member";
 
     @MockitoBean
     protected TbDeviceProfileCache deviceProfileCache;
@@ -302,6 +306,7 @@ public class DefaultTbClusterServiceTest {
         TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
 
         doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
+        when(partitionService.isKnownServiceId(ServiceType.TB_CORE, CORE)).thenReturn(true);
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
         TransportProtos.RestApiCallResponseMsgProto responseMsgProto = TransportProtos.RestApiCallResponseMsgProto.getDefaultInstance();
         TransportProtos.ToCoreNotificationMsg toCoreNotificationMsg = TransportProtos.ToCoreNotificationMsg.newBuilder().setRestApiCallResponseMsg(responseMsgProto).build();
@@ -316,6 +321,206 @@ public class DefaultTbClusterServiceTest {
         assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isNotNull();
         assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toCoreNotificationMsg);
         assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_CORE);
+    }
+
+    @Test
+    public void testPushNotificationToCoreToUnknownServiceIdIsSkipped() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushNotificationToCore(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), eq(UNKNOWN_SERVICE_ID));
+        verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
+        verify(callback, times(1)).onSuccess(isNull());
+        verify(callback, never()).onFailure(any(Throwable.class));
+    }
+
+    @Test
+    public void testPushNotificationToCoreToRecentlySeenButOfflineServiceIdIsSent() {
+        String offlineCore = "core-offline";
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
+
+        // offlineCore was a cluster member moments ago but has dropped out of the current live snapshot
+        ((DefaultTbClusterService) clusterService).onServiceListChanged(new ServiceListChangedEvent(
+                List.of(TransportProtos.ServiceInfo.newBuilder().setServiceId(offlineCore).addServiceTypes(ServiceType.TB_CORE.name()).build()),
+                TransportProtos.ServiceInfo.newBuilder().setServiceId(CORE).addServiceTypes(ServiceType.TB_CORE.name()).build()));
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet(CORE));
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_CORE, offlineCore);
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
+
+        clusterService.pushNotificationToCore(offlineCore, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToCoreToKnownServiceIdIsSent() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.isKnownServiceId(ServiceType.TB_CORE, CORE)).thenReturn(true);
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_CORE, CORE);
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
+
+        clusterService.pushNotificationToCore(CORE, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_CORE);
+    }
+
+    @Test
+    public void testPushNotificationToCoreFailsOpenWhenClusterTopologyIsUnknown() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_CORE)).thenReturn(Sets.newHashSet());
+        doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
+        when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
+
+        clusterService.pushNotificationToCore(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbCoreQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToRuleEngineToUnknownServiceIdIsSkipped() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet(RULE_ENGINE));
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushNotificationToRuleEngine(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_RULE_ENGINE), eq(UNKNOWN_SERVICE_ID));
+        verify(producerProvider, never()).getRuleEngineNotificationsMsgProducer();
+        verify(callback, times(1)).onSuccess(isNull());
+        verify(callback, never()).onFailure(any(Throwable.class));
+    }
+
+    @Test
+    public void testPushNotificationToRuleEngineToRecentlySeenButOfflineServiceIdIsSent() {
+        String offlineRuleEngine = "rule-engine-offline";
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> tbRuleEngineQueueProducer = mock(TbQueueProducer.class);
+
+        // offlineRuleEngine was a cluster member moments ago but has dropped out of the current live snapshot
+        ((DefaultTbClusterService) clusterService).onServiceListChanged(new ServiceListChangedEvent(
+                List.of(TransportProtos.ServiceInfo.newBuilder().setServiceId(offlineRuleEngine).addServiceTypes(ServiceType.TB_RULE_ENGINE.name()).build()),
+                TransportProtos.ServiceInfo.newBuilder().setServiceId(RULE_ENGINE).addServiceTypes(ServiceType.TB_RULE_ENGINE.name()).build()));
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet(RULE_ENGINE));
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, offlineRuleEngine);
+        when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbRuleEngineQueueProducer);
+
+        clusterService.pushNotificationToRuleEngine(offlineRuleEngine, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbRuleEngineQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToRuleEngineToKnownServiceIdIsSent() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> tbRuleEngineQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.isKnownServiceId(ServiceType.TB_RULE_ENGINE, RULE_ENGINE)).thenReturn(true);
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, RULE_ENGINE);
+        when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbRuleEngineQueueProducer);
+
+        clusterService.pushNotificationToRuleEngine(RULE_ENGINE, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbRuleEngineQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_RULE_ENGINE);
+    }
+
+    @Test
+    public void testPushNotificationToRuleEngineFailsOpenWhenClusterTopologyIsUnknown() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineNotificationMsg>> tbRuleEngineQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE)).thenReturn(Sets.newHashSet());
+        doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
+        when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbRuleEngineQueueProducer);
+
+        clusterService.pushNotificationToRuleEngine(UNKNOWN_SERVICE_ID, new FromDeviceRpcResponse(UUID.randomUUID(), null, null), callback);
+
+        verify(tbRuleEngineQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToTransportToUnknownServiceIdIsSkipped() {
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(TRANSPORT));
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushNotificationToTransport(UNKNOWN_SERVICE_ID, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), eq(UNKNOWN_SERVICE_ID));
+        verify(producerProvider, never()).getTransportNotificationsMsgProducer();
+        verify(callback, times(1)).onSuccess(isNull());
+        verify(callback, never()).onFailure(any(Throwable.class));
+    }
+
+    @Test
+    public void testPushNotificationToTransportToKnownServiceIdIsSent() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> tbTransportQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.isKnownServiceId(ServiceType.TB_TRANSPORT, TRANSPORT)).thenReturn(true);
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT);
+        when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
+
+        clusterService.pushNotificationToTransport(TRANSPORT, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+
+        verify(tbTransportQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+        // a live member is accepted without falling back to the fail-open / recently-seen checks
+        verify(partitionService, never()).getAllServiceIds(ServiceType.TB_TRANSPORT);
+    }
+
+    @Test
+    public void testPushNotificationToTransportToRecentlySeenButOfflineServiceIdIsSent() {
+        String offlineTransport = "transport-offline";
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> tbTransportQueueProducer = mock(TbQueueProducer.class);
+
+        // offlineTransport was a cluster member moments ago but has dropped out of the current live snapshot
+        ((DefaultTbClusterService) clusterService).onServiceListChanged(new ServiceListChangedEvent(
+                List.of(TransportProtos.ServiceInfo.newBuilder().setServiceId(offlineTransport).addServiceTypes(ServiceType.TB_TRANSPORT.name()).build()),
+                TransportProtos.ServiceInfo.newBuilder().setServiceId(TRANSPORT).addServiceTypes(ServiceType.TB_TRANSPORT.name()).build()));
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet(TRANSPORT));
+        doReturn(tpi).when(topicService).getNotificationsTopic(ServiceType.TB_TRANSPORT, offlineTransport);
+        when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
+
+        clusterService.pushNotificationToTransport(offlineTransport, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+
+        verify(tbTransportQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
+    }
+
+    @Test
+    public void testPushNotificationToTransportFailsOpenWhenClusterTopologyIsUnknown() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToTransportMsg>> tbTransportQueueProducer = mock(TbQueueProducer.class);
+
+        when(partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT)).thenReturn(Sets.newHashSet());
+        doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
+        when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
+
+        clusterService.pushNotificationToTransport(UNKNOWN_SERVICE_ID, TransportProtos.ToTransportMsg.getDefaultInstance(), callback);
+
+        verify(tbTransportQueueProducer, times(1)).send(eq(tpi), any(TbProtoQueueMsg.class), eq(callback));
     }
 
     @Test

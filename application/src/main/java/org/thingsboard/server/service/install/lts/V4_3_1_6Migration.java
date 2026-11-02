@@ -20,7 +20,7 @@ import java.util.UUID;
 @Component
 @TbCoreComponent
 @RequiredArgsConstructor
-public class V4_3_1_6Migration implements LtsMigration {
+public class V4_3_1_6Migration implements Migration {
 
     private final JdbcTemplate jdbcTemplate;
 

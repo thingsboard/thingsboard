@@ -3,6 +3,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +22,7 @@ import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.ai.solution.AiSolutionService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.util.UUID;
 
@@ -33,6 +35,7 @@ import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUT
 public class AiSolutionController extends BaseController {
 
     private final AiSolutionService aiSolutionService;
+    private final SystemSecurityService systemSecurityService;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/start")
@@ -97,19 +100,21 @@ public class AiSolutionController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/install")
     public JsonNode installSolution(@PathVariable UUID solutionId,
-                                    @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken) throws ThingsboardException {
+                                    @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken,
+                                    HttpServletRequest httpRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return aiSolutionService.installSolution(solutionId, tbAccessToken, user);
+        return aiSolutionService.installSolution(solutionId, tbAccessToken, systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest), user);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @DeleteMapping("/{solutionId}/uninstall")
     public JsonNode uninstallSolution(@PathVariable UUID solutionId,
-                                      @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken) throws ThingsboardException {
+                                      @RequestHeader(AUTHORIZATION_HEADER) String tbAccessToken,
+                                      HttpServletRequest httpRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return aiSolutionService.uninstallSolution(solutionId, tbAccessToken, user);
+        return aiSolutionService.uninstallSolution(solutionId, tbAccessToken, systemSecurityService.getBaseUrl(user.getTenantId(), user.getCustomerId(), httpRequest), user);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

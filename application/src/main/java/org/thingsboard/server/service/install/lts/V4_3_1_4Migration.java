@@ -17,7 +17,7 @@ import java.util.UUID;
 /**
  * Alarm sharding: drops the {@code alarm_comment -> alarm} cascade FK and adds {@code entity_alarm.originator_id}.
  * <p>
- * {@link LtsMigrationService} selects migrations from the injected {@link LtsMigration} beans, not from the on-disk
+ * {@link MigrationService} selects migrations from the injected {@link Migration} beans, not from the on-disk
  * {@code data/upgrade/lts/<version>/} directories, so this bean is what makes the runner discover version
  * {@code 4.3.1.4} and execute its {@code schema_update.sql} at all.
  * <p>
@@ -34,7 +34,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @TbCoreComponent
-public class V4_3_1_4Migration implements LtsMigration {
+public class V4_3_1_4Migration implements Migration {
 
     // entity_alarm is walked in keyset-paginated windows of this size, each in its own committed transaction, so
     // the backfill only ever holds row-level locks on the current window and never blocks concurrent readers.
@@ -86,7 +86,7 @@ public class V4_3_1_4Migration implements LtsMigration {
 
     /**
      * Backfills entity_alarm.originator_id from the parent alarm for rows that predate the column added by this
-     * version's schema_update.sql. Runs OUTSIDE the schema transaction (see {@link LtsMigration#applyAfterCommit})
+     * version's schema_update.sql. Runs OUTSIDE the schema transaction (see {@link Migration#applyAfterCommit})
      * so the ADD COLUMN's ACCESS EXCLUSIVE lock is already released; each batch commits on its own and takes only
      * a ROW EXCLUSIVE lock, so a serving node keeps reading and writing entity_alarm throughout.
      * <p>

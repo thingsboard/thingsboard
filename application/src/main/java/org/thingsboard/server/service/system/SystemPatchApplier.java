@@ -23,8 +23,8 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
-import org.thingsboard.server.service.install.lts.LtsVersion;
+import org.thingsboard.server.service.install.lts.MigrationService;
+import org.thingsboard.server.service.install.lts.Version;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class SystemPatchApplier {
     private final WidgetTypeService widgetTypeService;
     private final WidgetsBundleService widgetsBundleService;
     private final ImageService imageService;
-    private final LtsMigrationService ltsMigrationService;
+    private final MigrationService migrationService;
 
     @PostConstruct
     private void init() {
@@ -100,7 +100,7 @@ public class SystemPatchApplier {
             // skipVersionCheck got us here with the database possibly already at the package version, where the
             // default half-open selection would be empty: pass it on so that run still applies the stored version's
             // own migration.
-            List<String> appliedVersions = ltsMigrationService.applyMigrations(dbVersion, packageVersion, skipVersionCheck, () -> {
+            List<String> appliedVersions = migrationService.applyMigrations(dbVersion, packageVersion, skipVersionCheck, () -> {
                 // Between the schema and backfill phases: the schema phase may have added columns these definitions
                 // reference, and the refreshed definitions are then in effect for the whole backfill run. Each file
                 // is one jdbcTemplate.execute, so PostgreSQL runs it in a single implicit transaction and other
@@ -124,7 +124,7 @@ public class SystemPatchApplier {
             int createdImages = createMissingSystemImages();
             log.info("Created {} new system images", createdImages);
 
-            ltsMigrationService.recordVersions(appliedVersions);
+            migrationService.recordVersions(appliedVersions);
             schemaSettingsService.updateSchemaVersion();
             log.info("System data patch update completed successfully");
 
@@ -139,11 +139,11 @@ public class SystemPatchApplier {
 
         log.trace("Package version: {}, DB schema version: {}", packageVersion, dbVersion);
 
-        LtsVersion packageVersionInfo;
-        LtsVersion dbVersionInfo;
+        Version packageVersionInfo;
+        Version dbVersionInfo;
         try {
-            packageVersionInfo = LtsVersion.parse(packageVersion);
-            dbVersionInfo = LtsVersion.parse(dbVersion);
+            packageVersionInfo = Version.parse(packageVersion);
+            dbVersionInfo = Version.parse(dbVersion);
         } catch (IllegalArgumentException e) {
             log.warn("Unable to parse versions. Package: {}, DB: {}", packageVersion, dbVersion);
             return false;

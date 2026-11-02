@@ -27,11 +27,16 @@ public enum RpcStatus {
     // (RpcWriteRepository caches the status names the SQL guard binds).
     private static final Map<RpcKind, Map<RpcStatus, Set<RpcStatus>>> ALLOWED_FROM = allowedFrom();
 
+    /**
+     * {@code true} while the RPC is still pending in the device actor (not yet delivered/answered).
+     * Note: TIMEOUT is not intermediate, but it is not final either - the device actor may retry
+     * the delivery (TIMEOUT -> SENT/DELIVERED/QUEUED) until retries are exhausted (then FAILED).
+     */
     @Getter
-    private final boolean pushDeleteNotificationToCore;
+    private final boolean intermediate;
 
-    RpcStatus(boolean pushDeleteNotificationToCore) {
-        this.pushDeleteNotificationToCore = pushDeleteNotificationToCore;
+    RpcStatus(boolean intermediate) {
+        this.intermediate = intermediate;
     }
 
     /**

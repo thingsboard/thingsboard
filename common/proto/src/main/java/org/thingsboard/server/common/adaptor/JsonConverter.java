@@ -308,11 +308,31 @@ public class JsonConverter {
         return ToServerRpcRequestMsg.newBuilder().setRequestId(requestId).setMethodName(object.get("method").getAsString()).setParams(GSON.toJson(object.get("params"))).build();
     }
 
+
+    private static boolean isExplicitDouble(String valueAsString, BigDecimal bd) {
+        // 1. If BigDecimal retains a fractional part (scale > 0) after removing trailing zeros, it is strictly a Double (e.g., 1.5, 1E-3)
+        if (bd.stripTrailingZeros().scale() > 0) {
+            return true;
+        }
+        // 2. If it contains a decimal point '.' but no exponent ('E' or 'e') (e.g., "100.0"), treat as Double.
+        // Values with exponents that resolve to integers (e.g., "9.97E19") will return false to be processed in the Long/BigInteger flow.
+        return valueAsString.contains(".") && !valueAsString.contains("E") && !valueAsString.contains("e");
+    }
+
     private static void parseNumericValue(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
         String valueAsString = value.getAsString();
         String key = valueEntry.getKey();
         var bd = new BigDecimal(valueAsString);
-        if (bd.stripTrailingZeros().scale() <= 0 && !isSimpleDouble(valueAsString)) {
+
+        if (isExplicitDouble(valueAsString, bd)) {
+            if (bd.stripTrailingZeros().scale() <= 16) {
+                result.add(new DoubleDataEntry(key, bd.doubleValue()));
+            } else if (!value.isNumber() || isTypeCastEnabled) {
+                result.add(new StringDataEntry(key, bd.toPlainString()));
+            } else {
+                throw new JsonSyntaxException("Big decimal values are not supported!");
+            }
+        } else {
             try {
                 result.add(new LongDataEntry(key, bd.longValueExact()));
             } catch (ArithmeticException e) {
@@ -321,14 +341,6 @@ public class JsonConverter {
                 } else {
                     throw new JsonSyntaxException("Big integer values are not supported!");
                 }
-            }
-        } else {
-            if (bd.scale() <= 16) {
-                result.add(new DoubleDataEntry(key, bd.doubleValue()));
-            } else if (!value.isNumber() || isTypeCastEnabled) {
-                result.add(new StringDataEntry(key, bd.toPlainString()));
-            } else {
-                throw new JsonSyntaxException("Big integer values are not supported!");
             }
         }
     }

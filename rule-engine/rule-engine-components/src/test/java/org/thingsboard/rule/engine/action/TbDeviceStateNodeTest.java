@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.rule.engine.action;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -159,7 +160,7 @@ public class TbDeviceStateNodeTest {
         given(ctxMock.isLocalEntity(eq(nonLocalDeviceId2))).willReturn(false);
 
         // WHEN
-        node.onPartitionChangeMsg(ctxMock, new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE));
+        node.onPartitionChangeMsg(ctxMock, PartitionChangeMsg.forAllTenants(ServiceType.TB_RULE_ENGINE));
 
         // THEN
         assertThat(rateLimits)

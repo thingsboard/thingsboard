@@ -35,7 +35,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.wl.WhiteLabelingService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.install.lts.LtsMigrationService;
+import org.thingsboard.server.service.install.lts.MigrationService;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 import org.thingsboard.server.service.install.update.EdgeProfileMigrationService;
 
@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
 /**
  * Two parts of the offline upgrade driven against a real database: the CE-to-PE data conversion
  * ({@code updateData(true)}) replayed the way a crashed conversion replays it, and a PE database stamped at a
- * pre-4.4 version taken to the package version by the real LTS chain ({@code upgradeDatabase(false)}), from the
+ * pre-4.4 version taken to the package version by the real migration chain ({@code upgradeDatabase(false)}), from the
  * position the chain now runs from for both sources.
  * <p>
  * What is not here is the CE schema fork, {@code upgradeDatabase(true)}. The fixture below builds CE-shaped
@@ -82,7 +82,7 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
     private static final List<String> COUNTED_TABLES = List.of(
             "entity_group", "relation", "tenant", "customer", "tb_user", "device", "asset", "dashboard");
 
-    // Columns added by the LTS files the chain selects. report is the PE-only table the whole ordering fix exists
+    // Columns added by the migration files the chain selects. report is the PE-only table the whole ordering fix exists
     // for, so its two 4.4 columns are in the set even though report_info_view's SELECT r.* captures them.
     private static final List<Column> V_4_3_1_2_COLUMNS = List.of(
             new Column("calculated_field", "additional_info", "varchar"),
@@ -105,7 +105,7 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
     @Autowired
     private InstallScripts installScripts;
     @Autowired
-    private LtsMigrationService ltsMigrationService;
+    private MigrationService migrationService;
     @Autowired
     private PlatformTransactionManager transactionManager;
 
@@ -284,8 +284,8 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
 
     /**
      * The real conversion, wired to the real DAO services. Only the collaborators outside it are stood in for:
-     * the two install-profile beans a test context does not have, and the LTS data phase, which
-     * {@link org.thingsboard.server.service.install.lts.LtsMigrationIntegrationTest} owns.
+     * the two install-profile beans a test context does not have, and the migration data phase, which
+     * {@link org.thingsboard.server.service.install.lts.MigrationIntegrationTest} owns.
      */
     private DefaultDataUpdateService ceDataUpdateService() {
         return new DefaultDataUpdateService(tenantService, relationService, ruleChainService, integrationService,
@@ -293,7 +293,7 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
                 dashboardService, entityViewService, edgeService, agentProfileService, edgeProfileMigrationService,
                 mock(SystemDataLoaderService.class), mock(ComponentDiscoveryService.class),
                 inlineUpgradeExecutor(), schemaSettingsStubbedAt("4.3.1.4"),
-                mock(LtsMigrationService.class));
+                mock(MigrationService.class));
     }
 
     /**
@@ -313,7 +313,7 @@ public class PeUpgradeChainIntegrationTest extends AbstractControllerTest {
     /** The real schema upgrade, with only the version pair it is driven over stubbed. */
     private SqlDatabaseUpgradeService upgradeService(String fromVersion) {
         return new SqlDatabaseUpgradeService(installScripts, jdbcTemplate, transactionManager,
-                schemaSettingsStubbedAt(fromVersion), ltsMigrationService);
+                schemaSettingsStubbedAt(fromVersion), migrationService);
     }
 
     private DatabaseSchemaSettingsService schemaSettingsStubbedAt(String dbVersion) {

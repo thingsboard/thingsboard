@@ -9,7 +9,7 @@ public interface DatabaseSchemaSettingsService {
 
     /**
      * Whether the operator forced this offline upgrade past the version check (SKIP_SCHEMA_VERSION_CHECK). Besides
-     * suppressing the validation errors, it makes the LTS migration selection inclusive of the stored version, so a
+     * suppressing the validation errors, it makes the migration selection inclusive of the stored version, so a
      * database already at the package version re-runs that version's own migration instead of selecting nothing.
      */
     boolean isForcedReUpgrade();

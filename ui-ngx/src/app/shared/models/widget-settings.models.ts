@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
+  deepClone,
   isDefinedAndNotNull,
   isNotEmptyStr,
   isNumber,
@@ -188,6 +189,28 @@ export interface ColorRangeSettings extends AdvancedColorMode {
   range?: ColorRange[];
   rangeAdvanced?: AdvancedColorRange[];
 }
+
+/**
+ * Converts any stored rangeList shape to ColorRangeSettings. Always returns a new deep copy (null/undefined pass through),
+ * so callers may mutate the result freely.
+ */
+export const normalizeColorRangeSettings = (rangeList: ColorRangeSettings | ColorRange[]): ColorRangeSettings => {
+  if (!isDefinedAndNotNull(rangeList)) {
+    return rangeList as ColorRangeSettings;
+  }
+  if (Array.isArray(rangeList)) {
+    return {advancedMode: false, range: deepClone(rangeList)};
+  }
+  const result: ColorRangeSettings = deepClone(rangeList);
+  result.advancedMode = result.advancedMode ?? false;
+  // Unwraps the legacy corrupted shape {range: {advancedMode, range: [...]}} (possibly nested several levels deep)
+  let range: any = result.range;
+  while (isDefinedAndNotNull(range) && !Array.isArray(range)) {
+    range = range.range;
+  }
+  result.range = range;
+  return result;
+};
 
 export interface ColorGradientSettings extends AdvancedColorMode {
   gradient?: string[];
@@ -515,9 +538,9 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
 
 class RangeColorProcessor extends AdvancedModeColorProcessor {
 
-  constructor(protected settings: ColorSettings,
-              protected ctx: WidgetContext) {
-    super(settings, ctx);
+  constructor(settings: ColorSettings,
+              ctx: WidgetContext) {
+    super({...settings, rangeList: normalizeColorRangeSettings(settings.rangeList)}, ctx);
   }
 
   update(value: any): void {
@@ -561,15 +584,8 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
   }
 
   private computeFromRange(value: any): string {
-    let rangeList: any = this.settings.rangeList as Array<ColorRange>;
-    let advancedMode = false;
-
-    if (isDefinedAndNotNull(this.settings.rangeList?.advancedMode)) {
-      advancedMode = this.settings.rangeList.advancedMode;
-      rangeList = advancedMode ?
-        this.settings.rangeList.rangeAdvanced as Array<AdvancedColorRange> :
-        this.settings.rangeList.range as Array<ColorRange>;
-    }
+    const advancedMode = this.settings.rangeList?.advancedMode ?? false;
+    const rangeList: any = advancedMode ? this.settings.rangeList?.rangeAdvanced : this.settings.rangeList?.range;
 
     if (rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);

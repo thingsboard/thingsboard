@@ -5,7 +5,6 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { EntityType } from '@shared/models/entity-type.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { AssetInfo } from '@shared/models/asset.models';
@@ -24,8 +23,6 @@ import { Authority } from '@shared/models/authority.enum';
     standalone: false
 })
 export class AssetComponent extends GroupEntityComponent<AssetInfo> {
-
-  entityType = EntityType;
 
   readonly isTenantAdmin: boolean;
 

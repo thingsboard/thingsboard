@@ -114,7 +114,7 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                 } else {
-                    // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FOR_UPGRADE and MIN_CE_VERSION_FOR_UPGRADE in DefaultDatabaseSchemaSettingsService
+                    // TODO DON'T FORGET to update SUPPORTED_FAMILIES_FOR_UPGRADE and MIN_CE_VERSION_FOR_UPGRADE in DefaultDatabaseSchemaSettingsService
                     databaseSchemaVersionService.validateSchemaSettings();
                     // The database's own product marker selects the branch, so a CE database can never be taken
                     // down the PE path by a missing flag. --fromVersion=CE is still accepted, and now a no-op.
@@ -131,7 +131,7 @@ public class ThingsboardInstallService {
                     }
                     cacheCleanupService.clearCache();
                     if (updateFromCE) {
-                        // The LTS chain references PE-only tables and runs each of its files as a single transaction,
+                        // The migration chain references PE-only tables and runs each of its files as a single transaction,
                         // so a converted CE database must get those tables before the chain rather than after it.
                         entityDatabaseSchemaService.createDatabaseSchema(false);
                     }

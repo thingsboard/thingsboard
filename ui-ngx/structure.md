@@ -835,18 +835,18 @@ Key selectors: `mat-toolbar.details-toolbar`, `button[mat-fab][color="accent"]`,
 <div class="mat-padding">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="isEntityReadonly">
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label><!-- translated label --></mat-label>
         <input matInput formControlName="name">
         <mat-error><!-- validation message --></mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <mat-label><!-- translated label --></mat-label>
         <input matInput formControlName="label">
       </mat-form-field>
-      <tb-entity-autocomplete formControlName="someEntityId"/>
+      <tb-entity-autocomplete appearance="outline" formControlName="someEntityId"/>
       <mat-slide-toggle formControlName="gateway"><!-- label --></mat-slide-toggle>
-      <mat-form-field>
+      <mat-form-field appearance="outline">
         <textarea matInput formControlName="description"></textarea>
       </mat-form-field>
     </fieldset>

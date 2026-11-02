@@ -75,6 +75,7 @@ public class TrendzClient {
             HttpHeaders.TRANSFER_ENCODING.toLowerCase(),
             HttpHeaders.CONNECTION.toLowerCase(),
             HttpHeaders.CONTENT_LENGTH.toLowerCase(),
+            HttpHeaders.CONTENT_ENCODING.toLowerCase(),
             "Keep-Alive".toLowerCase(),
             "Proxy-Authenticate".toLowerCase(),
             "Proxy-Authorization".toLowerCase(),

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.report;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.report.ReportService;
 import org.thingsboard.server.dao.report.ReportTemplateService;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.exception.AccessDeniedException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.report.context.TbReportCtx;
 import org.thingsboard.server.report.datasource.ReportDataService;
@@ -41,7 +43,9 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.telemetry.TbTelemetryService;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.common.data.report.configuration.timewindow.TimeIntervalCalculator.getIntervalTs;
 import static org.thingsboard.server.common.data.report.configuration.timewindow.TimeIntervalCalculator.getIntervalType;
@@ -112,19 +116,30 @@ public class LocalReportDataService implements ReportDataService {
     @Override
     public List<TsKvEntry> getTimeseries(EntityId entityId, List<String> keys, Long startTs, Long endTs, Interval interval, String timeZone, Aggregation agg, SortOrder.Direction sortOrder,
                                          Integer limit, boolean useStrictDataTypes, TbReportCtx ctx) {
-        return tbTelemetryService.getTimeseries(entityId, keys, startTs, endTs, getIntervalType(interval), getIntervalTs(interval), timeZone, limit, agg, sortOrder.name(), useStrictDataTypes, getSecurityUser(ctx)).get(); // .get() will be interrupted on task processing timeout
+        return getOrEmptyIfAccessDenied(tbTelemetryService.getTimeseries(entityId, keys, startTs, endTs, getIntervalType(interval), getIntervalTs(interval), timeZone, limit, agg, sortOrder.name(), useStrictDataTypes, getSecurityUser(ctx))); // .get() will be interrupted on task processing timeout
     }
 
     @SneakyThrows
     @Override
     public List<ReadTsKvQueryResult> findTimeseriesByQueries(EntityId entityId, List<BaseReadTsKvQuery> queries, TbReportCtx ctx) {
-        return tbTelemetryService.getTimeseriesByReadQueries(entityId, queries, getSecurityUser(ctx)).get();
+        return getOrEmptyIfAccessDenied(tbTelemetryService.getTimeseriesByReadQueries(entityId, queries, getSecurityUser(ctx)));
     }
 
     @Override
     public Report createReport(Report report, byte[] data, TbReportCtx ctx) throws ThingsboardException {
         accessControlService.checkPermission(getSecurityUser(ctx), Resource.REPORT, Operation.CREATE);
         return reportService.createReport(report, data);
+    }
+
+    private <T> List<T> getOrEmptyIfAccessDenied(ListenableFuture<List<T>> future) throws InterruptedException, ExecutionException {
+        try {
+            return future.get();
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof AccessDeniedException) {
+                return Collections.emptyList();
+            }
+            throw e;
+        }
     }
 
     private SecurityUser getSecurityUser(TbReportCtx ctx) {
