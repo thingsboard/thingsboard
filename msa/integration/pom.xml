@@ -70,6 +70,7 @@
                                         <argument>-t</argument>
                                         <argument>${docker.repo}/${docker.name}:latest</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>--sbom=true</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
                                         <argument>.</argument>
@@ -91,6 +92,7 @@
                                         <argument>-t</argument>
                                         <argument>${docker.repo}/${docker.name}:${project.version}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>--sbom=true</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
                                         <argument>.</argument>
@@ -135,6 +137,7 @@
                                         <argument>-t</argument>
                                         <argument>${docker.repo}/${docker.name}:latest</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>--sbom=true</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
                                         <argument>.</argument>
@@ -156,6 +159,7 @@
                                         <argument>-t</argument>
                                         <argument>${docker.repo}/${docker.name}:${project.version}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>--sbom=true</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
                                         <argument>.</argument>
@@ -177,6 +181,7 @@
                                         <argument>-t</argument>
                                         <argument>${docker.repo}/${docker.name}:${docker.lts.tag}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>--sbom=true</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
                                         <argument>.</argument>

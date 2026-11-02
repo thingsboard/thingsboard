@@ -39,6 +39,7 @@
         <skip.ui.build>${skip.yarn}</skip.ui.build>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
+        <sbom.package.phase>none</sbom.package.phase>
         <!-- Use -Dpkg.skip=true to skip all packaging at once (bootjar + deb + rpm + zip).
              Individual flags below can be set independently for finer control. -->
         <!-- Set to true to skip spring-boot:repackage (the boot jar, i.e. the *-boot.jar artifact).
@@ -117,6 +118,8 @@
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <jar-plugin.version>3.5.0</jar-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
+        <sbom-maven-plugin.version>1.0.0-SNAPSHOT</sbom-maven-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
         <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
@@ -764,6 +767,111 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.cyclonedx</groupId>
+                    <artifactId>cyclonedx-maven-plugin</artifactId>
+                    <version>${cyclonedx-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>generate-sbom</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>makeBom</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <projectType>application</projectType>
+                        <outputDirectory>${project.build.outputDirectory}/META-INF/sbom</outputDirectory>
+                        <outputFormat>json</outputFormat>
+                        <outputName>application.cdx</outputName>
+                        <includeProvidedScope>false</includeProvidedScope>
+                        <skipNotDeployed>false</skipNotDeployed>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.thingsboard</groupId>
+                    <artifactId>sbom-maven-plugin</artifactId>
+                    <version>${sbom-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>sbom-metadata</id>
+                            <goals>
+                                <goal>metadata</goal>
+                            </goals>
+                            <configuration>
+                                <manufacturer>
+                                    <name>ThingsBoard, Inc.</name>
+                                    <urls>
+                                        <url>https://thingsboard.io</url>
+                                    </urls>
+                                    <contacts>
+                                        <contact>
+                                            <email>security@thingsboard.io</email>
+                                        </contact>
+                                    </contacts>
+                                </manufacturer>
+                                <supplier>
+                                    <name>ThingsBoard, Inc.</name>
+                                    <urls>
+                                        <url>https://thingsboard.io</url>
+                                    </urls>
+                                </supplier>
+                                <componentManufacturer>
+                                    <name>ThingsBoard, Inc.</name>
+                                    <urls>
+                                        <url>https://thingsboard.io</url>
+                                    </urls>
+                                </componentManufacturer>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>package-sbom</id>
+                            <phase>${sbom.package.phase}</phase>
+                            <goals>
+                                <goal>package</goal>
+                            </goals>
+                            <configuration>
+                                <name>${pkg.name}</name>
+                                <packages>
+                                    <package>
+                                        <id>deb</id>
+                                        <file>${project.build.directory}/${pkg.name}.deb</file>
+                                        <purl>pkg:deb/thingsboard/${pkg.name}@${project.version}-1?arch=all</purl>
+                                        <skip>${pkg.skip.deb}</skip>
+                                    </package>
+                                    <package>
+                                        <id>rpm</id>
+                                        <file>${project.build.directory}/${pkg.name}.rpm</file>
+                                        <purl>pkg:rpm/thingsboard/${pkg.name}@${project.version}-1?arch=noarch</purl>
+                                        <skip>${pkg.skip.rpm}</skip>
+                                    </package>
+                                    <package>
+                                        <id>zip</id>
+                                        <file>${project.build.directory}/${pkg.name}-windows.zip</file>
+                                        <purl>pkg:generic/thingsboard/${pkg.name}-windows@${project.version}</purl>
+                                        <skip>${pkg.skip.zip}</skip>
+                                    </package>
+                                </packages>
+                                <components>
+                                    <component>
+                                        <type>application</type>
+                                        <group>com.sun.winsw</group>
+                                        <name>winsw</name>
+                                        <version>${winsw.version}</version>
+                                        <description>Windows service wrapper, shipped as ${pkg.name}.exe.</description>
+                                        <purl>pkg:maven/com.sun.winsw/winsw@${winsw.version}?classifier=bin&amp;type=exe</purl>
+                                        <license>MIT</license>
+                                        <file>${pkg.win.dist}/service.exe</file>
+                                        <packages>
+                                            <package>zip</package>
+                                        </packages>
+                                    </component>
+                                </components>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
