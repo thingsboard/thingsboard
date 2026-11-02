@@ -395,8 +395,10 @@ class DefaultDevicePackageUpdateServiceTest {
         // A copy is saved: the integration read, possibly the cache's own instance, stays as it is until the commit
         assertThat(saved.getValue()).isNotSameAs(current);
         assertThat(current.getConfiguration().get("metadata").has("profile.lansitec-badge")).isFalse();
-        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN").get("resolution").asText())
-                .isEqualTo("use-existing");
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN");
+        assertThat(state.get("resolution").asText()).isEqualTo("use-existing");
+        // The entries the step added, which a delete of the package removes; not the one it removed
+        assertThat(state.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
     }
 
     @Test
