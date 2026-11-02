@@ -62,6 +62,8 @@ export interface DeviceUpdateStep {
   resolution?: string;
   // The package step's id, which keys its install state; the name when not set
   id?: string;
+  // The step takes ThingsBoard's default converter: its install state says so, for the update check
+  defaultConverter?: boolean;
 }
 
 export interface DeviceUpdateRequest {

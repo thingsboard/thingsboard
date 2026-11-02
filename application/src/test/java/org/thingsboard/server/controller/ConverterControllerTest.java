@@ -686,9 +686,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         testDecoder(TTI_UPLINK_DECODER, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
     }
 
-    @Test
-    public void testThingsStackDefaultConvertersGiveRepositoryDeviceItsModelProfile() throws IOException {
-        String expectedDecodedMessage = "{\"entityType\":\"DEVICE\",\"name\":\"am308-office\",\"profile\":\"milesight-iot-am308\",\"label\":\"am308-office\",\"group\":\"my-app\"," +
+    private static final String THINGS_STACK_REPOSITORY_DEVICE_RESULT = "{\"entityType\":\"DEVICE\",\"name\":\"am308-office\",\"profile\":\"milesight-iot-am308\",\"label\":\"am308-office\",\"group\":\"my-app\"," +
                 "\"telemetry\":[{\"ts\":1793170000000,\"values\":{\"temperature\":24.1,\"co2\":550}},{\"ts\":1793181600100,\"values\":{\"battery\":95,\"temperature\":24.5,\"co2\":560," +
                 "\"fCnt\":12,\"data\":\"AXVk\",\"rssi\":-60,\"snr\":9.5,\"channel\":2,\"consumedAirtime\":\"0.061696s\"}}]," +
                 "\"attributes\":{\"eui\":\"24E124707C481005\",\"joinEui\":\"24E124C0002A0001\",\"devAddr\":\"260B1234\",\"deviceId\":\"am308-office\",\"applicationId\":\"my-app\"," +
@@ -696,7 +694,17 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "\"hardwareVersion\":\"1.0\",\"firmwareVersion\":\"1.0\",\"bandId\":\"EU_863_870\",\"netId\":\"000013\",\"tenantId\":\"ttn\",\"clusterId\":\"eu1\"," +
                 "\"clusterAddress\":\"eu1.cloud.thethings.network\"}}";
 
-        testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD, expectedDecodedMessage);
+    @Test
+    public void testThingsStackDefaultConvertersGiveRepositoryDeviceItsModelProfile() throws IOException {
+        testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD, Map.of(), THINGS_STACK_REPOSITORY_DEVICE_RESULT);
+    }
+
+    @Test
+    public void testThingsStackDefaultConvertersTakeProfileNameFromIntegrationMetadata() throws IOException {
+        String expectedDecodedMessage = THINGS_STACK_REPOSITORY_DEVICE_RESULT.replace("\"profile\":\"milesight-iot-am308\"", "\"profile\":\"AM308\"");
+        Map<String, String> integrationMetadata = Map.of("profile.milesight-iot-am308", "AM308", "profile.milesight-iot-ws202", "WS202");
+
+        testThingsStackDefaultConverters(THINGS_STACK_REPOSITORY_DEVICE_PAYLOAD, integrationMetadata, expectedDecodedMessage);
     }
 
     @Test
@@ -706,18 +714,18 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "\"attributes\":{\"eui\":\"70B3D57ED006F370\",\"deviceId\":\"manual-node\",\"applicationId\":\"my-app\",\"fPort\":1,\"bandwidth\":125000," +
                 "\"spreadingFactor\":9,\"frequency\":\"868300000\"}}";
 
-        testThingsStackDefaultConverters(THINGS_STACK_MANUAL_DEVICE_PAYLOAD, expectedDecodedMessage);
+        testThingsStackDefaultConverters(THINGS_STACK_MANUAL_DEVICE_PAYLOAD, Map.of("profile.milesight-iot-am308", "AM308"), expectedDecodedMessage);
     }
 
     // The TBEL and JS defaults are two copies of one script, so each of them must give this result for TTN and TTI
-    private void testThingsStackDefaultConverters(String payloadFile, String expectedResult) throws IOException {
+    private void testThingsStackDefaultConverters(String payloadFile, Map<String, String> integrationMetadata, String expectedResult) throws IOException {
         JsonNode defaultConfigurations = JacksonUtil.toJsonNode(readResource(DEFAULT_V2_CONFIGURATION));
         String payload = readResource(payloadFile);
         for (IntegrationType integrationType : List.of(IntegrationType.TTN, IntegrationType.TTI)) {
             Converter converter = createConverter(defaultConfigurations.get(integrationType.name()), integrationType, 2);
             for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
                 String decoderFileName = "converters/" + scriptLang.name().toLowerCase() + "-" + integrationType.name().toLowerCase() + "-decoder.raw";
-                assertThat(JacksonUtil.toJsonNode(decode(decoderFileName, payload, converter, scriptLang)))
+                assertThat(JacksonUtil.toJsonNode(decode(decoderFileName, payload, converter, scriptLang, integrationMetadata)))
                         .as("%s %s", integrationType, scriptLang)
                         .isEqualTo(JacksonUtil.toJsonNode(expectedResult));
             }
@@ -896,6 +904,12 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     private String decode(String decoderFileName, String payloadExample, Converter converter, ScriptLanguage scriptLang) throws IOException {
+        return decode(decoderFileName, payloadExample, converter, scriptLang, Map.of());
+    }
+
+    // integrationMetadata: what the integration adds to the metadata of every uplink, from its configuration
+    private String decode(String decoderFileName, String payloadExample, Converter converter, ScriptLanguage scriptLang,
+                          Map<String, String> integrationMetadata) throws IOException {
         byte[] bytes = IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(decoderFileName));
 
         String base64Payload = Base64.getEncoder().encodeToString(payloadExample.getBytes(StandardCharsets.UTF_8));
@@ -917,6 +931,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 inputParams.set("payload", unwrapped.get("payload"));
             }
             inputParams.set("metadata",unwrapped.get("metadata"));
+            integrationMetadata.forEach(((ObjectNode) inputParams.get("metadata"))::put);
         } else {
             inputParams.set("payload", new TextNode(base64Payload));
         }

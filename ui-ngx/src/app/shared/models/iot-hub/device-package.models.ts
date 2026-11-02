@@ -226,6 +226,10 @@ export interface DeviceInstallStep {
   dockerCompose?: string;
   // INTEGRATION step references the integration-form.json artifact alongside the template.
   form?: string;
+  // UPLINK_CONVERTER: ThingsBoard's default converter for the method's integration instead of a template
+  default?: boolean;
+  // INTEGRATION: entries added to the integration's metadata, which keeps the entries it has
+  metadata?: Record<string, string>;
 }
 
 export interface DevicePackageInfo {
@@ -285,6 +289,8 @@ export interface FormFieldDefinition {
   // Consecutive fields with the same group are shown in one panel titled with the group
   group?: string;
   readOnly?: boolean;
+  // A STRING field the user changed shows a button that puts defaultValue back
+  resettable?: boolean;
   // Shown inside the empty field; the label then always stays above it
   placeholder?: string;
   // Fills the field from other fields of the form, e.g. "TTN – ${appId}", until the user edits it.

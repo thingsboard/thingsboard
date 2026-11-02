@@ -205,6 +205,14 @@
                   <mat-icon>autorenew</mat-icon>
                 </button>
               }
+              @if (canResetToDefault(field)) {
+                <button mat-icon-button matSuffix type="button"
+                        [matTooltip]="'action.reset-default' | translate"
+                        matTooltipPosition="above"
+                        (click)="resetToDefault(field)">
+                  <tb-icon>mdi:broom</tb-icon>
+                </button>
+              }
               @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
                 <mat-hint>{{ helpTextOf(field) }}</mat-hint>
               }

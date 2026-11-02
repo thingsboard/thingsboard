@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 
@@ -37,6 +38,10 @@ final class EntityChecksum {
         StringBuilder canonical = new StringBuilder();
         for (Object part : parts) {
             JsonNode node = part instanceof RuleChainMetaData metadata ? ruleChainContent(metadata) : JacksonUtil.valueToTree(part);
+            if (part instanceof Integration && node.get("configuration") instanceof ObjectNode configuration) {
+                // Device packages on one integration add their entries to its metadata: that is no change to the integration
+                configuration.remove("metadata");
+            }
             appendCanonical(canonical, node, true);
             canonical.append('|');
         }

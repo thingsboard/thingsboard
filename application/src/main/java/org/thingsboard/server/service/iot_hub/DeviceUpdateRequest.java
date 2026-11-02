@@ -61,6 +61,8 @@ public class DeviceUpdateRequest {
         private JsonNode sharedAttributes;
         // The resolution the install state records for it
         private String resolution;
+        // UPLINK_CONVERTER: the step takes ThingsBoard's default converter, which the install state records for the update check
+        private boolean defaultConverter;
     }
 
 }

@@ -35,6 +35,11 @@ import { IntegrationService } from '@core/http/integration.service';
 import { DialogService } from '@core/services/dialog.service';
 import { Converter, ConverterType } from '@shared/models/converter.models';
 import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-generation.service';
+import { ResourcesService } from '@core/services/resources.service';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { IntegrationType } from '@shared/models/integration.models';
+import { differsFromDefaultConverter, loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
 import {
   cleanFormFieldValue,
   DeviceInstallStep,
@@ -98,6 +103,8 @@ interface EntityStepPlan {
   version?: number;
   // Modified: the entity as the check found it, which the user can download before it is overwritten
   current?: any;
+  // A step with "default": true whose converter differs from ThingsBoard's default converter now
+  newDefaultConverter?: boolean;
 }
 
 /**
@@ -225,6 +232,8 @@ export interface ConnectionCheck {
 }
 
 const ENTITY_STEP_MIN_DELAY = 2000;
+// Where the wizard keeps the converter it builds for a step with "default": true, as if the package had that file
+const DEFAULT_CONVERTER_PATH = 'tb-default-converter/';
 const DEFAULT_RANDOM_SIZE = 20;
 const TRANSPORT_HOST_FIELD_KEY = 'tbTransportHost';
 const TRANSPORT_PORT_FIELD_KEY = 'tbTransportPort';
@@ -359,6 +368,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private previousFiles = new Map<string, string>();
   private previousPackageInfo: DevicePackageInfo | null = null;
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
+  // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
+  private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -397,7 +408,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private integrationService: IntegrationService,
     private aiDashboardGenerationService: AiDashboardGenerationService,
     private dialogService: DialogService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private resourcesService: ResourcesService
   ) {
     super(store, router, dialogRef);
   }
@@ -407,6 +419,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     try {
       await this.loadPackageFiles(this.data.item.id as string, this.zipFiles, this.zipImages);
       this.packageInfo = JSON.parse(this.zipFiles.get('device-info.json'));
+      await this.addDefaultConverters();
       this.availableInstallMethods = this.packageInfo.installMethods.filter(
         ct => this.packageInfo.installSteps[ct]?.length > 0
       );
@@ -440,6 +453,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // Update: the package keeps the method it was installed with
       this.selectedInstallMethod = this.data.update.descriptor.selectedInstallMethod;
       await this.loadPreviousVersion();
+      await this.checkDefaultConverters();
       if (this.isTextOnlyUpdate() && await this.registerTextOnlyUpdate()) {
         return;
       }
@@ -1588,7 +1602,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
         if (!body.routingKey) body.routingKey = this.pendingRoutingKey;
         if (!body.configuration) body.configuration = {};
-        if (body.configuration.metadata == null) body.configuration.metadata = {};
+        body.configuration.metadata = this.withStepMetadata(step, body.configuration.metadata);
 
         const result = await firstValueFrom(
           this.integrationService.saveIntegration(body, { ignoreErrors: true })
@@ -1785,7 +1799,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         body.id = { id: existing.id, entityType: 'INTEGRATION' };
         body.routingKey = this.pendingRoutingKey;
         if (!body.configuration) body.configuration = {};
-        if (body.configuration.metadata == null) body.configuration.metadata = {};
+        const current = await firstValueFrom(this.integrationService.getIntegration(existing.id, {ignoreErrors: true}));
+        body.configuration.metadata = this.withStepMetadata(step,
+          { ...current?.configuration?.metadata, ...body.configuration.metadata });
 
         const result = await firstValueFrom(
           this.integrationService.saveIntegration(body, { ignoreErrors: true })
@@ -1802,6 +1818,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** A device or gateway taken as it is: the token comes from its current credentials. */
   private async useExistingEntity(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
+    if (step.type === InstallStepType.INTEGRATION && step.metadata) {
+      return this.addStepMetadata(step, existing);
+    }
     if (step.type !== InstallStepType.DEVICE && step.type !== InstallStepType.GATEWAY) {
       return existing;
     }
@@ -1812,6 +1831,35 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       this.setGatewayOutput(step, output);
     }
     return output;
+  }
+
+  /**
+   * The integration's metadata with the INTEGRATION step's entries added. The entries it has stay, so the packages on
+   * one integration keep each other's. An entry that maps a name to itself, as profile.<name>: <name> does when the
+   * user kept the default profile name, isn't added.
+   */
+  private withStepMetadata(step: DeviceInstallStep, metadata: Record<string, string> | null | undefined): Record<string, string> {
+    const merged = { ...(metadata ?? {}) };
+    for (const [rawKey, rawValue] of Object.entries(step.metadata ?? {})) {
+      const key = this.resolveVariables(rawKey);
+      const value = this.resolveVariables(String(rawValue ?? ''));
+      if (value && !value.includes('${') && value !== key.substring(key.indexOf('.') + 1)) {
+        merged[key] = value;
+      }
+    }
+    return merged;
+  }
+
+  /** An integration taken as it is still gets the step's metadata: the package's converter reads it. */
+  private async addStepMetadata(step: DeviceInstallStep, existing: EntityStepOutput): Promise<EntityStepOutput> {
+    const integration = await firstValueFrom(this.integrationService.getIntegration(existing.id, {ignoreErrors: true}));
+    const metadata = this.withStepMetadata(step, integration.configuration?.metadata);
+    if (isEqual(metadata, integration.configuration?.metadata ?? {})) {
+      return existing;
+    }
+    integration.configuration = { ...integration.configuration, metadata };
+    const result = await firstValueFrom(this.integrationService.saveIntegration(integration, {ignoreErrors: true}));
+    return this.buildIntegrationOutput(result);
   }
 
   /** Stores the gateway output early, so the custom docker-compose template, if any, resolves ${gateway.token} etc. */
@@ -2001,7 +2049,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         fromVersionId: this.data.update.fromVersionId,
         selectedInstallMethod: this.selectedInstallMethod,
         installState: this.buildFormState(),
-        steps: this.buildUpdateSteps(ws)
+        steps: await this.buildUpdateSteps(ws)
       }, { ignoreLoading: true, ignoreErrors: true }));
     } catch (e: any) {
       result = { success: false, errorMessage: this.failureMessage(e) };
@@ -2053,7 +2101,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /** Update: the steps the server applies, each with its entity resolved from the template of the new version. */
-  private buildUpdateSteps(ws: WizardStep): DeviceUpdateStep[] {
+  private async buildUpdateSteps(ws: WizardStep): Promise<DeviceUpdateStep[]> {
     for (const ep of ws.entitySteps) {
       const plan = this.entityPlans.get(ep);
       const alias = stepTypeAliasMap[ep.step.type];
@@ -2068,16 +2116,21 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.entityOutputs.delete(alias);
       }
     }
-    return ws.entitySteps.map(ep => this.buildUpdateStep(ws, ep.step, this.entityPlans.get(ep)));
+    const steps: DeviceUpdateStep[] = [];
+    for (const ep of ws.entitySteps) {
+      steps.push(await this.buildUpdateStep(ws, ep.step, this.entityPlans.get(ep)));
+    }
+    return steps;
   }
 
-  private buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): DeviceUpdateStep {
+  private async buildUpdateStep(ws: WizardStep, step: DeviceInstallStep, plan: EntityStepPlan): Promise<DeviceUpdateStep> {
     const base: DeviceUpdateStep = {
       name: step.name,
       id: step.id,
       type: step.type,
       action: 'KEEP',
-      resolution: plan.previous?.resolution ?? plan.resolution ?? 'created'
+      resolution: plan.previous?.resolution ?? plan.resolution ?? 'created',
+      defaultConverter: step.default || undefined
     };
     if (step.type === InstallStepType.GATEWAY_CONNECTOR) {
       return plan.action === 'keep' ? base : { ...base, action: 'OVERWRITE', entity: this.resolveTemplateJson(this.zipFiles.get(step.template)) };
@@ -2090,6 +2143,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     }
     const overwritten = plan.action === 'overwrite' ? plan.previous.output : plan.resolution === 'overwrite' ? plan.existing : null;
     const entity = this.buildEntityBody(ws, step, overwritten);
+    if (step.type === InstallStepType.INTEGRATION) {
+      // An overwritten integration keeps the metadata it has, e.g. other packages' profile names
+      const current = overwritten ?
+        await firstValueFrom(this.integrationService.getIntegration(overwritten.id, {ignoreErrors: true})) : null;
+      entity.configuration.metadata = this.withStepMetadata(step, { ...current?.configuration?.metadata, ...entity.configuration.metadata });
+    }
     // As at install, the entity gets the step's attributes
     const attributes = {
       serverAttributes: this.resolvePackageFile(this.zipFiles, step.serverAttributes, this.formValues),
@@ -2186,6 +2245,51 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
           files.set(path, await entry.async('string'));
         }
       }
+    }
+  }
+
+  /**
+   * A converter step with "default": true takes the converter ThingsBoard creates for a new integration of the method's
+   * type (INTEGRATION_TTN: TTN). It becomes the step's template, so it installs, overwrites and updates like a file of the package.
+   */
+  private async addDefaultConverters(): Promise<void> {
+    const scriptLang = getCurrentAuthState(this.store).tbelEnabled ? ScriptLanguage.TBEL : ScriptLanguage.JS;
+    for (const [method, steps] of Object.entries(this.packageInfo.installSteps ?? {})) {
+      for (const step of steps) {
+        if (step.type !== InstallStepType.UPLINK_CONVERTER || !step.default) {
+          continue;
+        }
+        const integrationType = method.replace(/^INTEGRATION_/, '') as IntegrationType;
+        const converter = await loadDefaultUplinkConverter(this.resourcesService, integrationType, scriptLang, step.name);
+        if (!converter) {
+          throw new Error(`ThingsBoard has no default converter for ${integrationType}`);
+        }
+        step.template = `${DEFAULT_CONVERTER_PATH}${integrationType}.json`;
+        this.zipFiles.set(step.template, JSON.stringify(converter));
+      }
+    }
+  }
+
+  /**
+   * Update: ThingsBoard's default converter changes with ThingsBoard, not with the package, so a step with "default": true
+   * changed when the package's converter differs from the default one now. A converter the user changed differs too:
+   * the update shows that someone changed it.
+   */
+  private async checkDefaultConverters(): Promise<void> {
+    this.restoreInstallState(this.data.update.descriptor.installState ?? {});
+    try {
+      for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
+        const id = step.default ? this.storedStateOf(step)?.state?.entityOutput?.id : undefined;
+        const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
+        if (converter) {
+          const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
+            converter.configuration.scriptLang, converter.name);
+          this.defaultConverterChanges.set(step, !!defaultConverter && differsFromDefaultConverter(converter, defaultConverter));
+        }
+      }
+    } finally {
+      this.formValues = {};
+      this.entityOutputs.clear();
     }
   }
 
@@ -2343,12 +2447,15 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** Update: true when the new version's files give the entity something else than the installed version's gave it. */
   private entityStepChanged(step: DeviceInstallStep): boolean {
+    if (this.defaultConverterChanges.has(step)) {
+      return this.defaultConverterChanges.get(step);
+    }
     const previousStep = this.findPreviousStep(step);
     if (!previousStep) {
       return true;
     }
     const previousFormValues = this.previousFormValues();
-    const files: (keyof DeviceInstallStep)[] = ['template', 'serverAttributes', 'sharedAttributes', 'credentials'];
+    const files: ('template' | 'serverAttributes' | 'sharedAttributes' | 'credentials')[] = ['template', 'serverAttributes', 'sharedAttributes', 'credentials'];
     return files.some(file => !isEqual(
       this.resolvePackageFile(this.zipFiles, step[file], this.formValues),
       this.resolvePackageFile(this.previousFiles, previousStep[file], previousFormValues)
@@ -2418,6 +2525,13 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (previous) {
       // Its current name: the user may have renamed it
       ep.resolvedName = previous.output.name;
+      const newDefaultConverter = this.defaultConverterChanges.get(step);
+      // The default converter of a package that took another package's converter is that package's: the update
+      // of either brings it to ThingsBoard's default, which changes it for both
+      if (previous.useExisting && newDefaultConverter) {
+        const current = await this.loadEntitySnapshot(step, previous.output.id);
+        return { action: 'overwrite', previous, shared: true, confirmed: false, version: current.version, newDefaultConverter };
+      }
       // The device and its credentials, which the firmware uses, never change on update
       if (previous.useExisting || step.type === InstallStepType.DEVICE || step.type === InstallStepType.GATEWAY) {
         return { action: 'keep', previous, confirmed: true };
@@ -2436,7 +2550,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         action: 'overwrite', previous, shared: previous.shared, modified: modified && !previous.shared,
         confirmed: !previous.shared && !modified,
         version,
-        current: modified && !previous.shared ? current : undefined
+        current: modified && !previous.shared ? current : undefined,
+        newDefaultConverter
       };
     }
     // New in this version, or deleted since: created as at install, with the same name conflict check
@@ -2565,7 +2680,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       } else if (ws.type === 'progress' && ws.entitySteps) {
         for (const ep of ws.entitySteps) {
           if (ep.status === 'success' && ep.entityOutput) {
-            state[ep.step.id ?? ep.step.name] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created' };
+            state[ep.step.id ?? ep.step.name] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created',
+              ...(ep.step.default ? { defaultConverter: true } : {}) };
           }
         }
       }
