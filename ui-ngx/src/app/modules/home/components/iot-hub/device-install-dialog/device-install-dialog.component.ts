@@ -370,6 +370,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   private entityPlans = new WeakMap<EntityStepProgress, EntityStepPlan>();
   // Update: for each step with "default": true, whether its converter differs from ThingsBoard's default one now
   private defaultConverterChanges = new Map<DeviceInstallStep, boolean>();
+  // Update: the check of the update in progress; a way back meanwhile starts a new one, which drops this one's result
+  private updateCheckRun = 0;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -557,7 +559,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** Update: coming back to the Update step checks the update again, e.g. with the configuration changed. */
   private resetUpdatePlan(ws: WizardStep): void {
-    if (ws.type === 'progress' && !ws.progressDone && !ws.updating && !ws.checking) {
+    if (ws.type === 'progress' && !ws.progressDone && !ws.updating) {
+      if (ws.checking) {
+        // E.g. back through the stepper header during the check: its result is dropped when it comes
+        this.updateCheckRun++;
+        ws.checking = false;
+      }
       ws.entitySteps = null;
       ws.reviewing = false;
       ws.progressError = null;
@@ -2585,6 +2592,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
 
   /** Update: finds out what the update changes and what the user has to confirm, before anything changes. */
   private async checkUpdate(ws: WizardStep): Promise<void> {
+    const run = ++this.updateCheckRun;
     // Templates refer to the package's entities, e.g. ${deviceProfile.id}: until the steps run, the installed ones
     this.restoreInstallState(this.data.update.descriptor.installState ?? {}, false);
     ws.entitySteps = ws.rawSteps.map(s => ({
@@ -2600,9 +2608,16 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       const states = await firstValueFrom(this.iotHubApiService.checkDeviceUpdate(this.data.update.installedItemId, { ignoreLoading: true }));
       this.updateStates = new Map(states.map(state => [state.stepName, state]));
       const plans = await Promise.all(ws.entitySteps.map(ep => this.planEntityStep(ep)));
+      if (run !== this.updateCheckRun) {
+        // The user went back meanwhile: the plan is of the form values before
+        return;
+      }
       ws.entitySteps.forEach((ep, i) => this.entityPlans.set(ep, plans[i]));
       this.overwriteReferencesToCreated(ws);
     } catch (e: any) {
+      if (run !== this.updateCheckRun) {
+        return;
+      }
       ws.progressError = this.failureMessage(e);
     }
     ws.checking = false;
