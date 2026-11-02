@@ -2,33 +2,102 @@
 // SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.integration.api.converter;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.integration.api.converter.wrapper.ConverterUnwrapper;
+import org.thingsboard.integration.api.converter.wrapper.ThingsStackConverterUnwrapper;
 import org.thingsboard.integration.api.data.ContentType;
 import org.thingsboard.integration.api.data.UplinkData;
 import org.thingsboard.integration.api.data.UplinkMetaData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.DOUBLE_V;
+import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.LONG_V;
+import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.STRING_V;
 
 public class DedicatedScriptUplinkDataConverterTest {
 
     private DedicatedScriptUplinkDataConverter uplinkDataConverter;
+    private final ConverterUnwrapper thingsStackUnwrapper = new ThingsStackConverterUnwrapper();
 
     @BeforeEach
     public void startup() {
         uplinkDataConverter = new DedicatedScriptUplinkDataConverter(any(), any(), any());
+        ReflectionTestUtils.setField(uplinkDataConverter, "converterUnwrapper", thingsStackUnwrapper);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"01020304", "01a44d4c"})
+    public void parseUplinkDataKeepsStringIdentifiersInAttributesTest(String devAddr) throws Exception {
+        setConfig(Set.of("devAddr", "eui", "fCnt", "rssi", "snr"), null);
+
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrapThingsStack(devAddr));
+
+        Map<String, TransportProtos.KeyValueProto> attributes = toMap(uplink.getAttributesUpdate().getKvList());
+        assertKv(attributes.get("devAddr"), STRING_V, devAddr);
+        assertKv(attributes.get("eui"), STRING_V, "1000000000000001");
+        assertKv(attributes.get("fCnt"), LONG_V, 101L);
+        assertKv(attributes.get("rssi"), LONG_V, -22L);
+        assertKv(attributes.get("snr"), DOUBLE_V, 11.0);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"01020304", "01a44d4c"})
+    public void parseUplinkDataKeepsStringIdentifiersInTelemetryTest(String devAddr) throws Exception {
+        setConfig(Set.of("eui"), Set.of("devAddr", "fCnt", "rssi", "snr"));
+
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrapThingsStack(devAddr));
+
+        Map<String, TransportProtos.KeyValueProto> telemetry = toMap(uplink.getTelemetry().getTsKvList(0).getKvList());
+        assertKv(telemetry.get("devAddr"), STRING_V, devAddr);
+        assertKv(telemetry.get("fCnt"), LONG_V, 101L);
+        assertKv(telemetry.get("rssi"), LONG_V, -22L);
+        assertKv(telemetry.get("snr"), DOUBLE_V, 11.0);
+        assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("eui"), STRING_V, "1000000000000001");
+    }
+
+    @Test
+    public void parseUplinkDataKeepsNumericIdentifierAsNumberTest() throws Exception {
+        setConfig(Set.of("devAddr"), null);
+
+        ObjectNode payload = JacksonUtil.fromString(readPayloadFromFile("ThingsStackPayload.json"), ObjectNode.class);
+        UplinkMetaData unwrapped = thingsStackUnwrapper.unwrap(JacksonUtil.writeValueAsBytes(payload), new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond();
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrapped);
+
+        assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("devAddr"), LONG_V, 27000020L);
+    }
+
+    @Test
+    public void parseUplinkDataCastsDecoderOutputTest() throws Exception {
+        setConfig(Set.of("devAddr"), null);
+
+        JsonObject attributes = new JsonObject();
+        attributes.addProperty("devAddr", "01020304");
+        JsonObject uplinkJson = new JsonObject();
+        uplinkJson.add("attributes", attributes);
+
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(uplinkJson, unwrapThingsStack("05060708"));
+
+        assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("devAddr"), LONG_V, 1020304L);
     }
 
     @Test
@@ -204,6 +273,37 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertEquals("Device BE7A123456789", uplink.getDeviceName());
         assertEquals("default", uplink.getDeviceType());
         assertEquals("BE7A123456789", uplink.getDeviceLabel());
+    }
+
+    private void setConfig(Set<String> attributes, Set<String> telemetry) {
+        DedicatedConverterConfig config = new DedicatedConverterConfig();
+        config.setType(EntityType.DEVICE);
+        config.setName("Device $eui");
+        config.setAttributes(attributes);
+        config.setTelemetry(telemetry);
+        ReflectionTestUtils.setField(uplinkDataConverter, "config", config);
+    }
+
+    private UplinkMetaData unwrapThingsStack(String devAddr) throws Exception {
+        ObjectNode payload = JacksonUtil.fromString(readPayloadFromFile("ThingsStackPayload.json"), ObjectNode.class);
+        ObjectNode endDeviceIds = (ObjectNode) payload.get("end_device_ids");
+        endDeviceIds.put("dev_addr", devAddr);
+        endDeviceIds.put("dev_eui", "1000000000000001");
+        return thingsStackUnwrapper.unwrap(JacksonUtil.writeValueAsBytes(payload), new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond();
+    }
+
+    private Map<String, TransportProtos.KeyValueProto> toMap(List<TransportProtos.KeyValueProto> kvList) {
+        return kvList.stream().collect(Collectors.toMap(TransportProtos.KeyValueProto::getKey, kv -> kv));
+    }
+
+    private void assertKv(TransportProtos.KeyValueProto kv, TransportProtos.KeyValueType type, Object value) {
+        assertEquals(type, kv.getType());
+        assertEquals(value, getValue(kv));
+    }
+
+    private String readPayloadFromFile(String fileName) throws Exception {
+        var uri = this.getClass().getClassLoader().getResource(fileName).toURI();
+        return Files.readString(Path.of(uri));
     }
 
     private Object getValue(TransportProtos.KeyValueProto kv) {
