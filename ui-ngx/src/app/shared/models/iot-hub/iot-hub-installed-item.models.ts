@@ -30,6 +30,8 @@ export interface RuleChainInstalledItemDescriptor {
 export interface DeviceInstalledItemDescriptor {
   type: 'DEVICE';
   createdEntityIds?: { entityType: string; id: string }[];
+  // Of createdEntityIds, the entities the user chose to use as they were: the package doesn't own them
+  usedExistingEntityIds?: { entityType: string; id: string }[];
   dashboardId?: { id: string };
   selectedInstallMethod?: string;
   installState?: Record<string, any>;

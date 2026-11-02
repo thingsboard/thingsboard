@@ -18,7 +18,8 @@ import {
   DeviceInstalledItemDescriptor,
   DevicePackageEntityState,
   DeviceUpdateResult,
-  DeviceUpdateStep
+  DeviceUpdateStep,
+  IotHubInstalledItem
 } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -39,7 +40,8 @@ import { ResourcesService } from '@core/services/resources.service';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { IntegrationType } from '@shared/models/integration.models';
-import { differsFromDefaultConverter, loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
+import { differsFromDefaultConverter, isOwnDefaultConverter, loadDefaultUplinkConverter } from '@home/components/iot-hub/iot-hub-default-converter';
+import { PageData } from '@shared/models/page/page-data';
 import {
   cleanFormFieldValue,
   DeviceInstallStep,
@@ -1462,7 +1464,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       await firstValueFrom(
         this.iotHubApiService.registerDeviceInstall(
           this.data.item.id as string,
-          { createdEntityIds, dashboardId, selectedInstallMethod: this.selectedInstallMethod, installState: this.buildInstallState() },
+          { createdEntityIds, usedExistingEntityIds: this.collectUsedExistingEntityIds(), dashboardId,
+            selectedInstallMethod: this.selectedInstallMethod, installState: this.buildInstallState() },
           { ignoreLoading: true }
         )
       );
@@ -1836,14 +1839,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   /**
    * The integration's metadata with the INTEGRATION step's entries added. The entries it has stay, so the packages on
    * one integration keep each other's. An entry that maps a name to itself, as profile.<name>: <name> does when the
-   * user kept the default profile name, isn't added.
+   * user kept the default profile name, isn't added, and an earlier value of it is removed: the name is the default again.
    */
   private withStepMetadata(step: DeviceInstallStep, metadata: Record<string, string> | null | undefined): Record<string, string> {
     const merged = { ...(metadata ?? {}) };
     for (const [rawKey, rawValue] of Object.entries(step.metadata ?? {})) {
       const key = this.resolveVariables(rawKey);
       const value = this.resolveVariables(String(rawValue ?? ''));
-      if (value && !value.includes('${') && value !== key.substring(key.indexOf('.') + 1)) {
+      if (!value || value.includes('${')) {
+        continue;
+      }
+      if (value === key.substring(key.indexOf('.') + 1)) {
+        delete merged[key];
+      } else {
         merged[key] = value;
       }
     }
@@ -2282,7 +2290,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.restoreInstallState(this.data.update.descriptor.installState ?? {});
     try {
       for (const step of this.packageInfo.installSteps[this.selectedInstallMethod] ?? []) {
-        const id = step.default ? this.storedStateOf(step)?.state?.entityOutput?.id : undefined;
+        const stored = step.default ? this.storedStateOf(step)?.state : undefined;
+        let id: string = stored?.entityOutput?.id;
+        // A converter taken as it was may be any converter with that name: only another package's default one is checked
+        if (id && stored.resolution === 'use-existing' && !(await this.isInstalledDefaultConverter(id))) {
+          id = undefined;
+        }
         const converter = id ? await firstValueFrom(this.converterService.getConverter(id, {ignoreErrors: true})).catch(() => null) : null;
         if (converter) {
           const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
@@ -2348,7 +2361,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         return false;
       }
       steps.push({ name: step.name, id: step.id, type: step.type, action: 'KEEP', entityId: stored?.entityOutput?.id,
-        resolution: stored?.resolution ?? 'created', confirmed: true });
+        resolution: stored?.resolution ?? 'created', confirmed: true, defaultConverter: step.default || undefined });
     }
     // Under the new version's keys, as the wizard would store them
     const formState: Record<string, any> = {};
@@ -2429,13 +2442,30 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return new Set(fields.map(field => field.key).filter(key => !previousKeys.has(key)));
   }
 
+  /** True when a device package installed the converter itself, as its default converter. */
+  private async isInstalledDefaultConverter(id: string): Promise<boolean> {
+    let pageLink = new PageLink(100);
+    let page: PageData<IotHubInstalledItem>;
+    do {
+      page = await firstValueFrom(this.iotHubApiService.getInstalledItems(pageLink, 'DEVICE', undefined, { ignoreLoading: true }));
+      if (page.data.some(item => isOwnDefaultConverter(item, id))) {
+        return true;
+      }
+      pageLink = pageLink.nextPageLink();
+    } while (page.hasNext);
+    return false;
+  }
+
   /**
-   * Update: true when the entity is one the installed package owns: its install state records it, and not as one
-   * the user chose to use as it was. Not createdEntityIds: the install adds the use-existing ones to it too.
+   * Update: true when the entity is one the installed package owns: it created it, not the user chose to use it as it was.
+   * The same rule as the server's: createdEntityIds without usedExistingEntityIds, which an install made before the
+   * descriptor kept them has only in its install state.
    */
   private isPackageEntity(id: string): boolean {
-    return Object.values(this.data.update?.descriptor.installState ?? {})
-      .some(state => state?.entityOutput?.id === id && state.resolution !== 'use-existing');
+    const descriptor = this.data.update?.descriptor;
+    const usedExisting = descriptor?.usedExistingEntityIds?.some(used => used.id === id) ??
+      Object.values(descriptor?.installState ?? {}).some(state => state?.entityOutput?.id === id && state.resolution === 'use-existing');
+    return !!descriptor?.createdEntityIds?.some(created => created.id === id) && !usedExisting;
   }
 
   /** The keys the install state may keep a step under: its id, or else its name, as written or resolved. */
@@ -2478,7 +2508,23 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return files.some(file => !isEqual(
       this.resolvePackageFile(this.zipFiles, step[file], this.formValues),
       this.resolvePackageFile(this.previousFiles, previousStep[file], previousFormValues)
-    ));
+    )) || !isEqual(
+      // An INTEGRATION step's metadata entries, which the package's converter reads, are written when it is overwritten
+      this.resolveStepMetadata(step.metadata, this.formValues),
+      this.resolveStepMetadata(previousStep.metadata, previousFormValues)
+    );
+  }
+
+  /** The metadata entries of a step, resolved with the given form values. */
+  private resolveStepMetadata(metadata: Record<string, any> | undefined, formValues: Record<string, any>): Record<string, string> {
+    const committedValues = this.formValues;
+    this.formValues = formValues;
+    try {
+      return Object.fromEntries(Object.entries(metadata ?? {})
+        .map(([key, value]) => [this.resolveVariables(key), this.resolveVariables(String(value ?? ''))]));
+    } finally {
+      this.formValues = committedValues;
+    }
   }
 
   /** Update: the form values the installed version was installed with. */
@@ -2706,6 +2752,20 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     return state;
+  }
+
+  /** Of the created entity ids, the ones the user chose to use as they were: the package doesn't own them. */
+  private collectUsedExistingEntityIds(): { entityType: string; id: string }[] {
+    const ids: { entityType: string; id: string }[] = [];
+    for (const ws of this.wizardSteps) {
+      for (const ep of ws.type === 'progress' ? ws.entitySteps ?? [] : []) {
+        const entityType = this.stepTypeToEntityType(ep.step.type);
+        if (ep.status === 'success' && ep.entityOutput && ep.resolution === 'use-existing' && entityType) {
+          ids.push({ entityType, id: ep.entityOutput.id });
+        }
+      }
+    }
+    return ids;
   }
 
   private collectCreatedEntityIds(): { entityType: string; id: string }[] {

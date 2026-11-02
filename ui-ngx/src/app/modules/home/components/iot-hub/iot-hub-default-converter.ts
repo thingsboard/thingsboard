@@ -6,6 +6,7 @@ import { Converter, ConverterConfigV2, ConverterType, getTargetField, getTargetT
 import { IntegrationType } from '@shared/models/integration.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { isEqual } from '@core/utils';
+import { DeviceInstalledItemDescriptor, IotHubInstalledItem } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 
 const DEFAULT_CONVERTERS_V2_CONFIGURATION_URL = '/assets/converters/default-converters-v2-configuration.json';
 
@@ -55,3 +56,11 @@ export const differsFromDefaultConverter = (converter: Converter, defaultConvert
   return script(converter.configuration[field]) !== script(defaultConverter.configuration[field]) ||
     V2_CONFIGURATION_KEYS.some(key => !isEqual(converter.configuration[key] ?? null, defaultConverter.configuration[key] ?? null));
 };
+
+/**
+ * True when the device package installed the converter itself as its default converter, not one it took as it was:
+ * only such a converter is ThingsBoard's default one, which a new ThingsBoard version may change.
+ */
+export const isOwnDefaultConverter = (item: IotHubInstalledItem, converterId: string): boolean =>
+  item.itemType === 'DEVICE' && Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {})
+    .some(state => state?.defaultConverter && state.entityOutput?.id === converterId && state.resolution !== 'use-existing');

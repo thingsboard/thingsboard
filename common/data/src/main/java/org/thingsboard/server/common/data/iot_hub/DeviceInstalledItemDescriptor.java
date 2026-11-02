@@ -14,6 +14,8 @@ import java.util.Map;
 public class DeviceInstalledItemDescriptor implements IotHubInstalledItemDescriptor {
 
     private List<EntityId> createdEntityIds;
+    // Of createdEntityIds, the entities the user chose to use as they were: the package doesn't own them
+    private List<EntityId> usedExistingEntityIds;
     private DashboardId dashboardId;
     private String selectedInstallMethod;
     private Map<String, JsonNode> installState;

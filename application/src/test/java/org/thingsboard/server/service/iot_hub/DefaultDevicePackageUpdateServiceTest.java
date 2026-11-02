@@ -117,6 +117,8 @@ class DefaultDevicePackageUpdateServiceTest {
     private SubscriptionService subscriptionService;
     @Mock
     private TelemetrySubscriptionService telemetryService;
+    @Mock
+    private IotHubService iotHubService;
 
     @InjectMocks
     private DefaultDevicePackageUpdateService service;
@@ -302,6 +304,67 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
+    void sharedEntityOverwrittenByAnotherPackage_isNotChangedBySomeoneElse() {
+        Dashboard shared = dashboard(9L);
+        DevicePackageEntities.Snapshot snapshot = new DevicePackageEntities.Snapshot(shared, null);
+        when(packageEntities.load(tenantId, dashboardId)).thenReturn(snapshot);
+        when(iotHubService.findKeptEntities(tenantId, installedItem.getId())).thenReturn(new InstalledItemKeptEntities(List.of(), 0));
+        // This package recorded the dashboard as it left it; the other one overwrote it since and recorded the new one
+        ObjectNode own = stateOf(dashboardId, "created").put("checksum", "as-this-package-left-it");
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", own));
+        IotHubInstalledItem other = otherPackage(Map.of("Dashboard", stateOf(dashboardId, "created").put("checksum", snapshot.checksum())));
+        when(installedItemService.findByTenantId(any(), any(), any(), any()))
+                .thenReturn(new PageData<>(List.of(installedItem, other), 1, 2, false));
+
+        assertThat(service.check(user, installedItem.getId()).get(0).getModified()).isFalse();
+
+        shared.setConfiguration(JacksonUtil.newObjectNode().put("description", "Changed by hand"));
+        assertThat(service.check(user, installedItem.getId()).get(0).getModified()).isTrue();
+    }
+
+    @Test
+    void entityOfAStepAVersionDropped_staysThePackages() {
+        // v2 dropped the dashboard step: the install state no longer has it, createdEntityIds does
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of());
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+        DeviceUpdateRequest.Step step = keep("Dashboard", "DASHBOARD", dashboardId);
+        step.setResolution("use-existing");
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getInstallState().get("Dashboard").get("resolution").asText()).isEqualTo("created");
+    }
+
+    @Test
+    void entityUsedAtInstall_staysTheUsersAfterAVersionDropsItsStep() {
+        // Recorded at install; the step is gone from the install state since
+        DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        installed.setUsedExistingEntityIds(List.of(dashboardId));
+        installed.setInstallState(Map.of());
+        DeviceUpdateRequest.Step step = overwrite("Dashboard", "DASHBOARD", dashboardId, 9L, JacksonUtil.newObjectNode().put("title", "Dashboard"));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(step));
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(installedItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void entitiesUsedAtInstall_areCarriedIntoTheDescriptor() {
+        // Installed before the descriptor kept them: the install state has them
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("Dashboard", stateOf(dashboardId, "use-existing")));
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+        when(entityService.fetchEntity(any(), any())).thenReturn(Optional.of(dashboard(9L)));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getUsedExistingEntityIds()).containsExactly(dashboardId);
+    }
+
+    @Test
     void twoStepsWithOneKey_areRejected() {
         DeviceUpdateRequest.Step first = keep("Overview", "DASHBOARD", dashboardId);
         first.setId("main-dashboard");
@@ -381,7 +444,7 @@ class DefaultDevicePackageUpdateServiceTest {
     }
 
     @Test
-    void overwrittenSharedConverter_isRecordedAsDefaultAndOtherPackagesTakeItsChecksum() {
+    void overwrittenSharedConverter_isRecordedAsDefaultAndOnlyThePackagesOwnRowIsWritten() {
         ConverterId converterId = new ConverterId(UUID.randomUUID());
         Converter current = new Converter(converterId);
         current.setTenantId(tenantId);
@@ -408,9 +471,9 @@ class DefaultDevicePackageUpdateServiceTest {
         assertThat(result.isSuccess()).isTrue();
         JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("Uplink");
         assertThat(state.get("defaultConverter").asBoolean()).isTrue();
-        assertThat(created.get("checksum").asText()).isEqualTo(state.get("checksum").asText());
-        assertThat(usedExisting.has("checksum")).isFalse();
-        verify(installedItemService).save(tenantId, creator);
+        // The other packages keep what they recorded: check() takes the checksum of any installed package
+        assertThat(created.get("checksum").asText()).isEqualTo("before");
+        verify(installedItemService, never()).save(tenantId, creator);
         verify(installedItemService, never()).save(tenantId, taker);
     }
 

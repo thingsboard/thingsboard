@@ -137,6 +137,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         Set<UUID> sharedIds = new HashSet<>();
         iotHubService.findKeptEntities(tenantId, installedItemId).getEntities().forEach(e -> sharedIds.add(e.getEntityId().getId()));
         Map<UUID, EntityId> createdIds = createdIds(descriptor);
+        Map<UUID, Set<String>> recordedChecksums = recordedChecksums(tenantId);
 
         List<DevicePackageEntityState> states = new ArrayList<>();
         if (descriptor.getInstallState() == null) {
@@ -149,8 +150,11 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             }
             DevicePackageEntities.Snapshot snapshot = packageEntities.load(tenantId, entityId);
             JsonNode storedChecksum = state.get("checksum");
+            // Changed by someone else only when no installed package recorded the current checksum: an update of another
+            // package that shares the entity, e.g. a converter, records it only in its own row
             Boolean modified = snapshot == null || storedChecksum == null || !storedChecksum.isTextual() ? null :
-                    !storedChecksum.asText().equals(snapshot.checksum());
+                    !storedChecksum.asText().equals(snapshot.checksum())
+                            && !recordedChecksums.getOrDefault(entityId.getId(), Set.of()).contains(snapshot.checksum());
             states.add(new DevicePackageEntityState(stepName, entityId, snapshot != null,
                     snapshot != null ? snapshot.version() : null, modified, sharedIds.contains(entityId.getId())));
         });
@@ -285,11 +289,11 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             });
         }
         List<EntityId> stepEntityIds = new ArrayList<>();
+        Map<UUID, EntityId> usedExistingIds = usedExistingIds(previous);
         List<SavedEntity> saved = new ArrayList<>();
         List<DeviceUpdateRequest.Step> connectorSteps = new ArrayList<>();
         List<StepAttributes> attributes = new ArrayList<>();
         // The checksums of the entities this update overwrote, which other packages may record too
-        Map<UUID, String> overwrittenChecksums = new HashMap<>();
         DashboardId dashboardId = null;
 
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
@@ -321,12 +325,11 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 if (step.isDefaultConverter()) {
                     state.put("defaultConverter", true);
                 }
-                if (step.getAction() == DeviceUpdateRequest.Action.OVERWRITE && result.checksum() != null) {
-                    overwrittenChecksums.put(result.entityId().getId(), result.checksum());
-                }
                 installState.put(step.getId() != null ? step.getId() : step.getName(), state);
                 if (!"use-existing".equals(resolution)) {
                     stepEntityIds.add(result.entityId());
+                } else {
+                    usedExistingIds.putIfAbsent(result.entityId().getId(), result.entityId());
                 }
                 if (result.entityId() instanceof DashboardId id) {
                     dashboardId = id;
@@ -349,6 +352,9 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         // The new version may not offer the method the package was installed with
         descriptor.setSelectedInstallMethod(request.getSelectedInstallMethod() != null ? request.getSelectedInstallMethod() : previous.getSelectedInstallMethod());
         descriptor.setCreatedEntityIds(createdEntityIds(tenantId, previous, stepEntityIds));
+        // Carried over like createdEntityIds, so an entity the user chose to use stays theirs after a version drops its step
+        Set<UUID> tracked = createdIds(descriptor).keySet();
+        descriptor.setUsedExistingEntityIds(usedExistingIds.values().stream().filter(id -> tracked.contains(id.getId())).toList());
         descriptor.setDashboardId(dashboardId != null ? dashboardId : existingDashboard(tenantId, previous));
         Map<String, JsonNode> state = new LinkedHashMap<>(installState);
         descriptor.setInstallState(state);
@@ -358,45 +364,33 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         installedItem.setVersion(versionInfo.get("version").asText());
         installedItem.setDescriptor(descriptor);
         installedItemService.save(tenantId, installedItem);
-        refreshChecksumsOfOtherPackages(tenantId, installedItem.getId(), overwrittenChecksums);
         // Resolved once every entity is saved: attributes may refer to a later step's entity
         List<StepAttributes> resolvedAttributes = attributes.stream().map(a -> new StepAttributes(a.stepName(), a.entityId(),
                 resolvePlaceholders(a.server(), aliasOutputs), resolvePlaceholders(a.shared(), aliasOutputs))).toList();
         return new Applied(descriptor, outputs, saved, connectorSteps, resolvedAttributes, aliasOutputs);
     }
 
-    /**
-     * Another package that recorded the checksum of an entity this update overwrote, e.g. a shared converter, records the
-     * new one: the update was confirmed for all packages using the entity, so their next update sees no change by someone else.
-     */
-    private void refreshChecksumsOfOtherPackages(TenantId tenantId, IotHubInstalledItemId installedItemId, Map<UUID, String> checksums) {
-        if (checksums.isEmpty()) {
-            return;
-        }
+    /** The checksums the installed device packages recorded, by entity. */
+    private Map<UUID, Set<String>> recordedChecksums(TenantId tenantId) {
+        Map<UUID, Set<String>> checksums = new HashMap<>();
         PageLink pageLink = new PageLink(100);
         PageData<IotHubInstalledItem> page;
         do {
             page = installedItemService.findByTenantId(tenantId, List.of("DEVICE"), null, pageLink);
             for (IotHubInstalledItem item : page.getData()) {
-                if (!item.getId().equals(installedItemId) && item.getDescriptor() instanceof DeviceInstalledItemDescriptor descriptor
-                        && descriptor.getInstallState() != null && refreshChecksums(descriptor.getInstallState(), checksums)) {
-                    installedItemService.save(tenantId, item);
+                if (item.getDescriptor() instanceof DeviceInstalledItemDescriptor descriptor && descriptor.getInstallState() != null) {
+                    descriptor.getInstallState().values().forEach(state -> {
+                        UUID id = toUuid(state.path("entityOutput").path("id").asText());
+                        JsonNode checksum = state.get("checksum");
+                        if (id != null && checksum != null && checksum.isTextual()) {
+                            checksums.computeIfAbsent(id, k -> new HashSet<>()).add(checksum.asText());
+                        }
+                    });
                 }
             }
             pageLink = pageLink.nextPageLink();
         } while (page.hasNext());
-    }
-
-    private static boolean refreshChecksums(Map<String, JsonNode> installState, Map<UUID, String> checksums) {
-        boolean changed = false;
-        for (JsonNode state : installState.values()) {
-            String checksum = checksums.get(toUuid(state.path("entityOutput").path("id").asText()));
-            if (checksum != null && state.has("checksum") && state instanceof ObjectNode objectState) {
-                objectState.put("checksum", checksum);
-                changed = true;
-            }
-        }
-        return changed;
+        return checksums;
     }
 
     private static UUID toUuid(String id) {
@@ -841,19 +835,31 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
     }
 
     /**
-     * The entities the package owns: those its install state records, except the ones the user chose to use as they
-     * were. Not createdEntityIds: the install adds the use-existing ones to it too.
+     * The entities the package owns: those it created, not the ones the user chose to use as they were. The install adds
+     * those to createdEntityIds too, so they are subtracted; an entity of a step a later version dropped stays owned.
      */
     private static Set<UUID> ownedIds(DeviceInstalledItemDescriptor descriptor) {
-        Set<UUID> ids = new HashSet<>();
+        Set<UUID> ids = new HashSet<>(createdIds(descriptor).keySet());
+        ids.removeAll(usedExistingIds(descriptor).keySet());
+        return ids;
+    }
+
+    /**
+     * The entities the user chose to use as they were. An install made before the descriptor kept them has them only in
+     * its install state, which the first update carries over into the descriptor.
+     */
+    private static Map<UUID, EntityId> usedExistingIds(DeviceInstalledItemDescriptor descriptor) {
+        Map<UUID, EntityId> ids = new LinkedHashMap<>();
+        if (descriptor.getUsedExistingEntityIds() != null) {
+            descriptor.getUsedExistingEntityIds().forEach(id -> ids.put(id.getId(), id));
+            return ids;
+        }
+        Map<UUID, EntityId> createdIds = createdIds(descriptor);
         if (descriptor.getInstallState() != null) {
             descriptor.getInstallState().values().forEach(state -> {
-                JsonNode id = state.path("entityOutput").path("id");
-                if (id.isTextual() && !"use-existing".equals(state.path("resolution").asText())) {
-                    try {
-                        ids.add(UUID.fromString(id.asText()));
-                    } catch (IllegalArgumentException ignored) {
-                    }
+                UUID id = toUuid(state.path("entityOutput").path("id").asText());
+                if (id != null && "use-existing".equals(state.path("resolution").asText()) && createdIds.containsKey(id)) {
+                    ids.put(id, createdIds.get(id));
                 }
             });
         }
