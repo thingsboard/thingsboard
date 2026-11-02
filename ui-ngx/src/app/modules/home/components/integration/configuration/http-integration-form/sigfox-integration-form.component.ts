@@ -26,6 +26,8 @@ import { IntegrationType } from '@shared/models/integration.models';
 })
 export class SigfoxIntegrationFormComponent extends HttpIntegrationFormComponent {
 
+  showReplaceNoContentToOk = false;
+
   protected integrationType = IntegrationType.SIGFOX;
 
   constructor(protected fb: UntypedFormBuilder,
