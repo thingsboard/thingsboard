@@ -223,6 +223,11 @@
     flex-wrap: wrap;
     gap: 12px;
   }
+
+  &.tb-progress-row-error {
+    background: rgba(211, 47, 47, 0.06);
+    align-items: flex-start;
+  }
 }
 
 .tb-progress-icon {
@@ -245,6 +250,10 @@
 
   .tb-progress-warning {
     color: #f66716;
+  }
+
+  .tb-progress-error {
+    color: #c62828;
   }
 }
 
@@ -294,6 +303,36 @@
   &.tb-progress-label-pending {
     color: rgba(0, 0, 0, 0.54);
   }
+
+  // Next to a badge instead of taking the whole row
+  &.tb-progress-label-fit {
+    flex: 0 1 auto;
+  }
+}
+
+.tb-progress-hint {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.tb-progress-link {
+  color: #305680;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tb-progress-new {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: #305680;
+  background: rgba(48, 86, 128, 0.08);
+  border-radius: 4px;
+  padding: 2px 8px;
 }
 
 .tb-progress-status {
@@ -311,6 +350,51 @@
 
 .tb-progress-status-progress {
   color: rgba(0, 0, 0, 0.54);
+}
+
+.tb-progress-status-failed {
+  color: #c62828;
+}
+
+.tb-device-update-version {
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+// Update: above the actions, so the list doesn't move when it goes away
+.tb-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 24px 16px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.tb-update-banner-warning {
+    background: rgba(246, 103, 22, 0.08);
+    color: #b5470b;
+
+    mat-icon {
+      color: #f66716;
+    }
+  }
+
+  &.tb-update-banner-error {
+    background: rgba(211, 47, 47, 0.06);
+    color: #c62828;
+  }
 }
 
 

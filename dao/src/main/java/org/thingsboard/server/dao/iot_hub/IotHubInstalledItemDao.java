@@ -19,6 +19,9 @@ public interface IotHubInstalledItemDao extends Dao<IotHubInstalledItem> {
 
     Optional<IotHubInstalledItem> findByTenantIdAndId(TenantId tenantId, IotHubInstalledItemId installedItemId);
 
+    // Locks the row until the end of the current transaction
+    Optional<IotHubInstalledItem> findByTenantIdAndIdForUpdate(TenantId tenantId, IotHubInstalledItemId installedItemId);
+
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink);
 
     List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);

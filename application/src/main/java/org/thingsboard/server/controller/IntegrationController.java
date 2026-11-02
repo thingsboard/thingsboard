@@ -142,14 +142,10 @@ public class IntegrationController extends AutoCommitController {
 
             checkEntity(integration.getId(), integration, Resource.INTEGRATION);
 
-            if (!integration.isEdgeTemplate()) {
-                try {
-                    Integration copy = new Integration(integration);
-                    secretConfigurationService.replaceSecretUsages(tenantId, copy.getConfiguration());
-                    integrationManagerService.validateIntegrationConfiguration(copy).get(20, TimeUnit.SECONDS);
-                } catch (ExecutionException e) {
-                    throwRealCause(e);
-                }
+            try {
+                tbIntegrationService.validateIntegrationConfiguration(tenantId, integration);
+            } catch (ExecutionException e) {
+                throwRealCause(e);
             }
 
             Integration result = checkNotNull(integrationService.saveIntegration(integration));

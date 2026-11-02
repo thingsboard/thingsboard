@@ -19,6 +19,9 @@ public interface IotHubInstalledItemService {
 
     IotHubInstalledItem findById(TenantId tenantId, IotHubInstalledItemId id);
 
+    // Locks the item until the end of the current transaction, so concurrent updates of it run one after another
+    IotHubInstalledItem findByIdForUpdate(TenantId tenantId, IotHubInstalledItemId id);
+
     PageData<IotHubInstalledItem> findByTenantId(TenantId tenantId, List<String> itemTypes, UUID itemId, PageLink pageLink);
 
     List<UUID> findInstalledItemIdsByTenantId(TenantId tenantId);

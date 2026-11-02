@@ -21,6 +21,9 @@ interface IotHubInstalledItemRepository extends JpaRepository<IotHubInstalledIte
 
     Optional<IotHubInstalledItemEntity> findByTenantIdAndId(UUID tenantId, UUID id);
 
+    @Query(value = "SELECT * FROM iot_hub_installed_item i WHERE i.tenant_id = :tenantId AND i.id = :id FOR UPDATE", nativeQuery = true)
+    Optional<IotHubInstalledItemEntity> findByTenantIdAndIdForUpdate(@Param("tenantId") UUID tenantId, @Param("id") UUID id);
+
     @Query("SELECT DISTINCT item.itemId FROM IotHubInstalledItemEntity item WHERE item.tenantId = :tenantId")
     List<UUID> findInstalledItemIdsByTenantId(@Param("tenantId") UUID tenantId);
 

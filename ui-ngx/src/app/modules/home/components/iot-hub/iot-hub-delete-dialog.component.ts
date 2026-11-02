@@ -45,8 +45,10 @@ export class TbIotHubDeleteDialogComponent extends DialogComponent<TbIotHubDelet
     const kept = data.keptEntities;
     if (kept?.entities.length) {
       this.keptReferences = kept.entities.map(entity => ({ id: entity.entityId as EntityId, name: entity.name }));
-      this.description = this.translate.instant('iot-hub.remove-desc-kept',
-        { count: kept.usedByItemsCount, kept: kept.entities.length });
+      // Kept because other packages use them, because the user had them before the package, or both
+      const key = !kept.usedExistingCount ? 'iot-hub.remove-desc-kept' :
+        !kept.usedByItemsCount ? 'iot-hub.remove-desc-kept-own' : 'iot-hub.remove-desc-kept-own-or-used';
+      this.description = this.translate.instant(key, { count: kept.usedByItemsCount, kept: kept.entities.length });
     } else {
       this.description = this.translate.instant(data.itemType === 'SOLUTION_TEMPLATE' ? 'iot-hub.remove-desc-solution-template' : 'iot-hub.remove-desc');
     }

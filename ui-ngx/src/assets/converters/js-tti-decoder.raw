@@ -1,6 +1,7 @@
 // The Things Stack adds decoded_payload for a device registered from the LoRaWAN Device Repository, and the payload
 // is then that JSON: its keys become telemetry. A Milesight-style history list keeps each record's time.
-// Such a device gets the profile <brand_id>-<model_id>, so all devices of one model share it. Any other device gets LoRaWAN Device.
+// Such a device gets the profile <brand_id>-<model_id>, so all devices of one model share it,
+// or the name the integration metadata gives it under profile.<brand_id>-<model_id>. Any other device gets LoRaWAN Device.
 var values = {};
 var history = [];
 if (metadata.payloadFormat == 'JSON') {
@@ -19,11 +20,12 @@ if (metadata.payloadFormat == 'JSON') {
 var profile = 'LoRaWAN Device';
 if (metadata.brandId != null && metadata.modelId != null) {
     profile = metadata.brandId + '-' + metadata.modelId;
+    // The profile name chosen at install, kept in the integration metadata
+    var customProfile = metadata['profile.' + profile];
+    if (customProfile != null && customProfile != '') {
+        profile = customProfile;
+    }
 }
-// To give a model its own profile name, map it here, for example:
-// if (profile == 'milesight-iot-am308') {
-//     profile = 'AM308';
-// }
 if (history.length == 0) {
     return { profile: profile, telemetry: { ts: metadata.ts, values: values } };
 }

@@ -49,6 +49,8 @@ export class InstallFormRendererComponent implements OnChanges {
   @Input() resolveImagePath?: (path: string) => string;
   /** When true, PASSWORD inputs render unmasked by default (used by review mode). */
   @Input() reviewMode = false;
+  /** Update: the fields the installed version's form didn't have, highlighted as new. */
+  @Input() newFieldKeys?: Set<string>;
 
   passwordVisible: Record<string, boolean> = {};
   // Fields in render order: consecutive fields of a group form a section, and consecutive fields
@@ -136,6 +138,18 @@ export class InstallFormRendererComponent implements OnChanges {
     control.markAsDirty();
   }
 
+  /** A resettable field the user changed shows a button that puts its defaultValue back. */
+  canResetToDefault(field: FormFieldDefinition): boolean {
+    const control = this.formGroup.controls[field.key];
+    return !!field.resettable && !!control?.enabled && control.value !== (field.defaultValue ?? '');
+  }
+
+  resetToDefault(field: FormFieldDefinition): void {
+    const control = this.formGroup.controls[field.key];
+    control.setValue(field.defaultValue ?? '');
+    control.markAsDirty();
+  }
+
   onFocus(field: FormFieldDefinition): void {
     const control = this.formGroup.controls[field.key];
     this.focusedControl = control ?? null;
@@ -169,5 +183,9 @@ export class InstallFormRendererComponent implements OnChanges {
 
   imagePath(path: string): string {
     return this.resolveImagePath ? this.resolveImagePath(path) : path;
+  }
+
+  isNewField(field: FormFieldDefinition): boolean {
+    return !!this.newFieldKeys?.has(field.key);
   }
 }
