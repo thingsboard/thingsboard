@@ -318,11 +318,8 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
 
   private setFontSize(element: JQuery<HTMLElement>, text: string, fontSize: number, maxWidth: number) {
     let textWidth = this.measureTextWidth(text, fontSize);
-    while (textWidth > maxWidth) {
+    while (textWidth > maxWidth && fontSize > 1) {
       fontSize--;
-      if (fontSize < 0) {
-        break;
-      }
       textWidth = this.measureTextWidth(text, fontSize);
     }
     element.css({fontSize: fontSize + 'px', lineHeight: fontSize + 'px'});

@@ -208,7 +208,7 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
 
   private setFontSize(element: JQuery<HTMLElement>, text: string, fontSize: number, maxWidth: number) {
     let textWidth = this.measureTextWidth(text, fontSize);
-    while (textWidth > maxWidth) {
+    while (textWidth > maxWidth && fontSize > 1) {
       fontSize--;
       textWidth = this.measureTextWidth(text, fontSize);
     }
