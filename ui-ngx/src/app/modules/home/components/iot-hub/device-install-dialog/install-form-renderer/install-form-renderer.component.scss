@@ -15,22 +15,20 @@
   margin-top: 8px;
 }
 
-// Update: a field the installed version didn't have
-.tb-install-form-row-new {
-  padding: 8px 12px;
-  border-left: 3px solid #305680;
-  border-radius: 4px;
-  background: rgba(48, 86, 128, 0.04);
+// Update: a field the installed version didn't have: outline, label and hint in the primary color
+:host ::ng-deep .mat-mdc-form-field.tb-install-form-field-new {
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: var(--tb-primary-500);
+  }
+  .mdc-floating-label,
+  .mat-mdc-floating-label {
+    color: var(--tb-primary-500);
+  }
 }
 
-.tb-install-form-new {
-  align-self: flex-start;
-  font-size: 12px;
+.tb-install-form-new-hint {
+  color: var(--tb-primary-500);
   font-weight: 500;
-  line-height: 16px;
-  letter-spacing: 0.4px;
-  color: #305680;
-  background: rgba(48, 86, 128, 0.08);
-  border-radius: 4px;
-  padding: 2px 8px;
 }

@@ -1946,7 +1946,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   /** Update: what the update did with the entity of a row, once it succeeded. */
   updateOutcomeOf(plan: EntityStepPlan | undefined): string {
     if (!plan || plan.action === 'keep' || plan.resolution === 'use-existing') {
-      return 'iot-hub.device-update-not-changed';
+      return 'iot-hub.done';
     }
     return plan.action === 'overwrite' || plan.resolution === 'overwrite' ? 'iot-hub.device-update-updated' : 'iot-hub.device-update-created';
   }

@@ -36,10 +36,7 @@
 
     <ng-template #rowsTemplate let-rows>
       @for (row of rows; track row.fields[0].key) {
-        <div class="flex flex-col gap-2" [class.tb-install-form-row-new]="isNewRow(row)">
-          @if (isNewRow(row)) {
-            <span class="tb-install-form-new">{{ 'iot-hub.device-update-new' | translate }}</span>
-          }
+        <div class="flex flex-col gap-2">
           @if (row.fields.length > 1) {
             <div class="flex gap-4">
               @for (field of row.fields; track field.key) {
@@ -96,7 +93,7 @@
             </div>
           }
           @case (FormFieldType.SELECT) {
-            <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}</mat-label>
               <mat-select [formControlName]="field.key">
@@ -104,8 +101,13 @@
                   <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                 }
               </mat-select>
-              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
+              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>
+                  @if (isNewField(field)) {
+                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
+                  }
+                  {{ helpTextOf(field) }}
+                </mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -113,7 +115,7 @@
             </mat-form-field>
           }
           @case (FormFieldType.STRING_AUTOCOMPLETE) {
-            <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}</mat-label>
               <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''" [matAutocomplete]="auto"
@@ -124,8 +126,13 @@
                   <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
                 }
               </mat-autocomplete>
-              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
+              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>
+                  @if (isNewField(field)) {
+                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
+                  }
+                  {{ helpTextOf(field) }}
+                </mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -139,7 +146,7 @@
             </mat-form-field>
           }
           @case (FormFieldType.PASSWORD) {
-            <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}</mat-label>
               <input matInput [type]="passwordVisible[field.key] ? 'text' : 'password'"
@@ -158,8 +165,13 @@
                   <mat-icon>autorenew</mat-icon>
                 </button>
               }
-              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
+              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>
+                  @if (isNewField(field)) {
+                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
+                  }
+                  {{ helpTextOf(field) }}
+                </mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -173,14 +185,19 @@
             </mat-form-field>
           }
           @case (FormFieldType.INTEGER) {
-            <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}</mat-label>
               <input matInput type="number" [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
                      [errorStateMatcher]="errorStateMatcher" (focus)="onFocus(field)" (blur)="onBlur(field)"
                      data-lpignore="true" data-1p-ignore data-bwignore>
-              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
+              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>
+                  @if (isNewField(field)) {
+                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
+                  }
+                  {{ helpTextOf(field) }}
+                </mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>
@@ -194,7 +211,7 @@
             </mat-form-field>
           }
           @default {
-            <mat-form-field appearance="outline" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
+            <mat-form-field appearance="outline" [class.tb-install-form-field-new]="isNewField(field)" [subscriptSizing]="row.hasHintBox ? 'dynamic' : 'fixed'"
                             [floatLabel]="field.placeholder ? 'always' : 'auto'">
               <mat-label>{{ field.label }}</mat-label>
               <input matInput [formControlName]="field.key" [placeholder]="field.placeholder ?? ''"
@@ -208,8 +225,13 @@
                   <mat-icon>autorenew</mat-icon>
                 </button>
               }
-              @if (helpTextOf(field) && !(row.hasHintBox && field.helpPopupId)) {
-                <mat-hint>{{ helpTextOf(field) }}</mat-hint>
+              @if ((helpTextOf(field) || isNewField(field)) && !(row.hasHintBox && field.helpPopupId)) {
+                <mat-hint>
+                  @if (isNewField(field)) {
+                    <span class="tb-install-form-new-hint">{{ newFieldHint }}</span>
+                  }
+                  {{ helpTextOf(field) }}
+                </mat-hint>
               }
               @if (formGroup.controls[field.key]?.hasError('required')) {
                 <mat-error>{{ field.label + ' is required' }}</mat-error>

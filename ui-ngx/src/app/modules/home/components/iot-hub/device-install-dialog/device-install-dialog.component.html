@@ -56,7 +56,8 @@
             [formGroup]="ws.formGroup"
             [resolveImagePath]="resolveImagePathFn"
             [reviewMode]="reviewMode"
-            [newFieldKeys]="ws.newFieldKeys">
+            [newFieldKeys]="ws.newFieldKeys"
+            [newFieldHint]="'iot-hub.device-update-new-field' | translate: { version: data.item.version }">
           </tb-install-form-renderer>
         </div>
       }
