@@ -38,7 +38,12 @@ import { getItemTypeIcon, ItemType, itemTypeTranslations } from '@shared/models/
 import { IotHubActionsService } from '@home/components/iot-hub/iot-hub-actions.service';
 import { ConverterService } from '@core/http/converter.service';
 import { ResourcesService } from '@core/services/resources.service';
-import { differsFromDefaultConverter, loadDefaultUplinkConverter, loadOwnDefaultConverterIds } from '@home/components/iot-hub/iot-hub-default-converter';
+import {
+  DefaultConverterUpdate,
+  differsFromDefaultConverter,
+  loadDefaultUplinkConverter,
+  loadOwnDefaultConverterIds
+} from '@home/components/iot-hub/iot-hub-default-converter';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -73,7 +78,7 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
 
   publishedVersionMap = new Map<string, ItemPublishedVersionInfo>();
   // Installed device packages whose default converter differs from ThingsBoard's default converter now
-  converterUpdates = new Set<string>();
+  converterUpdates = new Map<string, DefaultConverterUpdate>();
   private converterCheckRun = 0;
   updatesChecked = false;
   isCheckingUpdates = false;
@@ -264,10 +269,14 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     return this.converterUpdates.has(item.id.id);
   }
 
-  /** The update to the installed version itself brings the converter to ThingsBoard's default one. */
+  /** Brings the package's default converter to ThingsBoard's default one. Other packages on the converter take it too. */
   updateConverter(item: IotHubInstalledItem): void {
-    this.iotHubActions.updateItem(item, item.version, item.itemVersionId).subscribe(result => {
-      if (result === 'updated') {
+    const update = this.converterUpdates.get(item.id.id);
+    if (!update) {
+      return;
+    }
+    this.iotHubActions.updateDefaultConverter(update).subscribe(updated => {
+      if (updated) {
         this.loadData();
       }
     });
@@ -281,12 +290,12 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
     // A later load (another page, sort or search) starts another run: an earlier one finishing last mustn't win
     const run = ++this.converterCheckRun;
     // The package's default converter of each DEVICE package on the page
-    const checks: { itemId: string; converterId: string }[] = [];
+    const checks: { item: IotHubInstalledItem; stateKey: string; converterId: string }[] = [];
     // Over all installed packages, not only this page's, as the update dialog decides
     let ownDefaultConverterIds: Set<string> | undefined;
     for (const item of this.dataSource) {
-      const states = item.itemType === 'DEVICE' ? Object.values((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {}) : [];
-      for (const state of states) {
+      const states = item.itemType === 'DEVICE' ? Object.entries((item.descriptor as DeviceInstalledItemDescriptor)?.installState ?? {}) : [];
+      for (const [stateKey, state] of states) {
         const id: string = state?.defaultConverter ? state.entityOutput?.id : undefined;
         if (!id) {
           continue;
@@ -298,10 +307,10 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
             continue;
           }
         }
-        checks.push({ itemId: item.id.id, converterId: id });
+        checks.push({ item, stateKey, converterId: id });
       }
     }
-    const changed = await Promise.all(checks.map(async ({ itemId, converterId }) => {
+    const changed = await Promise.all(checks.map(async ({ item, stateKey, converterId }): Promise<DefaultConverterUpdate | null> => {
       const converter = await firstValueFrom(this.converterService.getConverter(converterId, {ignoreErrors: true, ignoreLoading: true}))
         .catch(() => null);
       if (!converter) {
@@ -309,12 +318,13 @@ export class TbIotHubInstalledItemsTableComponent implements OnInit, OnChanges, 
       }
       const defaultConverter = await loadDefaultUplinkConverter(this.resourcesService, converter.integrationType,
         converter.configuration.scriptLang, converter.name);
-      return defaultConverter && differsFromDefaultConverter(converter, defaultConverter) ? itemId : null;
+      return defaultConverter && differsFromDefaultConverter(converter, defaultConverter) ?
+        { installedItem: item, stateKey, converter, defaultConverter } : null;
     }));
     if (run !== this.converterCheckRun) {
       return;
     }
-    this.converterUpdates = new Set(changed.filter(itemId => !!itemId));
+    this.converterUpdates = new Map(changed.filter(update => !!update).map(update => [update.installedItem.id.id, update]));
     this.cd.markForCheck();
   }
 

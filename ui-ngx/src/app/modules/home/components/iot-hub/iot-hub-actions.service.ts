@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, of, EMPTY } from 'rxjs';
+import { Observable, of, EMPTY, firstValueFrom, from } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
@@ -21,6 +21,8 @@ import { TbDeviceInstallDialogComponent, DeviceInstallDialogData, DeviceInstallU
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
 import { IotHubBuiltInService } from './iot-hub-built-in.service';
 import { isBuiltInItem } from './iot-hub-utils';
+import { TbIotHubConverterUpdateDialogComponent, IotHubConverterUpdateDialogData } from './iot-hub-converter-update-dialog.component';
+import { DefaultConverterUpdate, loadInstalledDevicePackages } from './iot-hub-default-converter';
 
 /**
  * What `openBuiltInOrConfirmInstall` did with a built-in item: 'handled' means nothing is left to do
@@ -165,6 +167,39 @@ export class IotHubActionsService {
         versionId
       }
     }).afterClosed();
+  }
+
+  /**
+   * Brings a device package's default converter to ThingsBoard's default converter now, after the user confirms it.
+   * The dialog opens with what the update check found: whether someone changed the converter, and which other packages use it.
+   */
+  updateDefaultConverter(update: DefaultConverterUpdate): Observable<boolean> {
+    return from(this.converterUpdateDialogData(update)).pipe(
+      switchMap(data => this.dialog.open<TbIotHubConverterUpdateDialogComponent, IotHubConverterUpdateDialogData, boolean>(
+        TbIotHubConverterUpdateDialogComponent, {
+          panelClass: ['tb-dialog'],
+          disableClose: true,
+          autoFocus: false,
+          data
+        }).afterClosed()),
+      catchError(() => of(false))
+    );
+  }
+
+  private async converterUpdateDialogData(update: DefaultConverterUpdate): Promise<IotHubConverterUpdateDialogData> {
+    const installedItemId = update.installedItem.id.id;
+    const converterId = update.converter.id.id;
+    const [states, packages] = await Promise.all([
+      firstValueFrom(this.iotHubApiService.checkDeviceUpdate(installedItemId)),
+      loadInstalledDevicePackages(this.iotHubApiService)
+    ]);
+    const state = states.find(s => s.stepName === update.stateKey);
+    // As the server decides what is shared: the converter is one of the entities another package tracks
+    const usedBy = packages
+      .filter(item => item.id.id !== installedItemId &&
+        (item.descriptor as DeviceInstalledItemDescriptor)?.createdEntityIds?.some(id => id.id === converterId))
+      .map(item => item.itemName);
+    return { update, version: state?.version, modified: state?.modified === true, usedBy };
   }
 
   deleteItem(installedItem: IotHubInstalledItem): Observable<boolean> {

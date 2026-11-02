@@ -1,0 +1,32 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
+
+-->
+<div class="flex flex-col gap-4 p-6">
+  <h2 class="tb-converter-update-title">{{ 'iot-hub.converter-update-title' | translate }}</h2>
+  <p class="tb-converter-update-text">{{ 'iot-hub.device-update-new-default-converter' | translate }}</p>
+  <div class="tb-converter-update-box flex flex-col gap-2">
+    <div class="tb-converter-update-name">{{ data.update.converter.name }}</div>
+    @if (data.modified) {
+      <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">
+        {{ modifiedHint.before }}<a class="tb-converter-update-link" href="#" (click)="$event.preventDefault(); downloadCurrent()">{{ modifiedHint.link }}</a>{{ modifiedHint.after }}
+      </span>
+    } @else if (data.usedBy.length) {
+      <span class="tb-progress-alert-msg tb-progress-alert-msg-warning">{{ 'iot-hub.device-update-shared' | translate }}</span>
+      <ul class="tb-converter-update-packages">
+        @for (name of data.usedBy; track $index) {
+          <li>{{ name }}</li>
+        }
+      </ul>
+    }
+  </div>
+  @if (errorMessage) {
+    <span class="tb-progress-alert-msg tb-progress-alert-msg-error">{{ errorMessage }}</span>
+  }
+</div>
+<div class="flex items-center justify-end gap-2 p-2">
+  <button mat-button (click)="cancel()" [disabled]="updating">{{ 'action.cancel' | translate }}</button>
+  <button mat-flat-button color="primary" (click)="update()" [disabled]="updating">{{ 'iot-hub.update' | translate }}</button>
+</div>

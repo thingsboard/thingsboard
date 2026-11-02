@@ -57,7 +57,7 @@
                 }
               </div>
             } @else if (hasConverterUpdate(item)) {
-              <!-- The update of the same version: only ThingsBoard's default converter changed -->
+              <!-- Only ThingsBoard's default converter changed: the package has no new version for it -->
               <button mat-stroked-button color="warn" class="tb-installed-update-btn" (click)="updateConverter(item)">
                 <mat-icon>arrow_upward</mat-icon>
                 {{ 'iot-hub.new-converter-available' | translate }}

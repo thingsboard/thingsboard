@@ -348,6 +348,16 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             }
         }
 
+        // An update to the installed version itself, e.g. of ThingsBoard's default converter only, sends just the steps
+        // it changes: the other steps and the forms keep their install state
+        if (UUID.fromString(request.getVersionId()).equals(installedItem.getItemVersionId()) && previous.getInstallState() != null) {
+            previous.getInstallState().forEach((key, value) -> {
+                if (value instanceof ObjectNode state) {
+                    installState.putIfAbsent(key, state);
+                }
+            });
+        }
+
         DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
         // The new version may not offer the method the package was installed with
         descriptor.setSelectedInstallMethod(request.getSelectedInstallMethod() != null ? request.getSelectedInstallMethod() : previous.getSelectedInstallMethod());
