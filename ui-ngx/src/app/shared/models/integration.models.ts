@@ -699,7 +699,6 @@ export interface ChipStackIntegration {
     applicationServerUrl: string;
     applicationServerAPIToken: string;
     useAPI4Plus: boolean;
-    allowDownlink: boolean;
   };
 }
 
