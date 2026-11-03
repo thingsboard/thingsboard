@@ -11,7 +11,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.integration.api.converter.wrapper.ChirpStackConverterUnwrapper;
 import org.thingsboard.integration.api.converter.wrapper.ConverterUnwrapper;
+import org.thingsboard.integration.api.converter.wrapper.LoriotConverterUnwrapper;
+import org.thingsboard.integration.api.converter.wrapper.ThingParkConverterUnwrapper;
 import org.thingsboard.integration.api.converter.wrapper.ThingsStackConverterUnwrapper;
 import org.thingsboard.integration.api.data.ContentType;
 import org.thingsboard.integration.api.data.UplinkData;
@@ -74,6 +77,65 @@ public class DedicatedScriptUplinkDataConverterTest {
         assertKv(telemetry.get("rssi"), LONG_V, -22L);
         assertKv(telemetry.get("snr"), DOUBLE_V, 11.0);
         assertKv(toMap(uplink.getAttributesUpdate().getKvList()).get("eui"), STRING_V, "1000000000000001");
+    }
+
+    @Test
+    public void parseUplinkDataKeepsChirpStackStringIdentifiersTest() throws Exception {
+        setConfig(Set.of("devAddr", "eui", "dr", "frequency"), Set.of("rssi", "snr"));
+
+        ObjectNode payload = JacksonUtil.fromString(readPayloadFromFile("ChirpStackPayload.json"), ObjectNode.class);
+        payload.put("devAddr", "01020304");
+        ((ObjectNode) payload.get("deviceInfo")).put("devEui", "1000000000000001");
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrap(new ChirpStackConverterUnwrapper(), payload));
+
+        Map<String, TransportProtos.KeyValueProto> attributes = toMap(uplink.getAttributesUpdate().getKvList());
+        assertKv(attributes.get("devAddr"), STRING_V, "01020304");
+        assertKv(attributes.get("eui"), STRING_V, "1000000000000001");
+        assertKv(attributes.get("dr"), LONG_V, 1L);
+        assertKv(attributes.get("frequency"), LONG_V, 867100000L);
+        Map<String, TransportProtos.KeyValueProto> telemetry = toMap(uplink.getTelemetry().getTsKvList(0).getKvList());
+        assertKv(telemetry.get("rssi"), LONG_V, -22L);
+        assertKv(telemetry.get("snr"), DOUBLE_V, 10.5);
+    }
+
+    @Test
+    public void parseUplinkDataKeepsLoriotStringIdentifiersTest() throws Exception {
+        setConfig(Set.of("eui", "fPort", "frequency", "dr"), Set.of("battery", "rssi"));
+
+        ObjectNode payload = JacksonUtil.fromString(readPayloadFromFile("LoriotPayload.json"), ObjectNode.class);
+        payload.put("EUI", "1000000000000001");
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrap(new LoriotConverterUnwrapper(), payload));
+
+        Map<String, TransportProtos.KeyValueProto> attributes = toMap(uplink.getAttributesUpdate().getKvList());
+        assertKv(attributes.get("eui"), STRING_V, "1000000000000001");
+        assertKv(attributes.get("fPort"), LONG_V, 80L);
+        assertKv(attributes.get("frequency"), LONG_V, 868100000L);
+        assertKv(attributes.get("dr"), STRING_V, "SF12 BW125 4/5");
+        Map<String, TransportProtos.KeyValueProto> telemetry = toMap(uplink.getTelemetry().getTsKvList(0).getKvList());
+        assertKv(telemetry.get("battery"), LONG_V, 143L);
+        assertKv(telemetry.get("rssi"), LONG_V, -49L);
+    }
+
+    @Test
+    public void parseUplinkDataKeepsThingParkStringIdentifiersTest() throws Exception {
+        setConfig(Set.of("devAddr", "eui", "lrcid", "fPort", "spreadingFactor", "frequency"), Set.of("rssi", "snr"));
+
+        ObjectNode payload = JacksonUtil.fromString(readPayloadFromFile("ThingsParkPayload.json"), ObjectNode.class);
+        ObjectNode uplinkNode = (ObjectNode) payload.get("DevEUI_uplink");
+        uplinkNode.put("DevAddr", "01020304");
+        uplinkNode.put("DevEUI", "1000000000000001");
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(new JsonObject(), unwrap(new ThingParkConverterUnwrapper(), payload));
+
+        Map<String, TransportProtos.KeyValueProto> attributes = toMap(uplink.getAttributesUpdate().getKvList());
+        assertKv(attributes.get("devAddr"), STRING_V, "01020304");
+        assertKv(attributes.get("eui"), STRING_V, "1000000000000001");
+        assertKv(attributes.get("lrcid"), STRING_V, "00000211");
+        assertKv(attributes.get("fPort"), LONG_V, 1L);
+        assertKv(attributes.get("spreadingFactor"), LONG_V, 9L);
+        assertKv(attributes.get("frequency"), DOUBLE_V, 902.5);
+        Map<String, TransportProtos.KeyValueProto> telemetry = toMap(uplink.getTelemetry().getTsKvList(0).getKvList());
+        assertKv(telemetry.get("rssi"), DOUBLE_V, -114.0);
+        assertKv(telemetry.get("snr"), DOUBLE_V, 4.75);
     }
 
     @Test
@@ -292,6 +354,11 @@ public class DedicatedScriptUplinkDataConverterTest {
         endDeviceIds.put("dev_eui", "1000000000000001");
         ((ObjectNode) payload.at("/uplink_message/settings")).put("frequency", "868100000");
         return thingsStackUnwrapper.unwrap(JacksonUtil.writeValueAsBytes(payload), new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond();
+    }
+
+    private UplinkMetaData unwrap(ConverterUnwrapper unwrapper, ObjectNode payload) throws Exception {
+        ReflectionTestUtils.setField(uplinkDataConverter, "converterUnwrapper", unwrapper);
+        return unwrapper.unwrap(JacksonUtil.writeValueAsBytes(payload), new UplinkMetaData<>(ContentType.JSON, Map.of())).getSecond();
     }
 
     private Map<String, TransportProtos.KeyValueProto> toMap(List<TransportProtos.KeyValueProto> kvList) {
