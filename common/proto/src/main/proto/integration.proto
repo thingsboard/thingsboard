@@ -343,6 +343,8 @@ message IntegrationApiResponseMsg {
 /* High priority messages with low latency are handled by ThingsBoard Integration Executor Service separately */
 message ToIntegrationExecutorNotificationMsg {
   transport.ComponentLifecycleMsgProto componentLifecycle = 1;
+  repeated transport.QueueUpdateMsg queueUpdateMsgs = 2;
+  repeated transport.QueueDeleteMsg queueDeleteMsgs = 3;
 }
 
 message IntegrationValidationRequestProto {
