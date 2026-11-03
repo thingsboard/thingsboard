@@ -1,23 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -37,7 +25,7 @@ class DeviceApiControllerTest {
         };
         var callback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, onSuccess);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax", (HttpInputMessage) null));
 
         callback.onError(new JsonParseException("Json ; expected"));
 
@@ -51,7 +39,7 @@ class DeviceApiControllerTest {
         DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
         var callback = new DeviceApiController.DeviceProvisionCallback(responseWriter);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax", (HttpInputMessage) null));
 
         callback.onError(new JsonParseException("Json ; expected"));
 
@@ -71,7 +59,7 @@ class DeviceApiControllerTest {
 
         var callback = new DeviceApiController.GetOtaPackageCallback(transportContext, responseWriter, title, version, chunkSize, chunk);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax", (HttpInputMessage) null));
 
         callback.onError(new JsonParseException("Json ; expected"));
 

@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.security;
 
 import com.google.common.base.Function;
@@ -276,6 +263,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.DEVICE_PROFILE, operation, entityId, deviceProfile);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(deviceProfile));
             }
@@ -294,6 +282,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.ASSET_PROFILE, operation, entityId, assetProfile);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(assetProfile));
             }
@@ -306,6 +295,7 @@ public class AccessValidator {
         } else {
             if (!operation.equals(Operation.READ_TELEMETRY)) {
                 callback.onSuccess(ValidationResult.accessDenied("Allowed only READ_TELEMETRY operation!"));
+                return;
             }
             ApiUsageState apiUsageState = apiUsageStateService.findApiUsageStateById(currentUser.getTenantId(), new ApiUsageStateId(entityId.getId()));
             if (apiUsageState == null) {
@@ -315,6 +305,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.API_USAGE_STATE, operation, entityId, apiUsageState);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(apiUsageState));
             }
@@ -333,6 +324,7 @@ public class AccessValidator {
                     accessControlService.checkPermission(currentUser, Resource.OTA_PACKAGE, operation, entityId, otaPackage);
                 } catch (ThingsboardException e) {
                     callback.onSuccess(ValidationResult.accessDenied(e.getMessage()));
+                    return;
                 }
                 callback.onSuccess(ValidationResult.ok(otaPackage));
             }

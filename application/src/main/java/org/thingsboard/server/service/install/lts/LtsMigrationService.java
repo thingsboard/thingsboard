@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.install.lts;
 
 import lombok.extern.slf4j.Slf4j;
@@ -126,9 +113,7 @@ public class LtsMigrationService {
     // so a cross-family upgrade is fully handled by the target-family migrations.
     // Excluding the dormant older-family beans avoids double-processing.
     static boolean isInRangeForTargetFamily(LtsVersion version, LtsVersion from, LtsVersion to) {
-        return version.sameFamily(to)
-                && version.compareTo(from) > 0
-                && version.compareTo(to) <= 0;
+        return version.sameFamily(to) && version.isInRange(from, to);
     }
 
     private void runSchemaUpdate(String version) {

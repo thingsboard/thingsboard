@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -74,6 +61,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -82,6 +70,7 @@ import java.util.function.UnaryOperator;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
+import static org.thingsboard.server.common.data.StringUtils.removeStart;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -588,7 +577,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             String resourceKey;
             TenantId resourceTenantId;
             try {
-                String[] parts = StringUtils.removeStart(link, "/api/resource/").split("/");
+                String[] parts = removeStart(link, "/api/resource/").split("/");
                 resourceType = ResourceType.valueOf(parts[0].toUpperCase());
                 String scope = parts[1];
                 resourceKey = parts[2];
@@ -611,7 +600,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     private String getResourceLink(String value) {
         if (StringUtils.startsWith(value, DataConstants.TB_RESOURCE_PREFIX + "/api/resource/")) {
-            return StringUtils.removeStart(value, DataConstants.TB_RESOURCE_PREFIX);
+            return removeStart(value, DataConstants.TB_RESOURCE_PREFIX);
         } else {
             return null;
         }
@@ -658,7 +647,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 }
 
                 String newValue = processor.apply(value);
-                if (StringUtils.equals(value, newValue)) {
+                if (Objects.equals(value, newValue)) {
                     return value;
                 } else {
                     updated.set(true);

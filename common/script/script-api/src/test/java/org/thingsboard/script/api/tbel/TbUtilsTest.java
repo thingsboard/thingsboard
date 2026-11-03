@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.script.api.tbel;
 
 import com.google.common.collect.Lists;
@@ -1316,13 +1303,13 @@ public class TbUtilsTest {
     }
     @Test
     public void setTest() throws ExecutionException, InterruptedException {
-        Set actual = TbUtils.newSet(ctx);
-        Set expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xCC});
+        Set<Byte> actual = TbUtils.newSet(ctx);
+        Set<Byte> expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xCC});
         actual.add((byte) 0xDD);
         actual.add((byte) 0xCC);
         actual.add((byte) 0xCC);
         assertTrue(expected.containsAll(actual));
-        List list = toList(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
+        List<Byte> list = toList(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
         actual.addAll(list);
         assertEquals(4, actual.size());
         assertTrue(actual.containsAll(expected));
@@ -1336,9 +1323,9 @@ public class TbUtilsTest {
         actual.clear();
         assertTrue(actual.isEmpty());
         actual = TbUtils.toSet(ctx, list);
-        Set actualClone = TbUtils.toSet(ctx, list);
-        Set actualClone_asc = TbUtils.toSet(ctx, list);
-        Set actualClone_desc = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone_asc = TbUtils.toSet(ctx, list);
+        Set<Byte> actualClone_desc = TbUtils.toSet(ctx, list);
         ((ExecutionLinkedHashSet<?>)actualClone).sort();
         ((ExecutionLinkedHashSet<?>)actualClone_asc).sort(true);
         ((ExecutionLinkedHashSet<?>)actualClone_desc).sort(false);

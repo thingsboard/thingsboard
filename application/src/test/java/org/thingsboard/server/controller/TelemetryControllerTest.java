@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,8 +7,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.query.AliasEntityId;
@@ -32,9 +21,11 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES;
 
@@ -230,6 +221,38 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         String invalidRequestBody2 = "{\" \": \"value\"}";
         doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", invalidRequestBody2, String.class, status().isBadRequest());
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody2, String.class, status().isBadRequest());
+    }
+
+    @Test
+    public void testCustomerUserCannotReadTimeseriesOfNotAssignedDevice() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        tsService.save(tenantId, device.getId(), new BasicTsKvEntry(1000L, new LongDataEntry("t", 1L))).get();
+
+        loginCustomerUser();
+        String url = "/api/plugins/telemetry/DEVICE/{entityId}/values/timeseries?keys=t&startTs=0&endTs={endTs}";
+        doGetAsync(url, device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
+        doGetAsync(url + "&agg=SUM&interval=86400000", device.getUuidId(), System.currentTimeMillis()).andExpect(status().isForbidden());
+        doGetAsync(url, UUID.randomUUID(), System.currentTimeMillis()).andExpect(status().isNotFound());
+
+        loginTenantAdmin();
+        assignDeviceToCustomer(device.getId(), customerId);
+
+        loginCustomerUser();
+        ObjectNode result = doGetAsync(url, ObjectNode.class, device.getUuidId(), System.currentTimeMillis());
+        Assert.assertEquals(1L, result.get("t").get(0).get("value").asLong());
+    }
+
+    @Test
+    public void testCustomerUserCannotSaveDeviceProfileAttributes() throws Exception {
+        loginTenantAdmin();
+        DeviceProfileId deviceProfileId = createDevice().getDeviceProfileId();
+
+        loginCustomerUser();
+        doPostAsync("/api/plugins/telemetry/DEVICE_PROFILE/" + deviceProfileId + "/SERVER_SCOPE", "{\"attr\": \"value\"}", String.class, status().isForbidden());
+
+        await().during(1, TimeUnit.SECONDS).atMost(2, TimeUnit.SECONDS)
+                .until(() -> attributesService.find(tenantId, deviceProfileId, AttributeScope.SERVER_SCOPE, "attr").get().isEmpty());
     }
 
     private Device createDevice() throws Exception {

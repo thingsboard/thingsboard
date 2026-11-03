@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.rpc;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,7 +9,7 @@ import org.eclipse.leshan.core.link.LinkParser;
 import org.eclipse.leshan.core.link.lwm2m.DefaultLwM2mLinkParser;
 import org.junit.Before;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
@@ -78,16 +65,16 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected final LinkParser linkParser = new DefaultLwM2mLinkParser();
     protected String CONFIG_PROFILE_WITH_PARAMS_RPC;
-    public Set expectedObjects;
-    public Set expectedObjectIdVers;
-    public Set expectedInstances;
-    public Set expectedObjectIdVerInstances;
+    public Set<String> expectedObjects;
+    public Set<String> expectedObjectIdVers;
+    public Set<String> expectedInstances;
+    public Set<String> expectedObjectIdVerInstances;
 
     protected String objectInstanceIdVer_1;
     protected String objectIdVer_0;
     protected String objectIdVer_1;
     protected String objectIdVer_2;
-    private static final Predicate PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
+    private static final Predicate<String> PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
     protected String objectIdVer_3;
     protected String objectInstanceIdVer_3;
     protected String objectInstanceIdVer_5;
@@ -104,7 +91,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected String idVer_19_0_0;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
     @Before

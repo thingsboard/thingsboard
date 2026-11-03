@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -272,20 +259,23 @@ public class EdgeMsgConstructorUtils {
                 responseBuilder.setResponse(body.get("response").asText());
             }
             builder.setResponseMsg(responseBuilder.build());
-        } else {
+        } else if (body.has("method")) {
             RpcRequestMsg.Builder requestBuilder = RpcRequestMsg.newBuilder();
             requestBuilder.setMethod(body.get("method").asText());
             requestBuilder.setParams(body.get("params").asText());
             builder.setRequestMsg(requestBuilder.build());
         }
+        // else: status-only message (rpcStatus set in constructDeviceRpcMsg) carries neither request nor response body
         return builder.build();
     }
 
     private static DeviceRpcCallMsg.Builder constructDeviceRpcMsg(UUID deviceId, JsonNode body) {
         DeviceRpcCallMsg.Builder builder = DeviceRpcCallMsg.newBuilder()
                 .setDeviceIdMSB(deviceId.getMostSignificantBits())
-                .setDeviceIdLSB(deviceId.getLeastSignificantBits())
-                .setRequestId(body.get("requestId").asInt());
+                .setDeviceIdLSB(deviceId.getLeastSignificantBits());
+        if (body.get("requestId") != null) {
+            builder.setRequestId(body.get("requestId").asInt());
+        }
         if (body.get("oneway") != null) {
             builder.setOneway(body.get("oneway").asBoolean());
         }
@@ -311,6 +301,9 @@ public class EdgeMsgConstructorUtils {
         }
         if (body.get("sessionId") != null) {
             builder.setSessionId(body.get("sessionId").asText());
+        }
+        if (body.get("rpcStatus") != null) {
+            builder.setRpcStatus(body.get("rpcStatus").asText());
         }
         return builder;
     }

@@ -1,19 +1,5 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The Thingsboard Authors
+// SPDX-License-Identifier: Apache-2.0
 import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -37,7 +23,8 @@ import { Subject } from 'rxjs';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
-import { EditorOptions } from 'tinymce';
+import { EditorOptions } from 'hugerte';
+import { defaultHugeRteOptions } from '@shared/models/hugerte/hugerte.models';
 
 @Component({
     selector: 'tb-template-configuration',
@@ -83,53 +70,15 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   readonly NotificationDeliveryMethod = NotificationDeliveryMethod;
   readonly NotificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
-  tinyMceOptions: Partial<EditorOptions> = {
-    base_url: '/assets/tinymce',
-    suffix: '.min',
+  hugeRteOptions: Partial<EditorOptions> = defaultHugeRteOptions({
     plugins: ['link', 'table', 'image', 'lists', 'code', 'fullscreen'],
     menubar: 'edit insert tools view format table',
     toolbar: 'undo redo | fontfamily fontsize blocks | bold italic  strikethrough | forecolor backcolor ' +
       '| link table image | alignleft aligncenter alignright alignjustify  ' +
       '| numlist bullist | outdent indent  | removeformat | code | fullscreen',
     toolbar_mode: 'sliding',
-    height: 400,
-    autofocus: false,
-    branding: false,
-    promotion: false,
-    setup: (editor) => {
-      editor.on('PostRender', function() {
-        const container = document.querySelector('.tox.tox-tinymce-aux');
-        const styleSheet = document.createElement('style');
-        styleSheet.innerText = `
-          .tox-tiered-menu .tox-menu {
-            width: fit-content;
-            max-width: min(80%, 440px);
-            @media screen and (max-width: 510px) {
-              max-width: calc(100% - 64px);
-            }
-            media screen and (min-width: 511px) and (max-width: 548px) {
-              max-width: calc(100% - 84px);
-            }
-            media screen and (min-width: 549px) and (max-width: 599px) {
-              max-width: calc(100% - 104px);
-            }
-          }
-          .tox-tiered-menu .tox-menu .tox-collection__item-label {
-            word-break: normal;
-          }
-          @media screen and (max-width: 890px) {
-            .tox-tiered-menu > .tox-collection--list:not(:first-child) {
-              left: auto !important;
-              right: 0 !important;
-            }
-          }
-        `;
-        container.prepend(styleSheet);
-      });
-    },
-    relative_urls: false,
-    urlconverter_callback: (url) => url
-  };
+    height: 400
+  });
 
   private propagateChange = null;
   private readonly destroy$ = new Subject<void>();
