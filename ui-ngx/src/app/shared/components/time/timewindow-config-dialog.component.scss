@@ -12,6 +12,22 @@
     tb-timezone-select {
       flex: 1;
     }
+
+    .tb-section-empty-hint {
+      color: rgb(221, 44, 0);
+      background-color: rgba(221, 44, 0, 0.08);
+      border: 1px solid rgb(221, 44, 0);
+      border-radius: 8px;
+
+      .mat-icon {
+        flex-shrink: 0;
+        color: rgb(221, 44, 0);
+      }
+
+      span {
+        min-width: 0;
+      }
+    }
   }
 }
 
