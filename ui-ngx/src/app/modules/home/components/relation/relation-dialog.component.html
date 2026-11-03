@@ -27,6 +27,16 @@
   }
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
+      @if (directionSelectable) {
+        <div class="tb-form-row no-border no-padding space-between mb-4">
+          <div translate>relation.direction</div>
+          <tb-toggle-select [(ngModel)]="direction" [ngModelOptions]="{standalone: true}">
+            @for (dir of [entitySearchDirection.FROM, entitySearchDirection.TO]; track dir) {
+              <tb-toggle-option [value]="dir">{{ directionTranslations.get(dir) | translate }}</tb-toggle-option>
+            }
+          </tb-toggle-select>
+        </div>
+      }
       <tb-relation-type-autocomplete
         appearance="outline"
         formControlName="type"

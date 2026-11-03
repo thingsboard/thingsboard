@@ -31,17 +31,17 @@ import { forkJoin, merge, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
-  AttributeData,
+  ALL_ATTRIBUTE_SCOPES,
   AttributeScope,
+  AttributeTableScope,
+  attributeTableScopeTranslations,
   DataKeyType,
   isClientSideTelemetryType,
   LatestTelemetry,
   TelemetryType,
-  telemetryTypeTranslations,
-  TimeseriesDeleteStrategy,
-  toTelemetryType
+  TimeseriesDeleteStrategy
 } from '@shared/models/telemetry/telemetry.models';
-import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
+import { AttributeDatasource, ScopedAttributeData } from '@home/models/datasource/attribute-datasource';
 import { AttributeService } from '@app/core/http/attribute.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Authority } from '@shared/models/authority.enum';
@@ -94,19 +94,19 @@ import { AiDashboardGenerationService } from '@home/components/ai/ai-dashboard-g
 })
 export class AttributeTableComponent extends PageComponent implements AfterViewInit, OnInit, OnDestroy {
 
-  telemetryTypeTranslationsMap = telemetryTypeTranslations;
+  attributeTableScopeTranslationsMap = attributeTableScopeTranslations;
   isClientSideTelemetryTypeMap = isClientSideTelemetryType;
 
   latestTelemetryTypes = LatestTelemetry;
   attributeScopeTypes = AttributeScope;
+  scopeColumnVisible = false;
 
   mode: 'default' | 'widget' = 'default';
 
-  attributeScopes: Array<string> = [];
-  attributeScope: TelemetryType;
-  toTelemetryTypeFunc = toTelemetryType;
+  attributeScopes: Array<AttributeTableScope> = [];
+  attributeScope: AttributeTableScope;
 
-  displayedColumns = ['lastUpdateTs', 'key', 'value'];
+  displayedColumns: string[] = [];
   pageLink: PageLink;
   textSearchMode = false;
   dataSource: AttributeDatasource;
@@ -158,6 +158,9 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
         if (this.viewsInited) {
           this.updateData(true);
         }
+      } else if (!this.activeValue) {
+        this.dataSource.releaseSubscriptions();
+        this.dirtyValue = true;
       }
     }
   }
@@ -227,11 +230,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   ngOnInit() {
-    if (!this.readonly ||
-      this.userPermissionsService.hasResourcesGenericPermission([Resource.WIDGETS_BUNDLE, Resource.WIDGET_TYPE],
-        Operation.READ)) {
-      this.displayedColumns.unshift('select');
-    }
+    this.updateColumns();
     this.widgetResize$ = new ResizeObserver(() => {
       this.zone.run(() => {
         const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
@@ -260,9 +259,27 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.destroy$.complete();
   }
 
-  attributeScopeChanged(attributeScope: TelemetryType) {
+  updateColumns() {
+    // Without a scope selector the scope column is what tells the user which attributes are displayed
+    this.scopeColumnVisible = this.attributeScope === ALL_ATTRIBUTE_SCOPES ||
+      (this.attributeScopes.length === 1 && this.attributeScope !== LatestTelemetry.LATEST_TELEMETRY);
+    this.displayedColumns = this.scopeColumnVisible ?
+      ['lastUpdateTs', 'scopeName', 'key', 'value'] : ['lastUpdateTs', 'key', 'value'];
+    if (!this.readonly ||
+      this.userPermissionsService.hasResourcesGenericPermission([Resource.WIDGETS_BUNDLE, Resource.WIDGET_TYPE],
+        Operation.READ)) {
+      this.displayedColumns.unshift('select');
+    }
+  }
+
+  attributeScopeChanged(attributeScope: AttributeTableScope) {
     this.attributeScope = attributeScope;
     this.mode = 'default';
+    this.updateColumns();
+    if (this.sort.active === 'scopeName' && !this.scopeColumnVisible) {
+      this.sort.active = 'key';
+      this.sort.direction = 'asc';
+    }
     this.paginator.pageIndex = 0;
     this.selectAllModel = false;
     this.updateData(true);
@@ -296,7 +313,12 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.pageLink.pageSize = this.paginator.pageSize;
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
-    this.dataSource.loadAttributes(this.entityIdValue, this.attributeScope, this.pageLink, reload);
+    this.dataSource.loadAttributes(this.entityIdValue, this.attributeScopesToLoad(), this.pageLink, reload);
+  }
+
+  private attributeScopesToLoad(): TelemetryType[] {
+    return this.attributeScope === ALL_ATTRIBUTE_SCOPES ?
+      Object.values(AttributeScope) : [this.attributeScope];
   }
 
   enterFilterMode() {
@@ -314,8 +336,11 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   resetSortAndFilter(update: boolean = true) {
     const entityType = this.entityIdValue.entityType;
-    if (entityType === EntityType.DEVICE || entityType === EntityType.ENTITY_VIEW) {
-      this.attributeScopes = Object.keys(AttributeScope);
+    if (this.disableAttributeScopeSelection) {
+      this.attributeScopes = [this.defaultAttributeScope];
+      this.attributeScopeSelectionReadonly = true;
+    } else if (entityType === EntityType.DEVICE || entityType === EntityType.ENTITY_VIEW) {
+      this.attributeScopes = [ALL_ATTRIBUTE_SCOPES, ...Object.values(AttributeScope)];
       this.attributeScopeSelectionReadonly = false;
     } else {
       this.attributeScopes = [AttributeScope.SERVER_SCOPE];
@@ -325,6 +350,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.textSearchMode = false;
     this.selectedWidgetsBundleAlias = null;
     this.attributeScope = this.defaultAttributeScope;
+    if (!this.attributeScopeSelectionReadonly && this.defaultAttributeScope !== LatestTelemetry.LATEST_TELEMETRY) {
+      this.attributeScope = ALL_ATTRIBUTE_SCOPES;
+    }
+    this.updateColumns();
     this.pageLink.textSearch = null;
     this.textSearch.reset('', {emitEvent: false});
     if (this.viewsInited) {
@@ -339,7 +368,20 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   reloadAttributes() {
+    this.dataSource.resetSubscriptions();
     this.updateData(true);
+  }
+
+  hasRestLoadedScopes(): boolean {
+    return this.attributeScopesToLoad().some(scope => !this.isClientSideTelemetryTypeMap.get(scope));
+  }
+
+  isAttributeEditable(attribute: ScopedAttributeData): boolean {
+    return !this.readonly && !this.isClientSideTelemetryTypeMap.get(attribute.scope);
+  }
+
+  isSelectionDeletable(): boolean {
+    return !this.readonly && this.dataSource.selection.selected.every(attribute => attribute.scope !== AttributeScope.CLIENT_SCOPE);
   }
 
   addAttribute($event: Event) {
@@ -348,11 +390,12 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     }
     const data: AddAttributeDialogData = {
       entityId: this.entityIdValue,
-      attributeScope: this.attributeScope,
+      attributeScope: this.attributeScope === ALL_ATTRIBUTE_SCOPES ? AttributeScope.SERVER_SCOPE : this.attributeScope,
+      datasource: this.dataSource
     };
 
-    if(this.attributeScope === LatestTelemetry.LATEST_TELEMETRY) {
-      data.datasource = this.dataSource;
+    if (this.attributeScope === ALL_ATTRIBUTE_SCOPES) {
+      data.attributeScopes = [AttributeScope.SERVER_SCOPE, AttributeScope.SHARED_SCOPE];
     }
 
     this.dialog.open<AddAttributeDialogComponent, AddAttributeDialogData, boolean>(AddAttributeDialogComponent, {
@@ -362,17 +405,21 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.reloadAttributes();
+          if (this.attributeScope === LatestTelemetry.LATEST_TELEMETRY) {
+            this.reloadAttributes();
+          } else {
+            this.dataSource.refreshAttributes();
+          }
         }
       }
     );
   }
 
-  editAttribute($event: Event, attribute: AttributeData) {
+  editAttribute($event: Event, attribute: ScopedAttributeData) {
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.isClientSideTelemetryTypeMap.get(this.attributeScope) || this.readonly) {
+    if (!this.isAttributeEditable(attribute)) {
       return;
     }
     const target = $event.target || $event.currentTarget;
@@ -413,16 +460,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
         const updatedAttribute = {...attribute};
         updatedAttribute.value = attributeValue;
         this.attributeService.saveEntityAttributes(this.entityIdValue,
-          this.attributeScope as AttributeScope, [updatedAttribute]).subscribe(
-          () => {
-            this.reloadAttributes();
-          }
+          attribute.scope as AttributeScope, [updatedAttribute]).subscribe(
+          () => this.dataSource.refreshAttributes([attribute.scope])
         );
       }
     });
   }
 
-  deleteTimeseries($event: Event, telemetry?: AttributeData) {
+  deleteTimeseries($event: Event, telemetry?: ScopedAttributeData) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -513,12 +558,17 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
         true
       ).subscribe((result) => {
         if (result) {
-          this.attributeService.deleteEntityAttributes(this.entityIdValue,
-            this.attributeScope as AttributeScope, this.dataSource.selection.selected).subscribe(
-            () => {
-              this.reloadAttributes();
-            }
-          );
+          const attributesByScope = new Map<AttributeScope, ScopedAttributeData[]>();
+          this.dataSource.selection.selected.forEach(attribute => {
+            const scope = attribute.scope as AttributeScope;
+            attributesByScope.set(scope, [...(attributesByScope.get(scope) ?? []), attribute]);
+          });
+          forkJoin(Array.from(attributesByScope, ([scope, attributes]) =>
+            this.attributeService.deleteEntityAttributes(this.entityIdValue, scope, attributes)
+          )).subscribe(() => {
+            this.dataSource.selection.clear();
+            this.dataSource.refreshAttributes(Array.from(attributesByScope.keys()));
+          });
         }
       });
     }
@@ -576,11 +626,12 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       dataKeys: []
     };
 
-    for (let i = 0; i < this.dataSource.selection.selected.length; i++) {
-      const attribute = this.dataSource.selection.selected[i];
+    // Widget data keys carry no attribute scope, so the same key selected from several scopes is added once
+    const keys = Array.from(new Set(this.dataSource.selection.selected.map(attribute => attribute.key)));
+    for (let i = 0; i < keys.length; i++) {
       const dataKey: DataKey = {
-        name: attribute.key,
-        label: attribute.key,
+        name: keys[i],
+        label: keys[i],
         type: dataKeyType,
         color: this.utils.getMaterialColor(i),
         settings: {},

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
 // SPDX-License-Identifier: Apache-2.0
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, SkipSelf } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -13,10 +14,11 @@ import {
   AttributeData,
   AttributeScope,
   LatestTelemetry,
-  TelemetryType
+  TelemetryType,
+  telemetryTypeTranslationsShort
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
 import { map } from 'rxjs/operators';
 import { ErrorMessageConfig } from '@shared/components/string-autocomplete.component';
@@ -25,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 export interface AddAttributeDialogData {
   entityId: EntityId;
   attributeScope: TelemetryType;
+  attributeScopes?: AttributeScope[];
   datasource?: AttributeDatasource;
 }
 
@@ -44,6 +47,8 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
 
   isTelemetry = false;
 
+  telemetryTypeTranslationsShort = telemetryTypeTranslationsShort;
+
   keyValidators = [Validators.required, Validators.maxLength(255)];
 
   constructor(protected store: Store<AppState>,
@@ -53,16 +58,24 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddAttributeDialogComponent, boolean>,
               public fb: FormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
+      scope: [this.data.attributeScope],
       key: ['', this.keyValidators],
       value: [null, [Validators.required]]
     });
     this.isTelemetry = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY;
+    this.attributeFormGroup.get('scope').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      const keyControl = this.attributeFormGroup.get('key');
+      keyControl.setValue(keyControl.value, {emitEvent: false});
+    });
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -93,17 +106,24 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
         this.data.attributeScope, [attribute]);
     } else {
       task = this.attributeService.saveEntityAttributes(this.data.entityId,
-        this.data.attributeScope as AttributeScope, [attribute]);
+        this.attributeFormGroup.get('scope').value as AttributeScope, [attribute]);
     }
     task.subscribe(() => this.dialogRef.close(true));
   }
 
-  fetchOptions(searchText: string): Observable<Array<string>> {
-    const search = searchText ? searchText?.toLowerCase() : '';
-    return this.data.datasource?.getAllAttributes(this.data.entityId,this.data.attributeScope).pipe(
-      map(attributes => attributes?.filter(attribute => attribute.key.toLowerCase().includes(search)).map(a => a.key)),
-    )
-  }
+  fetchOptions = (searchText: string): Observable<Array<string>> => {
+    if (!this.data.datasource) {
+      return of([]);
+    }
+    const search = searchText ? searchText.toLowerCase() : '';
+    const scope = this.attributeFormGroup.get('scope').value;
+    return this.data.datasource.getAttributes().pipe(
+      map(attributes => attributes
+        .filter(attribute => attribute.scope === scope && attribute.lastUpdateTs !== 0 &&
+          attribute.key.toLowerCase().includes(search))
+        .map(attribute => attribute.key))
+    );
+  };
 
   get attributeErrorMessages(): ErrorMessageConfig {
     return {

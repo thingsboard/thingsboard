@@ -11,6 +11,7 @@ import {
   CONTAINS_TYPE,
   EntityRelation,
   EntitySearchDirection,
+  relationDirectionTranslations,
   RelationTypeGroup
 } from '@shared/models/relation.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
@@ -31,6 +32,7 @@ export interface RelationDialogData {
   direction: EntitySearchDirection;
   relation: EntityRelation;
   readonly: boolean;
+  directionSelectable?: boolean;
 }
 
 @Component({
@@ -49,7 +51,9 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
   isAdd: boolean;
   direction: EntitySearchDirection;
   entitySearchDirection = EntitySearchDirection;
+  directionTranslations = relationDirectionTranslations;
   readonly: boolean;
+  directionSelectable: boolean;
 
   additionalInfo: FormControl;
 
@@ -72,6 +76,7 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
     this.isAdd = data.isAdd;
     this.direction = data.direction;
     this.readonly = data.readonly;
+    this.directionSelectable = data.isAdd && !!data.directionSelectable;
   }
 
   ngOnInit(): void {
@@ -128,12 +133,13 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
             additionalInfo: this.additionalInfo.value,
             typeGroup: RelationTypeGroup.COMMON
           } as EntityRelation;
+          const currentEntityId = this.data.relation.from ?? this.data.relation.to;
           if (this.direction === EntitySearchDirection.FROM) {
-            relation.from = this.data.relation.from;
+            relation.from = currentEntityId;
             relation.to = entityId;
           } else {
             relation.from = entityId;
-            relation.to = this.data.relation.to;
+            relation.to = currentEntityId;
           }
           tasks.push(this.entityRelationService.saveRelation(relation));
         });
