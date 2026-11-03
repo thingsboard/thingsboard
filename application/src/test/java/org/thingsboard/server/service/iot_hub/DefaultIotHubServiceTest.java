@@ -507,8 +507,33 @@ class DefaultIotHubServiceTest {
 
         service.deleteInstalledItem(user, deleted.getId());
 
+        // Nothing is left to remove once the other package's entry is subtracted: the integration isn't even read
+        verify(integrationService, never()).findIntegrationById(any(), any());
         verify(integrationService, never()).saveIntegration(any());
         verify(integrationService, never()).deleteIntegration(any(), any());
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_removesItsMetadataEntriesFromTheIntegrationItTookAsItWas() {
+        mockTenant();
+        IntegrationId integrationId = new IntegrationId(UUID.randomUUID());
+        IotHubInstalledItem deleted = devicePackage(integrationId);
+        setIntegrationState(deleted, integrationId, Map.of("profile.milesight-iot-am308", "am308-custom"));
+        ((DeviceInstalledItemDescriptor) deleted.getDescriptor()).setUsedExistingEntityIds(List.of(integrationId));
+        when(iotHubInstalledItemService.findById(tenantId, deleted.getId())).thenReturn(deleted);
+        when(iotHubInstalledItemService.findByTenantId(eq(tenantId), eq(List.of("DEVICE")), isNull(), any()))
+                .thenReturn(new PageData<>(List.of(deleted), 1, 1, false));
+        when(integrationService.findIntegrationById(tenantId, integrationId))
+                .thenReturn(integration(integrationId, Map.of("profile.milesight-iot-am308", "am308-custom", "profile.added-by-user", "Mine")));
+
+        service.deleteInstalledItem(user, deleted.getId());
+
+        ArgumentCaptor<Integration> saved = ArgumentCaptor.forClass(Integration.class);
+        verify(integrationService).saveIntegration(saved.capture());
+        verify(integrationService, never()).deleteIntegration(any(), any());
+        JsonNode metadata = saved.getValue().getConfiguration().get("metadata");
+        assertThat(metadata.has("profile.milesight-iot-am308")).isFalse();
+        assertThat(metadata.get("profile.added-by-user").asText()).isEqualTo("Mine");
     }
 
     @Test
