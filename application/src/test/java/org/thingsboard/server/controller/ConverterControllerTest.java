@@ -77,21 +77,21 @@ public class ConverterControllerTest extends AbstractControllerTest {
     private static final JsonNode CUSTOM_DOWNLINK_CONVERTER_CONFIGURATION = JacksonUtil.newObjectNode()
             .put("encoder", "return {deviceName: 'Device A', deviceType: 'thermostat'};");
 
-    private static final String DEFAULT_AWS_IOT_UPLINK_DECODER = "converters/tbel-aws-iot-decoder.raw";
-    private static final String DEFAULT_AZURE_UPLINK_DECODER = "converters/tbel-azure-decoder.raw";
-    private static final String DEFAULT_CHIRPSTACK_UPLINK_DECODER = "converters/tbel-chirpstack-decoder.raw";
+    private static final String DEFAULT_AWS_IOT_UPLINK_DECODER = "converters/AWS_IOT/uplink/tbel.raw";
+    private static final String DEFAULT_AZURE_UPLINK_DECODER = "converters/AZURE_IOT_HUB/uplink/tbel.raw";
+    private static final String DEFAULT_CHIRPSTACK_UPLINK_DECODER = "converters/CHIRPSTACK/uplink/tbel.raw";
     private static final String CHIRPSTACK_UPLINK_DECODER = "converter/chirpstack_uplink_decoder.raw";
-    private static final String DEFAULT_KPN_UPLINK_DECODER = "converters/tbel-kpn-decoder.raw";
-    private static final String DEFAULT_LORIOT_UPLINK_DECODER = "converters/tbel-loriot-decoder.raw";
+    private static final String DEFAULT_KPN_UPLINK_DECODER = "converters/KPN/uplink/tbel.raw";
+    private static final String DEFAULT_LORIOT_UPLINK_DECODER = "converters/LORIOT/uplink/tbel.raw";
     private static final String LORIOT_UPLINK_DECODER = "converter/loriot_uplink_decoder.raw";
-    private static final String DEFAULT_SIGFOX_UPLINK_DECODER = "converters/tbel-sigfox-decoder.raw";
-    private static final String DEFAULT_THINGPARK_UPLINK_DECODER = "converters/tbel-thingpark-decoder.raw";
+    private static final String DEFAULT_SIGFOX_UPLINK_DECODER = "converters/SIGFOX/uplink/tbel.raw";
+    private static final String DEFAULT_THINGPARK_UPLINK_DECODER = "converters/THINGPARK/uplink/tbel.raw";
     private static final String THINGPARK_UPLINK_DECODER = "converter/thingpark_uplink_decoder.raw";
-    private static final String DEFAULT_TPE_UPLINK_DECODER = "converters/tbel-tpe-decoder.raw";
+    private static final String DEFAULT_TPE_UPLINK_DECODER = "converters/TPE/uplink/tbel.raw";
     private static final String TPE_UPLINK_DECODER = "converter/tpe_uplink_decoder.raw";
-    private static final String DEFAULT_TTI_UPLINK_DECODER = "converters/tbel-tti-decoder.raw";
+    private static final String DEFAULT_TTI_UPLINK_DECODER = "converters/TTI/uplink/tbel.raw";
     private static final String TTI_UPLINK_DECODER = "converter/tti_uplink_decoder.raw";
-    private static final String DEFAULT_TTN_UPLINK_DECODER = "converters/tbel-ttn-decoder.raw";
+    private static final String DEFAULT_TTN_UPLINK_DECODER = "converters/TTN/uplink/tbel.raw";
     private static final String TTN_UPLINK_DECODER = "converter/ttn_uplink_decoder.raw";
     private static final String TTN_UPLINK_JSON_DECODER = "converter/ttn_uplink_json_decoder.raw";
     private static final String LORIOT_UPLINK_DECODER_RETURN_ARRAY = "converter/loriot_uplink_decoder_array.raw";
