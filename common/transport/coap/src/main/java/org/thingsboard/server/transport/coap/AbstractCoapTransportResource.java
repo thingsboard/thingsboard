@@ -4,7 +4,9 @@ package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.server.resources.CoapExchange;
+import org.eclipse.californium.elements.DtlsEndpointContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -23,12 +25,18 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
 
     @Override
     public void handleGET(CoapExchange exchange) {
+        transportContext.onRequest(isDtls(exchange.advanced().getRequest()));
         processHandleGet(exchange);
     }
 
     @Override
     public void handlePOST(CoapExchange exchange) {
+        transportContext.onRequest(isDtls(exchange.advanced().getRequest()));
         processHandlePost(exchange);
+    }
+
+    protected static boolean isDtls(Request request) {
+        return request.getSourceContext() instanceof DtlsEndpointContext;
     }
 
     protected abstract void processHandleGet(CoapExchange exchange);

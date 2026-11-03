@@ -9,6 +9,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
@@ -146,5 +147,7 @@ public interface TransportService {
     boolean hasSession(SessionInfoProto sessionInfo);
 
     void createGaugeStats(String statsName, AtomicInteger number, String... tags);
+
+    DefaultCounter createCounterStats(String statsName, String... tags);
 
 }
