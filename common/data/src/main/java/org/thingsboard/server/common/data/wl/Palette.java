@@ -13,7 +13,7 @@ import java.util.Map;
 @EqualsAndHashCode
 public class Palette {
 
-    @Schema(description = "Name of the pre-defined palette, or 'custom'", example = "custom", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Name of the pre-defined palette, or 'custom'", example = "custom")
     private String type;
 
     @JsonProperty("extends")

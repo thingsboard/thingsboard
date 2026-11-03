@@ -542,6 +542,10 @@ pre.tb-highlight {
     &.tb-error {
       color: rgb(221, 44, 0);
     }
+    &.tb-warning {
+      color: rgb(199, 106, 0);
+      pointer-events: auto;
+    }
   }
 
   .mat-mdc-tooltip {
