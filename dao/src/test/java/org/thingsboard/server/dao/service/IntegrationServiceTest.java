@@ -662,4 +662,28 @@ public class IntegrationServiceTest extends AbstractServiceTest {
         }
     }
 
+    @Test
+    public void testSaveIntegrationWithExistingExternalId() {
+        IntegrationId externalIntegrationId = new IntegrationId(Uuids.timeBased());
+
+        savedIntegrations.add(integrationService.saveIntegration(createIntegration(externalIntegrationId)));
+
+        Integration anotherIntegration = createIntegration(externalIntegrationId);
+        DataValidationException e = Assertions.assertThrows(DataValidationException.class,
+                () -> integrationService.saveIntegration(anotherIntegration));
+        Assert.assertEquals("Integration with such external id already exists!", e.getMessage());
+    }
+
+    private Integration createIntegration(IntegrationId externalId) {
+        Integration integration = new Integration();
+        integration.setTenantId(tenantId);
+        integration.setDefaultConverterId(converterId);
+        integration.setName(INTEGRATION_BASE_NAME + StringUtils.randomAlphanumeric(15));
+        integration.setRoutingKey(StringUtils.randomAlphanumeric(15));
+        integration.setType(IntegrationType.MQTT);
+        integration.setConfiguration(INTEGRATION_CONFIGURATION);
+        integration.setExternalId(externalId);
+        return integration;
+    }
+
 }
