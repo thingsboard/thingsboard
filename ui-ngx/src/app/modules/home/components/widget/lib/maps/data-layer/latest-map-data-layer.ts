@@ -264,10 +264,8 @@ export abstract class TbLatestMapDataLayer<S extends MapDataLayerSettings = MapD
   private unplacedItems: UnplacedMapDataItem[] = [];
 
   protected constructor(map: TbMap<any>,
-                        inputSettings: S,
-                        dataLayerIndex = 0,
-                        dataLayerCount = 1) {
-    super(map, inputSettings, dataLayerIndex, dataLayerCount);
+                        inputSettings: S) {
+    super(map, inputSettings);
     if (this.settings.edit?.enabledActions) {
       this.addEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.add);
       this.dragEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.move);
