@@ -164,6 +164,30 @@ public class DedicatedScriptUplinkDataConverterTest {
     }
 
     @Test
+    public void parseUplinkDataCastsDecoderTelemetryArrayTest() throws Exception {
+        setConfig(null, Set.of("devAddr"));
+
+        JsonObject values = new JsonObject();
+        values.addProperty("devAddr", "01020304");
+        JsonObject decoded = new JsonObject();
+        decoded.addProperty("ts", 1L);
+        decoded.add("values", values);
+        JsonArray telemetry = new JsonArray();
+        telemetry.add(decoded);
+        JsonObject uplinkJson = new JsonObject();
+        uplinkJson.add("telemetry", telemetry);
+
+        UplinkData uplink = uplinkDataConverter.parseUplinkData(uplinkJson, unwrapThingsStack("05060708"));
+
+        List<TransportProtos.TsKvListProto> tsKvList = uplink.getTelemetry().getTsKvListList();
+        assertEquals(2, tsKvList.size());
+        Map<String, TransportProtos.KeyValueProto> fromDecoder = toMap(tsKvList.stream().filter(tsKv -> tsKv.getTs() == 1L).findFirst().orElseThrow().getKvList());
+        Map<String, TransportProtos.KeyValueProto> fromMetadata = toMap(tsKvList.stream().filter(tsKv -> tsKv.getTs() != 1L).findFirst().orElseThrow().getKvList());
+        assertKv(fromDecoder.get("devAddr"), LONG_V, 1020304L);
+        assertKv(fromMetadata.get("devAddr"), LONG_V, 5060708L);
+    }
+
+    @Test
     public void parseUplinkDataWithTsTest() {
         DedicatedConverterConfig config = new DedicatedConverterConfig();
         config.setType(EntityType.DEVICE);

@@ -10,14 +10,16 @@ import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.Base64;
 import java.util.Map;
-import java.util.Set;
 
 public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
 
-    private static final ImmutableMap<String, String> KEYS_MAPPING;
+    // Proto3 JSON writes 64-bit integers as strings, so these numeric fields arrive as "868100000" and are parsed back to numbers.
+    private static final ImmutableMap<String, String> INT64_KEYS_MAPPING = ImmutableMap.of(
+            "frequency", "/uplink_message/settings/frequency"
+    );
 
-    // Proto3 JSON writes 64-bit integers as strings, so these numeric fields arrive as "868100000".
-    private static final Set<String> INT64_KEYS = Set.of("frequency");
+    // Map 64-bit integer (int64, uint64) fields in INT64_KEYS_MAPPING, not here.
+    private static final ImmutableMap<String, String> KEYS_MAPPING;
 
     static {
         KEYS_MAPPING = new ImmutableMap.Builder<String, String>()
@@ -38,7 +40,6 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
                 .put("spreadingFactor", "/uplink_message/settings/data_rate/lora/spreading_factor")
                 .put("dataRateIndex", "/uplink_message/settings/data_rate_index")
                 .put("codeRate", "/uplink_message/settings/coding_rate")
-                .put("frequency", "/uplink_message/settings/frequency")
                 .put("timestamp", "/uplink_message/settings/timestamp")
                 .put("time", "/uplink_message/settings/time")
                 .put("consumedAirtime", "/uplink_message/consumed_airtime")
@@ -62,6 +63,7 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
                 .put("simulated", "/simulated")
                 .put("rssi", "")
                 .put("snr", "")
+                .putAll(INT64_KEYS_MAPPING)
                 .build();
     }
 
@@ -86,7 +88,7 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
 
     @Override
     protected void postMapping(Map<String, Object> kvMap) {
-        INT64_KEYS.forEach(key -> kvMap.computeIfPresent(key, (k, value) -> value instanceof String str ? parseLong(str, value) : value));
+        INT64_KEYS_MAPPING.keySet().forEach(key -> kvMap.computeIfPresent(key, (k, value) -> value instanceof String str ? parseLong(str, value) : value));
         long ts = 0;
         if (kvMap.containsKey("uplinkMessageReceivedAt")) {
             var uplinkMessageReceivedAtTs = parseDateToTimestamp(kvMap.get("uplinkMessageReceivedAt").toString());

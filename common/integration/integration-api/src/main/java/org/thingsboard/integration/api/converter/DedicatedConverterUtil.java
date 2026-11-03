@@ -3,6 +3,7 @@
 package org.thingsboard.integration.api.converter;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.thingsboard.common.util.JacksonUtil;
@@ -47,9 +48,13 @@ public final class DedicatedConverterUtil {
             telemetry = src.get(TELEMETRY);
 
             if (telemetry.isJsonArray()) {
+                JsonArray telemetryArray = telemetry.getAsJsonArray();
+                Set<String> decoderKeys = getTelemetryKeys(telemetryArray);
                 JsonObject telemetryFromMetadata = addKvs(new JsonObject(), kvMap, config.getTelemetry(), unwrapperKeys, telemetryNoCastKeys);
+                // The no-cast keys apply to every array element, so a key the decoder also sends is cast as before.
+                telemetryNoCastKeys.removeAll(decoderKeys);
                 if (!telemetryFromMetadata.isEmpty()) {
-                    telemetry.getAsJsonArray().add(telemetryFromMetadata);
+                    telemetryArray.add(telemetryFromMetadata);
                 }
             } else if (telemetry.isJsonObject()) {
                 var obj = telemetry.getAsJsonObject();
@@ -110,6 +115,18 @@ public final class DedicatedConverterUtil {
             }
         }
         return defaultValue.get();
+    }
+
+    private static Set<String> getTelemetryKeys(JsonArray telemetry) {
+        Set<String> keys = new HashSet<>();
+        for (JsonElement element : telemetry) {
+            if (element.isJsonObject()) {
+                JsonObject obj = element.getAsJsonObject();
+                JsonElement values = obj.get(VALUES);
+                keys.addAll(values != null && values.isJsonObject() ? values.getAsJsonObject().keySet() : obj.keySet());
+            }
+        }
+        return keys;
     }
 
     private static JsonObject addKvs(JsonObject kvsObj, Map<String, Object> kvMap, Set<String> keys, Set<String> unwrapperKeys, Set<String> noCastKeys) {
