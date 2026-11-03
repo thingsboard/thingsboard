@@ -20,8 +20,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
@@ -286,42 +284,6 @@ public class HttpIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testUpdateSecretUsedInIntegration_thenReceiveIntegrationLifecycleEvent() throws Exception {
-        createIntegration(true);
-
-        cleanUpEvents(integration.getId(), new LifeCycleEventFilter());
-        Awaitility
-                .await()
-                .alias("Get cleaned up integration events")
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> {
-                    PageData<EventInfo> events = getEvents(tenantId, integration.getId());
-                    return events.getData().isEmpty();
-                });
-
-        // should trigger new update event
-        Secret secret = secretService.findSecretByName(tenantId, LOCALHOST);
-        secret.setValue("updated");
-        secretService.saveSecret(tenantId, secret);
-
-        Awaitility
-                .await()
-                .alias("Get integration events")
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> {
-                    PageData<EventInfo> events = getEvents(tenantId, integration.getId());
-                    if (events.getData().isEmpty()) {
-                        return false;
-                    }
-
-                    EventInfo event = events.getData().stream().max(Comparator.comparingLong(EventInfo::getCreatedTime)).orElse(null);
-                    return event != null
-                            && "UPDATED".equals(event.getBody().get("event").asText())
-                            && "true".equals(event.getBody().get("success").asText());
-                });
-    }
-
-    @Test
     public void testResponseHeadersFromDownlinkMetadata_thenHeaderPrefixIsCaseInsensitive() throws Exception {
         loginTenantAdmin();
 
@@ -361,17 +323,51 @@ public class HttpIntegrationTest extends AbstractIntegrationTest {
                 .setDataProto(TbMsg.toProto(downlink))
                 .build(), TbCallback.EMPTY);
 
-        MvcResult response = await("uplink response with the pending downlink")
+        var response = await("uplink response with the pending downlink")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> postUplink().andReturn(), result -> result.getResponse().getStatus() == 200);
+                .until(() -> doPostAsync("/api/v1/integrations/http/{routingKey}", TEST_DATA,
+                        TimeUnit.SECONDS.toMillis(TIMEOUT), integration.getRoutingKey()).andReturn(),
+                        result -> result.getResponse().getStatus() == 200);
 
         Assert.assertEquals("{\"uploadFrequency\":60}", response.getResponse().getContentAsString());
         Assert.assertEquals("upper", response.getResponse().getHeader("X-Upper-Case"));
         Assert.assertEquals("lower", response.getResponse().getHeader("X-Lower-Case"));
     }
 
-    private ResultActions postUplink() throws Exception {
-        return doPostAsync("/api/v1/integrations/http/{routingKey}", TEST_DATA, TimeUnit.SECONDS.toMillis(TIMEOUT), integration.getRoutingKey());
+    @Test
+    public void testUpdateSecretUsedInIntegration_thenReceiveIntegrationLifecycleEvent() throws Exception {
+        createIntegration(true);
+
+        cleanUpEvents(integration.getId(), new LifeCycleEventFilter());
+        Awaitility
+                .await()
+                .alias("Get cleaned up integration events")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    PageData<EventInfo> events = getEvents(tenantId, integration.getId());
+                    return events.getData().isEmpty();
+                });
+
+        // should trigger new update event
+        Secret secret = secretService.findSecretByName(tenantId, LOCALHOST);
+        secret.setValue("updated");
+        secretService.saveSecret(tenantId, secret);
+
+        Awaitility
+                .await()
+                .alias("Get integration events")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    PageData<EventInfo> events = getEvents(tenantId, integration.getId());
+                    if (events.getData().isEmpty()) {
+                        return false;
+                    }
+
+                    EventInfo event = events.getData().stream().max(Comparator.comparingLong(EventInfo::getCreatedTime)).orElse(null);
+                    return event != null
+                            && "UPDATED".equals(event.getBody().get("event").asText())
+                            && "true".equals(event.getBody().get("success").asText());
+                });
     }
 
     private void createIntegration(boolean isDevice) throws Exception {
