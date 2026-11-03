@@ -20,7 +20,6 @@ import {
 @Component({
     selector: 'tb-custom-action-pretty-editor',
     templateUrl: './custom-action-pretty-editor.component.html',
-    styleUrls: ['./custom-action-pretty-editor.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -89,6 +88,10 @@ export class CustomActionPrettyEditorComponent implements AfterViewInit, Control
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+  }
+
+  toggleFullScreen(): void {
+    this.fullscreen = !this.fullscreen;
   }
 
   writeValue(obj: CustomActionDescriptor): void {
