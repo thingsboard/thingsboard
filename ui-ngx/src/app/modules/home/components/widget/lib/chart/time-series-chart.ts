@@ -68,7 +68,14 @@ import {
   isString,
   mergeDeep
 } from '@core/utils';
-import { DataKey, Datasource, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
+import {
+  compareLegendDataKeys,
+  DataKey,
+  Datasource,
+  DatasourceType,
+  FormattedData,
+  widgetType
+} from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams, PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
 import { Renderer2 } from '@angular/core';
@@ -186,8 +193,7 @@ export class TbTimeSeriesChart {
               private readonly inputSettings: DeepPartial<TimeSeriesChartSettings>,
               private chartElement: HTMLElement,
               private renderer: Renderer2,
-              private autoResize = true,
-              private sortDataKeys = false) {
+              private autoResize = true) {
 
     let tooltipValueFormatFunction: TimeSeriesChartTooltipValueFormatFunction;
 
@@ -519,8 +525,8 @@ export class TbTimeSeriesChart {
         }
       }
     }
-    if (this.sortDataKeys) {
-      this.dataItems.sort((a, b) => a.dataKey.label.localeCompare(b.dataKey.label));
+    if (this.settings.sortSeries) {
+      this.dataItems.sort((a, b) => compareLegendDataKeys(a.dataKey, b.dataKey));
     }
   }
 

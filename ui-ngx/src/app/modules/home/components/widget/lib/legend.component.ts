@@ -15,7 +15,14 @@
 ///
 
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { LegendConfig, LegendData, LegendDirection, LegendKey, LegendPosition } from '@shared/models/widget.models';
+import {
+  compareLegendDataKeys,
+  LegendConfig,
+  LegendData,
+  LegendDirection,
+  LegendKey,
+  LegendPosition
+} from '@shared/models/widget.models';
 
 @Component({
     selector: 'tb-legend',
@@ -65,7 +72,7 @@ export class LegendComponent implements OnInit {
     try {
       let keys = this.legendData.keys;
       if (this.legendConfig.sortDataKeys) {
-        keys = this.legendData.keys.sort((key1, key2) => key1.dataKey.label.localeCompare(key2.dataKey.label));
+        keys = this.legendData.keys.sort((key1, key2) => compareLegendDataKeys(key1.dataKey, key2.dataKey));
       }
       return keys.filter(legendKey => this.legendData.keys[legendKey.dataIndex].dataKey.inLegend);
     } catch (e) {}
