@@ -1,0 +1,13 @@
+{
+  "type": "DEVICE",
+  "name": "Device $eui",
+  "label": "",
+  "profile": "",
+  "customer": "",
+  "group": "",
+  "attributes": [
+    "eui",
+    "mType",
+    "fCntDn"
+  ]
+}

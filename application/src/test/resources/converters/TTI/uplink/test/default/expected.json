@@ -1,0 +1,19 @@
+{
+  "entityType": "DEVICE",
+  "name": "eui-1000000000000001",
+  "profile": "application-tti-name",
+  "telemetry": {
+    "ts": 1684398325906,
+    "values": {
+      "battery": 95,
+      "temperature": 36.6,
+      "saturation": 99
+    }
+  },
+  "attributes": {
+    "sn": 32310067,
+    "devAddr": "20000001",
+    "fPort": 85,
+    "eui": "1000000000000001"
+  }
+}
