@@ -25,7 +25,6 @@ import {
   getLabel,
   getSingleTsValue,
   iconStyle,
-  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   resolveCssSize,
   textStyle,
@@ -92,7 +91,6 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
   private horizontal = false;
   private valueFormat: ValueFormatProcessor;
-  private lastUpdateTs: number;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
@@ -130,8 +128,8 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
-    if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
-      (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
+    if (this.showDate) {
+      this.dateFormat.formattedUpdated?.pipe(
         takeUntilDestroyed(this.destroyRef)
       ).subscribe(() => this.cd.detectChanges());
     }
@@ -162,7 +160,6 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (this.panelResize$) {
       this.panelResize$.disconnect();
     }
-    this.dateFormat.destroy();
   }
 
   public onInit() {
@@ -182,17 +179,12 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     } else {
       this.valueText = 'N/A';
     }
-    this.updateLastUpdateTs(ts);
+    this.dateFormat.update(ts);
     this.iconColor.update(value);
     this.labelColor.update(value);
     this.valueColor.update(value);
     this.dateColor.update(value);
     this.cd.detectChanges();
-  }
-
-  private updateLastUpdateTs(ts: number) {
-    this.lastUpdateTs = ts;
-    this.dateFormat.update(ts);
   }
 
   private onResize() {

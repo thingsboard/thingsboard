@@ -23,7 +23,6 @@ import {
   createValueFormatterFromSettings,
   DateFormatProcessor,
   getSingleTsValue,
-  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   textStyle,
   ValueFormatProcessor
@@ -139,11 +138,9 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
       this.dateStyle = textStyle(this.settings.dateFont);
       this.dateStyle.color = this.settings.dateColor;
-      if (this.settings.dateFormat?.lastUpdateAgo) {
-        (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
-          takeUntilDestroyed(this.destroyRef)
-        ).subscribe(() => this.cd.detectChanges());
-      }
+      this.dateFormat.formattedUpdated?.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
     }
 
     this.noSignalRssiValue = this.settings.noSignalRssiValue ?? -100;
@@ -179,11 +176,9 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.tooltipDateStyle = textStyle(this.settings.tooltipDateFont);
       this.tooltipDateStyle.color = this.settings.tooltipDateColor;
       this.tooltipDateLabelStyle = {...this.tooltipDateStyle, ...this.tooltipDateLabelStyle};
-      if (this.settings.tooltipDateFormat?.lastUpdateAgo) {
-        (this.tooltipDateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
-          takeUntilDestroyed(this.destroyRef)
-        ).subscribe(() => this.cd.detectChanges());
-      }
+      this.tooltipDateFormat.formattedUpdated?.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => this.cd.detectChanges());
     }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
@@ -203,8 +198,6 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
-    this.dateFormat?.destroy();
-    this.tooltipDateFormat?.destroy();
   }
 
   public onInit() {

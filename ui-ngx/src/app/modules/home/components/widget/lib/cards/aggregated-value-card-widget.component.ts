@@ -31,7 +31,6 @@ import {
   DateFormatProcessor,
   getDataKey,
   getLatestSingleTsValue,
-  LastUpdateAgoDateFormatProcessor,
   overlayStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
@@ -158,8 +157,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
 
-    if (this.showDate && this.settings.dateFormat?.lastUpdateAgo) {
-      (this.dateFormat as LastUpdateAgoDateFormatProcessor).tick$.pipe(
+    if (this.showDate) {
+      this.dateFormat.formattedUpdated?.pipe(
         takeUntilDestroyed(this.destroyRef)
       ).subscribe(() => this.cd.detectChanges());
     }
@@ -277,7 +276,6 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     if (this.showChart) {
       this.lineChart.destroy();
     }
-    this.dateFormat.destroy();
   }
 
   private updateLastUpdateTs(ts: number) {

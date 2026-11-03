@@ -21,13 +21,13 @@ import {
 } from '@shared/models/widget.models';
 import { EventEmitter, Injector, NgZone } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import { DateAgoPipe, nextAgoChangeDelay } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
-import { EMPTY, Observable, of, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, of, Subscription, timer } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, share, switchMap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
 import moment from 'moment';
@@ -765,9 +765,9 @@ export abstract class DateFormatProcessor {
                         protected settings: DateFormatSettings) {
   }
 
-  abstract update(ts: string | number | Date, interval?: Interval): string;
+  formattedUpdated?: Observable<void>;
 
-  destroy(): void {}
+  abstract update(ts: string | number | Date, interval?: Interval): string;
 
 }
 
@@ -794,13 +794,21 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
 
 export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
 
-  readonly tick$ = new Subject<void>();
-
   private dateAgoPipe: DateAgoPipe;
   private translate: TranslateService;
   private ngZone: NgZone;
-  private lastTs: string | number | Date;
-  private timerSub: Subscription;
+  private readonly ts$ = new BehaviorSubject<number>(null);
+
+  readonly formattedUpdated: Observable<void> = this.ts$.pipe(
+    distinctUntilChanged(),
+    switchMap(ts => this.agoTicks(ts)),
+    map(() => this.format(this.ts$.value)),
+    filter(text => text !== this.formatted),
+    map(text => {
+      this.formatted = text;
+    }),
+    share()
+  );
 
   constructor(protected $injector: Injector,
               protected settings: DateFormatSettings) {
@@ -811,57 +819,33 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
   }
 
   update(ts: string | number | Date): string {
-    this.cancelTimer();
-    this.lastTs = ts;
-    if (ts) {
-      this.refreshFormatted();
-      this.scheduleNext(+new Date(ts));
-    } else {
-      this.formatted = '&nbsp;';
-    }
+    this.ts$.next(ts ? +new Date(ts) : null);
+    this.formatted = ts ? this.format(ts) : '&nbsp;';
     return this.formatted;
   }
 
-  destroy(): void {
-    this.cancelTimer();
-    this.tick$.complete();
-  }
-
-  private refreshFormatted(): void {
-    const agoText = this.dateAgoPipe.transform(this.lastTs, {applyAgo: true, short: true, textPart: true});
-    this.formatted = this.settings.hideLastUpdatePrefix
+  private format(ts: string | number | Date): string {
+    const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
+    return this.settings.hideLastUpdatePrefix
       ? agoText
       : this.translate.instant('date.last-update-n-ago-text', {agoText});
   }
 
-  private scheduleNext(ts: number): void {
-    const delay = this.computeDelay(ts);
-    this.ngZone.runOutsideAngular(() => {
-      this.timerSub = timer(delay).subscribe(() => {
-        this.refreshFormatted();
-        this.scheduleNext(+new Date(this.lastTs));
-        this.tick$.next();
-      });
+  private agoTicks(ts: number): Observable<void> {
+    return new Observable<void>(subscriber => {
+      let tick: Subscription;
+      const schedule = () => {
+        const delay = nextAgoChangeDelay(ts);
+        if (delay !== null) {
+          tick = timer(delay).subscribe(() => {
+            subscriber.next();
+            schedule();
+          });
+        }
+      };
+      this.ngZone.runOutsideAngular(schedule);
+      return () => tick?.unsubscribe();
     });
-  }
-
-  private cancelTimer(): void {
-    this.timerSub?.unsubscribe();
-    this.timerSub = null;
-  }
-
-  private computeDelay(ts: number): number {
-    const age = Date.now() - ts;
-    if (age < 29 * SECOND) {
-      return 29 * SECOND - age;
-    } else if (age < MINUTE) {
-      return SECOND - (age % SECOND);
-    } else if (age < HOUR) {
-      return MINUTE - (age % MINUTE);
-    } else if (age < DAY) {
-      return HOUR - (age % HOUR);
-    }
-    return DAY - (age % DAY);
   }
 
 }
