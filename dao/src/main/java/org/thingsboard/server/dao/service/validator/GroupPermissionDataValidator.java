@@ -3,6 +3,7 @@
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -14,22 +15,41 @@ import org.thingsboard.server.common.data.permission.GroupPermission;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.dao.group.EntityGroupDao;
 import org.thingsboard.server.dao.grouppermission.GroupPermissionDao;
+import org.thingsboard.server.dao.owner.OwnerService;
 import org.thingsboard.server.dao.role.RoleDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.List;
+
 @Component
 @AllArgsConstructor
 public class GroupPermissionDataValidator extends DataValidator<GroupPermission> {
+
+    public static final String USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR =
+            "Group Permission can't grant access to a user group that is not owned by the grantee user group's owner or its sub-customers!";
 
     private final TenantService tenantService;
     private final EntityGroupDao entityGroupDao;
     private final RoleDao roleDao;
     private final GroupPermissionDao groupPermissionDao;
+    @Lazy
+    private final OwnerService ownerService;
 
-    @Override
-    protected void validateCreate(TenantId tenantId, GroupPermission groupPermission) {
+    public static void validateSelfRegistrationPermissions(TenantId tenantId, List<GroupPermission> permissions, EntityGroupDao entityGroupDao) {
+        if (permissions == null) {
+            return;
+        }
+        for (GroupPermission permission : permissions) {
+            if (permission.getEntityGroupId() == null || permission.getEntityGroupId().isNullUid()) {
+                continue;
+            }
+            EntityGroup entityGroup = entityGroupDao.findById(tenantId, permission.getEntityGroupId().getId());
+            if (entityGroup != null && entityGroup.getType() == EntityType.USER) {
+                throw new DataValidationException(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR);
+            }
+        }
     }
 
     @Override
@@ -51,13 +71,13 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
         }
         if (groupPermission.getUserGroupId() == null || groupPermission.getUserGroupId().isNullUid()) {
             throw new DataValidationException("Group Permission userGroupId should be specified!");
-        } else {
-            EntityGroup entityGroup = entityGroupDao.findById(tenantId, groupPermission.getUserGroupId().getId());
-            if (entityGroup == null) {
-                throw new DataValidationException("Group Permission is referencing to non-existent user group!");
-            } else if (entityGroup.getType() != EntityType.USER) {
-                throw new DataValidationException("Group Permission is referencing to user group with non user group type!");
-            }
+        }
+        EntityGroup userGroup = entityGroupDao.findById(tenantId, groupPermission.getUserGroupId().getId());
+        if (userGroup == null) {
+            throw new DataValidationException("Group Permission is referencing to non-existent user group!");
+        }
+        if (userGroup.getType() != EntityType.USER) {
+            throw new DataValidationException("Group Permission is referencing to user group with non user group type!");
         }
         if (groupPermission.getRoleId() == null || groupPermission.getRoleId().isNullUid()) {
             throw new DataValidationException("Group Permission roleId should be specified!");
@@ -76,9 +96,14 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
             if (entityGroup == null) {
                 throw new DataValidationException("Group Permission is referencing to non-existent entity group!");
             }
+            if (entityGroup.getType() == EntityType.USER
+                    && !ownerService.fetchOwnersHierarchy(tenantId, entityGroup.getOwnerId()).contains(userGroup.getOwnerId())) {
+                throw new DataValidationException(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR);
+            }
             groupPermission.setEntityGroupType(entityGroup.getType());
         } else {
             groupPermission.setEntityGroupType(null);
         }
     }
+
 }

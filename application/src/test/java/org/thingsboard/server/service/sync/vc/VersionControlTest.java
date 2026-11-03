@@ -129,6 +129,7 @@ import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRe
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadConfig;
 import org.thingsboard.server.common.data.sync.vc.request.load.EntityTypeVersionLoadRequest;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.grouppermission.GroupPermissionDao;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserService;
@@ -148,6 +149,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.controller.TbResourceControllerTest.JS_TEST_FILE_NAME;
@@ -165,6 +167,8 @@ public class VersionControlTest extends AbstractControllerTest {
     private OtaPackageService otaPackageService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private GroupPermissionDao groupPermissionDao;
 
     private TenantId tenantId1;
     protected User tenantAdmin1;
@@ -971,6 +975,30 @@ public class VersionControlTest extends AbstractControllerTest {
         assertThat(importedGroupPermissions).singleElement().satisfies(permission -> {
             assertThat(new GroupPermission(permission)).isEqualTo(groupPermission);
         });
+    }
+
+    @Test
+    public void testEntityGroupVcWithUserGroupPermissionOutsideOwnerHierarchy_loadFails() throws Exception {
+        Customer customer = createCustomer("Customer with managers");
+        EntityGroup customerUserGroup = createEntityGroup(customer.getId(), EntityType.USER, "Customer managers");
+        EntityGroup tenantUserGroup = createEntityGroup(tenantId1, EntityType.USER, "Tenant user group");
+        Role role = createGroupRole(null, "Manage users", List.of(Operation.READ, Operation.WRITE));
+
+        GroupPermission groupPermission = new GroupPermission();
+        groupPermission.setTenantId(tenantId1);
+        groupPermission.setUserGroupId(customerUserGroup.getId());
+        groupPermission.setRoleId(role.getId());
+        groupPermission.setEntityGroupId(tenantUserGroup.getId());
+        groupPermission.setEntityGroupType(EntityType.USER);
+        groupPermission = groupPermissionDao.save(tenantId1, groupPermission);
+
+        String versionId = createVersion("user groups", EntityType.CUSTOMER, EntityType.USER);
+        groupPermissionDao.removeById(tenantId1, groupPermission.getUuidId());
+
+        assertThatThrownBy(() -> loadVersion(versionId, EntityType.CUSTOMER, EntityType.USER))
+                .hasMessageContaining("Failed to load permissions of user group 'Customer managers'")
+                .hasMessageContaining(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR);
+        assertThat(findGroupPermissions(customerUserGroup.getId())).isEmpty();
     }
 
     @Test

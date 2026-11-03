@@ -149,6 +149,46 @@ public class EntityGroupEdgeTest extends AbstractEdgeTest {
         }
     }
 
+    @Test
+    public void testSendGroupPermissionsRequestToCloud_userGroupAsTarget() throws Exception {
+        Role groupRole = saveGroupRole();
+        EntityGroupInfo tenantAdminGroup = findTenantAdminsGroup();
+        EntityGroup userGroupNotAssignedToEdge = createUserGroup();
+
+        EntityGroup targetUserGroup = new EntityGroup();
+        targetUserGroup.setType(EntityType.USER);
+        targetUserGroup.setName("Target User Group");
+        targetUserGroup.setOwnerId(tenantId);
+        targetUserGroup = doPost("/api/entityGroup", targetUserGroup, EntityGroup.class);
+
+        saveGroupPermission(groupRole.getId(), tenantAdminGroup.getId(), targetUserGroup);
+        saveGroupPermission(groupRole.getId(), userGroupNotAssignedToEdge.getId(), targetUserGroup);
+
+        edgeImitator.expectMessageAmount(1);
+        doPost("/api/edge/" + edge.getUuidId() + "/entityGroup/" + targetUserGroup.getId() + "/" + EntityType.USER.name(), EntityGroup.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        UUID targetUserGroupId = targetUserGroup.getUuidId();
+        EntityGroupRequestMsg requestMsg = EntityGroupRequestMsg.newBuilder()
+                .setEntityGroupIdMSB(targetUserGroupId.getMostSignificantBits())
+                .setEntityGroupIdLSB(targetUserGroupId.getLeastSignificantBits())
+                .setType(EntityType.USER.name())
+                .build();
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.expectMessageAmount(1);
+        edgeImitator.sendUplinkMsg(UplinkMsg.newBuilder().addEntityGroupPermissionsRequestMsg(requestMsg).build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        List<GroupPermissionProto> groupPermissionProtos = edgeImitator.findAllMessagesByType(GroupPermissionProto.class);
+        Assert.assertEquals(1, groupPermissionProtos.size());
+        GroupPermission groupPermission = JacksonUtil.fromString(groupPermissionProtos.get(0).getEntity(), GroupPermission.class, true);
+        Assert.assertNotNull(groupPermission);
+        Assert.assertEquals(tenantAdminGroup.getId(), groupPermission.getUserGroupId());
+        Assert.assertEquals(targetUserGroup.getId(), groupPermission.getEntityGroupId());
+    }
+
     private EntityGroup createUserGroup() {
         EntityGroup entityGroup = new EntityGroup();
         entityGroup.setType(EntityType.USER);

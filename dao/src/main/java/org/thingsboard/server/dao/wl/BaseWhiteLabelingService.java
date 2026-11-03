@@ -32,9 +32,11 @@ import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.group.EntityGroupDao;
 import org.thingsboard.server.dao.model.sql.WhiteLabelingCompositeKey;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.exception.DataValidationException;
@@ -65,6 +67,7 @@ public class BaseWhiteLabelingService extends AbstractCachedService<WhiteLabelin
     private final CustomerService customerService;
     private final ImageService imageService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityGroupDao entityGroupDao;
 
     @Override
     public LoginWhiteLabelingParams getSystemLoginWhiteLabelingParams() {
@@ -556,6 +559,7 @@ public class BaseWhiteLabelingService extends AbstractCachedService<WhiteLabelin
 
     @Override
     public WebSelfRegistrationParams saveTenantSelfRegistrationParams(TenantId tenantId, WebSelfRegistrationParams selfRegistrationParams) {
+        GroupPermissionDataValidator.validateSelfRegistrationPermissions(tenantId, selfRegistrationParams.getPermissions(), entityGroupDao);
         if (selfRegistrationParams.getPrivacyPolicy() != null) {
             WhiteLabeling privacyPolicy = WhiteLabeling.builder()
                     .tenantId(tenantId)

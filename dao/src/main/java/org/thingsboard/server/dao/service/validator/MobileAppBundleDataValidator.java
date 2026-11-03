@@ -11,6 +11,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.dao.group.EntityGroupDao;
 import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.exception.DataValidationException;
@@ -21,6 +22,9 @@ public class MobileAppBundleDataValidator extends DataValidator<MobileAppBundle>
 
     @Autowired
     private MobileAppDao mobileAppDao;
+
+    @Autowired
+    private EntityGroupDao entityGroupDao;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, MobileAppBundle mobileAppBundle) {
@@ -44,5 +48,9 @@ public class MobileAppBundleDataValidator extends DataValidator<MobileAppBundle>
                 throw new DataValidationException("Mobile app bundle refers to wrong ios app! Platform type of specified app is " + iosApp.getPlatformType());
             }
         }
+        if (mobileAppBundle.getSelfRegistrationParams() != null) {
+            GroupPermissionDataValidator.validateSelfRegistrationPermissions(tenantId, mobileAppBundle.getSelfRegistrationParams().getPermissions(), entityGroupDao);
+        }
     }
+
 }

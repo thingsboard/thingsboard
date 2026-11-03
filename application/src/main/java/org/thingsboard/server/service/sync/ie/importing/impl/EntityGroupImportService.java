@@ -25,6 +25,7 @@ import org.thingsboard.server.dao.grouppermission.GroupPermissionService;
 import org.thingsboard.server.dao.ota.DeviceGroupOtaPackageService;
 import org.thingsboard.server.dao.ota.OtaPackageStateService;
 import org.thingsboard.server.dao.role.RoleService;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.service.sync.ie.importing.MissingEntityException;
@@ -210,7 +211,14 @@ public class EntityGroupImportService extends BaseEntityImportService<EntityGrou
             Role role = roleService.findRoleById(tenantId, permission.getRoleId());
             if (TenantId.SYS_TENANT_ID.equals(role.getOwnerId())) continue;
 
-            GroupPermission saved = groupPermissionService.saveGroupPermission(tenantId, permission);
+            GroupPermission saved;
+            try {
+                saved = groupPermissionService.saveGroupPermission(tenantId, permission);
+            } catch (DataValidationException e) {
+                EntityId groupId = entityGroup.getExternalId() != null ? entityGroup.getExternalId() : entityGroup.getId();
+                throw new DataValidationException(String.format("Failed to load permissions of user group '%s' with external id %s: %s",
+                        entityGroup.getName(), groupId.getId(), e.getMessage()), e);
+            }
 
             importResult.addSendEventsCallback(() -> {
                 userPermissionsService.onGroupPermissionUpdated(saved);

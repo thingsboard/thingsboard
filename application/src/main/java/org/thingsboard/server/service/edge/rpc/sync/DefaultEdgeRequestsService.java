@@ -574,12 +574,15 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         log.trace("[{}] processEntityGroupPermissionsRequest [{}][{}]", tenantId, edge.getName(), entityGroupEntitiesRequestMsg);
         try {
             if (entityGroupEntitiesRequestMsg.getEntityGroupIdMSB() != 0 && entityGroupEntitiesRequestMsg.getEntityGroupIdLSB() != 0) {
-                EntityGroupId userGroupId = new EntityGroupId(new UUID(entityGroupEntitiesRequestMsg.getEntityGroupIdMSB(), entityGroupEntitiesRequestMsg.getEntityGroupIdLSB()));
+                EntityGroupId entityGroupId = new EntityGroupId(new UUID(entityGroupEntitiesRequestMsg.getEntityGroupIdMSB(), entityGroupEntitiesRequestMsg.getEntityGroupIdLSB()));
                 EntityType entityGroupType = EntityType.valueOf(entityGroupEntitiesRequestMsg.getType());
                 if (EntityType.USER.equals(entityGroupType)) {
-                    return processUserGroupPermissionsRequest(edge, userGroupId);
+                    return Futures.transform(Futures.allAsList(
+                            processUserGroupPermissionsRequest(edge, entityGroupId),
+                            processEntityGroupPermissionsRequest(edge, entityGroupId, entityGroupType)
+                    ), voids -> null, MoreExecutors.directExecutor());
                 } else {
-                    return processEntityGroupPermissionsRequest(edge, userGroupId, entityGroupType);
+                    return processEntityGroupPermissionsRequest(edge, entityGroupId, entityGroupType);
                 }
             } else {
                 log.warn("Received empty entity group ID MSG and LSB [{}]", entityGroupEntitiesRequestMsg);
