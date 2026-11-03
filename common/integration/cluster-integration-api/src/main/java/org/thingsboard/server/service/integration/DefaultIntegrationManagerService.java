@@ -11,6 +11,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.exception.ThingsboardRuntimeException;
@@ -58,6 +60,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -73,8 +76,12 @@ import org.thingsboard.server.service.integration.state.IntegrationState;
 import org.thingsboard.server.service.integration.state.ValidationTask;
 import org.thingsboard.server.service.integration.state.ValidationTaskType;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -141,10 +148,26 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
     @Value("${integrations.init.connection_check_api_request_timeout_sec:20}")
     private int integrationConnectionCheckApiRequestTimeoutSec;
 
+    @Value("${integrations.ownership_stats.enabled:true}")
+    private boolean ownershipStatsEnabled;
+
+    @Value("${integrations.ownership_stats.check_interval_ms:60000}")
+    private long ownershipStatsCheckIntervalMs;
+
+    @Value("${integrations.ownership_stats.print_interval_ms:600000}")
+    private long ownershipStatsPrintIntervalMs;
+
+    @Autowired(required = false)
+    private StatsFactory statsFactory;
+
+    // The partition snapshot that refresh() last applied, per integration type.
+    private final ConcurrentMap<IntegrationType, Set<Integer>> appliedPartitions = new ConcurrentHashMap<>();
+
     private ExecutorService commandExecutorService;
     private ScheduledExecutorService statisticsExecutorService;
     private ScheduledExecutorService reInitExecutorService;
     private ScheduledExecutorService lifecycleExecutorService;
+    private IntegrationOwnershipMonitor ownershipMonitor;
 
     @PostConstruct
     public void init() {
@@ -155,11 +178,19 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             reInitExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("ie-reinit");
             reInitExecutorService.scheduleAtFixedRate(this::reInitIntegrations, reInitFrequency, reInitFrequency, TimeUnit.MILLISECONDS);
         }
-        if (statisticsEnabled) {
+        supportedIntegrationTypes.addAll(serviceInfoProvider.getSupportedIntegrationTypes());
+        boolean ownershipStats = ownershipStatsEnabled && !supportedIntegrationTypes.isEmpty() && ownershipStatsCheckIntervalMs > 0;
+        if (statisticsEnabled || ownershipStats) {
             statisticsExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("ie-stats");
+        }
+        if (statisticsEnabled) {
             statisticsExecutorService.scheduleAtFixedRate(this::persistStatistics, statisticsPersistFrequency, statisticsPersistFrequency, TimeUnit.MILLISECONDS);
         }
-        supportedIntegrationTypes.addAll(serviceInfoProvider.getSupportedIntegrationTypes());
+        if (ownershipStats) {
+            // shares the stats thread: persistStatistics() only enqueues async sends, and the ownership check takes milliseconds
+            ownershipMonitor = new IntegrationOwnershipMonitor(statsFactory, partitionService.getIntegrationExecutorPartitionsCount(), ownershipStatsPrintIntervalMs);
+            statisticsExecutorService.scheduleWithFixedDelay(this::checkOwnership, ownershipStatsCheckIntervalMs, ownershipStatsCheckIntervalMs, TimeUnit.MILLISECONDS);
+        }
     }
 
     @PreDestroy
@@ -170,7 +201,7 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
         if (commandExecutorService != null) {
             commandExecutorService.shutdownNow();
         }
-        if (statisticsEnabled) {
+        if (statisticsExecutorService != null) {
             statisticsExecutorService.shutdownNow();
         }
         if (reInitEnabled) {
@@ -447,13 +478,13 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
         if (!supportedIntegrationTypes.contains(integrationType)) {
             return;
         }
-        if (newPartitions.isEmpty()) {
-            return;
-        }
+        // An empty set is a real snapshot (the node lost every partition of this type), not a no-op:
+        // the singleton integrations of this type must be stopped.
         Set<Integer> ownedPartitions = newPartitions.stream()
                 .map(tpi -> tpi.getPartition().orElse(-1))
                 .filter(p -> p >= 0)
                 .collect(Collectors.toSet());
+        appliedPartitions.put(integrationType, Set.copyOf(ownedPartitions));
 
         Set<IntegrationId> currentIntegrationIds = new HashSet<>(integrations.keySet());
         for (IntegrationId integrationId : currentIntegrationIds) {
@@ -470,9 +501,14 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                         ? state.getConfiguration()
                         : configurationService.getIntegration(state.getTenantId(), state.getId());
             }
-            if (integration != null && !isMineForPartitions(integration, ownedPartitions)) {
+            // ownedPartitions belong to integrationType only; other types are handled by their own refresh.
+            if (integration != null && integrationType.equals(integration.getType()) && !isMineForPartitions(integration, ownedPartitions)) {
                 scheduleIntegrationEvent(integration.getTenantId(), integration.getId(), ComponentLifecycleEvent.STOPPED);
             }
+        }
+        if (newPartitions.isEmpty()) {
+            // Nothing new to start; keep the previous behaviour for non-singleton integrations on an empty snapshot.
+            return;
         }
         createIntegrations(configurationService.getActiveIntegrationList(integrationType, false), ownedPartitions);
     }
@@ -583,13 +619,21 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                 case UPDATED:
                 case ACTIVATED:
                     Integration configuration = configurationService.getIntegration(state.getTenantId(), state.getId());
-                    if (configuration != null) {
+                    if (configuration != null && !isMine(configuration)) {
+                        // The event was scheduled while this node owned the partition. Ownership may have moved
+                        // since then, and the refresh that would stop it may already have run or not run yet.
+                        log.info("[{}][{}] Skipping {}: the integration is not mine anymore, stopping it.", state.getTenantId(), state.getId(), pendingEvent);
+                        persistCurrentStatistics(state);
+                        processStop(state, STOPPED);
+                    } else if (configuration != null) {
                         processUpdateEvent(state, configuration);
                     } else {
                         processStop(state, DELETED);
                     }
                     break;
                 case STOPPED:
+                    processStopUnlessMine(state);
+                    break;
                 case SUSPENDED:
                 case DELETED:
                     persistCurrentStatistics(state);
@@ -597,6 +641,42 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                     break;
             }
             log.debug("[{}] Going to process new event: {}", state.getId(), pendingEvent);
+        }
+    }
+
+    // A STOPPED scheduled because the partition moved away can be stale: the partition may come back before the event
+    // runs, and refresh() skips integrations that are still running. Ownership is checked again when the stop runs, and
+    // once more after it, because the partition may also come back while the integration is being stopped.
+    private void processStopUnlessMine(IntegrationState state) {
+        Integration configuration;
+        try {
+            configuration = configurationService.getIntegration(state.getTenantId(), state.getId());
+        } catch (Exception e) {
+            // Without the configuration the ownership can't be checked: stop it, as before the check existed.
+            log.warn("[{}][{}] Failed to fetch the integration before stopping it: {}", state.getTenantId(), state.getId(), e.getMessage());
+            configuration = null;
+        }
+        if (state.getIntegration() != null && shouldRunHere(configuration)) {
+            log.info("[{}][{}] Skipping STOPPED: the integration is mine again.", state.getTenantId(), state.getId());
+            return;
+        }
+        persistCurrentStatistics(state);
+        processStop(state, STOPPED);
+        if (shouldRunHere(configuration)) {
+            log.info("[{}][{}] The integration is mine again after the stop, starting it.", state.getTenantId(), state.getId());
+            scheduleIntegrationEvent(state.getTenantId(), state.getId(), ComponentLifecycleEvent.CREATED);
+        }
+    }
+
+    private boolean shouldRunHere(Integration configuration) {
+        if (configuration == null || !configuration.isEnabled() || configuration.isRemote()) {
+            return false;
+        }
+        try {
+            return isMine(configuration);
+        } catch (Exception e) {
+            log.debug("[{}][{}] Failed to resolve integration ownership", configuration.getTenantId(), configuration.getId(), e);
+            return false;
         }
     }
 
@@ -762,6 +842,11 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
             if (state.getConfiguration() != null && state.getCurrentState() != null && state.getCurrentState().equals(ComponentLifecycleEvent.FAILED)) {
                 if (state.getUpdateLock().tryLock()) {
                     try {
+                        if (!isMine(state.getConfiguration())) {
+                            log.info("[{}][{}] Skipping re-init: the integration is not mine anymore, stopping it.", state.getTenantId(), state.getId());
+                            processStop(state, STOPPED);
+                            return;
+                        }
                         processUpdateEvent(state, state.getConfiguration());
                     } catch (Exception e) {
                         log.trace("[{}][{}] Failed to re-initialize the integration:", state.getTenantId(), state.getId(), e);
@@ -771,6 +856,55 @@ public class DefaultIntegrationManagerService implements IntegrationManagerServi
                 }
             }
         });
+    }
+
+    private void checkOwnership() {
+        try {
+            ownershipMonitor.check(collectOwnership(), System.currentTimeMillis());
+        } catch (Throwable e) {
+            log.warn("Failed to check integrations ownership", e);
+        }
+    }
+
+    List<IntegrationOwnershipMonitor.TypeOwnership> collectOwnership() {
+        Map<IntegrationType, Set<Integer>> ownedPartitions = new HashMap<>();
+        for (IntegrationType type : supportedIntegrationTypes) {
+            List<Integer> owned = partitionService.getMyPartitions(new QueueKey(ServiceType.TB_INTEGRATION_EXECUTOR, type.name()));
+            ownedPartitions.put(type, owned != null ? Set.copyOf(owned) : Set.of());
+        }
+        int partitionsCount = partitionService.getIntegrationExecutorPartitionsCount();
+        Map<IntegrationType, int[]> counts = new HashMap<>();
+        Map<IntegrationType, List<IntegrationId>> notMineRunning = new HashMap<>();
+        for (IntegrationState state : integrations.values()) {
+            ThingsboardPlatformIntegration<?> platformIntegration = state.getIntegration();
+            Integration configuration = platformIntegration != null ? platformIntegration.getConfiguration() : state.getConfiguration();
+            if (configuration == null || configuration.getType() == null) {
+                continue; // CREATED, not processed yet: the type is not known locally
+            }
+            IntegrationType type = configuration.getType();
+            ComponentLifecycleEvent currentState = state.getCurrentState();
+            int[] typeCounts = counts.computeIfAbsent(type, t -> new int[3]);
+            typeCounts[STARTED.equals(currentState) ? 0 : FAILED.equals(currentState) ? 1 : 2]++;
+            if (platformIntegration != null && type.isSingleton()) {
+                // Unlike isMine(), this does not call partitionService.resolve(): that loads the tenant routing info, i.e. the
+                // tenant profile, for every integration. Integration executor queues are never isolated, so the partition
+                // depends on the integration id only.
+                Set<Integer> owned = ownedPartitions.get(type);
+                if (owned == null || !owned.contains(partitionService.resolvePartitionIndex(state.getId().getId(), partitionsCount))) {
+                    notMineRunning.computeIfAbsent(type, t -> new ArrayList<>()).add(state.getId());
+                }
+            }
+        }
+        List<IntegrationOwnershipMonitor.TypeOwnership> result = new ArrayList<>();
+        supportedIntegrationTypes.stream().sorted(Comparator.comparing(Enum::name)).forEach(type -> {
+            int[] typeCounts = counts.getOrDefault(type, new int[3]);
+            result.add(new IntegrationOwnershipMonitor.TypeOwnership(type,
+                    ownedPartitions.get(type),
+                    appliedPartitions.getOrDefault(type, Set.of()),
+                    typeCounts[0], typeCounts[1], typeCounts[2],
+                    notMineRunning.getOrDefault(type, List.of())));
+        });
+        return result;
     }
 
     private void persistStatistics() {

@@ -23,6 +23,7 @@ import org.thingsboard.server.gen.integration.ToIntegrationExecutorDownlinkMsg;
 import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -34,6 +35,7 @@ import org.thingsboard.server.queue.util.TbPackCallback;
 import org.thingsboard.server.queue.util.TbPackProcessingContext;
 import org.thingsboard.server.service.cache.IntegrationExecutorCacheStartupService;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -124,39 +126,40 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.debug("Received partition change event: {}", event);
+        // Always enqueue first, then drain: the drain below must see this event. Enqueueing only while
+        // !started dropped every partition change that arrived after startup, so a node kept the partitions
+        // it drained at startup forever and singleton integrations ran twice (or nowhere) after a rollout.
+        pendingEvents.add(event);
         if (!started) {
-            // Add to queue FIRST, then check again
-            pendingEvents.add(event);
-            if (!started) {
-                log.debug("Integration Executor not started yet, event queued for later: {}", event);
-                return; // doStartup() will drain the queue
-            }
-            // started became true after we added - fall through to drain
+            log.debug("Integration Executor not started yet, event queued for later: {}", event);
+            return; // doStartup() will drain the queue
         }
-        // Either already started or just became started - drain and process the latest pending
+        // Either already started or just became started - drain and process the pending changes
         drainPendingEvents();
     }
 
-    private void drainPendingEvents() {
-        // Each PartitionChangeEvent carries a full partition snapshot for TB_INTEGRATION_EXECUTOR,
-        // so earlier pending events are superseded — discard them and process only the latest.
-        PartitionChangeEvent latest = null;
+    // Synchronized so that the startup thread and an event thread cannot process two drains concurrently
+    // and push them to subscribeEventsMap in reverse order, which would leave older partitions applied.
+    private synchronized void drainPendingEvents() {
+        // A PartitionChangeEvent carries only the queue keys whose partitions changed (an empty set for a removed key),
+        // not a full snapshot: merge the pending events per queue key, the latest partitions of each key win.
+        Map<QueueKey, Set<TopicPartitionInfo>> latestPartitions = new HashMap<>();
         PartitionChangeEvent event;
         while ((event = pendingEvents.poll()) != null) {
-            latest = event;
+            latestPartitions.putAll(event.getNewPartitions());
         }
-        if (latest == null) {
+        if (latestPartitions.isEmpty()) {
             return;
         }
         try {
-            processPartitionChangeEvent(latest);
+            processPartitionChanges(latestPartitions);
         } catch (Throwable t) {
-            log.error("Failed to handle partition change event: {}", latest, t);
+            log.error("Failed to handle partition changes: {}", latestPartitions, t);
         }
     }
 
-    private void processPartitionChangeEvent(PartitionChangeEvent event) {
-        event.getNewPartitions().forEach(((queueKey, partitions) -> {
+    private void processPartitionChanges(Map<QueueKey, Set<TopicPartitionInfo>> newPartitions) {
+        newPartitions.forEach(((queueKey, partitions) -> {
             IntegrationType type = IntegrationType.valueOf(queueKey.getQueueName());
             subscribeEventsMap.computeIfAbsent(type, t -> new ConcurrentLinkedQueue<>()).add(partitions);
             queueExecutor.submit(() -> refreshIntegrationsByType(type));
@@ -198,7 +201,7 @@ public class DefaultClusterIntegrationService extends TbApplicationEventListener
         } finally {
             // Mark as started and drain pending events even on failure, so that partition change events are not stuck in the queue forever.
             // After started=true, any new events will drain themselves in onTbApplicationEvent().
-            // ConcurrentLinkedQueue.poll() is atomic, so each event is processed exactly once.
+            // drainPendingEvents() is synchronized, so partition changes are applied in the order they were queued.
             started = true;
             drainPendingEvents();
         }
