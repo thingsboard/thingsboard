@@ -44,6 +44,7 @@ export class HttpIntegrationFormComponent extends IntegrationForm implements Con
 
   baseHttpIntegrationConfigForm: UntypedFormGroup;
   showSecurity = true;
+  showReplaceNoContentToOk = true;
 
   @Input()
   routingKey: string;
@@ -68,9 +69,11 @@ export class HttpIntegrationFormComponent extends IntegrationForm implements Con
       baseUrl: [baseUrl(), baseURLValidators],
       httpEndpoint: [{value: integrationEndPointUrl(this.integrationType, baseUrl(), this.routingKey), disabled: true}],
       enableSecurity: [false],
-      headersFilter: [{}],
-      replaceNoContentToOk: [false]
+      headersFilter: [{}]
     });
+    if (this.showReplaceNoContentToOk) {
+      this.baseHttpIntegrationConfigForm.addControl('replaceNoContentToOk', this.fb.control(false));
+    }
     this.baseHttpIntegrationConfigForm.get('baseUrl').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
