@@ -29,6 +29,7 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
 
     public static final String USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR =
             "Group Permission can't grant access to a user group that is not owned by the grantee user group's owner or its sub-customers!";
+    public static final String SELF_REGISTRATION_USER_GROUP_ERROR = "Self-registration permissions can't target user groups!";
 
     private final TenantService tenantService;
     private final EntityGroupDao entityGroupDao;
@@ -47,7 +48,7 @@ public class GroupPermissionDataValidator extends DataValidator<GroupPermission>
             }
             EntityGroup entityGroup = entityGroupDao.findById(tenantId, permission.getEntityGroupId().getId());
             if (entityGroup != null && entityGroup.getType() == EntityType.USER) {
-                throw new DataValidationException(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR);
+                throw new DataValidationException(SELF_REGISTRATION_USER_GROUP_ERROR);
             }
         }
     }

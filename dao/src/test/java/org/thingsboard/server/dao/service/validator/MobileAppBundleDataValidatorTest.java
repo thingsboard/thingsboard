@@ -26,7 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
-import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR;
+import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.SELF_REGISTRATION_USER_GROUP_ERROR;
 
 @SpringBootTest(classes = MobileAppBundleDataValidator.class)
 class MobileAppBundleDataValidatorTest {
@@ -97,7 +97,7 @@ class MobileAppBundleDataValidatorTest {
 
         assertThatThrownBy(() -> validator.validateDataImpl(tenantId, bundle))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR);
+                .hasMessage(SELF_REGISTRATION_USER_GROUP_ERROR);
     }
 
     @Test

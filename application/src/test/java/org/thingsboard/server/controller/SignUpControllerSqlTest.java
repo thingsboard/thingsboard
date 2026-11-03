@@ -79,7 +79,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR;
+import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.SELF_REGISTRATION_USER_GROUP_ERROR;
 
 @DaoSqlTest
 public class SignUpControllerSqlTest extends AbstractControllerTest {
@@ -312,7 +312,7 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
         doPost("/api/selfRegistration/selfRegistrationParams",
                 createWebSelfRegistrationParams(List.of(newGroupPermission(role, tenantUserGroup))))
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+                .andExpect(statusReason(containsString(SELF_REGISTRATION_USER_GROUP_ERROR)));
     }
 
     @Test
@@ -330,7 +330,7 @@ public class SignUpControllerSqlTest extends AbstractControllerTest {
 
         doPost("/api/mobile/bundle", mobileAppBundle)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR)));
+                .andExpect(statusReason(containsString(SELF_REGISTRATION_USER_GROUP_ERROR)));
     }
 
     @Test

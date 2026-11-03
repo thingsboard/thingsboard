@@ -36,6 +36,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.SELF_REGISTRATION_USER_GROUP_ERROR;
 import static org.thingsboard.server.dao.service.validator.GroupPermissionDataValidator.USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR;
 
 @SpringBootTest(classes = GroupPermissionDataValidator.class)
@@ -146,7 +147,7 @@ class GroupPermissionDataValidatorTest {
 
         assertThatThrownBy(() -> GroupPermissionDataValidator.validateSelfRegistrationPermissions(tenantId, permissions, entityGroupDao))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage(USER_GROUP_OUTSIDE_OWNER_HIERARCHY_ERROR);
+                .hasMessage(SELF_REGISTRATION_USER_GROUP_ERROR);
     }
 
     @Test
