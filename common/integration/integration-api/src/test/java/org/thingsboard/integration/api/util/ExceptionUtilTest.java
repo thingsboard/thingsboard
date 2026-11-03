@@ -43,4 +43,22 @@ public class ExceptionUtilTest {
         assertThat(message).isEqualTo("Please contact system administrator");
     }
 
+    @Test
+    void givenTbelScriptError_whenStackTraceEnabled_thenReturnsScriptErrorMessageOnly() {
+        var tbelError = new TbScriptException(UUID.randomUUID(), TbScriptException.ErrorCode.RUNTIME, "",
+                "Device name is missing.", new RuntimeException("Device name is missing."));
+
+        String message = ExceptionUtil.toString(new ExecutionException(tbelError), converterId, true);
+
+        assertThat(message).isEqualTo("Device name is missing.");
+    }
+
+    @Test
+    void givenUnknownError_whenStackTraceEnabled_thenReturnsStackTrace() {
+        String message = ExceptionUtil.toString(new IllegalStateException("internal"), converterId, true);
+
+        assertThat(message).startsWith("java.lang.IllegalStateException: internal")
+                .contains("\tat ");
+    }
+
 }

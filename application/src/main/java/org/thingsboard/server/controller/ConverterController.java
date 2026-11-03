@@ -415,7 +415,7 @@ public class ConverterController extends AutoCommitController {
             scriptUplinkEvaluator = new ScriptUplinkEvaluator(getTenantId(), getScriptInvokeService(scriptLang), getCurrentUser().getId(), decoder);
             output = scriptUplinkEvaluator.execute(payload, uplinkMetaData).get();
         } catch (Exception e) {
-            log.error("Error evaluating JS UpLink Converter function", e);
+            log.debug("Error evaluating uplink converter function", e);
             errorText = e instanceof ExecutionException && e.getCause() instanceof TbScriptException ? e.getCause().getMessage() : e.getMessage();
         } finally {
             if (scriptUplinkEvaluator != null) {
@@ -486,7 +486,7 @@ public class ConverterController extends AutoCommitController {
             output = scriptDownlinkEvaluator.execute(inMsg, integrationMetaData);
             validateDownLinkOutput(output);
         } catch (Exception e) {
-            log.error("Error evaluating JS Downlink Converter function", e);
+            log.debug("Error evaluating downlink converter function", e);
             errorText = e.getMessage();
         } finally {
             if (scriptDownlinkEvaluator != null) {

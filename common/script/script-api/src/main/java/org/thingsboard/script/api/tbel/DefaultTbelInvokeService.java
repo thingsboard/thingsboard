@@ -32,6 +32,7 @@ import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.stats.StatsType;
@@ -198,7 +199,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                 }
                 return scriptId;
             } catch (CompileException e) {
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, toErrorMessage(e), e);
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, scriptBody, e);
             }
@@ -220,7 +221,7 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
             } catch (ScriptMemoryOverflowException e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, script.getScriptBody(), new RuntimeException("Script memory overflow!"));
             } catch (Exception e) {
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, script.getScriptBody(), toRuntimeErrorMessage(e), e);
+                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.RUNTIME, script.getScriptBody(), toErrorMessage(e), e);
             }
         }));
     }
@@ -241,12 +242,13 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         }
     }
 
-    // The message of raiseError() is reported as is. Other MVEL errors keep "[Error: ...]" and "[Line: N, Column: M]",
-    // but not the "[Near ...]" block, whose caret line is padded with the error offset in the whole script.
-    private static String toRuntimeErrorMessage(Exception e) {
+    // The message of raiseError() is reported as is. Other MVEL errors (compilation and runtime) keep "[Error: ...]"
+    // and "[Line: N, Column: M]", but not the "[Near ...]" block, whose caret line is padded with the error offset
+    // in the whole script.
+    private static String toErrorMessage(Exception e) {
         TbelRaisedErrorException raisedError = ExceptionUtil.lookupException(e, TbelRaisedErrorException.class);
         if (raisedError != null) {
-            return raisedError.getMessage();
+            return StringUtils.isBlank(raisedError.getMessage()) ? "Script raised an error" : raisedError.getMessage();
         }
         if (e instanceof CompileException) {
             return MVEL_NEAR_BLOCK.matcher(e.getMessage()).replaceFirst("");

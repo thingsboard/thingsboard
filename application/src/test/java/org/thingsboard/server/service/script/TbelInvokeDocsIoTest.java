@@ -1539,6 +1539,33 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     @Test
+    public void raiseError_BlankMessage_Test() {
+        msgStr = "{}";
+        for (String call : new String[]{"raiseError(null)", "raiseError(\"\")", "raiseError(\"   \")"}) {
+            decoderStr = "return " + call + ";";
+            assertThatThrownBy(() -> {
+                invokeScript(evalScript(decoderStr), msgStr);
+            }).as(call).cause()
+                    .isInstanceOf(TbScriptException.class)
+                    .hasMessage("Script raised an error");
+        }
+    }
+
+    @Test
+    public void compilationError_WithoutNearBlock_Test() {
+        decoderStr = "// " + "x".repeat(1000) + "\n" + """
+                    return {deviceName: ;
+                """;
+        assertThatThrownBy(() -> {
+            evalScript(decoderStr);
+        }).cause()
+                .isInstanceOf(TbScriptException.class)
+                .hasMessageStartingWith("[Error: ")
+                .hasMessageContaining("[Line: 2, Column: ")
+                .hasMessageNotContaining("[Near");
+    }
+
+    @Test
     public void runtimeError_WithoutNearBlock_Test() {
         msgStr = "{}";
         decoderStr = "// " + "x".repeat(1000) + "\n" + """
