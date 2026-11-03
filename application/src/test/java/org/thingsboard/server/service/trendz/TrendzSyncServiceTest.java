@@ -21,6 +21,9 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.trendz.TrendzConfiguration;
 import org.thingsboard.server.common.data.trendz.TrendzHealthcheckResult;
 import org.thingsboard.server.common.data.trendz.TrendzSettings;
@@ -33,7 +36,11 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.trendz.TrendzSettingsService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.util.Map;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -155,6 +162,9 @@ public class TrendzSyncServiceTest extends AbstractControllerTest {
         assertNotNull(apiKey);
         assertTrue(apiKey.isInternal());
         assertTrue(apiKey.isEnabled());
+        Map<Resource, Set<Operation>> sysAdminPermissions = apiKey.getPermissions().getPermissionsForAuthority(Authority.SYS_ADMIN);
+        assertFalse(sysAdminPermissions.isEmpty(), "an empty set would give the key full sysadmin permissions");
+        assertFalse(sysAdminPermissions.containsKey(Resource.ADMIN_SETTINGS));
 
         TrendzSettings savedSettings = trendzSettingsService.findTrendzSettings();
         assertNotNull(savedSettings);
