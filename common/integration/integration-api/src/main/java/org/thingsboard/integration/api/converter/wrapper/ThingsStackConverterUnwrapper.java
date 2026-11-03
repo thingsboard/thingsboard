@@ -13,6 +13,12 @@ import java.util.Map;
 
 public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
 
+    // Proto3 JSON writes 64-bit integers as strings, so these numeric fields arrive as "868100000" and are parsed back to numbers.
+    private static final ImmutableMap<String, String> INT64_KEYS_MAPPING = ImmutableMap.of(
+            "frequency", "/uplink_message/settings/frequency"
+    );
+
+    // Map 64-bit integer (int64, uint64) fields in INT64_KEYS_MAPPING, not here.
     private static final ImmutableMap<String, String> KEYS_MAPPING;
 
     static {
@@ -34,7 +40,6 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
                 .put("spreadingFactor", "/uplink_message/settings/data_rate/lora/spreading_factor")
                 .put("dataRateIndex", "/uplink_message/settings/data_rate_index")
                 .put("codeRate", "/uplink_message/settings/coding_rate")
-                .put("frequency", "/uplink_message/settings/frequency")
                 .put("timestamp", "/uplink_message/settings/timestamp")
                 .put("time", "/uplink_message/settings/time")
                 .put("consumedAirtime", "/uplink_message/consumed_airtime")
@@ -59,6 +64,7 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
                 .put("rssi", "")
                 .put("snr", "")
                 .put("channel", "")
+                .putAll(INT64_KEYS_MAPPING)
                 .build();
     }
 
@@ -97,6 +103,7 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
 
     @Override
     protected void postMapping(Map<String, Object> kvMap) {
+        INT64_KEYS_MAPPING.keySet().forEach(key -> kvMap.computeIfPresent(key, (k, value) -> value instanceof String str ? parseLong(str, value) : value));
         long ts = 0;
         if (kvMap.containsKey("uplinkMessageReceivedAt")) {
             var uplinkMessageReceivedAtTs = parseDateToTimestamp(kvMap.get("uplinkMessageReceivedAt").toString());
@@ -118,6 +125,14 @@ public class ThingsStackConverterUnwrapper extends AbstractConverterUnwrapper {
             ts = System.currentTimeMillis();
         }
         kvMap.put("ts", ts);
+    }
+
+    private static Object parseLong(String str, Object defaultValue) {
+        try {
+            return Long.parseLong(str);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     @Override
