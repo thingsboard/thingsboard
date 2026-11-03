@@ -50,16 +50,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_SIGFOX_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_THINGSPARK_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_TPE_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE;
-import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE;
 
 @TestPropertySource(properties = {
         "js.evaluator=local",
@@ -591,10 +581,10 @@ public class ConverterControllerTest extends AbstractControllerTest {
     @Test
     public void testGettingDefaultPayloadForConverters() throws Exception {
         Map<IntegrationType, String> expectedPayloads = Map.of(
-                IntegrationType.LORIOT, DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE,
-                IntegrationType.CHIRPSTACK, DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE,
-                IntegrationType.TTN, DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE,
-                IntegrationType.TTI, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE);
+                IntegrationType.LORIOT, getDefaultPayload(IntegrationType.LORIOT),
+                IntegrationType.CHIRPSTACK, getDefaultPayload(IntegrationType.CHIRPSTACK),
+                IntegrationType.TTN, getDefaultPayload(IntegrationType.TTN),
+                IntegrationType.TTI, getDefaultPayload(IntegrationType.TTI));
 
         for (IntegrationType integrationType : expectedPayloads.keySet()) {
             String integrationName = "TEST_" + integrationType;
@@ -681,7 +671,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTI, 2);
 
-        testDecoder(DEFAULT_TTI_UPLINK_DECODER, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(DEFAULT_TTI_UPLINK_DECODER, getDefaultPayload(IntegrationType.TTI), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -692,7 +682,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTI, 2);
 
-        testDecoder(TTI_UPLINK_DECODER, DEFAULT_TTI_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(TTI_UPLINK_DECODER, getDefaultPayload(IntegrationType.TTI), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -703,7 +693,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTN, 2);
 
-        testDecoder(DEFAULT_TTN_UPLINK_DECODER, DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(DEFAULT_TTN_UPLINK_DECODER, getDefaultPayload(IntegrationType.TTN), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -714,7 +704,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "eui-$eui", "$applicationId", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TTN, 2);
 
-        testDecoder(TTN_UPLINK_DECODER, DEFAULT_TTN_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(TTN_UPLINK_DECODER, getDefaultPayload(IntegrationType.TTN), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -739,7 +729,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device $eui", "", Set.of("eui", "mType", "fCntDn"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.THINGPARK, 2);
 
-        testDecoder(DEFAULT_THINGPARK_UPLINK_DECODER, DEFAULT_THINGSPARK_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(DEFAULT_THINGPARK_UPLINK_DECODER, getDefaultPayload(IntegrationType.THINGPARK), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -750,7 +740,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device $eui", "", Set.of("eui", "mType", "fCntDn"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.THINGPARK, 2);
 
-        testDecoder(THINGPARK_UPLINK_DECODER, DEFAULT_THINGSPARK_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(THINGPARK_UPLINK_DECODER, getDefaultPayload(IntegrationType.THINGPARK), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -761,7 +751,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device $eui", "", Set.of("eui", "mType", "fCntDn"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TPE, 2);
 
-        testDecoder(DEFAULT_TPE_UPLINK_DECODER, DEFAULT_TPE_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(DEFAULT_TPE_UPLINK_DECODER, getDefaultPayload(IntegrationType.TPE), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -772,7 +762,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device $eui", "", Set.of("eui", "mType", "fCntDn"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.TPE, 2);
 
-        testDecoder(TPE_UPLINK_DECODER, DEFAULT_TPE_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(TPE_UPLINK_DECODER, getDefaultPayload(IntegrationType.TPE), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -783,7 +773,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.ASSET, "Asset $eui", "$deviceProfileName", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.CHIRPSTACK, 2);
 
-        testDecoder(DEFAULT_CHIRPSTACK_UPLINK_DECODER, DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(DEFAULT_CHIRPSTACK_UPLINK_DECODER, getDefaultPayload(IntegrationType.CHIRPSTACK), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -794,7 +784,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.ASSET, "Asset $eui", "$deviceProfileName", Set.of("eui", "fPort", "devAddr"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.CHIRPSTACK, 2);
 
-        testDecoder(CHIRPSTACK_UPLINK_DECODER, DEFAULT_CHIRPSTACK_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(CHIRPSTACK_UPLINK_DECODER, getDefaultPayload(IntegrationType.CHIRPSTACK), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -805,7 +795,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device name $eui", "Device type", Set.of("eui", "fPort"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.LORIOT, 2);
 
-        testDecoder(DEFAULT_LORIOT_UPLINK_DECODER, DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(DEFAULT_LORIOT_UPLINK_DECODER, getDefaultPayload(IntegrationType.LORIOT), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -816,7 +806,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device name $eui", "Device type", Set.of("eui", "fPort"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.LORIOT, 2);
 
-        testDecoder(LORIOT_UPLINK_DECODER, DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(LORIOT_UPLINK_DECODER, getDefaultPayload(IntegrationType.LORIOT), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -827,7 +817,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
         DedicatedConverterConfig config = createDedicatedConverterConfig(EntityType.DEVICE, "Device name $eui", "Device type", Set.of("eui", "fPort"));
         Converter converter = createConverter(JacksonUtil.valueToTree(config), IntegrationType.LORIOT, 2);
 
-        testDecoder(LORIOT_UPLINK_DECODER_RETURN_ARRAY, DEFAULT_LORIOT_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage, converter);
+        testDecoder(LORIOT_UPLINK_DECODER_RETURN_ARRAY, getDefaultPayload(IntegrationType.LORIOT), expectedDecodedMessage, converter);
     }
 
     @Test
@@ -837,7 +827,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "{\"temperature\":25.3,\"humidity\":62.8,\"pressure\":1012.5,\"latitude\":37.7749,\"longitude\":-122.4194," +
                 "\"status\":\"active\",\"power_status\":\"on\",\"x\":0.02,\"y\":0.03,\"z\":0.01,\"fault_codes.0\":100,\"fault_codes.1\":204," +
                 "\"fault_codes.2\":301,\"battery_level\":78.5}}}";
-        testDecoder(DEFAULT_AWS_IOT_UPLINK_DECODER, DEFAULT_AWS_IOT_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
+        testDecoder(DEFAULT_AWS_IOT_UPLINK_DECODER, getDefaultPayload(IntegrationType.AWS_IOT), expectedDecodedMessage);
     }
 
     @Test
@@ -847,7 +837,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "\"values\":{\"receivedAlarms\":[{\"type\":\"temperature\",\"severity\":\"high\",\"message\":\"Temperature exceeds threshold.\"}," +
                 "{\"type\":\"vibration\",\"severity\":\"critical\",\"message\":\"Excessive vibration detected.\"}],\"temperature\":25.5," +
                 "\"pressure\":1013.25,\"x\":0.02,\"y\":0.03,\"z\":0.015,\"status\":\"ALARM\",\"batteryLevel\":100,\"batteryStatus\":\"Charging\"}}}";
-        testDecoder(DEFAULT_AZURE_UPLINK_DECODER, DEFAULT_AZURE_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
+        testDecoder(DEFAULT_AZURE_UPLINK_DECODER, getDefaultPayload(IntegrationType.AZURE_IOT_HUB), expectedDecodedMessage);
     }
 
     @Test
@@ -856,13 +846,18 @@ public class ConverterControllerTest extends AbstractControllerTest {
                 "\"attributes\":{\"sigfoxId\":\"2203961\",\"deviceTypeId\":\"630ceaea10d051194ec0246e\",\"autoCalibration\":\"on\"," +
                 "\"zeroPointAdjusted\":false,\"transmitPower\":\"full\",\"powerControl\":\"off\",\"fwVersion\":2},\"telemetry\":{\"ts\":\"1686298419000\"," +
                 "\"values\":{\"temperature\":28.7,\"humidity\":33,\"co2\":582,\"co2Baseline\":420,\"customData1\":\"37\",\"customData2\":\"2\"}}}";
-        testDecoder(DEFAULT_SIGFOX_UPLINK_DECODER, DEFAULT_SIGFOX_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
+        testDecoder(DEFAULT_SIGFOX_UPLINK_DECODER, getDefaultPayload(IntegrationType.SIGFOX), expectedDecodedMessage);
     }
 
     @Test
     public void testKpnDefaultConverter() throws IOException {
         String expectedDecodedMessage = "{\"deviceName\":\"Device A\",\"deviceType\":\"thermostat\",\"customerName\":\"customer\",\"groupName\":\"thermostat devices\",\"attributes\":{\"model\":\"Model A\",\"serialNumber\":\"SN111\"},\"telemetry\":{\"temperature\":42,\"humidity\":80}}";
-        testDecoder(DEFAULT_KPN_UPLINK_DECODER, DEFAULT_KNP_UPLINK_CONVERTER_MESSAGE, expectedDecodedMessage);
+        testDecoder(DEFAULT_KPN_UPLINK_DECODER, getDefaultPayload(IntegrationType.KPN), expectedDecodedMessage);
+    }
+
+    private String getDefaultPayload(IntegrationType integrationType) throws IOException {
+        String path = "converters/" + integrationType.getDirectory() + "/uplink/payload.json";
+        return new String(IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(path)), StandardCharsets.UTF_8);
     }
 
     public void testDecoder(String decoderFileName, String payloadExample, String expectedResult) throws IOException {
