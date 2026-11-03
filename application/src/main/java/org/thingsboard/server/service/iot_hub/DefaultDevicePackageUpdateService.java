@@ -293,7 +293,6 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         List<SavedEntity> saved = new ArrayList<>();
         List<DeviceUpdateRequest.Step> connectorSteps = new ArrayList<>();
         List<StepAttributes> attributes = new ArrayList<>();
-        // The checksums of the entities this update overwrote, which other packages may record too
         DashboardId dashboardId = null;
 
         for (DeviceUpdateRequest.Step step : request.getSteps()) {
@@ -324,6 +323,10 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
                 }
                 if (step.isDefaultConverter()) {
                     state.put("defaultConverter", true);
+                }
+                ObjectNode metadata = addedMetadata(step.getMetadata());
+                if (metadata != null) {
+                    state.set("metadata", metadata);
                 }
                 installState.put(step.getId() != null ? step.getId() : step.getName(), state);
                 if (!"use-existing".equals(resolution)) {
@@ -367,6 +370,7 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         descriptor.setUsedExistingEntityIds(usedExistingIds.values().stream().filter(id -> tracked.contains(id.getId())).toList());
         descriptor.setDashboardId(dashboardId != null ? dashboardId : existingDashboard(tenantId, previous));
         Map<String, JsonNode> state = new LinkedHashMap<>(installState);
+        carryMetadataStates(previous, tracked, state);
         descriptor.setInstallState(state);
 
         installedItem.setItemVersionId(UUID.fromString(request.getVersionId()));
@@ -620,6 +624,43 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
         }
         Integration result = integrationService.saveIntegration(integration);
         return savedResult(tenantId, result.getId(), result, step, integrationOutput(result));
+    }
+
+    /**
+     * Carries over the state of an integration the package still tracks but this version has no step for, with the
+     * entries the package added to its metadata: a delete that keeps the integration removes them.
+     */
+    private static void carryMetadataStates(DeviceInstalledItemDescriptor previous, Set<UUID> tracked, Map<String, JsonNode> state) {
+        if (previous.getInstallState() == null) {
+            return;
+        }
+        Set<UUID> recorded = new HashSet<>();
+        state.values().forEach(s -> {
+            UUID id = toUuid(s.path("entityOutput").path("id").asText());
+            if (id != null) {
+                recorded.add(id);
+            }
+        });
+        previous.getInstallState().forEach((key, previousState) -> {
+            UUID id = previousState != null ? toUuid(previousState.path("entityOutput").path("id").asText()) : null;
+            if (id != null && tracked.contains(id) && !recorded.contains(id) && previousState.has("metadata") && !state.containsKey(key)) {
+                state.put(key, previousState.deepCopy());
+            }
+        });
+    }
+
+    /** The entries the step adds to the integration's metadata, which a delete of the package removes; null when none. */
+    private static ObjectNode addedMetadata(JsonNode entries) {
+        if (entries == null || !entries.isObject()) {
+            return null;
+        }
+        ObjectNode added = JacksonUtil.newObjectNode();
+        entries.fields().forEachRemaining(entry -> {
+            if (entry.getValue() != null && !entry.getValue().isNull()) {
+                added.put(entry.getKey(), entry.getValue().asText());
+            }
+        });
+        return added.isEmpty() ? null : added;
     }
 
     /**

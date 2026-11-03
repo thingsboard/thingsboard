@@ -1893,6 +1893,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return step.type === InstallStepType.INTEGRATION && step.metadata ? this.stepMetadataEntries(step) : undefined;
   }
 
+  /** The entries the INTEGRATION step adds to the integration's metadata, which a delete of the package removes. */
+  private addedMetadataOf(step: DeviceInstallStep): Record<string, string> | undefined {
+    const entries = Object.entries(this.integrationMetadataOf(step) ?? {}).filter(([, value]) => value !== null);
+    return entries.length ? Object.fromEntries(entries) : undefined;
+  }
+
   /** The INTEGRATION step's metadata entries, resolved: null for a self-mapping, whose earlier value is removed. */
   private stepMetadataEntries(step: DeviceInstallStep): Record<string, string | null> {
     const entries: Record<string, string | null> = {};
@@ -2761,8 +2767,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       } else if (ws.type === 'progress' && ws.entitySteps) {
         for (const ep of ws.entitySteps) {
           if (ep.status === 'success' && ep.entityOutput) {
+            const metadata = this.addedMetadataOf(ep.step);
             state[ep.step.id ?? ep.step.name] = { entityOutput: ep.entityOutput, resolution: ep.resolution || 'created',
-              ...(ep.step.default ? { defaultConverter: true } : {}) };
+              ...(ep.step.default ? { defaultConverter: true } : {}), ...(metadata ? { metadata } : {}) };
           }
         }
       }

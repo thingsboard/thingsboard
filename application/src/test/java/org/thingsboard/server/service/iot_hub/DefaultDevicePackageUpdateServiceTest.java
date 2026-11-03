@@ -395,8 +395,30 @@ class DefaultDevicePackageUpdateServiceTest {
         // A copy is saved: the integration read, possibly the cache's own instance, stays as it is until the commit
         assertThat(saved.getValue()).isNotSameAs(current);
         assertThat(current.getConfiguration().get("metadata").has("profile.lansitec-badge")).isFalse();
-        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN").get("resolution").asText())
-                .isEqualTo("use-existing");
+        JsonNode state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState().get("TTN");
+        assertThat(state.get("resolution").asText()).isEqualTo("use-existing");
+        // The entries the step added, which a delete of the package removes; not the one it removed
+        assertThat(state.get("metadata")).isEqualTo(JacksonUtil.newObjectNode().put("profile.lansitec-badge", "Badge"));
+    }
+
+    @Test
+    void integrationOfAStepAVersionDropped_keepsItsMetadataEntries() {
+        // Taken as it was at install with the package's entries; the new version has no step for it
+        ObjectNode installed = stateOf(integrationId, "use-existing");
+        installed.set("metadata", JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
+        ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).setInstallState(Map.of("TTN", installed));
+        Integration integration = new Integration();
+        integration.setId(integrationId);
+        when(entityService.fetchEntity(tenantId, integrationId)).thenReturn(Optional.of(integration));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("AM308", "DEVICE", deviceId)));
+
+        assertThat(result.isSuccess()).isTrue();
+        DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        assertThat(descriptor.getCreatedEntityIds()).contains(integrationId);
+        // A later delete that keeps the integration removes these entries
+        assertThat(descriptor.getInstallState().get("TTN").get("metadata"))
+                .isEqualTo(JacksonUtil.newObjectNode().put("profile.milesight-iot-am308", "AM308"));
     }
 
     @Test

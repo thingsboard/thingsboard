@@ -4,6 +4,7 @@
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.id.IntegrationId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.iot_hub.AlarmRuleInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.CalculatedFieldInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
@@ -715,6 +717,7 @@ public class DefaultIotHubService implements IotHubService {
      * Deletes what a device package created, except the entities another installed device package
      * also uses (e.g. an integration it took over with Overwrite): deleting those would break that package,
      * and the ones the user had before and the package took as they were (use existing).
+     * A kept integration loses the metadata entries the package added.
      */
     private void deleteDevicePackageEntities(TenantId tenantId, IotHubInstalledItemId installedItemId,
                                              DeviceInstalledItemDescriptor descriptor, SecurityUser user) {
@@ -723,17 +726,20 @@ public class DefaultIotHubService implements IotHubService {
             return;
         }
         Set<UUID> usedExisting = usedExistingIds(descriptor);
-        Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId);
+        List<DeviceInstalledItemDescriptor> otherPackages = new ArrayList<>();
+        Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, otherPackages);
         List<EntityId> reversed = new ArrayList<>(createdEntityIds);
         Collections.reverse(reversed);
         for (EntityId entityId : reversed) {
             if (usedExisting.contains(entityId.getId())) {
                 log.info("[{}] Kept {} {}: the package took it as it was", tenantId, entityId.getEntityType(), entityId.getId());
+                removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
                 continue;
             }
             Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
             if (usedBy != null) {
                 log.info("[{}] Kept {} {}: installed device packages {} use it", tenantId, entityId.getEntityType(), entityId.getId(), usedBy);
+                removeIntegrationMetadata(tenantId, entityId, descriptor, otherPackages);
                 continue;
             }
             try {
@@ -742,6 +748,52 @@ public class DefaultIotHubService implements IotHubService {
                 log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
             }
         }
+    }
+
+    /**
+     * Removes from the kept integration's metadata the entries the package added, e.g. the profile name its converter
+     * reads, so that a later package of that model gets the default profile again. An entry another installed package
+     * also added stays.
+     */
+    private void removeIntegrationMetadata(TenantId tenantId, EntityId entityId, DeviceInstalledItemDescriptor descriptor,
+                                           List<DeviceInstalledItemDescriptor> otherPackages) {
+        if (entityId.getEntityType() != EntityType.INTEGRATION) {
+            return;
+        }
+        Set<String> keys = addedMetadataKeys(descriptor, entityId.getId());
+        otherPackages.forEach(other -> keys.removeAll(addedMetadataKeys(other, entityId.getId())));
+        if (keys.isEmpty()) {
+            return;
+        }
+        try {
+            Integration integration = integrationService.findIntegrationById(tenantId, new IntegrationId(entityId.getId()));
+            if (integration == null || !(integration.getConfiguration() != null
+                    && integration.getConfiguration().get("metadata") instanceof ObjectNode metadata)
+                    || keys.stream().noneMatch(metadata::has)) {
+                return;
+            }
+            // A copy: the integration read may be the cache's own instance
+            Integration copy = new Integration(integration);
+            ((ObjectNode) copy.getConfiguration().get("metadata")).remove(keys);
+            integrationService.saveIntegration(copy);
+            log.info("[{}] Removed metadata entries {} of the deleted device package from integration {}", tenantId, keys, entityId.getId());
+        } catch (Exception e) {
+            log.error("[{}] Failed to remove the deleted device package's metadata entries from integration {}", tenantId, entityId.getId(), e);
+        }
+    }
+
+    /** The metadata entries the package's steps on the integration added, as its install state records them. */
+    private static Set<String> addedMetadataKeys(DeviceInstalledItemDescriptor descriptor, UUID integrationId) {
+        Set<String> keys = new HashSet<>();
+        if (descriptor.getInstallState() != null) {
+            descriptor.getInstallState().values().forEach(state -> {
+                if (state != null && integrationId.toString().equals(state.path("entityOutput").path("id").asText())
+                        && state.get("metadata") instanceof ObjectNode metadata) {
+                    metadata.fieldNames().forEachRemaining(keys::add);
+                }
+            });
+        }
+        return keys;
     }
 
     /** The delete dialog shows these before the user confirms, so they must match what {@link #deleteDevicePackageEntities} keeps. */
@@ -756,7 +808,7 @@ public class DefaultIotHubService implements IotHubService {
         int usedExistingCount = 0;
         if (installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
             Set<UUID> usedExisting = usedExistingIds(dd);
-            Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId);
+            Map<UUID, Set<IotHubInstalledItemId>> usedByOtherPackages = findEntitiesOfOtherDevicePackages(tenantId, installedItemId, new ArrayList<>());
             for (EntityId entityId : dd.getCreatedEntityIds()) {
                 Set<IotHubInstalledItemId> usedBy = usedByOtherPackages.get(entityId.getId());
                 boolean taken = usedExisting.contains(entityId.getId());
@@ -783,15 +835,20 @@ public class DefaultIotHubService implements IotHubService {
         return ids;
     }
 
-    private Map<UUID, Set<IotHubInstalledItemId>> findEntitiesOfOtherDevicePackages(TenantId tenantId, IotHubInstalledItemId installedItemId) {
+    /** The other installed device packages' entities, by id; the packages' descriptors go to {@code otherPackages}. */
+    private Map<UUID, Set<IotHubInstalledItemId>> findEntitiesOfOtherDevicePackages(TenantId tenantId, IotHubInstalledItemId installedItemId,
+                                                                                    List<DeviceInstalledItemDescriptor> otherPackages) {
         Map<UUID, Set<IotHubInstalledItemId>> usedBy = new HashMap<>();
         PageLink pageLink = new PageLink(100);
         PageData<IotHubInstalledItem> page;
         do {
             page = iotHubInstalledItemService.findByTenantId(tenantId, List.of("DEVICE"), null, pageLink);
             for (IotHubInstalledItem item : page.getData()) {
-                if (!item.getId().equals(installedItemId)
-                        && item.getDescriptor() instanceof DeviceInstalledItemDescriptor dd && dd.getCreatedEntityIds() != null) {
+                if (item.getId().equals(installedItemId) || !(item.getDescriptor() instanceof DeviceInstalledItemDescriptor dd)) {
+                    continue;
+                }
+                otherPackages.add(dd);
+                if (dd.getCreatedEntityIds() != null) {
                     dd.getCreatedEntityIds().forEach(id -> usedBy.computeIfAbsent(id.getId(), k -> new HashSet<>()).add(item.getId()));
                 }
             }
