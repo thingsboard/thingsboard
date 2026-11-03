@@ -267,12 +267,12 @@ function lansitecUint(b, offset, length) {
     return v;
 }
 
-// IEEE 754 single precision, big-endian, rounded to 6 decimals (about 0.1 m) as in the TBEL converter.
 // IEEE 754 float, big-endian at offset: false when its exponent is 0xFF (NaN or infinity).
 function lansitecFloatIsNumber(b, offset) {
     return !((b[offset] & 0x7F) == 0x7F && (b[offset + 1] & 0x80) != 0);
 }
 
+// IEEE 754 single precision, big-endian, rounded to 6 decimals (about 0.1 m) as in the TBEL converter.
 function lansitecFloat(b, offset) {
     var bits = lansitecUint(b, offset, 4);
     var exponent = Math.floor(bits / 8388608) % 256;
