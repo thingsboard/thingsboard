@@ -4,49 +4,109 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<div class="prompt-input">
-  @if (attachments().length) {
-    <tb-ai-attachments class="pending-attachments"
-                       [items]="attachments()"
-                       [removable]="true"
-                       (removed)="removeAttachment($event)">
-    </tb-ai-attachments>
+<div class="tb-ai-composer" [class.docked]="docked" [class.drop]="dragging()" [class.has-text]="hasText()">
+  @if (attachEnabled()) {
+    <input #fileInput type="file" hidden multiple [accept]="accept()" (change)="onFilesPicked($event)">
   }
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="prompt-field">
-    <textarea
-      matInput
-      #textarea
-      cdkTextareaAutosize
-      rows="1"
-      #autosize="cdkTextareaAutosize"
-      cdkAutosizeMinRows="1"
-      cdkAutosizeMaxRows="8"
-      [placeholder]="placeholder"
-      [formControl]="message"
-      (paste)="onPaste($event)"
-      (keydown.enter)="onEnter($event)">
-    </textarea>
-  </mat-form-field>
-  <div class="prompt-toolbar">
-    @if (attachEnabled()) {
-      <input #fileInput type="file" class="hidden" multiple [accept]="accept()" (change)="onFilesPicked($event)">
-      <button mat-icon-button
-              type="button"
-              class="tb-mat-20 attach-button !size-8"
-              [matTooltip]="'ai-assistant.attach-files' | translate"
-              matTooltipPosition="above"
-              (click)="openFilePicker()">
-        <mat-icon>add</mat-icon>
-      </button>
+  <div class="composer-field">
+    @if (attachments().length) {
+      <div class="composer-files">
+        @for (attachment of attachments(); track attachment.key) {
+          <span class="composer-file"
+                [class.up]="attachment.status === 'uploading'"
+                [class.bad]="attachment.status === 'error'">
+            @if (attachment.previewUrl && attachment.status !== 'error') {
+              <span class="file-pic" aria-hidden="true" [style.background-image]="'url(' + attachment.previewUrl + ')'"></span>
+            } @else {
+              <mat-icon class="tb-mat-18">{{ attachment.status === 'error' ? 'error_outline' : attachment.icon }}</mat-icon>
+            }
+            <span class="file-text">
+              <b>{{ attachment.name }}</b>
+              <small>{{ meta(attachment) }}</small>
+            </span>
+            @if (attachment.status === 'uploading') {
+              <i class="file-bar" [style.width.%]="attachment.progress"></i>
+            }
+            <button type="button" class="file-remove"
+                    [attr.aria-label]="'ai-assistant.remove-file' | translate: {name: attachment.name}"
+                    (click)="removeAttachment(attachment)">
+              <mat-icon class="tb-mat-16">close</mat-icon>
+            </button>
+          </span>
+        }
+      </div>
     }
-    <span class="flex-1"></span>
-    <button mat-icon-button
-            type="button"
-            color="primary"
-            class="tb-mat-20 send-button !size-8"
-            [disabled]="loading || uploading()"
-            (click)="send()">
-      <mat-icon>send</mat-icon>
-    </button>
+    <div class="composer-row">
+      <span class="composer-chevron" aria-hidden="true"></span>
+      <textarea #textarea
+                rows="2"
+                spellcheck="false"
+                [attr.aria-label]="'ai-assistant.ask-the-assistant' | translate"
+                [placeholder]="placeholder"
+                [formControl]="message"
+                (input)="onInput()"
+                (paste)="onPaste($event)"
+                (keydown)="onKeydown($event)"></textarea>
+      <span class="composer-send-slot">
+        <button type="button" class="composer-send"
+                [class.fly]="flying()"
+                [disabled]="!canSend"
+                [attr.aria-label]="'ai-assistant.send' | translate"
+                [tbAiTip]="sendTip"
+                tipClass="tip-mini"
+                (click)="send()">
+          <span class="return-glyph" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M20 4v7a4 4 0 0 1-4 4H4" pathLength="1"/><polyline points="9 10 4 15 9 20" pathLength="1"/></svg>
+          </span>
+        </button>
+      </span>
+    </div>
+    <div class="composer-foot">
+      @if (attachEnabled()) {
+        <button type="button" class="composer-tool composer-add"
+                [attr.aria-label]="'ai-assistant.add-files' | translate"
+                [tbAiTip]="addTip"
+                (click)="openFilePicker()">
+          <mat-icon class="tb-mat-18">attach_file</mat-icon>
+        </button>
+      }
+      <span class="composer-spacer"></span>
+      <button type="button" class="composer-tool"
+              [attr.aria-label]="'ai-assistant.shortcuts' | translate"
+              [tbAiTip]="keysTip"
+              tipClass="tip-keys"
+              [tipToggle]="true">
+        <mat-icon class="tb-mat-18">keyboard</mat-icon>
+      </button>
+    </div>
   </div>
 </div>
+
+<ng-template #sendTip>
+  <div class="tip-keyrow">
+    <span>{{ 'ai-assistant.send' | translate }}</span>
+    <span class="tip-caps"><kbd>Enter</kbd></span>
+  </div>
+</ng-template>
+
+<ng-template #addTip>
+  <div class="tip-head"><b>{{ 'ai-assistant.add-files' | translate }}</b></div>
+  <p>{{ 'ai-assistant.add-files-text' | translate }}</p>
+  <p class="tip-sub">{{ 'ai-assistant.add-files-hint' | translate: {count: maxPerMessage(), size: maxSize()} }}</p>
+</ng-template>
+
+<ng-template #keysTip>
+  <div class="tip-head"><b>{{ 'ai-assistant.shortcuts' | translate }}</b></div>
+  <div class="tip-keyrow">
+    <span>{{ 'ai-assistant.send' | translate }}</span>
+    <span class="tip-caps"><kbd>Enter</kbd></span>
+  </div>
+  <div class="tip-keyrow">
+    <span>{{ 'ai-assistant.new-line' | translate }}</span>
+    <span class="tip-caps"><kbd>Shift</kbd><kbd>Enter</kbd></span>
+  </div>
+  <div class="tip-keyrow">
+    <span>{{ 'ai-assistant.focus-composer' | translate }}</span>
+    <span class="tip-caps"><kbd>/</kbd></span>
+  </div>
+</ng-template>

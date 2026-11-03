@@ -14,6 +14,7 @@ import { AiLoadingModalComponent } from '@home/components/ai/ai-loading-modal.co
 import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry-modal.component';
 import { AiAttachmentsComponent } from '@home/components/ai/ai-attachments.component';
 import { AiAttachmentPreviewDialogComponent } from '@home/components/ai/ai-attachment-preview-dialog.component';
+import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { AiAttachmentPreviewDialogComponent } from '@home/components/ai/ai-attac
     AiLoadingModalComponent,
     AiNoTelemetryModalComponent,
     AiAttachmentsComponent,
-    AiAttachmentPreviewDialogComponent
+    AiAttachmentPreviewDialogComponent,
+    AiTipDirective
   ],
   imports: [
     CommonModule,

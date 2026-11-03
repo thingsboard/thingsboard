@@ -1,62 +1,583 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-:host {
-  width: 100%;
+$ai-teal-300: #4db6ac;
+$ai-teal-400: #26a69a;
+$ai-action: #00695c;
+$ai-action-hover: #004d40;
+$ai-focus: #00695c;
+$ai-teal-700: #00796b;
+$ink: rgba(0, 0, 0, 0.87);
+$ink-54: rgba(0, 0, 0, 0.54);
+$ink-38: rgba(0, 0, 0, 0.38);
+$faint: rgba(0, 0, 0, 0.56);
+$line: rgba(0, 0, 0, 0.12);
+$line-soft: rgba(0, 0, 0, 0.05);
+$crit: #d12730;
+$font: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+$chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E";
 
-  .prompt-input {
-    border-radius: 16px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    background-color: #fff;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    --mat-form-field-outlined-outline-width: 0px;
-    --mat-form-field-outlined-focus-outline-width: 0px;
+:host {
+  display: block;
+  width: 100%;
+}
+
+.tb-ai-composer {
+  width: 100%;
+  font-family: $font;
+  letter-spacing: 0.25px;
+  text-align: left;
+
+  .composer-field {
+    position: relative;
+    display: flow-root;
+    background: #fff;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.04), 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.08);
+    transition: border-color .18s ease, box-shadow .18s ease;
 
     &:focus-within {
-      border-color: rgba(0, 0, 0, 0.32);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border-color: $ai-focus;
+      box-shadow: 0 0 0 1px $ai-focus, 0 8px 24px rgba(0, 105, 92, 0.12);
+
+      .composer-chevron {
+        color: $ai-focus;
+      }
+    }
+  }
+
+  &.drop .composer-field {
+    box-shadow: inset 0 0 0 2px $ai-teal-300;
+    background: color-mix(in srgb, $ai-action 4%, #fff);
+  }
+
+  .composer-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 12px 0 16px;
+  }
+
+  .composer-file {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 6px 10px 6px 8px;
+    border: 1px solid $line;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13.5px;
+    line-height: 20px;
+    animation: composer-file-in .12s ease-out;
+
+    .mat-icon {
+      flex: none;
+      color: $ink-54;
     }
 
-    .pending-attachments {
-      padding: 12px 12px 0;
+    .file-pic {
+      flex: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #cfd8dc, #90a4ae) center / cover no-repeat;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
     }
 
-    .prompt-field {
-      width: 100%;
-    }
-
-    .prompt-toolbar {
+    .file-text {
       display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 0 8px 8px;
+      flex-direction: column;
+      min-width: 0;
+      overflow-wrap: anywhere;
+
+      b {
+        max-width: 240px;
+        overflow: hidden;
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 18px;
+        color: $ink;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      small {
+        font-size: 12px;
+        line-height: 16px;
+        color: $faint;
+      }
     }
 
-    .attach-button {
-      color: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(0, 0, 0, 0.16);
+    .file-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 2px;
+      background: $ai-action;
+      transition: width .15s linear;
+    }
+
+    .file-remove {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      margin-right: -4px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: none;
+      color: $ink-54;
+      cursor: pointer;
 
       &:hover {
-        color: rgba(0, 0, 0, 0.87);
-        border-color: rgba(0, 0, 0, 0.32);
+        background: rgba(0, 0, 0, 0.06);
+        color: $ink;
       }
+    }
+
+    &.up small {
+      color: $ai-teal-700;
+    }
+
+    &.bad {
+      border-color: color-mix(in srgb, $crit 40%, transparent);
+      background: color-mix(in srgb, $crit 4%, #fff);
+
+      .mat-icon, small {
+        color: $crit;
+      }
+    }
+  }
+
+  .composer-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0 8px 16px;
+  }
+
+  .composer-chevron {
+    --chevron: 18px;
+    display: flex;
+    flex: none;
+    align-items: center;
+    height: 24px;
+    margin: 4px 0 0 -2px;
+    color: $ai-action;
+    transition: color .18s ease;
+
+    &::before {
+      content: '';
+      width: var(--chevron);
+      height: var(--chevron);
+      background: currentColor;
+      mask: url($chevron) center / contain no-repeat;
+    }
+  }
+
+  textarea {
+    flex: 1;
+    min-width: 0;
+    min-height: 72px;
+    max-height: 240px;
+    margin: 4px 0 0;
+    padding: 0 58px 0 0;
+    border: 0;
+    outline: 0;
+    resize: none;
+    background: transparent;
+    font-family: $font;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: normal;
+    color: $ink;
+    caret-color: $ai-action;
+    tab-size: 2;
+    transition: height .12s ease;
+
+    &::placeholder {
+      color: $faint;
+    }
+  }
+
+  .composer-send-slot {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: inline-flex;
+  }
+
+  .composer-send {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: $ai-action;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .16s cubic-bezier(.2, 0, 0, 1);
+
+    &:hover:not(:disabled) {
+      background: $ai-action-hover;
+
+      .return-glyph polyline {
+        transform: scale(1.12);
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(.92);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $ai-focus;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      background: rgba(0, 0, 0, 0.06);
+      color: $ink-38;
+      cursor: default;
+    }
+
+    &.fly .return-glyph polyline {
+      animation: composer-grow .32s cubic-bezier(.2, 0, 0, 1);
+    }
+  }
+
+  .return-glyph {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    polyline {
+      transform-box: fill-box;
+      transform-origin: 0 50%;
+      transition: transform .16s ease-out;
+    }
+  }
+
+  .composer-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 8px 6px 16px;
+    border-top: 1px solid $line-soft;
+    border-radius: 0 0 14px 14px;
+    font-size: 13px;
+    line-height: 18px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .composer-spacer {
+    flex: 1;
+  }
+
+  .composer-tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: $ink-54;
+    cursor: pointer;
+    transition: background-color .12s ease, color .12s ease;
+
+    &:hover, &[aria-describedby] {
+      background: $line-soft;
+      color: $ink;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $ai-focus;
+      outline-offset: 1px;
+      color: $ink;
+    }
+  }
+
+  .composer-foot > .composer-add:first-child {
+    margin-left: -9px;
+  }
+
+  &.docked {
+    border-top: 1px solid $line;
+    background: #fff;
+    font-size: 14px;
+    line-height: 20px;
+    transition: border-top-color .18s ease;
+
+    &:focus-within {
+      border-top-color: $ai-focus;
+    }
+
+    .composer-field {
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      transition: box-shadow .18s ease;
+
+      &:focus-within {
+        box-shadow: inset 0 1px 0 $ai-focus;
+      }
+    }
+
+    &.drop .composer-field {
+      box-shadow: inset 0 0 0 2px $ai-teal-300;
+    }
+
+    .composer-files {
+      margin: 8px 8px 0 12px;
+    }
+
+    .composer-row {
+      gap: 6px;
+      padding: 6px 0 6px 12px;
+    }
+
+    .composer-chevron {
+      --chevron: 17px;
+      height: 22px;
+    }
+
+    textarea {
+      min-height: 44px;
+      max-height: 160px;
+      padding-right: 44px;
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .composer-send-slot {
+      right: 8px;
+      bottom: 8px;
+    }
+
+    .composer-send {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+    }
+
+    .return-glyph {
+      width: 17px;
+      height: 17px;
+
+      svg {
+        stroke-width: 2.4;
+      }
+    }
+
+    .composer-foot {
+      flex-wrap: nowrap;
+      gap: 6px 8px;
+      padding: 2px 8px 6px 12px;
+      border-radius: 0;
+      font-size: 12px;
+    }
+
+    .composer-tool {
+      width: 28px;
+      height: 28px;
+    }
+
+    .composer-foot > .composer-add:first-child {
+      margin-left: -7.5px;
     }
   }
 }
 
-:host::ng-deep {
-  .prompt-input .prompt-field {
-    .mdc-text-field--outlined {
-      padding-left: 16px;
-      padding-right: 16px;
+@keyframes composer-grow {
+  0% {
+    transform: none;
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes composer-file-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-ai-composer {
+    .composer-file {
+      animation: none;
     }
 
-    .mat-mdc-form-field-infix {
-      padding-top: 14px;
-      padding-bottom: 6px;
-      min-height: 0;
+    .composer-send .return-glyph polyline {
+      animation: none;
+      transition: none;
+      transform: none !important;
+    }
+
+    &.docked, .file-bar {
+      transition: none;
+    }
+  }
+}
+
+::ng-deep .tb-ai-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1100;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(248px, calc(100vw - 16px));
+  padding: 9px 12px 10px;
+  border-radius: 8px;
+  background: #1f2a31;
+  color: #d5dde2;
+  font: 400 12px/17px $font;
+  letter-spacing: .1px;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.22);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .16s cubic-bezier(.2, 0, 0, 1);
+
+  &.below {
+    transform: translateY(-4px);
+  }
+
+  &.on {
+    opacity: 1;
+    transform: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: var(--arrow-x, 50%);
+    top: 100%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: #1f2a31;
+  }
+
+  &.below::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: #1f2a31;
+  }
+
+  b {
+    display: block;
+    margin: 0;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 500;
+    color: #fff;
+  }
+
+  p {
+    margin: 0;
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  p + p {
+    margin-top: 3px;
+  }
+
+  .tip-sub {
+    color: #9fadb7;
+  }
+
+  .tip-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 3px;
+  }
+
+  .tip-keyrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 22px;
+  }
+
+  .tip-caps {
+    display: inline-flex;
+    gap: 3px;
+  }
+
+  kbd {
+    min-width: 16px;
+    height: 17px;
+    box-sizing: border-box;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font: 500 10.5px/17px $font;
+    text-align: center;
+  }
+
+  &.tip-keys {
+    min-width: 208px;
+
+    .tip-head {
+      margin-bottom: 2px;
+    }
+  }
+
+  &.tip-mini {
+    min-width: 0;
+    padding: 5px 8px 6px;
+
+    .tip-keyrow {
+      gap: 10px;
+      min-height: 18px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &, &.below {
+      transform: none;
+      transition: opacity .1s;
     }
   }
 }

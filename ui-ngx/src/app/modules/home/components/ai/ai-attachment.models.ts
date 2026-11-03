@@ -35,6 +35,41 @@ export const aiAttachmentIcon = (mediaType: string, name: string): string => {
   return 'description';
 };
 
+export interface AiAttachmentKind {
+  icon: string;
+  label: string;
+}
+
+export const aiAttachmentKind = (mediaType: string, name: string): AiAttachmentKind => {
+  const extension = name.split('.').pop()?.toLowerCase();
+  if (mediaType?.startsWith('image/')) {
+    return {icon: 'image', label: 'ai-assistant.file-kind.image'};
+  }
+  if (mediaType === 'application/pdf' || extension === 'pdf') {
+    return {icon: 'picture_as_pdf', label: 'ai-assistant.file-kind.pdf'};
+  }
+  if (extension === 'xlsx' || extension === 'csv') {
+    return {icon: 'table_chart', label: 'ai-assistant.file-kind.table'};
+  }
+  if (extension === 'docx') {
+    return {icon: 'description', label: 'ai-assistant.file-kind.document'};
+  }
+  if (extension === 'pptx') {
+    return {icon: 'slideshow', label: 'ai-assistant.file-kind.slides'};
+  }
+  if (extension === 'json') {
+    return {icon: 'data_object', label: 'ai-assistant.file-kind.json'};
+  }
+  if (['txt', 'log', 'md', 'xml', 'yaml', 'yml', 'html', 'htm'].includes(extension)) {
+    return {icon: 'description', label: 'ai-assistant.file-kind.text'};
+  }
+  return {icon: 'attach_file', label: 'ai-assistant.file-kind.file'};
+};
+
+export const formatAiFileSize = (bytes: number): string => bytes >= 1048576
+  ? (bytes / 1048576).toFixed(1).replace(/\.0$/, '') + ' MB'
+  : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+
 export const aiAttachmentExtension = (name: string): string => {
   const dot = name.lastIndexOf('.');
   return dot > 0 ? name.substring(dot + 1).toUpperCase() : '';

@@ -6,6 +6,7 @@ import {
   computed,
   ElementRef,
   EventEmitter,
+  HostListener,
   inject,
   Input,
   OnChanges,
@@ -18,29 +19,37 @@ import {
   ViewChild
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { of, Subscription } from 'rxjs';
-import { Store } from '@ngrx/store';
+import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { AppState } from '@core/core.state';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { guid, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import { AiPromptMessage, AiResourceConfig } from '@shared/models/ai-chat.models';
-import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
 import {
-  AiAttachmentItem,
+  aiAttachmentKind,
   fitAiImage,
+  formatAiFileSize,
   isAiAttachmentAccepted,
   namePastedImage
 } from '@home/components/ai/ai-attachment.models';
 
-interface PendingAttachment extends AiAttachmentItem {
+interface PendingAttachment {
+  key: string;
+  name: string;
+  size: number;
+  icon: string;
+  kind: string;
+  status: 'uploading' | 'ready' | 'error';
+  progress: number;
+  reason?: string;
   previewUrl?: string;
+  resource?: AiResourceInfo;
   upload?: Subscription;
 }
+
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const FLY_DURATION = 520;
 
 @Component({
   selector: 'tb-ai-prompt-input',
@@ -51,24 +60,20 @@ interface PendingAttachment extends AiAttachmentItem {
 export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestroy {
 
   private aiResourceService = inject(AiResourceService);
-  private store = inject<Store<AppState>>(Store);
   private translate = inject(TranslateService);
   private sanitizer = inject(DomSanitizer);
   private renderer = inject(Renderer2);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private fileSize = new FileSizePipe();
 
   @Input() placeholder = '';
 
   @Input() loading: boolean;
 
-  @Input() toastTarget: string;
+  @Input() docked = false;
 
   @Input() dropZone: HTMLElement;
 
   @Output() messageSent = new EventEmitter<AiPromptMessage>();
-
-  @ViewChild('autosize') autosize!: CdkTextareaAutosize;
 
   @ViewChild('textarea') textarea!: ElementRef<HTMLTextAreaElement>;
 
@@ -84,12 +89,27 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   accept = computed(() => this.config()?.extensions.join(',') ?? '');
 
+  maxPerMessage = computed(() => this.config()?.maxPerMessage ?? 0);
+
+  maxSize = computed(() => formatAiFileSize(this.config()?.maxSize ?? 0));
+
   uploading = computed(() => this.attachments().some(attachment => attachment.status === 'uploading'));
 
+  hasText = signal(false);
+
+  dragging = signal(false);
+
+  flying = signal(false);
+
   private dropTarget: HTMLElement;
-  private dropOverlay: HTMLElement;
   private dragDepth = 0;
   private unlisten: Array<() => void> = [];
+  private flyTimer: ReturnType<typeof setTimeout>;
+
+  get canSend(): boolean {
+    const ready = this.attachments().some(attachment => attachment.status === 'ready');
+    return !this.loading && !this.uploading() && (!!this.message.value?.trim() || ready);
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.dropZone) {
@@ -101,19 +121,44 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (!this.dropTarget) {
       this.listenForDrops(this.host.nativeElement);
     }
+    setTimeout(() => this.resize());
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.flyTimer);
     this.stopListening();
     this.clearAttachments(true);
   }
 
-  onEnter(event: Event): void {
-    const ke = event as KeyboardEvent;
-    if (!ke.shiftKey) {
-      ke.preventDefault();
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (target?.closest?.('input, textarea, select, [contenteditable]')) {
+      return;
+    }
+    const visible = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.tb-ai-composer textarea'))
+      .filter(textarea => textarea.offsetParent);
+    const field = this.textarea?.nativeElement;
+    if (field && visible[visible.length - 1] === field) {
+      event.preventDefault();
+      field.focus();
+      field.selectionStart = field.selectionEnd = field.value.length;
+    }
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && (!event.shiftKey || event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
       this.send();
     }
+  }
+
+  onInput(): void {
+    this.hasText.set(!!this.message.value);
+    this.resize();
   }
 
   send(): void {
@@ -122,6 +167,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (this.loading || this.uploading() || (!msg && !ready.length)) {
       return;
     }
+    this.fly();
     this.clearText();
     this.clearAttachments(false);
     this.messageSent.emit({message: msg, resources: ready.map(attachment => attachment.resource)});
@@ -138,9 +184,10 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   setValue(value: string): void {
     this.message.setValue(value);
+    this.hasText.set(!!value);
     setTimeout(() => {
       this.textarea?.nativeElement.focus();
-      this.autosize?.resizeToFitContent(true);
+      this.resize();
     });
   }
 
@@ -162,13 +209,19 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     }
   }
 
-  removeAttachment(item: AiAttachmentItem): void {
-    const attachment = this.attachments().find(candidate => candidate.key === item.key);
-    if (!attachment) {
-      return;
-    }
+  removeAttachment(attachment: PendingAttachment): void {
     this.discard(attachment);
-    this.attachments.update(list => list.filter(candidate => candidate !== attachment));
+    this.attachments.update(list => list.filter(candidate => candidate.key !== attachment.key));
+  }
+
+  meta(attachment: PendingAttachment): string {
+    if (attachment.status === 'error') {
+      return attachment.reason;
+    }
+    if (attachment.status === 'uploading') {
+      return this.translate.instant('ai-assistant.attachment-uploading', {progress: attachment.progress});
+    }
+    return `${this.translate.instant(attachment.kind)} · ${formatAiFileSize(attachment.size)}`;
   }
 
   async addFiles(files: File[]): Promise<void> {
@@ -177,35 +230,43 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
       return;
     }
     for (const original of files) {
-      if (this.attachments().length >= config.maxPerMessage) {
-        this.showError(this.translate.instant('ai-assistant.attachments-limit', {count: config.maxPerMessage}));
-        return;
+      const accepted = this.attachments().filter(attachment => attachment.status !== 'error').length;
+      if (accepted >= config.maxPerMessage) {
+        this.refuse(original, this.translate.instant('ai-assistant.attachment-over-limit', {count: config.maxPerMessage}));
+        continue;
       }
       if (!isAiAttachmentAccepted(original, config.extensions)) {
-        this.showError(this.translate.instant('ai-assistant.attachment-not-supported', {name: original.name}));
+        this.refuse(original, this.translate.instant('ai-assistant.attachment-unsupported'));
         continue;
       }
       const file = await fitAiImage(original, config.maxSize);
       if (file.size > config.maxSize) {
-        this.showError(this.translate.instant('ai-assistant.attachment-too-large',
-          {name: original.name, size: this.fileSize.transform(config.maxSize)}));
+        this.refuse(original, this.translate.instant('ai-assistant.attachment-larger-than', {size: formatAiFileSize(config.maxSize)}));
         continue;
       }
       this.startUpload(file, config);
     }
   }
 
+  private refuse(file: File, reason: string): void {
+    this.attachments.update(list => [...list, {
+      ...this.describe(file, file.type),
+      status: 'error',
+      progress: 0,
+      reason
+    }]);
+  }
+
+  private describe(file: File, mediaType: string): Pick<PendingAttachment, 'key' | 'name' | 'size' | 'icon' | 'kind'> {
+    const kind = aiAttachmentKind(mediaType, file.name);
+    return {key: guid(), name: file.name, size: file.size, icon: kind.icon, kind: kind.label};
+  }
+
   private startUpload(file: File, config: AiResourceConfig): void {
-    const image = ['image/png', 'image/jpeg', 'image/webp'].includes(file.type);
-    const previewUrl = image ? URL.createObjectURL(file) : undefined;
+    const previewUrl = IMAGE_TYPES.includes(file.type) ? URL.createObjectURL(file) : undefined;
     const attachment: PendingAttachment = {
-      key: guid(),
-      name: file.name,
-      mediaType: file.type || config.mediaTypes[0],
-      size: file.size,
-      image,
+      ...this.describe(file, file.type || config.mediaTypes[0]),
       previewUrl,
-      url$: previewUrl ? of(previewUrl) : undefined,
       status: 'uploading',
       progress: 0
     };
@@ -221,10 +282,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
           this.patch(attachment.key, {status: 'ready', resource: event.resource, progress: 100});
         }
       },
-      error: error => {
-        this.patch(attachment.key, {status: 'error'});
-        this.showError(this.errorMessage(error, file.name));
-      }
+      error: error => this.patch(attachment.key, {status: 'error', reason: this.errorMessage(error)})
     });
     this.patch(attachment.key, {upload});
   }
@@ -233,10 +291,29 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     this.attachments.update(list => list.map(attachment => attachment.key === key ? {...attachment, ...changes} : attachment));
   }
 
+  private fly(): void {
+    this.flying.set(false);
+    clearTimeout(this.flyTimer);
+    requestAnimationFrame(() => {
+      this.flying.set(true);
+      this.flyTimer = setTimeout(() => this.flying.set(false), FLY_DURATION);
+    });
+  }
+
+  private resize(): void {
+    const field = this.textarea?.nativeElement;
+    if (!field) {
+      return;
+    }
+    const cap = this.docked ? Math.min(160, Math.round(innerHeight * 0.3)) : Math.min(220, Math.round(innerHeight * 0.4));
+    field.style.height = 'auto';
+    field.style.height = Math.min(field.scrollHeight, cap) + 'px';
+  }
+
   private clearText(): void {
     this.message.reset('');
-    // Not autosize.reset(): it restores a height captured before the placeholder was known.
-    this.autosize?.resizeToFitContent(true);
+    this.hasText.set(false);
+    setTimeout(() => this.resize());
   }
 
   private clearAttachments(discard: boolean): void {
@@ -244,9 +321,9 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (!attachments.length) {
       return;
     }
-    if (discard) {
-      attachments.forEach(attachment => this.discard(attachment));
-    }
+    attachments
+      .filter(attachment => discard || attachment.status !== 'ready')
+      .forEach(attachment => this.discard(attachment));
     this.attachments.set([]);
   }
 
@@ -260,21 +337,10 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     }
   }
 
-  private errorMessage(error: any, name: string): string {
+  private errorMessage(error: any): string {
     const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
     const message = error ? parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message : null;
-    return message || this.translate.instant('ai-assistant.attachment-upload-failed', {name});
-  }
-
-  private showError(message: string): void {
-    this.store.dispatch(new ActionNotificationShow({
-      message,
-      target: this.toastTarget,
-      modern: true,
-      type: 'error',
-      verticalPosition: 'bottom',
-      horizontalPosition: 'center'
-    }));
+    return message || this.translate.instant('ai-assistant.attachment-failed');
   }
 
   private listenForDrops(target: HTMLElement): void {
@@ -288,7 +354,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
         }
         event.preventDefault();
         if (this.dragDepth++ === 0) {
-          this.showDropOverlay();
+          this.dragging.set(true);
         }
       }),
       this.renderer.listen(target, 'dragover', (event: DragEvent) => {
@@ -299,7 +365,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
       }),
       this.renderer.listen(target, 'dragleave', (event: DragEvent) => {
         if (hasFiles(event) && this.dragDepth > 0 && --this.dragDepth === 0) {
-          this.hideDropOverlay();
+          this.dragging.set(false);
         }
       }),
       this.renderer.listen(target, 'drop', (event: DragEvent) => {
@@ -308,7 +374,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
         }
         event.preventDefault();
         this.dragDepth = 0;
-        this.hideDropOverlay();
+        this.dragging.set(false);
         this.addFiles(Array.from(event.dataTransfer.files ?? []));
       })
     ];
@@ -318,44 +384,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     this.unlisten.forEach(unlisten => unlisten());
     this.unlisten = [];
     this.dragDepth = 0;
-    this.hideDropOverlay();
-  }
-
-  private showDropOverlay(): void {
-    if (this.dropOverlay || !this.dropTarget) {
-      return;
-    }
-    const overlay: HTMLElement = this.renderer.createElement('div');
-    overlay.className = 'tb-ai-drop-overlay';
-    Object.assign(overlay.style, {
-      position: 'absolute', inset: '8px', zIndex: '20', display: 'flex', flexDirection: 'column', gap: '8px',
-      alignItems: 'center', justifyContent: 'center', borderRadius: '12px', pointerEvents: 'none',
-      border: '2px dashed var(--tb-primary-500)', background: 'rgba(255, 255, 255, 0.92)',
-      color: 'var(--tb-primary-500)', fontSize: '16px', fontWeight: '500', textAlign: 'center', padding: '16px'
-    });
-    const icon: HTMLElement = this.renderer.createElement('span');
-    icon.className = 'material-icons';
-    icon.style.fontSize = '40px';
-    icon.textContent = 'upload_file';
-    const title: HTMLElement = this.renderer.createElement('span');
-    title.textContent = this.translate.instant('ai-assistant.drop-files');
-    const hint: HTMLElement = this.renderer.createElement('span');
-    Object.assign(hint.style, {fontSize: '13px', fontWeight: '400', color: 'rgba(0, 0, 0, 0.54)'});
-    hint.textContent = this.translate.instant('ai-assistant.attachments-hint',
-      {size: this.fileSize.transform(this.config()?.maxSize ?? 0)});
-    overlay.append(icon, title, hint);
-    if (getComputedStyle(this.dropTarget).position === 'static') {
-      this.renderer.setStyle(this.dropTarget, 'position', 'relative');
-    }
-    this.renderer.appendChild(this.dropTarget, overlay);
-    this.dropOverlay = overlay;
-  }
-
-  private hideDropOverlay(): void {
-    if (this.dropOverlay) {
-      this.dropOverlay.remove();
-      this.dropOverlay = null;
-    }
+    this.dragging.set(false);
   }
 
 }

@@ -86,24 +86,22 @@
         </div>
       </div>
     }
-    <div class="flex w-full flex-col items-center gap-3">
-      @if (!messages().length && promptExamples().length) {
-        <div class="example-chips">
-          @for (example of promptExamples(); track example.message) {
-            <button type="button" mat-stroked-button class="example-chip" (click)="useExample(example)">
-              {{ example.label }}
-            </button>
-          }
-        </div>
-      }
-      <tb-ai-prompt-input
-        class="flex"
-        [placeholder]="activePlaceholder()"
-        [loading]="loading()"
-        toastTarget="aiAssistant"
-        [dropZone]="chatContainer"
-        (messageSent)="sendMsgFromUser($event)">
-      </tb-ai-prompt-input>
-    </div>
+    @if (!messages().length && promptExamples().length) {
+      <div class="example-chips">
+        @for (example of promptExamples(); track example.message) {
+          <button type="button" mat-stroked-button class="example-chip" (click)="useExample(example)">
+            {{ example.label }}
+          </button>
+        }
+      </div>
+    }
   </div>
+  <tb-ai-prompt-input
+    class="ai-assistant-composer"
+    [docked]="true"
+    [placeholder]="activePlaceholder()"
+    [loading]="loading()"
+    [dropZone]="chatContainer"
+    (messageSent)="sendMsgFromUser($event)">
+  </tb-ai-prompt-input>
 </div>
