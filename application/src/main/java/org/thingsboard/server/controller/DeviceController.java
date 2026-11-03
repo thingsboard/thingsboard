@@ -120,6 +120,11 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.DevicePingResponse;
+import org.thingsboard.server.service.device.DevicePingService;
+
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -137,6 +142,8 @@ public class DeviceController extends BaseController {
     private final DeviceBulkImportService deviceBulkImportService;
     private final GatewayNotificationsService gatewayNotificationsService;
     private final TbDeviceService tbDeviceService;
+    
+    private final DevicePingService devicePingService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. "
@@ -758,6 +765,39 @@ public class DeviceController extends BaseController {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    /**
+     * Ping a device to check its reachability status.
+     *
+     * @param strDeviceId the device ID
+     * @return DevicePingResponse containing reachability status and last seen timestamp
+     */
+    @ApiOperation(value = "Ping Device", notes = "Checks if a device is reachable based on its last activity timestamp")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device/ping/{deviceId}", method = RequestMethod.GET)
+    @ResponseBody
+    public DevicePingResponse pingDevice(
+            @Parameter(description = "Device ID") @PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
+
+        try {
+            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+
+            // Check device exists and user has access
+            checkDeviceId(deviceId, Operation.READ);
+
+            DevicePingResponse response = devicePingService.pingDevice(getTenantId(), deviceId);
+
+            // Log the action
+            SecurityUser user = getCurrentUser();
+            logEntityActionService.logEntityAction(user.getTenantId(), deviceId,
+                    ActionType.ATTRIBUTES_READ, user, null, "lastActivityTime");
+
+            return response;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
 }
