@@ -22,6 +22,8 @@ import { AlarmStatusSelectComponent } from './alarm-status-select.component';
 import { ExampleHintComponent } from './example-hint.component';
 import { TargetEntityComponent } from '@home/components/rule-node/common/target-entity.component';
 import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list-config.component';
+import { EntityGroupPatternsComponent } from './entity-group-patterns.component';
+import { EdgeSourceComponent } from './edge-source.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +44,8 @@ import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list
     ExampleHintComponent,
     KvListConfigComponent,
     TargetEntityComponent,
+    EntityGroupPatternsComponent,
+    EdgeSourceComponent,
   ],
   imports: [
     CommonModule,
@@ -66,6 +70,8 @@ import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list
     ExampleHintComponent,
     KvListConfigComponent,
     TargetEntityComponent,
+    EntityGroupPatternsComponent,
+    EdgeSourceComponent,
   ]
 })
 
