@@ -34,7 +34,6 @@ import {
 @Component({
     selector: 'tb-custom-action-pretty-editor',
     templateUrl: './custom-action-pretty-editor.component.html',
-    styleUrls: ['./custom-action-pretty-editor.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -43,7 +42,6 @@ import {
         }
     ],
     encapsulation: ViewEncapsulation.None,
-    host: { class: 'tb-custom-action-pretty' },
     standalone: false
 })
 export class CustomActionPrettyEditorComponent implements AfterViewInit, ControlValueAccessor {
@@ -109,7 +107,6 @@ export class CustomActionPrettyEditorComponent implements AfterViewInit, Control
   toggleFullScreen(): void {
     this.fullscreen = !this.fullscreen;
   }
-
 
   writeValue(obj: CustomActionDescriptor): void {
     this.action = obj;

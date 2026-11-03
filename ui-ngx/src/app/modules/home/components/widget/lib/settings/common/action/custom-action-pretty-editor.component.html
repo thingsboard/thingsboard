@@ -15,11 +15,12 @@
     limitations under the License.
 
 -->
-<div class="tb-custom-action-pretty flex flex-col gap-2" tb-fullscreen [fullscreen]="fullscreen">
-  <div class="tb-action-expand-button flex flex-row items-center justify-end gap-1" [class.tb-fullscreen-editor]="fullscreen">
-    @if (helpId) {
-      <div [tb-help-popup]="helpId" [tb-help-popup-placement]="'bottomRight'" [tb-help-popup-style]="fullscreen ? {width: '900px'} : {maxWidth: '60vw'}"></div>
-    }
+<div class="tb-code-tabs-panel flex flex-col" tb-fullscreen [fullscreen]="fullscreen">
+  <div class="tb-code-tabs-toolbar flex flex-row items-center justify-end gap-1">
+    <div [tb-help-popup]="helpId"
+         tb-help-popup-placement="bottomRight"
+         [tb-help-popup-style]="{width: '900px'}">
+    </div>
     <button mat-stroked-button
             type="button"
             matTooltip="{{ 'widget.toggle-fullscreen' | translate }}"
@@ -29,34 +30,31 @@
       <span>{{ (fullscreen ? 'fullscreen.exit' : 'fullscreen.fullscreen') | translate }}</span>
     </button>
   </div>
-  <div class="tb-custom-action-editor" [class.tb-fullscreen-editor]="fullscreen">
-    @if (!fullscreen) {
-        <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="true"
-                                                [fullscreen]="fullscreen"
+  @if (!fullscreen) {
+    <tb-custom-action-pretty-resources-tabs class="h-96"
+                                            [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
+    </tb-custom-action-pretty-resources-tabs>
+  } @else {
+    <div class="flex min-h-0 flex-1">
+      <div #leftPanel class="tb-content flex">
+        <tb-custom-action-pretty-resources-tabs class="flex-1"
+                                                fullscreen
                                                 [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
         </tb-custom-action-pretty-resources-tabs>
-    } @else {
-      <div class="tb-fullscreen-panel tb-layout-fill flex flex-row">
-        <div #leftPanel class="tb-split tb-content left-panel">
-          <tb-custom-action-pretty-resources-tabs [hasCustomFunction]="false"
-                                                  [fullscreen]="fullscreen"
-                                                  [action]="action" (actionUpdated)="onActionUpdated($event ? true : false)">
-          </tb-custom-action-pretty-resources-tabs>
-        </div>
-        <div #rightPanel class="tb-split tb-content right-panel">
-          <tb-js-func
-            [(ngModel)]="action.customFunction"
-            (ngModelChange)="onActionUpdated()"
-            withModules
-            [fillHeight]="true"
-            [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
-            [disableUndefinedCheck]="true"
-            [validationArgs]="[]"
-            [editorCompleter]="customPrettyActionEditorCompleter"
-            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}">
-          </tb-js-func>
-        </div>
       </div>
-    }
-  </div>
+      <div #rightPanel class="tb-content flex">
+        <tb-js-func class="flex-1"
+                    [fillHeight]="true"
+                    [(ngModel)]="action.customFunction"
+                    (ngModelChange)="onActionUpdated()"
+                    withModules
+                    [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+                    [disableUndefinedCheck]="true"
+                    [validationArgs]="[]"
+                    [editorCompleter]="customPrettyActionEditorCompleter"
+                    functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}">
+        </tb-js-func>
+      </div>
+    </div>
+  }
 </div>
