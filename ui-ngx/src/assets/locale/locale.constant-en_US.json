@@ -5381,6 +5381,7 @@
         "column-example": "Example value data",
         "column-key": "Attribute/telemetry key",
         "credentials": "Credentials",
+        "gateway": "Gateway",
         "csv-delimiter": "CSV delimiter",
         "csv-first-line-header": "First line contains column names",
         "csv-update-data": "Update attributes/telemetry",
@@ -5424,7 +5425,6 @@
                 "community-string": "SNMP community string"
             },
             "isgateway": "Is Gateway",
-            "overwrite-activity-time": "Overwrite activity time for connected device",
             "description": "Description",
             "edge-license-key": "License Key",
             "cloud-endpoint": "Cloud Endpoint",

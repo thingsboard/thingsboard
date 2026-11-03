@@ -96,7 +96,7 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.snmpVersion, 'import.column-type.snmp.version'],
     [ImportEntityColumnType.snmpCommunityString, 'import.column-type.snmp.community-string'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
-    [ImportEntityColumnType.overwriteActivityTime, 'import.column-type.overwrite-activity-time'],
+    [ImportEntityColumnType.overwriteActivityTime, 'device.overwrite-activity-time'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
     [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
     [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloud-endpoint'],
