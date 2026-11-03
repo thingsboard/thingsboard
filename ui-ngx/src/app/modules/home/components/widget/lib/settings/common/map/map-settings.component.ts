@@ -23,7 +23,6 @@ import {
   MapSetting,
   MapType,
   mapZoomActions,
-  MapZoomAction,
   mapZoomActionTranslationMap
 } from '@shared/models/widget/maps/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -73,8 +72,6 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   mapScaleTranslationMap = mapScaleTranslationMap;
 
   MapType = MapType;
-
-  MapZoomAction = MapZoomAction;
 
   @Input()
   @coerceBoolean()

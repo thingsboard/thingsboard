@@ -72,7 +72,7 @@
     "jstree-bootstrap-theme": "^1.0.1",
     "jszip": "^3.10.2",
     "leaflet": "1.9.4",
-    "leaflet-gesture-handling": "^1.2.2",
+    "leaflet-gesture-handling": "1.2.2",
     "leaflet-polylinedecorator": "1.6.0",
     "leaflet-providers": "4.0.0",
     "leaflet.gridlayer.googlemutant": "0.15.0",

@@ -12604,7 +12604,7 @@
                 "zoom-double-click": "Double click",
                 "zoom-control-buttons": "Control buttons",
                 "gesture-handling": "Gesture handling",
-                "gesture-handling-hint": "Controls how users interact with the map. 'Default' allows normal scroll/zoom. 'Cooperative' requires Ctrl/⌘+scroll on desktop or two fingers on mobile to zoom.",
+                "gesture-handling-hint": "Defines how the map reacts while users scroll the page. 'Default' - the mouse wheel zooms the map and one finger moves it. 'Cooperative' - the page keeps scrolling; hold Ctrl/⌘ while scrolling to zoom the map, and use two fingers to move it on touch devices.",
                 "gesture-handling-default": "Default",
                 "gesture-handling-cooperative": "Cooperative",
                 "gesture-handling-touch": "Use two fingers to move the map",
