@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { FilterParamInfo, ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';

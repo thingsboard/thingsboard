@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -13,7 +13,7 @@ import { downloadEntityJson, readableMessage, requestFailureMessage, splitTextWi
 
 export interface IotHubConverterUpdateDialogData {
   update: DefaultConverterUpdate;
-  // The converter's version the update check found: the server refuses the update if someone saved the converter since
+  // The version of the converter the dialog downloads: the server refuses the update if someone saved the converter since
   version?: number;
   // Someone changed the converter since a package installed or last updated it
   modified: boolean;
@@ -33,7 +33,7 @@ export interface IotHubConverterUpdateDialogData {
 })
 export class TbIotHubConverterUpdateDialogComponent extends DialogComponent<TbIotHubConverterUpdateDialogComponent, boolean> {
 
-  readonly modifiedHint = splitTextWithLink(this.translate.instant('iot-hub.converter-update-modified'));
+  readonly modifiedHint = splitTextWithLink(this.translate.instant('iot-hub.device-update-modified'));
   updating = false;
   errorMessage: string | null = null;
 

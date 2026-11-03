@@ -11,6 +11,9 @@ import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models
 import { ItemType } from '@shared/models/iot-hub/iot-hub-item.models';
 import { DeviceInstalledItemDescriptor, IotHubInstalledItem, IotHubInstalledItemKeptEntities } from '@shared/models/iot-hub/iot-hub-installed-item.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { ConverterService } from '@core/http/converter.service';
+import { Converter } from '@shared/models/converter.models';
+import { HasVersion } from '@shared/models/entity.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemDialogResult } from './iot-hub-add-item-dialog.component';
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
@@ -39,7 +42,8 @@ export class IotHubActionsService {
     private dialogService: DialogService,
     private translate: TranslateService,
     private builtInService: IotHubBuiltInService,
-    private iotHubApiService: IotHubApiService
+    private iotHubApiService: IotHubApiService,
+    private converterService: ConverterService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -189,9 +193,11 @@ export class IotHubActionsService {
   private async converterUpdateDialogData(update: DefaultConverterUpdate): Promise<IotHubConverterUpdateDialogData> {
     const installedItemId = update.installedItem.id.id;
     const converterId = update.converter.id.id;
-    const [states, packages] = await Promise.all([
+    // The converter as it is now, not the table's copy: the dialog downloads it, and the update overwrites only this version
+    const [states, packages, converter] = await Promise.all([
       firstValueFrom(this.iotHubApiService.checkDeviceUpdate(installedItemId)),
-      loadInstalledDevicePackages(this.iotHubApiService)
+      loadInstalledDevicePackages(this.iotHubApiService),
+      firstValueFrom(this.converterService.getConverter(converterId)) as Promise<Converter & HasVersion>
     ]);
     const state = states.find(s => s.stepName === update.stateKey);
     // As the server decides what is shared: the converter is one of the entities another package tracks
@@ -199,7 +205,7 @@ export class IotHubActionsService {
       .filter(item => item.id.id !== installedItemId &&
         (item.descriptor as DeviceInstalledItemDescriptor)?.createdEntityIds?.some(id => id.id === converterId))
       .map(item => item.itemName);
-    return { update, version: state?.version, modified: state?.modified === true, usedBy };
+    return { update: { ...update, converter }, version: converter.version ?? state?.version, modified: state?.modified === true, usedBy };
   }
 
   deleteItem(installedItem: IotHubInstalledItem): Observable<boolean> {
