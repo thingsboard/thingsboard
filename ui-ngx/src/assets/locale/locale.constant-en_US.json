@@ -6455,6 +6455,7 @@
         "updates": "Updates",
         "up-to-date": "Up to date",
         "new-converter-available": "New converter available",
+        "converter-update-title": "Update the converter?",
         "update": "Update",
         "update-to-version": "Update to v {{ version }}",
         "update-item-title": "Update Item",

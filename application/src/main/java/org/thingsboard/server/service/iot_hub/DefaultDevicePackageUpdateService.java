@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -346,6 +346,16 @@ public class DefaultDevicePackageUpdateService extends AbstractTbEntityService i
             } catch (Exception e) {
                 throw new StepFailure(step.getName(), e);
             }
+        }
+
+        // An update to the installed version itself, e.g. of ThingsBoard's default converter only, sends just the steps
+        // it changes: the other steps and the forms keep their install state
+        if (UUID.fromString(request.getVersionId()).equals(installedItem.getItemVersionId()) && previous.getInstallState() != null) {
+            previous.getInstallState().forEach((key, value) -> {
+                if (value instanceof ObjectNode state) {
+                    installState.putIfAbsent(key, state);
+                }
+            });
         }
 
         DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();

@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
 package org.thingsboard.server.service.iot_hub;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -529,6 +529,53 @@ class DefaultDevicePackageUpdateServiceTest {
         assertThat(created.get("checksum").asText()).isEqualTo("before");
         verify(installedItemService, never()).save(tenantId, creator);
         verify(installedItemService, never()).save(tenantId, taker);
+    }
+
+    @Test
+    void updateOfTheInstalledVersion_keepsTheInstallStateOfTheStepsItLeavesOut() {
+        ConverterId converterId = new ConverterId(UUID.randomUUID());
+        Converter current = new Converter(converterId);
+        current.setTenantId(tenantId);
+        current.setName("Uplink data converter for TTN my-app");
+        current.setVersion(4L);
+        when(converterService.findConverterById(tenantId, converterId)).thenReturn(current);
+        when(converterService.saveConverter(any())).thenAnswer(i -> i.getArgument(0));
+        DeviceInstalledItemDescriptor installed = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
+        installed.setCreatedEntityIds(List.of(profileId, deviceId, dashboardId, integrationId, converterId));
+        installed.setInstallState(Map.of("Integration", stateOf(integrationId, "created"), "uplink", stateOf(converterId, "created"),
+                "Configuration", JacksonUtil.newObjectNode().set("formValues", JacksonUtil.newObjectNode().put("profileName", "am308"))));
+        ObjectNode versionInfo = JacksonUtil.newObjectNode().put("itemId", itemId.toString()).put("name", "AM308").put("version", "1.0.0");
+        when(iotHubRestClient.getVersionInfo(installedVersionId.toString())).thenReturn(versionInfo);
+        // ThingsBoard's default converter changed: only the converter step is sent
+        DeviceUpdateRequest.Step step = overwrite("Uplink data converter", "UPLINK_CONVERTER", converterId, 4L,
+                JacksonUtil.newObjectNode().put("name", "Uplink").set("configuration", JacksonUtil.newObjectNode().put("tbelDecoder", "return {};")));
+        step.setId("uplink");
+        step.setDefaultConverter(true);
+        DeviceUpdateRequest request = request(step);
+        request.setVersionId(installedVersionId.toString());
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request);
+
+        assertThat(result.isSuccess()).isTrue();
+        Map<String, JsonNode> state = ((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState();
+        ArgumentCaptor<Converter> saved = ArgumentCaptor.forClass(Converter.class);
+        verify(converterService).saveConverter(saved.capture());
+        assertThat(state.get("uplink").get("checksum").asText()).isEqualTo(EntityChecksum.of(saved.getValue()));
+        assertThat(state.get("uplink").get("defaultConverter").asBoolean()).isTrue();
+        assertThat(state.get("Integration")).isEqualTo(stateOf(integrationId, "created"));
+        assertThat(state.get("Configuration").get("formValues").get("profileName").asText()).isEqualTo("am308");
+        verify(integrationService, never()).saveIntegration(any());
+        assertThat(installedItem.getItemVersionId()).isEqualTo(installedVersionId);
+    }
+
+    @Test
+    void updateToAnotherVersion_dropsTheInstallStateOfTheStepsItLeavesOut() {
+        when(dashboardService.findDashboardById(tenantId, dashboardId)).thenReturn(dashboard(9L));
+
+        DeviceUpdateResult result = service.apply(user, installedItem.getId(), request(keep("Dashboard", "DASHBOARD", dashboardId)));
+
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(((DeviceInstalledItemDescriptor) installedItem.getDescriptor()).getInstallState()).containsOnlyKeys("Dashboard");
     }
 
     @Test
