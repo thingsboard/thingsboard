@@ -91,4 +91,12 @@ public class DataValidatorTest {
         Assertions.assertThrows(DataValidationException.class, () -> DataValidator.validateQueueNameOrTopic(value, "topic"));
     }
 
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "example.com", "sub.domain.co.uk", "localhost", "localhost:8080", "iot.example.com:8080", "sub.domain.org:443"
+    })
+    public void validateDomain(String domain) {
+        assertThat(DataValidator.isValidDomain(domain)).isTrue();
+    }
 }
