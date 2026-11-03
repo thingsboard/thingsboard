@@ -86,7 +86,8 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   public updateAppearance() {
     this.updatePathAppearance();
     const dsData = this.dataLayer.getMap().getData();
-    if (this.settings.showMarker && this.settings.tooltip?.show) {
+    this.createMarker();
+    if (this.settings.showMarker && this.markerTooltip && this.settings.tooltip?.show) {
       updateTooltip(this.dataLayer.getMap(), this.markerTooltip,
         this.settings.tooltip, this.dataLayer.dataLayerTooltipProcessor, this.pointData, dsData);
     }
@@ -148,9 +149,12 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
   }
 
   private createMarker() {
-    if (this.settings.showMarker) {
+    if (this.settings.showMarker && !this.marker) {
       const dsData = this.dataLayer.getMap().getData();
       const location = this.dataLayer.dataProcessor.extractLocation(this.pointData, dsData);
+      if (!location) {
+        return;
+      }
       this.marker = L.marker(location, {
         tbMarkerData: this.pointData,
         snapIgnore: true
@@ -174,6 +178,10 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private updateMarker() {
     if (this.settings.showMarker) {
+      this.createMarker();
+      if (!this.marker) {
+        return;
+      }
       const dsData = this.dataLayer.getMap().getData();
       this.marker.options.tbMarkerData = this.pointData;
       this.updateMarkerLocation(this.pointData, dsData);
@@ -189,7 +197,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const locations = formattedRouteData.map(data => this.dataLayer.dataProcessor.extractLocation(data, dsData));
+      const locations = this.extractValidLocations(formattedRouteData, dsData).map(entry => entry.location);
       const pathStyle = this.dataLayer.getPathStyle(this.pointData, dsData);
       this.polyline = L.polyline(locations, pathStyle);
       this.polyline.addTo(this.layer);
@@ -204,13 +212,21 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
     if (this.settings.showPath) {
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const locations = formattedRouteData.map(data => this.dataLayer.dataProcessor.extractLocation(data, dsData));
+      const locations = this.extractValidLocations(formattedRouteData, dsData).map(entry => entry.location);
       this.polyline.setLatLngs(locations);
       if (this.settings.usePathDecorator) {
         this.polylineDecorator.setPaths(this.polyline);
       }
       this.updatePathAppearance();
     }
+  }
+
+  private extractValidLocations(data: FormattedData<TbMapDatasource>[], dsData: FormattedData<TbMapDatasource>[]):
+      {location: L.LatLng; data: FormattedData<TbMapDatasource>}[] {
+    return data.map(item => ({
+      location: this.dataLayer.dataProcessor.extractLocation(item, dsData),
+      data: item
+    })).filter(entry => !!entry.location);
   }
 
   private updatePoints() {
@@ -221,10 +237,7 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
       }
       const formattedRouteData = _.values(this.tripRouteData);
       const dsData = this.dataLayer.getMap().getData();
-      const pointsData = formattedRouteData.map(data => ({
-        location: this.dataLayer.dataProcessor.extractLocation(data, dsData),
-        data
-      })).filter(pData => !!pData.location);
+      const pointsData = this.extractValidLocations(formattedRouteData, dsData);
       const toDelete = new Set(Array.from(this.points.keys()));
       for (const pData of pointsData) {
         let pointData = pData.data;
@@ -286,13 +299,13 @@ class TbTripDataItem extends TbDataLayerItem<TripsDataLayerSettings, TbTripsData
 
   private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
     const location = this.dataLayer.dataProcessor.extractLocation(data, dsData);
-    if (!this.marker.getLatLng().equals(location)) {
+    if (location && !this.marker.getLatLng().equals(location)) {
       this.marker.setLatLng(location);
     }
   }
 
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    if (this.settings.showMarker) {
+    if (this.settings.showMarker && this.marker) {
       this.dataLayer.dataProcessor.createMarkerIcon(data, dsData, data.rotationAngle).subscribe(
         (iconInfo) => {
           const options = deepClone(iconInfo.icon.options);
