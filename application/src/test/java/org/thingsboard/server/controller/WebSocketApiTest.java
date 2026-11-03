@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cache.logexternal.LogChunkBuffer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -964,6 +965,50 @@ public class WebSocketApiTest extends AbstractControllerTest {
         Assert.assertNotNull(eData.getFirst().getLatest().get(EntityKeyType.ATTRIBUTE));
         attrValue = eData.getFirst().getLatest().get(EntityKeyType.ATTRIBUTE).get("anyAttributeKey");
         Assert.assertEquals(new TsValue(dataPoint5.getLastUpdateTs(), dataPoint5.getValueAsString()), attrValue);
+    }
+
+    @Test
+    public void testAttributesSubscriptionForEntityTypeWithoutTsAndAttributes() throws Exception {
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Out of attributes and time series scope"), DeviceProfile.class);
+
+        JsonNode update = getWsClient().subscribeForAttributes(deviceProfile.getId(),
+                TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("anyAttributeKey"));
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.BAD_REQUEST.getCode());
+        assertThat(update.get("errorMsg").asText()).isEqualTo("Attributes and time series are not supported for entity type 'DEVICE_PROFILE'!");
+    }
+
+    @Test
+    public void testAttributesSubscriptionForDeniedEntityIsRejected() throws Exception {
+        loginCustomerUser();
+
+        JsonNode update = getWsClient().subscribeForAttributes(device.getId(),
+                TbAttributeSubscriptionScope.SERVER_SCOPE.name(), List.of("anyAttributeKey"));
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.ACCESS_DENIED.getCode());
+        assertThat(update.get("errorMsg").asText()).startsWith(SubscriptionErrorCode.ACCESS_DENIED.getDefaultMsg());
+        assertThat(update.hasNonNull("data")).isFalse();
+    }
+
+    @Test
+    public void testTimeseriesSubscriptionForEntityTypeWithoutTsAndAttributes() throws Exception {
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Out of time series scope"), DeviceProfile.class);
+
+        JsonNode update = getWsClient().sendTimeseriesCmd(deviceProfile.getId(), "LATEST_TELEMETRY");
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.BAD_REQUEST.getCode());
+        assertThat(update.get("errorMsg").asText()).isEqualTo("Attributes and time series are not supported for entity type 'DEVICE_PROFILE'!");
+    }
+
+    @Test
+    public void testTimeseriesSubscriptionWithKeysForDeniedEntityIsRejected() throws Exception {
+        loginCustomerUser();
+
+        JsonNode update = getWsClient().sendTimeseriesCmd(device.getId(), "LATEST_TELEMETRY", "temperature");
+
+        assertThat(update.get("errorCode").asInt()).isEqualTo(SubscriptionErrorCode.ACCESS_DENIED.getCode());
+        assertThat(update.get("errorMsg").asText()).startsWith(SubscriptionErrorCode.ACCESS_DENIED.getDefaultMsg());
+        assertThat(update.hasNonNull("data")).isFalse();
     }
 
     @Test
