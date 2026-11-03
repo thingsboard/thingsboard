@@ -25,6 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -1636,6 +1637,62 @@ public class DeviceControllerTest extends AbstractControllerTest {
         device = doPost("/api/device", device, Device.class);
         assertThat(device.getName()).isEqualTo("Device v1.1");
         assertThat(device.getVersion()).isEqualTo(3);
+    }
+
+    @Test
+    public void testReclaimDeviceByCustomerUser() throws Exception {
+        Device device = createCustomerDevice("Reclaim own device");
+
+        loginCustomerUser();
+        doDeleteAsync("/api/customer/device/" + device.getName() + "/claim", String.class);
+
+        loginTenantAdmin();
+        Device foundDevice = doGet("/api/device/" + device.getUuidId(), Device.class);
+        Assert.assertEquals(NULL_UUID, foundDevice.getCustomerId().getId());
+    }
+
+    @Test
+    public void testReclaimDeviceOfDifferentCustomerByCustomerUser() throws Exception {
+        Device device = createCustomerDevice("Reclaim device of different customer");
+
+        loginDifferentCustomer();
+        doDelete("/api/customer/device/" + device.getName() + "/claim")
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        loginTenantAdmin();
+        Device foundDevice = doGet("/api/device/" + device.getUuidId(), Device.class);
+        Assert.assertEquals(customerId, foundDevice.getCustomerId());
+    }
+
+    @Test
+    public void testClaimDeviceOfDifferentCustomerByCustomerUser() throws Exception {
+        Device device = createCustomerDevice("Claim device of different customer");
+
+        loginDifferentCustomer();
+        doPost("/api/customer/device/" + device.getName() + "/claim", new ClaimRequest(null))
+                .andExpect(status().isForbidden())
+                .andExpect(statusReason(containsString(msgErrorPermission)));
+
+        loginTenantAdmin();
+        Device foundDevice = doGet("/api/device/" + device.getUuidId(), Device.class);
+        Assert.assertEquals(customerId, foundDevice.getCustomerId());
+    }
+
+    @Test
+    public void testReclaimDeviceByTenantAdmin() throws Exception {
+        Device device = createCustomerDevice("Reclaim device by tenant admin");
+
+        doDeleteAsync("/api/customer/device/" + device.getName() + "/claim", String.class);
+
+        Device foundDevice = doGet("/api/device/" + device.getUuidId(), Device.class);
+        Assert.assertEquals(NULL_UUID, foundDevice.getCustomerId().getId());
+    }
+
+    private Device createCustomerDevice(String name) throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice(name);
+        return doPost("/api/customer/" + customerId.getId() + "/device/" + device.getUuidId(), Device.class);
     }
 
     private Device createDevice(String name) {
