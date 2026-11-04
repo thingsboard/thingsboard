@@ -252,8 +252,8 @@ export class AiAssistantPanelComponent implements OnInit {
 
   sendMsgFromUser(prompt: AiPromptMessage): void {
     const userMessage: ChatMessage = prompt.resources.length
-      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
-      : {from: 'USER', content: prompt.message};
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources, time: Date.now()}
+      : {from: 'USER', content: prompt.message, time: Date.now()};
     this.messages.update(list => [...list, userMessage]);
     this.sendMessage(prompt).subscribe({
       error: (err) => {
@@ -505,7 +505,7 @@ export class AiAssistantPanelComponent implements OnInit {
   private handleChatEvent(chatMsg: ChatEvent): Observable<ChatEvent> {
     switch (chatMsg.event) {
       case 'assistantMessage':
-        this.messages.update(list => [...list, {from: 'AI', content: chatMsg.data.message}]);
+        this.messages.update(list => [...list, {from: 'AI', content: chatMsg.data.message, time: Date.now()}]);
         return of(chatMsg);
       case 'toolExecutionRequested':
         return this.handleToolApproval(chatMsg);

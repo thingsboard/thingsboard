@@ -250,8 +250,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   sendMsgFromUser(prompt: AiPromptMessage): void {
     const userMessage: ChatMessage = prompt.resources.length
-      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
-      : {from: 'USER', content: prompt.message};
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources, time: Date.now()}
+      : {from: 'USER', content: prompt.message, time: Date.now()};
     this.messages.update(list => [...list, userMessage]);
     this.sendMessage(prompt).subscribe({
       error: err => {
@@ -370,7 +370,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private handleChatEvent(event: ChatEvent): Observable<ChatEvent> {
     switch (event.event) {
       case 'assistantMessage':
-        this.messages.update(list => [...list, {from: 'AI', content: event.data.message}]);
+        this.messages.update(list => [...list, {from: 'AI', content: event.data.message, time: Date.now()}]);
         break;
       case 'toolExecutionRequested':
         this.handleToolApproval(event);

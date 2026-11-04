@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import { ClipboardService } from 'ngx-clipboard';
 import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
 
 @Component({
@@ -25,10 +26,27 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   waitApproval = false;
 
   private static readonly PIN_TO_BOTTOM_MS = 1500;
+  private static readonly COPIED_MS = 1200;
 
   private releaseBottom: () => void;
 
-  constructor(private elementRef: ElementRef<HTMLElement>) {}
+  lastAnswerIndex = -1;
+
+  copiedIndex = -1;
+
+  private copiedTimeout: ReturnType<typeof setTimeout>;
+
+  constructor(private elementRef: ElementRef<HTMLElement>,
+              private clipboard: ClipboardService) {}
+
+  copyAnswer(answer: HTMLElement, index: number): void {
+    const text = (answer.querySelector<HTMLElement>('.agent-body') ?? answer).innerText.trim();
+    if (this.clipboard.copyFromContent(text)) {
+      this.copiedIndex = index;
+      clearTimeout(this.copiedTimeout);
+      this.copiedTimeout = setTimeout(() => this.copiedIndex = -1, AiChatMessagesComponent.COPIED_MS);
+    }
+  }
 
   getApprovalData(msg: ApprovalChatMessage): ToolExecutionRequested {
     return msg.data;
@@ -45,6 +63,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       }
     }
     if (changes.messages) {
+      this.lastAnswerIndex = this.findLastAnswerIndex();
       if (changes.messages.firstChange) {
         if (this.initialScroll === 'bottom') {
           this.pinToBottom();
@@ -87,7 +106,18 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     this.approvalAction.emit($event);
   }
 
+  private findLastAnswerIndex(): number {
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const message = this.messages[i];
+      if (message.from === 'AI' && message.status !== 'INCOMPLETE') {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   ngOnDestroy(): void {
+    clearTimeout(this.copiedTimeout);
     this.releaseBottom?.();
   }
 

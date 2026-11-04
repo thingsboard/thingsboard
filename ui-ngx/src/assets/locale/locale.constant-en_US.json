@@ -760,6 +760,8 @@
         "pin": "Pin to the top",
         "unpin": "Unpin",
         "double-click-to-rename": "Double-click to rename",
+        "copy-answer": "Copy the answer",
+        "copied": "Copied",
         "auto-approve": "Auto-approve",
         "auto-approve-on": "On",
         "auto-approve-off": "Off",

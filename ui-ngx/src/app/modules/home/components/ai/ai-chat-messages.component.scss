@@ -45,6 +45,75 @@
     }
   }
 
+  .msg-foot {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 24px;
+    margin-top: -2px;
+    font-size: var(--chat-caption);
+    line-height: var(--chat-caption-lh);
+    color: var(--k-faint);
+    font-variant-numeric: tabular-nums;
+
+    &.agent-foot {
+      margin-top: 4px;
+      padding-left: calc(var(--chat-mark) + 10px);
+    }
+
+    time {
+      margin-right: 6px;
+    }
+  }
+
+  .foot-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity .12s ease;
+
+    &.show {
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  .ai:hover .foot-tools, .ai:focus-within .foot-tools {
+    opacity: 1;
+  }
+
+  .foot-tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--tb-ink-54);
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--tb-ink);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ai-focus);
+      outline-offset: 1px;
+    }
+
+    &.done {
+      color: var(--tb-ok);
+    }
+  }
+
   .agent {
     display: flex;
     align-items: flex-start;

@@ -13,6 +13,11 @@
       @if (msg.content) {
         <div class="msg">{{ msg.content }}</div>
       }
+      @if (msg.time) {
+        <div class="msg-foot">
+          <time [matTooltip]="msg.time | date:'medium'" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
+        </div>
+      }
     </div>
   } @else {
     <div class="ai">
@@ -29,9 +34,23 @@
           <span>{{ msg.content }}</span>
         </div>
       } @else {
-        <div class="agent">
+        <div class="agent" #answer>
           <span class="tb-ai-mark" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
           <tb-markdown class="agent-body" usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+        </div>
+        <div class="msg-foot agent-foot">
+          @if (msg.time) {
+            <time [matTooltip]="msg.time | date:'medium'" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
+          }
+          <span class="foot-tools" [class.show]="$index === lastAnswerIndex">
+            <button type="button" class="foot-tool" [class.done]="copiedIndex === $index"
+                    [matTooltip]="(copiedIndex === $index ? 'ai-assistant.copied' : 'ai-assistant.copy-answer') | translate"
+                    matTooltipPosition="above"
+                    [attr.aria-label]="'ai-assistant.copy-answer' | translate"
+                    (click)="copyAnswer(answer, $index)">
+              <mat-icon class="tb-mat-16">{{ copiedIndex === $index ? 'check' : 'content_copy' }}</mat-icon>
+            </button>
+          </span>
         </div>
       }
     </div>

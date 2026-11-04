@@ -179,6 +179,7 @@ export interface GeneralChatMessage {
   content: string;
   status?: 'INCOMPLETE';
   resources?: AiResourceInfo[];
+  time?: number;
 }
 
 export interface ApprovalChatMessage {
