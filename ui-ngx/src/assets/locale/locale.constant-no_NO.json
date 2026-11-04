@@ -6295,8 +6295,7 @@
     "type-rule-chain": "Regelkjede",
     "type-rule-chain-plural": "Regelkjeder",
     "type-device": "Enhet",
-    "type-device-plural": "Enheter",
-    "selected": "Valgt"
+    "type-device-plural": "Enheter"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -8007,7 +8006,6 @@
     "endpoint-url-pattern": "URL-mønster for endepunkt",
     "endpoint-url-pattern-required": "URL-mønster for endepunkt er påkrevd",
     "request-method": "Forespørselsmetode",
-    "use-simple-client-http-factory": "Bruk enkel HTTP-klientfabrikk",
     "ignore-request-body": "Uten forespørselsinnhold",
     "request-body-template": "Mal for forespørselsinnhold",
     "request-body-template-hint": "Bruk <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> for metadata og <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> for meldingsverdier. Hvis feltet er tomt, brukes meldingens nyttelast som forespørselsinnhold. For nyttelast som ikke er JSON, aktiver 'Tolk som ren tekst'. <br/><br/> Du kan sette inn en hemmelighet med plassholderen <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, der 'name' er identifikatoren til hemmeligheten og 'type' er enten TEXT eller TEXT_FILE. Dette er nyttig i konfigurasjonsfelt for regelnoder som ikke støtter 'Bruk hemmelighet' direkte. Eksempel: <code><span style=\"color: #000;\">$&#123;</span>secret:leietakerpassord;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8183,7 +8181,6 @@
     "proxy-port-range": "Proxy-porten må være mellom 1 og 65535.",
     "proxy-user": "Proxy-bruker",
     "proxy-password": "Proxy-passord",
-    "proxy-scheme": "Proxy-skjema",
     "numbers-to-template": "Telefonnumre til mal",
     "numbers-to-template-required": "Telefonnumre til mal er påkrevd",
     "numbers-to-template-hint": "Kommaseparerte telefonnumre, bruk <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> for verdi fra metadata, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> for verdi fra meldingsinnholdet",
@@ -8968,8 +8965,6 @@
     "single-entity": "Enkeltentitet",
     "group-entities": "Gruppe av entiteter",
     "entities-group-owner": "Eier av entitetsgruppe",
-    "single-device": "Enkelt enhet",
-    "group-of-devices": "Gruppe av enheter",
     "devices-group-owner": "Eier av enhetsgruppe",
     "message-body": "Meldingsinnhold",
     "target": "Mål",
@@ -11381,22 +11376,6 @@
     "ai-credits-usage": "AI-kreditter: {{ used }} av {{ max }} brukt",
     "ai-credits-description": "Du har brukt <strong>{{ used }}</strong> av dine <strong>{{ max }}</strong> AI-kreditter denne måneden. Grensen tilbakestilles {{ date }}. Kontakt systemadministratoren for å øke AI-kredittkvoten din."
   },
-  "solution-template": {
-    "solution-template": "Løsningsmal",
-    "solution-templates": "Løsningsmaler",
-    "management": "Administrer løsningsmaler",
-    "details": "Detaljer",
-    "install": "Installer",
-    "level": "Nivå",
-    "install-title": "Løsningsmal ble installert",
-    "install-failed-title": "Installasjon av løsningsmal mislyktes",
-    "instructions": "Instruksjoner",
-    "goto-main-dashboard": "Gå til hoveddashbordet",
-    "delete": "Slett",
-    "delete-solution-title": "Er du sikker på at du vil slette løsningen '{{solutionTitle}}'?",
-    "delete-solution-text": "Vær forsiktig, etter bekreftelsen vil løsningen og all tilhørende data bli uopprettelig.",
-    "installing": "Installerer løsningsmal..."
-  },
   "markdown": {
     "edit": "Rediger",
     "preview": "Forhåndsvis",
@@ -11413,20 +11392,8 @@
     "app-title": "Applikasjonstittel",
     "favicon": "Nettstedsikon",
     "favicon-desc": "Ikon i nettleserfanen og bokmerker. PNG eller ICO, 32×32 px anbefales",
-    "favicon-description": "*.ico, *.gif eller *.png bilde med maksimal størrelse {{kbSize}} KB.",
-    "favicon-size-error": "Nettstedsikonet er for stort. Maksimal tillatt størrelse er {{kbSize}} KB.",
-    "favicon-type-error": "Ugyldig filformat for nettstedsikon. Kun ICO, GIF eller PNG godtas.",
-    "drop-favicon-image": "Slipp et nettstedsikonbilde eller klikk for å velge en fil å laste opp.",
-    "drop-favicon-image-or": "Dra og slipp et nettstedsikonbilde eller",
-    "no-favicon-image": "Ingen ikon valgt",
     "logo": "Logo",
     "logo-desc": "SVG eller PNG, høyde minst 96px, opptil 200 KB",
-    "logo-description": "Ethvert bilde med maksimal størrelse {{kbSize}} KB.",
-    "logo-size-error": "Logobildet er for stort. Maksimal tillatt størrelse er {{kbSize}} KB.",
-    "logo-type-error": "Ugyldig logofilformat. Kun bildefiler er tillatt.",
-    "drop-logo-image": "Slipp et logobilde eller klikk for å velge en fil å laste opp.",
-    "drop-logo-image-or": "Dra og slipp et logobilde eller",
-    "no-logo-image": "Ingen logo valgt",
     "logo-height": "Logohøyde",
     "logo-height-desc": "Skalerer logoen proporsjonalt og sentrerer den. Øk høyden (opptil 200px) for høye logoer",
     "collapsed-logo": "Logo for minimert sidepanel",
@@ -11470,11 +11437,9 @@
     "error-verification-url": "Et domenenavn skal ikke inneholde symbolene '/' og ':'. Eksempel: thingsboard.io",
     "show-connectivity-dialog": "Vis tilkoblingsdialog",
     "show-connectivity-dialog-desc": "Viser dialogen for enhetstilkobling med tilkoblingsinstruksjoner etter at en enhet er opprettet",
-    "hide-connectivity-dialog": "Skjul tilkoblingsdialog",
     "override-trendz-add-on-name": "Overstyr navn på Trendz analytics-tillegg",
     "override-trendz-add-on-name-desc": "Gir tillegget \"Trendz\" nytt navn, \"Avansert analyse\", i hele plattformen",
     "show-platform-name-version-bottom-left-corner": "Vis plattformnavn og versjon i nedre venstre hjørne",
-    "override-trendz-add-on-name-hint": "Når aktivert, vil 'Trendz analytics' bli vist som 'Avansert analyse' i hele plattformen.",
     "show-platform-name-version": "Vis plattformnavn og versjon",
     "platform-name": "Plattformnavn",
     "platform-version": "Plattformversjon",
@@ -12700,9 +12665,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13039,10 +13002,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Legitimasjon",
-      "here-app-id": "HERE app ID",
-      "here-app-code": "HERE app-kode",
       "here-api-key": "HERE API-nøkkel",
-      "here-use-new-version-api-3": "Bruk API versjon 3",
       "tencent-maps-api-key": "Tencent Maps API-nøkkel",
       "tencent-map-type-roadmap": "Veikart",
       "tencent-map-type-satelite": "Satellitt",
@@ -13939,7 +13899,6 @@
       "roles-and-permissions": "Roller og tillatelser",
       "groups": "Grupper",
       "integrations": "Integrasjoner",
-      "solution-templates": "Løsningsmaler",
       "scheduler": "Tidsplanlegger",
       "white-labeling": "White labeling"
     },
@@ -13953,11 +13912,6 @@
       "critical": "Kritisk",
       "assigned-to-me": "Tildelt meg",
       "total": "Totalt"
-    },
-    "solution-templates": {
-      "title": "Løsningsmaler",
-      "prototype-plan": "Prototypeplan",
-      "startup-plan": "Oppstartsplan"
     },
     "getting-started": {
       "get-started": "Kom i gang",
