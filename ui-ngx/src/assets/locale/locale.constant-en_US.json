@@ -3870,6 +3870,7 @@
         "update-confirm": "Update '{{name}}' to version {{version}}?",
         "update-confirm-title": "Update '{{name}}'?",
         "update-desc": "Updating this will replace the current version with the latest and reconfigure the associated resources within your tenant",
+        "update-desc-device": "Updating re-installs the package through the installation wizard of the new version. When the wizard starts the installation, the entities the current version created (devices, gateways, profiles, rule chains, dashboard) are removed together with their data, including device telemetry",
         "update-desc-solution-template": "Updating this solution template will delete and recreate all entities it created, including dashboards, rule chains, devices, and other associated resources within your tenant. Any changes you made to them will be lost",
         "update-success-desc": "'{{name}}' has been updated successfully",
         "updating": "Updating...",

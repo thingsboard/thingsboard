@@ -346,8 +346,9 @@ public class DefaultIotHubService implements IotHubService {
             String itemType = installedItem.getItemType();
             IotHubInstalledItemDescriptor descriptor = installedItem.getDescriptor();
 
-            // Skip checksum validation for solution templates
-            if (!"SOLUTION_TEMPLATE".equals(itemType)) {
+            // Skip checksum validation for solution templates and device packages: both are removed and installed again,
+            // and the update dialog warns about that before the user confirms.
+            if (!"SOLUTION_TEMPLATE".equals(itemType) && !"DEVICE".equals(itemType)) {
                 JsonNode installedVersionInfo = iotHubRestClient.getVersionInfo(installedItem.getItemVersionId().toString());
                 if (installedVersionInfo == null) {
                     throw new IllegalArgumentException("Failed to get installed version info from IoT Hub");
@@ -377,6 +378,18 @@ public class DefaultIotHubService implements IotHubService {
                 throw new IllegalArgumentException("Installed item type does not match the new version's item type.");
             }
 
+            if ("DEVICE".equals(itemType)) {
+                // A device package is installed by the wizard in the UI: it needs the user's input (gateway name,
+                // credentials and so on), so the server cannot install the new version itself. The wizard calls this
+                // right before it creates the new version's entities, and registers the new version when it is done.
+                // Remove the installed item together with its entities, so it never shows the new version with
+                // nothing installed.
+                deleteDevicePackageEntities(tenantId, ((DeviceInstalledItemDescriptor) descriptor).getCreatedEntityIds(), user);
+                iotHubInstalledItemService.deleteById(tenantId, installedItemId);
+                log.info("[{}] Removed device package {} for the install of version {}", tenantId, installedItem.getItemName(), versionId);
+                return UpdateItemVersionResult.success(descriptor);
+            }
+
             String itemName = versionInfo.get("name").asText();
             String version = versionInfo.get("version").asText();
 
@@ -387,12 +400,6 @@ public class DefaultIotHubService implements IotHubService {
                 case "WIDGET" -> updateWidget(user, tenantId, (WidgetInstalledItemDescriptor) descriptor, fileData);
                 case "CALCULATED_FIELD" -> updateCalculatedField(user, tenantId, (CalculatedFieldInstalledItemDescriptor) descriptor, fileData);
                 case "RULE_CHAIN" -> updateRuleChain(tenantId, (RuleChainInstalledItemDescriptor) descriptor, fileData);
-                case "DEVICE" -> {
-                    DeviceInstalledItemDescriptor dd = (DeviceInstalledItemDescriptor) descriptor;
-                    deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
-                    dd.setCreatedEntityIds(null);
-                    dd.setDashboardId(null);
-                }
                 case "SOLUTION_TEMPLATE" -> {
                     SolutionTemplateInstalledItemDescriptor stDescriptor = (SolutionTemplateInstalledItemDescriptor) descriptor;
                     solutionService.deleteSolution(tenantId, stDescriptor, user);
