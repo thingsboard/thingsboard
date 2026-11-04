@@ -229,7 +229,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
             edge.setId(savedEdge.getId());
             doPost("/api/edge", edge)
                     .andExpect(status().isForbidden())
-                    .andExpect(statusReason(containsString(msgErrorPermission)));
+                    .andExpect(statusReason(containsString("You don't have permission to perform")));
         } finally {
             deleteDifferentTenant();
         }
