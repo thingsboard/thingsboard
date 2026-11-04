@@ -39,10 +39,6 @@ import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
-import {
-  DashboardInfoDialogData,
-  ImportDashboardFileDialogComponent
-} from '@home/pages/dashboard/import-dashboard-file-dialog.component';
 
 // @dynamic
 @Injectable()
@@ -258,17 +254,7 @@ export class DashboardGroupConfigFactory implements EntityGroupStateConfigFactor
   }
 
   importDashboardFile($event: Event, dashboard: DashboardInfo, config: GroupEntityTableConfig<DashboardInfo>) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<ImportDashboardFileDialogComponent, DashboardInfoDialogData,
-      boolean>(ImportDashboardFileDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        dashboard
-      }
-    }).afterClosed().subscribe(
+    this.homeDialogs.importDashboardFile($event, dashboard).subscribe(
       (res) => {
         if (res) {
           config.updateData();
