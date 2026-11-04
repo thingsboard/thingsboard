@@ -5016,7 +5016,7 @@
     "mapping": "Zuordnung",
     "topic-filter": "Themenfilter",
     "converter-type": "Konvertertyp",
-    "converter-json": "Json",
+    "converter-json": "JSON",
     "json-name-expression": "Gerätename JSON-Ausdruck",
     "topic-name-expression": "Gerätename Themenausdruck",
     "json-type-expression": "Gerätetyp JSON-Ausdruck",

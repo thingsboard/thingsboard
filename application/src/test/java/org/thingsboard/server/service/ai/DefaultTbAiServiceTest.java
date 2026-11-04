@@ -33,18 +33,21 @@ import org.thingsboard.server.service.ai.transport.TbAiChannelRejectedException;
 import org.thingsboard.server.service.ai.transport.TbAiChannelUnavailableException;
 import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
+import org.thingsboard.server.service.ai.transport.TbAiTurnLink;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -491,6 +494,54 @@ class DefaultTbAiServiceTest {
     private DefaultTbAiService newService(boolean enabled, Optional<TbAiTokenProvider> tokenProvider) {
         return new DefaultTbAiService(apiUsageStateService, apiUsageReportClient, tokenProvider,
                 new TbAiSettings(enabled, sseInactivityTimeoutSeconds, sseLogMaxDataLength), operations);
+    }
+
+    @Test
+    void shouldTellTheTurnTheBrowserLeft_andStillReportCredits_whenClientCancelsMidStream() {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        upstream = Sinks.many().unicast().onBackpressureBuffer();
+        AtomicBoolean left = new AtomicBoolean();
+        TbAiTurnLink link = new TbAiTurnLink();
+        link.onClientLeft(() -> left.set(true));
+        Disposable client = service.processStream(chatId, tokenProvider -> upstream.asFlux(), user, link, true).subscribe();
+        upstream.tryEmitNext(assistantMessage("hello"));
+
+        // WHEN
+        client.dispose();
+        upstream.tryEmitNext(creditsUsedEvent(150));
+        upstream.tryEmitComplete();
+
+        // THEN
+        assertThat(left).isTrue();
+        then(apiUsageReportClient).should().report(tenantId, customerId, ApiUsageRecordKey.AI_CREDITS_COUNT, 150L);
+    }
+
+    @Test
+    void shouldNotTellTheTurnTheBrowserLeft_whenTheStreamEnds() {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        AtomicBoolean left = new AtomicBoolean();
+        TbAiTurnLink link = new TbAiTurnLink();
+        link.onClientLeft(() -> left.set(true));
+
+        // WHEN
+        service.processStream(chatId, tokenProvider -> Flux.just(assistantMessage("hello")), user, link, true)
+                .collectList().block(Duration.ofSeconds(5));
+
+        // THEN
+        assertThat(left).isFalse();
+    }
+
+    @Test
+    void shouldFollowTheTurnWithoutLookingAtCredits_whenCreditsAreNotChecked() {
+        // WHEN
+        List<ServerSentEvent<String>> events = service.processStream(chatId, tokenProvider -> Flux.just(assistantMessage("hello")), user,
+                new TbAiTurnLink(), false).collectList().block(Duration.ofSeconds(5));
+
+        // THEN
+        assertThat(events).extracting(ServerSentEvent::event).containsExactly("assistantMessage");
+        then(apiUsageStateService).shouldHaveNoInteractions();
     }
 
     private SecurityUser newUser(TenantId tenant) {
