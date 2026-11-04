@@ -10,6 +10,7 @@ import com.google.gson.JsonParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -139,7 +140,8 @@ public class DeviceApiController implements TbTransportService {
                     + REQUIRE_ACCESS_TOKEN)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK",
-                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+                    content = @Content(schema = @Schema(implementation = JsonNode.class),
+                            examples = @ExampleObject(name = "attributes", value = "{\"client\": {\"clientKey\": \"value1\"}, \"shared\": {\"sharedKey\": 42}}"))),
             @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
     })
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -250,7 +252,8 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "The RPC command for the device, a JSON object with 'id', 'method' and 'params'.",
-                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+                    content = @Content(schema = @Schema(implementation = JsonNode.class),
+                            examples = @ExampleObject(name = "rpc", value = "{\"id\": 1, \"method\": \"setGpio\", \"params\": {\"pin\": 4, \"value\": 1}}"))),
             @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
     })
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -310,7 +313,8 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "RPC request to server was sent to Rule Engine. The body is the RPC reply, arbitrary JSON.",
-                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+                    content = @Content(schema = @Schema(implementation = JsonNode.class),
+                            examples = @ExampleObject(name = "reply", value = "{\"time\": \"2026-11-04T15:00:00Z\"}"))),
             @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
             @ApiResponse(responseCode = "413", description = "Request payload too large."),
@@ -344,7 +348,8 @@ public class DeviceApiController implements TbTransportService {
                     REQUIRE_ACCESS_TOKEN)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "The updated shared attributes as key-value pairs, plus the 'deleted' array of removed keys, if any.",
-                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+                    content = @Content(schema = @Schema(implementation = JsonNode.class),
+                            examples = @ExampleObject(name = "update", value = "{\"sharedKey\": 43, \"deleted\": [\"oldKey\"]}"))),
             @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
     })
     @RequestMapping(value = "/{deviceToken}/attributes/updates", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -451,7 +456,8 @@ public class DeviceApiController implements TbTransportService {
                     "  \"status\":\"SUCCESS\"\n" +
                     "}" + MARKDOWN_CODE_BLOCK_END)
     @ApiResponse(responseCode = "200", description = "OK",
-            content = @Content(schema = @Schema(implementation = JsonNode.class)))
+            content = @Content(schema = @Schema(implementation = JsonNode.class),
+                            examples = @ExampleObject(name = "provisioned", value = "{\"credentialsType\": \"ACCESS_TOKEN\", \"credentialsValue\": \"sLzc0gDAZPkGMzFVTyUY\", \"status\": \"SUCCESS\"}")))
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> provisionDevice(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON with provision request. See API call description for example.")
