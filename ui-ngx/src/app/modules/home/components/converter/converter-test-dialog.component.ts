@@ -153,7 +153,7 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
     const debugIn = this.data.debugIn;
     let contentType: ContentType;
     let msgType: string;
-    let metadata: Record<string, string>;
+    let metadata: Record<string, unknown>;
     let integrationMetadata: Record<string, any>;
     if (debugIn) {
       if (debugIn.inContentType) {
@@ -441,11 +441,11 @@ export class ConverterTestDialogComponent extends DialogComponent<ConverterTestD
     }
   }
 
-  private stringifyMetadataValues(metadata: Record<string, any>): Record<string, string> {
+  private stringifyMetadataValues(metadata: Record<string, unknown>): Record<string, unknown> {
     if (!metadata) {
       return metadata;
     }
-    const result: Record<string, string> = {};
+    const result: Record<string, unknown> = {};
     Object.keys(metadata).forEach((key) => {
       result[key] = isObject(metadata[key]) ? JSON.stringify(metadata[key]) : metadata[key];
     });
