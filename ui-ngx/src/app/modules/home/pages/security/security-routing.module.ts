@@ -49,7 +49,7 @@ export const securityRoutes: Routes = [
       title: 'security.security',
       breadcrumb: {
         label: 'security.security',
-        icon: 'lock'
+        icon: 'mdi:lock-outline'
       }
     },
     resolve: {
