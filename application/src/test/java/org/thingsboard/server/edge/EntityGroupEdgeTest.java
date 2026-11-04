@@ -214,6 +214,21 @@ public class EntityGroupEdgeTest extends AbstractEdgeTest {
                 .build()));
     }
 
+    @Test
+    public void testSendEntityGroupEntitiesRequestForGroupNotAssignedToEdgeToCloud() throws Exception {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Device Group Not Assigned To Edge");
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+        saveDevice("Device Not Assigned To Edge", "default", entityGroup.getId());
+
+        EntityGroupId entityGroupId = entityGroup.getId();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addEntityGroupEntitiesRequestMsg(EntityGroupRequestMsg.newBuilder()
+                .setEntityGroupIdMSB(entityGroupId.getId().getMostSignificantBits())
+                .setEntityGroupIdLSB(entityGroupId.getId().getLeastSignificantBits())
+                .setType(EntityType.DEVICE.name()).build()));
+    }
+
     private EntityGroup saveDifferentTenantGroup(EntityType groupType, EntityId entityId) throws Exception {
         EntityGroup entityGroup = new EntityGroup();
         entityGroup.setType(groupType);

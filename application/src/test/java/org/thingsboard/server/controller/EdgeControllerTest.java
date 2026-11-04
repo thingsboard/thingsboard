@@ -69,6 +69,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.permission.GroupPermission;
+import org.thingsboard.server.common.data.permission.ShareGroupRequest;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.role.Role;
 import org.thingsboard.server.common.data.role.RoleType;
@@ -280,6 +281,41 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedEdge.getName(), foundEdge.getName());
         Assert.assertEquals(savedEdge.getRoutingKey(), foundEdge.getRoutingKey());
         Assert.assertEquals(savedEdge.getSecret(), foundEdge.getSecret());
+    }
+
+    @Test
+    public void testAssignReadOnlyEntityGroupToEdgeByCustomerUser() throws Exception {
+        Edge edge = doPost("/api/edge", constructEdge("Customer edge", "default"), Edge.class);
+        doPost("/api/owner/CUSTOMER/" + customerId.getId() + "/EDGE/" + edge.getId().getId())
+                .andExpect(status().isOk());
+
+        EntityGroup readOnlyGroup = new EntityGroup();
+        readOnlyGroup.setType(EntityType.DEVICE);
+        readOnlyGroup.setName("Read only device group");
+        readOnlyGroup = doPost("/api/entityGroup", readOnlyGroup, EntityGroup.class);
+        doPost("/api/entityGroup/" + readOnlyGroup.getId().getId() + "/share",
+                new ShareGroupRequest(customerId, true, null, true, null))
+                .andExpect(status().isOk());
+
+        EntityGroup customerGroup = new EntityGroup();
+        customerGroup.setType(EntityType.DEVICE);
+        customerGroup.setName("Customer device group");
+        customerGroup.setOwnerId(customerId);
+        customerGroup = doPost("/api/entityGroup", customerGroup, EntityGroup.class);
+
+        loginCustomerAdminUser();
+        doGet("/api/entityGroup/" + readOnlyGroup.getId().getId())
+                .andExpect(status().isOk());
+        doPost("/api/edge/" + edge.getId().getId() + "/entityGroup/" + readOnlyGroup.getId().getId() + "/DEVICE")
+                .andExpect(status().isForbidden());
+        doPost("/api/edge/" + edge.getId().getId() + "/entityGroup/" + customerGroup.getId().getId() + "/DEVICE")
+                .andExpect(status().isOk());
+
+        loginTenantAdmin();
+        EntityGroupId readOnlyGroupId = readOnlyGroup.getId();
+        PageData<EntityGroupInfo> edgeGroups = doGetTypedWithPageLink("/api/entityGroups/edge/" + edge.getId().getId() + "/DEVICE?",
+                new TypeReference<>() {}, new PageLink(100));
+        Assert.assertTrue(edgeGroups.getData().stream().noneMatch(g -> g.getId().equals(readOnlyGroupId)));
     }
 
     @Test
