@@ -35,6 +35,8 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
             newAssignedCustomers.addAll(dashboard.getAssignedCustomers());
         }
+        checkEntityTenant(tenantId, dashboardId);
+        dashboard.setTenantId(tenantId);
         Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
@@ -94,7 +96,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
     protected void deleteDashboard(TenantId tenantId, Edge edge, DashboardId dashboardId) {
         Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
-        if (dashboardById != null) {
+        if (dashboardById != null && tenantId.equals(dashboardById.getTenantId())) {
             edgeCtx.getDashboardService().deleteDashboard(tenantId, dashboardId);
             pushEntityEventToRuleEngine(tenantId, edge, dashboardById, TbMsgType.ENTITY_DELETED);
         }

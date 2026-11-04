@@ -177,6 +177,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @After
     public void teardownEdgeTest() {
         try {
+            deleteDifferentTenant();
             loginTenantAdmin();
 
             doDelete("/api/edge/" + edge.getId().toString())
@@ -616,6 +617,22 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         compareHasVersionEntities(deviceCredentials, deviceCredentialsMsg);
 
         return savedDevice;
+    }
+
+    protected Device saveDifferentTenantDevice() throws Exception {
+        loginDifferentTenant();
+        Device device = new Device();
+        device.setName("Different Tenant Device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        loginTenantAdmin();
+        return savedDevice;
+    }
+
+    protected void sendUplinkMsgAndVerifyNoDownlink(Consumer<UplinkMsg.Builder> customizer) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        sendUplinkMsgAndWaitForResponse(customizer);
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
     }
 
     protected Device findDeviceByName(String deviceName) throws Exception {
