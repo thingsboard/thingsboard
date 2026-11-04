@@ -341,7 +341,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }),
             () => undefined, false, {
               name: this.translate.instant('event.copy-entity-id'),
-              icon: 'content_copy',
+              icon: 'content_paste',
               style: {
                 padding: '4px',
                 'font-size': '16px'
@@ -358,7 +358,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               padding: '0 12px 0 0'
             }), () => undefined, false, {
               name: this.translate.instant('event.copy-message-id'),
-              icon: 'content_copy',
+              icon: 'content_paste',
               style: {
                 padding: '4px',
                 'font-size': '16px'
