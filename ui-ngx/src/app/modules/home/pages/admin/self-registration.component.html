@@ -135,8 +135,8 @@
           </fieldset>
           <fieldset class="fields-group">
             <legend class="group-title" translate>self-registration.privacy-policy-text</legend>
-            <div class="flex flex-col">
-              <mat-slide-toggle class="pb-2 pt-3" formControlName="showPrivacyPolicy">
+            <div class="flex flex-col gap-2">
+              <mat-slide-toggle class="pt-2" formControlName="showPrivacyPolicy">
                 {{ 'self-registration.show-privacy-policy' | translate }}
               </mat-slide-toggle>
               <div class="tb-privacy-policy">
@@ -146,10 +146,10 @@
               </div>
             </div>
           </fieldset>
-          <fieldset class="fields-group" style="margin-top: 20px">
+          <fieldset class="fields-group">
             <legend class="group-title" translate>self-registration.terms-of-use-text</legend>
-            <div class="flex flex-col">
-              <mat-slide-toggle class="pb-2 pt-3" formControlName="showTermsOfUse">
+            <div class="flex flex-col gap-2">
+              <mat-slide-toggle class="pt-2" formControlName="showTermsOfUse">
                 {{ 'self-registration.show-terms-of-use' | translate }}
               </mat-slide-toggle>
               <div class="tb-terms-of-use">
