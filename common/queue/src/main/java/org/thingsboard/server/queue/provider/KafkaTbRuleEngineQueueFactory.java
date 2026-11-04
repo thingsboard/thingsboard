@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.queue.provider;
 
 import com.google.protobuf.util.JsonFormat;
@@ -25,9 +13,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.integration.ToIntegrationExecutorDownlinkMsg;
+import org.thingsboard.server.gen.integration.ToIntegrationExecutorNotificationMsg;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.AgentBulkOperationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToAgentNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -40,6 +32,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperService
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToTbReportNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -62,6 +55,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 import org.thingsboard.server.queue.settings.TbQueueCalculatedFieldSettings;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueEdgeSettings;
+import org.thingsboard.server.queue.settings.TbQueueIntegrationExecutorSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
@@ -82,6 +76,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     private final TbQueueRemoteJsInvokeSettings jsInvokeSettings;
     private final TbKafkaConsumerStatsService consumerStatsService;
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
+    private final TbQueueIntegrationExecutorSettings integrationExecutorSettings;
     private final TbQueueEdgeSettings edgeSettings;
     private final TbQueueCalculatedFieldSettings calculatedFieldSettings;
     private final EdqsConfig edqsConfig;
@@ -98,6 +93,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     private final TbQueueAdmin cfAdmin;
     private final TbQueueAdmin cfStateAdmin;
     private final TbQueueAdmin edqsEventsAdmin;
+    private final TbQueueAdmin agentBulkOpsAdmin;
     private final AtomicLong consumerCount = new AtomicLong();
 
     public KafkaTbRuleEngineQueueFactory(TopicService topicService, TbKafkaSettings kafkaSettings,
@@ -108,6 +104,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
                                          TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                          TbKafkaConsumerStatsService consumerStatsService,
                                          TbQueueTransportNotificationSettings transportNotificationSettings,
+                                         TbQueueIntegrationExecutorSettings integrationExecutorSettings,
                                          TbQueueEdgeSettings edgeSettings,
                                          TbQueueCalculatedFieldSettings calculatedFieldSettings,
                                          EdqsConfig edqsConfig,
@@ -121,6 +118,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         this.jsInvokeSettings = jsInvokeSettings;
         this.consumerStatsService = consumerStatsService;
         this.transportNotificationSettings = transportNotificationSettings;
+        this.integrationExecutorSettings = integrationExecutorSettings;
         this.edgeSettings = edgeSettings;
         this.calculatedFieldSettings = calculatedFieldSettings;
         this.edqsConfig = edqsConfig;
@@ -137,6 +135,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         this.cfAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldConfigs());
         this.cfStateAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldStateConfigs());
         this.edqsEventsAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdqsEventsConfigs());
+        this.agentBulkOpsAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getAgentBulkOpsConfigs());
     }
 
     @Override
@@ -145,6 +144,16 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("tb-rule-engine-transport-notifications-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(topicService.buildTopicName(transportNotificationSettings.getNotificationsTopic()));
+        requestBuilder.admin(notificationAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> createIntegrationExecutorNotificationsMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToIntegrationExecutorNotificationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-rule-engine-ie-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(topicService.buildTopicName(integrationExecutorSettings.getNotificationsTopic()));
         requestBuilder.admin(notificationAdmin);
         return requestBuilder.build();
     }
@@ -210,6 +219,16 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     }
 
     @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> createIntegrationExecutorDownlinkMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToIntegrationExecutorDownlinkMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-rule-engine-to-ie-downlinks-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(topicService.buildTopicName(integrationExecutorSettings.getDownlinkTopic()));
+        requestBuilder.admin(notificationAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> createEdgeNotificationsMsgProducer() {
         TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToEdgeNotificationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
@@ -225,6 +244,26 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         requestBuilder.settings(kafkaSettings);
         requestBuilder.clientId("tb-rule-engine-edge-event-" + serviceInfoProvider.getServiceId());
         requestBuilder.admin(edgeEventAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToAgentNotificationMsg>> createAgentNotificationsMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToAgentNotificationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-rule-engine-to-agent-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(topicService.getAgentNotificationsTopic(serviceInfoProvider.getServiceId()).getFullTopicName());
+        requestBuilder.admin(notificationAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<AgentBulkOperationMsg>> createAgentBulkOpsMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<AgentBulkOperationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-rule-engine-agent-bulk-ops-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(topicService.getAgentBulkOpsTopic().getFullTopicName());
+        requestBuilder.admin(agentBulkOpsAdmin);
         return requestBuilder.build();
     }
 
@@ -416,6 +455,16 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     @Override
     public TbQueueRequestTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> createEdqsRequestTemplate() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToTbReportNotificationMsg>> createTbReportNotificationsMsgProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToTbReportNotificationMsg>>builder()
+                .clientId("tb-rule-engine-to-report-notifications-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.getNotificationsTopic(ServiceType.TB_REPORT, serviceInfoProvider.getServiceId()).getFullTopicName())
+                .settings(kafkaSettings)
+                .admin(notificationAdmin)
+                .build();
     }
 
     @PreDestroy

@@ -1,0 +1,31 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div [formGroup]="form">
+  <fieldset [disabled]="disabled">
+    <tb-secret-file-input formControlName="caCert"
+                          label="{{'integration.ca-cert' | translate}}"
+                          inputId="ca-cert"
+                          [required]="!ignoreCaCert"
+                          [existingFileName]="form.get('caCertFileName')?.value"
+                          (fileNameChanged)="form?.get('caCertFileName').patchValue($event)">
+    </tb-secret-file-input>
+    <tb-secret-file-input formControlName="cert"
+                          label="{{'integration.cert' | translate}}"
+                          inputId="cert"
+                          required
+                          [existingFileName]="form.get('certFileName')?.value"
+                          (fileNameChanged)="form?.get('certFileName').patchValue($event)">
+    </tb-secret-file-input>
+    <tb-secret-file-input formControlName="privateKey"
+                          label="{{'integration.private-key' | translate}}"
+                          inputId="private-key"
+                          required
+                          [existingFileName]="form.get('privateKeyFileName')?.value"
+                          (fileNameChanged)="form?.get('privateKeyFileName').patchValue($event)">
+    </tb-secret-file-input>
+  </fieldset>
+</div>

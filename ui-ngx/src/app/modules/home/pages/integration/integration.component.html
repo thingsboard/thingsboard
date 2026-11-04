@@ -1,0 +1,168 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-stroked-button color="primary"
+    [disabled]="(isLoading$ | async)"
+    (click)="onEntityAction($event, 'open')"
+    [class.!hidden]="isEdit || isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-stroked-button color="primary" [disabled]="(isLoading$ | async)" (click)="onEntityAction($event, 'delete')"
+    [class.!hidden]="hideDelete() || isEdit">
+    {{'integration.delete' | translate }}
+  </button>
+  <div class="flex flex-row xs:flex-col">
+    <button mat-stroked-button ngxClipboard (cbOnSuccess)="onIntegrationIdCopied()" [cbContent]="entity?.id?.id"
+      [class.!hidden]="isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>integration.copyId</span>
+    </button>
+    <button mat-stroked-button (click)="exportToIotHub()"
+            [disabled]="!isExistingIntegration() || (isLoading$ | async)"
+            [class.!hidden]="isEdit">
+      <mat-icon>hub</mat-icon>
+      <span translate>iot-hub.export-to-iot-hub</span>
+    </button>
+  </div>
+</div>
+<form [formGroup]="entityForm" class="mat-padding" tb-toast toastTarget="integrationRoot">
+  <fieldset [disabled]="(isLoading$ | async)">
+    @if (isEdgeTemplate) {
+      <div translate class="tb-hint tb-hint-edge">integration.edge-placeholder-hint</div>
+    }
+    <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field class="flex-1" appearance="outline">
+          <mat-label translate>integration.name</mat-label>
+          <input matInput formControlName="name" required>
+          @if (entityForm.get('name').hasError('required') || entityForm.get('name').hasError('pattern')) {
+            <mat-error>
+              {{ 'integration.name-required' | translate }}
+            </mat-error>
+          }
+          @if (entityForm.get('name').hasError('maxlength')) {
+            <mat-error>
+              {{ 'integration.name-max-length' | translate }}
+            </mat-error>
+          }
+        </mat-form-field>
+        <tb-integration-type-select formControlName="type" required class="flex-1" appearance="outline">
+        </tb-integration-type-select>
+      </div>
+      <tb-entity-debug-settings-button
+        class="mb-5 flex items-center"
+        formControlName="debugSettings"
+        [entityType]="EntityType.INTEGRATION"
+        [additionalActionConfig]="additionalActionConfig"
+        />
+    </div>
+    <div class="row flex flex-col gap-2">
+      <mat-slide-toggle formControlName="enabled">
+        {{ 'integration.enabled' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle formControlName="allowCreateDevicesOrAssets">
+        {{ 'integration.allow-create-devices-or-assets' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <tb-converter-autocomplete class="flex-1" formControlName="defaultConverterId" required appearance="outline"
+        labelText="integration.uplink-converter" requiredText="integration.uplink-converter-required"
+        [converterType]="converterType.UPLINK"
+        [integrationType]="entityForm.get('type').value"
+        [showDetailsPageLink]="true"
+        [useFullEntityId]="true"
+        [addNewConverter]="true"
+        [isEdgeTemplate]="integrationScope === 'edges'">
+      </tb-converter-autocomplete>
+      @if (showDownlinkConvector) {
+        <tb-converter-autocomplete class="flex-1" formControlName="downlinkConverterId" appearance="outline"
+          labelText="integration.downlink-converter"
+          [converterType]="converterType.DOWNLINK"
+          [integrationType]="entityForm.get('type').value"
+          [showDetailsPageLink]="true"
+          [useFullEntityId]="true"
+          [addNewConverter]="true"
+          [isEdgeTemplate]="integrationScope === 'edges'">
+        </tb-converter-autocomplete>
+      }
+    </div>
+    <tb-integration-configuration
+      formControlName="configuration"
+      [routingKey]="entityForm.get('routingKey').value"
+      [genericAdditionalInfoTemplate]="genericAdditionalInfo"
+      [executeRemotelyTemplate]="executeRemotely"
+      [integrationType]="entityForm.get('type').value"
+      [isSetDownlink]="!!entityForm.get('downlinkConverterId').value"
+      [isEdgeTemplate]="isEdgeTemplate"
+    ></tb-integration-configuration>
+  </fieldset>
+</form>
+<ng-template #genericAdditionalInfo>
+  <section [formGroup]="entityForm">
+    <div formGroupName="additionalInfo" class="flex flex-col">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-label translate>integration.description</mat-label>
+        <textarea matInput formControlName="description" cdkTextareaAutosize
+        cdkAutosizeMinRows="1" rows="1"></textarea>
+      </mat-form-field>
+    </div>
+    <fieldset class="fields-group">
+      <legend class="group-title" translate>integration.metadata</legend>
+      <tb-key-val-map formControlName="metadata" isStrokedButton="true" appearance="outline"></tb-key-val-map>
+    </fieldset>
+  </section>
+  <div style="height: 30px;"></div>
+</ng-template>
+<ng-template #executeRemotely>
+  <section [formGroup]="entityForm">
+    <mat-expansion-panel class="remote-integration-setting" [expanded]="entityForm.get('remote').value">
+      <mat-expansion-panel-header class="flex flex-row">
+        <mat-panel-title>
+          <mat-slide-toggle formControlName="remote" (click)="$event.stopPropagation()">
+            {{'integration.execute-remotely' | translate}}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <section class="remote-integration-setting-content">
+          <div class="flex flex-row items-center justify-start">
+            <mat-form-field class="mat-block flex-1" appearance="outline">
+              <mat-label translate>integration.integration-key</mat-label>
+              <input matInput formControlName="routingKey">
+            </mat-form-field>
+            <button mat-icon-button ngxClipboard type="button" color="primary"
+              (cbOnSuccess)="onIntegrationInfoCopied('key')"
+              [cbContent]="entityForm?.get('routingKey').value"
+              matTooltip="{{'integration.copy-integration-key' | translate}}">
+              <mat-icon class="tb-mat-20">content_copy</mat-icon>
+            </button>
+          </div>
+          <div class="flex flex-row items-center justify-start">
+            <mat-form-field class="mat-block flex-1" appearance="outline">
+              <mat-label translate>integration.integration-secret</mat-label>
+              <input matInput formControlName="secret">
+            </mat-form-field>
+            <button mat-icon-button ngxClipboard type="button" color="primary"
+              (cbOnSuccess)="onIntegrationInfoCopied('secret')"
+              [cbContent]="entityForm?.get('secret').value"
+              matTooltip="{{'integration.copy-integration-secret' | translate}}">
+              <mat-icon class="tb-mat-20">content_copy</mat-icon>
+            </button>
+          </div>
+        </section>
+      </ng-template>
+    </mat-expansion-panel>
+    @if (isCheckConnectionAvailable && isEdit) {
+      <button
+        style="margin-bottom: 8px"
+        mat-stroked-button color="primary"
+        (click)="onIntegrationCheck()">
+        {{ 'integration.check-connection' | translate }}
+      </button>
+    }
+  </section>
+</ng-template>

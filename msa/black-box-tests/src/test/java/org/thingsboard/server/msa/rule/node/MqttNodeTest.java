@@ -1,21 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+
 package org.thingsboard.server.msa.rule.node;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -30,6 +20,7 @@ import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.SecretType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -40,6 +31,7 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.secret.Secret;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
@@ -54,7 +46,6 @@ import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.fail;
@@ -82,11 +73,16 @@ public class MqttNodeTest extends AbstractContainerTest {
 
     @Test
     public void telemetryUpload() throws Exception {
+        String password = "pass";
+        Secret secret = createSecret(password);
+        String formattedSecret = toSecretPlaceholder(secret.getName(), secret.getType());
+
         RuleChainId defaultRuleChainId = getDefaultRuleChainId();
 
-        createRootRuleChainWithTestNode("MqttRuleNodeTestMetadata.json", "org.thingsboard.rule.engine.mqtt.TbMqttNode", 2);
-
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        createRootRuleChainWithTestNode("MqttRuleNodeTestMetadata.json", "org.thingsboard.rule.engine.mqtt.TbMqttNode", 2,
+                deviceCredentials.getCredentialsId(), formattedSecret);
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
 
@@ -98,6 +94,7 @@ public class MqttNodeTest extends AbstractContainerTest {
         MqttClient mqttClient = new MqttClient(CONTAINER_MQTT_URL, StringUtils.randomAlphanumeric(10), new MemoryPersistence());
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setUserName(deviceCredentials.getCredentialsId());
+        mqttConnectOptions.setPassword(password.toCharArray());
         mqttClient.connect(mqttConnectOptions);
         mqttClient.publish("v1/devices/me/telemetry", new MqttMessage(createPayload().toString().getBytes()));
 
@@ -110,21 +107,21 @@ public class MqttNodeTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
         assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.6));
         assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
 
         Awaitility
                 .await()
                 .alias("Get integration events")
                 .atMost(10, TimeUnit.SECONDS)
-                .until(() -> messageListener.getEvents().size() > 0);
+                .until(() -> !messageListener.getEvents().isEmpty());
 
         BlockingQueue<MqttEvent> events = messageListener.getEvents();
         JsonNode actual = JacksonUtil.toJsonNode(Objects.requireNonNull(events.poll()).message);
 
         assertThat(actual.get("stringKey").asText()).isEqualTo("value1");
         assertThat(actual.get("booleanKey").asBoolean()).isEqualTo(Boolean.TRUE);
-        assertThat(actual.get("doubleKey").asDouble()).isEqualTo(42.0);
+        assertThat(actual.get("doubleKey").asDouble()).isEqualTo(42.6);
         assertThat(actual.get("longKey").asLong()).isEqualTo(73);
 
         testRestClient.setRootRuleChain(defaultRuleChainId);
@@ -132,6 +129,7 @@ public class MqttNodeTest extends AbstractContainerTest {
 
     @Data
     private class MqttMessageListener implements IMqttMessageListener {
+
         private final BlockingQueue<MqttEvent> events;
 
         private MqttMessageListener() {
@@ -147,12 +145,15 @@ public class MqttNodeTest extends AbstractContainerTest {
         public BlockingQueue<MqttEvent> getEvents() {
             return events;
         }
+
     }
 
     @Data
     private class MqttEvent {
+
         private final String topic;
         private final String message;
+
     }
 
     private RuleChainId getDefaultRuleChainId() {
@@ -168,12 +169,13 @@ public class MqttNodeTest extends AbstractContainerTest {
         return defaultRuleChain.get().getId();
     }
 
-    protected RuleChainId createRootRuleChainWithTestNode(String ruleChainMetadataFile, String ruleNodeType, int eventsCount) throws Exception {
+    protected RuleChainId createRootRuleChainWithTestNode(String ruleChainMetadataFile, String ruleNodeType, int eventsCount, String username, String password) throws Exception {
         RuleChain newRuleChain = new RuleChain();
         newRuleChain.setName("testRuleChain");
         RuleChain ruleChain = testRestClient.postRuleChain(newRuleChain);
 
         JsonNode configuration = JacksonUtil.OBJECT_MAPPER.readTree(this.getClass().getClassLoader().getResourceAsStream(ruleChainMetadataFile));
+        replaceCredentialsInConfiguration(configuration, username, password);
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
         ruleChainMetaData.setFirstNodeIndex(configuration.get("firstNodeIndex").asInt());
@@ -193,13 +195,33 @@ public class MqttNodeTest extends AbstractContainerTest {
                 .until(() -> {
                     PageData<EventInfo> events = testRestClient.getEvents(node.getId(), EventType.LC_EVENT, ruleChain.getTenantId(), new TimePageLink(1024));
                     List<EventInfo> eventInfos = events.getData().stream().filter(eventInfo ->
-                                    "STARTED".equals(eventInfo.getBody().get("event").asText()) &&
-                                            "true".equals(eventInfo.getBody().get("success").asText()))
-                            .collect(Collectors.toList());
+                            "STARTED".equals(eventInfo.getBody().get("event").asText()) &&
+                                    "true".equals(eventInfo.getBody().get("success").asText())).toList();
 
                     return eventInfos.size() == eventsCount;
                 });
 
         return ruleChain.getId();
     }
+
+    private void replaceCredentialsInConfiguration(JsonNode configuration, String username, String password) {
+        JsonNode credentialsNode = configuration.path("nodes").get(0).get("configuration").path("credentials");
+        if (credentialsNode.isObject()) {
+            ((ObjectNode) credentialsNode).put("username", username);
+            ((ObjectNode) credentialsNode).put("password", password);
+        }
+    }
+
+    private Secret createSecret(String value) {
+        Secret secret = new Secret();
+        secret.setName("mqtt_node_secret");
+        secret.setValue(value);
+        secret.setType(SecretType.TEXT);
+        return testRestClient.saveSecret(secret);
+    }
+
+    private String toSecretPlaceholder(String name, SecretType type) {
+        return String.format("${secret:%s;type:%s}", name, type);
+    }
+
 }

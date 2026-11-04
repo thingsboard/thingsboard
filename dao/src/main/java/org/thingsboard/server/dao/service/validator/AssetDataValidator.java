@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +12,13 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetDao;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.subscription.SubscriptionService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -39,14 +30,25 @@ public class AssetDataValidator extends DataValidator<Asset> {
 
     @Autowired
     @Lazy
+    private AssetService assetService;
+
+    @Autowired
+    @Lazy
     private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
 
+    @Autowired
+    @Lazy
+    private SubscriptionService subscriptionService;
+
     @Override
     protected void validateCreate(TenantId tenantId, Asset asset) {
+        subscriptionService.createAssetAllowed(asset.getTenantId());
         validateNumberOfEntitiesPerTenant(tenantId, EntityType.ASSET);
+        validateNameUniqueness(asset, null, assetService::findAssetByTenantIdAndName, "Asset with such name already exists!");
+        validateExternalIdUniqueness(asset, null, assetDao, "Asset with such external id already exists!");
     }
 
     @Override
@@ -55,6 +57,8 @@ public class AssetDataValidator extends DataValidator<Asset> {
         if (old == null) {
             throw new DataValidationException("Can't update non existing asset!");
         }
+        validateNameUniqueness(asset, old, assetService::findAssetByTenantIdAndName, "Asset with such name already exists!");
+        validateExternalIdUniqueness(asset, old, assetDao, "Asset with such external id already exists!");
         return old;
     }
 

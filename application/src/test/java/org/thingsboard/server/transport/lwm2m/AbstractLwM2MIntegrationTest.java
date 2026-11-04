@@ -1,25 +1,12 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.awaitility.core.ConditionTimeoutException;
@@ -37,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -102,10 +89,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -133,10 +120,10 @@ import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegra
 })
 public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
-    @SpyBean
+    @MockitoSpyBean
     protected LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
 
-    @SpyBean
+    @MockitoSpyBean
     protected DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
 
     @Autowired
@@ -176,147 +163,147 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     protected final String OBSERVE_ATTRIBUTES_WITHOUT_PARAMS =
             "    {\n" +
-                    "    \"keyName\": {},\n" +
-                    "    \"observe\": [],\n" +
-                    "    \"attribute\": [],\n" +
-                    "    \"telemetry\": [],\n" +
-                    "    \"attributeLwm2m\": {}\n" +
-                    "  }";
-    public static  String TELEMETRY_WITHOUT_OBSERVE =
+            "    \"keyName\": {},\n" +
+            "    \"observe\": [],\n" +
+            "    \"attribute\": [],\n" +
+            "    \"telemetry\": [],\n" +
+            "    \"attributeLwm2m\": {}\n" +
+            "  }";
+    public static String TELEMETRY_WITHOUT_OBSERVE =
             "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [],\n" +
-                    "    \"attribute\": [\n" +
-                    "    ],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/3_1.2/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {}\n" +
-                    "  }";
-    public static  String TELEMETRY_WITH_ONE_OBSERVE =
+            "    \"keyName\": {\n" +
+            "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
+            "    },\n" +
+            "    \"observe\": [],\n" +
+            "    \"attribute\": [\n" +
+            "    ],\n" +
+            "    \"telemetry\": [\n" +
+            "      \"/3_1.2/0/9\"\n" +
+            "    ],\n" +
+            "    \"attributeLwm2m\": {}\n" +
+            "  }";
+    public static String TELEMETRY_WITH_ONE_OBSERVE =
             "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [\n" +
-                    "      \"/3_1.2/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attribute\": [\n" +
-                    "    ],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/3_1.2/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {}\n" +
-                    "  }";
+            "    \"keyName\": {\n" +
+            "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
+            "    },\n" +
+            "    \"observe\": [\n" +
+            "      \"/3_1.2/0/9\"\n" +
+            "    ],\n" +
+            "    \"attribute\": [\n" +
+            "    ],\n" +
+            "    \"telemetry\": [\n" +
+            "      \"/3_1.2/0/9\"\n" +
+            "    ],\n" +
+            "    \"attributeLwm2m\": {}\n" +
+            "  }";
 
-    public static  String TELEMETRY_WITH_MANY_OBSERVE =
+    public static String TELEMETRY_WITH_MANY_OBSERVE =
             "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
-                    "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [\n" +
-                    "      \"/3_1.2/0/9\",\n" +
-                    "      \"/3_1.2/0/20\"\n" +
-                    "    ],\n" +
-                    "    \"attribute\": [],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/3_1.2/0/9\",\n" +
-                    "      \"/3_1.2/0/20\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {},\n" +
-                    "    \"observeStrategy\": 0\n" +
-                    "  }";
+            "    \"keyName\": {\n" +
+            "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+            "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
+            "    },\n" +
+            "    \"observe\": [\n" +
+            "      \"/3_1.2/0/9\",\n" +
+            "      \"/3_1.2/0/20\"\n" +
+            "    ],\n" +
+            "    \"attribute\": [],\n" +
+            "    \"telemetry\": [\n" +
+            "      \"/3_1.2/0/9\",\n" +
+            "      \"/3_1.2/0/20\"\n" +
+            "    ],\n" +
+            "    \"attributeLwm2m\": {},\n" +
+            "    \"observeStrategy\": 0\n" +
+            "  }";
 
-    public static  String TELEMETRY_WITH_SINGLE_PARAMS_OBJECT_ID_5_ID_3 =
+    public static String TELEMETRY_WITH_SINGLE_PARAMS_OBJECT_ID_5_ID_3 =
             "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
-                    "      \"/5_1.2/0/3\": \"state\",\n" +
-                    "      \"/5_1.2/0/5\": \"updateResult\",\n" +
-                    "      \"/5_1.2/0/6\": \"pkgname\",\n" +
-                    "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
-                    "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [\n" +
-                    "      \"/3_1.2/0/9\",\n" +
-                    "      \"/5_1.2/0/3\",\n" +
-                    "      \"/5_1.2/0/5\",\n" +
-                    "      \"/5_1.2/0/6\",\n" +
-                    "      \"/5_1.2/0/7\",\n" +
-                    "      \"/5_1.2/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attribute\": [],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/3_1.2/0/9\",\n" +
-                    "      \"/5_1.2/0/3\",\n" +
-                    "      \"/5_1.2/0/5\",\n" +
-                    "      \"/5_1.2/0/6\",\n" +
-                    "      \"/5_1.2/0/7\",\n" +
-                    "      \"/5_1.2/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {},\n" +
-                    "    \"observeStrategy\": 0\n" +
-                    "  }";
+            "    \"keyName\": {\n" +
+            "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+            "      \"/5_1.2/0/3\": \"state\",\n" +
+            "      \"/5_1.2/0/5\": \"updateResult\",\n" +
+            "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+            "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
+            "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
+            "    },\n" +
+            "    \"observe\": [\n" +
+            "      \"/3_1.2/0/9\",\n" +
+            "      \"/5_1.2/0/3\",\n" +
+            "      \"/5_1.2/0/5\",\n" +
+            "      \"/5_1.2/0/6\",\n" +
+            "      \"/5_1.2/0/7\",\n" +
+            "      \"/5_1.2/0/9\"\n" +
+            "    ],\n" +
+            "    \"attribute\": [],\n" +
+            "    \"telemetry\": [\n" +
+            "      \"/3_1.2/0/9\",\n" +
+            "      \"/5_1.2/0/3\",\n" +
+            "      \"/5_1.2/0/5\",\n" +
+            "      \"/5_1.2/0/6\",\n" +
+            "      \"/5_1.2/0/7\",\n" +
+            "      \"/5_1.2/0/9\"\n" +
+            "    ],\n" +
+            "    \"attributeLwm2m\": {},\n" +
+            "    \"observeStrategy\": 0\n" +
+            "  }";
 
-    public static  String TELEMETRY_WITH_COMPOSITE_ALL_OBSERVE_ID_3_ID_19 =
-               "    {\n" +
-                       "    \"keyName\": {\n" +
-                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
-                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
-                       "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
-                       "    },\n" +
-                       "    \"observe\": [\n" +
-                       "      \"/3_1.2/0/9\",\n" +
-                       "      \"/3_1.2/0/20\",\n" +
-                       "      \"/19_1.1/0/2\"\n" +
-                       "    ],\n" +
-                       "    \"attribute\": [],\n" +
-                       "    \"telemetry\": [\n" +
-                       "      \"/3_1.2/0/9\",\n" +
-                       "      \"/3_1.2/0/20\",\n" +
-                       "      \"/19_1.1/0/2\"\n" +
-                       "    ],\n" +
-                       "    \"attributeLwm2m\": {},\n" +
-                       "    \"observeStrategy\": 1\n" +
-                       "  }";
+    public static String TELEMETRY_WITH_COMPOSITE_ALL_OBSERVE_ID_3_ID_19 =
+            "    {\n" +
+            "    \"keyName\": {\n" +
+            "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+            "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+            "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
+            "    },\n" +
+            "    \"observe\": [\n" +
+            "      \"/3_1.2/0/9\",\n" +
+            "      \"/3_1.2/0/20\",\n" +
+            "      \"/19_1.1/0/2\"\n" +
+            "    ],\n" +
+            "    \"attribute\": [],\n" +
+            "    \"telemetry\": [\n" +
+            "      \"/3_1.2/0/9\",\n" +
+            "      \"/3_1.2/0/20\",\n" +
+            "      \"/19_1.1/0/2\"\n" +
+            "    ],\n" +
+            "    \"attributeLwm2m\": {},\n" +
+            "    \"observeStrategy\": 1\n" +
+            "  }";
 
-    public static  String TELEMETRY_WITH_COMPOSITE_BY_OBJECT_OBSERVE_ID_3_ID_5_ID_19 =
-               "    {\n" +
-                       "    \"keyName\": {\n" +
-                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
-                       "      \"/5_1.2/0/6\": \"pkgname\",\n" +
-                       "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
-                       "    },\n" +
-                       "    \"observe\": [\n" +
-                       "      \"/3_1.2/0/20\",\n" +
-                       "      \"/5_1.2/0/6\",\n" +
-                       "      \"/19_1.1/0/2\"\n" +
-                       "    ],\n" +
-                       "    \"attribute\": [],\n" +
-                       "    \"telemetry\": [\n" +
-                       "      \"/3_1.2/0/20\",\n" +
-                       "      \"/5_1.2/0/6\",\n" +
-                       "      \"/19_1.1/0/2\"\n" +
-                       "    ],\n" +
-                       "    \"attributeLwm2m\": {},\n" +
-                       "    \"observeStrategy\": 2\n" +
-                       "  }";
+    public static String TELEMETRY_WITH_COMPOSITE_BY_OBJECT_OBSERVE_ID_3_ID_5_ID_19 =
+            "    {\n" +
+            "    \"keyName\": {\n" +
+            "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+            "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+            "      \"/19_1.1/0/2\": \"dataCreationTime\"\n" +
+            "    },\n" +
+            "    \"observe\": [\n" +
+            "      \"/3_1.2/0/20\",\n" +
+            "      \"/5_1.2/0/6\",\n" +
+            "      \"/19_1.1/0/2\"\n" +
+            "    ],\n" +
+            "    \"attribute\": [],\n" +
+            "    \"telemetry\": [\n" +
+            "      \"/3_1.2/0/20\",\n" +
+            "      \"/5_1.2/0/6\",\n" +
+            "      \"/19_1.1/0/2\"\n" +
+            "    ],\n" +
+            "    \"attributeLwm2m\": {},\n" +
+            "    \"observeStrategy\": 2\n" +
+            "  }";
 
     public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
-                    "    \"edrxCycle\": null,\n" +
-                    "    \"powerMode\": \"DRX\",\n" +
-                    "    \"fwUpdateResource\": null,\n" +
-                    "    \"fwUpdateStrategy\": 1,\n" +
-                    "    \"psmActivityTimer\": null,\n" +
-                    "    \"swUpdateResource\": null,\n" +
-                    "    \"swUpdateStrategy\": 1,\n" +
-                    "    \"pagingTransmissionWindow\": null,\n" +
-                    "    \"clientOnlyObserveAfterConnect\": 1\n" +
-                    "  }";
+            "    \"edrxCycle\": null,\n" +
+            "    \"powerMode\": \"DRX\",\n" +
+            "    \"fwUpdateResource\": null,\n" +
+            "    \"fwUpdateStrategy\": 1,\n" +
+            "    \"psmActivityTimer\": null,\n" +
+            "    \"swUpdateResource\": null,\n" +
+            "    \"swUpdateStrategy\": 1,\n" +
+            "    \"pagingTransmissionWindow\": null,\n" +
+            "    \"clientOnlyObserveAfterConnect\": 1\n" +
+            "  }";
 
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccessUpdate = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS, ON_UPDATE_STARTED, ON_UPDATE_SUCCESS));
@@ -424,11 +411,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     public void basicTestConnectionObserveCompositeTelemetry(Security security,
-                                                    LwM2MDeviceCredentials deviceCredentials,
-                                                    String endpoint,
-                                                    Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
-                                                    int cntObserve,
-                                                    int varTest) throws Exception {
+                                                             LwM2MDeviceCredentials deviceCredentials,
+                                                             String endpoint,
+                                                             Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                                             int cntObserve,
+                                                             int varTest) throws Exception {
 
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
@@ -533,8 +520,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return lwm2mDeviceProfile;
     }
 
-    protected void updateProfile(DeviceProfile deviceProfile, String telemetryObserve, TelemetryObserveStrategy telemetryObserveStrategy)  throws Exception  {
-        Lwm2mDeviceProfileTransportConfiguration  transportConfiguration = getTransportConfiguration(telemetryObserve, getBootstrapServerCredentialsNoSec(NONE));
+    protected void updateProfile(DeviceProfile deviceProfile, String telemetryObserve, TelemetryObserveStrategy telemetryObserveStrategy) throws Exception {
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(telemetryObserve, getBootstrapServerCredentialsNoSec(NONE));
         transportConfiguration.getObserveAttr().setObserveStrategy(telemetryObserveStrategy);
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + deviceProfile.getId().getId().toString(), DeviceProfile.class);
         foundDeviceProfile.getProfileData().setTransportConfiguration(transportConfiguration);
@@ -603,13 +590,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
      * @throws Exception
      */
     public void testConnectionWithoutObserveWithDataReceivedSingleTelemetry(Security security,
-                                                          LwM2MDeviceCredentials deviceCredentials,
-                                                          String endpoint,
-                                                          boolean queueMode) throws Exception {
+                                                                            LwM2MDeviceCredentials deviceCredentials,
+                                                                            String endpoint,
+                                                                            boolean queueMode) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITH_ONE_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
-
 
 
         SingleEntityFilter sef = new SingleEntityFilter();
@@ -643,10 +629,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                             response.getErrorMessage() == null ? "" : response.getErrorMessage());
             };
             ErrorCallback errorCallback = (e) -> log.warn("Unable to send data to {}.", server, e);
-            while(cntLast > 0) {
+            while (cntLast > 0) {
                 leshanClient.getSendService().sendData(server, ContentFormat.SENML_CBOR, paths,
                         2000, responseCallback, errorCallback);
-                cntLast-- ;
+                cntLast--;
             }
         }
 
@@ -725,28 +711,28 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
         switch (bootstrapConfigType) {
             case BOTH:
-                bootstrap.add(getBootstrapServerCredentialNoSec(false));
-                bootstrap.add(getBootstrapServerCredentialNoSec(true));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(false));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(true));
                 break;
             case BOOTSTRAP_ONLY:
-                bootstrap.add(getBootstrapServerCredentialNoSec(true));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(true));
                 break;
             case LWM2M_ONLY:
-                bootstrap.add(getBootstrapServerCredentialNoSec(false));
+                bootstrap.add(getBootstrapSectionServerCredentialNoSec(false));
                 break;
             case NONE:
         }
         return bootstrap;
     }
 
-    protected AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
-        AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
-        bootstrapServerCredential.setServerPublicKey("");
-        bootstrapServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
-        bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
-        bootstrapServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
-        bootstrapServerCredential.setPort(isBootstrap ? LWM2M_BOOTSTRAP_PORT : LWM2M_PORT);
-        return bootstrapServerCredential;
+    protected AbstractLwM2MBootstrapServerCredential getBootstrapSectionServerCredentialNoSec(boolean isBootstrap) {
+        AbstractLwM2MBootstrapServerCredential bootstrapSectionServerCredential = new NoSecLwM2MBootstrapServerCredential();
+        bootstrapSectionServerCredential.setServerPublicKey("");
+        bootstrapSectionServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
+        bootstrapSectionServerCredential.setBootstrapServerIs(isBootstrap);
+        bootstrapSectionServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
+        bootstrapSectionServerCredential.setPort(isBootstrap ? LWM2M_BOOTSTRAP_PORT : LWM2M_PORT);
+        return bootstrapSectionServerCredential;
     }
 
     protected LwM2MDeviceCredentials getDeviceCredentialsNoSec(LwM2MClientCredential clientCredentials) {
@@ -777,13 +763,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         }
     }
 
-    protected  void awaitDeleteDevice(String deviceIdStr) throws Exception {
+    protected void awaitDeleteDevice(String deviceIdStr) throws Exception {
         await("Delete device with id:  " + deviceIdStr)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
                     doDelete("/api/device/" + deviceIdStr)
                             .andExpect(status().isOk());
-                   return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
+                    return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
                 });
     }
 
@@ -805,7 +791,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         JsonElement element = JsonUtils.parse(rpcActualResult.get("value").asText());
-        return element.isJsonArray() ? ((JsonArray)element).size() : null;
+        return element.isJsonArray() ? ((JsonArray) element).size() : null;
     }
 
     protected void sendObserveCancelAllWithAwait(String deviceIdStr) throws Exception {
@@ -821,6 +807,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         return rpcActualResult.get("value").asText();
     }
+
     protected void sendRpcObserveWithContainsLwM2mSingleResource(String params) throws Exception {
         String rpcActualResult = sendRpcObserveOkWithResultValue("Observe", params);
         assertTrue(rpcActualResult.contains("LwM2mSingleResource") || rpcActualResult.contains("LwM2mMultipleResource"));
@@ -834,8 +821,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         String sendRpcRequest;
         if (params == null) {
             sendRpcRequest = "{\"method\": \"" + method + "\"}";
-        }
-        else {
+        } else {
             sendRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + params + "\"}}";
         }
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceIdStr, sendRpcRequest, String.class, status().isOk());
@@ -857,4 +843,5 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
                 .updatedReg(Mockito.any(Registration.class));
     }
+
 }

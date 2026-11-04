@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
@@ -41,7 +30,7 @@
                    class="flex-1"
                    mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      @for (source of sources; track trackBySourcesIndex(index, source); let index = $index) {
+      @for (source of sources; track source.datasource.entityId; let index = $index) {
         <mat-tab [label]="source.displayName">
           @if (isActiveTab(index)) {
             <div class="table-container flex-1">
@@ -56,7 +45,7 @@
                     </mat-cell>
                   </ng-container>
                 }
-                @for (h of source.header; track trackByColumnIndex($index, h)) {
+                @for (h of source.header; track h.index) {
                   <ng-container [matColumnDef]="h.index + ''">
                     <mat-header-cell *matHeaderCellDef mat-sort-header [disabled]="!h.sortable"> {{ h.dataKey.label }} </mat-header-cell>
                     <mat-cell *matCellDef="let row; let rowIndex = index"
@@ -79,7 +68,7 @@
                     @if (source.timeseriesDatasource.countCellButtonAction) {
                       <div [class.lt-lg:!hidden]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                            [style.min-width]="(source.timeseriesDatasource.countCellButtonAction * 40) + 'px'">
-                        @for (actionDescriptor of row.actionCellButtons; track trackByActionCellDescriptionId($index, actionDescriptor)) {
+                        @for (actionDescriptor of row.actionCellButtons; track actionDescriptor.id) {
                           @if (!actionDescriptor.icon) {
                             <span style="width: 40px;"></span>
                           }
@@ -104,7 +93,7 @@
                             <mat-icon class="material-icons">more_vert</mat-icon>
                           </button>
                           <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                            @for (actionDescriptor of row.actionCellButtons; track trackByActionCellDescriptionId($index, actionDescriptor)) {
+                            @for (actionDescriptor of row.actionCellButtons; track actionDescriptor.id) {
                               @if (actionDescriptor.icon) {
                                 <button mat-menu-item
                                         (click)="onActionButtonClick($event, row, actionDescriptor)">

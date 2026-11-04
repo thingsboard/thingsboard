@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.action;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -64,8 +52,18 @@ public class EntityActionService {
     private final AuditLogService auditLogService;
     private final NotificationRuleProcessor notificationRuleProcessor;
 
-    public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
-                                             ActionType actionType, User user, Object... additionalInfo) {
+    public <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, TenantId tenantId, CustomerId customerId,
+                                                                                     ActionType actionType, Object... additionalInfo) {
+        pushEntityActionToRuleEngine(entityId, entity, null, tenantId, customerId, actionType, additionalInfo);
+    }
+
+    public <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
+                                                                                     ActionType actionType, Object... additionalInfo) {
+        pushEntityActionToRuleEngine(entityId, entity, user, user.getTenantId(), customerId, actionType, additionalInfo);
+    }
+
+    public <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, TenantId tenantId, CustomerId customerId,
+                                                                                     ActionType actionType, Object... additionalInfo) {
         Optional<TbMsgType> msgType = actionType.getRuleEngineMsgType();
         if (msgType.isPresent()) {
             try {
@@ -94,6 +92,16 @@ public class EntityActionService {
                     String strCustomerName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedCustomerId", strCustomerId);
                     metaData.putValue("unassignedCustomerName", strCustomerName);
+                } else if (actionType == ActionType.ADDED_TO_ENTITY_GROUP) {
+                    String strEntityGroupId = extractParameter(String.class, 1, additionalInfo);
+                    String strEntityGroupName = extractParameter(String.class, 2, additionalInfo);
+                    metaData.putValue("addedToEntityGroupId", strEntityGroupId);
+                    metaData.putValue("addedToEntityGroupName", strEntityGroupName);
+                } else if (actionType == ActionType.REMOVED_FROM_ENTITY_GROUP) {
+                    String strEntityGroupId = extractParameter(String.class, 1, additionalInfo);
+                    String strEntityGroupName = extractParameter(String.class, 2, additionalInfo);
+                    metaData.putValue("removedFromEntityGroupId", strEntityGroupId);
+                    metaData.putValue("removedFromEntityGroupName", strEntityGroupName);
                 } else if (actionType == ActionType.ASSIGNED_FROM_TENANT) {
                     String strTenantId = extractParameter(String.class, 0, additionalInfo);
                     String strTenantName = extractParameter(String.class, 1, additionalInfo);
@@ -104,6 +112,10 @@ public class EntityActionService {
                     String strTenantName = extractParameter(String.class, 1, additionalInfo);
                     metaData.putValue("assignedToTenantId", strTenantId);
                     metaData.putValue("assignedToTenantName", strTenantName);
+                } else if (actionType == ActionType.CHANGE_OWNER) {
+                    EntityId targetOwnerId = extractParameter(EntityId.class, 0, additionalInfo);
+                    metaData.putValue("targetOwnerId", targetOwnerId.toString());
+                    metaData.putValue("targetOwnerType", targetOwnerId.getEntityType().name());
                 } else if (actionType == ActionType.ASSIGNED_TO_EDGE) {
                     String strEdgeId = extractParameter(String.class, 1, additionalInfo);
                     String strEdgeName = extractParameter(String.class, 2, additionalInfo);
@@ -242,7 +254,7 @@ public class EntityActionService {
             customerId = user.getCustomerId();
         }
         if (e == null) {
-            pushEntityActionToRuleEngine(entityId, entity, user.getTenantId(), customerId, actionType, user, additionalInfo);
+            pushEntityActionToRuleEngine(entityId, entity, user, customerId, actionType, additionalInfo);
         }
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }

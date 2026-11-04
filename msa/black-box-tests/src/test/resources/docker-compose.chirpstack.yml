@@ -1,0 +1,51 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+# Real ChirpStack v4 LoRaWAN Network Server used by ChirpStackIntegrationTest.
+# It shares the MQTT "broker" (mosquitto) defined in docker-compose.mosquitto.yml
+# and lives on the same compose network as tb-http-integration, so ChirpStack
+# can forward uplinks to ThingsBoard via its HTTP application integration.
+
+services:
+  chirpstack:
+    image: chirpstack/chirpstack:4
+    restart: always
+    command: -c /etc/chirpstack
+    # Paths are relative to the compose project directory (docker/advanced), so the
+    # vendored config copied to <targetDir>/chirpstack is reached via "../chirpstack".
+    volumes:
+      - ../chirpstack/configuration/chirpstack:/etc/chirpstack
+    depends_on:
+      - chirpstack-postgres
+      - chirpstack-redis
+      - broker
+    environment:
+      MQTT_BROKER_HOST: broker
+      REDIS_HOST: chirpstack-redis
+      POSTGRESQL_HOST: chirpstack-postgres
+
+  chirpstack-rest-api:
+    image: chirpstack/chirpstack-rest-api:4
+    restart: always
+    command: --server chirpstack:8080 --bind 0.0.0.0:8090 --insecure
+    ports:
+      - "8090"
+    depends_on:
+      - chirpstack
+
+  chirpstack-postgres:
+    image: postgres:14-alpine
+    restart: always
+    volumes:
+      - ../chirpstack/configuration/postgresql/initdb:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: chirpstack
+      POSTGRES_PASSWORD: chirpstack
+      POSTGRES_DB: chirpstack
+
+  chirpstack-redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --save "" --appendonly no

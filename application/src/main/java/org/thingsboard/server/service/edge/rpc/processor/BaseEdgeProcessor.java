@@ -1,49 +1,51 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.HasOwnerId;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.BlobEntityId;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.IntegrationId;
+import org.thingsboard.server.common.data.id.RoleId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -59,12 +61,14 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import javax.annotation.Nullable;
@@ -96,13 +100,17 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
     @Autowired
     protected DbCallbackExecutorService dbCallbackExecutorService;
 
+    // PE context
+    @Autowired
+    protected OwnersCacheService ownersCacheService;
+
     protected ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
                                                    EdgeId edgeId,
                                                    EdgeEventType type,
                                                    EdgeEventActionType action,
                                                    EntityId entityId,
                                                    JsonNode body) {
-        return saveEdgeEvent(tenantId, edgeId, type, action, entityId, body, true);
+        return saveEdgeEvent(tenantId, edgeId, type, action, entityId, body, null);
     }
 
     protected ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
@@ -111,6 +119,17 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
                                                    EdgeEventActionType action,
                                                    EntityId entityId,
                                                    JsonNode body,
+                                                   EntityGroupId entityGroupId) {
+        return saveEdgeEvent(tenantId, edgeId, type, action, entityId, body, entityGroupId, true);
+    }
+
+    protected ListenableFuture<Void> saveEdgeEvent(TenantId tenantId,
+                                                   EdgeId edgeId,
+                                                   EdgeEventType type,
+                                                   EdgeEventActionType action,
+                                                   EntityId entityId,
+                                                   JsonNode body,
+                                                   EntityGroupId entityGroupId,
                                                    boolean doValidate) {
         if (doValidate) {
             ListenableFuture<Optional<AttributeKvEntry>> future =
@@ -118,25 +137,25 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
             return Futures.transformAsync(future, activeOpt -> {
                 if (activeOpt.isEmpty()) {
                     log.trace("Edge is not activated. Skipping event. tenantId [{}], edgeId [{}], type[{}], " +
-                                    "action [{}], entityId [{}], body [{}]",
-                            tenantId, edgeId, type, action, entityId, body);
+                                    "action [{}], entityId [{}], body [{}], entityGroupId [{}]",
+                            tenantId, edgeId, type, action, entityId, body, entityGroupId);
                     return Futures.immediateFuture(null);
                 }
                 if (activeOpt.get().getBooleanValue().isPresent() && activeOpt.get().getBooleanValue().get()) {
-                    return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+                    return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body, entityGroupId);
                 } else {
                     if (doSaveIfEdgeIsOffline(type, action)) {
-                        return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+                        return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body, entityGroupId);
                     } else {
                         log.trace("Edge is not active at the moment. Skipping event. tenantId [{}], edgeId [{}], type[{}], " +
-                                        "action [{}], entityId [{}], body [{}]",
-                                tenantId, edgeId, type, action, entityId, body);
+                                        "action [{}], entityId [{}], body [{}], entityGroupId [{}]",
+                                tenantId, edgeId, type, action, entityId, body, entityGroupId);
                         return Futures.immediateFuture(null);
                     }
                 }
             }, dbCallbackExecutorService);
         } else {
-            return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+            return doSaveEdgeEvent(tenantId, edgeId, type, action, entityId, body, entityGroupId);
         }
     }
 
@@ -145,19 +164,21 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
             case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, ADDED_COMMENT,
                  UPDATED_COMMENT, DELETED -> true;
             default -> switch (type) {
-                case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE,
-                     WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, AI_MODEL, API_KEY, NOTIFICATION_TEMPLATE,
-                     NOTIFICATION_TARGET, NOTIFICATION_RULE -> true;
+                case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, CUSTOMER, TENANT, TENANT_PROFILE, WIDGETS_BUNDLE, WIDGET_TYPE,
+                     ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, CALCULATED_FIELD, AI_MODEL, API_KEY, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET, NOTIFICATION_RULE,
+                     ROLE, INTEGRATION, CONVERTER, WHITE_LABELING, LOGIN_WHITE_LABELING, CUSTOM_TRANSLATION, CUSTOM_MENU, MAIL_TEMPLATES, SECRET -> true;
                 default -> false;
             };
         };
     }
 
-    private ListenableFuture<Void> doSaveEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventType type, EdgeEventActionType action, EntityId entityId, JsonNode body) {
-        log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], action [{}], entityId [{}], body [{}]",
-                tenantId, edgeId, type, action, entityId, body);
+    private ListenableFuture<Void> doSaveEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventType type, EdgeEventActionType action, EntityId entityId, JsonNode body,
+                                                   EntityGroupId entityGroupId) {
+        log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
+                        "action [{}], entityId [{}], body [{}], entityGroupId [{}]",
+                tenantId, edgeId, type, action, entityId, body, entityGroupId);
 
-        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body, entityGroupId);
         return edgeCtx.getEdgeEventService().saveAsync(edgeEvent);
     }
 
@@ -168,25 +189,26 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeCtx.getEdgeService().findActiveEdges(link), 1024);
             for (Edge edge : edges) {
-                futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), type, actionType, entityId, body, false));
+                futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), type, actionType, entityId, body, null, false));
             }
         } else {
-            futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null, sourceEdgeId);
+            futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, body, sourceEdgeId, null);
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
-    private List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId,
-                                                                            EdgeEventType type,
-                                                                            EdgeEventActionType actionType,
-                                                                            EntityId entityId,
-                                                                            JsonNode body,
-                                                                            EdgeId sourceEdgeId) {
+    protected List<ListenableFuture<Void>> processActionForAllEdgesByTenantId(TenantId tenantId,
+                                                                              EdgeEventType type,
+                                                                              EdgeEventActionType actionType,
+                                                                              EntityId entityId,
+                                                                              JsonNode body,
+                                                                              EdgeId sourceEdgeId,
+                                                                              EntityGroupId entityGroupId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeCtx.getEdgeService().findEdgesByTenantId(tenantId, link), 1024);
         for (Edge edge : edges) {
             if (!edge.getId().equals(sourceEdgeId)) {
-                futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body));
+                futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body, entityGroupId));
             }
         }
         return futures;
@@ -200,10 +222,10 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected UpdateMsgType getUpdateMsgType(EdgeEventActionType actionType) {
         return switch (actionType) {
-            case UPDATED, CREDENTIALS_UPDATED, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, UPDATED_COMMENT ->
-                    UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-            case ADDED, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT -> UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, DELETED_COMMENT, ALARM_DELETE -> UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+            case UPDATED, CREDENTIALS_UPDATED, UPDATED_COMMENT -> UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
+            case ADDED, ADDED_TO_ENTITY_GROUP, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT -> UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, REMOVED_FROM_ENTITY_GROUP, CHANGE_OWNER, DELETED_COMMENT, ALARM_DELETE ->
+                    UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
             case ALARM_ACK -> UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
             case ALARM_CLEAR -> UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
             default -> throw new RuntimeException("Unsupported actionType [" + actionType + "]");
@@ -221,22 +243,22 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         } else {
             JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
             EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
+            EntityGroupId entityGroupId = constructEntityGroupId(tenantId, edgeNotificationMsg);
             switch (actionType) {
                 case UPDATED:
                 case CREDENTIALS_UPDATED:
-                case ASSIGNED_TO_CUSTOMER:
-                case UNASSIGNED_FROM_CUSTOMER:
+                case ADDED_TO_ENTITY_GROUP:
                     if (edgeId != null && !edgeId.equals(originatorEdgeId)) {
-                        return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
+                        return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body, entityGroupId);
                     } else {
-                        return processNotificationToRelatedEdges(tenantId, entityId, entityId, type, actionType, originatorEdgeId);
+                        return pushNotificationToAllRelatedEdges(tenantId, entityId, entityId, type, actionType, body, entityGroupId, originatorEdgeId);
                     }
                 case DELETED:
-                    EdgeEventActionType deleted = EdgeEventActionType.DELETED;
+                case REMOVED_FROM_ENTITY_GROUP:
                     if (edgeId != null) {
-                        return saveEdgeEvent(tenantId, edgeId, type, deleted, entityId, body);
+                        return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body, entityGroupId);
                     } else {
-                        return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(tenantId, type, deleted, entityId, body, originatorEdgeId)),
+                        return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, body, originatorEdgeId, entityGroupId)),
                                 voids -> null, dbCallbackExecutorService);
                     }
                 case ASSIGNED_TO_EDGE:
@@ -253,6 +275,14 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
                     } else {
                         return Futures.immediateFuture(null);
                     }
+                case CHANGE_OWNER:
+                    if (edgeId != null) {
+                        return saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body);
+                    } else {
+                        // TODO: provide logic for customer
+                        return Futures.transform(Futures.allAsList(processActionForAllEdgesByTenantId(
+                                tenantId, type, actionType, entityId, body, originatorEdgeId, null)), voids -> null, dbCallbackExecutorService);
+                    }
                 default:
                     return Futures.immediateFuture(null);
             }
@@ -267,14 +297,32 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         }
     }
 
-    protected ListenableFuture<Void> processNotificationToRelatedEdges(TenantId tenantId, EntityId ownerEntityId, EntityId entityId, EdgeEventType type,
-                                                                       EdgeEventActionType actionType, EdgeId sourceEdgeId) {
+    private EntityGroupId constructEntityGroupId(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        if (edgeNotificationMsg.getEntityGroupIdMSB() != 0 && edgeNotificationMsg.getEntityGroupIdLSB() != 0) {
+            EntityGroupId entityGroupId = new EntityGroupId(new UUID(edgeNotificationMsg.getEntityGroupIdMSB(), edgeNotificationMsg.getEntityGroupIdLSB()));
+            EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
+            if (entityGroup == null) {
+                return null;
+            }
+            if (entityGroup.isEdgeGroupAll()) {
+                return null;
+            } else {
+                return entityGroupId;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    protected ListenableFuture<Void> pushNotificationToAllRelatedEdges(TenantId tenantId, EntityId ownerEntityId, EntityId entityId, EdgeEventType type,
+                                                                       EdgeEventActionType actionType, JsonNode body,
+                                                                       EntityGroupId entityGroupId, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
                 new PageDataIterableByTenantIdEntityId<>(edgeCtx.getEdgeService()::findRelatedEdgeIdsByEntityId, tenantId, ownerEntityId, RELATED_EDGES_CACHE_ITEMS);
         for (EdgeId relatedEdgeId : edgeIds) {
             if (!relatedEdgeId.equals(sourceEdgeId)) {
-                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
+                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, body, entityGroupId));
             }
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
@@ -321,6 +369,12 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
             case CUSTOMER -> new CustomerId(new UUID(entityIdMSB, entityIdLSB));
             case USER -> new UserId(new UUID(entityIdMSB, entityIdLSB));
             case EDGE -> new EdgeId(new UUID(entityIdMSB, entityIdLSB));
+            case ENTITY_GROUP -> new EntityGroupId(new UUID(entityIdMSB, entityIdLSB));
+            case CONVERTER -> new ConverterId(new UUID(entityIdMSB, entityIdLSB));
+            case INTEGRATION -> new IntegrationId(new UUID(entityIdMSB, entityIdLSB));
+            case SCHEDULER_EVENT -> new SchedulerEventId(new UUID(entityIdMSB, entityIdLSB));
+            case BLOB_ENTITY -> new BlobEntityId(new UUID(entityIdMSB, entityIdLSB));
+            case ROLE -> new RoleId(new UUID(entityIdMSB, entityIdLSB));
             default -> {
                 log.warn("Unsupported entity type [{}] during construct of entity id. entityIdMSB [{}], entityIdLSB [{}]",
                         entityTypeStr, entityIdMSB, entityIdLSB);
@@ -411,6 +465,75 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
         });
     }
 
+    protected void changeOwnerIfRequired(TenantId tenantId, CustomerId customerId, EntityId entityId) throws ThingsboardException {
+        EntityId newOwnerId = getOwnerId(tenantId, customerId);
+        EntityId currentOwnerId;
+        switch (entityId.getEntityType()) {
+            case DEVICE -> {
+                Device device = edgeCtx.getDeviceService().findDeviceById(tenantId, new DeviceId(entityId.getId()));
+                currentOwnerId = device.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeDeviceOwner(tenantId, newOwnerId, device);
+                }
+            }
+            case ASSET -> {
+                Asset asset = edgeCtx.getAssetService().findAssetById(tenantId, new AssetId(entityId.getId()));
+                currentOwnerId = asset.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeAssetOwner(tenantId, newOwnerId, asset);
+                }
+            }
+            case ENTITY_VIEW -> {
+                EntityView entityView = edgeCtx.getEntityViewService().findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
+                currentOwnerId = entityView.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeEntityViewOwner(tenantId, newOwnerId, entityView);
+                }
+            }
+            case USER -> {
+                User user = edgeCtx.getUserService().findUserById(tenantId, new UserId(entityId.getId()));
+                currentOwnerId = user.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeUserOwner(tenantId, newOwnerId, user);
+                }
+            }
+            case DASHBOARD -> {
+                Dashboard dashboard = edgeCtx.getDashboardService().findDashboardById(tenantId, new DashboardId(entityId.getId()));
+                currentOwnerId = dashboard.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeDashboardOwner(tenantId, newOwnerId, dashboard);
+                }
+            }
+            case CUSTOMER -> {
+                Customer customer = edgeCtx.getCustomerService().findCustomerById(tenantId, new CustomerId(entityId.getId()));
+                currentOwnerId = customer.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeCustomerOwner(tenantId, newOwnerId, customer);
+                }
+            }
+            case EDGE -> {
+                Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, new EdgeId(entityId.getId()));
+                currentOwnerId = edge.getOwnerId();
+                if (!newOwnerId.equals(currentOwnerId)) {
+                    ownersCacheService.changeEdgeOwner(tenantId, newOwnerId, edge);
+                }
+            }
+        }
+    }
+
+    private EntityId getOwnerId(TenantId tenantId, CustomerId customerId) {
+        return customerId != null && !customerId.isNullUid() ? customerId : tenantId;
+    }
+
+    protected void safeAddEntityToGroup(TenantId tenantId, EntityGroupId entityGroupId, EntityId entityId) {
+        if (entityGroupId != null && !ModelConstants.NULL_UUID.equals(entityGroupId.getId())) {
+            EntityGroup entityGroup = edgeCtx.getEntityGroupService().findEntityGroupById(tenantId, entityGroupId);
+            if (entityGroup != null) {
+                edgeCtx.getEntityGroupService().addEntityToEntityGroup(tenantId, entityGroupId, entityId);
+            }
+        }
+    }
+
     protected boolean isSaveRequired(HasVersion current, HasVersion updated) {
         if (current != null) {
             current.setVersion(null);
@@ -434,6 +557,42 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected static String generateRandomAlphabeticString(String prefix) {
         return prefix + "_" + StringUtils.randomAlphabetic(15);
+    }
+
+    protected <T extends HasOwnerId & HasId<? extends EntityId>> void addEntityToEdgeAllGroup(TenantId tenantId, Edge edge, T entity) {
+        if (entity == null) {
+            return;
+        }
+        EntityId entityId = entity.getId();
+        EntityType entityType = entityId.getEntityType();
+        try {
+            EntityType ownerType = entity.getOwnerId().getEntityType();
+            EntityGroup edgeEntityGroup = edgeCtx.getEntityGroupService().findOrCreateEdgeAllGroupAsync(tenantId, edge, edge.getName(), ownerType, entityType).get();
+            if (edgeEntityGroup != null) {
+                edgeCtx.getEntityGroupService().addEntityToEntityGroup(tenantId, edgeEntityGroup.getId(), entityId);
+            }
+        } catch (Exception e) {
+            log.warn("[{}] Can't add entity to edge {} 'All' group, entity id [{}]", tenantId, entityType, entityId, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected <T extends HasOwnerId & HasId<? extends EntityId>> void removeEntityFromEdgeAllGroup(TenantId tenantId, Edge edge, T entity) {
+        if (entity == null) {
+            return;
+        }
+        EntityId entityId = entity.getId();
+        EntityType entityType = entityId.getEntityType();
+        try {
+            EntityType ownerType = entity.getOwnerId().getEntityType();
+            EntityGroup edgeEntityGroup = edgeCtx.getEntityGroupService().findOrCreateEdgeAllGroupAsync(tenantId, edge, edge.getName(), ownerType, entityType).get();
+            if (edgeEntityGroup != null) {
+                edgeCtx.getEntityGroupService().removeEntityFromEntityGroup(tenantId, edgeEntityGroup.getId(), entityId);
+            }
+        } catch (Exception e) {
+            log.warn("[{}] Can't delete entity from edge {} 'All' group, entity id [{}]", tenantId, entityType, entityId, e);
+            throw new RuntimeException(e);
+        }
     }
 
 }

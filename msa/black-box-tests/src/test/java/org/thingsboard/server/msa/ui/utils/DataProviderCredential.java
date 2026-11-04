@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.msa.ui.utils;
 
 import org.openqa.selenium.Keys;
@@ -33,9 +21,11 @@ public class DataProviderCredential {
     private static final String LONG_PHONE_NUMBER = "20155501231";
     private static final String SHORT_PHONE_NUMBER = "201555011";
     private static final String RULE_CHAIN_SECOND_WORD_NAME_PATH = "Rule";
-    private static final String CUSTOMER_SECOND_WORD_NAME_PATH = "Customer";
+    private static final String CUSTOMER_FIRST_WORD_NAME_PATH = "Customer";
     private static final String RULE_CHAIN_FIRST_WORD_NAME_PATH = "Root";
-    private static final String CUSTOMER_FIRST_WORD_NAME_PATH = "A";
+    private static final String ENTITY_GROUP_FIRST_WORD_NAME_PATH = "Entity";
+    private static final String ENTITY_GROUP_SECOND_WORD_NAME_PATH = "Group";
+    private static final String CUSTOMER_SECOND_WORD_NAME_PATH = "A";
     private static final String DEFAULT_DEVICE_PROFILE_NAME = "Device Profile";
     private static final String DEFAULT_ASSET_PROFILE_NAME = "Asset Profile";
 
@@ -94,6 +84,13 @@ public class DataProviderCredential {
         return new Object[][]{
                 {CUSTOMER_FIRST_WORD_NAME_PATH},
                 {CUSTOMER_SECOND_WORD_NAME_PATH}};
+    }
+
+    @DataProvider
+    public static Object[][] customerGroupNameForSearchByFirstAndSecondWord() {
+        return new Object[][]{
+                {ENTITY_GROUP_FIRST_WORD_NAME_PATH},
+                {ENTITY_GROUP_SECOND_WORD_NAME_PATH}};
     }
 
     @DataProvider

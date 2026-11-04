@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.security.system;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,37 +21,52 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
+import org.thingsboard.server.common.data.wl.LoginWhiteLabelingParams;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
+import org.thingsboard.server.dao.wl.WhiteLabelingService;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.model.token.AccessJwtToken;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.permission.UserPermissionsService;
 import org.thingsboard.server.utils.MiscUtils;
 import ua_parser.Client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -73,9 +76,13 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     private final AdminSettingsService adminSettingsService;
     private final BCryptPasswordEncoder encoder;
+    private final JwtTokenFactory tokenFactory;
     private final UserService userService;
+    private final UserPermissionsService userPermissionsService;
+    private final CustomerService customerService;
     private final MailService mailService;
     private final AuditLogService auditLogService;
+    private final WhiteLabelingService whiteLabelingService;
     private final SecuritySettingsService securitySettingsService;
 
     @Override
@@ -89,7 +96,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             SecuritySettings securitySettings = securitySettingsService.getSecuritySettings();
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts()) {
-                    lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
+                    lockAccount(tenantId, userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
@@ -127,16 +134,16 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                 && failedVerificationAttempts >= maxVerificationFailures) {
             userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
             SecuritySettings securitySettings = securitySettingsService.getSecuritySettings();
-            lockAccount(userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
+            lockAccount(tenantId, userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), maxVerificationFailures);
             throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
         }
     }
 
-    private void lockAccount(UserId userId, String username, String userLockoutNotificationEmail, Integer maxFailedLoginAttempts) {
+    private void lockAccount(TenantId tenantId, UserId userId, String username, String userLockoutNotificationEmail, Integer maxFailedLoginAttempts) {
         userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
         if (StringUtils.isNotBlank(userLockoutNotificationEmail)) {
             try {
-                mailService.sendAccountLockoutEmail(username, userLockoutNotificationEmail, maxFailedLoginAttempts);
+                mailService.sendAccountLockoutEmail(tenantId, username, userLockoutNotificationEmail, maxFailedLoginAttempts);
             } catch (ThingsboardException e) {
                 log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, userLockoutNotificationEmail, e);
             }
@@ -199,6 +206,48 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
+    public String getBaseUrl(Authority authority, TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest) {
+        String baseUrl;
+        LoginWhiteLabelingParams loginWhiteLabelingParams = null;
+        if (Authority.CUSTOMER_USER.equals(authority)) {
+            try {
+                loginWhiteLabelingParams = whiteLabelingService.getCustomerLoginWhiteLabelingParams(tenantId, customerId);
+            } catch (Exception e) {
+                log.warn("Failed to fetch CustomerLoginWhiteLabelingParams.");
+            }
+        }
+
+        if ((!isBaseUrlSet(loginWhiteLabelingParams) && Authority.CUSTOMER_USER.equals(authority)) || Authority.TENANT_ADMIN.equals(authority)) {
+            try {
+                loginWhiteLabelingParams = whiteLabelingService.getTenantLoginWhiteLabelingParams(tenantId);
+            } catch (Exception e) {
+                log.warn("Failed to fetch TenantLoginWhiteLabelingParams.");
+            }
+        }
+
+        if (!isBaseUrlSet(loginWhiteLabelingParams)) {
+            try {
+                loginWhiteLabelingParams = whiteLabelingService.getSystemLoginWhiteLabelingParams();
+            } catch (Exception e) {
+                log.warn("Failed to fetch TenantLoginWhiteLabelingParams.");
+            }
+        }
+
+        if (isBaseUrlSet(loginWhiteLabelingParams)) {
+            baseUrl = loginWhiteLabelingParams.getBaseUrl();
+        } else if (loginWhiteLabelingParams != null && loginWhiteLabelingParams.isProhibitDifferentUrl()) {
+            return getBaseUrl(tenantId, customerId, null);
+        } else {
+            return getBaseUrl(tenantId, customerId, httpServletRequest);
+        }
+        return formatBaseUrl(baseUrl);
+    }
+
+    private boolean isBaseUrlSet(LoginWhiteLabelingParams loginWhiteLabelingParams) {
+        return loginWhiteLabelingParams != null && StringUtils.isNoneEmpty(loginWhiteLabelingParams.getBaseUrl());
+    }
+
+    @Override
     public String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest) {
         String baseUrl = null;
         AdminSettings generalSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "general");
@@ -206,14 +255,17 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         JsonNode prohibitDifferentUrl = generalSettings.getJsonValue().get("prohibitDifferentUrl");
 
         if ((prohibitDifferentUrl != null && prohibitDifferentUrl.asBoolean()) || httpServletRequest == null) {
-            baseUrl = generalSettings.getJsonValue().get("baseUrl").asText();
+            JsonNode baseUrlNode = generalSettings.getJsonValue().get("baseUrl");
+            if (baseUrlNode != null) {
+                baseUrl = baseUrlNode.asText();
+            }
         }
 
         if (StringUtils.isEmpty(baseUrl) && httpServletRequest != null) {
             baseUrl = MiscUtils.constructBaseUrl(httpServletRequest);
         }
 
-        return baseUrl;
+        return formatBaseUrl(baseUrl);
     }
 
     @Override
@@ -272,8 +324,61 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                 user.getName(), user.getId(), null, actionType, e, clientAddress, browser, os, device, provider);
     }
 
+    @Override
+    public AccessJwtToken createUserAccessToken(TenantId tenantId, UserId userId) throws ThingsboardException {
+        User user = userService.findUserById(tenantId, userId);
+        if (user == null) {
+            throw new ThingsboardException("Configured user [id: " + userId + "] was not found in system. Please use other user credentials.", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        UserCredentials credentials = userService.findUserCredentialsByUserId(tenantId, userId);
+        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+        MergedUserPermissions mergedUserPermissions;
+        try {
+            mergedUserPermissions = userPermissionsService.getMergedPermissions(user, false);
+        } catch (Exception e) {
+            throw new BadCredentialsException("Failed to get user permissions", e);
+        }
+
+        SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal, mergedUserPermissions);
+        return tokenFactory.createAccessJwtToken(securityUser);
+    }
+
+    @Override
+    public AccessJwtToken createUserAccessTokenFromPublicId(TenantId tenantId, String publicId) throws ThingsboardException {
+        CustomerId customerId;
+        try {
+            customerId = new CustomerId(UUID.fromString(publicId));
+        } catch (Exception e) {
+            throw new BadCredentialsException("Authentication Failed. Public Id is not valid.");
+        }
+        Customer publicCustomer = customerService.findCustomerById(tenantId, customerId);
+        if (publicCustomer == null) {
+            throw new UsernameNotFoundException("Public entity not found: " + publicId);
+        }
+        if (!publicCustomer.isPublic()) {
+            throw new BadCredentialsException("Authentication Failed. Public Id is not valid.");
+        }
+        User user = new User(new UserId(EntityId.NULL_UUID));
+        user.setTenantId(publicCustomer.getTenantId());
+        user.setCustomerId(publicCustomer.getId());
+        user.setEmail(publicId);
+        user.setAuthority(Authority.CUSTOMER_USER);
+        user.setFirstName("Public");
+        user.setLastName("Public");
+
+        SecurityUser securityUser = new SecurityUser(user, true, new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, publicId), new MergedUserPermissions(new HashMap<>(), new HashMap<>()));
+        return tokenFactory.createAccessJwtToken(securityUser);
+    }
+
     private static boolean isPositiveInteger(Integer val) {
-        return val != null && val.intValue() > 0;
+        return val != null && val > 0;
+    }
+
+    private static String formatBaseUrl(String baseUrl) {
+        if (!org.apache.commons.lang3.StringUtils.startsWithAny(baseUrl, "http://", "https://")) {
+            baseUrl = "https://" + baseUrl;
+        }
+        return baseUrl;
     }
 
 }

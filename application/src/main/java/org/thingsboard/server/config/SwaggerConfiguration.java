@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -50,10 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
-import org.springdoc.core.utils.SpringDocUtils;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
@@ -125,6 +113,8 @@ public class SwaggerConfiguration {
 
     @Value("${swagger.api_path:/api/**}")
     private String apiPath;
+    @Value("${swagger.exclude_api_path:/api/v1/integrations/**}")
+    private String excludeApiPath;
     @Value("${swagger.security_path_regex}")
     private String securityPathRegex;
     @Value("${swagger.non_security_path_regex}")
@@ -295,6 +285,7 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
+                .pathsToExclude(excludeApiPath)
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();

@@ -1,18 +1,7 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-License-Identifier: Apache-2.0
 
 -->
 <form [formGroup]="intervalOptionsConfigForm" class="tb-interval-options-form tb-form-panel no-border"
@@ -38,7 +27,7 @@
       }
     </div>
     <div class="tb-form-table-body" formArrayName="intervals">
-      @for (interval of intervalsFormArray.controls; track trackByElement(i, interval); let i = $index) {
+      @for (interval of intervalsFormArray.controls; track interval; let i = $index) {
         <div [formGroupName]="i" class="tb-form-table-row">
           <div class="tb-form-table-row-cell tb-interval">
             <mat-checkbox class="tb-interval-option" formControlName="enabled" color="primary">

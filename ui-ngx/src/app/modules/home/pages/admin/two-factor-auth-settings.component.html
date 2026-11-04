@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div>
@@ -27,21 +17,25 @@
     @if (isLoading$ | async) {
       <mat-progress-bar color="warn" mode="indeterminate">
       </mat-progress-bar>
-    }
-    @if (!(isLoading$ | async)) {
+    } @else {
       <div style="height: 4px;"></div>
     }
     <mat-card-content>
       <form [formGroup]="twoFaFormGroup" (ngSubmit)="save()">
-        <fieldset [disabled]="isLoading$ | async">
-          <div class="tb-form-panel no-padding no-border">
-            <div class="tb-form-panel stroked tb-slide-toggle">
+        <fieldset [disabled]="(isLoading$ | async) || readonly">
+          @if (isTenantAdmin()) {
+            <mat-checkbox formControlName="useSystemTwoFactorAuthSettings" style="padding-bottom: 16px;">
+              {{ 'admin.2fa.use-system-two-factor-auth-settings' | translate }}
+            </mat-checkbox>
+          }
+          <div class="tb-form-panel no-padding no-border" [class.!hidden]="isTenantAdmin() && twoFaFormGroup.get('useSystemTwoFactorAuthSettings').value">
+            <div class="tb-form-panel stroked tb-slide-toggle" [class.!hidden]="isTenantAdmin()">
               <mat-expansion-panel class="tb-settings no-padding-bottom">
                 <mat-expansion-panel-header>
                   <mat-panel-title>
                     <mat-slide-toggle class="mat-slide flex items-center justify-start"
-                                      (mousedown)="toggleExtensionPanel($event, 0, twoFaFormGroup.get('enforceTwoFa').value)"
-                                      formControlName="enforceTwoFa">
+                      (mousedown)="toggleExtensionPanel($event, 0, twoFaFormGroup.get('enforceTwoFa').value)"
+                      formControlName="enforceTwoFa">
                       {{ 'admin.2fa.force-2fa' | translate }}
                     </mat-slide-toggle>
                   </mat-panel-title>
@@ -62,7 +56,7 @@
                       <section class="tb-form-panel no-padding no-border">
                         <div class="flex flex-1 items-center justify-center">
                           <tb-toggle-select class="tb-notification-tenant-group" appearance="fill"
-                                            formControlName="filterByTenants">
+                            formControlName="filterByTenants">
                             <tb-toggle-option [value]="true">{{ 'tenant.tenant' | translate }}</tb-toggle-option>
                             <tb-toggle-option [value]="false">{{ 'tenant-profile.tenant-profile' | translate }}</tb-toggle-option>
                           </tb-toggle-select>
@@ -100,14 +94,14 @@
               @if (!atListOneProvider) {
                 <tb-error noMargin error="{{ 'admin.2fa.available-providers-required' | translate }}" class="flex h-4 items-center pl-3"/>
               }
-              @for (provider of providersForm.controls; track trackByElement(i, provider); let i = $index) {
+              @for (provider of providersForm.controls; track provider; let i = $index) {
                 <div class="tb-form-panel stroked tb-slide-toggle">
                   <mat-expansion-panel class="tb-settings" [formGroupName]="i">
                     <mat-expansion-panel-header>
                       <mat-panel-title>
                         <mat-slide-toggle class="mat-slide flex items-center justify-start"
-                                          (mousedown)="toggleExtensionPanel($event, i+1, provider.get('enable').value)"
-                                          formControlName="enable">
+                          (mousedown)="toggleExtensionPanel($event, i+1, provider.get('enable').value)"
+                          formControlName="enable">
                           {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                         </mat-slide-toggle>
                       </mat-panel-title>
@@ -233,7 +227,7 @@
                     <mat-expansion-panel-header>
                       <mat-panel-title>
                         <mat-slide-toggle class="mat-slide flex items-center justify-start" (mousedown)="toggleExtensionPanel($event, providersForm.length+1, twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value)"
-                                          formControlName="verificationCodeCheckRateLimitEnable">
+                          formControlName="verificationCodeCheckRateLimitEnable">
                           {{ 'admin.2fa.verification-code-check-rate-limit' | translate }}
                         </mat-slide-toggle>
                       </mat-panel-title>
@@ -273,11 +267,13 @@
             </section>
           </div>
           <div class="flex flex-row items-center justify-end gap-2">
-            <button mat-button mat-raised-button color="primary"
-                    [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty || !atListOneProvider"
-                    type="submit">
-              {{'action.save' | translate}}
-            </button>
+            @if (!readonly) {
+              <button mat-button mat-raised-button color="primary"
+                [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty || !atListOneProvider"
+                type="submit">
+                {{'action.save' | translate}}
+              </button>
+            }
           </div>
         </fieldset>
       </form>

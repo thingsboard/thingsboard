@@ -1,0 +1,18 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="pe-pack-offer-cards" [class.no-nav]="disableNavigation" [attr.data-count]="visibleOffers.length">
+  @for (offer of visibleOffers; track offer) {
+    @let info = pePackOfferInfoMap.get(offer);
+    <button class="pe-pack-card" [disabled]="disableNavigation" (click)="onCard($event, offer)">
+      <span class="offer-svg" [innerHTML]="info.svg | safe: 'html'"></span>
+      <div class="text-block">
+        <b>{{ info.title | translate }}</b>
+        <span>{{ (info.promoTry ?? info.promo) | translate }}</span>
+      </div>
+    </button>
+  }
+</div>

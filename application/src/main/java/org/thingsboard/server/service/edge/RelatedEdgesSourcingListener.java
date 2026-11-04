@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.edge;
 
 import jakarta.annotation.PostConstruct;
@@ -22,19 +10,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.edge.RelatedEdgesService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.group.EntityGroupService;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class RelatedEdgesSourcingListener {
 
     private final RelatedEdgesService relatedEdgesService;
+    private final EntityGroupService entityGroupService;
 
     private ExecutorService executorService;
 
@@ -59,6 +54,20 @@ public class RelatedEdgesSourcingListener {
                 executorService.submit(() -> {
                     log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
                     try {
+                        if (EntityType.ENTITY_GROUP.equals(event.getEntityId().getEntityType())) {
+                            List<EntityId> entityIds = entityGroupService.findAllEntityIdsAsync(event.getTenantId(), (EntityGroupId) event.getEntityId(), new PageLink(Integer.MAX_VALUE)).get();
+                            entityIds.forEach(entityId -> relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), entityId));
+                        }
+                        relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
+                    } catch (Exception e) {
+                        log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
+                    }
+                });
+            }
+            case ADDED_TO_ENTITY_GROUP, REMOVED_FROM_ENTITY_GROUP -> {
+                executorService.submit(() -> {
+                    log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
+                    try {
                         relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
                     } catch (Exception e) {
                         log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
@@ -66,6 +75,7 @@ public class RelatedEdgesSourcingListener {
                 });
             }
         }
+
     }
 
     @TransactionalEventListener(
@@ -76,6 +86,9 @@ public class RelatedEdgesSourcingListener {
         executorService.submit(() -> {
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
             try {
+                if (EntityType.ENTITY_GROUP.equals(event.getEntityId().getEntityType())) {
+                    relatedEdgesService.publishEdgeIdsEvictEventByTenantId(event.getTenantId());
+                }
                 relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
             } catch (Exception e) {
                 log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event, e);

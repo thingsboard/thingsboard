@@ -1,38 +1,40 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @use '@angular/material' as mat;
-@import '../theme.scss';
+@import "../theme/app-theme.scss";
+@import '../../../../../scss/constants';
 
-$primary-color: rgba(mat.m2-get-color-from-palette($tb-primary, 50), 0.4);
+$primary-color: mat.m2-get-color-from-palette($tb-primary);
 $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
+@mixin primary-theme-background {
+  &:before {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: $primary-color;
+    opacity: 0.04;
+    border-radius: 8px;
+  }
+}
 
 :host {
   .tb-alarm-comments {
-    background-color: $primary-color;
     max-width: 600px;
     width: 100%;
 
     .comment-input {
       position: sticky;
-      z-index: 1;
+      z-index: 2;
+      background-color: transparent;
+      @include primary-theme-background;
 
       .inner-wrap {
         border: $border;
         padding: 0 24px;
-        background-color: $primary-color;
       }
 
       &.oldest-first {
@@ -72,7 +74,7 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
     }
 
     .header {
-      z-index: 1;
+      z-index: 2;
       position: sticky;
       top: -24px;
       background-color: white;
@@ -83,10 +85,12 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
 
       &-container {
         padding: 0 24px;
-        background-color: $primary-color;
         border: $border;
         border-bottom: none;
         border-radius: 8px 8px 0 0;
+        position: relative;
+        background-color: transparent;
+        @include primary-theme-background;
 
         &.activity-only {
           border: none;
@@ -117,6 +121,13 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
       border: $border;
       border-top: none;
       border-radius: 0 0 8px 8px;
+      position: relative;
+      background-color: transparent;
+      @include primary-theme-background;
+
+      & > div {
+        z-index: 1;
+      }
 
       &.activity-only {
         border: none;
@@ -130,9 +141,11 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
 
     .user-comment {
       padding: 4px;
-      border-radius: 8px;
+      position: relative;
+      background-color: transparent;
+
       &:hover {
-        background-color: $primary-color;
+        @include primary-theme-background;
       }
 
       .mat-icon {
@@ -166,6 +179,8 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
       letter-spacing: 0.2px;
       border-radius: 16px;
       padding: 0 3px;
+      z-index: 1;
+
       &:hover {
         background: rgba(0, 0, 0, 0.04);
       }
@@ -195,6 +210,7 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
 
     .action-buttons {
       visibility: hidden;
+      z-index: 1;
       .mat-icon {
         color: rgba(0, 0, 0, 0.38);
       }

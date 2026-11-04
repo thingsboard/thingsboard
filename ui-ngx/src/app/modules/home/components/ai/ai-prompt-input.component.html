@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="prompt-input">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mr-10 flex-1">
+    <textarea
+      matInput
+      #textarea
+      cdkTextareaAutosize
+      rows="2"
+      #autosize="cdkTextareaAutosize"
+      cdkAutosizeMinRows="2"
+      cdkAutosizeMaxRows="6"
+      [placeholder]="placeholder"
+      [formControl]="message"
+      (keydown.enter)="onEnter($event)">
+    </textarea>
+  </mat-form-field>
+  <button mat-icon-button
+          type="button"
+          color="primary"
+          class="tb-mat-24 send-button !size-8"
+          [disabled]="loading"
+          (click)="send()">
+    <mat-icon>send</mat-icon>
+  </button>
+</div>

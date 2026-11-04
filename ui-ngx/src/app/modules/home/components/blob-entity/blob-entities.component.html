@@ -1,0 +1,169 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div #blobEntitiesWidgetContainer class="mat-padding tb-blob-entities tb-absolute-fill" [class.mat-padding]="!widgetMode">
+  <div [class.!hidden]="!showData"
+    [class.tb-outlined-border]="!widgetMode"
+    class="tb-blob-entities-content flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        @if (widgetMode) {
+          <span class="tb-blob-entities-title">{{ctx.widgetTitle}}</span>
+        } @else {
+          <span class="tb-blob-entities-title" translate>blob-entity.files</span>
+        }
+        <tb-timewindow [(ngModel)]="timewindow" class="pr-5"
+          (ngModelChange)="onTimewindowChange()"
+        asButton historyOnly></tb-timewindow>
+        <span class="flex-1"></span>
+        @if (widgetMode) {
+          <ng-container *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel"></ng-container>
+        } @else {
+          <section>
+            <button [disabled]="isLoading$ | async"
+              mat-icon-button
+              (click)="enterFilterMode()"
+              matTooltip="{{'action.search' | translate }}"
+              matTooltipPosition="above">
+              <mat-icon>search</mat-icon>
+            </button>
+            <button [disabled]="isLoading$ | async"
+              mat-icon-button
+              (click)="reloadBlobEntities()"
+              matTooltip="{{'action.refresh' | translate }}"
+              matTooltipPosition="above">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </section>
+        }
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+          matTooltip="{{ 'blob-entity.search' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field class="flex-1">
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+            [formControl]="textSearch"
+            placeholder="{{ 'blob-entity.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+          matTooltip="{{ 'action.close' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [class.!hidden]="dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools">
+        <span>
+          {{ translate.get('blob-entity.selected-blob-entities', {count: dataSource.selection.selected.length}) | async }}
+        </span>
+        <span class="flex-1"></span>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+          matTooltip="{{ 'action.delete' | translate }}"
+          matTooltipPosition="above"
+          (click)="deleteBlobEntities($event)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div class="flex flex-1 flex-col">
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource"
+          matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+          <ng-container matColumnDef="select" sticky>
+            <mat-header-cell *matHeaderCellDef style="width: 30px;">
+              <mat-checkbox (change)="$event ? dataSource.masterToggle() : null"
+                [checked]="dataSource.selection.hasValue() && (dataSource.isAllSelected() | async)"
+                [indeterminate]="dataSource.selection.hasValue() && !(dataSource.isAllSelected() | async)">
+              </mat-checkbox>
+            </mat-header-cell>
+            <mat-cell *matCellDef="let relation">
+              <mat-checkbox (click)="$event.stopPropagation()"
+                (change)="$event ? dataSource.selection.toggle(relation) : null"
+                [checked]="dataSource.selection.isSelected(relation)">
+              </mat-checkbox>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="createdTime">
+            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 25%"> {{ 'blob-entity.created-time' | translate }} </mat-header-cell>
+            <mat-cell *matCellDef="let blobEntity">
+              {{ blobEntity.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 25%"> {{ 'blob-entity.name' | translate }} </mat-header-cell>
+            <mat-cell *matCellDef="let blobEntity">
+              {{ blobEntity.name }}
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 25%"> {{ 'blob-entity.type' | translate }} </mat-header-cell>
+            <mat-cell *matCellDef="let blobEntity">
+              {{ blobEntity.typeName }}
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="customerTitle">
+            <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 25%"> {{ 'blob-entity.created_customer' | translate }} </mat-header-cell>
+            <mat-cell *matCellDef="let blobEntity">
+              {{ blobEntity.customerTitle }}
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="actions" stickyEnd>
+            <mat-header-cell *matHeaderCellDef style="min-width: 100px; max-width: 100px; width: 100px">
+            </mat-header-cell>
+            <mat-cell *matCellDef="let blobEntity">
+              <div class="flex flex-1 flex-row items-stretch justify-end">
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                  matTooltip="{{ 'blob-entity.download-blob-entity' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="downloadBlobEntity($event, blobEntity)">
+                  <mat-icon>file_download</mat-icon>
+                </button>
+                @if (deleteEnabled) {
+                  <button
+                    mat-icon-button [disabled]="isLoading$ | async"
+                    matTooltip="{{ 'blob-entity.delete-blob-entity' | translate }}"
+                    matTooltipPosition="above"
+                    (click)="deleteBlobEntity($event, blobEntity)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </div>
+            </mat-cell>
+          </ng-container>
+          <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+          <mat-row class="mat-row-select"
+            [class.mat-selected]="dataSource.selection.isSelected(blobEntity)"
+          *matRowDef="let blobEntity; columns: displayedColumns;" (click)="dataSource.selection.toggle(blobEntity)"></mat-row>
+        </table>
+        <span [class.!hidden]="(dataSource.isEmpty() | async) === false || dataSource.dataLoading"
+        class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
+        <span [class.!hidden]="!dataSource.dataLoading"
+        class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
+      </div>
+      @if (displayPagination) {
+        <mat-divider></mat-divider>
+      }
+      @if (displayPagination) {
+        <mat-paginator
+          [length]="dataSource.total() | async"
+          [pageIndex]="pageLink.page"
+          [pageSize]="pageLink.pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          [hidePageSize]="hidePageSize"
+        showFirstLastButtons></mat-paginator>
+      }
+    </div>
+  </div>
+  <span [class.!hidden]="showData"
+  class="tb-absolute-fill flex items-center justify-center" translate>entity.no-data</span>
+</div>

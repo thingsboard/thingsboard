@@ -1,0 +1,44 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<table class="tb-report-table-preview tb-report-table" [class.tb-plain-table]="isPlainFormat">
+  <colgroup>
+    @for (column of columns; track column) {
+      <col [attr.width]="columnWidth(column)">
+    }
+  </colgroup>
+  <thead>
+    @if (showTableHeading) {
+      <tr [style.height]="headingHeight">
+        @if (isPlainFormat) {
+          <th [attr.colspan]="columns.length" class="tb-report-table-heading" [style]="headingStyle" [innerText]="headingText">
+          </th>
+        } @else {
+          <th [attr.colspan]="columns.length" class="tb-report-table-heading" [style]="headingStyle" [innerHTML]="headingText | safe: 'html'">
+          </th>
+        }
+      </tr>
+    }
+    <tr>
+      @for (column of columns; track column) {
+        <th [style]="headerStyle(column)">{{ column.label }}
+          @if (hasSortOrder(column)) {
+            <mat-icon class="tb-mat-16 sort-order">
+              {{ ascSortOrder() ? 'arrow_upward' : 'arrow_downward' }}
+            </mat-icon>
+          }
+        </th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      @for (column of columns; track column) {
+        <td [style]="cellStyle(column)" [innerHTML]="cellContent(column) | safe: 'html'"></td>
+      }
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,128 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-progress-dialog-header">
+  <h2 mat-dialog-title translate>agent.app-event-progress-title</h2>
+  <span class="header-app-name">{{ subjectName }}</span>
+  <div tb-help="agentAppEvents"></div>
+  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="tb-progress-body">
+  @if (loading) {
+    <div class="tb-progress-loading">
+      <mat-spinner diameter="20"></mat-spinner>
+      <span translate>agent.app-event-progress-loading</span>
+    </div>
+  }
+
+  @if (!loading && loadError) {
+    <div class="tb-progress-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadError }}</span>
+    </div>
+  }
+
+  @if (!loading && !loadError) {
+    <!-- Event summary -->
+    <div class="tb-progress-summary">
+      <div class="info-col">
+        <div class="info-label">{{ (isAgentScoped ? 'agent.agent-upgrade-subject-label' : 'agent.app-name') | translate }}</div>
+        <div class="info-value">{{ subjectName }}</div>
+      </div>
+      <div class="info-col">
+        <div class="info-label" translate>agent.app-event-action</div>
+        <div class="info-value">{{ actionKey | translate }}</div>
+      </div>
+      <div class="info-col">
+        <div class="info-label" translate>agent.app-event-status</div>
+        <div class="info-value">
+          <span [class]="'tb-status-badge ' + statusBadgeClass">{{ statusKey | translate }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- Current activity banner -->
+    @if (event?.currentActivity && !isTerminal) {
+      <div class="tb-progress-current">
+        <div class="progress-spinner"></div>
+        <div class="progress-body">
+          <div class="progress-label" translate>agent.app-event-current-activity</div>
+          <div class="progress-text">{{ event.currentActivity }}</div>
+        </div>
+      </div>
+    }
+    <!-- Error banner -->
+    @if (hasError) {
+      <div class="tb-progress-error-banner">
+        <mat-icon>error_outline</mat-icon>
+        <div class="error-body">
+          <div class="error-label" translate>agent.app-event-error-title</div>
+          <div class="error-text">{{ event.errorMessage }}</div>
+        </div>
+      </div>
+    }
+    <!-- Step list -->
+    <ul class="tb-step-progress">
+      @for (s of steps; track s.step.id) {
+        <li [class]="'tb-step-item ' + s.state">
+          <div class="step-icon">
+            @if (s.state === 'completed') {
+              <mat-icon class="step-check">check</mat-icon>
+            }
+            @if (s.state === 'processing') {
+              <span class="step-spinner"></span>
+            }
+            @if (s.state === 'error') {
+              <mat-icon>close</mat-icon>
+            }
+            @if (s.state === 'pending') {
+              <span class="step-num">{{ s.index }}</span>
+            }
+          </div>
+          <div class="step-content">
+            <div class="step-title">
+              {{ s.step.title }}
+              <span class="step-type-label">{{ s.step.type }}</span>
+            </div>
+            <div class="step-meta">
+              @switch (s.state) {
+                @case ('completed') {
+                  <span translate>agent.app-event-step-completed</span>
+                }
+                @case ('processing') {
+                  <span translate>agent.app-event-step-processing</span>
+                }
+                @case ('error') {
+                  <span translate>agent.app-event-step-error</span>
+                }
+                @default {
+                  <span translate>agent.app-event-step-waiting</span>
+                }
+              }
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<div mat-dialog-actions class="tb-progress-actions">
+  @if (canCancel) {
+    <button mat-button color="warn" (click)="cancelEvent($event)">
+      <mat-icon>cancel</mat-icon>
+      {{ 'agent.app-event-cancel' | translate }}
+    </button>
+  }
+  <span class="flex-1"></span>
+  <button mat-button (click)="viewInEvents($event)">
+    <mat-icon>list_alt</mat-icon>
+    {{ 'agent.app-event-view-in-events' | translate }}
+  </button>
+  <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
+</div>

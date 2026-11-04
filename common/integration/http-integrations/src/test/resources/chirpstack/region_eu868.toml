@@ -1,0 +1,54 @@
+[[regions]]
+name="eu868"
+description="EU868"
+common_name="EU868"
+
+  [regions.gateway]
+  force_gws_private=false
+
+    [regions.gateway.backend]
+    enabled="mqtt"
+
+      [regions.gateway.backend.mqtt]
+      topic_prefix="eu868"
+      server="tcp://$MQTT_BROKER_HOST:1883/"
+
+  [regions.network]
+  installation_margin=10
+  rx_window=0
+  rx1_delay=1
+  rx1_dr_offset=0
+  rx2_dr=0
+  rx2_frequency=869525000
+  enabled_uplink_channels=[0, 1, 2]
+  rx2_prefer_on_link_budget=false
+  downlink_tx_power=-1
+
+    [[regions.network.extra_channels]]
+    frequency=867100000
+    min_dr=0
+    max_dr=5
+
+    [[regions.network.extra_channels]]
+    frequency=867300000
+    min_dr=0
+    max_dr=5
+
+    [[regions.network.extra_channels]]
+    frequency=867500000
+    min_dr=0
+    max_dr=5
+
+    [[regions.network.extra_channels]]
+    frequency=867700000
+    min_dr=0
+    max_dr=5
+
+    [[regions.network.extra_channels]]
+    frequency=867900000
+    min_dr=0
+    max_dr=5
+
+    [regions.network.class_b]
+    ping_slot_dr=3
+    ping_slot_frequency=0

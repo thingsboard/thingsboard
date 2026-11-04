@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.solutions.data;
 
 import lombok.AllArgsConstructor;
@@ -33,15 +21,15 @@ public class CreatedEntityInfo {
 
     public String getEntityPageLink(UUID id) {
         return switch (type) {
-            case CUSTOMER -> "/customers/" + id;
-            case USER -> "/users/" + id;
-            case ASSET -> "/entities/assets/" + id;
-            case DEVICE -> "/entities/devices/" + id;
+            case DEVICE -> "/entities/devices/all/" + id;
+            case ASSET -> "/entities/assets/all/" + id;
             case DEVICE_PROFILE -> "/profiles/deviceProfiles/" + id;
             case ASSET_PROFILE -> "/profiles/assetProfiles/" + id;
-            case DASHBOARD -> "/dashboards/" + id;
-            case RULE_CHAIN -> "/ruleChains/" + id;
-            case EDGE -> "/edgeManagement/instances/" + id;
+            case USER -> "/users/all/" + id;
+            case CUSTOMER -> "/customers/all/" + id;
+            case DASHBOARD -> "/dashboards/all/" + id;
+            case ROLE -> "/security-settings/roles/" + id;
+            case EDGE -> "/edgeManagement/edges/all/" + id;
             default -> null;
         };
     }

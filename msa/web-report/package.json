@@ -1,0 +1,42 @@
+{
+  "name": "thingsboard-web-report",
+  "private": true,
+  "version": "4.4.1",
+  "description": "ThingsBoard Web Reporting Microservice",
+  "main": "server.ts",
+  "bin": "server.js",
+  "scripts": {
+    "pkg": "tsc && pkg -t node22-linux-x64 --output ./target/thingsboard-web-report-linux ./target/src && pkg -t node22-win-x64 --no-bytecode --public-packages \"*\" --public --output ./target/thingsboard-web-report-win.exe ./target/src && node install.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --watch --watch-preserve-output -r ts-node/register server.ts",
+    "start-prod": "NODE_ENV=production node --watch --watch-preserve-output -r ts-node/register server.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "config": "~4.4.2",
+    "express": "~5.3.0",
+    "js-yaml": "^4.3.2",
+    "playwright-chromium": "~1.64.1",
+    "playwright-core": "~1.64.1",
+    "winston": "~3.19.0",
+    "winston-daily-rotate-file": "~5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "~5.0.6",
+    "@types/node": "~22.20.5",
+    "@yao-pkg/pkg": "^6.24.0",
+    "fs-extra": "~11.4.1",
+    "postinstall-postinstall": "^2.1.0",
+    "ts-node": "~10.9.2",
+    "typescript": "~5.9.3"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/config/**/*.*",
+      "node_modules/open/xdg-open",
+      "../../node_modules/playwright-core/browsers.json",
+      "node_modules/playwright-core/lib/server/chromium/appIcon.png",
+      "../../node_modules/playwright-core/lib/webp_codec.wasm"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+#
+# SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+# SPDX-License-Identifier: BUSL-1.1
+#
+
+version: '3.0'
+services:
+  opcplc:
+    restart: always
+    image: "mcr.microsoft.com/iotedge/opc-plc:2.8.5"
+    ports:
+     - "50000:50000"
+    command: "--pn=50000 --autoaccept --on --sph --sn=5 --sr=10 --st=uint --fn=5 --fr=1 --ft=uint --ctb --scn --lid --lsn --ref --gn=5 --ut --ses --to"

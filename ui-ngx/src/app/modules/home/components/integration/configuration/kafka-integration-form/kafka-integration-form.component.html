@@ -1,0 +1,83 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="kafkaIntegrationConfigForm">
+  <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.group-id</mat-label>
+      <input matInput formControlName="groupId" required>
+      @if (kafkaIntegrationConfigForm.get('groupId').hasError('required')) {
+        <mat-error translate>integration.group-id-required
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.client-id</mat-label>
+      <input matInput formControlName="clientId" required>
+      @if (kafkaIntegrationConfigForm.get('clientId').hasError('required')) {
+        <mat-error translate>integration.client-id-required
+        </mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.bootstrap-servers</mat-label>
+      <input matInput formControlName="bootstrapServers" required>
+      @if (kafkaIntegrationConfigForm.get('bootstrapServers').hasError('required')) {
+        <mat-error translate>
+          integration.bootstrap-servers-required
+        </mat-error>
+      }
+      @if (kafkaIntegrationConfigForm.get('bootstrapServers').hasError('privateNetwork')) {
+        <mat-error translate>
+          integration.host-private
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.poll-interval</mat-label>
+      <input matInput type="number" required formControlName="pollInterval" step="1">
+      @if (kafkaIntegrationConfigForm.get('pollInterval').hasError('required')) {
+        <mat-error translate>integration.poll-interval-required</mat-error>
+      }
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline" class="mat-block">
+    <mat-label translate>integration.topics</mat-label>
+    <input matInput formControlName="topics" required>
+    @if (kafkaIntegrationConfigForm.get('topics').hasError('required')) {
+      <mat-error translate>integration.topics-required
+      </mat-error>
+    }
+  </mat-form-field>
+
+  <mat-slide-toggle class="checkbox" [aria-label]="'integration.enable-ssl' | translate"
+                    style="margin-bottom: 16px;"
+                    formControlName="autoCreateTopics">
+    {{ 'integration.auto-create-topics' | translate }}
+  </mat-slide-toggle>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <fieldset class="fields-group">
+        <legend class="group-title" translate>integration.other-properties</legend>
+        <tb-key-val-map formControlName="otherProperties" isStrokedButton="true" appearance="outline"></tb-key-val-map>
+      </fieldset>
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+
+</section>

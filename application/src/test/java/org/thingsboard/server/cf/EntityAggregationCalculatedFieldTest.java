@@ -1,20 +1,9 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cf;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
 import org.junit.Before;
@@ -36,14 +25,26 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.CustomInterval;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.HourInterval;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.Watermark;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.job.Job;
+import org.thingsboard.server.common.data.job.JobStatus;
+import org.thingsboard.server.common.data.job.JobType;
+import org.thingsboard.server.common.data.job.task.CfReprocessingTaskResult;
+import org.thingsboard.server.common.data.job.task.TaskResult;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.controller.AbstractWebTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -106,7 +107,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("9999");
+                    assertNumericValue(result, "consumption", 9999);
                     assertThat(result.get("avgConsumption").get(0).get("value").isNull()).isTrue();
                 });
     }
@@ -137,8 +138,8 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
-                    assertThat(result.get("avgConsumption").get(0).get("value").asText()).isEqualTo("133");
+                    assertNumericValue(result, "consumption", 400);
+                    assertNumericValue(result, "avgConsumption", 133);
                 });
 
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":500}}", tsInInterval_1));
@@ -149,8 +150,8 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
-                    assertThat(result.get("avgConsumption").get(0).get("value").asText()).isEqualTo("133");
+                    assertNumericValue(result, "consumption", 400);
+                    assertNumericValue(result, "avgConsumption", 133);
                 });
     }
 
@@ -181,8 +182,8 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
-                    assertThat(result.get("avgConsumption").get(0).get("value").asText()).isEqualTo("133");
+                    assertNumericValue(result, "consumption", 400);
+                    assertNumericValue(result, "avgConsumption", 133);
                 });
 
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":300}}", tsInInterval_1));
@@ -193,9 +194,152 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("600");
-                    assertThat(result.get("avgConsumption").get(0).get("value").asText()).isEqualTo("200");
+                    assertNumericValue(result, "consumption", 600);
+                    assertNumericValue(result, "avgConsumption", 200);
                 });
+    }
+
+    @Test
+    public void testReprocessCalculatedField() throws Exception {
+        Device device = createDevice("Device", "1234567890111");
+
+        LocalDate testDate = LocalDate.of(2025, 11, 11);
+        ZonedDateTime dateTime = ZonedDateTime.of(testDate, LocalTime.of(13, 24), ZoneId.of(TZ));
+        // reprocessing time window(TW)
+        long startTs = dateTime.minusHours(4).toInstant().toEpochMilli(); // 2025-11-11 9:24
+        long endTs = dateTime.toInstant().toEpochMilli(); // 2025-11-11 13:24
+
+        // outside the TW
+        long interval_1_startTs = ts(testDate, 8, 0, 0);
+        long interval_1_1 = ts(testDate, 8, 11, 23);
+        long interval_1_2 = ts(testDate, 8, 33, 56);
+        long interval_1_3 = ts(testDate, 8, 47, 12);
+
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":11}}", interval_1_1));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":12}}", interval_1_2));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":8}}", interval_1_3));
+
+        // outside the TW (but telemetry will be used for initial processing)
+        long interval_2_startTs = ts(testDate, 9, 0, 0);
+        long interval_2_1 = ts(testDate, 9, 0, 0);
+        long interval_2_2 = ts(testDate, 9, 15, 11);
+
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":13}}", interval_2_1));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":35}}", interval_2_2));
+
+        // inside the TW
+        long interval_3_startTs = ts(testDate, 10, 0, 0);
+        long interval_3_1 = ts(testDate, 10, 20, 44);
+        long interval_3_2 = ts(testDate, 10, 40, 33);
+        long interval_3_3 = ts(testDate, 10, 55, 22);
+
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":3}}", interval_3_1));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":22}}", interval_3_2));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":22}}", interval_3_3));
+
+        // inside the TW
+        long interval_4_startTs = ts(testDate, 11, 0, 0);
+
+        // inside the TW
+        long interval_5_startTs = ts(testDate, 12, 0, 0);
+        long interval_5_1 = ts(testDate, 12, 11, 46);
+        long interval_5_2 = ts(testDate, 12, 26, 11);
+        long interval_5_3 = ts(testDate, 12, 59, 31);
+
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":5}}", interval_5_1));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":51}}", interval_5_2));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":12}}", interval_5_3));
+
+        // outside the TW
+        long interval_6_startTs = ts(testDate, 13, 0, 0);
+        long interval_6_1 = ts(testDate, 13, 17, 32);
+        long interval_6_2 = ts(testDate, 13, 38, 31);
+
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":22}}", interval_6_1));
+        postTelemetry(device.getId(), String.format("{\"ts\":%s, \"values\":{\"energy\":11}}", interval_6_2));
+
+        /*
+                                              startTs                        endTs
+                                                 |-----------------------------|
+                             |         |         |         |         |         |         |
+               |  intervals  |   8-9   |  9-10   |  10-11  |  11-12  |  12-13  |  13-14  |
+               |  telemetry  | 11 12 8 |  13 35  | 3 22 22 |         | 5 51 12 |  22 11  |
+                             |         |         |         |         |         |         |
+                                                 |-----------------------------|
+                                                                |--- reprocessing time window
+               consumption should be: 48 -> 47 -> 9999(default value) -> 68
+        */
+
+        CalculatedField savedCalculatedField = createConsumptionCF(device.getId(), new HourInterval(TZ, 0L), null);
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().alias("reprocess -> perform calculation for time window").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getTimeSeries(device.getId(), interval_1_startTs - 1, interval_6_startTs + 1, "consumption", "avgConsumption");
+                    assertThat(result).isNotNull();
+
+                    assertThat(result.get("consumption").get(0).get("ts").asText()).isEqualTo(Long.toString(interval_5_startTs));
+                    assertNumericValue(result, "consumption", 0, 68);
+                    assertThat(result.get("avgConsumption").get(0).get("ts").asText()).isEqualTo(Long.toString(interval_5_startTs));
+                    assertNumericValue(result, "avgConsumption", 0, 23);
+
+                    assertThat(result.get("consumption").get(1).get("ts").asText()).isEqualTo(Long.toString(interval_4_startTs));
+                    assertNumericValue(result, "consumption", 1, 9999);
+
+                    assertThat(result.get("consumption").get(2).get("ts").asText()).isEqualTo(Long.toString(interval_3_startTs));
+                    assertNumericValue(result, "consumption", 2, 47);
+                    assertThat(result.get("avgConsumption").get(1).get("ts").asText()).isEqualTo(Long.toString(interval_3_startTs));
+                    assertNumericValue(result, "avgConsumption", 1, 16);
+
+                    assertThat(result.get("consumption").get(3).get("ts").asText()).isEqualTo(Long.toString(interval_2_startTs));
+                    assertNumericValue(result, "consumption", 3, 48);
+                    assertThat(result.get("avgConsumption").get(2).get("ts").asText()).isEqualTo(Long.toString(interval_2_startTs));
+                    assertNumericValue(result, "avgConsumption", 2, 24);
+                });
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(device.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(device.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(device.getName());
+        });
+    }
+
+    @Test
+    public void testReprocessCalculatedFieldWhenNoTimeseriesDataAvailableForTimewindow() throws Exception {
+        Device device = createDevice("Device", "1234567890111");
+
+        LocalDate testDate = LocalDate.of(2025, 11, 11);
+        ZonedDateTime dateTime = ZonedDateTime.of(testDate, LocalTime.of(13, 24), ZoneId.of(TZ));
+        // reprocessing time window(TW)
+        long startTs = dateTime.minusHours(4).toInstant().toEpochMilli(); // 2025-11-11 9:24
+        long endTs = dateTime.toInstant().toEpochMilli(); // 2025-11-11 13:24
+
+        CalculatedField savedCalculatedField = createConsumptionCF(device.getId(), new HourInterval(TZ, 0L), null, null);
+
+        reprocessCalculatedField(savedCalculatedField, startTs, endTs);
+
+        await().atMost(AbstractWebTest.TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job cfReprocessingJob = findJobs(List.of(JobType.CF_REPROCESSING), List.of(device.getUuidId())).stream().findFirst().orElseThrow();
+            assertThat(cfReprocessingJob.getStatus()).isEqualTo(JobStatus.FAILED);
+            assertThat(cfReprocessingJob.getResult().getSuccessfulCount()).isEqualTo(0);
+            assertThat(cfReprocessingJob.getResult().getTotalCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getFailedCount()).isEqualTo(1);
+            assertThat(cfReprocessingJob.getResult().getResults()).isNotNull().hasSize(1);
+            assertThat(cfReprocessingJob.getEntityId()).isEqualTo(device.getId());
+            assertThat(cfReprocessingJob.getEntityName()).isEqualTo(device.getName());
+
+            TaskResult taskResult = cfReprocessingJob.getResult().getResults().get(0);
+            assertThat(taskResult).isInstanceOf(CfReprocessingTaskResult.class);
+            CfReprocessingTaskResult cfReprocessingTaskResult = (CfReprocessingTaskResult) taskResult;
+            assertThat(cfReprocessingTaskResult.getFailure()).isNotNull()
+                    .extracting(CfReprocessingTaskResult.CfReprocessingTaskFailure::getError)
+                    .isEqualTo("Time series data aggregation for selected reprocessing time window has no results!");
+        });
     }
 
     @Test
@@ -231,8 +375,8 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
-                    assertThat(result.get("avgConsumption").get(0).get("value").asText()).isEqualTo("133");
+                    assertNumericValue(result, "consumption", 400);
+                    assertNumericValue(result, "avgConsumption", 133);
                 });
 
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":500}}", currentIntervalStartTs + 4500L));
@@ -243,14 +387,24 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgConsumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("500");
+                    assertNumericValue(result, "consumption", 500);
                     assertThat(result.get("consumption").get(0).get("ts").asLong()).isEqualTo(currentIntervalStartTs + 4000L);
-                    assertThat(result.get("avgConsumption").get(0).get("value").asText()).isEqualTo("500");
+                    assertNumericValue(result, "avgConsumption", 500);
                     assertThat(result.get("avgConsumption").get(0).get("ts").asLong()).isEqualTo(currentIntervalStartTs + 4000L);
                 });
     }
 
+    private long ts(LocalDate date, int hour, int minute, int second) {
+        return ZonedDateTime.of(date, LocalTime.of(hour, minute, second), ZoneId.of(TZ))
+                .toInstant()
+                .toEpochMilli();
+    }
+
     private CalculatedField createConsumptionCF(EntityId entityId, AggInterval aggInterval, Watermark watermark) {
+        return createConsumptionCF(entityId, aggInterval, watermark, 9999.0);
+    }
+
+    private CalculatedField createConsumptionCF(EntityId entityId, AggInterval aggInterval, Watermark watermark, Double defaultValue) {
         Map<String, Argument> arguments = new HashMap<>();
         Argument argument = new Argument();
         argument.setRefEntityKey(new ReferencedEntityKey("energy", ArgumentType.TS_LATEST, null));
@@ -261,7 +415,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         AggMetric consumption = new AggMetric();
         consumption.setFunction(AggFunction.SUM);
         consumption.setInput(new AggKeyInput("en"));
-        consumption.setDefaultValue(9999.0);
+        consumption.setDefaultValue(defaultValue);
         aggMetrics.put("consumption", consumption);
 
         AggMetric avgEnergyConsumption = new AggMetric();
@@ -306,8 +460,8 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumption", "avgTemperature");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
-                    assertThat(result.get("avgTemperature").get(0).get("value").asText()).isEqualTo("39");
+                    assertNumericValue(result, "consumption", 400);
+                    assertNumericValue(result, "avgTemperature", 39);
                 });
     }
 
@@ -372,8 +526,33 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         return saveCalculatedField(calculatedField);
     }
 
+    // useStrictDataTypes=true so the value node keeps its stored type (numeric -> JSON number, str_v -> JSON string).
+    // Without it the endpoint returns every value via getValueAsString(), masking the string-vs-number distinction.
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
-        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys=" + String.join(",", keys), ObjectNode.class);
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?useStrictDataTypes=true&keys=" + String.join(",", keys), ObjectNode.class);
+    }
+
+    // Regression guard: a numeric aggregation result must be stored as a numeric JSON node (ts_kv.dbl_v/long_v),
+    // not a JSON string (ts_kv.str_v) - otherwise server-side AVG/SUM return no data. A value-only check would
+    // not catch this: asLong()/asText() coerce a string node like "400" to the same value/text, so the node type
+    // is asserted explicitly; the numeric comparison then verifies the aggregated value.
+    private static void assertNumericValue(ObjectNode result, String key, long expectedValue) {
+        assertNumericValue(result, key, 0, expectedValue);
+    }
+
+    private static void assertNumericValue(ObjectNode result, String key, int index, long expectedValue) {
+        JsonNode value = result.get(key).get(index).get("value");
+        assertThat(value.isNumber()).as(key + "[" + index + "] should be stored as a numeric node").isTrue();
+        assertThat(value.asLong()).isEqualTo(expectedValue);
+    }
+
+    // useStrictDataTypes=true (see getLatestTelemetry) so reprocessed results keep their stored numeric type.
+    private ObjectNode getTimeSeries(EntityId entityId, long startTs, long endTs, String... keys) throws Exception {
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?useStrictDataTypes=true&keys={keys}&startTs={startTs}&endTs={endTs}", ObjectNode.class, String.join(",", keys), startTs, endTs);
+    }
+
+    private Job reprocessCalculatedField(CalculatedField savedCalculatedField, long startTs, long endTs) throws Exception {
+        return doGet("/api/calculatedField/" + savedCalculatedField.getUuidId() + "/reprocess?startTs={startTs}&endTs={endTs}", Job.class, startTs, endTs);
     }
 
 }

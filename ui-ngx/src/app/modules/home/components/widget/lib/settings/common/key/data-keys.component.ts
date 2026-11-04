@@ -1,25 +1,13 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import {
   Component,
   DestroyRef,
   ElementRef,
-  forwardRef, HostBinding,
+  forwardRef,
+  HostBinding,
   Input,
   OnChanges,
   OnInit,
@@ -50,17 +38,14 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 import { MatChipGrid, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKey, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DataKeySettingsFunction } from './data-keys.component.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  DataKeyConfigDialogComponent,
-  DataKeyConfigDialogData
-} from './data-key-config-dialog.component';
+import { DataKeyConfigDialogComponent, DataKeyConfigDialogData } from './data-key-config-dialog.component';
 import { deepClone, guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
@@ -114,6 +99,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   @Input()
   @coerceBoolean()
   inlineField = false;
+
+  @Input()
+  @coerceBoolean()
+  reportMode = false;
 
   @Input()
   @coerceBoolean()
@@ -200,6 +189,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   deviceId: string;
+
+  @Input()
+  datasources: Datasource[];
 
   @Input()
   generateKey: (key: DataKey) => DataKey;
@@ -578,6 +570,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
         preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
         context: {
           color: key.color,
+          useThemePalette: true,
           colorCancelButton: true
         },
         showCloseButton: false,
@@ -612,10 +605,12 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
           entityAliasId: this.entityAliasId,
           showPostProcessing: this.widgetType !== widgetType.alarm,
           callbacks: this.callbacks,
+          reportMode: this.reportMode,
           hideDataKeyLabel: this.hideDataKeyLabel,
           hideDataKeyColor: this.hideDataKeyColor,
           hideDataKeyUnits: this.hideDataKeyUnits,
           hideDataKeyDecimals: this.hideDataKeyDecimals,
+          datasources: this.datasources,
           supportsUnitConversion: this.supportsUnitConversion
         }
       }).afterClosed().subscribe((updatedDataKey) => {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
@@ -37,9 +24,16 @@ export interface DefaultTenantProfileConfiguration {
   maxDashboards: number;
   maxRuleChains: number;
   maxEdges: number;
+  maxIntegrations: number;
+  maxConverters: number;
+  maxSchedulerEvents: number;
+  maxAgents: number;
+  maxAgentApplications: number;
+  maxGeneratedReports: number;
   maxResourcesInBytes: number;
   maxOtaPackagesInBytes: number;
   maxResourceSize: number;
+  maxReportSizeInBytes: number;
 
   transportTenantMsgRateLimit?: string;
   transportTenantTelemetryMsgRateLimit?: string;
@@ -54,6 +48,10 @@ export interface DefaultTenantProfileConfiguration {
   transportGatewayDeviceMsgRateLimit?: string;
   transportGatewayDeviceTelemetryMsgRateLimit?: string;
   transportGatewayDeviceTelemetryDataPointsRateLimit?: string;
+
+  integrationMsgsPerTenantRateLimit?: string;
+  integrationMsgsPerDeviceRateLimit?: string;
+  integrationMsgsPerAssetRateLimit?: string;
 
   tenantEntityExportRateLimit?: string;
   tenantEntityImportRateLimit?: string;
@@ -71,6 +69,7 @@ export interface DefaultTenantProfileConfiguration {
   maxSms: number;
   smsEnabled: boolean;
   maxCreatedAlarms: number;
+  maxAiCredits: number;
 
   maxDebugModeDurationMinutes: number;
 
@@ -98,11 +97,18 @@ export interface DefaultTenantProfileConfiguration {
   edgeUplinkMessagesRateLimits?: string;
   edgeUplinkMessagesRateLimitsPerEdge?: string;
 
+  agentEventRateLimits?: string;
+  agentEventRateLimitsPerAgent?: string;
+  agentLogChunkRateLimits?: string;
+  agentLogChunkRateLimitsPerAgent?: string;
+
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
   rpcTtlDays: number;
   queueStatsTtlDays: number;
   ruleEngineExceptionsTtlDays: number;
+  blobEntityTtlDays: number;
+  reportTtlDays: number;
 
   maxCalculatedFieldsPerEntity: number;
   maxArgumentsPerCF: number;
@@ -119,6 +125,8 @@ export interface DefaultTenantProfileConfiguration {
   maxStateSizeInKBytes: number;
   maxSingleValueArgumentSizeInKBytes: number;
   calculatedFieldDebugEventsRateLimit: string;
+
+  aiChatRequestsPerTenantRateLimit: string;
 }
 
 export type TenantProfileConfigurations = DefaultTenantProfileConfiguration;
@@ -140,9 +148,17 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxDashboards: 0,
           maxRuleChains: 0,
           maxEdges: 0,
+          maxIntegrations: 0,
+          maxConverters: 0,
+          maxSchedulerEvents: 0,
+          maxAgents: 0,
+          maxAgentApplications: 0,
+          maxGeneratedReports: 0,
+          maxAiCredits: 0,
           maxResourcesInBytes: 0,
           maxOtaPackagesInBytes: 0,
           maxResourceSize: 0,
+          maxReportSizeInBytes: 0,
           maxTransportMessages: 0,
           maxTransportDataPoints: 0,
           maxREExecutions: 0,
@@ -176,20 +192,23 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           rpcTtlDays: 0,
           queueStatsTtlDays: 0,
           ruleEngineExceptionsTtlDays: 0,
-          maxCalculatedFieldsPerEntity: 5,
+          blobEntityTtlDays: 0,
+          reportTtlDays: 0,
+          maxCalculatedFieldsPerEntity: 100,
           maxArgumentsPerCF: 10,
           maxDataPointsPerRollingArg: 1000,
           maxRelationLevelPerCfArgument: 2,
           minAllowedDeduplicationIntervalInSecForCF: 10,
           minAllowedAggregationIntervalInSecForCF: 60,
-          maxRelatedEntitiesToReturnPerCfArgument: 100,
+          maxRelatedEntitiesToReturnPerCfArgument: 1000,
           minAllowedScheduledUpdateIntervalInSecForCF: 10,
           intermediateAggregationIntervalInSecForCF: 300,
           cfReevaluationCheckInterval: 60,
           alarmsReevaluationInterval: 60,
-          maxStateSizeInKBytes: 32,
-          maxSingleValueArgumentSizeInKBytes: 2,
-          calculatedFieldDebugEventsRateLimit: ''
+          maxStateSizeInKBytes: 512,
+          maxSingleValueArgumentSizeInKBytes: 32,
+          calculatedFieldDebugEventsRateLimit: '',
+          aiChatRequestsPerTenantRateLimit: ''
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

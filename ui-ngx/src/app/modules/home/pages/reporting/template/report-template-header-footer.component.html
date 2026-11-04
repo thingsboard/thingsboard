@@ -1,0 +1,79 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-report-components-container tb-header" [class.tb-expanded]="expanded">
+  <div class="tb-header-toolbar">
+    <tb-toggle-select class="tb-header-select" [(ngModel)]="headerToggleValue" (ngModelChange)="toggleCurrentHeader()">
+      <tb-toggle-option value="header">{{ (header ? 'report-template.header' : 'report-template.footer') | translate }}</tb-toggle-option>
+      <tb-toggle-option value="firstPageHeader">{{ (header ? 'report-template.first-page-header' : 'report-template.first-page-footer') | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+    <div class="tb-header-title">
+      {{ (header ? 'report-template.header' : 'report-template.footer') | translate }}
+    </div>
+    <div #reportHeaderToolbarButtons class="tb-header-toolbar-buttons">
+      <button mat-button class="tb-report-header-expand-button" (click)="toggleExpanded()">
+        {{ (expanded ? 'report-template.collapse' : 'report-template.expand') | translate }}
+        <mat-icon class="tb-mat-20" iconPositionEnd>expand_more</mat-icon>
+      </button>
+      @if (!readonly) {
+        @if (currentHeader.enabled) {
+          <button #disableHeaderButton class="tb-disable-header-button" mat-stroked-button color="primary" (click)="disableHeader()">
+            {{ 'action.disable' | translate }}
+          </button>
+        } @else {
+          <button #disableHeaderButton class="tb-disable-header-button" mat-stroked-button color="primary" (click)="enableHeader()">
+            {{ 'action.enable' | translate }}
+          </button>
+        }
+      }
+    </div>
+  </div>
+  <div #reportHeaderComponents class="tb-header-components">
+    @if (!currentHeader.enabled) {
+      <div class="tb-disabled-header">
+        @if (header) {
+          {{ (headerToggleValue === 'header' ? 'report-template.header-disabled' : 'report-template.first-page-header-disabled') | translate }}
+        } @else {
+          {{ (headerToggleValue === 'header' ? 'report-template.footer-disabled' : 'report-template.first-page-footer-disabled') | translate }}
+        }
+      </div>
+    }
+    <tb-report-components
+      [context]="context"
+      [format]="format"
+      [readonly]="readonly"
+      [background]="background"
+      [width]="width"
+      [scale]="scale"
+      [marginTop]="marginTop"
+      [marginLeft]="marginLeft"
+      [marginRight]="marginRight"
+      [marginBottom]="marginBottom"
+      [class.!hidden]="headerToggleValue !== 'header' || !headerFooter.enabled"
+      [reportComponents]="headerFooter.components"
+      (componentsChanged)="reportComponentsChanged()"
+      (componentEdit)="editReportComponent($event)"
+      (componentRemoved)="reportComponentRemoved($event)">
+    </tb-report-components>
+    <tb-report-components
+      [context]="context"
+      [format]="format"
+      [readonly]="readonly"
+      [background]="background"
+      [width]="width"
+      [scale]="scale"
+      [marginTop]="marginTop"
+      [marginLeft]="marginLeft"
+      [marginRight]="marginRight"
+      [marginBottom]="marginBottom"
+      [class.!hidden]="headerToggleValue !== 'firstPageHeader' || !headerFooter.firstPage.enabled"
+      [reportComponents]="headerFooter.firstPage.components"
+      (componentsChanged)="reportComponentsChanged()"
+      (componentEdit)="editReportComponent($event)"
+      (componentRemoved)="reportComponentRemoved($event)">
+    </tb-report-components>
+  </div>
+</div>

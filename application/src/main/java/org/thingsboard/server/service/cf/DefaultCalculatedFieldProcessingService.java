@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.cf;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -51,6 +39,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgumentEntry;
+import org.thingsboard.server.service.security.permission.OwnersCacheService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
@@ -65,7 +54,6 @@ import java.util.concurrent.ExecutionException;
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
-@TbRuleEngineComponent
 @Service
 @Slf4j
 public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedFieldProcessingService implements CalculatedFieldProcessingService {
@@ -76,7 +64,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                                                    TimeseriesService timeseriesService,
                                                    ApiLimitService apiLimitService,
                                                    RelationService relationService,
-                                                   OwnerService ownerService,
+                                                   OwnersCacheService ownerService,
                                                    TbClusterService clusterService,
                                                    TelemetrySubscriptionService tsSubService,
                                                    PartitionService partitionService) {
@@ -142,6 +130,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         return super.fetchMetricDuringInterval(tenantId, entityId, argKey, metric, interval);
     }
 
+    @Override
     public void processResult(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof AlarmCalculatedFieldResult) {
             sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));

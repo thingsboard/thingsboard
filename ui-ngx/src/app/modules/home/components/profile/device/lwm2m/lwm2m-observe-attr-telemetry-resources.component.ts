@@ -1,20 +1,8 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, DestroyRef, forwardRef, inject, Input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -29,8 +17,9 @@ import {
 } from '@angular/forms';
 import { ResourceLwM2M } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { combineLatest, Subject } from 'rxjs';
-import { startWith, takeUntil } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { startWith } from 'rxjs/operators';
+import { GtSmBreakpointAwareDirective } from '@shared/components/gt-sm-breakpoint-aware.directive';
 
 @Component({
     selector: 'tb-profile-lwm2m-observe-attr-telemetry-resource',
@@ -51,9 +40,11 @@ import { startWith, takeUntil } from 'rxjs/operators';
     standalone: false
 })
 
-export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValueAccessor, OnDestroy, Validator {
+export class Lwm2mObserveAttrTelemetryResourcesComponent extends GtSmBreakpointAwareDirective implements ControlValueAccessor, Validator {
 
   resourcesFormGroup: UntypedFormGroup;
+
+  private destroyRef = inject(DestroyRef);
 
   @Input()
   disabled = false;
@@ -71,22 +62,17 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
     }
   }
 
-  private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder) {
+    super();
     this.resourcesFormGroup = this.fb.group({
       resources: this.fb.array([])
     });
 
     this.resourcesFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(() => this.updateModel(this.resourcesFormGroup.getRawValue().resources));
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   registerOnTouched(fn: any): void {
@@ -158,8 +144,8 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
       attributes: [resource.attributes]
     });
     combineLatest([
-      form.get('attribute').valueChanges.pipe(startWith(resource.attribute), takeUntil(this.destroy$)),
-      form.get('telemetry').valueChanges.pipe(startWith(resource.telemetry), takeUntil(this.destroy$))
+      form.get('attribute').valueChanges.pipe(startWith(resource.attribute), takeUntilDestroyed(this.destroyRef)),
+      form.get('telemetry').valueChanges.pipe(startWith(resource.telemetry), takeUntilDestroyed(this.destroyRef))
     ]).subscribe(([attribute, telemetry]) => {
       if (!this.disabled) {
         if (attribute || telemetry) {
@@ -180,10 +166,6 @@ export class Lwm2mObserveAttrTelemetryResourcesComponent implements ControlValue
     } else {
       this.propagateChange(null);
     }
-  }
-
-  trackByParams(index: number, resource: ResourceLwM2M): number {
-    return resource.id;
   }
 
   isDisabledObserve(index: number): boolean{

@@ -1,21 +1,8 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Injectable, NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { inject, Injectable, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { ProfileComponent } from './profile.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
@@ -26,6 +13,8 @@ import { AppState } from '@core/core.state';
 import { UserService } from '@core/http/user.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Observable } from 'rxjs';
+import { CustomTranslationService } from '@core/http/custom-translation.service';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class UserProfileResolver  {
@@ -39,6 +28,15 @@ export class UserProfileResolver  {
     return this.userService.getUser(userId);
   }
 }
+
+export const allowLocalesResolver: ResolveFn<Array<Array<string>>> = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot,
+  customTranslation = inject(CustomTranslationService)
+): Observable<Array<Array<string>>> => customTranslation.getAvailableLocales().pipe(
+      map(locales => Object.entries(locales)
+        .sort((a, b) => a[0] > b[0] ? 1 : -1))
+  );
 
 export const profileRoutes: Routes = [
   {
@@ -54,7 +52,8 @@ export const profileRoutes: Routes = [
       }
     },
     resolve: {
-      user: UserProfileResolver
+      user: UserProfileResolver,
+      locales: allowLocalesResolver
     }
   }
 ];

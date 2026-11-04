@@ -1,0 +1,30 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  width: 100%;
+
+  .prompt-input {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    position: relative;
+    display: flex;
+    flex: 1;
+    --mat-form-field-outlined-outline-width: 0px;
+    --mat-form-field-outlined-focus-outline-width: 0px;
+
+    .send-button {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+    }
+  }
+}
+
+:host::ng-deep {
+  .prompt-input {
+    .mdc-text-field--outlined {
+      padding-right: 8px;
+    }
+  }
+}

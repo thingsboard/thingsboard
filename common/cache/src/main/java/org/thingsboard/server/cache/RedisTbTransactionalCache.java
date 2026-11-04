@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.cache;
 
 import lombok.Getter;
@@ -58,10 +46,32 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     @Getter
     private final JedisConnectionFactory connectionFactory;
     private final RedisSerializer<String> keySerializer = StringRedisSerializer.UTF_8;
+    // Combined prefix (configured key prefix + cache name) prepended to every raw Redis key; precomputed once.
+    private final String rawKeyPrefix;
     private final TbRedisSerializer<K, V> valueSerializer;
     protected final Expiration evictExpiration;
     protected final Expiration cacheTtl;
     protected final boolean cacheEnabled;
+
+    static final byte[] EVICT_BY_PREFIX_LUA_SCRIPT = StringRedisSerializer.UTF_8.serialize("""
+            local prefix = ARGV[1]
+            local count = tonumber(ARGV[2]) or 1000
+            local cursor = "0"
+            local keysToDelete = {}
+            repeat
+                local result = redis.call("SCAN", cursor, "MATCH", prefix .. "*", "COUNT", count)
+                cursor = result[1]
+                for i, key in ipairs(result[2]) do
+                    table.insert(keysToDelete, key)
+                end
+            until cursor == "0"
+            if #keysToDelete > 0 then
+                redis.call("DEL", unpack(keysToDelete))
+            end
+            return #keysToDelete
+            """);
+
+    static final byte[] EVICT_BY_PREFIX_SHA = StringRedisSerializer.UTF_8.serialize("837605bb2289f85b0ebf1c10fa8cbd5833bea3ac");
 
     public RedisTbTransactionalCache(String cacheName,
                                      CacheSpecsMap cacheSpecsMap,
@@ -70,6 +80,8 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                                      TbRedisSerializer<K, V> valueSerializer) {
         this.cacheName = cacheName;
         this.connectionFactory = (JedisConnectionFactory) connectionFactory;
+        String configuredKeyPrefix = configuration.getKeyPrefix() == null ? "" : configuration.getKeyPrefix();
+        this.rawKeyPrefix = configuredKeyPrefix + cacheName;
         this.valueSerializer = valueSerializer;
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
         this.cacheTtl = Optional.ofNullable(cacheSpecsMap)
@@ -178,6 +190,18 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     @Override
+    public void evictByPrefix(String prefix) {
+        if (!cacheEnabled) {
+            return;
+        }
+        byte[] rawPrefix = StringRedisSerializer.UTF_8.serialize(rawKeyPrefix + prefix);
+        byte[] rawBatchSize = StringRedisSerializer.UTF_8.serialize(String.valueOf(1000));
+        try (var connection = getConnection(rawPrefix)) {
+            executeScript(connection, EVICT_BY_PREFIX_SHA, EVICT_BY_PREFIX_LUA_SCRIPT, ReturnType.INTEGER, 0, rawPrefix, rawBatchSize);
+        }
+    }
+
+    @Override
     public TbCacheTransaction<K, V> newTransactionForKey(K key) {
         byte[][] rawKey = new byte[][]{getRawKey(key)};
         RedisConnection connection = watch(rawKey);
@@ -226,7 +250,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     }
 
     protected byte[] getRawKey(K key) {
-        String keyString = cacheName + key.toString();
+        String keyString = rawKeyPrefix + key.toString();
         byte[] rawKey;
         try {
             rawKey = keySerializer.serialize(keyString);

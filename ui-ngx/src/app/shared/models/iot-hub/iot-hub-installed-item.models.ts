@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { BaseData } from '@shared/models/base-data';
 import { EntityType } from '@shared/models/entity-type.models';
 import { getEntityDetailsPageURL } from '@core/utils';
@@ -21,11 +8,6 @@ import { getEntityDetailsPageURL } from '@core/utils';
 export interface WidgetInstalledItemDescriptor {
   type: 'WIDGET';
   widgetTypeId: { id: string };
-}
-
-export interface DashboardInstalledItemDescriptor {
-  type: 'DASHBOARD';
-  dashboardId: { id: string };
 }
 
 export interface CalculatedFieldInstalledItemDescriptor {
@@ -56,6 +38,7 @@ export interface DeviceInstalledItemDescriptor {
 export interface SolutionTemplateInstalledItemDescriptor {
   type: 'SOLUTION_TEMPLATE';
   createdEntityIds: { entityType: string; id: string }[];
+  dashboardGroupId: { id: string };
   dashboardId: { id: string };
   publicId: { id: string };
   mainDashboardPublic: boolean;
@@ -64,7 +47,6 @@ export interface SolutionTemplateInstalledItemDescriptor {
 
 export type IotHubInstalledItemDescriptor =
   | WidgetInstalledItemDescriptor
-  | DashboardInstalledItemDescriptor
   | CalculatedFieldInstalledItemDescriptor
   | AlarmRuleInstalledItemDescriptor
   | RuleChainInstalledItemDescriptor
@@ -122,7 +104,6 @@ export interface ItemPublishedVersionInfo {
 }
 
 export interface IotHubInstalledItem extends BaseData<{id: string}> {
-  tenantId: { id: string };
   itemId: string;
   itemVersionId: string;
   itemName: string;
@@ -137,6 +118,7 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
   }
   let entityId: string | null = null;
   let entityType: EntityType | null = null;
+  let entityGroupId: string | null = null;
   switch (descriptor.type) {
     case 'DEVICE':
       if (descriptor.dashboardId) {
@@ -154,10 +136,6 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
       entityId = descriptor.widgetTypeId?.id;
       entityType = EntityType.WIDGET_TYPE;
       break;
-    case 'DASHBOARD':
-      entityId = descriptor.dashboardId?.id;
-      entityType = EntityType.DASHBOARD;
-      break;
     case 'CALCULATED_FIELD':
     case 'ALARM_RULE':
       entityId = descriptor.calculatedFieldId?.id;
@@ -170,14 +148,17 @@ export const getInstalledItemUrl = (descriptor?: IotHubInstalledItemDescriptor):
     case 'SOLUTION_TEMPLATE':
       entityId = descriptor.dashboardId?.id;
       entityType = EntityType.DASHBOARD;
+      entityGroupId = descriptor.dashboardGroupId?.id;
       break;
   }
   if (entityType && entityId) {
     let url: string | null;
     if (descriptor.type === 'ALARM_RULE') {
       url = `/alarms/alarm-rules/${entityId}`;
+    } else if (descriptor.type === 'SOLUTION_TEMPLATE' && entityGroupId) {
+       url = `/dashboards/groups/${entityGroupId}/${entityId}`;
     } else {
-      url = getEntityDetailsPageURL(entityId, entityType);
+       url = getEntityDetailsPageURL(entityId, entityType);
     }
     return url;
   }

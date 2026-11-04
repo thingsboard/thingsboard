@@ -22,7 +22,9 @@
         "retainedMessage": false,
         "ssl": false,
         "credentials": {
-          "type": "anonymous"
+            "type": "basic",
+            "username": "",
+            "password": ""
         }
       },
       "externalId": null

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import '../../../../../../../scss/constants';
 
 div.tb-widget .tb-widget-content.tb-no-interaction {
@@ -38,6 +26,15 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
   .leaflet-gl-layer.maplibregl-map {
     position: relative;
     z-index: 1;
+  }
+  &.tb-web-report {
+    div:has(> img[src*="googleapis.com/maps"]) {
+      transition: none !important;
+      opacity: 1 !important;
+    }
+    .leaflet-tile-loaded {
+      opacity: 1 !important;
+    }
   }
 }
 
@@ -80,7 +77,7 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
           &:not(.leaflet-disabled) {
             &:hover, &.active {
               border-bottom: none;
-              color: var(--tb-map-control-active-color, $tb-primary-color); // primary color
+              color: var(--tb-map-control-active-color, var(--tb-primary-500)); // primary color
               &:before {
                 content: "";
                 position: absolute;
@@ -120,9 +117,9 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
                   border-radius: 15px;
                 }
                 > div:not(.tb-control-text):not(.tb-close) {
-                  background-color: var(--tb-map-control-active-color, $tb-primary-color);
+                  background-color: var(--tb-map-control-active-color, var(--tb-primary-500));
                   svg {
-                    fill: var(--tb-map-control-active-color, $tb-primary-color);
+                    fill: var(--tb-map-control-active-color, var(--tb-primary-500));
                   }
                 }
               }
@@ -370,7 +367,7 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
             clip: rect(0, 0, 0, 0);
             pointer-events: none;
             &:checked+label.tb-layer-label {
-              border: 3px solid $tb-primary-color;
+              border: 3px solid var(--tb-primary-500);
               box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
               margin: 0;
             }
@@ -383,7 +380,7 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
             border: 1px solid rgba(0, 0, 0, 0.12);
             margin: 2px;
             &:hover {
-              border: 3px solid $tb-primary-color;
+              border: 3px solid var(--tb-primary-500);
               box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
               margin: 0;
             }

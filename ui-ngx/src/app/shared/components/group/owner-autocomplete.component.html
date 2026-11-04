@@ -1,0 +1,55 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-form-field [formGroup]="selectOwnerFormGroup" class="mat-block" [appearance]="appearance">
+  <mat-label>{{ placeholderText | translate }}</mat-label>
+  <input matInput type="text"
+    #ownerInput
+    #ownerMatInput="matInput"
+    formControlName="owner"
+    (focusin)="onFocus()"
+    (blur)="onBlur()"
+    [required]="required"
+    [matAutocomplete]="ownerAutocomplete">
+  @if (selectOwnerFormGroup.get('owner').value && !disabled) {
+    <button
+      type="button"
+      matSuffix mat-icon-button aria-label="Clear"
+      (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  }
+  <mat-autocomplete class="tb-autocomplete"
+    (closed)="!ownerMatInput.focused ? onPanelClosed() : false"
+    #ownerAutocomplete="matAutocomplete"
+    [displayWith]="displayOwnerFn">
+    @for (owner of filteredOwners | async; track owner) {
+      <mat-option [value]="owner">
+        <span [innerHTML]="owner.name | highlight:searchText"></span>
+      </mat-option>
+    }
+    @if (!(filteredOwners | async)?.length) {
+      <mat-option [value]="null">
+        <div (click)="$event.stopPropagation()">
+          @if (!textIsNotEmpty(searchText)) {
+            <div>
+              <span>{{ 'entity-group.no-owners-text' | translate }}</span>
+            </div>
+          } @else {
+            <span>
+              {{ notFoundText | translate: {owner: searchText, entity: searchText} }}
+            </span>
+          }
+        </div>
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (selectOwnerFormGroup.get('owner').hasError('required')) {
+    <mat-error>
+      {{ requiredText | translate }}
+    </mat-error>
+  }
+</mat-form-field>

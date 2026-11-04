@@ -408,6 +408,44 @@
             "within-time-required": "Cal el temps."
         }
     },
+    "ai-assistant": {
+        "configure-with-ai": "Configura amb IA",
+        "follow-up-prompt-placeholder": "Respon...",
+        "sub-title": "Puc ajudar-vos a configurar i gestionar els vostres dispositius, taulers, camps calculats, regles d'alarma i notificacions: només heu de descriure què necessiteu i jo m'encarrego de la resta.",
+        "new-chat": "Nou xat",
+        "no-chats": "Encara no hi ha xats",
+        "today": "Avui",
+        "yesterday": "Ahir",
+        "last-7-days": "Últims 7 dies",
+        "older": "Més antics",
+        "delete-chat-title": "Esteu segur que voleu eliminar '{{name}}'?",
+        "delete-chat-text": "Es perdran tots els missatges del xat",
+        "delete-chat-confirm": "Sí, elimina",
+        "action-approval-required": "Es requereix l'aprovació de l'acció",
+        "approve": "Aprova",
+        "deny": "Denega",
+        "processing": "Processant...",
+        "approved": "Fet",
+        "denied": "Denegat",
+        "error": "Ha fallat",
+        "thinking": "Pensant...",
+        "rename-chat-title": "Canvia el nom d'aquest xat",
+        "main-title": "Hola! Sóc el teu assistent d'IA"
+    },
+    "alarm-rule": {
+        "ai-assistant-example-suggest-rules-label": "Suggereix regles d'alarma",
+        "ai-assistant-example-suggest-rules-message": "Reviseu els meus dispositius i suggeriu regles d'alarma que valgui la pena configurar.",
+        "ai-assistant-example-inactivity-label": "Alarma d'inactivitat del dispositiu",
+        "ai-assistant-example-inactivity-message": "Creeu una regla d'alarma que activi un avís quan un dispositiu deixi d'enviar telemetria durant més de 10 minuts.",
+        "ai-assistant-initial-prompt-placeholder": "Descriviu què voleu configurar..."
+    },
+    "calculated-fields": {
+        "ai-assistant-example-suggest-fields-label": "Suggereix camps calculats",
+        "ai-assistant-example-suggest-fields-message": "Reviseu els meus dispositius i suggeriu camps calculats que valgui la pena configurar.",
+        "ai-assistant-example-aggregate-label": "Agrega la telemetria",
+        "ai-assistant-example-aggregate-message": "Trieu un dels meus dispositius i configureu un camp calculat que agregui algunes de les seves claus de telemetria. Descriviu què crearàs i demaneu-me primer confirmació.",
+        "ai-assistant-initial-prompt-placeholder": "Descriviu què voleu configurar..."
+    },
     "alarm": {
         "alarm": "Alarma",
         "alarms": "Alarmes",
@@ -955,15 +993,7 @@
     "custom-translation": {
         "custom-translation": "Traducció personalitzada",
         "translation-map": "Mapa de traducció",
-        "key": "Clau de traducció",
-        "import": "Importa la traducció",
-        "export": "Exporta la traducció",
-        "export-data": "Exporta les dades de traducció",
-        "import-data": "Importa les dades de traducció",
-        "translation-file": "Fitxer de traducció",
-        "invalid-translation-file-error": "No s'ha pogut importar el fitxer de traducció: l'estructura de dades de traducció no és vàlida.",
-        "custom-translation-hint": "Definiu el JSON de traducció personalitzat a continuació. Aquest JSON sobreescriurà la traducció predeterminada. Feu clic a «Baixa el fitxer locale» per a obtenir la traducció existent. També podeu utilitzar el fitxer baixat com a referència a les parelles disponibles de traducció clau-valor.",
-        "download-locale-file": "Baixa el fitxer locale"
+        "translation-file": "Fitxer de traducció"
     },
     "datetime": {
         "date-from": "Data des de",
@@ -972,6 +1002,11 @@
         "time-to": "Hora fins a"
     },
     "dashboard": {
+        "ai-assistant-initial-prompt-placeholder": "Descriviu què voleu configurar...",
+        "ai-assistant-example-monitor-device-label": "Supervisa un dispositiu",
+        "ai-assistant-example-monitor-device-message": "El dispositiu és ... Vull configurar aquest tauler com una vista d'estat únic d'aquest dispositiu, mostrant la seva telemetria més recent com a targetes de valor a la part superior, un gràfic de sèries temporals d'aquesta telemetria a sota i una taula de les seves alarmes actives a la part inferior.",
+        "ai-assistant-example-monitor-fleet-label": "Supervisa una flota de dispositius",
+        "ai-assistant-example-monitor-fleet-message": "El tipus de dispositiu és ... Vull configurar aquest tauler amb dos estats per a aquest tipus. L'estat de resum ha de llistar tots els dispositius d'aquest tipus en una taula d'entitats, amb una taula de les alarmes actives d'aquests dispositius a sota. En seleccionar un dispositiu s'obre un estat de detall que mostra la telemetria més recent d'aquest dispositiu com a targetes de valor a la part superior, un gràfic de sèries temporals d'aquesta telemetria a sota i una taula de les seves alarmes actives a la part inferior.",
         "dashboard": "Panell",
         "dashboards": "Panells",
         "management": "Gestió de Panells",
@@ -1215,6 +1250,9 @@
         "toggle-edit-mode": "Anar a Manera d'Edició"
     },
     "device": {
+        "ai-assistant-initial-prompt-placeholder": "Descriviu què voleu configurar...",
+        "ai-assistant-example-connect-label": "Connecta el meu dispositiu",
+        "ai-assistant-example-connect-message": "Ajuda'm a connectar un dels meus dispositius a la plataforma perquè comenci a enviar telemetria real.",
         "device": "Dispositiu",
         "device-required": "Cal dispositiu.",
         "devices": "Dispositius",
@@ -1795,7 +1833,7 @@
         "cloud-endpoint": "Punt final del núvol",
         "cloud-endpoint-required": "Cal punt final del núvol",
         "cloud-endpoint-max-length": "Cloud Endpoint hauria de ser inferior a 256",
-        "cloud-endpoint-hint": "Edge requereix l'accés HTTP (s) a la nube (ThingsBoard CE / PE) per verificar la clau de llicència. Especifiqueu l'URL de la núvol a la que Edge pot connectar-se.",
+        "cloud-endpoint-hint": "Edge requereix l'accés HTTP (s) a la nube (ThingsBoard) per verificar la clau de llicència. Especifiqueu l'URL de la núvol a la que Edge pot connectar-se.",
         "description": "Descripció",
         "details": "Detalls",
         "events": "Esdeveniments",
@@ -2885,8 +2923,6 @@
         "connect-timeout-range": "Temps d'espera de connexió ha d'estar en un rang entre 1 i 200.",
         "client-id": "ID del client",
         "client-id-required": "Cal Client ID.",
-        "client-id-range": "L'identificador de client ha de tenir entre 1 i 23 caràcters. [MQTT-3.1.3-5]",
-        "client-id-pattern": "L'identificador de client ha de constar de números, lletres majúscules i minúscules. [MQTT-3.1.3-5]",
         "client-id-hint": "Pista: opcional. Deixeu en blanc l'identificador de client generat automàticament. Aneu amb compte quan especifiqueu l'identificador de client. La majoria dels corredors de MQTT no permetran connexions múltiples amb el mateix identificador de client. Per connectar-se a aquests corredors, el vostre identificador de client mqtt ha de ser únic.",
         "max-bytes-in-message": "Màxim bytes al missatge",
         "max-bytes-in-message-range": "El màxim de bytes del missatge hauria d'estar en un interval d'1 a 256000000.",
@@ -2900,8 +2936,8 @@
         "topics-required": "Cal temes.",
         "routing-keys": "Claus d'encaminament",
         "routing-keys-required": "Cal claus d'encaminament.",
-        "queues": "Cues",
-        "queues-required": "Cal el nom de la cua.",
+        "queue": "Cua",
+        "queue-required": "Cal el nom de la cua.",
         "durable": "Durable",
         "exclusive": "Exclusiu",
         "autoDelete": "Supressió automàtica",
@@ -2989,7 +3025,7 @@
         "sas-key-name-required": "Cal nom de Clau SAS.",
         "sas-key": "Clau SAS",
         "sas-key-required": "Cal clau SAS.",
-        "iot-hub-name": "Nom del Concentrador IoT (Cal per enllaç descendent)",
+        "iot-hub-name": "Nom del Concentrador IoT",
         "hostname": "Hostname",
         "hostname-required": "Cal hostname",
         "integration-clazz": "Classe d'integració",
@@ -3950,7 +3986,7 @@
         "search": "Buscar Fitxers",
         "clear-search": "Esborrar cerca",
         "no-blob-entities-prompt": "Fitxers no trobats",
-        "report": "Report",
+        "report": "Informe web",
         "created-time": "Temps de creació",
         "name": "Nom",
         "type": "Tipus",
@@ -4699,7 +4735,6 @@
         "dark-foreground": "Primer pla fosc",
         "domain-name": "Nom del domini",
         "base-url": "Base URL",
-        "base-url-required": "Cal la base URL.",
         "prohibit-different-url": "Prohibir l'ús del nom d'amfitrió de les capçaleres de la sol·licitud del client",
         "prohibit-different-url-hint": "Aquesta configuració s'hauria d'habilitar per als entorns de producció. Pot causar problemes de seguretat quan està desactivat",
         "help-link-base-url": "URL base dels enllaços d'ajuda",

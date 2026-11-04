@@ -1,0 +1,34 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-info-panel">
+  <div class="tb-entity-info-title" translate>solution-creator.iam-info</div>
+  <div class="tb-entity-info-panel-content">
+    <div class="property">
+      <span>{{ 'solution-creator.name' | translate }}</span>
+      <span>{{ iam.name }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property">
+      <span>{{ 'permission.operation.operations' | translate }}</span>
+      <span>{{ operations }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="property column">
+      <span>{{ 'solution-creator.description' | translate }}</span>
+      <span class="description-text">{{ iam.description }}</span>
+    </div>
+    <mat-divider></mat-divider>
+  </div>
+  <div class="flex h-10 items-end justify-end gap-4">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
+</div>

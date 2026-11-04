@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -22,7 +9,7 @@ import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DashboardService } from '@core/http/dashboard.service';
-import { forkJoin, Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 
@@ -119,13 +106,15 @@ export class ManageDashboardCustomersDialogComponent extends
   }
 
   private getManageDashboardCustomersTask(dashboardId: string, customerIds: Array<string>): Observable<any> {
-    switch (this.data.actionType) {
+    /*switch (this.data.actionType) {
       case 'assign':
         return this.dashboardService.addDashboardCustomers(dashboardId, customerIds);
       case 'manage':
         return this.dashboardService.updateDashboardCustomers(dashboardId, customerIds);
       case 'unassign':
         return this.dashboardService.removeDashboardCustomers(dashboardId, customerIds);
-    }
+        break;
+    }*/
+    return of(null);
   }
 }

@@ -1,22 +1,11 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.widget;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +39,8 @@ import java.util.stream.Stream;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
+import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("WidgetsBundleDaoService")
 @Slf4j
@@ -194,6 +185,28 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
+    public ListenableFuture<List<WidgetsBundle>> findSystemWidgetsBundlesByIdsAsync(TenantId tenantId, List<WidgetsBundleId> widgetsBundleIds) {
+        log.trace("Executing findSystemWidgetsBundlesByIdsAsync, tenantId [{}], widgetsBundleIds [{}]", tenantId, widgetsBundleIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(widgetsBundleIds, ids -> "Incorrect widgetsBundleIds " + ids);
+        return widgetsBundleDao.findSystemWidgetBundlesByIdsAsync(tenantId.getId(), toUUIDs(widgetsBundleIds));
+    }
+
+    @Override
+    public ListenableFuture<List<WidgetsBundle>> findAllTenantWidgetsBundlesByIdsAsync(TenantId tenantId, List<WidgetsBundleId> widgetsBundleIds) {
+        log.trace("Executing findAllTenantWidgetsBundlesByIdsAsync, tenantId [{}], widgetsBundleIds [{}]", tenantId, widgetsBundleIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(widgetsBundleIds, ids -> "Incorrect widgetsBundleIds " + ids);
+        return widgetsBundleDao.findAllTenantWidgetBundlesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(widgetsBundleIds));
+    }
+
+    @Override
+    public List<WidgetsBundle> findSystemOrTenantWidgetsBundlesByIds(TenantId tenantId, List<WidgetsBundleId> widgetsBundleIds) {
+        log.trace("Executing findSystemOrTenantWidgetsBundlesByIds, tenantId [{}], widgetsBundleIds [{}]", tenantId, widgetsBundleIds);
+        return widgetsBundleDao.findSystemOrTenantWidgetBundlesByIds(tenantId.getId(), toUUIDs(widgetsBundleIds));
+    }
+
+    @Override
     public void deleteWidgetsBundlesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteWidgetsBundlesByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
@@ -251,12 +264,6 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
             }
             widgetTypeService.updateWidgetsBundleWidgetFqns(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), widgetTypeFqns);
         });
-    }
-
-    @Override
-    public List<WidgetsBundle> findSystemOrTenantWidgetsBundlesByIds(TenantId tenantId, List<WidgetsBundleId> widgetsBundleIds) {
-        log.trace("Executing findSystemOrTenantWidgetsBundlesByIds, tenantId [{}], widgetsBundleIds [{}]", tenantId, widgetsBundleIds);
-        return widgetsBundleDao.findSystemOrTenantWidgetBundlesByIds(tenantId.getId(), toUUIDs(widgetsBundleIds));
     }
 
     private WidgetTypeDetails updateSystemWidget(JsonNode widgetTypeJson) {

@@ -1,0 +1,85 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+@import "constants.scss";
+
+:host {
+  display: block;
+
+  .pe-pack-offer-cards {
+    display: grid;
+    // Follow the number of visible cards up to three columns, so 1 card fills the row, 2 split it in half
+    // and 3+ line up in thirds. On the smallest screens each card takes its own row.
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    &[data-count="2"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    &[data-count="3"], &[data-count="4"] {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    @media #{$mat-xs} {
+      grid-template-columns: minmax(0, 1fr);
+      &[data-count="2"], &[data-count="3"], &[data-count="4"] {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    > button {
+      width: 100%;
+      border: 0;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: box-shadow 0.14s ease;
+    }
+
+    // Hover affordance is only meaningful when clicking a card actually goes somewhere.
+    &:not(.no-nav) > button:hover {
+      box-shadow: var(--tb-elev-card);
+      b {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+    }
+    &.no-nav > button {
+      cursor: default;
+    }
+
+    .pe-pack-card {
+      display: flex;
+      gap: 9px;
+      padding: 11px 12px 12px;
+      border-radius: 8px;
+      background: #fff;
+      // The SVG is injected via [innerHTML] onto a span wrapper, so it's the wrapper that participates
+      // in the flex layout — the nested svg just needs to sit as a block.
+      .offer-svg {
+        display: block;
+        flex: none;
+        margin-top: 1px;
+        line-height: 0;
+        color: var(--tb-pro-ink);
+        svg {
+          display: block;
+        }
+      }
+      .text-block {
+        min-width: 0;
+      }
+      b {
+        display: block;
+        margin: 0 0 2px;
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 1.35;
+        color: var(--tb-ink);
+      }
+      span {
+        display: block;
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: var(--tb-ink-2);
+      }
+    }
+  }
+}

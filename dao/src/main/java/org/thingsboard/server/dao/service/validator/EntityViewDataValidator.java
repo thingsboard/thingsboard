@@ -1,21 +1,10 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.service.validator;
 
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
@@ -23,37 +12,44 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
-import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
-@AllArgsConstructor
 public class EntityViewDataValidator extends DataValidator<EntityView> {
 
-    private final EntityViewDao entityViewDao;
-    private final TenantService tenantService;
-    private final CustomerDao customerDao;
+    @Autowired
+    private EntityViewDao entityViewDao;
+
+    @Autowired
+    @Lazy
+    private EntityViewService entityViewService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private CustomerDao customerDao;
 
     @Override
     protected void validateCreate(TenantId tenantId, EntityView entityView) {
-        entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                .ifPresent(e -> {
-                    throw new DataValidationException("Entity view with such name already exists!");
-                });
+        validateNameUniqueness(entityView, null, entityViewService::findEntityViewByTenantIdAndName, "Entity view with such name already exists!");
+        validateExternalIdUniqueness(entityView, null, entityViewDao, "Entity view with such external id already exists!");
     }
 
     @Override
     protected EntityView validateUpdate(TenantId tenantId, EntityView entityView) {
-        var opt = entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName());
-        opt.ifPresent(e -> {
-            if (!e.getUuidId().equals(entityView.getUuidId())) {
-                throw new DataValidationException("Entity view with such name already exists!");
-            }
-        });
-        return opt.orElse(null);
+        EntityView old = entityViewDao.findById(entityView.getTenantId(), entityView.getId().getId());
+        if (old == null) {
+            throw new DataValidationException("Can't update non existing entity view!");
+        }
+        validateNameUniqueness(entityView, old, entityViewService::findEntityViewByTenantIdAndName, "Entity view with such name already exists!");
+        validateExternalIdUniqueness(entityView, old, entityViewDao, "Entity view with such external id already exists!");
+        return old;
     }
 
     @Override

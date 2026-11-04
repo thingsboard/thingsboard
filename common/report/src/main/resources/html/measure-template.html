@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <link rel="stylesheet" type="text/css" media="all" href="/html/styles/main.css"/>
+  <style th:inline="text">
+      @page {
+          margin: 0;
+          size: [[${pageWidth}]] [[${pageHeight}]];
+      }
+  </style>
+</head>
+<body th:utext="${htmlContent}">
+</body>
+</html>

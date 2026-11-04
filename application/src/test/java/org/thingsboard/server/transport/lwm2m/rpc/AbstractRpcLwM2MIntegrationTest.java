@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.rpc;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,7 +9,7 @@ import org.eclipse.leshan.core.link.LinkParser;
 import org.eclipse.leshan.core.link.lwm2m.DefaultLwM2mLinkParser;
 import org.junit.Before;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
@@ -53,6 +40,7 @@ import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_LWM2M_TEST_OBJECT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
@@ -77,16 +65,16 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected final LinkParser linkParser = new DefaultLwM2mLinkParser();
     protected String CONFIG_PROFILE_WITH_PARAMS_RPC;
-    public Set expectedObjects;
-    public Set expectedObjectIdVers;
-    public Set expectedInstances;
-    public Set expectedObjectIdVerInstances;
+    public Set<String> expectedObjects;
+    public Set<String> expectedObjectIdVers;
+    public Set<String> expectedInstances;
+    public Set<String> expectedObjectIdVerInstances;
 
     protected String objectInstanceIdVer_1;
     protected String objectIdVer_0;
     protected String objectIdVer_1;
     protected String objectIdVer_2;
-    private static final Predicate PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
+    private static final Predicate<String> PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
     protected String objectIdVer_3;
     protected String objectInstanceIdVer_3;
     protected String objectInstanceIdVer_5;
@@ -94,6 +82,8 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectIdVer_19;
     protected final String OBJECT_ID_VER_50 = "/50";
     protected String objectIdVer_3303;
+    protected String objectIdVer_3442;
+    protected String objectInstanceIdVer_3442;
     protected static AtomicInteger endpointSequence = new AtomicInteger();
     protected static String DEVICE_ENDPOINT_RPC_PREF = "deviceEndpointRpc";
 
@@ -103,7 +93,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected String idVer_19_0_0;
 
-    @SpyBean
+    @MockitoSpyBean
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
     @Before
@@ -152,10 +142,12 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         objectIdVer_3 = (String) expectedObjectIdVers.stream().filter(PREDICATE_3).findFirst().get();
         objectIdVer_19 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
         objectIdVer_3303 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + TEMPERATURE_SENSOR)).findFirst().get();
+        objectIdVer_3442 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + OBJECT_ID_LWM2M_TEST_OBJECT)).findFirst().get();
         objectInstanceIdVer_1 = (String) expectedObjectIdVerInstances.stream().filter(path -> (!((String) path).startsWith("/" + BINARY_APP_DATA_CONTAINER) && ((String) path).startsWith("/" + SERVER))).findFirst().get();
         objectInstanceIdVer_3 = (String) expectedObjectIdVerInstances.stream().filter(PREDICATE_3).findFirst().get();
         objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).startsWith("/" + FIRMWARE)).findFirst().get();
         objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).startsWith("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
+        objectInstanceIdVer_3442 = objectIdVer_3442  + "/" + OBJECT_INSTANCE_ID_0;
 
         idVer_3_0_0 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
         idVer_3_0_9 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9;

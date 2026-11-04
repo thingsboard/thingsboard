@@ -1,18 +1,8 @@
 <!--
 
-    Copyright © 2016-2026 The Thingsboard Authors
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+    SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
 <div>
@@ -27,8 +17,7 @@
     @if (isLoading$ | async) {
       <mat-progress-bar color="warn" mode="indeterminate">
       </mat-progress-bar>
-    }
-    @if (!(isLoading$ | async)) {
+    } @else {
       <div style="height: 4px;"></div>
     }
     <mat-card-content style="padding-top: 16px;">
@@ -36,7 +25,7 @@
         <fieldset class="fields-group" [disabled]="(isLoading$ | async) || (isReadOnly | async)">
           <legend class="group-title" translate>admin.auto-commit-entities</legend>
           <div class="flex flex-col">
-            @for (entityTypeFormGroup of entityTypesFormGroupArray(); track trackByEntityType($index, entityTypeFormGroup); let isLast = $last) {
+            @for (entityTypeFormGroup of entityTypesFormGroupArray(); track entityTypeFormGroup; let isLast = $last) {
               <div
                 class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
                 <mat-expansion-panel class="entity-type-config flex-1" [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
@@ -48,25 +37,28 @@
                         </div>
                       </mat-panel-title>
                       <span class="flex-1"></span>
-                      <button mat-icon-button style="min-width: 40px;"
-                              type="button"
-                              (click)="removeEntityType($index)"
-                              matTooltip="{{ 'action.remove' | translate }}"
-                              matTooltipPosition="above">
-                        <mat-icon>delete</mat-icon>
-                      </button>
+                      @if (!readonly) {
+                        <button mat-icon-button style="min-width: 40px;"
+                          type="button"
+                          (click)="removeEntityType($index)"
+                          matTooltip="{{ 'action.remove' | translate }}"
+                          matTooltipPosition="above">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
                     </div>
                   </mat-expansion-panel-header>
                   <ng-template matExpansionPanelContent>
                     <div class="entity-type-config-content flex flex-col gap-2">
                       <mat-divider></mat-divider>
                       <div class="flex flex-col gt-lg:flex-row gt-lg:gap-4">
-                        <div class="flex flex-row gap-4 xs:flex-col xs:gap-0">
+                        <div class="flex flex-col gt-xs:flex-row gap-1 gt-xs:gap-4">
                           <tb-entity-type-select
                             showLabel
                             appearance="outline"
                             formControlName="entityType"
                             required
+                            [overrideEntityTypeTranslations]="overrideEntityTypeTranslationsMap"
                             [filterAllowedEntityTypes]="false"
                             [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
                           </tb-entity-type-select>
@@ -80,7 +72,12 @@
                           </div>
                         </div>
                         <div class="flex flex-1 flex-col gt-xs:flex-row items-start gt-xs:items-center justify-start gap-1 gt-xs:gap-4"
-                             formGroupName="config">
+                          formGroupName="config">
+                          @if (entityTypeFormGroup.get('entityType').value === entityTypes.USER) {
+                            <mat-checkbox formControlName="savePermissions">
+                              {{ 'version-control.export-roles' | translate }}
+                            </mat-checkbox>
+                          }
                           @if (entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE) {
                             <mat-checkbox formControlName="saveCredentials">
                               {{ 'version-control.export-credentials' | translate }}
@@ -111,19 +108,23 @@
               </div>
             }
             <div style="padding-top: 16px;"  class="flex flex-row">
-              <button mat-raised-button color="primary"
-                      type="button"
-                      [disabled]="!addEnabled()"
-                      (click)="addEntityType()">
-                <span translate>version-control.add-entity-type</span>
-              </button>
+              @if (!readonly) {
+                <button mat-raised-button color="primary"
+                  type="button"
+                  [disabled]="!addEnabled()"
+                  (click)="addEntityType()">
+                  <span translate>version-control.add-entity-type</span>
+                </button>
+              }
               <span class="flex-1"></span>
-              <button mat-raised-button color="primary"
-                      type="button"
-                      [disabled]="!entityTypesFormGroupArray().length"
-                      (click)="removeAll()">
-                <span translate>version-control.remove-all</span>
-              </button>
+              @if (!readonly) {
+                <button mat-raised-button color="primary"
+                  type="button"
+                  [disabled]="!entityTypesFormGroupArray().length"
+                  (click)="removeAll()">
+                  <span translate>version-control.remove-all</span>
+                </button>
+              }
             </div>
           </div>
         </fieldset>
@@ -131,14 +132,16 @@
           <div class="tb-hint" translate>version-control.auto-commit-settings-read-only-hint</div>
         }
         <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch xs:justify-end">
-          <button mat-raised-button color="warn" type="button" [class.!hidden]="!settings"
-                  [disabled]="(isLoading$ | async) || (isReadOnly | async)" (click)="delete(formDirective)">
+          <button mat-raised-button color="warn" type="button" [class.!hidden]="!settings || !allowDelete || !entityTypesFormGroupArray().length"
+            [disabled]="(isLoading$ | async) || (isReadOnly | async)" (click)="delete(formDirective)">
             {{'action.delete' | translate}}
           </button>
           <span class="flex-1"></span>
-          <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || (isReadOnly | async) || autoCommitSettingsForm.invalid || !autoCommitSettingsForm.dirty"
-                  type="submit">{{'action.save' | translate}}
-          </button>
+          @if (!readonly) {
+            <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || (isReadOnly | async) || autoCommitSettingsForm.invalid || !autoCommitSettingsForm.dirty"
+              type="submit">{{'action.save' | translate}}
+            </button>
+          }
         </div>
       </form>
     </mat-card-content>

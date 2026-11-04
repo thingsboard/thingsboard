@@ -1,20 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-@import '../scss/constants';
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 .tb-widget-container {
   position: absolute;
   inset: 0;
@@ -31,7 +17,8 @@
 
   &.tb-overflow-visible {
     overflow: visible;
-    .tb-widget {
+
+    > .tb-widget-content > .tb-widget {
       overflow: visible;
     }
   }
@@ -160,6 +147,10 @@ div.tb-widget {
   }
 }
 
+gridster:not(.mobile) > gridster-item {
+  position: absolute;
+}
+
 gridster-item:hover {
   .tb-widget-container {
     div.tb-widget {
@@ -204,7 +195,7 @@ gridster-item:hover {
           align-items: center;
           gap: 8px;
           font-weight: normal;
-          color: $tb-primary-color;
+          color: var(--tb-primary-500);
           font-size: 11px;
           padding: 4px 4px 4px 6px;
           border-radius: 2px;

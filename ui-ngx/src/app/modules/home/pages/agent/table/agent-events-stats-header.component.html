@@ -1,0 +1,27 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (counts.total > 0) {
+  <div class="tb-bulk-stats-inline">
+    <span class="tb-bulk-stats-main">
+      <strong>{{ counts.done }}</strong>
+      <span class="slash">/</span>
+      <strong>{{ counts.total }}</strong>
+      <span class="pct">({{ successPct }}%)</span>
+    </span>
+    <span class="tb-bulk-stats-bar">
+      <span class="bar-done"    [style.width.%]="donePct"></span>
+      <span class="bar-error"   [style.width.%]="errorPct"></span>
+      <span class="bar-running" [style.width.%]="runningPct"></span>
+    </span>
+    <span class="tb-bulk-stats-legend">
+      <span class="legend-item"><span class="dot dot-done"></span>{{ 'agent.stats-done' | translate: { count: counts.done } }}</span>
+      <span class="legend-item"><span class="dot dot-error"></span>{{ 'agent.stats-error' | translate: { count: counts.error } }}</span>
+      <span class="legend-item"><span class="dot dot-running"></span>{{ 'agent.stats-running' | translate: { count: counts.running } }}</span>
+      <span class="legend-item"><span class="dot dot-pending"></span>{{ 'agent.stats-pending' | translate: { count: counts.pending } }}</span>
+    </span>
+  </div>
+}

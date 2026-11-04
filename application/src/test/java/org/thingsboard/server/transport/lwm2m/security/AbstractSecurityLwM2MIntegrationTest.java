@@ -1,18 +1,5 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.transport.lwm2m.security;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -239,10 +226,10 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     public void basicTestConnectionBootstrapRequestTriggerBefore(String clientEndpoint, String awaitAlias, LwM2MProfileBootstrapConfigType type, int cnt) throws Exception {
         List<LwM2MBootstrapServerCredential> bootstrapServerCredentialsNoSec = getBootstrapServerCredentialsNoSec(type);
         for (int i = 2; i <= cnt; i++) {
-            AbstractLwM2MBootstrapServerCredential bsCredential = getBootstrapServerCredentialNoSec(false);
-            bsCredential.setHost("0.0.0." + i);
-            bsCredential.setShortServerId(bsCredential.getShortServerId() + i);
-            bootstrapServerCredentialsNoSec.add(bsCredential);
+            AbstractLwM2MBootstrapServerCredential bsSectionCredential = getBootstrapSectionServerCredentialNoSec(false);
+            bsSectionCredential.setHost("0.0.0." + i);
+            bsSectionCredential.setShortServerId(bsSectionCredential.getShortServerId() + i);
+            bootstrapServerCredentialsNoSec.add(bsSectionCredential);
         }
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, bootstrapServerCredentialsNoSec);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
@@ -316,46 +303,46 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesBs));
     }
 
-    protected List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsSecure(LwM2MSecurityMode mode, LwM2MProfileBootstrapConfigType bootstrapConfigType) {
-        List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
+    protected List<LwM2MBootstrapServerCredential> getBootstrapSectionsServerCredentialsSecure(LwM2MSecurityMode mode, LwM2MProfileBootstrapConfigType bootstrapConfigType) {
+        List<LwM2MBootstrapServerCredential> bootstrapSections = new ArrayList<>();
         switch (bootstrapConfigType) {
             case BOTH:
-                bootstrap.add(getBootstrapServerCredential(mode, false));
-                bootstrap.add(getBootstrapServerCredential(mode, true));
+                bootstrapSections.add(getBootstrapSectionServerCredential(mode, false));
+                bootstrapSections.add(getBootstrapSectionServerCredential(mode, true));
                 break;
             case BOOTSTRAP_ONLY:
-                bootstrap.add(getBootstrapServerCredential(mode, true));
+                bootstrapSections.add(getBootstrapSectionServerCredential(mode, true));
                 break;
             case LWM2M_ONLY:
-                bootstrap.add(getBootstrapServerCredential(mode, false));
+                bootstrapSections.add(getBootstrapSectionServerCredential(mode, false));
                 break;
             case NONE:
         }
-        return bootstrap;
+        return bootstrapSections;
     }
 
-    private AbstractLwM2MBootstrapServerCredential getBootstrapServerCredential(LwM2MSecurityMode mode, boolean isBootstrap) {
-        AbstractLwM2MBootstrapServerCredential bootstrapServerCredential;
+    private AbstractLwM2MBootstrapServerCredential getBootstrapSectionServerCredential(LwM2MSecurityMode mode, boolean isBootstrap) {
+        AbstractLwM2MBootstrapServerCredential bootstrapSectionServerCredential;
         switch (mode) {
             case PSK:
-                bootstrapServerCredential = new PSKLwM2MBootstrapServerCredential();
-                bootstrapServerCredential.setServerPublicKey("");
+                bootstrapSectionServerCredential = new PSKLwM2MBootstrapServerCredential();
+                bootstrapSectionServerCredential.setServerPublicKey("");
                 break;
             case RPK:
-                bootstrapServerCredential = new RPKLwM2MBootstrapServerCredential();
+                bootstrapSectionServerCredential = new RPKLwM2MBootstrapServerCredential();
                 if (isBootstrap) {
-                    bootstrapServerCredential.setServerPublicKey(Base64.encodeBase64String(serverPublicKeyFromCertBs.getEncoded()));
+                    bootstrapSectionServerCredential.setServerPublicKey(Base64.encodeBase64String(serverPublicKeyFromCertBs.getEncoded()));
                 } else {
-                    bootstrapServerCredential.setServerPublicKey(Base64.encodeBase64String(serverPublicKeyFromCert.getEncoded()));
+                    bootstrapSectionServerCredential.setServerPublicKey(Base64.encodeBase64String(serverPublicKeyFromCert.getEncoded()));
                 }
                 break;
             case X509:
-                bootstrapServerCredential = new X509LwM2MBootstrapServerCredential();
+                bootstrapSectionServerCredential = new X509LwM2MBootstrapServerCredential();
                 try {
                     if (isBootstrap) {
-                        bootstrapServerCredential.setServerPublicKey(Base64.encodeBase64String(serverX509CertBs.getEncoded()));
+                        bootstrapSectionServerCredential.setServerPublicKey(Base64.encodeBase64String(serverX509CertBs.getEncoded()));
                     } else {
-                        bootstrapServerCredential.setServerPublicKey(Base64.encodeBase64String(serverX509Cert.getEncoded()));
+                        bootstrapSectionServerCredential.setServerPublicKey(Base64.encodeBase64String(serverX509Cert.getEncoded()));
                     }
                 } catch (CertificateEncodingException e) {
                     e.printStackTrace();
@@ -364,11 +351,11 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
             default:
                 throw new IllegalStateException("Unexpected value: " + mode);
         }
-        bootstrapServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
-        bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
-        bootstrapServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
-        bootstrapServerCredential.setPort(isBootstrap ? LWM2MS_BOOTSTRAP_PORT : LWM2MS_PORT);
-        return bootstrapServerCredential;
+        bootstrapSectionServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
+        bootstrapSectionServerCredential.setBootstrapServerIs(isBootstrap);
+        bootstrapSectionServerCredential.setHost(isBootstrap ? LWM2M_BOOTSTRAP_HOST : LWM2M_HOST);
+        bootstrapSectionServerCredential.setPort(isBootstrap ? LWM2MS_BOOTSTRAP_PORT : LWM2MS_PORT);
+        return bootstrapSectionServerCredential;
     }
 
 

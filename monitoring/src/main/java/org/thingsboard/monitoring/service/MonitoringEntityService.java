@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.monitoring.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,9 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.monitoring.client.TbClient;
+import org.thingsboard.monitoring.config.integration.IntegrationMonitoringConfig;
+import org.thingsboard.monitoring.config.integration.IntegrationMonitoringTarget;
 import org.thingsboard.monitoring.config.transport.DeviceConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringConfig;
 import org.thingsboard.monitoring.config.transport.TransportMonitoringTarget;
@@ -36,7 +28,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -49,6 +40,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.converter.Converter;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
@@ -60,18 +52,26 @@ import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfig
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.ConverterId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.integration.Integration;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.group.EntityGroup;
+import org.thingsboard.server.common.data.group.EntityGroupInfo;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.User;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.monitoring.service.BaseHealthChecker.TEST_CF_TELEMETRY_KEY;
@@ -84,6 +84,8 @@ public class MonitoringEntityService {
 
     private static final String DASHBOARD_TITLE = "[Monitoring] Cloud monitoring";
     private static final String DASHBOARD_RESOURCE_PATH = "dashboard_cloud_monitoring.json";
+    private static final String ENTITY_GROUP_PUBLIC_DASHBOARDS_NAME = "[Monitoring] Public dashboards";
+    private static final String ENTITY_GROUP_PUBLIC_ASSETS_NAME = "[Monitoring] Public assets";
 
     private final TbClient tbClient;
 
@@ -129,11 +131,15 @@ public class MonitoringEntityService {
 
         Asset asset = getOrCreateMonitoringAsset();
         Dashboard dashboard = getOrCreateMonitoringDashboard();
-
-        tbClient.assignAssetToPublicCustomer(asset.getId());
-        tbClient.assignDashboardToPublicCustomer(dashboard.getId());
-
         this.dashboardId = Optional.ofNullable(dashboard).map(Dashboard::getId).orElse(null);
+
+        // Public access is granted through public entity groups
+        EntityGroupInfo publicAssetsGroup = getOrCreatePublicGroup(ENTITY_GROUP_PUBLIC_ASSETS_NAME, EntityType.ASSET);
+        addEntityToGroupIfMissing(publicAssetsGroup, asset.getId());
+
+        EntityGroupInfo publicDashboardsGroup = getOrCreatePublicGroup(ENTITY_GROUP_PUBLIC_DASHBOARDS_NAME, EntityType.DASHBOARD);
+        addEntityToGroupIfMissing(publicDashboardsGroup, dashboard.getId());
+
     }
 
     public Asset getOrCreateMonitoringAsset() {
@@ -180,7 +186,7 @@ public class MonitoringEntityService {
         device.setName(deviceName);
 
         DeviceCredentials credentials = new DeviceCredentials();
-        credentials.setCredentialsId(RandomStringUtils.randomAlphabetic(20));
+        credentials.setCredentialsId(RandomStringUtils.secure().nextAlphabetic(20));
         DeviceData deviceData = new DeviceData();
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
 
@@ -268,21 +274,23 @@ public class MonitoringEntityService {
     public String getDashboardPublicLink() {
         String link = "";
         try {
+            if (dashboardId == null) {
+                return link;
+            }
             Optional<DashboardInfo> infoOpt = tbClient.getDashboardInfoById(dashboardId);
             if (infoOpt.isPresent()) {
+                // the public link is based on the public entity group that contains this dashboard
+                EntityGroupInfo publicDashboardsGroup = getOrCreatePublicGroup(ENTITY_GROUP_PUBLIC_DASHBOARDS_NAME, EntityType.DASHBOARD);
+                JsonNode additionalInfo = publicDashboardsGroup.getAdditionalInfo();
                 String publicCustomerId = null;
-                Set<ShortCustomerInfo> customers = infoOpt.get().getAssignedCustomers();
-                if (customers != null) {
-                    publicCustomerId = customers.stream()
-                            .filter(ShortCustomerInfo::isPublic)
-                            .map(c -> c.getCustomerId().getId().toString())
-                            .findFirst().orElse(null);
+                if (additionalInfo != null && additionalInfo.has("publicCustomerId")) {
+                    publicCustomerId = additionalInfo.get("publicCustomerId").asText();
                 }
-                if (publicCustomerId != null) {
+                if (publicCustomerId != null && !publicCustomerId.isEmpty()) {
                     link = buildPublicDashboardLink(dashboardId, publicCustomerId);
                     log.info("Public Monitoring dashboard link: {}", link);
                 } else {
-                    log.warn("Dashboard is not assigned to public customer. Public link can't be generated.");
+                    log.warn("Public dashboards group doesn't contain publicCustomerId. Public link can't be generated.");
                 }
             }
         } catch (Exception e) {
@@ -320,6 +328,66 @@ public class MonitoringEntityService {
         return String.format("%s/dashboard/%s?publicId=%s", base, dashboardId.getId().toString(), publicCustomerId);
     }
 
+    private EntityGroupInfo getOrCreatePublicGroup(String groupName, EntityType type) {
+        // Owner is the current tenant
+        EntityId ownerId = tbClient.getUser().map(User::getOwnerId).orElseThrow();
+        // Try to find existing group by owner and name
+        EntityGroupInfo group = tbClient.getEntityGroupInfoByOwnerAndNameAndType(ownerId, type, groupName)
+                .orElse(null);
+        if (group == null) {
+            EntityGroup newGroup = new EntityGroup();
+            newGroup.setName(groupName);
+            newGroup.setType(type);
+            newGroup.setOwnerId(ownerId);
+            EntityGroupInfo saved = tbClient.saveEntityGroup(newGroup);
+            // Make group public (idempotent)
+            try {
+                tbClient.makeEntityGroupPublic(saved.getId());
+            } catch (HttpClientErrorException e) {
+                if (!(e.getStatusCode() == HttpStatus.BAD_REQUEST &&
+                        e.getResponseBodyAsString() != null &&
+                        e.getResponseBodyAsString().contains("already public"))) {
+                    throw e;
+                }
+            }
+            // Refetch to ensure updated additionalInfo (isPublic, publicCustomerId)
+            return tbClient.getEntityGroupById(saved.getId()).orElse(saved);
+        } else {
+            if (!group.isPublic()) {
+                try {
+                    tbClient.makeEntityGroupPublic(group.getId());
+                } catch (HttpClientErrorException e) {
+                    if (!(e.getStatusCode() == HttpStatus.BAD_REQUEST &&
+                            e.getResponseBodyAsString() != null &&
+                            e.getResponseBodyAsString().contains("already public"))) {
+                        throw e;
+                    }
+                }
+                group = tbClient.getEntityGroupById(group.getId()).orElse(group);
+            }
+            return group;
+        }
+    }
+
+    private void addEntityToGroupIfMissing(EntityGroupInfo group, EntityId entityId) {
+        boolean present = false;
+        try {
+            // Check presence using REST call
+            present = tbClient.getGroupEntity(group.getId(), entityId).isPresent();
+        } catch (HttpClientErrorException e) {
+            String body = e.getResponseBodyAsString();
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST && body != null && body.contains("not present in entity group")) {
+                // Treat as not present; we'll add it below
+                present = false;
+            } else {
+                throw e;
+            }
+        }
+        if (!present) {
+            tbClient.addEntitiesToEntityGroup(group.getId(), List.of(entityId));
+        }
+    }
+
     private String getBaseUrl() {
         // TbClient.baseURL contains the root url, without trailing slash
         try {
@@ -330,6 +398,76 @@ public class MonitoringEntityService {
             log.warn("Unable to access baseURL from RestClient. Falling back to http://localhost:8080");
             return "http://localhost:8080";
         }
+    }
+
+    public void checkEntities(IntegrationMonitoringConfig config, IntegrationMonitoringTarget target) {
+        Device device = getOrCreateDevice(config, target);
+        DeviceConfig deviceConfig = new DeviceConfig();
+        deviceConfig.setId(device.getId().toString());
+        deviceConfig.setName(device.getName());
+        target.setDevice(deviceConfig);
+
+        Converter converter = getOrCreateConverter();
+        Integration integration = getOrCreateIntegration(config, target, converter.getId());
+        target.setIntegration(integration);
+    }
+
+    private Device getOrCreateDevice(IntegrationMonitoringConfig config, IntegrationMonitoringTarget target) {
+        String deviceName = String.format("%s %s integration - %s", target.getNamePrefix(), config.getIntegrationType().getName(), target.getBaseUrl()).trim();
+        return tbClient.getTenantDevice(deviceName)
+                .orElseGet(() -> {
+                    Device defaultDevice = ResourceUtils.getResource("integration/device.json", Device.class);
+                    defaultDevice.setName(deviceName);
+                    log.info("Creating new device '{}'", deviceName);
+                    return tbClient.saveDevice(defaultDevice);
+                });
+    }
+
+    private Integration getOrCreateIntegration(IntegrationMonitoringConfig config, IntegrationMonitoringTarget target, ConverterId converterId) {
+        String integrationName = String.format("%s %s integration", target.getNamePrefix(), config.getIntegrationType().getName()).trim();
+        return tbClient.getIntegrations(new PageLink(1, 0, integrationName)).getData()
+                .stream().findFirst()
+                .orElseGet(() -> {
+                    Integration defaultIntegration = ResourceUtils.getResource("integration/" + config.getIntegrationType().name().toLowerCase() + "/integration.json", Integration.class);
+                    defaultIntegration.setName(integrationName);
+                    defaultIntegration.setDefaultConverterId(converterId);
+                    defaultIntegration.setRoutingKey(UUID.randomUUID().toString());
+                    List<String> configParams;
+                    switch (config.getIntegrationType()) {
+                        case MQTT -> {
+                            URI url = URI.create(target.getBaseUrl());
+                            configParams = List.of(
+                                    url.getHost() /* %1$s */,
+                                    String.valueOf(url.getPort()) /* %2$s */,
+                                    defaultIntegration.getRoutingKey() /* %3$s */,
+                                    RandomStringUtils.randomNumeric(6) /* client id suffix, %4$s */
+                            );
+                        }
+                        default -> {
+                            configParams = List.of(
+                                    target.getBaseUrl() /* %1$s */,
+                                    defaultIntegration.getRoutingKey() /* %2$s */
+                            );
+                        }
+                    }
+                    defaultIntegration.setConfiguration(JacksonUtil.toJsonNode(
+                            String.format(defaultIntegration.getConfiguration().toString(),
+                                    configParams.toArray())));
+                    log.info("Creating new integration '{}'", integrationName);
+                    return tbClient.saveIntegration(defaultIntegration);
+                });
+    }
+
+    private Converter getOrCreateConverter() {
+        String converterName = "Default converter";
+        return tbClient.getConverters(new PageLink(1, 0, converterName)).getData()
+                .stream().findFirst()
+                .orElseGet(() -> {
+                    Converter defaultConverter = ResourceUtils.getResource("integration/converter.json", Converter.class);
+                    defaultConverter.setName(converterName);
+                    log.info("Creating new converter '{}'", converterName);
+                    return tbClient.saveConverter(defaultConverter);
+                });
     }
 
 }

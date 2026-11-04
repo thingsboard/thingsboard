@@ -1,0 +1,73 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<mat-toolbar color="tb-primary" class="tb-install-wizard-toolbar">
+  <div class="tb-install-wizard-toolbar-content">
+    <h2>{{ 'agent.app-upgrade-title' | translate }}:</h2>
+    <span class="flex-1">{{ profile.name }}</span>
+  </div>
+  <div tb-help="agentAppProfileVersions"></div>
+  <button mat-icon-button (click)="cancel()" type="button" tabindex="-1">
+    <mat-icon>close</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div mat-dialog-content class="tb-install-wizard-body">
+
+  @if (loadingTemplate) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span translate>agent.app-upgrade-loading</span>
+    </div>
+  }
+  @if (!loadingTemplate && loadError) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadError }}</span>
+      <div class="step-footer">
+        <button mat-button (click)="cancel()">{{ 'action.close' | translate }}</button>
+      </div>
+    </div>
+  }
+
+  @if (!loadingTemplate && !loadError) {
+    <div class="summary-card" style="margin-bottom: 16px;">
+      <div class="summary-row">
+        <span class="label" translate>agent.app-upgrade-summary-versions</span>
+        <span class="value">{{ fromVersion || '—' }} → {{ toVersion || '—' }}</span>
+      </div>
+    </div>
+    <div class="diff-header-row">
+      <div class="diff-header added">
+        {{ 'agent.app-upgrade-template-new' | translate: { version: toVersion || '—' } }}
+      </div>
+      <div class="diff-header removed" translate>agent.app-upgrade-current</div>
+      <button type="button" class="diff-sync-toggle"
+        [class.active]="diffSyncScroll"
+        [matTooltip]="'agent.app-diff-sync-scroll' | translate"
+        (click)="diffSyncScroll = !diffSyncScroll">
+        <mat-icon>{{ diffSyncScroll ? 'link' : 'link_off' }}</mat-icon>
+      </button>
+    </div>
+    <tb-agent-compose-diff [left]="proposedYaml" [right]="currentYaml"
+      [syncScroll]="diffSyncScroll" (rightChange)="composeYaml = $event"></tb-agent-compose-diff>
+    <p class="diff-hint" translate>agent.app-upgrade-diff-hint</p>
+    @if (isComposeYamlInvalid()) {
+      <p class="diff-hint" style="color:#c62828;" translate>
+        agent.app-compose-invalid-yaml
+      </p>
+    }
+    <div class="step-footer">
+      <button mat-button (click)="cancel()" [disabled]="submitting">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button mat-raised-button color="primary" (click)="submit()" [disabled]="!canSubmit()">
+        <mat-icon>upgrade</mat-icon>
+        <span>{{ 'agent.app-upgrade-cta' | translate }}</span>
+      </button>
+    </div>
+  }
+</div>

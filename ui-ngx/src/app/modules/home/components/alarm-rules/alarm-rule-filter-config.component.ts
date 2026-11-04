@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   Component,
   DestroyRef,
@@ -40,6 +27,8 @@ import { POSITION_MAP } from '@shared/models/overlay.models';
 import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { alarmRuleEntityTypeList, AlarmRuleFilterConfig } from "@shared/models/alarm-rule.models";
+import { UserPermissionsService } from "@core/http/user-permissions.service";
+import { Operation } from "@shared/models/security.models";
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmRuleFilterConfigData');
 
@@ -93,7 +82,8 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
 
   entityType = EntityType;
 
-  listEntityTypes = alarmRuleEntityTypeList;
+  listEntityTypes = alarmRuleEntityTypeList.filter(entityType =>
+    this.userPermissionsService.hasGenericPermissionByEntityGroupType(Operation.READ_CALCULATED_FIELD, entityType));
   entityTypeTranslations = entityTypeTranslations;
 
   private alarmRuleFilterConfig: AlarmRuleFilterConfig;
@@ -111,7 +101,8 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
               private nativeElement: ElementRef,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private userPermissionsService: UserPermissionsService) {
   }
 
   ngOnInit(): void {

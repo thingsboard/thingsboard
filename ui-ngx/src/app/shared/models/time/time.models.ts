@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { TimeService } from '@core/services/time.service';
 import { deepClean, deepClone, isDefined, isDefinedAndNotNull, isNumeric, isUndefined } from '@app/core/utils';
 import moment_ from 'moment';
@@ -276,7 +263,16 @@ export const historyInterval = (timewindowMs: number): Timewindow => ({
   selectedTab: TimewindowType.HISTORY,
   history: {
     historyType: HistoryWindowType.LAST_INTERVAL,
+    interval: SECOND,
     timewindowMs
+  }
+});
+
+export const historyQuickInterval = (interval: QuickTimeInterval): Timewindow => ({
+  selectedTab: TimewindowType.HISTORY,
+  history: {
+    historyType: HistoryWindowType.INTERVAL,
+    quickInterval: interval
   }
 });
 
@@ -683,6 +679,8 @@ export const calculateTsOffset = (timezone?: string): number => {
     return 0;
   }
 };
+
+export const toUtcDate = (ts: number | string): Date => moment(ts).utcOffset(0, true).toDate();
 
 export const isHistoryTypeTimewindow = (timewindow: Timewindow): boolean => getTimewindowType(timewindow) === TimewindowType.HISTORY;
 
@@ -1373,6 +1371,7 @@ export interface TimezoneInfo {
 
 let timezones: TimezoneInfo[] = null;
 let defaultTimezone: string = null;
+let userZone: moment_.MomentZone = null;
 
 export const getTimezones = (): TimezoneInfo[] => {
   if (!timezones) {
@@ -1413,6 +1412,13 @@ export const getTimezoneInfo = (timezoneId: string, defaultTimezoneId?: string, 
 export const getDefaultTimezoneInfo = (): TimezoneInfo => {
   const userTimezone = getDefaultTimezone();
   return getTimezoneInfo(userTimezone);
+};
+
+export const getUserZone = (): moment_.MomentZone => {
+  if (!userZone) {
+    userZone = momentTz.tz.zone(momentTz.tz.guess());
+  }
+  return userZone;
 };
 
 export const getTime = (ts: number, tz?: string): moment_.Moment => {

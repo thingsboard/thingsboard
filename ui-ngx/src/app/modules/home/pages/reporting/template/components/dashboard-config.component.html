@@ -1,0 +1,69 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-form-panel no-border h-full" [formGroup]="reportConfigForm">
+  <div class="tb-report-component-config-header">
+    <tb-toggle-select [(ngModel)]="settingsTab" [ngModelOptions]="{standalone: true}" appearance="fill">
+      <tb-toggle-option value="dashboard">{{ 'report-template.dashboard' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="layout">{{ 'report-template.layout' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+  <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'dashboard'">
+    <tb-datasources
+      [configMode]="basicMode"
+      stroked
+      displayDatasourceFilterForBasicMode
+      hideDataKeys
+      formControlName="dataSources"
+      [dataSourcesOptions]="{
+                  widgetType: widgetType.latest,
+                  maxDatasources: 1,
+                  datasourcesOptional: true,
+                  allowFunctions: false
+      }"
+      [callbacks]="callbacks"
+      [aliasController]="context.aliasController">
+    </tb-datasources>
+    <tb-dashboard-report-config pdfReportMode formControlName="config"></tb-dashboard-report-config>
+  </div>
+  <div class="tb-form-panel no-border no-padding overflow-y-auto" [class.!hidden]="settingsTab !== 'layout'">
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.image.image-width' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="widthType">
+            @for (widthType of imageWidthTypes; track widthType) {
+              <mat-option [value]="widthType">
+                {{ imageWidthTypeTranslations.get(widthType) | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (reportConfigForm.get('widthType').value === 'custom') {
+          <div class="tb-small-label" translate>report-template.width</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="customWidth" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+        }
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'report-template.component.image.image-alignment' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="alignment">
+          @for (alignment of imageAlignments; track alignment) {
+            <mat-option [value]="alignment">
+              {{ imageAlignmentTranslations.get(alignment) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <tb-report-component-layout-settings formControlName="layout">
+    </tb-report-component-layout-settings>
+  </div>
+</div>

@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy;
 
 import com.google.common.collect.Lists;
@@ -21,8 +9,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -30,6 +18,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -209,8 +198,8 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
     }
 
     @Override
-    protected PageData<EntityData> findByQueryAndCheck(CustomerId customerId, EntityDataQuery query, long expectedResultSize) {
-        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findByQuery(customerId, query),
+    protected PageData<EntityData> findByQueryAndCheck(CustomerId customerId, MergedUserPermissions permissions, EntityDataQuery query, long expectedResultSize) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findByQuery(customerId, permissions, query),
                 result -> result.getTotalElements() == expectedResultSize);
     }
 
@@ -222,12 +211,12 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
 
     @Override
     protected long countByQueryAndCheck(EntityCountQuery countQuery, int expectedResult) {
-        return countByQueryAndCheck(new CustomerId(CustomerId.NULL_UUID), countQuery, expectedResult);
+        return countByQueryAndCheck(new CustomerId(CustomerId.NULL_UUID), mergedUserPermissionsPE, countQuery, expectedResult);
     }
 
     @Override
-    protected long countByQueryAndCheck(CustomerId customerId, EntityCountQuery query, int expectedResult) {
-        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(customerId, query),
+    protected long countByQueryAndCheck(CustomerId customerId, MergedUserPermissions permissions, EntityCountQuery query, int expectedResult) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(customerId, permissions, query),
                 result -> result == expectedResult);
     }
 

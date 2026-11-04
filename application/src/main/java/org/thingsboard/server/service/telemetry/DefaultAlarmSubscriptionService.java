@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,11 +15,13 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
+import org.thingsboard.server.common.data.alarm.AlarmFilter;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -49,6 +39,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
@@ -60,6 +51,8 @@ import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.SEVERITY_CHANGED;
 
@@ -98,34 +91,36 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
-        return withWsCallback(alarmService.acknowledgeAlarm(tenantId, alarmId, ackTs));
+    public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, long ackTs) {
+        return withWsCallback(alarmService.acknowledgeAlarm(tenantId, originator, alarmId, ackTs));
     }
 
     @Override
-    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
-        return clearAlarm(tenantId, alarmId, clearTs, details, true);
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, long clearTs, JsonNode details) {
+        return clearAlarm(tenantId, originator, alarmId, clearTs, details, true);
     }
 
     @Override
-    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent) {
-        return withWsCallback(alarmService.clearAlarm(tenantId, alarmId, clearTs, details, pushEvent));
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent) {
+        return withWsCallback(alarmService.clearAlarm(tenantId, originator, alarmId, clearTs, details, pushEvent));
     }
 
     @Override
-    public AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs) {
-        return withWsCallback(alarmService.assignAlarm(tenantId, alarmId, assigneeId, assignTs));
+    public AlarmApiCallResult assignAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, UserId assigneeId, long assignTs) {
+        return withWsCallback(alarmService.assignAlarm(tenantId, originator, alarmId, assigneeId, assignTs));
     }
 
     @Override
-    public AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs) {
-        return withWsCallback(alarmService.unassignAlarm(tenantId, alarmId, assignTs));
+    public AlarmApiCallResult unassignAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId, long assignTs) {
+        return withWsCallback(alarmService.unassignAlarm(tenantId, originator, alarmId, assignTs));
     }
 
     @Override
-    public boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
-        AlarmApiCallResult result = alarmService.delAlarm(tenantId, alarmId);
-        onAlarmDeleted(result);
+    public boolean deleteAlarm(TenantId tenantId, EntityId originator, AlarmId alarmId) {
+        AlarmApiCallResult result = alarmService.delAlarm(tenantId, originator, alarmId);
+        if (result.isSuccessful()) {
+            onAlarmDeleted(result);
+        }
         return result.isSuccessful();
     }
 
@@ -170,8 +165,9 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        return alarmService.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, MergedUserPermissions mergedUserPermissions,
+                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+        return alarmService.findAlarmDataByQueryForEntities(tenantId, mergedUserPermissions, query, orderedEntityIds);
     }
 
     @Override
@@ -186,7 +182,21 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, type);
+        return alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, type);    }
+
+    @Override
+    public List<Long> findAlarmCounts(TenantId tenantId, AlarmQuery query, List<AlarmFilter> filters) {
+        return alarmService.findAlarmCounts(tenantId, query, filters);
+    }
+
+    @Override
+    public Set<EntityId> getPropagationEntityIds(Alarm alarm) {
+        return alarmService.getPropagationEntityIds(alarm);
+    }
+
+    @Override
+    public Set<EntityId> getPropagationEntityIds(Alarm alarm, List<EntityType> types) {
+        return alarmService.getPropagationEntityIds(alarm, types);
     }
 
     @Override

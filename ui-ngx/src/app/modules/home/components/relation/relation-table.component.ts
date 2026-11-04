@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -48,6 +35,10 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { RelationsDatasource } from '../../models/datasource/relation-datasource';
 import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { Operation, resourceByEntityType } from '@shared/models/security.models';
+import { EntityType } from '@shared/models/entity-type.models';
+import { UserPermissionsService } from '@core/http/user-permissions.service';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { FormBuilder } from '@angular/forms';
 
@@ -105,6 +96,16 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
+  private readonlyValue: boolean;
+  get readonly(): boolean {
+    return this.readonlyValue;
+  }
+
+  @Input()
+  set readonly(value: boolean) {
+    this.readonlyValue = coerceBooleanProperty(value);
+  }
+
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -119,6 +120,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
               private entityRelationService: EntityRelationService,
               public translate: TranslateService,
               public dialog: MatDialog,
+              private userPermissionsService: UserPermissionsService,
               private dialogService: DialogService,
               private cd: ChangeDetectorRef,
               private elementRef: ElementRef,
@@ -130,10 +132,10 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     this.direction = EntitySearchDirection.FROM;
     this.pageLink = new PageLink(10, 0, null, sortOrder);
     this.dataSource = new RelationsDatasource(this.entityRelationService, this.translate);
-    this.updateColumns();
   }
 
   ngOnInit() {
+    this.updateColumns();
     this.widgetResize$ = new ResizeObserver(() => {
       this.zone.run(() => {
         const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
@@ -156,9 +158,12 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
 
   updateColumns() {
     if (this.direction === EntitySearchDirection.FROM) {
-      this.displayedColumns = ['select', 'type', 'toEntityTypeName', 'toName', 'actions'];
+      this.displayedColumns = ['type', 'toEntityTypeName', 'toName', 'actions'];
     } else {
-      this.displayedColumns = ['select', 'type', 'fromEntityTypeName', 'fromName', 'actions'];
+      this.displayedColumns = ['type', 'fromEntityTypeName', 'fromName', 'actions'];
+    }
+    if (!this.readonly) {
+      this.displayedColumns.unshift('select');
     }
   }
 
@@ -238,6 +243,27 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   editRelation($event: Event, relation: EntityRelationInfo) {
     this.openRelationDialog($event, relation);
   }
+  showRelation($event: Event, relation: EntityRelationInfo) {
+    this.openRelationDialog($event, relation, this.readonly);
+  }
+
+  isRelationEditable(relation: EntityRelationInfo): boolean {
+    if (this.readonly) {
+      return false;
+    }
+    const entityType = this.direction === EntitySearchDirection.FROM ? relation.to.entityType : relation.from.entityType;
+    const resource = resourceByEntityType.get(entityType as EntityType);
+    return this.userPermissionsService.hasGenericPermission(resource, Operation.WRITE);
+  }
+
+  onRowClick($event: Event, groupPermission) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (!this.readonly) {
+      this.dataSource.selection.toggle(groupPermission);
+    }
+  }
 
   deleteRelation($event: Event, relation: EntityRelationInfo) {
     if ($event) {
@@ -316,7 +342,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
-  openRelationDialog($event: Event, relation: EntityRelation = null) {
+  openRelationDialog($event: Event, relation: EntityRelation = null, readonly: boolean = false) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -343,7 +369,8 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
       data: {
         isAdd,
         direction: this.direction,
-        relation: {...relation}
+        relation: {...relation},
+        readonly
       }
     }).afterClosed().subscribe(
       (res) => {

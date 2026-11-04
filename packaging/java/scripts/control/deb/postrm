@@ -4,4 +4,10 @@ set -e
 
 systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
 
+# Hosts upgraded from an earlier deb still have debconf entries registered; a no-op where there were never any.
+if [ "$1" = purge ] && [ -e /usr/share/debconf/confmodule ]; then
+    . /usr/share/debconf/confmodule
+    db_purge
+fi
+
 exit 0

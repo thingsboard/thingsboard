@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Injectable, NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
@@ -44,7 +31,7 @@ export const oAuth2Routes: Routes = [
     path: 'oauth2',
     component: RouterTabsComponent,
     data: {
-      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       breadcrumb: {
         label: 'admin.oauth2.oauth2',
         icon: 'mdi:shield-account'
@@ -55,18 +42,15 @@ export const oAuth2Routes: Routes = [
         path: '',
         children: [],
         data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          redirectTo: {
-            SYS_ADMIN: '/security-settings/oauth2/domains',
-            TENANT_ADMIN: '/security-settings/oauth2/clients'
-          }
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/security-settings/oauth2/domains'
         }
       },
       {
         path: 'domains',
         component: EntitiesTableComponent,
         data: {
-          auth: [Authority.SYS_ADMIN],
+          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
           title: 'admin.oauth2.domains',
           breadcrumb: {
             menuId: MenuId.domains
@@ -89,7 +73,7 @@ export const oAuth2Routes: Routes = [
             path: '',
             component: EntitiesTableComponent,
             data: {
-              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+              auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
               title: 'admin.oauth2.clients'
             },
             resolve: {
@@ -107,7 +91,7 @@ export const oAuth2Routes: Routes = [
                     labelFunction: entityDetailsPageBreadcrumbLabelFunction,
                     icon: 'public'
                   } as BreadCrumbConfig<EntityDetailsPageComponent>,
-                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+                  auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
                   title: 'admin.oauth2.clients',
                   hideTabs: true,
                   backNavigationCommands: ['../..']

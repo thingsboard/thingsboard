@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
@@ -140,6 +127,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected shapePatternStorage: ShapePatternStorage = {};
 
+  protected mapUuid: string;
+
   private readonly mapResize$: ResizeObserver;
 
   private tooltipInstances: TooltipInstancesData[] = [];
@@ -154,9 +143,17 @@ export abstract class TbMap<S extends BaseMapSettings> {
     return !!this.currentEditButton;
   }
 
+  private dataLayersSubscription: IWidgetSubscription;
+  private tripDataLayersSubscription: IWidgetSubscription;
+
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
+    if (this.ctx.reportService.reportView) {
+      this.mapUuid = this.ctx.reportService.onWaitForMap();
+      $(containerElement).addClass('tb-web-report');
+    }
+    this.ctx.customDataExport = this.customDataExport.bind(this);
     this.ctx.actionsApi.placeMapItem = this.placeMapItem.bind(this);
     (this.ctx as any).mapInstance = this;
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
@@ -359,6 +356,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             }
             this.ctx.subscriptionApi.createSubscription(dataLayersSubscriptionOptions, false).subscribe(
               (dataLayersSubscription) => {
+                this.dataLayersSubscription = dataLayersSubscription;
                 let pageSize = this.settings.mapPageSize;
                 if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
                   pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
@@ -408,6 +406,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
             this.ctx.subscriptionApi.createSubscription(tripDataLayersSubscriptionOptions, false).subscribe(
               (tripDataLayersSubscription) => {
+                this.tripDataLayersSubscription = tripDataLayersSubscription;
                 let pageSize = this.settings.mapPageSize;
                 if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
                   pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
@@ -944,6 +943,17 @@ export abstract class TbMap<S extends BaseMapSettings> {
           });
         });
     });
+  }
+
+  private customDataExport(): {[key: string]: any}[] {
+    let exportData: {[key: string]: any}[] = [];
+    if (this.dataLayersSubscription) {
+      exportData = [...this.dataLayersSubscription.exportData()];
+    }
+    if (this.tripDataLayersSubscription) {
+      exportData = [...exportData,...this.tripDataLayersSubscription.exportData()];
+    }
+    return exportData;
   }
 
   private update(subscription: IWidgetSubscription) {

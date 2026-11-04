@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -48,24 +36,30 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.UniquifyStrategy;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityGroupId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.permission.Operation;
+import org.thingsboard.server.common.data.permission.Resource;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
@@ -73,14 +67,11 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
 import org.thingsboard.server.service.entitiy.device.TbDeviceService;
+import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,16 +99,18 @@ import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_MQTT_BASIC_DESCRIPTION_MARKDOWN;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_X509_CERTIFICATE_DESCRIPTION_MARKDOWN;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_GROUP_ID;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_GROUP_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_CUSTOMERS_OR_SUB_CUSTOMERS;
 import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_DELETE_CHECK;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_GROUP_READ_CHECK;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_READ_CHECK;
+import static org.thingsboard.server.controller.ControllerConstants.RBAC_WRITE_CHECK;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -126,7 +119,6 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PA
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
-import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
 @TbCoreComponent
@@ -137,15 +129,18 @@ public class DeviceController extends BaseController {
 
     protected static final String DEVICE_NAME = "deviceName";
 
-    private final DeviceBulkImportService deviceBulkImportService;
+    protected static final String RBAC_READ_CREDENTIALS_CHECK = " Security check is performed to verify that the user has 'READ_CREDENTIALS' permission for the entity (entities).";
+    protected static final String RBAC_WRITE_CREDENTIALS_CHECK = " Security check is performed to verify that the user has 'WRITE_CREDENTIALS' permission for the entity (entities).";
+    protected static final String RBAC_CLAIM_CHECK = " Security check is performed to verify that the user has 'CLAIM_DEVICES' permission for the entity (entities).";
+    protected static final String RBAC_ASSIGN_TO_TENANT_CHECK = " Security check is performed to verify that the user has 'ASSIGN_TO_TENANT' permission for the entity (entities).";
 
+    private final DeviceBulkImportService deviceBulkImportService;
+    private final GatewayNotificationsService gatewayNotificationsService;
     private final TbDeviceService tbDeviceService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
-            notes = "Fetch the Device object based on the provided Device Id. " +
-                    "If the user has the authority of 'TENANT_ADMIN', the server checks that the device is owned by the same tenant. " +
-                    "If the user has the authority of 'CUSTOMER_USER', the server checks that the device is assigned to the same customer." +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Fetch the Device object based on the provided Device Id. "
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -156,11 +151,9 @@ public class DeviceController extends BaseController {
         return checkDeviceId(deviceId, Operation.READ);
     }
 
-    @ApiOperation(value = "Get Device Info (getDeviceInfoById)",
-            notes = "Fetch the Device Info object based on the provided Device Id. " +
-                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " +
-                    DEVICE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get Device (getDeviceInfoById)",
+            notes = "Fetch the Device info object based on the provided Device Id. "
+                    + DEVICE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/info/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -179,27 +172,31 @@ public class DeviceController extends BaseController {
                     "Referencing non-existing device Id will cause 'Not Found' error." +
                     "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes." +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.") @RequestBody Device device,
+    public Device saveDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.", required = true) @RequestBody Device device,
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
-                                     "If omitted, access token will be auto-generated.")
-                             @RequestParam(name = "accessToken", required = false) String accessToken,
+                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken,
+                             @RequestParam(name = "entityGroupId", required = false) String strEntityGroupId,
+                             @Parameter(description = "A list of entity group ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+                             @RequestParam(name = "entityGroupIds", required = false) String[] strEntityGroupIds,
                              @Parameter(description = NAME_CONFLICT_POLICY_DESC)
                              @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
                              @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
                              @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
                              @Parameter(description = UNIQUIFY_STRATEGY_DESC)
-                             @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws Exception {
-        device.setTenantId(getCurrentUser().getTenantId());
-        if (device.getId() != null) {
-            checkDeviceId(device.getId(), Operation.WRITE);
-        } else {
-            checkEntity(null, device, Resource.DEVICE);
-        }
-        return tbDeviceService.save(device, accessToken, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
+                             @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        return saveGroupEntity(device, strEntityGroupId, strEntityGroupIds,
+                (device1, entityGroups) -> {
+                    try {
+                        return tbDeviceService.save(device1, accessToken, entityGroups, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), user);
+                    } catch (Exception e) {
+                        throw handleException(e);
+                    }
+                });
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -219,12 +216,15 @@ public class DeviceController extends BaseController {
                     "Note: LwM2M device - only existing device profile ID (Transport configuration -> Transport type: \"LWM2M\".\n\n" +
                     DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_LVM2M_RPK_DESCRIPTION_MARKDOWN + "\n\n" +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity. " +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_WRITE_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDeviceWithCredentials(@Parameter(description = "The JSON object with device and credentials. See method description above for example.")
                                             @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials,
+                                            @RequestParam(name = "entityGroupId", required = false) String strEntityGroupId,
+                                            @Parameter(description = "A list of entity group ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+                                            @RequestParam(name = "entityGroupIds", required = false) String[] strEntityGroupIds,
                                             @Parameter(description = NAME_CONFLICT_POLICY_DESC)
                                             @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
                                             @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
@@ -233,14 +233,15 @@ public class DeviceController extends BaseController {
                                             @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws ThingsboardException {
         Device device = deviceAndCredentials.getDevice();
         DeviceCredentials credentials = deviceAndCredentials.getCredentials();
-        device.setTenantId(getCurrentUser().getTenantId());
-        checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(device, credentials, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
+        SecurityUser user = getCurrentUser();
+        return saveGroupEntity(device, strEntityGroupId, strEntityGroupIds,
+                (device1, entityGroup) -> tbDeviceService.saveDeviceWithCredentials(device1, credentials, entityGroup, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), user));
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",
-            notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+            notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_DELETE_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDevice(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
@@ -251,60 +252,9 @@ public class DeviceController extends BaseController {
         tbDeviceService.delete(device, getCurrentUser());
     }
 
-    @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",
-            notes = "Creates assignment of the device to customer. Customer will be able to query device afterwards." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
-    public Device assignDeviceToCustomer(@Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
-                                         @PathVariable("customerId") String strCustomerId,
-                                         @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
-        checkParameter(DEVICE_ID, strDeviceId);
-        CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-        Customer customer = checkCustomerId(customerId, Operation.READ);
-        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDeviceService.assignDeviceToCustomer(getTenantId(), deviceId, customer, getCurrentUser());
-    }
-
-    @ApiOperation(value = "Unassign device from customer (unassignDeviceFromCustomer)",
-            notes = "Clears assignment of the device to customer. Customer will not be able to query device afterwards." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public Device unassignDeviceFromCustomer(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                             @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
-        checkParameter(DEVICE_ID, strDeviceId);
-        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_CUSTOMER);
-        if (device.getCustomerId() == null || device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            throw new IncorrectParameterException("Device isn't assigned to any customer!");
-        }
-
-        Customer customer = checkCustomerId(device.getCustomerId(), Operation.READ);
-
-        return tbDeviceService.unassignDeviceFromCustomer(device, customer, getCurrentUser());
-    }
-
-    @ApiOperation(value = "Make device publicly available (assignDeviceToPublicCustomer)",
-            notes = "Device will be available for non-authorized (not logged-in) users. " +
-                    "This is useful to create dashboards that you plan to share/embed on a publicly available website. " +
-                    "However, users that are logged-in and belong to different tenant will not be able to access the device." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
-    public Device assignDeviceToPublicCustomer(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                               @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
-        checkParameter(DEVICE_ID, strDeviceId);
-        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.ASSIGN_TO_CUSTOMER);
-        return tbDeviceService.assignDeviceToPublicCustomer(getTenantId(), deviceId, getCurrentUser());
-    }
-
     @ApiOperation(value = "Get Device Credentials (getDeviceCredentialsByDeviceId)",
-            notes = "If during device creation there wasn't specified any credentials, platform generates random 'ACCESS_TOKEN' credentials." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "If during device creation there wasn't specified any credentials, platform generates random 'ACCESS_TOKEN' credentials."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CREDENTIALS_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}/credentials", method = RequestMethod.GET)
     @ResponseBody
@@ -317,7 +267,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Update device credentials (updateDeviceCredentials)",
-            notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. \" +\n" +
+            notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials.\n" +
                     "Use this method to update the device credentials. First use 'getDeviceCredentialsByDeviceId' to get the credentials id and value.\n" +
                     "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device.\n" +
                     "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.\n" +
@@ -337,7 +287,7 @@ public class DeviceController extends BaseController {
                     " - 'deviceId.id' (this is id of Device).\n" +
                     "Remove 'tenantId' and optionally 'customerId' from the request body example (below) to create new Device entity." +
                     TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
     @ResponseBody
     public DeviceCredentials updateDeviceCredentials(
@@ -350,7 +300,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Devices (getTenantDevices)",
             notes = "Returns a page of devices owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/tenant/devices")
     public PageData<Device> getTenantDevices(
@@ -366,6 +316,7 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (type != null && type.trim().length() > 0) {
@@ -375,54 +326,21 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Tenant Device Infos (getTenantDeviceInfos)",
-            notes = "Returns a page of devices info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/tenant/deviceInfos")
-    public PageData<DeviceInfo> getTenantDeviceInfos(
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-            @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-            @RequestParam int page,
-            @Parameter(description = DEVICE_TYPE_DESCRIPTION)
-            @RequestParam(required = false) String type,
-            @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
-            @RequestParam(required = false) String deviceProfileId,
-            @Parameter(description = DEVICE_ACTIVE_PARAM_DESCRIPTION)
-            @RequestParam(required = false) Boolean active,
-            @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
-            @RequestParam(required = false) String textSearch,
-            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deviceProfileName", "label", "customerTitle"}))
-            @RequestParam(required = false) String sortProperty,
-            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-            @RequestParam(required = false) String sortOrder
-    ) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
-        filter.tenantId(tenantId);
-        filter.active(active);
-        if (type != null && type.trim().length() > 0) {
-            filter.type(type);
-        } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
-            filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
-        }
-        return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
-    }
-
     @Hidden
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/tenant/devices", params = {"deviceName"})
     public Device getTenantDevice(
+            @Parameter(description = DEVICE_NAME_DESCRIPTION)
             @RequestParam String deviceName) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         return checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
     }
 
-    @ApiOperation(value = "Get Tenant Device (getTenantDeviceByName)",
+    @ApiOperation(value = "Get Tenant Device (getTenantDevice)",
             notes = "Requested device must be owned by tenant that the user belongs to. " +
-                    "Device name is an unique property of device. So it can be used to identify the device." + TENANT_AUTHORITY_PARAGRAPH)
+                    "Device name is an unique property of device. So it can be used to identify the device."
+                    + TENANT_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/tenant/device")
     public Device getTenantDeviceByName(
@@ -433,7 +351,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Customer Devices (getCustomerDevices)",
             notes = "Returns a page of devices objects assigned to customer. " +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/customer/{customerId}/devices")
     public PageData<Device> getCustomerDevices(
@@ -455,6 +373,7 @@ public class DeviceController extends BaseController {
         TenantId tenantId = getCurrentUser().getTenantId();
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         checkCustomerId(customerId, Operation.READ);
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (type != null && type.trim().length() > 0) {
             return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
@@ -463,20 +382,45 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Customer Device Infos (getCustomerDeviceInfos)",
-            notes = "Returns a page of devices info objects assigned to customer. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get Devices (getUserDevices)",
+            notes = "Returns a page of devices that are available for the current user. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/customer/{customerId}/deviceInfos")
-    public PageData<DeviceInfo> getCustomerDeviceInfos(
-            @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("customerId") String strCustomerId,
+    @RequestMapping(value = "/user/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Device> getUserDevices(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @RequestParam int page,
+            @Parameter(description = DEVICE_TYPE_DESCRIPTION)
+            @RequestParam(required = false) String type,
+            @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deviceProfileName", "label", "customerTitle"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        SecurityUser currentUser = getCurrentUser();
+        MergedUserPermissions mergedUserPermissions = currentUser.getUserPermissions();
+        return entityService.findUserEntities(currentUser.getTenantId(), currentUser.getCustomerId(), mergedUserPermissions, EntityType.DEVICE,
+                Operation.READ, type, pageLink);
+    }
+
+    @ApiOperation(value = "Get All Device Infos for current user (getAllDeviceInfos)",
+            notes = "Returns a page of device info objects owned by the tenant or the customer of a current user. "
+                    + DEVICE_INFO_DESCRIPTION + " " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/deviceInfos/all", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<DeviceInfo> getAllDeviceInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @Parameter(description = DEVICE_TYPE_DESCRIPTION)
-            @RequestParam(required = false) String type,
+            @Parameter(description = INCLUDE_CUSTOMERS_OR_SUB_CUSTOMERS)
+            @RequestParam(required = false) Boolean includeCustomers,
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @Parameter(description = DEVICE_ACTIVE_PARAM_DESCRIPTION)
@@ -487,25 +431,66 @@ public class DeviceController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
+        filter.tenantId(tenantId);
+        filter.active(active);
+        filter.includeCustomers(includeCustomers != null && includeCustomers);
+        if (deviceProfileId != null && deviceProfileId.length() > 0) {
+            filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
+        }
+        if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
+            filter.customerId(getCurrentUser().getCustomerId());
+        }
+        return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
+    }
+
+    @ApiOperation(value = "Get Customer Device Infos (getCustomerDeviceInfos)",
+            notes = "Returns a page of device info objects owned by the specified customer. "
+                    + DEVICE_INFO_DESCRIPTION + " " + PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/customer/{customerId}/deviceInfos")
+    public PageData<DeviceInfo> getCustomerDeviceInfos(
+            @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable(CUSTOMER_ID) String strCustomerId,
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = INCLUDE_CUSTOMERS_OR_SUB_CUSTOMERS)
+            @RequestParam(required = false) Boolean includeCustomers,
+            @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
+            @RequestParam(required = false) String deviceProfileId,
+            @Parameter(description = DEVICE_ACTIVE_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean active,
+            @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deviceProfileName", "label", "customerTitle"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter(CUSTOMER_ID, strCustomerId);
+        accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         checkCustomerId(customerId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
         filter.tenantId(tenantId);
-        filter.customerId(customerId);
         filter.active(active);
-        if (type != null && type.trim().length() > 0) {
-            filter.type(type);
-        } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
+        filter.includeCustomers(includeCustomers != null && includeCustomers);
+        filter.customerId(customerId);
+        if (deviceProfileId != null && deviceProfileId.length() > 0) {
             filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
         }
         return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
     }
 
     @ApiOperation(value = "Get Devices By Ids (getDevicesByIds)",
-            notes = "Requested devices must be owned by tenant or assigned to customer which user is performing the request. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Requested devices must be owned by tenant or assigned to customer which user is performing the request. "
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/devices")
     public List<Device> getDevicesByIds(
@@ -514,24 +499,18 @@ public class DeviceController extends BaseController {
         checkArrayParameter("deviceIds", strDeviceIds);
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
-        CustomerId customerId = user.getCustomerId();
         List<DeviceId> deviceIds = new ArrayList<>();
         for (String strDeviceId : strDeviceIds) {
             deviceIds.add(new DeviceId(toUUID(strDeviceId)));
         }
-        ListenableFuture<List<Device>> devices;
-        if (customerId == null || customerId.isNullUid()) {
-            devices = deviceService.findDevicesByTenantIdAndIdsAsync(tenantId, deviceIds);
-        } else {
-            devices = deviceService.findDevicesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, deviceIds);
-        }
-        return checkNotNull(devices.get());
+        List<Device> devices = checkNotNull(deviceService.findDevicesByTenantIdAndIdsAsync(tenantId, deviceIds).get());
+        return filterDevicesByReadPermission(devices);
     }
 
     @ApiOperation(value = "Find related devices (findDevicesByQuery)",
             notes = "Returns all devices that are related to the specific entity. " +
                     "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
-                    "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
@@ -543,15 +522,45 @@ public class DeviceController extends BaseController {
         checkNotNull(query.getDeviceTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         List<Device> devices = checkNotNull(deviceService.findDevicesByQuery(getCurrentUser().getTenantId(), query).get());
-        devices = devices.stream().filter(device -> {
+        return filterDevicesByReadPermission(devices);
+    }
+
+    @ApiOperation(value = "Get devices by Entity Group Id (getDevicesByEntityGroupId)",
+            notes = "Returns a page of Device objects that belongs to specified Entity Group Id. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_GROUP_READ_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/entityGroup/{entityGroupId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Device> getDevicesByEntityGroupId(
+            @Parameter(description = ENTITY_GROUP_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable(ENTITY_GROUP_ID) String strEntityGroupId,
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true, schema = @Schema(minimum = "1"))
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true, schema = @Schema(minimum = "0"))
+            @RequestParam int page,
+            @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deviceProfileName", "label", "customerTitle"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder
+    ) throws ThingsboardException {
+        checkParameter(ENTITY_GROUP_ID, strEntityGroupId);
+        EntityGroupId entityGroupId = new EntityGroupId(toUUID(strEntityGroupId));
+        EntityGroup entityGroup = checkEntityGroupId(entityGroupId, Operation.READ);
+        checkEntityGroupType(EntityType.DEVICE, entityGroup.getType());
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return checkNotNull(deviceService.findDevicesByEntityGroupId(entityGroupId, pageLink));
+    }
+
+    private List<Device> filterDevicesByReadPermission(List<Device> devices) {
+        return devices.stream().filter(device -> {
             try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
-                return true;
+                return accessControlService.hasPermission(getCurrentUser(), Resource.DEVICE, Operation.READ, device.getId(), device);
             } catch (ThingsboardException e) {
                 return false;
             }
-        }).collect(Collectors.toList());
-        return devices;
+        }).toList();
     }
 
     @ApiOperation(value = "Get Device Types (getDeviceTypes)",
@@ -573,28 +582,37 @@ public class DeviceController extends BaseController {
                     "Once device is claimed, the customer becomes its owner and customer users may access device data as well as control the device. \n" +
                     "In order to enable claiming devices feature a system parameter security.claim.allowClaimingByDefault should be set to true, " +
                     "otherwise a server-side claimingAllowed attribute with the value true is obligatory for provisioned devices. \n" +
-                    "See official documentation for more details regarding claiming." + CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "See official documentation for more details regarding claiming." + CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_CLAIM_CHECK)
     @PreAuthorize("hasAuthority('CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> claimDevice(@Parameter(description = "Unique name of the device which is going to be claimed")
                                                       @PathVariable(DEVICE_NAME) String deviceName,
                                                       @Parameter(description = "Claiming request which can optionally contain secret key")
-                                                      @RequestBody(required = false) ClaimRequest claimRequest) throws ThingsboardException {
+                                                      @RequestBody(required = false) ClaimRequest claimRequest,
+                                                      @RequestParam(required = false) String subCustomerId) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
         final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
 
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
-        CustomerId customerId = user.getCustomerId();
-
+        CustomerId parentCustomerId = user.getCustomerId();
+        CustomerId customerId;
         Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
         accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
                 device.getId(), device);
         String secretKey = getSecretKey(claimRequest);
 
+        if (StringUtils.isEmpty(subCustomerId)) {
+            customerId = parentCustomerId;
+        } else {
+            Customer subCustomer = checkNotNull(customerService.findCustomerById(tenantId, new CustomerId(UUID.fromString(subCustomerId))));
+            customerId = subCustomer.getId();
+            if (!ownersCacheService.isChildOwner(tenantId, parentCustomerId, customerId)) {
+                throw new ThingsboardException("Requested sub-customer wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
+            }
+        }
         ListenableFuture<ClaimResult> future = tbDeviceService.claimDevice(tenantId, device, customerId, secretKey, user);
-
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable ClaimResult result) {
@@ -622,7 +640,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Reclaim device (reClaimDevice)",
             notes = "Reclaiming means the device will be unassigned from the customer and the device will be available for claiming again."
-                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_CLAIM_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -662,7 +680,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Assign device to tenant (assignDeviceToTenant)",
-            notes = "Creates assignment of the device to tenant. Thereafter tenant will be able to reassign the device to a customer." + TENANT_AUTHORITY_PARAGRAPH)
+            notes = "Creates assignment of the device to tenant. Thereafter tenant will be able to reassign the device to a customer."
+                    + TENANT_AUTHORITY_PARAGRAPH + RBAC_ASSIGN_TO_TENANT_CHECK)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -683,127 +702,62 @@ public class DeviceController extends BaseController {
         return tbDeviceService.assignDeviceToTenant(device, newTenant, getCurrentUser());
     }
 
-    @ApiOperation(value = "Assign device to edge (assignDeviceToEdge)",
-            notes = "Creates assignment of an existing device to an instance of The Edge. " +
-                    EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
-                    "Second, remote edge service will receive a copy of assignment device " +
-                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once device will be delivered to edge service, it's going to be available for usage on remote edge instance." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
-    public Device assignDeviceToEdge(@Parameter(description = EDGE_ID_PARAM_DESCRIPTION)
-                                     @PathVariable(EDGE_ID) String strEdgeId,
-                                     @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                     @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
-        checkParameter(EDGE_ID, strEdgeId);
-        checkParameter(DEVICE_ID, strDeviceId);
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        Edge edge = checkEdgeId(edgeId, Operation.READ);
-
-        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        checkDeviceId(deviceId, Operation.READ);
-
-        return tbDeviceService.assignDeviceToEdge(getTenantId(), deviceId, edge, getCurrentUser());
-    }
-
-    @ApiOperation(value = "Unassign device from edge (unassignDeviceFromEdge)",
-            notes = "Clears assignment of the device to the edge. " +
-                    EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
-                    "Second, remote edge service will receive an 'unassign' command to remove device " +
-                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove device locally." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.DELETE)
-    @ResponseBody
-    public Device unassignDeviceFromEdge(@Parameter(description = EDGE_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(EDGE_ID) String strEdgeId,
-                                         @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
-        checkParameter(EDGE_ID, strEdgeId);
-        checkParameter(DEVICE_ID, strDeviceId);
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        Edge edge = checkEdgeId(edgeId, Operation.READ);
-
-        DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-        Device device = checkDeviceId(deviceId, Operation.READ);
-        return tbDeviceService.unassignDeviceFromEdge(device, edge, getCurrentUser());
-    }
-
-    @ApiOperation(value = "Get devices assigned to edge (getEdgeDevices)",
-            notes = "Returns a page of devices assigned to edge. " +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Count devices by device profile  (countByDeviceProfileAndEmptyOtaPackage)",
+            notes = "The platform gives an ability to load OTA (over-the-air) packages to devices. " +
+                    "It can be done in two different ways: device scope or device profile scope." +
+                    "In the response you will find the number of devices with specified device profile, but without previously defined device scope OTA package. " +
+                    "It can be useful when you want to define number of devices that will be affected with future OTA package"
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/edge/{edgeId}/devices")
-    public PageData<DeviceInfo> getEdgeDevices(
-            @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable(EDGE_ID) String strEdgeId,
-            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-            @RequestParam int pageSize,
-            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-            @RequestParam int page,
-            @Parameter(description = DEVICE_TYPE_DESCRIPTION)
-            @RequestParam(required = false) String type,
-            @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
-            @RequestParam(required = false) String deviceProfileId,
-            @Parameter(description = DEVICE_ACTIVE_PARAM_DESCRIPTION)
-            @RequestParam(required = false) Boolean active,
-            @Parameter(description = DEVICE_TEXT_SEARCH_DESCRIPTION)
-            @RequestParam(required = false) String textSearch,
-            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deviceProfileName", "label", "customerTitle"}))
-            @RequestParam(required = false) String sortProperty,
-            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-            @RequestParam(required = false) String sortOrder,
-            @Parameter(description = "Timestamp. Devices with creation time before it won't be queried")
-            @RequestParam(required = false) Long startTime,
-            @Parameter(description = "Timestamp. Devices with creation time after it won't be queried")
-            @RequestParam(required = false) Long endTime) throws ThingsboardException {
-        checkParameter(EDGE_ID, strEdgeId);
-        TenantId tenantId = getCurrentUser().getTenantId();
-        EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-        checkEdgeId(edgeId, Operation.READ);
-        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
-        DeviceInfoFilter.DeviceInfoFilterBuilder filter = DeviceInfoFilter.builder();
-        filter.tenantId(tenantId);
-        filter.edgeId(edgeId);
-        filter.active(active);
-        if (type != null && type.trim().length() > 0) {
-            filter.type(type);
-        } else if (deviceProfileId != null && deviceProfileId.length() > 0) {
-            filter.deviceProfileId(new DeviceProfileId(toUUID(deviceProfileId)));
-        }
-        return checkNotNull(deviceService.findDeviceInfosByFilter(filter.build(), pageLink));
+    @RequestMapping(value = "/devices/count/{otaPackageType}/{deviceProfileId}", method = RequestMethod.GET)
+    @ResponseBody
+    public Long countByDeviceProfileAndEmptyOtaPackage(@Parameter(description = "OTA package type", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
+                                                       @PathVariable("otaPackageType") String otaPackageType,
+                                                       @Parameter(description = "Device Profile Id. I.g. '784f394c-42b6-435a-983c-b7beff2784f9'")
+                                                       @PathVariable("deviceProfileId") String deviceProfileId) throws ThingsboardException {
+        checkParameter("OtaPackageType", otaPackageType);
+        checkParameter("DeviceProfileId", deviceProfileId);
+        return deviceService.countByDeviceProfileAndEmptyOtaPackage(
+                getTenantId(),
+                new DeviceProfileId(UUID.fromString(deviceProfileId)),
+                OtaPackageType.valueOf(otaPackageType));
     }
 
     @ApiOperation(value = "Count devices by device profile  (countByDeviceProfileAndEmptyOtaPackage)",
             notes = "The platform gives an ability to load OTA (over-the-air) packages to devices. " +
                     "It can be done in two different ways: device scope or device profile scope." +
                     "In the response you will find the number of devices with specified device profile, but without previously defined device scope OTA package. " +
-                    "It can be useful when you want to define number of devices that will be affected with future OTA package" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+                    "It can be useful when you want to define number of devices that will be affected with future OTA package" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH + RBAC_READ_CHECK)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/devices/count/{otaPackageType}/{deviceProfileId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/devices/count/{otaPackageType}/{otaPackageId}/{entityGroupId}", method = RequestMethod.GET)
     @ResponseBody
-    public Long countByDeviceProfileAndEmptyOtaPackage(
+    public Long countByDeviceGroupAndEmptyOtaPackage(
             @Parameter(description = "OTA package type", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
             @PathVariable("otaPackageType") String otaPackageType,
-            @Parameter(description = "Device Profile Id. I.g. '784f394c-42b6-435a-983c-b7beff2784f9'")
-            @PathVariable("deviceProfileId") String deviceProfileId) throws ThingsboardException {
+            @PathVariable("otaPackageId") String otaPackageId,
+            @PathVariable("entityGroupId") String deviceGroupId) throws ThingsboardException {
         checkParameter("OtaPackageType", otaPackageType);
-        checkParameter("DeviceProfileId", deviceProfileId);
-        return deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(
-                getTenantId(),
-                new DeviceProfileId(UUID.fromString(deviceProfileId)),
+        checkParameter("OtaPackageId", otaPackageId);
+        checkParameter("EntityGroupId", deviceGroupId);
+        checkParameter("DeviceGroupId", deviceGroupId);
+        return deviceService.countByEntityGroupAndEmptyOtaPackage(
+                new EntityGroupId(UUID.fromString(deviceGroupId)),
+                new OtaPackageId(UUID.fromString(otaPackageId)),
                 OtaPackageType.valueOf(otaPackageType));
     }
 
     @ApiOperation(value = "Import the bulk of devices (processDevicesBulkImport)",
-            notes = "There's an ability to import the bulk of devices using the only .csv file." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+            notes = "There's an ability to import the bulk of devices using the only .csv file." + RBAC_WRITE_CHECK)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping("/device/bulk_import")
-    public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws
-            Exception {
-        SecurityUser user = getCurrentUser();
-        return deviceBulkImportService.processBulkImport(request, user);
+    public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
+        return deviceBulkImportService.processBulkImport(request, getCurrentUser(), (device, savingFunction) -> {
+            try {
+                saveGroupEntity(device, request.getEntityGroupId(), savingFunction);
+            } catch (ThingsboardException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
 }

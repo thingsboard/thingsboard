@@ -1,0 +1,250 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-merged-host">
+  <mat-toolbar class="mat-mdc-table-toolbar tb-merged-toolbar" [class.!hidden]="textSearchMode">
+    <div class="mat-toolbar-tools">
+      <span class="tb-merged-title">{{ 'agent.application-profiles' | translate }}</span>
+      <span class="flex-1"></span>
+      <button mat-icon-button type="button" (click)="refresh()"
+              matTooltip="{{ 'action.refresh' | translate }}" matTooltipPosition="above">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-icon-button type="button" (click)="enterSearchMode()"
+              matTooltip="{{ 'action.search' | translate }}" matTooltipPosition="above">
+        <mat-icon>search</mat-icon>
+      </button>
+      <button mat-flat-button color="primary" type="button" (click)="openAssignDialog()">
+        <mat-icon>add</mat-icon>
+        {{ 'agent.assign-profile' | translate }}
+      </button>
+    </div>
+  </mat-toolbar>
+
+  <mat-toolbar class="mat-mdc-table-toolbar tb-merged-toolbar" [class.!hidden]="!textSearchMode">
+    <div class="mat-toolbar-tools">
+      <button mat-icon-button matTooltip="{{ 'action.search' | translate }}" matTooltipPosition="above">
+        <mat-icon>search</mat-icon>
+      </button>
+      <mat-form-field class="flex-1" appearance="outline">
+        <mat-label>&nbsp;</mat-label>
+        <input #searchInput matInput [ngModel]="searchText" (ngModelChange)="onSearchTextChange($event)"
+               placeholder="{{ 'common.enter-search' | translate }}">
+      </mat-form-field>
+      <button mat-icon-button type="button" (click)="exitSearchMode()"
+              matTooltip="{{ 'action.close' | translate }}" matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </mat-toolbar>
+
+  @if (autoInstallEnabled) {
+    <div class="tb-merged-auto-install-note">
+      <mat-icon>info_outline</mat-icon>
+      <span>{{ autoInstallNoteKey | translate }}</span>
+    </div>
+  }
+
+  <div class="tb-merged-table-wrapper">
+    @if (filteredRows.length === 0 && !loading) {
+      <div class="tb-merged-empty">{{ 'agent.no-profiles-assigned' | translate }}</div>
+    } @else {
+      <table mat-table class="tb-merged-table" [dataSource]="filteredRows"
+             matSort [matSortActive]="sortActive" [matSortDirection]="sortDirection" matSortDisableClear
+             (matSortChange)="onSortChange($event)"
+             multiTemplateDataRows [trackBy]="trackProfile">
+
+        <ng-container matColumnDef="expand">
+          <th mat-header-cell *matHeaderCellDef class="tb-col-expand"></th>
+          <td mat-cell *matCellDef="let row" class="tb-col-expand">
+            <button mat-icon-button type="button" (click)="toggleRow(row, $event)"
+                    [attr.aria-expanded]="row.expanded">
+              <mat-icon [class.tb-chevron-rotated]="row.expanded">chevron_right</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="name" class="tb-col-name">{{ 'agent.profile-name' | translate }}</th>
+          <td mat-cell *matCellDef="let row" class="tb-col-name">
+            <a class="tb-merged-profile-name" (click)="openProfile(row, $event)">{{ row.profile.name }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="type" class="tb-col-type">{{ 'agent.app-type' | translate }}</th>
+          <td mat-cell *matCellDef="let row" class="tb-col-type">
+            <span class="tb-type-badge" [style.background]="typeBadgeStyle(row.profile.appType).background"
+              [style.color]="typeBadgeStyle(row.profile.appType).color">{{ row.profile.appType }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="template">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="template" class="tb-col-template">{{ 'agent.template' | translate }}</th>
+          <td mat-cell *matCellDef="let row" class="tb-col-template">
+            @if (templateLabel(row)) {
+              <span>{{ templateLabel(row) }}</span>
+            } @else {
+              <span class="tb-merged-empty-cell">—</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="assignedApplications">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="assignedApplications" class="tb-col-assigned-apps">
+            {{ 'agent.assigned-applications' | translate }}
+          </th>
+          <td mat-cell *matCellDef="let row" class="tb-col-assigned-apps">{{ assignedAppsCount(row) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="relateOnAutoDiscovery">
+          <th mat-header-cell *matHeaderCellDef class="tb-col-auto-discovery">
+            <span matTooltip="{{ 'agent.relate-on-auto-discovery-tooltip' | translate }}" matTooltipPosition="above">
+              {{ 'agent.relate-on-auto-discovery' | translate }}
+            </span>
+          </th>
+          <td mat-cell *matCellDef="let row" class="tb-col-auto-discovery">
+            @if (autoDiscoveryEnabled(row)) {
+              <mat-checkbox [checked]="relatesOnAutoDiscovery(row)"
+                            (click)="toggleAutoDiscovery($event, row)"
+                            matTooltip="{{ 'agent.relate-on-auto-discovery-tooltip' | translate }}"
+                            matTooltipPosition="above">
+              </mat-checkbox>
+            } @else {
+              <span class="tb-merged-empty-cell">—</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="tb-col-actions">{{ 'agent.bulk-actions' | translate }}</th>
+          <td mat-cell *matCellDef="let row" class="tb-col-actions">
+            <button mat-icon-button type="button" (click)="bulkRestart($event, row)"
+                    matTooltip="{{ 'agent.bulk-restart' | translate }}">
+              <mat-icon>restart_alt</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="bulkUpdate($event, row)"
+                    matTooltip="{{ 'agent.bulk-update' | translate }}">
+              <mat-icon>sync_alt</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="bulkUpgrade($event, row)"
+                    [disabled]="!upgradeEnabled(row)"
+                    matTooltip="{{ 'agent.bulk-upgrade' | translate }}">
+              <mat-icon>arrow_upward</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="bulkDelete($event, row)"
+                    matTooltip="{{ 'agent.bulk-delete' | translate }}">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <button mat-icon-button type="button" (click)="unassign($event, row)"
+                    matTooltip="{{ 'agent.unassign-profile' | translate }}">
+              <mat-icon>link_off</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="detail">
+          <td mat-cell *matCellDef="let row" [attr.colspan]="profileColumns.length"
+              class="tb-detail-cell" [class.tb-detail-cell-open]="row.expanded">
+            <div class="tb-detail-content" [class.tb-detail-content-open]="row.expanded">
+              @if (row.expanded) {
+                <div class="tb-detail-heading">
+                  {{ 'agent.recent-bulk-actions' | translate }}
+                  <span class="tb-detail-count">({{ row.actionsTotal }})</span>
+                </div>
+                @if (row.loading) {
+                  <div class="tb-detail-loading">
+                    <mat-spinner diameter="20"></mat-spinner>
+                  </div>
+                } @else if (row.actions.length === 0) {
+                  <div class="tb-detail-empty">{{ 'agent.no-recent-bulk-actions' | translate }}</div>
+                } @else {
+                  <table mat-table class="tb-detail-table" [dataSource]="row.actions" [trackBy]="trackAction">
+                    <ng-container matColumnDef="createdTime">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'common.created-time' | translate }}</th>
+                      <td mat-cell *matCellDef="let a" class="tb-detail-mono">{{ formatDate(a.createdTime) }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="actionType">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'agent.bulk-action-type' | translate }}</th>
+                      <td mat-cell *matCellDef="let a">
+                        <span class="tb-detail-action">
+                          <mat-icon>{{ actionMeta(a.actionType).icon }}</mat-icon>
+                          {{ actionMeta(a.actionType).label }}
+                        </span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'agent.bulk-action-status' | translate }}</th>
+                      <td mat-cell *matCellDef="let a">
+                        <span class="tb-detail-status" [style.color]="statusMeta(a.status).color">
+                          <mat-icon>{{ statusMeta(a.status).icon }}</mat-icon>
+                          {{ statusMeta(a.status).label }}
+                        </span>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="counts">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'agent.bulk-action-counts' | translate }}</th>
+                      <td mat-cell *matCellDef="let a" class="tb-detail-mono">
+                        <span class="tb-detail-submitted">{{ a.submitted }}</span>/{{ a.total }}
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="errorMsg">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'agent.bulk-action-error' | translate }}</th>
+                      <td mat-cell *matCellDef="let a" class="tb-detail-error">{{ a.errorMsg || '' }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="open">
+                      <th mat-header-cell *matHeaderCellDef class="tb-detail-open-col"></th>
+                      <td mat-cell *matCellDef="let a" class="tb-detail-open-col">
+                        <mat-icon class="tb-detail-arrow"
+                                  [class.tb-detail-arrow-selected]="selectedAction?.id?.id === a.id.id">
+                          {{ selectedAction?.id?.id === a.id.id ? 'arrow_forward' : 'chevron_right' }}
+                        </mat-icon>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="bulkColumns"></tr>
+                    <tr mat-row *matRowDef="let a; columns: bulkColumns"
+                        class="tb-detail-row"
+                        [class.tb-detail-row-selected]="selectedAction?.id?.id === a.id.id"
+                        (click)="selectAction(row, a)"></tr>
+                  </table>
+                  @if (row.actionsTotal > row.actionsPageSize) {
+                    <mat-paginator class="tb-detail-paginator"
+                                   [length]="row.actionsTotal"
+                                   [pageSize]="row.actionsPageSize"
+                                   [pageIndex]="row.actionsPageIndex"
+                                   [pageSizeOptions]="actionsPageSizeOptions"
+                                   [showFirstLastButtons]="true"
+                                   (page)="onActionsPageChange(row, $event)">
+                    </mat-paginator>
+                  }
+                }
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="profileColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: profileColumns"
+            class="tb-merged-row"
+            [class.tb-merged-row-expanded]="row.expanded"
+            (click)="toggleRow(row)"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['detail']"
+            class="tb-detail-host-row"
+            [class.tb-detail-host-row-open]="row.expanded"></tr>
+      </table>
+    }
+  </div>
+
+  @if (selectedAction && selectedActionProfile) {
+    <tb-agent-executions-side-panel
+      [agentProfile]="agentProfile"
+      [appProfile]="selectedActionProfile"
+      [bulkAction]="selectedAction"
+      (closePanel)="closePanel()"
+      (openFullDetails)="openFullDetails()">
+    </tb-agent-executions-side-panel>
+  }
+</div>

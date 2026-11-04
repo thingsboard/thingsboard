@@ -1,0 +1,46 @@
+{
+  "type": "MQTT",
+  "debugMode": false,
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 1749473522744
+  },
+  "enabled": true,
+  "allowCreateDevicesOrAssets": true,
+  "defaultConverterId": null,
+  "downlinkConverterId": null,
+  "routingKey": null,
+  "configuration": {
+    "clientConfiguration": {
+      "host": "%1$s",
+      "port": 1883,
+      "cleanSession": true,
+      "retainedMessage": false,
+      "ssl": false,
+      "connectTimeoutSec": 10,
+      "clientId": "mqtt-integration-%4$s",
+      "maxBytesInMessage": 32368,
+      "protocolVersion": "MQTT_3_1_1",
+      "credentials": {
+        "type": "basic",
+        "username": "tbmq_ck4nVf0b",
+        "password": ""
+      }
+    },
+    "topicFilters": [
+      {
+        "filter": "monitoring/%3$s",
+        "qos": 1
+      }
+    ],
+    "downlinkTopicPattern": "${topic}",
+    "metadata": {}
+  },
+  "additionalInfo": {
+    "description": ""
+  },
+  "externalId": null,
+  "edgeTemplate": false,
+  "remote": false
+}

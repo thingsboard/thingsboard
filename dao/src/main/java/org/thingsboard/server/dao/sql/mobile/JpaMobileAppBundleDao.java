@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.sql.mobile;
 
 import lombok.RequiredArgsConstructor;
@@ -29,8 +17,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.mobile.MobileAppBundleDao;
-import org.thingsboard.server.dao.model.sql.MobileAppBundleEntity;
 import org.thingsboard.server.dao.model.sql.MobileAppBundleOauth2ClientEntity;
+import org.thingsboard.server.dao.model.sql.MobileAppBundlePolicyInfoEntity;
 import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
@@ -41,19 +29,25 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @SqlDao
-public class JpaMobileAppBundleDao extends JpaAbstractDao<MobileAppBundleEntity, MobileAppBundle> implements MobileAppBundleDao {
+public class JpaMobileAppBundleDao extends JpaAbstractDao<MobileAppBundlePolicyInfoEntity, MobileAppBundle> implements MobileAppBundleDao {
 
     private final MobileAppBundleRepository mobileAppBundleRepository;
     private final MobileAppBundleOauth2ClientRepository mobileOauth2ProviderRepository;
+    private final MobileAppBundlePolicyInfoRepository mobileAppBundlePolicyInfoRepository;
 
     @Override
-    protected Class<MobileAppBundleEntity> getEntityClass() {
-        return MobileAppBundleEntity.class;
+    protected Class<MobileAppBundlePolicyInfoEntity> getEntityClass() {
+        return MobileAppBundlePolicyInfoEntity.class;
     }
 
     @Override
-    protected JpaRepository<MobileAppBundleEntity, UUID> getRepository() {
-        return mobileAppBundleRepository;
+    protected JpaRepository<MobileAppBundlePolicyInfoEntity, UUID> getRepository() {
+        return mobileAppBundlePolicyInfoRepository;
+    }
+
+    @Override
+    public MobileAppBundle findPolicyInfoByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
+        return DaoUtil.getData(mobileAppBundlePolicyInfoRepository.findByPkgNameAndPlatformType(pkgName, platform));
     }
 
     @Override

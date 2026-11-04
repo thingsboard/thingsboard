@@ -1,20 +1,8 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { Component, forwardRef, Input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,10 +16,11 @@ import {
   Validators
 } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ThemePalette } from '@angular/material/core';
 import { Instance, ResourceLwM2M, ResourceSettingTelemetry, } from './lwm2m-profile-config.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { GtSmBreakpointAwareDirective } from '@shared/components/gt-sm-breakpoint-aware.directive';
 
 @Component({
     selector: 'tb-profile-lwm2m-observe-attr-telemetry-instances',
@@ -52,7 +41,13 @@ import { Subscription } from 'rxjs';
     standalone: false
 })
 
-export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class Lwm2mObserveAttrTelemetryInstancesComponent extends GtSmBreakpointAwareDirective implements ControlValueAccessor, Validator {
+
+  readonly resourceToggles: {type: ResourceSettingTelemetry; color: ThemePalette; labelKey: string}[] = [
+    {type: 'attribute', color: 'warn', labelKey: 'device-profile.lwm2m.select-all-attribute'},
+    {type: 'telemetry', color: 'primary', labelKey: 'device-profile.lwm2m.select-all-telemetry'},
+    {type: 'observe', color: 'primary', labelKey: 'device-profile.lwm2m.select-all-observe'}
+  ];
 
   instancesFormGroup: UntypedFormGroup;
 
@@ -73,22 +68,18 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
   @Input()
   disabled: boolean;
 
-  private valueChange$: Subscription = null;
   private propagateChange = (v: any) => { };
 
   constructor(private fb: UntypedFormBuilder,
               public translate: TranslateService) {
+    super();
     this.instancesFormGroup = this.fb.group({
       instances: this.fb.array([])
     });
 
-    this.valueChange$ = this.instancesFormGroup.valueChanges.subscribe(value => this.updateModel(value.instances));
-  }
-
-  ngOnDestroy() {
-    if (this.valueChange$) {
-      this.valueChange$.unsubscribe();
-    }
+    this.instancesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(value => this.updateModel(value.instances));
   }
 
   registerOnChange(fn: any): void {
@@ -176,10 +167,6 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
     this.instancesFormArray.updateValueAndValidity();
   }
 
-  trackByParams = (index: number, instance: Instance): number => {
-    return instance.id;
-  }
-
   getIndeterminate = (instance: AbstractControl, type: ResourceSettingTelemetry): boolean => {
     const resources = instance.get('resources').value as ResourceLwM2M[];
     if (isDefinedAndNotNull(resources)) {
@@ -201,6 +188,10 @@ export class Lwm2mObserveAttrTelemetryInstancesComponent implements ControlValue
       this.getChecked(instance, 'telemetry') ||
       this.getChecked(instance, 'attribute')
     );
+  }
+
+  isToggleDisabled(instance: AbstractControl, type: ResourceSettingTelemetry): boolean {
+    return type === 'observe' ? this.disableObserve(instance) : this.disabled;
   }
 
   get isExpend(): boolean {

@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
@@ -33,6 +20,7 @@ import {
   timeSeriesChartStateValidator
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
     selector: 'tb-time-series-chart-states-panel',
@@ -57,6 +45,10 @@ export class TimeSeriesChartStatesPanelComponent implements ControlValueAccessor
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  stroked = false;
 
   statesFormGroup: UntypedFormGroup;
 
@@ -115,10 +107,6 @@ export class TimeSeriesChartStatesPanelComponent implements ControlValueAccessor
 
   statesFormArray(): UntypedFormArray {
     return this.statesFormGroup.get('states') as UntypedFormArray;
-  }
-
-  trackByState(index: number, stateControl: AbstractControl): any {
-    return stateControl;
   }
 
   removeState(index: number) {

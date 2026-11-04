@@ -1,0 +1,197 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<section [formGroup]="opcIntegrationConfigForm">
+  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+    <mat-form-field appearance="outline" class="mat-block flex-1" subscriptSizing="dynamic">
+      <mat-label translate>integration.host</mat-label>
+      <input matInput required formControlName="host">
+      <mat-hint></mat-hint>
+      @if (opcIntegrationConfigForm.get('host').hasError('required')) {
+        <mat-error translate>
+          integration.host-required
+        </mat-error>
+      }
+      @if (opcIntegrationConfigForm.get('host').hasError('privateNetwork')) {
+        <mat-error translate>
+          integration.host-private
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.port</mat-label>
+      <input matInput type="number" step="1" min="1" max="65535" required formControlName="port">
+      @if (opcIntegrationConfigForm.get('port').hasError('required')) {
+        <mat-error translate>
+          integration.port-required
+        </mat-error>
+      }
+      @if (opcIntegrationConfigForm.get('port').hasError('min') ||
+                                  opcIntegrationConfigForm.get('port').hasError('max')) {
+        <mat-error translate>
+          integration.port-range
+        </mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-label translate>integration.endpoint</mat-label>
+      <input matInput type="text" formControlName="endpoint">
+    </mat-form-field>
+  </div>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>integration.opc-ua-security</legend>
+    <mat-form-field appearance="outline" class="mat-block">
+      <mat-select required formControlName="security">
+        @for (security of OpcSecurityType | keyvalue; track security.key) {
+          <mat-option [value]="security.key">
+            {{security.value}}
+          </mat-option>
+        }
+      </mat-select>
+      @if (opcIntegrationConfigForm.get('security').hasError('required')) {
+        <mat-error translate>
+          integration.opc-ua-security-required
+        </mat-error>
+      }
+    </mat-form-field>
+    @if (opcIntegrationConfigForm.get('security').value !== OpcSecurityType.None) {
+      <section formGroupName="keystore">
+        <mat-form-field appearance="outline" class="mat-block">
+          <mat-label translate>integration.opc-ua-keystore-type</mat-label>
+          <mat-select required formControlName="type">
+            @for (keystore of OpcKeystoreType; track keystore) {
+              <mat-option [value]="keystore">
+                {{ keystore }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (opcIntegrationConfigForm.get('keystore.type').hasError('required')) {
+            <mat-error translate>
+              integration.opc-ua-keystore-type-required
+            </mat-error>
+          }
+        </mat-form-field>
+        <fieldset [disabled]="disabled">
+          <tb-secret-file-input formControlName="fileContent"
+                                label="{{ 'integration.opc-ua-keystore-location' | translate }}"
+                                inputId="location"
+                                [existingFileName]="opcIntegrationConfigForm.get('keystore.location').value"
+                                (fileNameChanged)="opcIntegrationConfigForm.get('keystore.location').setValue($event)">
+          </tb-secret-file-input>
+        </fieldset>
+        <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+          <mat-form-field appearance="outline" class="mat-block flex-1">
+            <mat-label translate>integration.opc-ua-keystore-alias</mat-label>
+            <input matInput required formControlName="alias">
+            @if (opcIntegrationConfigForm.get('keystore.alias').hasError('required')) {
+              <mat-error translate>
+                integration.opc-ua-keystore-alias-required
+              </mat-error>
+            }
+          </mat-form-field>
+          <tb-secret-key-input formControlName="password" class="mat-block flex-1"
+                               required
+                               appearance="outline"
+                               label="{{ 'integration.opc-ua-keystore-password' | translate }}"
+                               requiredText="{{ 'integration.opc-ua-keystore-password-required' | translate }}">
+          </tb-secret-key-input>
+        </div>
+        <tb-secret-key-input formControlName="keyPassword" class="mat-block flex-1"
+                             required
+                             appearance="outline"
+                             label="{{ 'integration.opc-ua-keystore-key-password' | translate }}"
+                             requiredText="{{ 'integration.opc-ua-keystore-key-password-required' | translate }}">
+        </tb-secret-key-input>
+      </section>
+    }
+  </fieldset>
+
+  <fieldset class="fields-group" formGroupName="identity">
+    <legend class="group-title" translate>integration.opc-ua-identity</legend>
+    <mat-form-field appearance="outline" class="mat-block flex-1">
+      <mat-select required formControlName="type">
+        @for (identityType of identityTypes; track identityType) {
+          <mat-option [value]="identityType">
+            {{ IdentityTypeTranslation.get(identityType) | translate}}
+          </mat-option>
+        }
+      </mat-select>
+      @if (opcIntegrationConfigForm.get('identity.type').hasError('required')) {
+        <mat-error translate>
+          integration.opc-ua-identity-required
+        </mat-error>
+      }
+    </mat-form-field>
+    @if (opcIntegrationConfigForm.get('identity.type').value === IdentityType.Username) {
+      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.username</mat-label>
+          <input matInput required formControlName="username" autocomplete="new-username">
+          @if (opcIntegrationConfigForm.get('identity.username').hasError('required')) {
+            <mat-error translate>
+              integration.username-required
+            </mat-error>
+          }
+        </mat-form-field>
+        <tb-secret-key-input formControlName="password" class="mat-block flex-1"
+                             required
+                             appearance="outline"
+                             label="{{ 'integration.password' | translate }}"
+                             requiredText="{{ 'integration.password-required' | translate }}">
+        </tb-secret-key-input>
+      </div>
+    }
+  </fieldset>
+
+  <tb-opc-ua-mapping formControlName="mapping"></tb-opc-ua-mapping>
+
+  <ng-container [ngTemplateOutlet]="executeRemotelyTemplate">
+  </ng-container>
+
+  <mat-expansion-panel class="configuration-panel">
+    <mat-expansion-panel-header>
+      <mat-panel-description class="flex items-stretch justify-end" translate>
+        integration.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.opc-ua-application-name</mat-label>
+          <input matInput formControlName="applicationName">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="mat-block flex-1">
+          <mat-label translate>integration.opc-ua-application-uri</mat-label>
+          <input matInput formControlName="applicationUri">
+        </mat-form-field>
+      </div>
+
+      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field appearance="outline" class="mat-block max-w-50% flex-full">
+          <mat-label translate>integration.opc-ua-scan-period-in-seconds</mat-label>
+          <input matInput type="number" required formControlName="scanPeriodInSeconds">
+          @if (opcIntegrationConfigForm.get('scanPeriodInSeconds').hasError('required')) {
+            <mat-error translate>
+              integration.opc-ua-scan-period-in-seconds-required
+            </mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="mat-block max-w-50% flex-full">
+          <mat-label translate>integration.opc-ua-timeout</mat-label>
+          <input matInput type="number" required formControlName="timeoutInMillis">
+          @if (opcIntegrationConfigForm.get('timeoutInMillis').hasError('required')) {
+            <mat-error translate>
+              integration.opc-ua-timeout-required
+            </mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <ng-container [ngTemplateOutlet]="genericAdditionalInfoTemplate">
+      </ng-container>
+    </ng-template>
+  </mat-expansion-panel>
+</section>

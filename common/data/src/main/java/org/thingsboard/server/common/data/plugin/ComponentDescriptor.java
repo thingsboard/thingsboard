@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.common.data.plugin;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -55,6 +43,8 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     @Getter @Setter private String actions;
     @Schema(description = "Indicates that the RuleNode supports queue name configuration.", accessMode = Schema.AccessMode.READ_ONLY, example = "true")
     @Getter @Setter private boolean hasQueueName;
+    @Schema(description = "Indicates that the RuleNode configuration uses secrets placeholders.", accessMode = Schema.AccessMode.READ_ONLY, example = "true")
+    @Getter @Setter private boolean hasSecrets;
 
     public ComponentDescriptor() {
         super();
@@ -75,6 +65,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         this.configurationVersion = plugin.getConfigurationVersion();
         this.actions = plugin.getActions();
         this.hasQueueName = plugin.isHasQueueName();
+        this.hasSecrets = plugin.isHasSecrets();
     }
 
     @Schema(description = "JSON object with the descriptor Id. " +
@@ -107,6 +98,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         if (configurationVersion != that.configurationVersion) return false;
         if (clusteringMode != that.clusteringMode) return false;
         if (hasQueueName != that.isHasQueueName()) return false;
+        if (hasSecrets != that.isHasSecrets()) return false;
         return Objects.equals(clazz, that.clazz);
     }
 
@@ -120,6 +112,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
         result = 31 * result + (actions != null ? actions.hashCode() : 0);
         result = 31 * result + (clusteringMode != null ? clusteringMode.hashCode() : 0);
         result = 31 * result + (hasQueueName ? 1 : 0);
+        result = 31 * result + (hasSecrets ? 1 : 0);
         return result;
     }
 

@@ -1,20 +1,7 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
-import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
+import { booleanAttribute, Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -63,14 +50,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 })
 export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
 
+  @Input({ transform: booleanAttribute })
+  readonly: boolean;
+
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
   @Input()
   operation: ComplexOperation = ComplexOperation.AND;
-
-  @Input()
-  readonly = false;
 
   filterListFormGroup = this.fb.group({
     filters: this.fb.array([])
@@ -174,7 +161,7 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
         isAdd,
         arguments: this.arguments,
         usedArguments: this.getUsedArguments,
-        readonly
+        readonly: this.readonly || readonly,
       }
     }).afterClosed();
   }

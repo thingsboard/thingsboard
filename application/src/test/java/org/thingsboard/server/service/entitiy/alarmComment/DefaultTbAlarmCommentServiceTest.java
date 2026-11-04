@@ -1,26 +1,14 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.service.entitiy.alarmComment;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -41,6 +29,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.group.EntityGroupService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.entitiy.alarm.DefaultTbAlarmCommentService;
@@ -65,35 +54,37 @@ import static org.mockito.Mockito.when;
 })
 public class DefaultTbAlarmCommentServiceTest {
 
-    @MockBean
+    @MockitoBean
     protected DbCallbackExecutorService dbExecutor;
-    @MockBean
+    @MockitoBean
     protected TbLogEntityActionService logEntityActionService;
-    @MockBean
+    @MockitoBean
     protected AlarmService alarmService;
-    @MockBean
+    @MockitoBean
     protected AlarmCommentService alarmCommentService;
-    @MockBean
+    @MockitoBean
     protected AlarmSubscriptionService alarmSubscriptionService;
-    @MockBean
+    @MockitoBean
     protected CustomerService customerService;
-    @MockBean
+    @MockitoBean
     protected TbClusterService tbClusterService;
-    @MockBean
+    @MockitoBean
+    protected EntityGroupService entityGroupService;
+    @MockitoBean
     private AccessControlService accessControlService;
-    @MockBean
+    @MockitoBean
     private TenantService tenantService;
-    @MockBean
+    @MockitoBean
     private AssetService assetService;
-    @MockBean
+    @MockitoBean
     private DeviceService deviceService;
-    @MockBean
+    @MockitoBean
     private AssetProfileService assetProfileService;
-    @MockBean
+    @MockitoBean
     private DeviceProfileService deviceProfileService;
-    @MockBean
+    @MockitoBean
     private EntityService entityService;
-    @SpyBean
+    @MockitoSpyBean
     DefaultTbAlarmCommentService service;
 
     @Test

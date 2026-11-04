@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import * as CanvasGauges from 'canvas-gauges';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
@@ -36,6 +23,7 @@ import { UnitService } from '@core/services/unit.service';
 import { isNotEmptyTbUnits } from '@shared/models/unit.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import GenericOptions = CanvasGauges.GenericOptions;
+import { getGaugeValueText } from '@home/components/widget/lib/analogue-gauge.models';
 
 // @dynamic
 export class TbCanvasDigitalGauge {
@@ -144,6 +132,7 @@ export class TbCanvasDigitalGauge {
       ticks: this.localSettings.ticks,
 
       title: this.localSettings.title,
+
       fontTitleSize: this.localSettings.titleFont.size,
       fontTitleStyle: this.localSettings.titleFont.style,
       fontTitleWeight: this.localSettings.titleFont.weight,
@@ -259,27 +248,32 @@ export class TbCanvasDigitalGauge {
   update() {
     if (this.ctx.data.length > 0) {
       const cellData = this.ctx.data[0];
-      if (cellData.data.length > 0) {
-        const tvPair = cellData.data[cellData.data.length -
-        1];
-        let timestamp: number;
-        if (this.localSettings.showTimestamp) {
-          timestamp = tvPair[0];
-          const filter = this.ctx.$injector.get(DatePipe);
-          (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
-            filter.transform(timestamp, this.localSettings.timestampFormat);
+      const tvPair = cellData.data.length > 0 ? cellData.data[cellData.data.length - 1] : null;
+      let timestamp: number;
+      if (this.localSettings.showTimestamp && tvPair) {
+        timestamp = tvPair[0];
+        const filter = this.ctx.$injector.get(DatePipe);
+        (this.gauge.options as CanvasDigitalGaugeOptions).labelTimestamp =
+          filter.transform(timestamp, this.localSettings.timestampFormat);
+      }
+      const origValue = tvPair ? tvPair[1] : null;
+      const value = parseFloat(origValue);
+      const options = this.gauge.options as CanvasDigitalGaugeOptions;
+      const valueText = getGaugeValueText(origValue);
+      if (options.valueText !== valueText) {
+        options.valueText = valueText;
+        this.gauge.update({} as CanvasDigitalGaugeOptions);
+      }
+      const gaugeValue = valueText ? options.minValue : value;
+      if (!isNaN(gaugeValue) && gaugeValue !== this.gauge.value) {
+        if (!this.gauge.options.animation) {
+          this.gauge._value = gaugeValue;
+        } else {
+          delete this.gauge._value;
         }
-        const value = parseFloat(tvPair[1]);
-        if (value !== this.gauge.value) {
-          if (!this.gauge.options.animation) {
-            this.gauge._value = value;
-          } else {
-            delete this.gauge._value;
-          }
-          this.gauge.value = value;
-        } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {
-          this.gauge.timestamp = timestamp;
-        }
+        this.gauge.value = gaugeValue;
+      } else if (this.localSettings.showTimestamp && tvPair && this.gauge.timestamp !== timestamp) {
+        this.gauge.timestamp = timestamp;
       }
     }
   }

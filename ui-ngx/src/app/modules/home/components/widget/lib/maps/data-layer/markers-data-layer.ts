@@ -1,19 +1,6 @@
-///
-/// Copyright © 2016-2026 The Thingsboard Authors
-///
-/// Licensed under the Apache License, Version 2.0 (the "License");
-/// you may not use this file except in compliance with the License.
-/// You may obtain a copy of the License at
-///
-///     http://www.apache.org/licenses/LICENSE-2.0
-///
-/// Unless required by applicable law or agreed to in writing, software
-/// distributed under the License is distributed on an "AS IS" BASIS,
-/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-/// See the License for the specific language governing permissions and
-/// limitations under the License.
-///
-
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 import {
   BaseMarkerShapeSettings,
   ClusterMarkerColorFunction,
@@ -45,7 +32,7 @@ import {
   isDefined,
   isDefinedAndNotNull,
   isEmptyStr,
-  parseTbFunction,
+  parseTbFunction, plainColorFromVariable,
   safeExecuteTbFunction
 } from '@core/utils';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -137,7 +124,7 @@ export class MarkerDataProcessor<S extends MarkersDataLayerSettings = MarkersDat
   }
 
   public createDefaultMarkerIcon(rotationAngle = 0): Observable<MarkerIconInfo> {
-    const color = this.settings.markerShape?.color?.color || '#307FE5';
+    const color = plainColorFromVariable(this.settings.markerShape?.color?.color || '#307FE5');
     return this.createColoredMarkerShape(MarkerShape.markerShape1, tinycolor(color), rotationAngle);
   }
 
@@ -234,7 +221,7 @@ abstract class BaseColorMarkerShapeProcessor<S extends BaseMarkerShapeSettings> 
     this.colorProcessor = new DataLayerColorProcessor(this.dataProcessor.dataLayer, colorSettings);
     const setup$: Observable<void>[] = [this.colorProcessor.setup()];
     if (colorSettings.type === DataLayerColorType.constant) {
-      const color = tinycolor(colorSettings.color);
+      const color = tinycolor(plainColorFromVariable(colorSettings.color));
       setup$.push(
         this.createMarkerShape(color, 0, this.settings.size).pipe(
           map((info) => {

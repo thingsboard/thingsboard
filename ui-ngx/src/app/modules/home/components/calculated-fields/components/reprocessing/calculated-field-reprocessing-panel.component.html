@@ -1,0 +1,112 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-cf-reprocessing-panel">
+  <div class="tb-cf-reprocessing-title" translate>calculated-fields.calculated-field-reprocessing</div>
+  <div class="tb-cf-reprocessing-content">
+    @switch (state()) {
+      @case (ReprocessingState.LOADING) {
+        <div class="flex flex-1 flex-col items-center justify-center gap-4">
+          <mat-spinner color="accent" diameter="65" strokeWidth="4"></mat-spinner>
+          <span class="mat-subtitle-1 mb-0">{{ 'common.loading' | translate }}</span>
+        </div>
+      }
+      @case (ReprocessingState.CONFIG) {
+        <div class="tb-form-hint tb-form-panel-hint tb-primary-fill">
+          {{ 'calculated-fields.hint.reprocessing' | translate }}
+        </div>
+        <tb-timewindow [(ngModel)]="timeWindow"
+          [panelMode]="false"
+          [timezone]="true"
+          [historyOnly]="true">
+        </tb-timewindow>
+      }
+      @case (ReprocessingState.SUBMIT) {
+        <div class="flex flex-1 flex-col justify-center gap-2">
+          <span class="tb-task-status">{{ 'calculated-fields.submitting-tasks' | translate }}</span>
+          <mat-progress-bar mode="determinate" [value]="submitProgress()"></mat-progress-bar>
+        </div>
+      }
+      @case (ReprocessingState.PROCESS) {
+        <div class="flex flex-1 flex-col justify-center gap-2">
+          <div class="flex justify-between">
+            <span class="tb-task-status">{{ reprocessingLabel | translate }}</span>
+            <span class="tb-task-status info">{{ processInfo() }}</span>
+          </div>
+          <mat-progress-bar mode="determinate" [value]="processProgress()"></mat-progress-bar>
+        </div>
+      }
+      @case (ReprocessingState.RESULTS) {
+        <div class="flex flex-1 flex-col items-center justify-center gap-2 rounded"
+          [class.tb-primary-fill]="job().status === JobStatus.COMPLETED"
+          [class.task-result-problem]="job().status !== JobStatus.COMPLETED">
+          <tb-icon [color]="resultIconColor" [class.warn]="!resultIconColor">{{ resultIcon }}</tb-icon>
+          <div class="flex flex-col items-center">
+            <span class="tb-task-status">{{ resultLabel | translate }}</span>
+            @if (job().status === JobStatus.FAILED) {
+              @if (totalTasks > 1) {
+                <span class="tb-task-status info">
+                  {{ 'calculated-fields.tasks-failed-reprocess' | translate: { error: failedTasks, total: totalTasks } }}
+                </span>
+              } @else {
+                <span class="tb-task-status info" translate>calculated-fields.task-failed-reprocess</span>
+              }
+            }
+          </div>
+        </div>
+      }
+      @case (ReprocessingState.VALIDATION_ERROR) {
+        <div class="task-result-problem flex flex-1 flex-col items-center justify-center gap-2 rounded">
+          <tb-icon class="warn">warning</tb-icon>
+          <span class="tb-validation-message text-center">{{ validationMgs }}</span>
+        </div>
+      }
+    }
+  </div>
+  <div class="flex h-10 items-end gap-4">
+    @if (state() !== ReprocessingState.LOADING && state() !== ReprocessingState.CONFIG && state() !== ReprocessingState.VALIDATION_ERROR) {
+      <button mat-button
+        color="primary"
+        type="button"
+        (click)="openDetails()">
+        {{ 'calculated-fields.details' | translate }}
+      </button>
+    }
+    <span class="flex-1"></span>
+    @if (state() === ReprocessingState.LOADING || state() === ReprocessingState.CONFIG || state() === ReprocessingState.VALIDATION_ERROR) {
+      <button mat-button
+        color="primary"
+        type="button"
+        (click)="cancel()">
+        {{ 'action.close' | translate }}
+      </button>
+    }
+    @if (state() === ReprocessingState.CONFIG || (state() === ReprocessingState.RESULTS && job()?.status === JobStatus.FAILED && hasWritePermission && failedTasks <= 100)) {
+      <button mat-raised-button
+        color="primary"
+        type="button"
+        (click)="reprocessing()">
+        {{ 'task.reprocess' | translate : {count: failedTasks ?? 0} }}
+      </button>
+    }
+    @if ((state() === ReprocessingState.SUBMIT || state() === ReprocessingState.PROCESS) && job() && hasWritePermission) {
+      <button mat-raised-button
+        color="accent"
+        type="button"
+        (click)="cancelReprocessing($event)">
+        {{ 'calculated-fields.cancel-reprocessing' | translate }}
+      </button>
+    }
+    @if (state() === ReprocessingState.RESULTS && (job()?.status !== JobStatus.FAILED || !hasWritePermission)) {
+      <button mat-raised-button
+        color="primary"
+        type="button"
+        (click)="cancel()">
+        {{ 'calculated-fields.finish' | translate }}
+      </button>
+    }
+  </div>
+</div>

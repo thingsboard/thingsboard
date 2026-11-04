@@ -1,0 +1,123 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (entity && (entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.READ_ATTRIBUTES)) {
+  <mat-tab
+    label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+    <tb-attribute-table [defaultAttributeScope]="entityType === entityTypes.DEVICE ? attributeScopes.CLIENT_SCOPE : attributeScopes.SERVER_SCOPE"
+      [readonly]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE_ATTRIBUTES)"
+      [active]="attributesTab.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name">
+    </tb-attribute-table>
+  </mat-tab>
+}
+@if (entity && (entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.READ_TELEMETRY)) {
+  <mat-tab
+    label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
+    <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+      [readonly]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE_TELEMETRY)"
+      disableAttributeScopeSelection
+      [disableAddTelemetry]="entityType === entityTypes.ENTITY_VIEW"
+      [active]="telemetryTab.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name">
+    </tb-attribute-table>
+  </mat-tab>
+}
+@if (entity
+  && authUser.authority === authorities.TENANT_ADMIN
+  && (entityType === entityTypes.DEVICE || entityType === entityTypes.ASSET)
+  && (resource[entityType] | hasGenericPermission: operation.READ_CALCULATED_FIELD)) {
+  <mat-tab
+    label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
+    <tb-calculated-fields-table
+      [readonly]="!(resource[entityType] | hasGenericPermission: operation.WRITE_CALCULATED_FIELD)"
+      [hideClearEventAction]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE)"
+      [active]="calculatedFieldsTab.isActive"
+      [ownerId]="entity.ownerId"
+      [entityId]="entity.id"
+      />
+  </mat-tab>
+}
+@if (entity && authUser.authority === authorities.TENANT_ADMIN &&
+  (entityType === entityTypes.DEVICE || entityType === entityTypes.ASSET || entityType === entityTypes.CUSTOMER) &&
+  (resource[entityType] | hasGenericPermission: operation.READ_CALCULATED_FIELD)) {
+  <mat-tab #alarmRules="matTab" label="{{'alarm-rule.alarm-rules' | translate }}">
+    <tb-alarm-rules-table
+      [active]="alarmRules.isActive"
+      [entityId]="entity.id"
+      [entityName]="entity.name"
+      [ownerId]="entity.ownerId"
+      [readonly]="!(resource[entityType] | hasGenericPermission: operation.WRITE_CALCULATED_FIELD)"
+      [hideClearEventAction]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE)">
+    </tb-alarm-rules-table>
+  </mat-tab>
+}
+
+@if (entity && (resource.ALARM | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
+    <tb-alarm-table [active]="alarmsTab.isActive"
+      [entityId]="entity.id"
+      [writeEnabled]="(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE) && (resource.ALARM | hasGenericPermission: operation.WRITE)"
+      [removeEnabled]="(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE) && (resource.ALARM | hasGenericPermission: operation.DELETE)">
+    </tb-alarm-table>
+  </mat-tab>
+}
+@if (entity && hasEventsTab()) {
+  <mat-tab
+    label="{{ 'device.events' | translate }}" #eventsTab="matTab">
+    <tb-event-table [defaultEventType]="eventTypes.ERROR" [active]="eventsTab.isActive"
+      [tenantId]="entity.tenantId.id"
+    [entityId]="entity.id"></tb-event-table>
+  </mat-tab>
+}
+@if (entity && entityType === entityTypes.EDGE) {
+  <mat-tab
+    label="{{ 'edge.downlinks' | translate }}" #downLinksTab="matTab">
+    <tb-edge-downlink-table [active]="downLinksTab.isActive"
+    [entityId]="entity.id"></tb-edge-downlink-table>
+  </mat-tab>
+}
+@if (entity) {
+  <mat-tab
+    label="{{ 'relation.relations' | translate }}" #relationsTab="matTab">
+    <tb-relation-table [active]="relationsTab.isActive"
+      [readonly]="!(entityGroup | hasGroupEntityOrGenericPermission: entityResource: operation.WRITE)"
+    [entityId]="entity.id"></tb-relation-table>
+  </mat-tab>
+}
+@if (entity && entityType !== entityTypes.CUSTOMER && (resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
+    <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive"
+      [auditLogMode]="auditLogModes.ENTITY"
+    [entityId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
+}
+@if (entity && entityType === entityTypes.CUSTOMER && (resource.AUDIT_LOG | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'audit-log.audit-logs' | translate }}" #customerAuditLogsTab="matTab">
+    <tb-audit-log-table detailsMode="true" [active]="customerAuditLogsTab.isActive"
+      [auditLogMode]="auditLogModes.CUSTOMER"
+    [customerId]="entity.id"></tb-audit-log-table>
+  </mat-tab>
+}
+@if (entity && hasVersionControl()) {
+  <mat-tab
+    label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+    <tb-version-control detailsMode="true" singleEntityMode="true"
+      (versionRestored)="entitiesTableConfig.updateData()"
+    [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
+  </mat-tab>
+}
+@if (entity && entityType === entityTypes.USER && (resource.API_KEY | hasGenericPermission: operation.READ)) {
+  <mat-tab
+    label="{{ 'api-key.api-keys' | translate }}" #apiKeysTab="matTab">
+    <tb-api-keys-table [active]="apiKeysTab.isActive" [userId]="entity.id"></tb-api-keys-table>
+  </mat-tab>
+}

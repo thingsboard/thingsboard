@@ -1,18 +1,6 @@
-/**
- * Copyright © 2016-2026 The Thingsboard Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// SPDX-FileCopyrightText: Copyright The ThingsBoard Authors
+// SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.base.Function;
@@ -24,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
@@ -88,6 +77,17 @@ class BaseRelationService implements RelationService {
     private final JpaExecutorService executor;
     private final JpaRelationQueryExecutorService relationsExecutor;
     private final ApiLimitService apiLimitService;
+    private final RelationWriteLock relationWriteLock;
+
+    /**
+     * Self-reference to the Spring proxy, so the async write paths can re-enter the {@code @Transactional} sync
+     * methods through the proxy on the executor thread. A direct {@code this::saveRelation} call would bypass the
+     * transactional proxy (self-invocation), leaving {@link RelationWriteLock} without an active transaction.
+     * Field-injected with {@code @Lazy} to avoid a constructor self-dependency cycle.
+     */
+    @Autowired
+    @Lazy
+    private RelationService self;
 
     private ScheduledExecutorService timeoutExecutorService;
 
@@ -97,7 +97,8 @@ class BaseRelationService implements RelationService {
     public BaseRelationService(RelationDao relationDao, @Lazy EntityService entityService,
                                TbTransactionalCache<RelationCacheKey, RelationCacheValue> cache,
                                ApplicationEventPublisher eventPublisher, JpaExecutorService executor,
-                               JpaRelationQueryExecutorService relationsExecutor, ApiLimitService apiLimitService) {
+                               JpaRelationQueryExecutorService relationsExecutor, @Lazy ApiLimitService apiLimitService,
+                               RelationWriteLock relationWriteLock) {
         this.relationDao = relationDao;
         this.entityService = entityService;
         this.cache = cache;
@@ -105,6 +106,7 @@ class BaseRelationService implements RelationService {
         this.executor = executor;
         this.relationsExecutor = relationsExecutor;
         this.apiLimitService = apiLimitService;
+        this.relationWriteLock = relationWriteLock;
     }
 
     @PostConstruct
@@ -159,22 +161,41 @@ class BaseRelationService implements RelationService {
                 relation -> RelationCacheValue.builder().relation(relation).build(), false);
     }
 
+    // Write path: locks the relation endpoints before the DML. Must run inside @Transactional so the advisory
+    // lock and the DML share one transaction/connection — see RelationWriteLock for the full locking contract.
+    @Transactional
     @Override
     public EntityRelation saveRelation(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
+        relationWriteLock.lockEntities(List.of(relation.getFrom(), relation.getTo()));
         var result = relationDao.saveRelation(tenantId, relation);
         publishEvictEvent(EntityRelationEvent.from(result));
         eventPublisher.publishEvent(new RelationActionEvent(tenantId, result, ActionType.RELATION_ADD_OR_UPDATE));
         return result;
     }
 
+    // Write path: locks all relation endpoints before the DML. Must run inside @Transactional so the advisory
+    // lock and the DML share one transaction/connection — see RelationWriteLock for the full locking contract.
+    @Transactional
     @Override
     public void saveRelations(TenantId tenantId, List<EntityRelation> relations) {
         log.trace("Executing saveRelations [{}]", relations);
         for (EntityRelation relation : relations) {
             validate(relation);
         }
+        // No need to dedupe here: lockEntities derives keys and applies distinct().sorted(), so a plain list suffices.
+        List<EntityId> endpoints = new ArrayList<>(relations.size() * 2);
+        for (EntityRelation relation : relations) {
+            endpoints.add(relation.getFrom());
+            endpoints.add(relation.getTo());
+        }
+        // Lock-budget caveat: this acquires one advisory xact lock per distinct endpoint, all held until commit
+        // (chunking the acquisition would not lower the peak, since every lock must survive to commit anyway). Only
+        // the DML below is partitioned. The lock set thus scales with the batch's endpoint count and, for very large
+        // batches, can press against max_locks_per_transaction (same caveat as deleteRuleChainsByTenantId in
+        // BaseRuleChainService); callers should bound batch sizes accordingly.
+        relationWriteLock.lockEntities(endpoints);
         List<EntityRelation> savedRelations = new ArrayList<>(relations.size());
         for (List<EntityRelation> partition : Lists.partition(relations, 1024)) {
             savedRelations.addAll(relationDao.saveRelations(tenantId, partition));
@@ -188,25 +209,22 @@ class BaseRelationService implements RelationService {
     @Override
     public ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing saveRelationAsync [{}]", relation);
-        try {
-            validate(relation);
-        } catch (DataValidationException e) {
-            return Futures.immediateFailedFuture(e);
-        }
-        var future = relationDao.saveRelationAsync(tenantId, relation);
-        return Futures.transform(future, savedRelation -> {
-            if (savedRelation != null) {
-                handleEvictEvent(EntityRelationEvent.from(savedRelation));
-                eventPublisher.publishEvent(new RelationActionEvent(tenantId, savedRelation, ActionType.RELATION_ADD_OR_UPDATE));
-            }
-            return savedRelation != null;
-        }, directExecutor());
+        // Run the @Transactional sync method on the executor thread (through the Spring proxy via self) so the
+        // advisory lock and the DML share one transaction/connection. Reusing saveRelation preserves cache-evict
+        // and event publishing. A validation/DAO failure surfaces as a failed future, as before.
+        // Must go through the self proxy (not this.): a this.saveRelation self-invocation bypasses the Spring
+        // proxy, so @Transactional + RelationWriteLock would run without an active transaction — see self field Javadoc.
+        return executor.submit(() -> self.saveRelation(tenantId, relation) != null);
     }
 
+    // Write path: locks the relation endpoints before the DML. Must run inside @Transactional so the advisory
+    // lock and the DML share one transaction/connection — see RelationWriteLock for the full locking contract.
+    @Transactional
     @Override
     public boolean deleteRelation(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing DeleteRelation [{}]", relation);
         validate(relation);
+        relationWriteLock.lockEntities(List.of(relation.getFrom(), relation.getTo()));
         var result = relationDao.deleteRelation(tenantId, relation);
         if (result != null) {
             publishEvictEvent(EntityRelationEvent.from(result));
@@ -218,25 +236,18 @@ class BaseRelationService implements RelationService {
     @Override
     public ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing deleteRelationAsync [{}]", relation);
-        try {
-            validate(relation);
-        } catch (DataValidationException e) {
-            return Futures.immediateFailedFuture(e);
-        }
-        var future = relationDao.deleteRelationAsync(tenantId, relation);
-        return Futures.transform(future, deletedRelation -> {
-            if (deletedRelation != null) {
-                handleEvictEvent(EntityRelationEvent.from(deletedRelation));
-                eventPublisher.publishEvent(new RelationActionEvent(tenantId, deletedRelation, ActionType.RELATION_DELETED));
-            }
-            return deletedRelation != null;
-        }, directExecutor());
+        // See saveRelationAsync: run the @Transactional sync method on the executor thread via the proxy so the
+        // advisory lock and DML share one transaction; event/cache handling is preserved by reusing deleteRelation.
+        // Must go through the self proxy (not this.) so @Transactional + RelationWriteLock get an active transaction.
+        return executor.submit(() -> self.deleteRelation(tenantId, relation));
     }
 
+    @Transactional
     @Override
     public EntityRelation deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing deleteRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
+        relationWriteLock.lockEntities(List.of(from, to));
         var result = relationDao.deleteRelation(tenantId, from, to, relationType, typeGroup);
         if (result != null) {
             publishEvictEvent(EntityRelationEvent.from(result));
@@ -248,15 +259,14 @@ class BaseRelationService implements RelationService {
     @Override
     public ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing deleteRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        // Validate before submitting to preserve this overload's historical contract: invalid arguments throw
+        // DataValidationException synchronously to the caller, not as a failed future. deleteRelation re-validates
+        // inside the task; the double run is harmless (pure null/emptiness checks).
         validate(from, to, relationType, typeGroup);
-        var future = relationDao.deleteRelationAsync(tenantId, from, to, relationType, typeGroup);
-        return Futures.transform(future, deletedEvent -> {
-            if (deletedEvent != null) {
-                handleEvictEvent(EntityRelationEvent.from(deletedEvent));
-                eventPublisher.publishEvent(new RelationActionEvent(tenantId, deletedEvent, ActionType.RELATION_DELETED));
-            }
-            return deletedEvent != null;
-        }, directExecutor());
+        // See saveRelationAsync: run the @Transactional sync method on the executor thread via the proxy so the
+        // advisory lock and DML share one transaction; event/cache handling is preserved by reusing deleteRelation.
+        // Must go through the self proxy (not this.) so @Transactional + RelationWriteLock get an active transaction.
+        return executor.submit(() -> self.deleteRelation(tenantId, from, to, relationType, typeGroup) != null);
     }
 
     @Transactional
@@ -275,6 +285,7 @@ class BaseRelationService implements RelationService {
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId, RelationTypeGroup relationTypeGroup) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         validate(entityId);
+        relationWriteLock.lockEntities(List.of(entityId));
 
         List<EntityRelation> inboundRelations;
         if (relationTypeGroup == null) {
@@ -474,6 +485,7 @@ class BaseRelationService implements RelationService {
         return relationInfo;
     }
 
+    @Transactional
     @Override
     public void removeRelations(TenantId tenantId, EntityId entityId) {
         log.trace("removeRelations {}", entityId);
@@ -484,9 +496,27 @@ class BaseRelationService implements RelationService {
             relations.addAll(findByTo(tenantId, entityId, relationTypeGroup));
         }
 
-        for (EntityRelation relation : relations) {
-            deleteRelation(tenantId, relation);
-        }
+        // Every relation removed here was found via findByFrom(entityId)/findByTo(entityId), so {entityId} is always one
+        // endpoint. The single covering lock on entityId serializes this against any concurrent per-endpoint writer of
+        // such a relation (which also locks entityId), and the covering marker suppresses the per-deleteRelation
+        // lockEntities calls inside the loop.
+        //
+        // Anchor-vs-anchor is NOT serialized, though: two concurrent removeRelations(A) and removeRelations(B) each hold
+        // only their own covering lock. Since this method is @Transactional, the per-row deletes hold their row locks
+        // until commit, so a row shared by A and B (A<->B relation) deleted in opposite orders by the two invocations
+        // (A collects it via findByFrom, B via findByTo, or vice versa) could 40P01 row-lock deadlock — a window the old
+        // auto-commit-per-delete behavior did not have. Sorting the collected rows by a deterministic composite key
+        // makes both invocations delete their shared rows in the same order, closing that window.
+        relations.sort(Comparator
+                .comparing((EntityRelation relation) -> relation.getFrom().getId())
+                .thenComparing(relation -> relation.getTo().getId())
+                .thenComparing(EntityRelation::getType)
+                .thenComparing(EntityRelation::getTypeGroup));
+        relationWriteLock.withCoveringLock(entityId, () -> {
+            for (EntityRelation relation : relations) {
+                deleteRelation(tenantId, relation);
+            }
+        });
     }
 
     @Override

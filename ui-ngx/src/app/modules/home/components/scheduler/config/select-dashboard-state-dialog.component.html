@@ -1,0 +1,36 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<form (ngSubmit)="select()" class="tb-select-dashboard-state-dialog">
+  <mat-toolbar color="tb-primary" class="tb-bottom-border flex flex-row">
+    <h2 translate>scheduler.select-dashboard-state</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="flex-1" style="position: relative; overflow: hidden;">
+    <div class="tb-absolute-fill">
+      <iframe #selectDashboardFrame frameborder="0" height="100%" width="100%"></iframe>
+    </div>
+  </div>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="isLoading$ | async">
+      {{ 'action.select' | translate }}
+    </button>
+  </div>
+</form>

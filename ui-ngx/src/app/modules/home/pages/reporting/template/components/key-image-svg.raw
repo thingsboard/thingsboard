@@ -1,0 +1,6 @@
+<svg width="200" height="120" fill="none" version="1.1" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+ <rect transform="scale(-1,1)" x="-200" width="200" height="120" rx="0" ry="0" style="fill:#eaedf2"/>
+ <g transform="translate(100 60)">
+  <text x="0" y="0" fill="#b71c1c" font-family="Roboto" font-size="12px" text-anchor="middle" style="fill:#373a3b;font-family:Roboto;font-size:32px;font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;text-anchor:middle" xml:space="preserve"><tspan x="0" y="0" dominant-baseline="middle">${key}</tspan></text>
+ </g>
+</svg>

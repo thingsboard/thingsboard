@@ -1,0 +1,35 @@
+{
+  "reprocessingOrder": 0,
+  "type": "SCRIPT",
+  "name": "Calculate consumption",
+  "entityId": {
+    "entityType": "DEVICE_PROFILE",
+    "id": "58183d7e-4b7a-4ad6-a476-5d6c6571174c"
+  },
+  "debugSettings": {
+    "failuresEnabled": true,
+    "allEnabled": false,
+    "allEnabledUntil": 0
+  },
+  "configurationVersion": 0,
+  "configuration": {
+    "type": "SCRIPT",
+    "arguments": {
+      "pulseCounter": {
+        "refEntityKey": {
+          "key": "pulseCounter",
+          "type": "TS_ROLLING"
+        },
+        "limit": 2,
+        "timeWindow": 5400000
+      }
+    },
+    "expression": "return {\n    ts: ctx.latestTs,\n    values: {\n        meterReadingDelta: getMeterReadingDelta()\n    }\n};\n\nfunction getMeterReadingDelta() {\n        if (pulseCounter.count() == 1) {\n        return pulseCounter.first();\n    }\n    if (pulseCounter.count() < 2) {\n        return 0;\n    }\n    var first = pulseCounter.first();\n    var last = pulseCounter.last();\n    \n    \n    if (isNaN(first) || isNaN(last)) {\n        return 0;\n    }\n\n    var waterConsumption = last - first;\n    if (waterConsumption <= 0) {\n        return 0;\n    }\n    \n    return toFixed(waterConsumption, 2);\n}",
+    "output": {
+      "type": "TIME_SERIES",
+      "strategy": {
+        "type": "RULE_CHAIN"
+      }
+    }
+  }
+}

@@ -1,0 +1,279 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<div class="tb-entity-table tb-absolute-fill tb-form-panel no-padding no-border" [class.mat-padding]="fullscreen">
+  <div class="tb-entity-table-content tb-outlined-border flex flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
+          <span class="tb-entity-table-title" translate>custom-translation.translation-map</span>
+        </div>
+        <span class="flex-1"></span>
+        @if (!readonly) {
+          <button mat-icon-button [disabled]="isLoading$ | async"
+            (click)="toggleAddNewTranslated($event)"
+            matTooltip="{{ 'custom-translation.add-new-key' | translate }}"
+            matTooltipPosition="above"
+            class="tb-mat-40">
+            <mat-icon>add</mat-icon>
+          </button>
+        }
+        <button mat-icon-button [disabled]="isLoading$ | async" (click)="enterSearchMode()"
+          matTooltip="{{ 'custom-translation.search' | translate }}"
+          matTooltipPosition="above"
+          class="tb-mat-40">
+          <mat-icon>search</mat-icon>
+        </button>
+        <button mat-icon-button
+          class="tb-mat-40"
+          (click)="toggleFullscreen()"
+          matTooltipPosition="above"
+          matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}">
+          <mat-icon class="material-icons">{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+          class="tb-mat-40"
+          matTooltip="{{ 'custom-translation.search' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field class="flex-1">
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+            [formControl]="textSearch"
+            placeholder="{{ 'custom-translation.search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button
+          class="tb-mat-40"
+          (click)="exitSearchMode()"
+          matTooltip="{{ 'action.close' | translate }}"
+          matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div class="table-container flex-1">
+      <table #table mat-table [dataSource]="dataSource" [trackBy]="trackByLocale"
+        matSort [matSortActive]="pageLink.sortOrder?.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="k">
+          <mat-header-cell *matHeaderCellDef mat-sort-header class="w-1/3 max-w-1/3">{{ 'custom-translation.term-key' | translate }}</mat-header-cell>
+          <mat-cell *matCellDef="let translate" class="cell-action w-1/3 max-w-1/3">
+            <div class="constant-value flex items-center">
+              <div>{{ translate.k }}</div>
+              <tb-copy-button
+                class="copy-button"
+                [disabled]="isLoading$ | async"
+                [copyText]="translate.k"
+                tooltipText="{{ 'custom-translation.copy-term-key' | translate }}"
+                tooltipPosition="above"
+                icon="content_copy"
+                [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                >
+              </tb-copy-button>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="o">
+          <mat-header-cell *matHeaderCellDef mat-sort-header class="w-1/3 max-w-1/3">{{ 'language.locales.' + defaultLang | translate }}</mat-header-cell>
+          <mat-cell *matCellDef="let translate" class="cell-action w-1/3 max-w-1/3">
+            <div class="constant-value flex items-center">
+              <div>{{ translate.o }}</div>
+              @if (translate.o) {
+                <tb-copy-button
+                  class="copy-button"
+                  [disabled]="isLoading$ | async"
+                  [copyText]="translate.o"
+                  tooltipText="{{ 'custom-translation.copy-original-text' | translate }}"
+                  tooltipPosition="above"
+                  icon="content_copy"
+                  [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+                  >
+                </tb-copy-button>
+              }
+            </div>
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="t">
+          <mat-header-cell *matHeaderCellDef mat-sort-header class="w-1/3 max-w-1/3">{{ localeName }}</mat-header-cell>
+          <mat-cell *matCellDef="let translate" class="w-1/3 max-w-1/3">
+            @if ((translate.s === CustomTranslationState.Untranslated || translate.edit || translate.s === CustomTranslationState.Added && !translate.t) && !readonly) {
+              <div class="tb-form-row no-padding no-gap no-border">
+                <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                  <textarea matInput
+                    rows="1"
+                    placeholder="{{ 'custom-translation.set' | translate }}"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="1"
+                    (click)="$event.stopPropagation()"
+                    (blur)="updatedTranslated(translate)"
+                    (keydown.enter)="updatedTranslated(translate)"
+                    (keydown.tab)="nextRowTab($event, translate)"
+                    [(ngModel)]="translate.value">
+                  </textarea>
+                </mat-form-field>
+              </div>
+            } @else {
+              {{ translate.t }}
+            }
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="action">
+          <mat-header-cell *matHeaderCellDef style="width: 40px; max-width: 40px; min-width: 40px"> </mat-header-cell>
+          <mat-cell *matCellDef="let translate" style="width: 40px; max-width: 40px; min-width: 40px">
+            @if (translate.s === CustomTranslationState.Customized && !readonly) {
+              <button mat-icon-button
+                class="tb-mat-40"
+                [disabled]="(isLoading$ | async)"
+                matTooltip="{{ 'custom-translation.return-default-translation' | translate }}"
+                matTooltipPosition="above"
+                (click)="returnDefaultTranslation($event, translate)">
+                <tb-icon>
+                  mdi:broom
+                </tb-icon>
+              </button>
+            }
+            @if (translate.s === CustomTranslationState.Added && !readonly && translate.t) {
+              <button mat-icon-button
+                class="tb-mat-40"
+                [disabled]="(isLoading$ | async)"
+                matTooltip="{{ 'custom-translation.delete-translation' | translate }}"
+                matTooltipPosition="above"
+                (click)="deleteNewTranslated($event, translate)">
+                <tb-icon>
+                  delete
+                </tb-icon>
+              </button>
+            }
+          </mat-cell>
+          <ng-container matColumnDef="newKey">
+            <mat-header-cell *matHeaderCellDef style="width: 33%">
+              <div class="tb-form-row no-padding no-gap no-border" [formGroup]="newKey">
+                <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                  <textarea matInput
+                    rows="1"
+                    placeholder="{{ 'custom-translation.set' | translate }}"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="1"
+                    #keyInput
+                    (blur)="addNewTranslated()"
+                    (keydown.enter)="keyInput.blur()"
+                    formControlName="key">
+                  </textarea>
+                </mat-form-field>
+              </div>
+            </mat-header-cell>
+          </ng-container>
+          <ng-container matColumnDef="original">
+            <mat-header-cell *matHeaderCellDef style="width: 33%">
+              @if (localeCode !== defaultLang) {
+                <div class="tb-form-row no-padding no-gap no-border" [formGroup]="newKey">
+                  <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                    <textarea matInput
+                      rows="1"
+                      placeholder="{{ 'custom-translation.set' | translate }}"
+                      cdkTextareaAutosize
+                      cdkAutosizeMinRows="1"
+                      #originalInput
+                      (blur)="addNewTranslated()"
+                      (keydown.enter)="originalInput.blur()"
+                      formControlName="original">
+                    </textarea>
+                  </mat-form-field>
+                </div>
+              }
+            </mat-header-cell>
+          </ng-container>
+          <ng-container matColumnDef="translated">
+            <mat-header-cell *matHeaderCellDef style="width: 33%">
+              <div class="tb-form-row no-padding no-gap no-border" [formGroup]="newKey">
+                <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+                  <textarea matInput
+                    rows="1"
+                    placeholder="{{ 'custom-translation.set' | translate }}"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="1"
+                    #translatedInput
+                    (blur)="addNewTranslated()"
+                    (keydown.enter)="translatedInput.blur()"
+                    formControlName="translated">
+                  </textarea>
+                </mat-form-field>
+              </div>
+            </mat-header-cell>
+          </ng-container>
+          <ng-container matColumnDef="deleteKey">
+            <mat-header-cell *matHeaderCellDef style="width: 40px; max-width: 40px; min-width: 40px">
+              <button mat-icon-button
+                class="tb-mat-40"
+                [disabled]="(isLoading$ | async)"
+                (click)="deleteNewTranslated($event)"
+                matTooltip="{{ 'action.cancel' | translate }}"
+                matTooltipPosition="above">
+                <tb-icon>
+                  close
+                </tb-icon>
+              </button>
+            </mat-header-cell>
+          </ng-container>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-header-row *matHeaderRowDef="['newKey', 'original', 'translated', 'deleteKey']; sticky: true" [class.!hidden]="!newTranslated" class="added"></mat-header-row>
+        <mat-row
+          [class.!hidden]="dataSource.dataLoading"
+          *matRowDef="let translate; columns: displayedColumns;"
+          (click)="toggleEditMode($event, translate)"
+          [class]="{
+             untranslated: translate.s === CustomTranslationState.Untranslated,
+             customized: translate.s === CustomTranslationState.Customized,
+             added: translate.s === CustomTranslationState.Added,
+             }">
+        </mat-row>
+      </table>
+      <span [class.!hidden]="!dataSource.dataLoading"
+      class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-paginator [length]="dataSource.total() | async"
+      [pageIndex]="pageLink.page"
+      [pageSize]="pageLink.pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      [hidePageSize]="hidePageSize"
+    showFirstLastButtons></mat-paginator>
+  </div>
+  <div class="tb-form-row tb-legend">
+    <tb-icon color="primary">mdi:filter-variant</tb-icon>
+    <mat-chip-listbox [formControl]="filterParams" multiple>
+      <mat-chip-option [value]="CustomTranslationState.Translated">
+        <div class="tb-legend-item-label">
+          <div translate>custom-translation.translated</div>
+          <div class="tb-legend-item-label-color translated"></div>
+        </div>
+      </mat-chip-option>
+      <mat-chip-option [value]="CustomTranslationState.Untranslated">
+        <div class="tb-legend-item-label">
+          <div translate>custom-translation.untranslated</div>
+          <div class="tb-legend-item-label-color untranslated"></div>
+        </div>
+      </mat-chip-option>
+      <mat-chip-option [value]="CustomTranslationState.Customized">
+        <div class="tb-legend-item-label">
+          <div translate>custom-translation.customized</div>
+          <div class="tb-legend-item-label-color customized"></div>
+        </div>
+      </mat-chip-option>
+      <mat-chip-option [value]="CustomTranslationState.Added">
+        <div class="tb-legend-item-label">
+          <div translate>custom-translation.added-key</div>
+          <div class="tb-legend-item-label-color added"></div>
+        </div>
+      </mat-chip-option>
+    </mat-chip-listbox>
+  </div>
+</div>
