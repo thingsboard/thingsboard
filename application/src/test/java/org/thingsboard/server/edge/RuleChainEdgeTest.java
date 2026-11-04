@@ -3,6 +3,7 @@
 package org.thingsboard.server.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
@@ -11,16 +12,21 @@ import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -257,6 +263,41 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         doDelete("/api/ruleChain/" + savedRuleChain.getUuidId())
                 .andExpect(status().isOk());
         Assert.assertTrue(edgeImitator.waitForMessages(5));
+    }
+
+    @Test
+    public void testSendRuleChainMetadataRequestForRuleChainOfDifferentTenantToCloud() throws Exception {
+        RuleChainId ruleChainId = getDifferentTenantRootRuleChainId();
+        sendUplinkMsgAndVerifyNoDownlink(uplinkMsgBuilder -> uplinkMsgBuilder.addRuleChainMetadataRequestMsg(RuleChainMetadataRequestMsg.newBuilder()
+                .setRuleChainIdMSB(ruleChainId.getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainId.getId().getLeastSignificantBits()).build()));
+    }
+
+    @Test
+    public void testSendRuleChainMetadataForRuleChainOfDifferentTenantToCloud() throws Exception {
+        RuleChainId ruleChainId = getDifferentTenantRootRuleChainId();
+        loginDifferentTenant();
+        RuleChainMetaData metaData = doGet("/api/ruleChain/" + ruleChainId.getId() + "/metadata", RuleChainMetaData.class);
+        int nodesCount = metaData.getNodes().size();
+        loginTenantAdmin();
+
+        metaData.setNodes(List.of(metaData.getNodes().get(0)));
+        metaData.setConnections(null);
+        metaData.setFirstNodeIndex(0);
+        sendUplinkMsgAndWaitForResponse(uplinkMsgBuilder -> uplinkMsgBuilder.addRuleChainMetadataUpdateMsg(
+                EdgeMsgConstructorUtils.constructRuleChainMetadataUpdatedMsg(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, metaData, EdgeVersion.V_LATEST)));
+
+        loginDifferentTenant();
+        RuleChainMetaData metaDataAfter = doGet("/api/ruleChain/" + ruleChainId.getId() + "/metadata", RuleChainMetaData.class);
+        Assert.assertEquals(nodesCount, metaDataAfter.getNodes().size());
+    }
+
+    private RuleChainId getDifferentTenantRootRuleChainId() throws Exception {
+        loginDifferentTenant();
+        RuleChain rootRuleChain = doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {},
+                new PageLink(100), RuleChainType.CORE.name()).getData().stream().filter(RuleChain::isRoot).findFirst().orElseThrow();
+        loginTenantAdmin();
+        return rootRuleChain.getId();
     }
 
 }

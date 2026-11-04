@@ -50,7 +50,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor implements Da
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
                     Dashboard dashboardToDelete = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
-                    if (dashboardToDelete != null) {
+                    if (dashboardToDelete != null && tenantId.equals(dashboardToDelete.getTenantId())) {
                         edgeCtx.getDashboardService().unassignDashboardFromEdge(tenantId, dashboardId, edge.getId());
                     }
                     return Futures.immediateFuture(null);
