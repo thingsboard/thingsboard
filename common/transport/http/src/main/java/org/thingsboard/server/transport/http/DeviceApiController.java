@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 package org.thingsboard.server.transport.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -89,6 +91,11 @@ public class DeviceApiController implements TbTransportService {
             " }\n" +
             "}";
 
+    private static final String GET_ATTRIBUTES_RESPONSE_EXAMPLE = "{\n" +
+            " \"client\": {\"clientKey\": \"value1\", \"booleanKey\": true},\n" +
+            " \"shared\": {\"sharedKey\": 42.0, \"jsonKey\": {\"someNumber\": 42}}\n" +
+            "}";
+
     protected static final String TS_PAYLOAD = "The request payload is a JSON document with three possible formats:\n\n" +
             "Simple format without timestamp. In such a case, current server time will be used: \n\n" +
             MARKDOWN_CODE_BLOCK_START +
@@ -115,17 +122,26 @@ public class DeviceApiController implements TbTransportService {
 
     private static final String ACCESS_TOKEN_PARAM_DESCRIPTION = "Your device access token.";
 
+    private static final String REQUEST_TIMEOUT_DESCRIPTION = "No response was received before the request timeout (or the long poll timeout) expired. The response body is empty.";
+
     @Autowired
     private HttpTransportContext transportContext;
 
     @Operation(summary = "Get attributes (getDeviceAttributes)",
             description = "Returns all attributes that belong to device. "
                     + "Use optional 'clientKeys' and/or 'sharedKeys' parameter to return specific attributes. "
+                    + "Client-scope attributes are returned under 'client' and shared-scope attributes under 'shared'; "
+                    + "a scope without attributes is left out. "
                     + "\n Example of the result: "
                     + MARKDOWN_CODE_BLOCK_START
-                    + ATTRIBUTE_PAYLOAD_EXAMPLE
+                    + GET_ATTRIBUTES_RESPONSE_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
                     + REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK",
+                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+            @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
+    })
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> getDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -162,6 +178,7 @@ public class DeviceApiController implements TbTransportService {
                     + ATTRIBUTE_PAYLOAD_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
                     + REQUIRE_ACCESS_TOKEN)
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content)
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -183,6 +200,7 @@ public class DeviceApiController implements TbTransportService {
                     + "\n Example of the request: "
                     + TS_PAYLOAD
                     + REQUIRE_ACCESS_TOKEN)
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content)
     @RequestMapping(value = "/{deviceToken}/telemetry", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postTelemetry(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -208,6 +226,7 @@ public class DeviceApiController implements TbTransportService {
                     + "Note: both 'secretKey' and 'durationMs' is optional parameters. " +
                     "In case the secretKey is not specified, the empty string as a default value is used. In case the durationMs is not specified, the system parameter device.claim.duration is used.\n\n"
                     + REQUIRE_ACCESS_TOKEN)
+    @ApiResponse(responseCode = "200", description = "OK", content = @Content)
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> saveClaimingInfo(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -229,6 +248,11 @@ public class DeviceApiController implements TbTransportService {
                     "Deprecated, since long polling is resource and network consuming. " +
                     "Consider using MQTT or CoAP protocol for light-weight real-time updates. \n\n" +
                     REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The RPC command for the device, a JSON object with 'id', 'method' and 'params'.",
+                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+            @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
+    })
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> subscribeToCommands(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -253,7 +277,7 @@ public class DeviceApiController implements TbTransportService {
             description = "Replies to server originated RPC command identified by 'requestId' parameter. The response is arbitrary JSON.\n\n" +
                     REQUIRE_ACCESS_TOKEN)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "RPC reply to command request was sent to Core."),
+            @ApiResponse(responseCode = "200", description = "RPC reply to command request was sent to Core.", content = @Content),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
             @ApiResponse(responseCode = "413", description = "Request payload is too large."),
     })
@@ -285,7 +309,9 @@ public class DeviceApiController implements TbTransportService {
                     MARKDOWN_CODE_BLOCK_END +
                     REQUIRE_ACCESS_TOKEN)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "RPC request to server was sent to Rule Engine."),
+            @ApiResponse(responseCode = "200", description = "RPC request to server was sent to Rule Engine. The body is the RPC reply, arbitrary JSON.",
+                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+            @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
             @ApiResponse(responseCode = "413", description = "Request payload too large."),
     })
@@ -316,6 +342,11 @@ public class DeviceApiController implements TbTransportService {
                     "Deprecated, since long polling is resource and network consuming. " +
                     "Consider using MQTT or CoAP protocol for light-weight real-time updates. \n\n" +
                     REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The updated shared attributes as key-value pairs, plus the 'deleted' array of removed keys, if any.",
+                    content = @Content(schema = @Schema(implementation = JsonNode.class))),
+            @ApiResponse(responseCode = "408", description = REQUEST_TIMEOUT_DESCRIPTION, content = @Content),
+    })
     @RequestMapping(value = "/{deviceToken}/attributes/updates", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> subscribeToAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -347,6 +378,12 @@ public class DeviceApiController implements TbTransportService {
                     "For example, device may request first 16 KB of firmware using 'chunk'=0 and 'size'=16384. " +
                     "Next 16KB using 'chunk'=1 and 'size'=16384. The last chunk should have less bytes then requested using 'size' parameter. \n\n" +
                     REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The firmware package file or the requested chunk of it.",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))),
+            @ApiResponse(responseCode = "400", description = "The requested title or version does not match the firmware assigned to the device. The response body is empty.", content = @Content),
+            @ApiResponse(responseCode = "404", description = "No firmware is assigned to the device. The response body is empty.", content = @Content),
+    })
     @RequestMapping(value = "/{deviceToken}/firmware", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getFirmware(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -373,6 +410,12 @@ public class DeviceApiController implements TbTransportService {
                     "For example, device may request first 16 KB of software using 'chunk'=0 and 'size'=16384. " +
                     "Next 16KB using 'chunk'=1 and 'size'=16384. The last chunk should have less bytes then requested using 'size' parameter. \n\n" +
                     REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "The software package file or the requested chunk of it.",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))),
+            @ApiResponse(responseCode = "400", description = "The requested title or version does not match the software assigned to the device. The response body is empty.", content = @Content),
+            @ApiResponse(responseCode = "404", description = "No software is assigned to the device. The response body is empty.", content = @Content),
+    })
     @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getSoftware(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -407,6 +450,8 @@ public class DeviceApiController implements TbTransportService {
                     "  \"credentialsValue\":\"DEVICE_ACCESS_TOKEN\",\n" +
                     "  \"status\":\"SUCCESS\"\n" +
                     "}" + MARKDOWN_CODE_BLOCK_END)
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(schema = @Schema(implementation = JsonNode.class)))
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> provisionDevice(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON with provision request. See API call description for example.")
