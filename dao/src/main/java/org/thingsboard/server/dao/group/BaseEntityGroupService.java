@@ -1214,6 +1214,9 @@ public class BaseEntityGroupService extends AbstractCachedEntityService<EntityGr
             if (!data.getOwnerId().equals(old.getOwnerId())) {
                 throw new DataValidationException("Entity group owner can't be changed!");
             }
+            if (data.getType() != old.getType()) {
+                throw new DataValidationException("Entity group type can't be changed!");
+            }
             return old;
         }
 

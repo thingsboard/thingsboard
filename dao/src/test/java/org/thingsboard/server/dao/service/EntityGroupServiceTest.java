@@ -533,6 +533,22 @@ public class EntityGroupServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testShouldNotChangeEntityGroupTypeOnUpdate() {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup.setName("Device Group");
+        EntityGroup savedEntityGroup = entityGroupService.saveEntityGroup(tenantId, tenantId, entityGroup);
+
+        EntityGroup retypedEntityGroup = new EntityGroup(savedEntityGroup);
+        retypedEntityGroup.setType(EntityType.USER);
+
+        assertThatThrownBy(() -> entityGroupService.saveEntityGroup(tenantId, tenantId, retypedEntityGroup))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Entity group type can't be changed!");
+        assertThat(entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId()).getType()).isEqualTo(EntityType.DEVICE);
+    }
+
+    @Test
     public void testShouldUpdateEntityGroupWithSameOwner() {
         EntityGroup entityGroup = new EntityGroup();
         entityGroup.setType(EntityType.DEVICE);

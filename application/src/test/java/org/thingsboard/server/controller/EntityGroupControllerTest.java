@@ -107,6 +107,22 @@ public class EntityGroupControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldNotChangeEntityGroupType() throws Exception {
+        loginTenantAdmin();
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setName("Device Group");
+        entityGroup.setType(EntityType.DEVICE);
+        EntityGroup savedEntityGroup = doPost("/api/entityGroup", entityGroup, EntityGroup.class);
+
+        savedEntityGroup.setType(EntityType.USER);
+        doPost("/api/entityGroup", savedEntityGroup)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Entity group type can't be changed!")));
+
+        assertThat(entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId()).getType()).isEqualTo(EntityType.DEVICE);
+    }
+
+    @Test
     public void testShouldNotMoveTenantEntityGroupToCustomerAsCustomerAdmin() throws Exception {
         EntityGroup tenantAdministratorsGroup = entityGroupService.findEntityGroupByTypeAndName(tenantId, tenantId,
                 EntityType.USER, EntityGroup.GROUP_TENANT_ADMINS_NAME).get();
