@@ -142,6 +142,15 @@
               </div>
             }
           }
+          @if (ws.removingReplaced) {
+            <div class="mt-4 flex items-center gap-2">
+              <mat-spinner diameter="18"></mat-spinner>
+              <span class="tb-progress-status">{{ 'iot-hub.device-update-removing' | translate }}</span>
+            </div>
+          }
+          @if (stepLevelError(ws); as error) {
+            <span class="tb-progress-alert-msg tb-progress-alert-msg-error mt-4">{{ error }}</span>
+          }
         </div>
       }
     }
@@ -171,7 +180,7 @@
 } @else {
   <div class="tb-device-install-header flex items-center gap-3 py-2 pl-6 pr-2">
     <h2 class="tb-device-install-title">{{ 'iot-hub.device-install-title' | translate:{ name: packageInfo?.name || data.item.name } }}</h2>
-    <button mat-icon-button (click)="cancel()" tabindex="-1">
+    <button mat-icon-button [disabled]="removingReplaced" (click)="cancel()" tabindex="-1">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -220,13 +229,13 @@
       @if (allProgressDone) {
         <button mat-button (click)="done()">{{ 'action.close' | translate }}</button>
       } @else {
-        <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+        <button mat-button [disabled]="removingReplaced" (click)="cancel()">{{ 'action.cancel' | translate }}</button>
       }
     </ng-template>
 
     <mat-dialog-actions>
       @if (!isFirstWizardStep) {
-        <button mat-stroked-button (click)="previousStep()">{{ 'action.back' | translate }}</button>
+        <button mat-stroked-button [disabled]="removingReplaced" (click)="previousStep()">{{ 'action.back' | translate }}</button>
       }
       <span class="flex-1"></span>
       @if (currentWizardStep; as step) {

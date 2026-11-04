@@ -180,11 +180,24 @@ export class IotHubApiService {
   public registerDeviceInstall(
     versionId: string,
     descriptor: { type?: string; createdEntityIds: { entityType: string; id: string }[]; dashboardId?: { entityType: string; id: string }; selectedInstallMethod?: string; installState?: Record<string, any> },
+    replaceInstalledItemId?: string,
     config?: IotHubRequestConfig
   ): Observable<InstallItemVersionResult> {
+    let params = this.buildParams(config);
+    if (replaceInstalledItemId) {
+      params = params.set('replaceInstalledItemId', replaceInstalledItemId);
+    }
     return this.http.post<InstallItemVersionResult>(
       `/api/iot-hub/device/register?versionId=${versionId}`,
       { type: 'DEVICE', ...descriptor },
+      { params }
+    );
+  }
+
+  public removeDevicePackageEntities(installedItemId: string, versionId: string, config?: IotHubRequestConfig): Observable<void> {
+    return this.http.post<void>(
+      `/api/iot-hub/installedItems/${installedItemId}/device/removeEntities?versionId=${versionId}`,
+      null,
       { params: this.buildParams(config) }
     );
   }
