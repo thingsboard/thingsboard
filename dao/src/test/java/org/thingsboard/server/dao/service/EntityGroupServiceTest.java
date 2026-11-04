@@ -515,6 +515,39 @@ public class EntityGroupServiceTest extends AbstractServiceTest {
                 .hasMessage("Entity '" + entityGroupId.getEntityType() + "' is not a group entity!");
     }
 
+    @Test
+    public void testShouldNotChangeEntityGroupOwnerOnUpdate() {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup.setName("Device Group");
+        EntityGroup savedEntityGroup = entityGroupService.saveEntityGroup(tenantId, tenantId, entityGroup);
+
+        CustomerId customerId = new CustomerId(UUID.randomUUID());
+        EntityGroup movedEntityGroup = new EntityGroup(savedEntityGroup);
+        movedEntityGroup.setOwnerId(customerId);
+
+        assertThatThrownBy(() -> entityGroupService.saveEntityGroup(tenantId, customerId, movedEntityGroup))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Entity group owner can't be changed!");
+        assertThat(entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId()).getOwnerId()).isEqualTo(tenantId);
+    }
+
+    @Test
+    public void testShouldUpdateEntityGroupWithSameOwner() {
+        EntityGroup entityGroup = new EntityGroup();
+        entityGroup.setType(EntityType.DEVICE);
+        entityGroup.setName("Device Group");
+        EntityGroup savedEntityGroup = entityGroupService.saveEntityGroup(tenantId, tenantId, entityGroup);
+
+        EntityGroup renamedEntityGroup = new EntityGroup(savedEntityGroup);
+        renamedEntityGroup.setName("Renamed Device Group");
+        entityGroupService.saveEntityGroup(tenantId, tenantId, renamedEntityGroup);
+
+        EntityGroup foundEntityGroup = entityGroupService.findEntityGroupById(tenantId, savedEntityGroup.getId());
+        assertThat(foundEntityGroup.getName()).isEqualTo("Renamed Device Group");
+        assertThat(foundEntityGroup.getOwnerId()).isEqualTo(tenantId);
+    }
+
     private ListenableFuture<AttributesSaveResult> saveStringAttribute(EntityId entityId, String key, String value, AttributeScope scope) {
         KvEntry attrValue = new StringDataEntry(key, value);
         AttributeKvEntry attr = new BaseAttributeKvEntry(attrValue, 42L);
