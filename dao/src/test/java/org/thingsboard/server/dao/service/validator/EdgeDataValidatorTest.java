@@ -8,13 +8,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.verify;
 
@@ -48,6 +51,19 @@ class EdgeDataValidatorTest {
         validator.validateDataImpl(tenantId, edge);
         verify(validator).validateString("Edge name", edge.getName());
         verify(validator).validateString("Edge type", edge.getType());
+    }
+
+    @Test
+    void testValidateUpdateWithDifferentTenant() {
+        Edge old = new Edge(new EdgeId(UUID.randomUUID()));
+        old.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        Edge edge = new Edge(old.getId());
+        edge.setTenantId(tenantId);
+        willReturn(old).given(edgeDao).findById(tenantId, edge.getId().getId());
+
+        assertThatThrownBy(() -> validator.validateUpdate(tenantId, edge))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Can't update edge tenant id!");
     }
 
 }
