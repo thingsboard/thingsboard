@@ -2,43 +2,45 @@
 // SPDX-License-Identifier: BUSL-1.1
 :host {
   display: block;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--k-stroke);
   border-radius: 12px;
-  padding: 16px;
+  padding: var(--chat-card-pad);
+  background: var(--tb-surface);
+  font-family: var(--tb-font);
+  letter-spacing: var(--chat-text-ls);
+  color: var(--tb-ink);
 
   &.executing {
-    color: rgba(0, 0, 0, 0.76);
+    color: var(--k-grey);
   }
 
   &.approved {
-    color: #198038;
-    background-color: rgba(25, 128, 56, 0.06);
+    color: var(--tb-ok-text);
+    background-color: var(--tb-ok-tint);
   }
 
   &.denied {
-    color: rgba(0, 0, 0, 0.54);
-    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--tb-text-secondary);
+    background-color: var(--tb-line-soft);
   }
 
   &.error {
-    color: #D12730;
-    background-color: rgba(209, 39, 48, 0.08);
+    color: var(--tb-crit);
+    background-color: var(--tb-crit-tint);
   }
 
   .approval-title {
     margin-bottom: 8px;
     font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
-    letter-spacing: 0.25px;
+    font-size: var(--chat-head);
+    line-height: var(--chat-head-lh);
   }
 
   .approval-content {
-    font-size: 14px;
-    line-height: 20px;
     margin-bottom: 16px;
-    color: rgba(0, 0, 0, 0.54);
-    letter-spacing: 0.25px;
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    color: var(--tb-text-secondary);
   }
 
   .approval-actions {
@@ -48,36 +50,36 @@
 
     .approved {
       flex: 1;
-      --mat-button-filled-label-text-color: #FFF;
-      --mat-button-filled-container-color: #198038;
+      --mat-button-filled-label-text-color: var(--ai-on-action);
+      --mat-button-filled-container-color: var(--ai-action);
     }
 
     .danger {
       flex: 1;
-      --mat-button-filled-label-text-color: #FFF;
-      --mat-button-filled-container-color: #d32f2f;
+      --mat-button-filled-label-text-color: var(--ai-on-action);
+      --mat-button-filled-container-color: var(--tb-crit);
     }
 
     .denied {
       flex: 1;
-      --mat-button-outlined-label-text-color: #FF5722;
+      --mat-button-outlined-label-text-color: var(--tb-ink);
+      --mat-button-outlined-outline-color: var(--k-stroke-hover);
     }
   }
 
   .approve-all {
     width: 100%;
     margin-top: 8px;
-    --mat-button-text-label-text-color: rgba(0, 0, 0, 0.54);
-    --mat-button-text-container-height: 32px;
+    --mat-button-text-label-text-color: var(--tb-text-secondary);
+    --mat-button-text-container-height: var(--chat-control);
   }
 
   .approval-result {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: var(--chat-line);
     font-weight: 500;
-    line-height: 24px;
-    letter-spacing: 0.25px;
+    line-height: var(--chat-line-lh);
   }
 }

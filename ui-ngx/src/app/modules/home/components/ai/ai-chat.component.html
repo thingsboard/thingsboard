@@ -1,0 +1,92 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<header class="ai-chat-head" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
+        (fullscreenChanged)="onFullscreenChanged($event)">
+  <ng-content select="[aiChatLead]"></ng-content>
+  @if (variant() === 'panel') {
+    <span class="tb-ai-mark m32" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
+  }
+  @if (chat(); as chat) {
+    @if (renaming()) {
+      <input #titleInput class="ai-chat-rename" [value]="chat.title"
+             [attr.aria-label]="'ai-assistant.chat-title' | translate"
+             (keydown)="onRenameKeydown($event)" (blur)="finishRename(titleInput.value)">
+    } @else {
+      <span #chatName class="ai-chat-name" [matTooltip]="nameClipped() ? chat.title : ('ai-assistant.double-click-to-rename' | translate)"
+            matTooltipPosition="after" matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
+            (mouseenter)="nameClipped.set(chatName.scrollWidth > chatName.clientWidth + 1)" (dblclick)="startRename()">{{ chat.title }}</span>
+    }
+  } @else {
+    <span class="ai-chat-name">{{ 'ai-assistant.new-chat' | translate }}</span>
+  }
+  <div class="ai-chat-actions">
+    @if (fullscreenEnabled()) {
+      <button type="button" class="ai-ib" (click)="toggleFullscreen()"
+              [matTooltip]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate" matTooltipPosition="above"
+              [attr.aria-label]="(fullscreen() ? 'fullscreen.exit' : 'fullscreen.expand') | translate">
+        <mat-icon fontSet="material-icons-round">{{ fullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+      </button>
+    }
+    @if (chat() && !renaming()) {
+      <button type="button" class="ai-ib" [matMenuTriggerFor]="chatMenu"
+              [matTooltip]="'action.more' | translate" matTooltipPosition="above" [attr.aria-label]="'action.more' | translate">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+    }
+    <ng-content select="[aiChatActions]"></ng-content>
+  </div>
+</header>
+<div tb-toast [toastTarget]="toastTarget()" class="pointer-events-none absolute inset-0"></div>
+<div #chatArea class="ai-chat-body" [class.empty]="!messages().length && !loading()">
+  @if (messages().length || loading()) {
+    <tb-ai-chat-messages
+      class="ai-chat-log"
+      [messages]="messages()"
+      [loading]="loading()"
+      [completedExecutions]="completedExecutions()"
+      [autoApprove]="autoApprove()"
+      [additionalStyles]="markdownStyles"
+      [scrollContainer]="chatArea"
+      initialScroll="bottom"
+      (approvalAction)="onApprovalAction($event)">
+    </tb-ai-chat-messages>
+  } @else if (!chatId()) {
+    <div class="ai-chat-start">
+      <span class="tb-ai-mark" [class.m64]="variant() === 'page'" [class.m44]="variant() === 'panel'" aria-hidden="true">
+        <mat-icon>auto_awesome</mat-icon>
+      </span>
+      <h1 class="ai-chat-start-title">{{ 'ai-assistant.what-to-work-on' | translate }}</h1>
+    </div>
+  }
+  <div class="ai-chat-composer">
+    <tb-ai-prompt-input
+      [placeholder]="placeholder()"
+      [loading]="loading()"
+      [dropZone]="chatArea"
+      [showAutoApprove]="true"
+      [autoApprove]="autoApprove()"
+      [autoApproveInChat]="!!chatId()"
+      (autoApproveChange)="setAutoApprove($event)"
+      (messageSent)="sendMsgFromUser($event)">
+    </tb-ai-prompt-input>
+  </div>
+</div>
+
+<mat-menu #chatMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">
+  <button mat-menu-item (click)="startRename()">
+    <mat-icon fontSet="material-icons-round">edit</mat-icon>
+    <span>{{ 'action.rename' | translate }}</span>
+  </button>
+  <button mat-menu-item (click)="togglePinned()">
+    <mat-icon fontSet="material-icons-round">push_pin</mat-icon>
+    <span>{{ (chat()?.pinned ? 'ai-assistant.unpin' : 'ai-assistant.pin') | translate }}</span>
+  </button>
+  <button mat-menu-item class="danger" (click)="deleteChat()">
+    <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
+    <span>{{ 'action.delete' | translate }}</span>
+  </button>
+</mat-menu>

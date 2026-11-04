@@ -29,19 +29,20 @@
           <span>{{ msg.content }}</span>
         </div>
       } @else {
-        <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+        <div class="agent">
+          <span class="tb-ai-mark" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
+          <tb-markdown class="agent-body" usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+        </div>
       }
     </div>
   }
 }
 @if (loading && !waitApproval) {
-  <div class="generating flex items-center gap-4">
+  <div class="generating flex items-center">
     @if (loadingLongTime) {
       <ng-content select="[loadingLongTime]"></ng-content>
     } @else {
-      <svg class="image-main-color w-6" preserveAspectRatio="xMidYMid meet" viewBox="0 0 42 48">
-        <use [attr.xlink:href]="'/assets/solution-creator/iot-assistant.svg#iot-assistant'"></use>
-      </svg>
+      <span class="tb-ai-mark" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
       <div class="glow-container">
         {{ 'ai-assistant.thinking' | translate }}
       </div>

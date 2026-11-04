@@ -16,8 +16,8 @@
     display: flex;
     align-items: center;
     border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    background: #fff;
+    border: 1px solid var(--k-stroke);
+    background: var(--tb-surface);
     overflow: hidden;
     flex: none;
 
@@ -25,7 +25,7 @@
       cursor: pointer;
 
       &:hover {
-        border-color: var(--tb-primary-500);
+        border-color: var(--ai-focus);
       }
     }
 
@@ -33,7 +33,7 @@
       width: 64px;
       height: 64px;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.04);
+      background: var(--tb-line-soft);
 
       img {
         width: 100%;
@@ -42,7 +42,7 @@
       }
 
       .placeholder {
-        color: rgba(0, 0, 0, 0.38);
+        color: var(--tb-ink-38);
       }
     }
 
@@ -60,22 +60,13 @@
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        color: var(--tb-primary-500);
-        position: relative;
-
-        &:before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: var(--tb-primary-500);
-          opacity: 0.1;
-        }
+        color: var(--ai-selected-text);
+        background: var(--ai-selected-wash);
 
         mat-icon {
-          font-size: 20px;
-          width: 20px;
-          height: 20px;
+          font-size: var(--chat-icon);
+          width: var(--chat-icon);
+          height: var(--chat-icon);
         }
       }
 
@@ -83,26 +74,27 @@
         display: flex;
         flex-direction: column;
         min-width: 0;
-        line-height: 16px;
+        line-height: var(--chat-meta-lh);
 
         .file-name {
-          font-size: 13px;
-          color: rgba(0, 0, 0, 0.87);
+          font-size: var(--chat-meta);
+          font-weight: 500;
+          color: var(--tb-ink);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
         .file-info {
-          font-size: 11px;
-          color: rgba(0, 0, 0, 0.54);
+          font-size: var(--chat-caption);
+          color: var(--k-faint);
           white-space: nowrap;
         }
       }
     }
 
     &.failed {
-      border-color: rgba(209, 39, 48, 0.6);
+      border-color: color-mix(in srgb, var(--tb-crit) 60%, transparent);
     }
 
     .state {
@@ -111,10 +103,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.7);
+      background: color-mix(in srgb, var(--tb-surface) 70%, transparent);
 
       .error-icon {
-        color: rgb(209, 39, 48);
+        color: var(--tb-crit);
       }
     }
 
@@ -131,13 +123,13 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #fff;
-      background: rgba(0, 0, 0, 0.6);
+      color: var(--ai-on-dark);
+      background: color-mix(in srgb, var(--ai-dark) 80%, transparent);
       opacity: 0.9;
 
       &:hover {
         opacity: 1;
-        background: rgba(0, 0, 0, 0.8);
+        background: var(--ai-dark);
       }
 
       mat-icon {

@@ -6,6 +6,7 @@ import { SharedModule } from '@shared/shared.module';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 import { AiAssistantPanelComponent } from '@home/components/ai/ai-assistant-panel.component';
 import { AiChatMessagesComponent } from '@home/components/ai/ai-chat-messages.component';
+import { AiChatComponent } from '@home/components/ai/ai-chat.component';
 import { AiApprovalCardComponent } from '@home/components/ai/ai-approval-card.component';
 import { AiRenameDialogComponent } from '@home/components/ai/ai-rename-dialog.component';
 import { AiCreditsComponent } from '@home/components/ai/ai-credits.component';
@@ -20,6 +21,7 @@ import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
   declarations: [
     AiPromptInputComponent,
     AiAssistantPanelComponent,
+    AiChatComponent,
     AiChatMessagesComponent,
     AiApprovalCardComponent,
     AiRenameDialogComponent,
@@ -38,6 +40,7 @@ import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
   exports: [
     AiPromptInputComponent,
     AiAssistantPanelComponent,
+    AiChatComponent,
     AiChatMessagesComponent,
     AiApprovalCardComponent,
     AiRenameDialogComponent,

@@ -5,6 +5,7 @@
 @use '@angular/material/core/tokens/m2-utils';
 @import './datepicker-theme';
 @import './theme-constants';
+@import './ai-theme';
 
 @include mat.elevation-classes();
 @include mat.app-background();

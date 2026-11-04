@@ -96,7 +96,9 @@ export class AiAssistantPanelComponent implements OnInit {
 
   promptExamples = computed<AiAssistantPromptExample[]>(() => this.panelService.config()?.promptExamples ?? []);
 
-  autoApprove = computed(() => this.panelService.isAutoApprove(this.chatId()));
+  newChatAutoApprove = signal<boolean>(false);
+
+  autoApprove = computed(() => this.chatId() ? this.panelService.isAutoApprove(this.chatId()) : this.newChatAutoApprove());
 
   selectedChatTitle = computed(() => {
     const id = this.chatId();
@@ -219,6 +221,15 @@ export class AiAssistantPanelComponent implements OnInit {
       {executionId: event.executionId, approved: event.approved},
       {ignoreLoading: true, ignoreErrors: true}
     ).subscribe();
+  }
+
+  setAutoApprove(enabled: boolean): void {
+    const chatId = this.chatId();
+    if (chatId) {
+      this.panelService.setAutoApprove(chatId, enabled);
+    } else {
+      this.newChatAutoApprove.set(enabled);
+    }
   }
 
   setMenuWidth(triggerEl: MatButton): void {
@@ -366,6 +377,9 @@ export class AiAssistantPanelComponent implements OnInit {
       ? of(null)
       : this.aiChat.createChat({title: 'New chat'}, {ignoreLoading: true, ignoreErrors: true}).pipe(
         tap(chatId => {
+          if (this.newChatAutoApprove()) {
+            this.panelService.setAutoApprove(chatId, true);
+          }
           this.isCreatingNew.set(false);
           this.chatId.set(chatId);
           this.panelService.setLastChatId(chatId);

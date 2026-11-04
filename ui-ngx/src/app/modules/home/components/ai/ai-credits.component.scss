@@ -3,27 +3,27 @@
 :host {
   .ai-credits-donut,
   .mat-mdc-icon-button {
-    --_donut-color: #198038;
-    --_donut-track: rgba(0, 0, 0, 0.12);
+    --_donut-color: var(--tb-ok);
+    --_donut-track: var(--tb-ink-12);
 
     &.WARNING {
-      --_donut-color: #FAA405;
-      --_donut-track: rgba(250, 164, 5, 0.2);
+      --_donut-color: var(--tb-caution);
+      --_donut-track: var(--tb-caution-tint);
     }
 
     &.DISABLED {
-      --_donut-color: #D12730;
-      --_donut-track: rgba(209, 39, 48, 0.2);
+      --_donut-color: var(--tb-crit);
+      --_donut-track: color-mix(in srgb, var(--tb-crit) 20%, transparent);
     }
   }
 
   .ai-credits-donut {
     &:hover {
-      background-color: rgba(0, 0, 0, 0.04);
+      background-color: var(--tb-line-soft);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--tb-primary-500, #00695c);
+      outline: 2px solid var(--ai-focus);
       outline-offset: 2px;
     }
 
@@ -32,22 +32,22 @@
     }
 
     .donut-title {
-      font-size: 14px;
+      font-size: var(--chat-line);
       font-weight: 500;
-      line-height: 20px;
-      letter-spacing: 0.25px;
-      color: rgba(0, 0, 0, 0.76);
+      line-height: var(--chat-line-lh);
+      letter-spacing: var(--chat-text-ls);
+      color: var(--k-grey);
     }
 
     .donut-usage {
-      font-size: 13px;
-      line-height: 16px;
-      color: rgba(0, 0, 0, 0.54);
+      font-size: var(--chat-meta);
+      line-height: var(--chat-meta-lh);
+      color: var(--k-faint);
     }
   }
 
   .update-btn {
-    --mat-button-outlined-outline-color: rgba(0, 0, 0, 0.12);
+    --mat-button-outlined-outline-color: var(--k-stroke);
     --mat-button-outlined-horizontal-padding: 12px;
   }
 }

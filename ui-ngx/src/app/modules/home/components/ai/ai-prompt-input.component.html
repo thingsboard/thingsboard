@@ -70,6 +70,13 @@
           <mat-icon class="tb-mat-18">attach_file</mat-icon>
         </button>
       }
+      @if (showAutoApprove) {
+        <label class="composer-auto" [class.on]="autoApprove" [tbAiTip]="autoTip" tipClass="tip-auto">
+          <input type="checkbox" [checked]="autoApprove" (change)="toggleAutoApprove($event)">
+          <span class="track" aria-hidden="true"><span class="knob"><mat-icon>bolt</mat-icon></span></span>
+          <span class="label">{{ 'ai-assistant.auto-approve' | translate }}</span>
+        </label>
+      }
       <span class="composer-spacer"></span>
       <button type="button" class="composer-tool"
               [attr.aria-label]="'ai-assistant.shortcuts' | translate"
@@ -93,6 +100,14 @@
   <div class="tip-head"><b>{{ 'ai-assistant.add-files' | translate }}</b></div>
   <p>{{ 'ai-assistant.add-files-text' | translate }}</p>
   <p class="tip-sub">{{ 'ai-assistant.add-files-hint' | translate: {count: maxPerMessage(), size: maxSize()} }}</p>
+</ng-template>
+
+<ng-template #autoTip>
+  <div class="tip-head">
+    <b>{{ 'ai-assistant.auto-approve' | translate }}</b>
+    <span class="tip-value" [class.on]="autoApprove">{{ (autoApprove ? 'ai-assistant.auto-approve-on' : 'ai-assistant.auto-approve-off') | translate }}</span>
+  </div>
+  <p>{{ (autoApproveInChat ? 'ai-assistant.auto-approve-text' : 'ai-assistant.auto-approve-new-chat-text') | translate }}</p>
 </ng-template>
 
 <ng-template #keysTip>

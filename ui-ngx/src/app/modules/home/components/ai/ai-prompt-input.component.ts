@@ -73,7 +73,15 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   @Input() dropZone: HTMLElement;
 
+  @Input() showAutoApprove = false;
+
+  @Input() autoApprove = false;
+
+  @Input() autoApproveInChat = true;
+
   @Output() messageSent = new EventEmitter<AiPromptMessage>();
+
+  @Output() autoApproveChange = new EventEmitter<boolean>();
 
   @ViewChild('textarea') textarea!: ElementRef<HTMLTextAreaElement>;
 
@@ -189,6 +197,11 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
       this.textarea?.nativeElement.focus();
       this.resize();
     });
+  }
+
+  toggleAutoApprove(event: Event): void {
+    this.autoApprove = (event.target as HTMLInputElement).checked;
+    this.autoApproveChange.emit(this.autoApprove);
   }
 
   openFilePicker(): void {

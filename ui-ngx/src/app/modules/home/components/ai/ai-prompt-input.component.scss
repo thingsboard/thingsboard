@@ -1,19 +1,5 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-$ai-teal-300: #4db6ac;
-$ai-teal-400: #26a69a;
-$ai-action: #00695c;
-$ai-action-hover: #004d40;
-$ai-focus: #00695c;
-$ai-teal-700: #00796b;
-$ink: rgba(0, 0, 0, 0.87);
-$ink-54: rgba(0, 0, 0, 0.54);
-$ink-38: rgba(0, 0, 0, 0.38);
-$faint: rgba(0, 0, 0, 0.56);
-$line: rgba(0, 0, 0, 0.12);
-$line-soft: rgba(0, 0, 0, 0.05);
-$crit: #d12730;
-$font: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
 $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E";
 
 :host {
@@ -23,32 +9,32 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
 
 .tb-ai-composer {
   width: 100%;
-  font-family: $font;
-  letter-spacing: 0.25px;
+  font-family: var(--tb-font);
+  letter-spacing: var(--chat-text-ls);
   text-align: left;
 
   .composer-field {
     position: relative;
     display: flow-root;
-    background: #fff;
+    background: var(--tb-surface);
     border: 1px solid transparent;
     border-radius: 14px;
     box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.04), 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.08);
     transition: border-color .18s ease, box-shadow .18s ease;
 
     &:focus-within {
-      border-color: $ai-focus;
-      box-shadow: 0 0 0 1px $ai-focus, 0 8px 24px rgba(0, 105, 92, 0.12);
+      border-color: var(--ai-focus);
+      box-shadow: 0 0 0 1px var(--ai-focus), 0 8px 24px var(--ai-focus-shadow);
 
       .composer-chevron {
-        color: $ai-focus;
+        color: var(--ai-focus);
       }
     }
   }
 
   &.drop .composer-field {
-    box-shadow: inset 0 0 0 2px $ai-teal-300;
-    background: color-mix(in srgb, $ai-action 4%, #fff);
+    box-shadow: inset 0 0 0 2px var(--ai-teal-300);
+    background: color-mix(in srgb, var(--ai-action) 4%, var(--tb-surface));
   }
 
   .composer-files {
@@ -66,16 +52,16 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     max-width: 100%;
     overflow: hidden;
     padding: 6px 10px 6px 8px;
-    border: 1px solid $line;
+    border: 1px solid var(--tb-line);
     border-radius: 8px;
-    background: #fff;
-    font-size: 13.5px;
-    line-height: 20px;
+    background: var(--tb-surface);
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
     animation: composer-file-in .12s ease-out;
 
     .mat-icon {
       flex: none;
-      color: $ink-54;
+      color: var(--tb-ink-54);
     }
 
     .file-pic {
@@ -96,18 +82,18 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       b {
         max-width: 240px;
         overflow: hidden;
-        font-size: 13.5px;
+        font-size: var(--chat-line);
         font-weight: 500;
         line-height: 18px;
-        color: $ink;
+        color: var(--tb-ink);
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       small {
-        font-size: 12px;
-        line-height: 16px;
-        color: $faint;
+        font-size: var(--chat-meta);
+        line-height: var(--chat-meta-lh);
+        color: var(--k-faint);
       }
     }
 
@@ -116,7 +102,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       left: 0;
       bottom: 0;
       height: 2px;
-      background: $ai-action;
+      background: var(--ai-action);
       transition: width .15s linear;
     }
 
@@ -132,25 +118,25 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       border: 0;
       border-radius: 50%;
       background: none;
-      color: $ink-54;
+      color: var(--tb-ink-54);
       cursor: pointer;
 
       &:hover {
         background: rgba(0, 0, 0, 0.06);
-        color: $ink;
+        color: var(--tb-ink);
       }
     }
 
     &.up small {
-      color: $ai-teal-700;
+      color: var(--ai-teal-700);
     }
 
     &.bad {
-      border-color: color-mix(in srgb, $crit 40%, transparent);
-      background: color-mix(in srgb, $crit 4%, #fff);
+      border-color: color-mix(in srgb, var(--tb-crit) 40%, transparent);
+      background: color-mix(in srgb, var(--tb-crit) 4%, var(--tb-surface));
 
       .mat-icon, small {
-        color: $crit;
+        color: var(--tb-crit);
       }
     }
   }
@@ -170,7 +156,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     align-items: center;
     height: 24px;
     margin: 4px 0 0 -2px;
-    color: $ai-action;
+    color: var(--ai-action);
     transition: color .18s ease;
 
     &::before {
@@ -193,17 +179,17 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     outline: 0;
     resize: none;
     background: transparent;
-    font-family: $font;
-    font-size: 16px;
-    line-height: 24px;
+    font-family: var(--tb-font);
+    font-size: var(--chat-text);
+    line-height: var(--chat-text-lh);
     letter-spacing: normal;
-    color: $ink;
-    caret-color: $ai-action;
+    color: var(--tb-ink);
+    caret-color: var(--ai-action);
     tab-size: 2;
     transition: height .12s ease;
 
     &::placeholder {
-      color: $faint;
+      color: var(--k-faint);
     }
   }
 
@@ -225,13 +211,13 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     padding: 0;
     border: 0;
     border-radius: 10px;
-    background: $ai-action;
-    color: #fff;
+    background: var(--ai-action);
+    color: var(--ai-on-action);
     cursor: pointer;
     transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .16s cubic-bezier(.2, 0, 0, 1);
 
     &:hover:not(:disabled) {
-      background: $ai-action-hover;
+      background: var(--ai-action-hover);
 
       .return-glyph polyline {
         transform: scale(1.12);
@@ -243,13 +229,13 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     }
 
     &:focus-visible {
-      outline: 2px solid $ai-focus;
+      outline: 2px solid var(--ai-focus);
       outline-offset: 2px;
     }
 
     &:disabled {
       background: rgba(0, 0, 0, 0.06);
-      color: $ink-38;
+      color: var(--tb-ink-38);
       cursor: default;
     }
 
@@ -287,11 +273,11 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     align-items: center;
     gap: 2px;
     padding: 2px 8px 6px 16px;
-    border-top: 1px solid $line-soft;
+    border-top: 1px solid var(--tb-line-soft);
     border-radius: 0 0 14px 14px;
-    font-size: 13px;
-    line-height: 18px;
-    color: rgba(0, 0, 0, 0.6);
+    font-size: var(--chat-meta);
+    line-height: var(--chat-meta-lh);
+    color: var(--tb-text-secondary);
   }
 
   .composer-spacer {
@@ -309,19 +295,117 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     border: 0;
     border-radius: 8px;
     background: none;
-    color: $ink-54;
+    color: var(--tb-ink-54);
     cursor: pointer;
     transition: background-color .12s ease, color .12s ease;
 
     &:hover, &[aria-describedby] {
-      background: $line-soft;
-      color: $ink;
+      background: var(--tb-line-soft);
+      color: var(--tb-ink);
     }
 
     &:focus-visible {
-      outline: 2px solid $ai-focus;
+      outline: 2px solid var(--ai-focus);
       outline-offset: 1px;
-      color: $ink;
+      color: var(--tb-ink);
+    }
+  }
+
+  .composer-auto {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 10px 0 8px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 18px;
+    color: var(--tb-text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color .12s ease, color .12s ease;
+
+    &:hover, &[aria-describedby], &:has(input:focus-visible) {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--tb-ink);
+    }
+
+    input {
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+    }
+
+    .track {
+      position: relative;
+      flex: none;
+      width: 34px;
+      height: 14px;
+      border-radius: 7px;
+      background: rgba(0, 0, 0, 0.26);
+      transition: background-color .32s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .knob {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fafafa;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      transition: transform .32s cubic-bezier(.4, 0, .2, 1), background-color .32s cubic-bezier(.4, 0, .2, 1), box-shadow .2s ease;
+
+      .mat-icon {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+        line-height: 13px;
+        color: var(--tb-ink-54);
+        transition: color .32s cubic-bezier(.4, 0, .2, 1);
+      }
+    }
+
+    .label {
+      white-space: nowrap;
+      color: var(--tb-ink-76);
+    }
+
+    &:active .knob {
+      box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    &.on {
+      color: var(--tb-ink-76);
+
+      .track {
+        background: color-mix(in srgb, var(--ai-selected) 35%, transparent);
+      }
+
+      .knob {
+        transform: translateX(14px);
+        background: var(--ai-selected);
+
+        .mat-icon {
+          color: var(--ai-on-action);
+        }
+      }
+
+      &:active .knob {
+        box-shadow: 0 0 0 5px color-mix(in srgb, var(--ai-selected) 10%, transparent), 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .track, .knob, .knob .mat-icon {
+        transition: none;
+      }
     }
   }
 
@@ -330,14 +414,14 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
   }
 
   &.docked {
-    border-top: 1px solid $line;
-    background: #fff;
-    font-size: 14px;
-    line-height: 20px;
+    border-top: 1px solid var(--tb-line);
+    background: var(--tb-surface);
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
     transition: border-top-color .18s ease;
 
     &:focus-within {
-      border-top-color: $ai-focus;
+      border-top-color: var(--ai-focus);
     }
 
     .composer-field {
@@ -347,12 +431,12 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       transition: box-shadow .18s ease;
 
       &:focus-within {
-        box-shadow: inset 0 1px 0 $ai-focus;
+        box-shadow: inset 0 1px 0 var(--ai-focus);
       }
     }
 
     &.drop .composer-field {
-      box-shadow: inset 0 0 0 2px $ai-teal-300;
+      box-shadow: inset 0 0 0 2px var(--ai-teal-300);
     }
 
     .composer-files {
@@ -373,8 +457,8 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       min-height: 44px;
       max-height: 160px;
       padding-right: 44px;
-      font-size: 14px;
-      line-height: 20px;
+      font-size: var(--chat-line);
+      line-height: var(--chat-line-lh);
     }
 
     .composer-send-slot {
@@ -402,7 +486,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       gap: 6px 8px;
       padding: 2px 8px 6px 12px;
       border-radius: 0;
-      font-size: 12px;
+      font-size: var(--chat-meta);
     }
 
     .composer-tool {
@@ -463,9 +547,9 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
   max-width: min(248px, calc(100vw - 16px));
   padding: 9px 12px 10px;
   border-radius: 8px;
-  background: #1f2a31;
-  color: #d5dde2;
-  font: 400 12px/17px $font;
+  background: var(--ai-dark);
+  color: var(--ai-on-dark);
+  font: 400 12px/17px var(--tb-font);
   letter-spacing: .1px;
   box-shadow: 0 6px 20px rgba(16, 24, 40, 0.22);
   opacity: 0;
@@ -489,14 +573,14 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     top: 100%;
     margin-left: -5px;
     border: 5px solid transparent;
-    border-top-color: #1f2a31;
+    border-top-color: var(--ai-dark);
   }
 
   &.below::after {
     top: auto;
     bottom: 100%;
     border-top-color: transparent;
-    border-bottom-color: #1f2a31;
+    border-bottom-color: var(--ai-dark);
   }
 
   b {
@@ -505,7 +589,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     font-size: 13px;
     line-height: 18px;
     font-weight: 500;
-    color: #fff;
+    color: var(--ai-on-action);
   }
 
   p {
@@ -518,8 +602,17 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     margin-top: 3px;
   }
 
+  .tip-value {
+    font-weight: 500;
+    color: #c3ced5;
+
+    &.on {
+      color: var(--ai-dark-accent);
+    }
+  }
+
   .tip-sub {
-    color: #9fadb7;
+    color: color-mix(in srgb, var(--ai-on-dark) 70%, transparent);
   }
 
   .tip-head {
@@ -551,8 +644,8 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     border: 0;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.14);
-    color: #fff;
-    font: 500 10.5px/17px $font;
+    color: var(--ai-on-action);
+    font: 500 10.5px/17px var(--tb-font);
     text-align: center;
   }
 

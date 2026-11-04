@@ -102,6 +102,10 @@
     [placeholder]="activePlaceholder()"
     [loading]="loading()"
     [dropZone]="chatContainer"
+    [showAutoApprove]="true"
+    [autoApprove]="autoApprove()"
+    [autoApproveInChat]="!!chatId()"
+    (autoApproveChange)="setAutoApprove($event)"
     (messageSent)="sendMsgFromUser($event)">
   </tb-ai-prompt-input>
 </div>

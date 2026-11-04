@@ -52,6 +52,7 @@ import { TrendzAnalyticsModule } from '@home/pages/trendz-analytics/trendz-analy
 import { TrendzSettingsModule } from '@home/pages/trendz-settings/trendz-settings.module';
 import { AgentModule } from '@home/pages/agent/agent.module';
 import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
+import { AiAssistantModule } from '@home/pages/ai-assistant/ai-assistant.module';
 
 @NgModule({
   exports: [
@@ -105,7 +106,8 @@ import { IotHubModule } from '@home/pages/iot-hub/iot-hub.module';
     ReportingModule,
     TrendzAnalyticsModule,
     TrendzSettingsModule,
-    IotHubModule
+    IotHubModule,
+    AiAssistantModule
   ]
 })
 export class HomePagesModule { }

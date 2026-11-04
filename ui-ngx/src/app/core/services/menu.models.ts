@@ -178,6 +178,7 @@ export enum MenuId {
   secrets = 'secrets',
   ai_models = 'ai_models',
   iot_hub = 'iot_hub',
+  ai_assistant = 'ai_assistant',
   reporting = 'reporting',
   report_templates = 'report_templates',
   report_scheduling = 'report_scheduling',
@@ -1551,6 +1552,18 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       outlinedIcon: 'mdi:hub-outline',
       isNew: true
     }
+  ],
+  [
+    MenuId.ai_assistant,
+    {
+      id: MenuId.ai_assistant,
+      name: 'ai-assistant.ai-assistant',
+      type: 'link',
+      path: '/ai-assistant',
+      icon: 'auto_awesome',
+      outlinedIcon: 'mdi:creation-outline',
+      isNew: true
+    }
   ]
 ]);
 
@@ -1586,6 +1599,12 @@ const menuFilters = new Map<MenuId, MenuFilter>([
     MenuId.iot_hub, (authState, userPermissionsService) =>
           authState.authUser.authority === Authority.TENANT_ADMIN &&
           userPermissionsService.hasGenericPermission(Resource.ALL, Operation.ALL)
+  ],
+  [
+    MenuId.ai_assistant, (authState, userPermissionsService) =>
+        authState.aiEnabled &&
+        authState.authUser.authority === Authority.TENANT_ADMIN &&
+        userPermissionsService.hasGenericPermission(Resource.AI, Operation.ALL)
   ],
   [
     MenuId.device_all, (_authState, userPermissionsService) =>
@@ -2008,6 +2027,7 @@ export const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
     [
       {id: MenuId.home},
       {id: MenuId.iot_hub},
+      {id: MenuId.ai_assistant},
       {id: MenuId.ai_solution_creator},
       {
         id: MenuId.monitor,

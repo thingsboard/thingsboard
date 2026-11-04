@@ -1,0 +1,127 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+<ng-template #panelIcon let-open="open">
+  <svg class="ai-panel-icon" viewBox="0 -960 960 960" aria-hidden="true">
+    <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm120-80v-560H200v560h120Zm80 0h360v-560H400v560Zm-80 0H200h120Z"/>
+    <path [attr.d]="open ? 'M500-640v320l160-160-160-160Z' : 'M660-320v-320L500-480l160 160Z'"/>
+  </svg>
+</ng-template>
+
+<aside class="ai-rail" [attr.aria-label]="'ai-assistant.chats' | translate">
+  @if (railOpen()) {
+    <div class="ai-rail-panel">
+      <div class="ai-rail-head">
+        <h2>{{ 'ai-assistant.chats' | translate }}</h2>
+        <button type="button" class="ai-ib" (click)="toggleRail()"
+                [matTooltip]="'ai-assistant.close-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.close-chats' | translate">
+          <ng-container *ngTemplateOutlet="panelIcon; context: {open: false}"></ng-container>
+        </button>
+      </div>
+      <button type="button" class="ai-nav" [class.active]="!chatId()" [attr.aria-current]="!chatId() ? 'page' : null"
+              (click)="newChat()">
+        <mat-icon fontSet="material-icons-round">add</mat-icon>
+        <span>{{ 'ai-assistant.new-chat' | translate }}</span>
+      </button>
+      <label class="ai-find" [class.on]="!!query()">
+        <mat-icon fontSet="material-icons-round">search</mat-icon>
+        <input #searchInput type="search" [placeholder]="'ai-assistant.search-chats' | translate"
+               [attr.aria-label]="'ai-assistant.search-chats' | translate"
+               [value]="query()" (input)="query.set(searchInput.value)" (keydown)="onSearchKeydown($event)">
+        @if (query()) {
+          <button type="button" class="ai-find-clear" (click)="$event.preventDefault(); query.set('')"
+                  [matTooltip]="'action.clear' | translate" matTooltipPosition="above" [attr.aria-label]="'action.clear' | translate">
+            <mat-icon fontSet="material-icons-round">close</mat-icon>
+          </button>
+        } @else {
+          <kbd class="ai-find-key" aria-hidden="true">{{ shortcutModifier }}K</kbd>
+        }
+      </label>
+      <nav class="ai-list" [attr.aria-label]="'ai-assistant.chats' | translate">
+        @for (group of groups(); track group.label) {
+          <section class="ai-sect">
+            <h3>{{ group.label }}</h3>
+            @for (chat of group.chats; track chat.id) {
+              @if (renamingId() === chat.id) {
+                <div class="ai-row editing">
+                  <input #rowTitle class="ai-rename" [value]="chat.title"
+                         [attr.aria-label]="'ai-assistant.chat-title' | translate"
+                         (keydown)="onRenameKeydown($event)" (blur)="finishRename(chat, rowTitle.value)">
+                </div>
+              } @else {
+                <div class="ai-row" role="link" tabindex="0" [class.active]="chat.id === chatId()"
+                     [attr.aria-current]="chat.id === chatId() ? 'page' : null"
+                     (click)="selectChat(chat)" (keydown.enter)="selectChat(chat)">
+                  <span class="ai-row-title" [matTooltip]="'ai-assistant.double-click-to-rename' | translate" matTooltipPosition="after"
+                        matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
+                        (dblclick)="$event.stopPropagation(); startRename(chat)">{{ chat.title }}</span>
+                  @if (aiChats.replying().has(chat.id)) {
+                    <span class="tb-ai-status-mark running" [matTooltip]="'ai-assistant.in-progress' | translate" matTooltipPosition="above"></span>
+                  }
+                  <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chatMenu"
+                          [matMenuTriggerData]="{chat: chat}" (click)="$event.stopPropagation()"
+                          [matTooltip]="'ai-assistant.chat-actions' | translate" matTooltipPosition="above"
+                          [attr.aria-label]="'ai-assistant.chat-actions' | translate">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                </div>
+              }
+            }
+          </section>
+        } @empty {
+          @if (aiChats.loaded()) {
+            <p class="ai-empty">
+              {{ query().trim() ? ('ai-assistant.no-chat-matches' | translate: {query: query().trim()}) : ('ai-assistant.chats-show-here' | translate) }}
+            </p>
+          }
+        }
+      </nav>
+    </div>
+  } @else {
+    <div class="ai-strip">
+      <button type="button" class="ai-ib" (click)="toggleRail()"
+              [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.open-chats' | translate">
+        <ng-container *ngTemplateOutlet="panelIcon; context: {open: true}"></ng-container>
+      </button>
+      <button type="button" class="ai-ib" (click)="newChat()"
+              [matTooltip]="'ai-assistant.new-chat' | translate" matTooltipPosition="right" [attr.aria-label]="'ai-assistant.new-chat' | translate">
+        <mat-icon fontSet="material-icons-round">add</mat-icon>
+      </button>
+      <button type="button" class="ai-ib" (click)="openSearch()"
+              [matTooltip]="('ai-assistant.search-chats' | translate) + ' (' + shortcutModifier + 'K)'" matTooltipPosition="right"
+              [attr.aria-label]="'ai-assistant.search-chats' | translate">
+        <mat-icon fontSet="material-icons-round">search</mat-icon>
+      </button>
+    </div>
+  }
+</aside>
+
+<tb-ai-chat class="ai-canvas" variant="page" [toastTarget]="toastTarget" [(chatId)]="chatId"
+            (click)="onChatClick($event)">
+  @if (!railOpen()) {
+    <button aiChatLead type="button" class="ai-ib ai-bar-chats" (click)="toggleRail()"
+            [matTooltip]="'ai-assistant.open-chats' | translate" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.open-chats' | translate">
+      <ng-container *ngTemplateOutlet="panelIcon; context: {open: true}"></ng-container>
+    </button>
+  }
+</tb-ai-chat>
+
+<mat-menu #chatMenu="matMenu" class="tb-ai-chat-menu">
+  <ng-template matMenuContent let-chat="chat">
+    <button mat-menu-item (click)="startRename(chat)">
+      <mat-icon fontSet="material-icons-round">edit</mat-icon>
+      <span>{{ 'action.rename' | translate }}</span>
+    </button>
+    <button mat-menu-item (click)="togglePinned(chat)">
+      <mat-icon fontSet="material-icons-round">push_pin</mat-icon>
+      <span>{{ (chat.pinned ? 'ai-assistant.unpin' : 'ai-assistant.pin') | translate }}</span>
+    </button>
+    <button mat-menu-item class="danger" (click)="deleteChat(chat)">
+      <mat-icon fontSet="material-icons-round">delete_outline</mat-icon>
+      <span>{{ 'action.delete' | translate }}</span>
+    </button>
+  </ng-template>
+</mat-menu>

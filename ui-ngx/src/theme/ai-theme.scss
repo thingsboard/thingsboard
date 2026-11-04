@@ -1,0 +1,380 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+
+// The AI experience's design tokens (Uplink). Every AI component reads these, never a raw value:
+// --ai-* the AI's colour and light, --chat-* type, space and touch, --entity-* entity types,
+// --hl-* / --tb-code-* the code palette, --k-* the chat's greys and strokes.
+
+:root {
+  --tb-ink-76: rgba(0, 0, 0, 0.76);
+  --tb-ink-60: rgba(0, 0, 0, 0.6);
+  --tb-ink-54: rgba(0, 0, 0, 0.54);
+  --tb-ink-38: rgba(0, 0, 0, 0.38);
+  --tb-ink-12: rgba(0, 0, 0, 0.12);
+  --tb-text-secondary: rgba(0, 0, 0, 0.6);
+  --tb-text-muted: rgba(0, 0, 0, 0.56);
+  --tb-line-soft: rgba(0, 0, 0, 0.05);
+  --tb-surface: #ffffff;
+  --tb-bg: #eeeeee;
+
+  --tb-crit-bg: rgba(209, 39, 48, 0.04);
+  --tb-caution-text: #955400;
+  --tb-ok: #198038;
+  --tb-ok-tint: rgba(25, 128, 56, 0.08);
+  --tb-ok-text: #16702f;
+  --tb-star: #FAE205;
+
+  --tb-sev-critical: #D12730;
+  --tb-sev-major: #F35E09;
+  --tb-sev-minor: #B47604;
+  --tb-sev-warning: var(--tb-sev-minor);
+  --tb-sev-indeterminate: rgba(0, 0, 0, 0.54);
+  --tb-sev-major-text: #B04306;
+  --tb-sev-minor-text: #8A5A02;
+  --tb-sev-warning-text: #7D7003;
+
+  --tb-soft-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 4px rgba(16, 24, 40, 0.04);
+  --tb-hover-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);
+  --tb-tile-radius: 10px;
+
+  --tb-font: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --tb-mono: "Roboto Mono", SFMono-Regular, Menlo, monospace;
+
+  --ai-hue: 180;
+  --ai-light-mint: oklch(0.87 0.06 calc(var(--ai-hue) - 20));
+  --ai-light-teal: oklch(0.86 0.08 calc(var(--ai-hue) - 5));
+  --ai-light-aqua: oklch(0.88 0.07 calc(var(--ai-hue) + 25));
+  --ai-light-lilac: oklch(0.84 0.06 295);
+  --ai-light-peach: oklch(0.88 0.06 45);
+  --ai-light-amber: oklch(0.90 0.06 80);
+  --ai-light-anchor: oklch(0.80 0.11 calc(var(--ai-hue) + 2));
+  --ai-light-paper: oklch(0.985 0.005 calc(var(--ai-hue) + 5));
+  --ai-w-teal: 90%;
+  --ai-w-aqua: 80%;
+  --ai-w-mint: 71%;
+  --ai-w-lilac: 55%;
+  --ai-w-peach: 69%;
+  --ai-w-amber: 55%;
+  --ai-light-stops: var(--ai-light-teal), var(--ai-light-aqua), var(--ai-light-lilac), var(--ai-light-peach), var(--ai-light-amber), var(--ai-light-mint), var(--ai-light-teal);
+  --ai-glow: conic-gradient(in oklab, var(--ai-light-stops));
+  --ai-icon:
+    radial-gradient(80% 80% at 16% 10%, oklch(0.99 0.01 calc(var(--ai-hue) + 5) / 0.6), transparent 62%),
+    radial-gradient(55% 55% at 0% 100%, color-mix(in oklab, var(--ai-light-mint) 50%, transparent), transparent 70%),
+    radial-gradient(55% 55% at 100% 0%, color-mix(in oklab, var(--ai-light-amber) 35%, transparent), transparent 70%),
+    linear-gradient(135deg in oklab, oklch(0.89 0.065 calc(var(--ai-hue) - 8)) 0%, oklch(0.92 0.05 calc(var(--ai-hue) + 25)) 36%, oklch(0.89 0.045 295) 68%, oklch(0.93 0.039 50) 100%);
+  --ai-field-tile:
+    radial-gradient(60% 75% at 6% 8%, color-mix(in oklab, var(--ai-light-teal) var(--ai-w-teal), transparent), transparent 70%),
+    radial-gradient(55% 65% at 70% 0%, color-mix(in oklab, var(--ai-light-aqua) var(--ai-w-aqua), transparent), transparent 70%),
+    radial-gradient(50% 60% at 4% 100%, color-mix(in oklab, var(--ai-light-mint) var(--ai-w-mint), transparent), transparent 70%),
+    radial-gradient(50% 60% at 62% 62%, color-mix(in oklab, var(--ai-light-lilac) var(--ai-w-lilac), transparent), transparent 72%),
+    radial-gradient(45% 60% at 100% 100%, color-mix(in oklab, var(--ai-light-peach) var(--ai-w-peach), transparent), transparent 70%),
+    radial-gradient(40% 50% at 100% 40%, color-mix(in oklab, var(--ai-light-amber) var(--ai-w-amber), transparent), transparent 70%),
+    var(--ai-light-paper);
+  --ai-field-wash:
+    radial-gradient(60% 75% at 6% 8%, color-mix(in oklab, var(--ai-light-teal) calc(var(--ai-w-teal) * .87), transparent), transparent 70%),
+    radial-gradient(55% 65% at 70% 0%, color-mix(in oklab, var(--ai-light-aqua) calc(var(--ai-w-aqua) * .87), transparent), transparent 70%),
+    radial-gradient(50% 60% at 4% 100%, color-mix(in oklab, var(--ai-light-mint) calc(var(--ai-w-mint) * .87), transparent), transparent 70%),
+    radial-gradient(50% 60% at 62% 62%, color-mix(in oklab, var(--ai-light-lilac) calc(var(--ai-w-lilac) * .87), transparent), transparent 72%),
+    radial-gradient(45% 60% at 100% 100%, color-mix(in oklab, var(--ai-light-peach) calc(var(--ai-w-peach) * .87), transparent), transparent 70%),
+    radial-gradient(40% 50% at 100% 40%, color-mix(in oklab, var(--ai-light-amber) calc(var(--ai-w-amber) * .87), transparent), transparent 70%),
+    var(--ai-light-paper);
+  --ai-field-hint:
+    radial-gradient(60% 75% at 6% 8%, color-mix(in oklab, var(--ai-light-teal) calc(var(--ai-w-teal) * .48), transparent), transparent 70%),
+    radial-gradient(55% 65% at 70% 0%, color-mix(in oklab, var(--ai-light-aqua) calc(var(--ai-w-aqua) * .48), transparent), transparent 70%),
+    radial-gradient(50% 60% at 4% 100%, color-mix(in oklab, var(--ai-light-mint) calc(var(--ai-w-mint) * .48), transparent), transparent 70%),
+    radial-gradient(50% 60% at 62% 62%, color-mix(in oklab, var(--ai-light-lilac) calc(var(--ai-w-lilac) * .48), transparent), transparent 72%),
+    radial-gradient(45% 60% at 100% 100%, color-mix(in oklab, var(--ai-light-peach) calc(var(--ai-w-peach) * .48), transparent), transparent 70%),
+    radial-gradient(40% 50% at 100% 40%, color-mix(in oklab, var(--ai-light-amber) calc(var(--ai-w-amber) * .48), transparent), transparent 70%),
+    var(--ai-light-paper);
+
+  --chat-text: 16px;
+  --chat-text-lh: 24px;
+  --chat-head: 16px;
+  --chat-head-lh: 24px;
+  --chat-line: 14px;
+  --chat-line-lh: 20px;
+  --chat-chip: 14px;
+  --chat-chip-lh: 18px;
+  --chat-meta: 12px;
+  --chat-meta-lh: 16px;
+  --chat-caption: 12px;
+  --chat-caption-lh: 16px;
+  --chat-code: 13px;
+  --chat-code-lh: 20px;
+  --chat-title: 24px;
+  --chat-title-lh: 32px;
+  --chat-turn-gap: 28px;
+  --chat-card-pad: 16px;
+  --chat-icon: 20px;
+  --chat-mark: 28px;
+  --chat-control: 32px;
+  --chat-tap: 0px;
+  --chat-text-ls: 0.25px;
+  --chat-key: #f6f8f8;
+
+  --ai-teal-50: #e0f2f1;
+  --ai-teal-100: #b2dfdb;
+  --ai-teal-200: #80cbc4;
+  --ai-teal-300: #4db6ac;
+  --ai-teal-400: #26a69a;
+  --ai-teal-500: #00695c;
+  --ai-teal-600: #00897b;
+  --ai-teal-700: #00796b;
+  --ai-teal-800: #00695c;
+  --ai-teal-900: #004d40;
+  --ai-deep: #033633;
+  --ai-deep-hover: #23504e;
+  --ai-deep-pressed: #002624;
+  --ai-action: var(--ai-deep);
+  --ai-action-hover: var(--ai-deep-hover);
+  --ai-action-pressed: var(--ai-deep-pressed);
+  --ai-on-action: #ffffff;
+  --ai-focus: var(--ai-teal-600);
+  --ai-selected: var(--ai-teal-500);
+  --ai-selected-wash: var(--ai-teal-50);
+  --ai-selected-text: var(--ai-teal-900);
+  --ai-link: var(--ai-teal-500);
+  --ai-link-strong: var(--ai-teal-900);
+  --ai-link-line: color-mix(in srgb, var(--ai-teal-500) 35%, transparent);
+  --ai-focus-shadow: color-mix(in srgb, var(--ai-teal-500) 12%, transparent);
+  --ai-dark: #24323b;
+  --ai-on-dark: #e6ebee;
+  --ai-dark-accent: #8fe3d3;
+  --ai-dark-accent-hover: #a6ecdf;
+  --ai-dark-accent-soft: #80d6c8;
+  --ai-dark-accent-pale: #c4f3ea;
+  --ai-on-dark-accent: #0f2a26;
+  --ai-person: #e9f0ee;
+
+  --entity-device-bg: #e9efff;
+  --entity-device-fg: #535eb8;
+  --entity-path-bg: #dbf5ff;
+  --entity-path-fg: #007592;
+  --entity-chain-bg: #f7eaff;
+  --entity-chain-fg: #814ea4;
+  --entity-rule-bg: #ffebdf;
+  --entity-rule-fg: #a34d16;
+  --entity-view-bg: #e0f7e5;
+  --entity-view-fg: #2d7b48;
+  --entity-people-bg: #ffe9f1;
+  --entity-people-fg: #a0446d;
+  --entity-solution-bg: #e9f1fb;
+  --entity-solution-fg: #586a83;
+
+  --tb-code-bg: #1d2830;
+  --tb-code-fg: #dfe7ec;
+  --tb-code-line: rgba(255, 255, 255, 0.08);
+  --tb-code-head-fg: rgba(255, 255, 255, 0.7);
+  --hl-cmd: var(--ai-dark-accent);
+  --hl-flag: #9fb6c8;
+  --hl-str: #f2c98a;
+  --hl-num: #d4b4f7;
+  --hl-key: #9cc8f2;
+  --hl-com: #8a98a3;
+  --hl-err: #ff9d92;
+  --hl-fn: #d7e8a3;
+  --hl-bool: #f3b6d2;
+  --hl-lvl: #9bdda8;
+  --hl-mark: rgba(255, 255, 255, 0.6);
+
+  --k-grey: var(--tb-ink-76);
+  --k-faint: var(--tb-text-muted);
+  --k-stroke: rgba(0, 0, 0, 0.1);
+  --k-stroke-hover: rgba(0, 0, 0, 0.2);
+}
+
+[data-type="compact"] {
+  --chat-text: 14px;
+  --chat-text-lh: 20px;
+  --chat-head: 14px;
+  --chat-head-lh: 20px;
+  --chat-chip: 13px;
+  --chat-chip-lh: 16px;
+  --chat-code-lh: 18px;
+  --chat-title: 20px;
+  --chat-title-lh: 28px;
+}
+
+[data-space="compact"] {
+  --chat-turn-gap: 20px;
+  --chat-card-pad: 12px;
+  --chat-icon: 18px;
+  --chat-mark: 24px;
+  --chat-control: 28px;
+}
+
+[data-touch] {
+  --chat-tap: 44px;
+}
+
+[data-ai] {
+  --tb-primary-50: var(--ai-teal-50);
+  --tb-primary-100: var(--ai-teal-100);
+  --tb-primary-200: var(--ai-teal-200);
+  --tb-primary-300: var(--ai-teal-300);
+  --tb-primary-400: var(--ai-teal-400);
+  --tb-primary-500: var(--ai-teal-500);
+  --tb-primary-600: var(--ai-teal-600);
+  --tb-primary-700: var(--ai-teal-700);
+  --tb-primary-800: var(--ai-teal-800);
+  --tb-primary-900: var(--ai-teal-900);
+  --tb-primary-contrast-500: #ffffff;
+}
+
+@property --ai-h {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 172;
+}
+
+.tb-ai-mark {
+  --m: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--m);
+  height: var(--m);
+  border-radius: 38%;
+  background: var(--ai-icon);
+  background-size: 240% 240%;
+  animation: tb-ai-icon-flow 8s ease-in-out infinite alternate, tb-ai-mark-hue 6s ease-in-out infinite alternate;
+
+  .mat-icon {
+    font-size: calc(var(--m) * .57);
+    width: calc(var(--m) * .57);
+    height: calc(var(--m) * .57);
+    line-height: 1;
+    color: oklch(0.32 0.07 var(--ai-h)) !important;
+  }
+
+  &.m24 { --m: 24px; }
+  &.m32 { --m: 32px; }
+  &.m44 { --m: 44px; }
+  &.m64 { --m: 64px; }
+
+  &.m44, &.m64 {
+    box-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px color-mix(in oklab, var(--ai-light-teal) 26%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes tb-ai-icon-flow {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 60%; }
+  100% { background-position: 40% 100%; }
+}
+
+@keyframes tb-ai-mark-hue {
+  from { --ai-h: calc(var(--ai-hue) - 8); }
+  to { --ai-h: calc(var(--ai-hue) + 120); }
+}
+
+.tb-ai-status-mark {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: '';
+    display: block;
+  }
+
+  &.running::before {
+    width: 9px;
+    height: 9px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--tb-ink-38);
+    border-top-color: transparent;
+    animation: tb-ai-status-turn .9s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &.running::before {
+      animation: none;
+      border-top-color: var(--tb-ink-38);
+    }
+  }
+}
+
+@keyframes tb-ai-status-turn {
+  to { transform: rotate(360deg); }
+}
+
+.mat-mdc-menu-panel.tb-ai-chat-menu {
+  min-width: 200px;
+  max-width: 300px;
+  border-radius: 12px;
+  background: var(--tb-surface);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(16, 24, 40, 0.10), 0 12px 32px rgba(16, 24, 40, 0.10);
+
+  .mat-mdc-menu-content {
+    padding: 6px;
+  }
+
+  .mat-mdc-menu-item {
+    min-height: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    gap: 10px;
+
+    .mat-mdc-menu-item-text {
+      font: 400 13.5px/20px var(--tb-font);
+      letter-spacing: normal;
+      color: var(--tb-ink);
+    }
+
+    .mat-icon {
+      margin-right: 0;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      color: var(--tb-ink-60);
+    }
+
+    &:hover:not([disabled]), &.cdk-program-focused, &.cdk-keyboard-focused {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    &.danger {
+      position: relative;
+      margin-top: 7px;
+      overflow: visible;
+
+      &::before {
+        content: '';
+        display: block;
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        top: -4px;
+        bottom: auto;
+        height: 1px;
+        border: 0;
+        border-radius: 0;
+        background: rgba(0, 0, 0, 0.08);
+      }
+
+      .mat-mdc-menu-item-text, .mat-icon {
+        color: var(--tb-crit);
+      }
+
+      &:hover:not([disabled]) {
+        background: var(--tb-crit-tint);
+      }
+    }
+  }
+}
+
+.mat-mdc-tooltip.tb-ai-cursor-tooltip {
+  translate: -12px 30px;
+}

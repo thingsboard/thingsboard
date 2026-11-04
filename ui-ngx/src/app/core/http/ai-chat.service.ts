@@ -7,6 +7,7 @@ import { HttpClient, HttpEventType } from '@angular/common/http';
 import {
   ApprovalResult,
   ChatConfiguration,
+  ChatUpdate,
   ChatEvent,
   ChatInfo,
   SendChatMessageRequest,
@@ -33,7 +34,7 @@ export class AiChatService {
     return this.http.post<string>(`/api/ai/chats`, chat, defaultHttpOptionsFromConfig(config));
   }
 
-  public updatedChat(chatId: string, chat: ChatConfiguration, config?: RequestConfig): Observable<void> {
+  public updatedChat(chatId: string, chat: ChatUpdate, config?: RequestConfig): Observable<void> {
     return this.http.patch<void>(`/api/ai/chats/${chatId}`, chat, defaultHttpOptionsFromConfig(config));
   }
 

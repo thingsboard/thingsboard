@@ -1,0 +1,465 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  input,
+  model,
+  OnDestroy,
+  OnInit,
+  SecurityContext,
+  signal,
+  untracked,
+  ViewChild
+} from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Observable, of, Subject, throwError, timer } from 'rxjs';
+import { catchError, concatMap, finalize, retry, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
+import { AiChatService } from '@core/http/ai-chat.service';
+import { AiChatsService } from '@core/services/ai-chats.service';
+import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import {
+  AiChatClientContext,
+  AiPromptMessage,
+  ApprovalResult,
+  ChatEvent,
+  SendChatMessageRequest,
+  ToolExecutionRequestedEvent,
+  ToolExecutionResult
+} from '@shared/models/ai-chat.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
+
+export type AiChatVariant = 'page' | 'panel';
+
+@Component({
+  selector: 'tb-ai-chat',
+  templateUrl: './ai-chat.component.html',
+  styleUrls: ['./ai-chat.component.scss'],
+  standalone: false,
+  host: {
+    'data-ai': '',
+    '[attr.data-type]': 'variant() === "panel" ? "compact" : null',
+    '[attr.data-space]': 'variant() === "panel" ? "compact" : null',
+    'class': 'tb-ai-chat',
+    '[class.v-page]': 'variant() === "page"',
+    '[class.v-panel]': 'variant() === "panel"'
+  }
+})
+export class AiChatComponent implements OnInit, OnDestroy {
+
+  private static readonly RESUME_ATTEMPTS = 4;
+  private static readonly RESUME_DELAY_MS = 2000;
+
+  @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
+
+  chatId = model<string | undefined>(undefined);
+
+  variant = input<AiChatVariant>('page');
+
+  clientContext = input<AiChatClientContext | undefined>(undefined);
+
+  toastTarget = input<string>('aiChat');
+
+  fullscreenEnabled = input<boolean>(true);
+
+  fullscreen = signal<boolean>(false);
+
+  readonly markdownStyles = [
+    '.tb-markdown-view p, .tb-markdown-view h2, .tb-markdown-view h3, .tb-markdown-view h4, .tb-markdown-view h5, ' +
+    '.tb-markdown-view h6, .tb-markdown-view div.code-wrapper {padding-left: 0 !important;} ' +
+    '.tb-markdown-view ol {padding-inline-start: 30px;} .tb-markdown-view ul {padding-left: 28px; padding-right: 0;}'
+  ];
+
+  messages = signal<ChatMessage[]>([]);
+
+  loading = signal<boolean>(false);
+
+  completedExecutions = signal<Record<string, ToolExecutionResult>>({});
+
+  renaming = signal<boolean>(false);
+
+  nameClipped = signal<boolean>(false);
+
+  chat = computed(() => {
+    const id = this.chatId();
+    return id ? this.chats.chats().find(chat => chat.id === id) : undefined;
+  });
+
+  newChatAutoApprove = signal<boolean>(false);
+
+  autoApprove = computed(() => this.chatId() ? this.panelService.isAutoApprove(this.chatId()) : this.newChatAutoApprove());
+
+  placeholder = computed(() => this.translate.instant(this.messages().length
+    ? 'ai-assistant.follow-up-prompt-placeholder'
+    : 'ai-assistant.prompt-placeholder'));
+
+  private aiChat = inject(AiChatService);
+  private chats = inject(AiChatsService);
+  private panelService = inject(AiAssistantPanelService);
+  private translate = inject(TranslateService);
+  private store = inject(Store<AppState>);
+  private sanitizer = inject(DomSanitizer);
+  private destroyRef = inject(DestroyRef);
+  private host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  readonly hostElement = this.host.nativeElement;
+
+  private loadChat$ = new Subject<string>();
+  private cancelMessage$ = new Subject<void>();
+  private messageCancelled = false;
+  private shownChatId: string | undefined;
+  private replyingChatId: string | undefined;
+  private affectedEntities: EntityId[] = [];
+  private logScrollBottom: number | undefined;
+
+  private chatIdEffect = effect(() => {
+    const chatId = this.chatId();
+    untracked(() => this.show(chatId));
+  });
+
+  private deletedChatEffect = effect(() => {
+    const chatId = this.chatId();
+    if (chatId && this.chats.loaded() && !this.chats.find(chatId)) {
+      untracked(() => this.chatId.set(undefined));
+    }
+  });
+
+  ngOnInit(): void {
+    this.loadChat$.pipe(
+      switchMap(id => this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
+        catchError(err => {
+          this.showErrorMessage(err);
+          return EMPTY;
+        })
+      )),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(messages => {
+      this.showHistory(messages);
+      this.resumeTurn(this.chatId());
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.cancelActiveMessage();
+  }
+
+  toggleFullscreen(): void {
+    const log = this.host.nativeElement.querySelector('.ai-chat-body');
+    this.logScrollBottom = log ? log.scrollHeight - log.clientHeight - log.scrollTop : undefined;
+    this.fullscreen.set(!this.fullscreen());
+  }
+
+  onFullscreenChanged(fullscreen: boolean): void {
+    this.fullscreen.set(fullscreen);
+    const scrollBottom = this.logScrollBottom;
+    if (scrollBottom !== undefined) {
+      setTimeout(() => {
+        const log = this.host.nativeElement.querySelector('.ai-chat-body');
+        if (log) {
+          log.scrollTop = log.scrollHeight - log.clientHeight - scrollBottom;
+        }
+      });
+    }
+  }
+
+  focus(): void {
+    this.promptInput?.focus();
+  }
+
+  startRename(): void {
+    if (!this.chat()) {
+      return;
+    }
+    this.renaming.set(true);
+    setTimeout(() => {
+      const input = this.host.nativeElement.querySelector<HTMLInputElement>('.ai-chat-rename');
+      input?.focus();
+      input?.select();
+    });
+  }
+
+  onRenameKeydown(event: KeyboardEvent): void {
+    if (event.isComposing) {
+      return;
+    }
+    if (event.key === 'Enter') {
+      (event.target as HTMLInputElement).blur();
+    } else if (event.key === 'Escape') {
+      this.renaming.set(false);
+    }
+  }
+
+  finishRename(value: string): void {
+    const chat = this.chat();
+    if (!this.renaming() || !chat) {
+      return;
+    }
+    this.renaming.set(false);
+    const title = value.trim();
+    if (title && title !== chat.title) {
+      this.chats.rename(chat.id, title).subscribe({error: err => this.showErrorMessage(err)});
+    }
+  }
+
+  togglePinned(): void {
+    const chat = this.chat();
+    if (chat) {
+      this.chats.setPinned(chat.id, !chat.pinned).subscribe({error: err => this.showErrorMessage(err)});
+    }
+  }
+
+  deleteChat(): void {
+    const chat = this.chat();
+    if (chat) {
+      this.chats.confirmAndDelete(chat).subscribe({error: err => this.showErrorMessage(err)});
+    }
+  }
+
+  setAutoApprove(enabled: boolean): void {
+    const chatId = this.chatId();
+    if (chatId) {
+      this.panelService.setAutoApprove(chatId, enabled);
+    } else {
+      this.newChatAutoApprove.set(enabled);
+    }
+  }
+
+  onApprovalAction(event: ApprovalResult): void {
+    const chatId = this.chatId();
+    if (event.autoApprove && chatId) {
+      this.panelService.setAutoApprove(chatId, true);
+    }
+    this.aiChat.resolveToolApproval(
+      {executionId: event.executionId, approved: event.approved},
+      {ignoreLoading: true, ignoreErrors: true}
+    ).subscribe();
+  }
+
+  sendMsgFromUser(prompt: AiPromptMessage): void {
+    const userMessage: ChatMessage = prompt.resources.length
+      ? {from: 'USER', content: prompt.message, resources: prompt.resources}
+      : {from: 'USER', content: prompt.message};
+    this.messages.update(list => [...list, userMessage]);
+    this.sendMessage(prompt).subscribe({
+      error: err => {
+        if (this.isConnectionLost(err) && this.chatId()) {
+          this.showErrorToast(this.translate.instant('ai-assistant.connection-lost'));
+          this.resumeTurn(this.chatId(), true);
+          return;
+        }
+        this.messages.update(list => list.filter(message => message !== userMessage));
+        setTimeout(() => this.showErrorMessage(err), 0);
+      }
+    });
+  }
+
+  private show(chatId: string | undefined): void {
+    if (chatId === this.shownChatId) {
+      return;
+    }
+    this.cancelActiveMessage();
+    this.renaming.set(false);
+    this.shownChatId = chatId;
+    this.messages.set([]);
+    this.completedExecutions.set({});
+    if (chatId) {
+      this.loadChat$.next(chatId);
+    } else {
+      setTimeout(() => this.promptInput?.focus());
+    }
+  }
+
+  private sendMessage(prompt: AiPromptMessage): Observable<ChatEvent> {
+    this.messageCancelled = false;
+    const startOrContinue$ = this.chatId()
+      ? of(null)
+      : this.chats.create('New chat').pipe(
+        tap(chat => {
+          if (this.newChatAutoApprove()) {
+            this.panelService.setAutoApprove(chat.id, true);
+          }
+          this.shownChatId = chat.id;
+          this.chatId.set(chat.id);
+        })
+      );
+    const request: SendChatMessageRequest = {message: prompt.message};
+    if (prompt.resources.length) {
+      request.resources = prompt.resources.map(resource => resource.id);
+    }
+    if (this.clientContext()) {
+      request.clientContext = this.clientContext();
+    }
+    this.loading.set(true);
+    return startOrContinue$.pipe(
+      tap(() => this.startLoading()),
+      switchMap(() => this.aiChat.sendChatMessage(this.chatId(), request, {ignoreLoading: true, ignoreErrors: true})),
+      takeUntil(this.cancelMessage$),
+      concatMap(event => this.handleChatEvent(event)),
+      finalize(() => this.stopLoading())
+    );
+  }
+
+  private resumeTurn(chatId: string, afterConnectionLoss = false): void {
+    if (!chatId) {
+      return;
+    }
+    let resumed = false;
+    this.messageCancelled = false;
+    const attempt$ = timer(afterConnectionLoss ? AiChatComponent.RESUME_DELAY_MS : 0).pipe(
+      tap(() => {
+        if (afterConnectionLoss) {
+          this.startLoading();
+        }
+      }),
+      switchMap(() => this.aiChat.resumeChat(chatId, {ignoreLoading: true, ignoreErrors: true}))
+    );
+    attempt$.pipe(
+      retry({
+        count: afterConnectionLoss ? AiChatComponent.RESUME_ATTEMPTS : 0,
+        delay: (error, attempt) => this.isConnectionLost(error)
+          ? timer(attempt * AiChatComponent.RESUME_DELAY_MS)
+          : throwError(() => error)
+      }),
+      takeUntil(this.cancelMessage$),
+      concatMap(event => {
+        if (event.event === 'turnResumed') {
+          resumed = true;
+          this.startLoading();
+          this.dropRunningReply();
+          return of(event);
+        }
+        return this.handleChatEvent(event);
+      }),
+      finalize(() => {
+        if (resumed || afterConnectionLoss) {
+          this.stopLoading();
+        }
+      })
+    ).subscribe({
+      error: () => {
+        if (afterConnectionLoss) {
+          this.showErrorToast(this.translate.instant('ai-assistant.reconnect-failed'));
+        }
+      },
+      complete: () => {
+        if (this.messageCancelled || this.chatId() !== chatId) {
+          return;
+        }
+        if (resumed || afterConnectionLoss) {
+          this.aiChat.getChatMessages(chatId, {ignoreLoading: true, ignoreErrors: true})
+            .pipe(takeUntil(this.cancelMessage$))
+            .subscribe(messages => this.showHistory(messages));
+        }
+      }
+    });
+  }
+
+  private handleChatEvent(event: ChatEvent): Observable<ChatEvent> {
+    switch (event.event) {
+      case 'assistantMessage':
+        this.messages.update(list => [...list, {from: 'AI', content: event.data.message}]);
+        break;
+      case 'toolExecutionRequested':
+        this.handleToolApproval(event);
+        break;
+      case 'toolExecutionResult':
+        this.completedExecutions.update(map => ({...map, [event.data.executionId]: event.data}));
+        if (event.data.affectedEntities?.length) {
+          this.affectedEntities.push(...event.data.affectedEntities);
+        }
+        break;
+      case 'chatTitleGenerated':
+        if (this.chatId() && event.data.title) {
+          this.chats.setTitle(this.chatId(), event.data.title);
+        }
+        break;
+      default:
+        if (event.event === 'error') {
+          this.showErrorToast(this.sanitizer.sanitize(SecurityContext.HTML, event.data?.message) ?? event.data?.message);
+        }
+    }
+    return of(event);
+  }
+
+  private handleToolApproval(event: ToolExecutionRequestedEvent): void {
+    if (event.data.needsApproval) {
+      this.messages.update(list => [...list, {from: 'APPROVAL', data: event.data}]);
+    }
+  }
+
+  private showHistory(messages: ChatMessage[]): void {
+    const completed: Record<string, ToolExecutionResult> = {};
+    for (const message of messages) {
+      const result = message.from === 'APPROVAL' ? (message as ApprovalChatMessage).result : undefined;
+      if (result) {
+        completed[result.executionId] = result;
+      }
+    }
+    this.completedExecutions.set(completed);
+    this.messages.set(messages);
+  }
+
+  private dropRunningReply(): void {
+    this.messages.update(list => {
+      const lastUser = list.map(message => message.from).lastIndexOf('USER');
+      return lastUser >= 0 ? list.slice(0, lastUser + 1) : list;
+    });
+  }
+
+  private cancelActiveMessage(): void {
+    this.messageCancelled = true;
+    this.cancelMessage$.next();
+    this.stopLoading();
+    this.promptInput?.reset();
+  }
+
+  private startLoading(): void {
+    this.loading.set(true);
+    this.chats.setReplying(this.replyingChatId, false);
+    this.replyingChatId = this.chatId();
+    this.chats.setReplying(this.replyingChatId, true);
+  }
+
+  private stopLoading(): void {
+    this.loading.set(false);
+    if (this.affectedEntities.length) {
+      this.panelService.emitUpdatedData(this.affectedEntities);
+      this.affectedEntities = [];
+    }
+    this.chats.setReplying(this.replyingChatId, false);
+    this.replyingChatId = undefined;
+  }
+
+  private isConnectionLost(error: any): boolean {
+    return error instanceof HttpErrorResponse && error.status === 0;
+  }
+
+  private showErrorMessage(error: any): void {
+    const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
+    this.showErrorToast(parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message);
+  }
+
+  private showErrorToast(message: string): void {
+    this.store.dispatch(new ActionNotificationShow({
+      message,
+      target: this.toastTarget(),
+      modern: true,
+      type: 'error',
+      verticalPosition: 'bottom',
+      horizontalPosition: 'center'
+    }));
+  }
+}

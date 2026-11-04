@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
 import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
 
@@ -10,7 +10,7 @@ import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@sh
   styleUrls: ['./ai-chat-messages.component.scss'],
   standalone: false
 })
-export class AiChatMessagesComponent implements OnChanges {
+export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   @Input() messages: ChatMessage[] = [];
   @Input() loading = false;
@@ -18,9 +18,15 @@ export class AiChatMessagesComponent implements OnChanges {
   @Input() additionalStyles: string[];
   @Input() completedExecutions: Record<string, ToolExecutionResult> = {};
   @Input() autoApprove = false;
+  @Input() scrollContainer: HTMLElement;
+  @Input() initialScroll: 'lastUserMessage' | 'bottom' = 'lastUserMessage';
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
 
   waitApproval = false;
+
+  private static readonly PIN_TO_BOTTOM_MS = 1500;
+
+  private releaseBottom: () => void;
 
   constructor(private elementRef: ElementRef<HTMLElement>) {}
 
@@ -40,7 +46,11 @@ export class AiChatMessagesComponent implements OnChanges {
     }
     if (changes.messages) {
       if (changes.messages.firstChange) {
-        setTimeout(() => this.scrollToLastUserMessage(), 0);
+        if (this.initialScroll === 'bottom') {
+          this.pinToBottom();
+        } else {
+          setTimeout(() => this.scrollToLastUserMessage(), 0);
+        }
         return;
       }
       const wasNearBottom = this.isNearBottom();
@@ -77,8 +87,33 @@ export class AiChatMessagesComponent implements OnChanges {
     this.approvalAction.emit($event);
   }
 
+  ngOnDestroy(): void {
+    this.releaseBottom?.();
+  }
+
+  private pinToBottom(): void {
+    const scroller = this.scroller;
+    const stick = () => scroller.scrollTop = scroller.scrollHeight;
+    const observer = new ResizeObserver(stick);
+    observer.observe(this.elementRef.nativeElement);
+    const release = () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+      scroller.removeEventListener('wheel', release);
+      scroller.removeEventListener('touchstart', release);
+      scroller.removeEventListener('keydown', release);
+      this.releaseBottom = undefined;
+    };
+    const timeout = setTimeout(release, AiChatMessagesComponent.PIN_TO_BOTTOM_MS);
+    scroller.addEventListener('wheel', release, {passive: true});
+    scroller.addEventListener('touchstart', release, {passive: true});
+    scroller.addEventListener('keydown', release);
+    this.releaseBottom = release;
+    stick();
+  }
+
   scrollToBottom(behavior: ScrollBehavior = 'smooth'): void {
-    const el = this.elementRef.nativeElement;
+    const el = this.scroller;
     el.scrollTo({top: el.scrollHeight, behavior});
   }
 
@@ -118,8 +153,12 @@ export class AiChatMessagesComponent implements OnChanges {
     }
   }
 
+  private get scroller(): HTMLElement {
+    return this.scrollContainer ?? this.elementRef.nativeElement;
+  }
+
   private isNearBottom(threshold = 150): boolean {
-    const el = this.elementRef.nativeElement;
+    const el = this.scroller;
     return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
   }
 

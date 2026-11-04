@@ -3,15 +3,16 @@
 :host {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--chat-turn-gap);
   overflow: auto;
+  font-family: var(--tb-font);
+  font-size: var(--chat-text);
+  line-height: var(--chat-text-lh);
+  letter-spacing: var(--chat-text-ls);
+  color: var(--tb-ink);
   width: 100%;
   margin-top: 8px;
   flex: 1 1 auto;
-
-  .image-main-color {
-    color: var(--tb-primary-500);
-  }
 
   .user {
     display: flex;
@@ -34,52 +35,66 @@
 
     .msg {
       max-width: 80%;
-      padding: 10px 18px;
-      border-radius: 12px 12px 0 12px;
-      position: relative;
+      padding: 12px 16px;
+      border-radius: 16px 16px 4px 16px;
+      background: var(--ai-person);
       overflow: hidden;
       white-space: pre-line;
       word-break: break-word;
-      line-height: 24px;
-      color: rgba(0, 0, 0, 0.76);
+      color: var(--tb-ink);
+    }
+  }
 
-      &:before {
-        display: block;
-        height: auto;
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: var(--tb-primary-500);
-        opacity: 0.1;
-        pointer-events: none;
-      }
+  .agent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+
+    .tb-ai-mark {
+      --m: var(--chat-mark);
+      margin-top: 2px;
+    }
+
+    .agent-body {
+      flex: 1;
+      min-width: 0;
+      padding-top: 2px;
     }
   }
 
   .incomplete {
     padding: 10px 14px;
     border-radius: 12px;
-    line-height: 20px;
-    color: rgba(0, 0, 0, 0.76);
-    background: rgba(255, 152, 0, 0.08);
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
+    color: var(--tb-ink);
+    background: var(--tb-caution-tint);
 
     .incomplete-icon {
       flex: none;
-      color: #FF9800;
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
+      color: var(--tb-caution);
+      font-size: var(--chat-icon);
+      width: var(--chat-icon);
+      height: var(--chat-icon);
     }
   }
 
   .generating {
+    gap: 10px;
+
+    .tb-ai-mark {
+      --m: var(--chat-mark);
+    }
+
+    font-size: var(--chat-line);
+    line-height: var(--chat-line-lh);
     transition: all 0.3s ease-in-out;
 
     .glow-container {
       color: transparent;
       overflow: hidden;
       position: relative;
-      background: linear-gradient(90deg, #3D3D3D -40.76%, #808080 -23.64%, #3D3D3D -6.52%);
+      background: linear-gradient(90deg, var(--tb-ink-76) -40.76%, var(--tb-ink-38) -23.64%, var(--tb-ink-76) -6.52%);
       background-clip: text;
       animation: fadeInScale 0.3s ease-in-out forwards;
       opacity: 0;
@@ -99,7 +114,7 @@
         height: 100%;
         flex-shrink: 0;
         opacity: 0.5;
-        background: #FFF;
+        background: var(--tb-surface);
         filter: blur(2px);
         transform: skewX(-25deg);
         animation: glow-move 3s ease-in-out infinite;
@@ -123,20 +138,34 @@
 
   &::ng-deep {
     .tb-markdown-view {
+      font-family: var(--tb-font);
+      font-size: var(--chat-text);
+      line-height: var(--chat-text-lh);
+      color: var(--tb-ink);
+
       h2 {
-        font-size: 28px;
+        font-size: var(--chat-title);
+        line-height: var(--chat-title-lh);
       }
 
       h3 {
-        font-size: 24px;
-      }
-
-      h4 {
         font-size: 20px;
+        line-height: 28px;
       }
 
-      h5, h6 {
-        font-size: 18px;
+      h4, h5, h6 {
+        font-size: var(--chat-head);
+        line-height: var(--chat-head-lh);
+      }
+
+      code {
+        font-family: var(--tb-mono);
+        font-size: var(--chat-code);
+      }
+
+      a {
+        color: var(--ai-link);
+        text-decoration-color: var(--ai-link-line);
       }
 
       a {

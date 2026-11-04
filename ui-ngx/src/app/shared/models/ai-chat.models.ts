@@ -6,9 +6,15 @@ export interface ChatConfiguration {
   title: string;
 }
 
+export interface ChatUpdate {
+  title?: string;
+  pinned?: boolean;
+}
+
 export interface ChatInfo extends ChatConfiguration {
   id: string;
   createdTime: number;
+  pinned?: boolean;
 }
 
 export interface BaseChatEvent {
