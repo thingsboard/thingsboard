@@ -3,7 +3,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of, EMPTY } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
@@ -172,13 +172,20 @@ export class IotHubActionsService {
 
   /**
    * A device package is updated by installing the new version through the install wizard: it needs the user's
-   * input, so the server cannot install it alone. The wizard removes the installed version only when it starts
-   * creating the entities, so closing it before that leaves the package as it was.
+   * input, so the server cannot install it alone. The wizard removes the installed version's entities only when it starts
+   * creating the new ones, so closing it before that leaves the package as it was.
    */
   private reinstallDevice(installedItem: IotHubInstalledItem, versionId: string): Observable<string | boolean> {
+    const descriptor = installedItem.descriptor as DeviceInstalledItemDescriptor;
     return this.iotHubApiService.getVersionInfo(versionId).pipe(
-      switchMap(item => this.openDeviceInstallDialog(item, { replaceInstalledItemId: installedItem.id.id })),
-      map(result => result === 'installed' ? 'updated' : false)
+      switchMap(item => this.openDeviceInstallDialog(item, {
+        replaceInstalledItemId: installedItem.id.id,
+        selectedInstallMethod: descriptor?.selectedInstallMethod,
+        installState: descriptor?.installState
+      })),
+      map(result => result === 'installed' ? 'updated' : false),
+      // The error itself is shown by the HTTP interceptor; nothing is changed yet.
+      catchError(() => of(false))
     );
   }
 

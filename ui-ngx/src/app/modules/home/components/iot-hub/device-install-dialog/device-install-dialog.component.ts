@@ -48,9 +48,10 @@ export interface DeviceInstallDialogData {
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
   /**
-   * Update of an installed device package: the installed item of the current version. It is removed together
-   * with its entities right before the wizard creates the new version's entities, not earlier, so closing the
-   * wizard before that leaves the package as it was.
+   * Update of an installed device package: the installed item of the current version. Its entities are removed
+   * right before the wizard creates the new version's entities, not earlier, so closing the wizard before that
+   * leaves the package as it was; the item takes the new version when the wizard registers it. The forms start
+   * from installState and the connection method from selectedInstallMethod, as the user filled them before.
    */
   replaceInstalledItemId?: string;
 }
@@ -71,6 +72,8 @@ export interface WizardStep {
   entitySteps?: EntityStepProgress[];
   progressError?: string;
   progressDone?: boolean;
+  /** Update only: the entities of the replaced version are being removed. */
+  removingReplaced?: boolean;
 }
 
 const ENTITY_STEP_MIN_DELAY = 2000;
@@ -108,8 +111,24 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
   private installRegistered = false;
-  /** Set once the version this wizard replaces (see replaceInstalledItemId) is removed. */
-  private replacedItemRemoved = false;
+  /** Update only: whether the removal of the replaced version's entities was sent, and whether it is done. */
+  private replaceStarted = false;
+  private replacedEntitiesRemoved = false;
+  /**
+   * The installed item this wizard registers: the wizard registers again after each group of entities, and each
+   * registration updates that item. On an update it is the replaced item from the start.
+   */
+  private registeredItemId: string | undefined;
+  /**
+   * Every entity this wizard created or chose, kept as soon as it exists: each registration sends them all, so none is
+   * left untracked when the user goes back from a group of steps (to change a form or the connection method) or a
+   * step or a registration failed.
+   */
+  private packageEntityIds: { entityType: string; id: string }[] = [];
+  /** Update only: the connection method of the installed version, preselected until the user confirms it. */
+  private methodPreselected = false;
+  /** The dialog is closed: a run of the entity steps that is still waiting must not create anything. */
+  private closed = false;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -141,6 +160,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   async ngOnInit(): Promise<void> {
+    this.registeredItemId = this.data.replaceInstalledItemId;
     try {
       const zipData = await firstValueFrom(this.iotHubApiService.getVersionFileData(this.data.item.id, { ignoreLoading: true }).pipe(
         mergeMap((blob: Blob) => blob.arrayBuffer())
@@ -199,12 +219,19 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       // pe-connectivity-method-prompt dialog and never set
       // selectedInstallMethod.
       this.startWizard();
+      // Update: preselect the method the installed version uses; the user can still pick another one.
+      const installedMethod = this.data.replaceInstalledItemId && this.data.selectedInstallMethod;
+      if (installedMethod && this.availableInstallMethods.includes(installedMethod) && !peOnlyInstallMethods.has(installedMethod)) {
+        this.selectedInstallMethod = installedMethod;
+        this.methodPreselected = true;
+      }
     }
     this.loading = false;
     this.cdr.detectChanges();
   }
 
   ngOnDestroy() {
+    this.closed = true;
     for (const url of this.zipImages.values()) {
       URL.revokeObjectURL(url);
     }
@@ -218,6 +245,12 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     // selectable — they never become the active install method.
     if (peOnlyInstallMethods.has(ct)) {
       this.openPeConnectivityPrompt(ct);
+      return;
+    }
+    if (this.selectedInstallMethod === ct && this.methodPreselected) {
+      // Update: the card of the installed version's method is preselected; clicking it confirms it.
+      this.methodPreselected = false;
+      this.confirmConnectivity();
       return;
     }
     if (this.selectedInstallMethod === ct) {
@@ -258,6 +291,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     if (!this.selectedInstallMethod) {
       return;
     }
+    this.methodPreselected = false;
     // If we are already inside the wizard (connectivity step is the
     // first one), append the remaining steps and advance the stepper.
     const onConnectivityStep = this.currentWizardStep?.type === 'connectivity';
@@ -380,9 +414,18 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     this.dialogRef.close('installed');
   }
 
+  get removingReplaced(): boolean {
+    return this.wizardSteps.some(ws => ws.removingReplaced);
+  }
+
   cancel(): void {
-    // Once the replaced version is removed, the caller has to reload its installed items as well.
-    this.dialogRef.close(this.installRegistered || this.replacedItemRemoved ? 'installed' : false);
+    if (this.removingReplaced) {
+      // The removal is irreversible and already running: closing now would leave the outcome unknown.
+      return;
+    }
+    this.closed = true;
+    // Once the replaced version's entities may be gone, the caller has to reload its installed items as well.
+    this.dialogRef.close(this.installRegistered || this.replaceStarted ? 'installed' : false);
   }
 
   retryEntitySteps(step: WizardStep): void {
@@ -420,7 +463,7 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       await this.runEntitySteps(ws);
     } catch (err: any) {
       ep.status = 'error';
-      ep.errorMessage = err?.error?.message || err?.message || 'Unknown error';
+      ep.errorMessage = this.errorText(err);
       ws.progressError = ep.errorMessage;
       this.cdr.detectChanges();
     }
@@ -691,8 +734,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     const formJson = this.zipFiles.get(ws.rawSteps[0].file) || '[]';
     ws.formFields = JSON.parse(formJson) as FormFieldDefinition[];
     const controls: Record<string, UntypedFormControl> = {};
-    // In review mode, use stored values; otherwise use defaults
-    const storedValues = this.reviewMode && this.data.installState?.[ws.label]?.formValues;
+    // In review mode and on an update, use stored values; otherwise use defaults
+    const storedValues = (this.reviewMode || this.data.replaceInstalledItemId) && this.data.installState?.[ws.label]?.formValues;
     for (const field of ws.formFields) {
       this.fieldTypes.set(field.key, field.type);
       const validators = [];
@@ -713,7 +756,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   private resolveInitialFieldValue(field: FormFieldDefinition, storedValue: any): any {
-    if (storedValue !== undefined) {
+    // On an update the stored value comes from the previous version, whose field may have changed since.
+    if (storedValue !== undefined && (this.reviewMode || this.fitsField(field, storedValue))) {
       return storedValue;
     }
     const isStringLike = field.type === FormFieldType.STRING || field.type === FormFieldType.PASSWORD;
@@ -773,6 +817,11 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     ep.entityOutput = output;
     ep.resolution = resolution;
     ep.status = 'success';
+    // Kept from the moment it exists: going back resets the step, and the entity must still be registered.
+    const entityType = this.stepTypeToEntityType(ep.step.type);
+    if (entityType && !this.packageEntityIds.some(known => known.id === output.id)) {
+      this.packageEntityIds.push({ entityType, id: output.id });
+    }
     const alias = stepTypeAliasMap[ep.step.type];
     if (alias) {
       this.entityOutputs.set(alias, output);
@@ -786,7 +835,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   private async runEntitySteps(ws: WizardStep): Promise<void> {
-    if (!await this.removeReplacedItem(ws)) {
+    if (!await this.removeReplacedEntities(ws) || this.closed) {
+      // The dialog was closed meanwhile (navigating away): create nothing.
       return;
     }
     for (const ep of ws.entitySteps) {
@@ -818,31 +868,44 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
         this.markEntityStepSuccess(ws, ep, output, 'created');
       } catch (err: any) {
         ep.status = 'error';
-        ep.errorMessage = err?.error?.message || err?.message || 'Unknown error';
+        ep.errorMessage = this.errorText(err);
         ws.progressError = ep.errorMessage;
         this.cdr.detectChanges();
         return;
       }
     }
 
-    // All done — register install with created entity IDs
-    ws.progressDone = true;
-    ws.completed = true;
+    // All done — register install with created entity IDs. The step is done only then: until it is registered,
+    // nothing tracks the entities, so the package could be neither updated nor removed from IoT Hub.
     try {
-      const createdEntityIds = this.collectCreatedEntityIds();
+      for (const id of this.collectCreatedEntityIds()) {
+        if (!this.packageEntityIds.some(known => known.id === id.id)) {
+          this.packageEntityIds.push(id);
+        }
+      }
+      const createdEntityIds = [...this.packageEntityIds];
       const dashboardId = this.findCreatedDashboardId();
-      await firstValueFrom(
+      const result = await firstValueFrom(
         this.iotHubApiService.registerDeviceInstall(
           this.data.item.id as string,
           { createdEntityIds, dashboardId, selectedInstallMethod: this.selectedInstallMethod, installState: this.buildInstallState() },
-          { ignoreLoading: true }
+          this.registeredItemId,
+          { ignoreLoading: true, ignoreErrors: true }
         )
       );
+      if (!result?.success) {
+        throw new Error(result?.errorMessage);
+      }
       this.installRegistered = true;
-    } catch (_e) {
-      // Non-critical — entities are created, tracking registration failed
-      console.error('Failed to register device install', _e);
+      this.registeredItemId = result.installedItemId ?? this.registeredItemId;
+    } catch (err: any) {
+      // The entities stay as they are: Retry registers them again.
+      ws.progressError = this.translate.instant('iot-hub.device-install-register-error', { error: this.errorText(err) });
+      this.cdr.detectChanges();
+      return;
     }
+    ws.progressDone = true;
+    ws.completed = true;
 
     // Auto-advance to next step after a short pause
     if (!this.isLastWizardStep) {
@@ -853,37 +916,50 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   /**
-   * Update of a device package: remove the current version with its entities before the new version's entities
-   * are created, or they would conflict by name. Retry runs it again when it failed.
+   * Update of a device package: remove the entities of the current version before the new version's entities are
+   * created, or they would conflict by name. The installed item keeps its version until the new one is registered,
+   * and removing again is safe, so Retry simply repeats it.
    */
-  private async removeReplacedItem(ws: WizardStep): Promise<boolean> {
-    if (!this.data.replaceInstalledItemId || this.replacedItemRemoved) {
+  private async removeReplacedEntities(ws: WizardStep): Promise<boolean> {
+    if (!this.data.replaceInstalledItemId || this.replacedEntitiesRemoved) {
       return true;
     }
-    // Nothing is created yet: the first step shows the removal running and, if it fails, why.
-    const ep = ws.entitySteps.find(s => s.status !== 'success');
-    if (ep) {
-      ep.status = 'running';
-      ep.errorMessage = null;
-      this.cdr.detectChanges();
-    }
+    this.replaceStarted = true;
+    ws.removingReplaced = true;
+    this.cdr.detectChanges();
     try {
-      const result = await firstValueFrom(this.iotHubApiService.updateItemVersion(
-        this.data.replaceInstalledItemId, this.data.item.id as string, { ignoreLoading: true }, true));
-      if (!result.success) {
-        throw new Error(result.errorMessage || this.translate.instant('iot-hub.update-error', { name: this.data.item.name }));
-      }
-      this.replacedItemRemoved = true;
+      await firstValueFrom(this.iotHubApiService.removeDevicePackageEntities(this.data.replaceInstalledItemId,
+        this.data.item.id as string, { ignoreLoading: true, ignoreErrors: true }));
+      this.replacedEntitiesRemoved = true;
       return true;
     } catch (err: any) {
-      // Retry runs the removal again.
-      ws.progressError = err?.error?.message || err?.message || 'Unknown error';
-      if (ep) {
-        ep.status = 'error';
-        ep.errorMessage = ws.progressError;
-      }
-      this.cdr.detectChanges();
+      ws.progressError = this.translate.instant('iot-hub.device-update-remove-error', { error: this.errorText(err) });
       return false;
+    } finally {
+      ws.removingReplaced = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /** An error of the step that is not one entity's (removing the replaced entities, registering), shown below them. */
+  stepLevelError(ws: WizardStep): string | null {
+    return ws.progressError && !ws.entitySteps?.some(ep => ep.status === 'error') ? ws.progressError : null;
+  }
+
+  private errorText(err: any): string {
+    return err?.error?.message || err?.message || 'Unknown error';
+  }
+
+  private fitsField(field: FormFieldDefinition, value: any): boolean {
+    switch (field.type) {
+      case FormFieldType.BOOLEAN:
+        return typeof value === 'boolean';
+      case FormFieldType.INTEGER:
+        return Number.isInteger(value) || (typeof value === 'string' && /^-?\d*$/.test(value));
+      case FormFieldType.SELECT:
+        return typeof value === 'string' && (!field.options?.length || field.options.some(option => option.value === value));
+      default:
+        return typeof value === 'string';
     }
   }
 
