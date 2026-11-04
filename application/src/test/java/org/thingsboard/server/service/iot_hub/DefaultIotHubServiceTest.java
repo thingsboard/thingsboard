@@ -13,11 +13,21 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
+import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.entitiy.device.TbDeviceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
@@ -48,6 +58,14 @@ class DefaultIotHubServiceTest {
     private IotHubRestClient iotHubRestClient;
     @Mock
     private IotHubInstalledItemService iotHubInstalledItemService;
+    @Mock
+    private DeviceService deviceService;
+    @Mock
+    private TbDeviceService tbDeviceService;
+    @Mock
+    private DashboardService dashboardService;
+    @Mock
+    private TbDashboardService tbDashboardService;
 
     @Spy
     @InjectMocks
@@ -410,5 +428,61 @@ class DefaultIotHubServiceTest {
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.isRolledBack()).isFalse();
         assertThat(result.getErrorMessage()).contains("install failed");
+    }
+
+    @Test
+    void updateItemVersion_device_removesInstalledItemWithItsEntities() throws Exception {
+        mockTenant();
+        String newVersionId = UUID.randomUUID().toString();
+        Device device = new Device(new DeviceId(UUID.randomUUID()));
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId(), dashboard.getId()));
+        descriptor.setDashboardId(dashboard.getId());
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setItemVersionId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(newVersionId))
+                .thenReturn(version(newVersionId, UUID.randomUUID().toString(), "DEVICE", "Gateway", "1.0.2"));
+        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
+        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, item.getId(), newVersionId, false, null);
+
+        // No "entity modified" question: the update dialog warns that the package is installed again.
+        assertThat(result.isSuccess()).isTrue();
+        assertThat(result.isEntityModified()).isFalse();
+        // The entities are removed in reverse order of creation, then the installed item itself: the install
+        // wizard registers the new version, and until then the package is not shown as installed.
+        InOrder order = inOrder(tbDashboardService, tbDeviceService, iotHubInstalledItemService);
+        order.verify(tbDashboardService).delete(dashboard, user);
+        order.verify(tbDeviceService).delete(device, user);
+        order.verify(iotHubInstalledItemService).deleteById(tenantId, item.getId());
+        // Nothing is installed or saved on the server: the new version is never recorded with no entities.
+        verify(iotHubRestClient, never()).getVersionInfo(item.getItemVersionId().toString());
+        verify(iotHubRestClient, never()).getVersionFileData(anyString());
+        verify(iotHubInstalledItemService, never()).save(any(), any());
+    }
+
+    @Test
+    void updateItemVersion_device_versionOfAnotherType_keepsEverything() {
+        mockTenant();
+        String newVersionId = UUID.randomUUID().toString();
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setItemVersionId(UUID.randomUUID());
+        item.setDescriptor(new DeviceInstalledItemDescriptor());
+
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        when(iotHubRestClient.getVersionInfo(newVersionId))
+                .thenReturn(version(newVersionId, UUID.randomUUID().toString(), "WIDGET", "Widget", "1.0.0"));
+
+        UpdateItemVersionResult result = service.updateItemVersion(user, item.getId(), newVersionId, false, null);
+
+        assertThat(result.isSuccess()).isFalse();
+        verify(iotHubInstalledItemService, never()).deleteById(any(), any());
     }
 }

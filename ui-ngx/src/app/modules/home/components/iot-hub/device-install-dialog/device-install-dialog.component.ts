@@ -47,6 +47,12 @@ export interface DeviceInstallDialogData {
   reviewMode?: boolean;
   selectedInstallMethod?: string;
   installState?: Record<string, any>;
+  /**
+   * Update of an installed device package: the installed item of the current version. It is removed together
+   * with its entities right before the wizard creates the new version's entities, not earlier, so closing the
+   * wizard before that leaves the package as it was.
+   */
+  replaceInstalledItemId?: string;
 }
 
 export type WizardStepType = 'connectivity' | 'placeholder' | 'instruction' | 'form' | 'progress';
@@ -102,6 +108,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
    * has to report 'installed', or the caller keeps showing pre-install counts and badges.
    */
   private installRegistered = false;
+  /** Set once the version this wizard replaces (see replaceInstalledItemId) is removed. */
+  private replacedItemRemoved = false;
 
   // Variable resolution state
   formValues: Record<string, any> = {};
@@ -373,7 +381,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   cancel(): void {
-    this.dialogRef.close(this.installRegistered ? 'installed' : false);
+    // Once the replaced version is removed, the caller has to reload its installed items as well.
+    this.dialogRef.close(this.installRegistered || this.replacedItemRemoved ? 'installed' : false);
   }
 
   retryEntitySteps(step: WizardStep): void {
@@ -777,6 +786,9 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
   }
 
   private async runEntitySteps(ws: WizardStep): Promise<void> {
+    if (!await this.removeReplacedItem(ws)) {
+      return;
+    }
     for (const ep of ws.entitySteps) {
       if (ep.status === 'success') {
         continue;
@@ -837,6 +849,41 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       await this.delay(500);
       this.stepper.next();
       this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Update of a device package: remove the current version with its entities before the new version's entities
+   * are created, or they would conflict by name. Retry runs it again when it failed.
+   */
+  private async removeReplacedItem(ws: WizardStep): Promise<boolean> {
+    if (!this.data.replaceInstalledItemId || this.replacedItemRemoved) {
+      return true;
+    }
+    // Nothing is created yet: the first step shows the removal running and, if it fails, why.
+    const ep = ws.entitySteps.find(s => s.status !== 'success');
+    if (ep) {
+      ep.status = 'running';
+      ep.errorMessage = null;
+      this.cdr.detectChanges();
+    }
+    try {
+      const result = await firstValueFrom(this.iotHubApiService.updateItemVersion(
+        this.data.replaceInstalledItemId, this.data.item.id as string, { ignoreLoading: true }, true));
+      if (!result.success) {
+        throw new Error(result.errorMessage || this.translate.instant('iot-hub.update-error', { name: this.data.item.name }));
+      }
+      this.replacedItemRemoved = true;
+      return true;
+    } catch (err: any) {
+      // Retry runs the removal again.
+      ws.progressError = err?.error?.message || err?.message || 'Unknown error';
+      if (ep) {
+        ep.status = 'error';
+        ep.errorMessage = ws.progressError;
+      }
+      this.cdr.detectChanges();
+      return false;
     }
   }
 

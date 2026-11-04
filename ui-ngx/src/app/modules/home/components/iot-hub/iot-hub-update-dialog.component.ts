@@ -65,12 +65,22 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
    * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
    */
   get updateDescKey(): string {
-    return this.data?.itemType === ItemType.SOLUTION_TEMPLATE
-      ? 'iot-hub.update-desc-solution-template'
-      : 'iot-hub.update-desc';
+    switch (this.data?.itemType) {
+      case ItemType.SOLUTION_TEMPLATE:
+        return 'iot-hub.update-desc-solution-template';
+      case ItemType.DEVICE:
+        return 'iot-hub.update-desc-device';
+      default:
+        return 'iot-hub.update-desc';
+    }
   }
 
   update(force = false): void {
+    if (this.data.itemType === ItemType.DEVICE) {
+      // The install wizard of the new version does the update: it needs the user's input.
+      this.dialogRef.close('reinstall');
+      return;
+    }
     this.state = 'updating';
     this.iotHubApiService.updateItemVersion(this.data.installedItemId, this.data.versionId, { ignoreLoading: true }, force).subscribe({
       next: (result) => {

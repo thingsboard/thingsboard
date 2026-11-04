@@ -18,6 +18,7 @@ import { TbIotHubDeleteDialogComponent, IotHubDeleteDialogData } from './iot-hub
 import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './device-install-dialog/device-install-dialog.component';
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
 import { IotHubBuiltInService } from './iot-hub-built-in.service';
+import { IotHubApiService } from '@core/http/iot-hub-api.service';
 import { isBuiltInItem } from './iot-hub-utils';
 
 /**
@@ -34,7 +35,8 @@ export class IotHubActionsService {
     private dialog: MatDialog,
     private dialogService: DialogService,
     private translate: TranslateService,
-    private builtInService: IotHubBuiltInService
+    private builtInService: IotHubBuiltInService,
+    private iotHubApiService: IotHubApiService
   ) {}
 
   openItemDetail(item: MpItemVersionView, installedItem?: IotHubInstalledItem, installedItemsCount?: number,
@@ -163,7 +165,21 @@ export class IotHubActionsService {
         version,
         versionId
       }
-    }).afterClosed();
+    }).afterClosed().pipe(
+      switchMap(result => result === 'reinstall' ? this.reinstallDevice(installedItem, versionId) : of(result))
+    );
+  }
+
+  /**
+   * A device package is updated by installing the new version through the install wizard: it needs the user's
+   * input, so the server cannot install it alone. The wizard removes the installed version only when it starts
+   * creating the entities, so closing it before that leaves the package as it was.
+   */
+  private reinstallDevice(installedItem: IotHubInstalledItem, versionId: string): Observable<string | boolean> {
+    return this.iotHubApiService.getVersionInfo(versionId).pipe(
+      switchMap(item => this.openDeviceInstallDialog(item, { replaceInstalledItemId: installedItem.id.id })),
+      map(result => result === 'installed' ? 'updated' : false)
+    );
   }
 
   deleteItem(installedItem: IotHubInstalledItem): Observable<boolean> {
@@ -193,7 +209,8 @@ export class IotHubActionsService {
   }
 
   private openDeviceInstallDialog(item: MpItemVersionView,
-                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any }): Observable<any> {
+                                  options?: { reviewMode?: boolean; selectedInstallMethod?: string; installState?: any;
+                                              replaceInstalledItemId?: string }): Observable<any> {
     return this.dialog.open<TbDeviceInstallDialogComponent, DeviceInstallDialogData>(TbDeviceInstallDialogComponent, {
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog-lt-md'],
       disableClose: true,
