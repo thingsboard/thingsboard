@@ -102,9 +102,28 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   autoApprove = computed(() => this.chatId() ? this.panelService.isAutoApprove(this.chatId()) : this.newChatAutoApprove());
 
-  placeholder = computed(() => this.translate.instant(this.messages().length
-    ? 'ai-assistant.follow-up-prompt-placeholder'
-    : 'ai-assistant.prompt-placeholder'));
+  denyReasons = signal<Record<string, string>>({});
+
+  stopping = signal<boolean>(false);
+
+  private answeredApprovals = signal<ReadonlySet<string>>(new Set());
+
+  waitingApproval = computed<ApprovalChatMessage | undefined>(() => {
+    if (this.autoApprove()) {
+      return undefined;
+    }
+    const completed = this.completedExecutions();
+    const answered = this.answeredApprovals();
+    return this.messages()
+      .filter((message): message is ApprovalChatMessage => message.from === 'APPROVAL')
+      .find(message => !completed[message.data.executionId] && !answered.has(message.data.executionId) && message.data.needsApproval);
+  });
+
+  placeholder = computed(() => this.translate.instant(this.waitingApproval()
+    ? 'ai-assistant.deny-placeholder'
+    : this.messages().length
+      ? 'ai-assistant.follow-up-prompt-placeholder'
+      : 'ai-assistant.prompt-placeholder'));
 
   private aiChat = inject(AiChatService);
   private chats = inject(AiChatsService);
@@ -128,6 +147,24 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private chatIdEffect = effect(() => {
     const chatId = this.chatId();
     untracked(() => this.show(chatId));
+  });
+
+  level = computed(() => {
+    const chat = this.chat();
+    return chat ? this.chats.levelOf(chat) : null;
+  });
+
+  private openChatEffect = effect(onCleanup => {
+    const chatId = this.chatId();
+    untracked(() => this.chats.setOpen(chatId, true));
+    onCleanup(() => untracked(() => this.chats.setOpen(chatId, false)));
+  });
+
+  private waitingEffect = effect(onCleanup => {
+    const chatId = this.chatId();
+    const waiting = !!this.waitingApproval();
+    untracked(() => this.chats.setWaiting(chatId, waiting));
+    onCleanup(() => untracked(() => this.chats.setWaiting(chatId, false)));
   });
 
   private deletedChatEffect = effect(() => {
@@ -237,18 +274,44 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
   }
 
+  stop(): void {
+    const chatId = this.chatId();
+    if (!chatId || !this.loading() || this.stopping()) {
+      return;
+    }
+    this.stopping.set(true);
+    this.aiChat.stopChat(chatId, {ignoreLoading: true, ignoreErrors: true}).subscribe({
+      error: err => {
+        this.stopping.set(false);
+        this.showErrorMessage(err);
+      }
+    });
+  }
+
   onApprovalAction(event: ApprovalResult): void {
     const chatId = this.chatId();
     if (event.autoApprove && chatId) {
       this.panelService.setAutoApprove(chatId, true);
     }
-    this.aiChat.resolveToolApproval(
-      {executionId: event.executionId, approved: event.approved},
-      {ignoreLoading: true, ignoreErrors: true}
-    ).subscribe();
+    this.answeredApprovals.update(set => new Set(set).add(event.executionId));
+    if (event.reason) {
+      this.denyReasons.update(reasons => ({...reasons, [event.executionId]: event.reason}));
+    }
+    const result: ApprovalResult = {executionId: event.executionId, approved: event.approved};
+    if (event.reason) {
+      result.reason = event.reason;
+    }
+    this.aiChat.resolveToolApproval(result, {ignoreLoading: true, ignoreErrors: true}).subscribe();
   }
 
   sendMsgFromUser(prompt: AiPromptMessage): void {
+    const waiting = this.waitingApproval();
+    if (waiting) {
+      if (prompt.message.trim()) {
+        this.onApprovalAction({executionId: waiting.data.executionId, approved: false, reason: prompt.message.trim()});
+      }
+      return;
+    }
     const userMessage: ChatMessage = prompt.resources.length
       ? {from: 'USER', content: prompt.message, resources: prompt.resources, time: Date.now()}
       : {from: 'USER', content: prompt.message, time: Date.now()};
@@ -275,6 +338,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.shownChatId = chatId;
     this.messages.set([]);
     this.completedExecutions.set({});
+    this.denyReasons.set({});
+    this.answeredApprovals.set(new Set());
     if (chatId) {
       this.loadChat$.next(chatId);
     } else {
@@ -381,6 +446,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
           this.affectedEntities.push(...event.data.affectedEntities);
         }
         break;
+      case 'turnStopped':
+        this.messages.update(list => [...list, {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'INCOMPLETE', time: Date.now()}]);
+        break;
       case 'chatTitleGenerated':
         if (this.chatId() && event.data.title) {
           this.chats.setTitle(this.chatId(), event.data.title);
@@ -434,7 +502,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   private stopLoading(): void {
+    if (this.loading()) {
+      this.chats.refresh().subscribe({error: () => {}});
+    }
     this.loading.set(false);
+    this.stopping.set(false);
     if (this.affectedEntities.length) {
       this.panelService.emitUpdatedData(this.affectedEntities);
       this.affectedEntities = [];

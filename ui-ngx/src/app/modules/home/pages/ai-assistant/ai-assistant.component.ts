@@ -7,6 +7,7 @@ import {
   ElementRef,
   HostListener,
   inject,
+  OnDestroy,
   OnInit,
   signal,
   ViewChild
@@ -38,10 +39,11 @@ export interface AiChatsGroup {
     '[class.rail-open]': 'railOpen()'
   }
 })
-export class AiAssistantComponent implements OnInit {
+export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private static readonly RAIL_OPEN_KEY = 'tbAiAssistantRailOpen';
   private static readonly NARROW_WIDTH = 900;
+  private static readonly REFRESH_MS = 20000;
 
   @ViewChild(AiChatComponent) chat: AiChatComponent;
   @ViewChild('searchInput') searchInput: ElementRef<HTMLInputElement>;
@@ -82,6 +84,8 @@ export class AiAssistantComponent implements OnInit {
       const index = chat.pinned ? 0 : chat.createdTime >= today ? 1 : chat.createdTime >= today - DAY ? 2 : chat.createdTime >= today - WEEK ? 3 : 4;
       groups[index].chats.push(chat);
     }
+    const needsFirst = (chat: ChatInfo) => this.aiChats.levelOf(chat) === 'needs' ? 0 : 1;
+    groups.forEach(group => group.chats.sort((a, b) => needsFirst(a) - needsFirst(b)));
     return groups.filter(group => group.chats.length);
   });
 
@@ -103,6 +107,16 @@ export class AiAssistantComponent implements OnInit {
       });
     }
   });
+
+  private refreshTimer = setInterval(() => {
+    if (!document.hidden) {
+      this.aiChats.refresh().subscribe({error: () => {}});
+    }
+  }, AiAssistantComponent.REFRESH_MS);
+
+  ngOnDestroy(): void {
+    clearInterval(this.refreshTimer);
+  }
 
   ngOnInit(): void {
     this.aiChats.load().subscribe({

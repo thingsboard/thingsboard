@@ -38,7 +38,7 @@
 }
 
 .ai-chat-name {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -49,6 +49,27 @@
 
 :host(.v-panel) .ai-chat-name {
   font-size: var(--chat-line);
+}
+
+.ai-chat-status {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 12.5px/20px var(--tb-font);
+  color: var(--tb-ink-54);
+  white-space: nowrap;
+
+  .tb-ai-status-mark {
+    width: 10px;
+    height: 10px;
+
+    &.running::before {
+      width: 8px;
+      height: 8px;
+      border-width: 1.5px;
+    }
+  }
 }
 
 .ai-chat-rename {
@@ -70,6 +91,7 @@
 
 .ai-chat-actions {
   flex: none;
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 2px;

@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal, untracked, WritableSignal } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AiChatService } from '@core/http/ai-chat.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { DialogService } from '@core/services/dialog.service';
-import { ChatInfo } from '@shared/models/ai-chat.models';
+import { ChatInfo, ChatLevel } from '@shared/models/ai-chat.models';
 
 @Injectable({ providedIn: 'root' })
 export class AiChatsService {
@@ -25,6 +25,37 @@ export class AiChatsService {
 
   private _replying = signal<ReadonlySet<string>>(new Set());
   readonly replying = this._replying.asReadonly();
+
+  private _waiting = signal<ReadonlySet<string>>(new Set());
+
+  private _open = signal<ReadonlySet<string>>(new Set());
+
+  levelOf(chat: ChatInfo): ChatLevel | null {
+    if (this._waiting().has(chat.id)) {
+      return 'needs';
+    }
+    if (this._replying().has(chat.id)) {
+      return 'running';
+    }
+    if (this._open().has(chat.id)) {
+      return null;
+    }
+    return chat.status === 'NEEDS_YOU' ? 'needs' : chat.status === 'RUNNING' ? 'running' : null;
+  }
+
+  setWaiting(chatId: string | undefined, waiting: boolean): void {
+    this.toggle(this._waiting, chatId, waiting);
+  }
+
+  setOpen(chatId: string | undefined, open: boolean): void {
+    this.toggle(this._open, chatId, open);
+  }
+
+  refresh(): Observable<ChatInfo[]> {
+    return this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).pipe(
+      tap(chats => this._chats.set(chats))
+    );
+  }
 
   load(): Observable<ChatInfo[]> {
     return this.aiChat.listChats({ignoreLoading: true, ignoreErrors: true}).pipe(
@@ -93,12 +124,16 @@ export class AiChatsService {
   }
 
   setReplying(chatId: string | undefined, replying: boolean): void {
-    if (!chatId) {
+    this.toggle(this._replying, chatId, replying);
+  }
+
+  private toggle(target: WritableSignal<ReadonlySet<string>>, chatId: string | undefined, on: boolean): void {
+    if (!chatId || untracked(target).has(chatId) === on) {
       return;
     }
-    this._replying.update(set => {
+    target.update(set => {
       const next = new Set(set);
-      if (replying) {
+      if (on) {
         next.add(chatId);
       } else {
         next.delete(chatId);

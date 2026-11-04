@@ -57,6 +57,12 @@ class DefaultAiChatService implements AiChatService {
     }
 
     @Override
+    public void stopChat(UUID chatId, SecurityUser user) {
+        tbAiService.process(tokenProvider -> operations.execute(
+                new TbAiOperation(ChannelProtocol.CHAT_STOP, new ChatOperationRequest(chatId, null)), user, tokenProvider), user, false);
+    }
+
+    @Override
     public void deleteChat(UUID chatId, SecurityUser user) {
         tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.CHAT_DELETE, new ChatOperationRequest(chatId, null)), user, tokenProvider), user, false);

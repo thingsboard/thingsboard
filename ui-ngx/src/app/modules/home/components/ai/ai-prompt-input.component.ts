@@ -83,6 +83,22 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   @Output() autoApproveChange = new EventEmitter<boolean>();
 
+  @Input() stoppable = false;
+
+  @Input() stopping = false;
+
+  @Output() stopped = new EventEmitter<void>();
+
+  get canStop(): boolean {
+    return this.loading && this.stoppable;
+  }
+
+  stop(): void {
+    if (this.canStop && !this.stopping) {
+      this.stopped.emit();
+    }
+  }
+
   @ViewChild('textarea') textarea!: ElementRef<HTMLTextAreaElement>;
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -158,6 +174,11 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   }
 
   onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && this.canStop) {
+      event.preventDefault();
+      this.stop();
+      return;
+    }
     if (event.key === 'Enter' && (!event.shiftKey || event.metaKey || event.ctrlKey)) {
       event.preventDefault();
       this.send();

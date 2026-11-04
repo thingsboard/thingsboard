@@ -15,7 +15,12 @@ export interface ChatInfo extends ChatConfiguration {
   id: string;
   createdTime: number;
   pinned?: boolean;
+  status?: ChatStatus;
 }
+
+export type ChatStatus = 'RUNNING' | 'NEEDS_YOU';
+
+export type ChatLevel = 'needs' | 'running';
 
 export interface BaseChatEvent {
   event: string;
@@ -70,6 +75,7 @@ export interface ToolExecutionResult extends BaseChatToolEventData {
   message: string;
   icon?: string;
   affectedEntities?: Array<EntityId>;
+  reason?: string;
 }
 
 export interface ToolExecutionResultEvent extends BaseChatEvent {
@@ -96,10 +102,16 @@ export interface TurnResumedEvent extends BaseChatEvent {
   data: Record<string, never>;
 }
 
+export interface TurnStoppedEvent extends BaseChatEvent {
+  event: 'turnStopped';
+  data: Record<string, never>;
+}
+
 export interface ApprovalResult {
   executionId: string;
   approved: boolean;
   autoApprove?: boolean;
+  reason?: string;
 }
 
 export enum ToolApprovalResult {
@@ -109,7 +121,7 @@ export enum ToolApprovalResult {
 }
 
 export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
-  | TurnResumedEvent;
+  | TurnResumedEvent | TurnStoppedEvent;
 
 export enum AiAssistantViewType {
   DASHBOARD = 'DASHBOARD',

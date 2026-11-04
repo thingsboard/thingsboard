@@ -58,8 +58,8 @@
                   <span class="ai-row-title" [matTooltip]="'ai-assistant.double-click-to-rename' | translate" matTooltipPosition="after"
                         matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
                         (dblclick)="$event.stopPropagation(); startRename(chat)">{{ chat.title }}</span>
-                  @if (aiChats.replying().has(chat.id)) {
-                    <span class="tb-ai-status-mark running" [matTooltip]="'ai-assistant.in-progress' | translate" matTooltipPosition="above"></span>
+                  @if (aiChats.levelOf(chat); as level) {
+                    <span [class]="'tb-ai-status-mark ' + level" [matTooltip]="('ai-assistant.status-tip-' + level) | translate" matTooltipPosition="above"></span>
                   }
                   <button type="button" class="ai-row-menu" [matMenuTriggerFor]="chatMenu"
                           [matMenuTriggerData]="{chat: chat}" (click)="$event.stopPropagation()"

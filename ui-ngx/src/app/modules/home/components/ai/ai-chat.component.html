@@ -19,6 +19,12 @@
       <span #chatName class="ai-chat-name" [matTooltip]="nameClipped() ? chat.title : ('ai-assistant.double-click-to-rename' | translate)"
             matTooltipPosition="after" matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
             (mouseenter)="nameClipped.set(chatName.scrollWidth > chatName.clientWidth + 1)" (dblclick)="startRename()">{{ chat.title }}</span>
+      @if (level(); as level) {
+        <span class="ai-chat-status" [class]="'ai-chat-status ' + level">
+          <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + level"></span>
+          <span>{{ ('ai-assistant.status-' + level) | translate }}</span>
+        </span>
+      }
     }
   } @else {
     <span class="ai-chat-name">{{ 'ai-assistant.new-chat' | translate }}</span>
@@ -52,6 +58,7 @@
       [additionalStyles]="markdownStyles"
       [scrollContainer]="chatArea"
       initialScroll="bottom"
+      [denyReasons]="denyReasons()"
       (approvalAction)="onApprovalAction($event)">
     </tb-ai-chat-messages>
   } @else if (!chatId()) {
@@ -65,11 +72,14 @@
   <div class="ai-chat-composer">
     <tb-ai-prompt-input
       [placeholder]="placeholder()"
-      [loading]="loading()"
+      [loading]="loading() && !waitingApproval()"
       [dropZone]="chatArea"
       [showAutoApprove]="true"
       [autoApprove]="autoApprove()"
       [autoApproveInChat]="!!chatId()"
+      [stoppable]="!!chatId()"
+      [stopping]="stopping()"
+      (stopped)="stop()"
       (autoApproveChange)="setAutoApprove($event)"
       (messageSent)="sendMsgFromUser($event)">
     </tb-ai-prompt-input>

@@ -62,6 +62,10 @@ export class AiChatService {
    * Follows the reply still running in the chat: a 'turnResumed' event, every event of the reply so far, then the
    * live ones. Completes with no events when nothing is running.
    */
+  public stopChat(chatId: string, config?: RequestConfig): Observable<void> {
+    return this.http.post<void>(`/api/ai/chats/${chatId}/stop`, null, defaultHttpOptionsFromConfig(config));
+  }
+
   public resumeChat(chatId: string, config?: RequestConfig): Observable<ChatEvent> {
     return this.streamEvents(`/api/ai/chats/${chatId}/resume`, null, config);
   }

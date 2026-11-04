@@ -26,6 +26,7 @@
           [data]="getApprovalData(msg)"
           [completedExecution]="getCompletedExecution(msg)"
           [autoApprove]="autoApprove"
+          [answered]="!!denyReasons[getApprovalData(msg).executionId]"
           (approvalAction)="approval($event)">
         </tb-ai-approval-card>
       } @else if (msg.status === 'INCOMPLETE') {
@@ -54,6 +55,11 @@
         </div>
       }
     </div>
+    @if (msg.from === 'APPROVAL' && denyReasonOf(msg); as reason) {
+      <div class="user">
+        <div class="msg">{{ reason }}</div>
+      </div>
+    }
   }
 }
 @if (loading && !waitApproval) {

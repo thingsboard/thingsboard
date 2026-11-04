@@ -286,6 +286,21 @@
     display: block;
   }
 
+  &.needs::before {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--tb-caution);
+  }
+
+  &.error::before {
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--tb-crit);
+    transform: rotate(45deg);
+  }
+
   &.running::before {
     width: 9px;
     height: 9px;

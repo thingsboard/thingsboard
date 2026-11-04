@@ -21,6 +21,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() autoApprove = false;
   @Input() scrollContainer: HTMLElement;
   @Input() initialScroll: 'lastUserMessage' | 'bottom' = 'lastUserMessage';
+  @Input() denyReasons: Record<string, string> = {};
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
 
   waitApproval = false;
@@ -50,6 +51,10 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   getApprovalData(msg: ApprovalChatMessage): ToolExecutionRequested {
     return msg.data;
+  }
+
+  denyReasonOf(msg: ApprovalChatMessage): string | undefined {
+    return this.completedExecutions[msg.data.executionId]?.reason ?? this.denyReasons[msg.data.executionId];
   }
 
   getCompletedExecution(msg: ApprovalChatMessage): ToolExecutionResult | undefined {

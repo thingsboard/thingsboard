@@ -66,6 +66,15 @@ class AiChatController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PostMapping("/{chatId}/stop")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void stopChat(@PathVariable UUID chatId) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
+        aiChatService.stopChat(chatId, user);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping
     public JsonNode listChats() throws ThingsboardException {
         SecurityUser user = getCurrentUser();

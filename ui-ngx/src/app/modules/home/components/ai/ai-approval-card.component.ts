@@ -3,13 +3,15 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   HostBinding,
   inject,
   Input,
   OnChanges,
   Output,
-  SimpleChanges
+  SimpleChanges,
+  ViewChild
 } from '@angular/core';
 import {
   ApprovalResult,
@@ -34,6 +36,12 @@ export class AiApprovalCardComponent implements OnChanges {
 
   @Input() autoApprove = false;
 
+  @Input() answered = false;
+
+  @ViewChild('denyInput') denyInput: ElementRef<HTMLInputElement>;
+
+  denying = false;
+
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
 
   @HostBinding('class') state: ApprovalCardState = 'pending';
@@ -43,6 +51,10 @@ export class AiApprovalCardComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (this.autoApprove && this.state === 'pending' && !this.completedExecution) {
       this.approve();
+    }
+    if (this.answered && this.state === 'pending' && !this.completedExecution) {
+      this.denying = false;
+      this.state = 'executing';
     }
     if (changes.completedExecution && this.completedExecution?.executionId === this.data.executionId) {
       const result = this.completedExecution;
@@ -88,8 +100,25 @@ export class AiApprovalCardComponent implements OnChanges {
   }
 
   deny(): void {
+    if (this.denying) {
+      this.sendDeny(this.denyInput?.nativeElement.value ?? '');
+      return;
+    }
+    this.denying = true;
+    setTimeout(() => this.denyInput?.nativeElement.focus());
+  }
+
+  sendDeny(words: string): void {
+    const reason = words.trim();
+    this.denying = false;
     this.state = 'executing';
-    this.approvalAction.emit({executionId: this.data.executionId, approved: false});
+    this.approvalAction.emit(reason
+      ? {executionId: this.data.executionId, approved: false, reason}
+      : {executionId: this.data.executionId, approved: false});
+  }
+
+  closeDeny(): void {
+    this.denying = false;
   }
 
   private emitApproval(autoApprove = false): void {

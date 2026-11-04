@@ -200,6 +200,20 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     display: inline-flex;
   }
 
+  .composer-stop {
+    &:disabled {
+      opacity: .6;
+      cursor: default;
+    }
+
+    .stop-glyph {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--ai-on-action);
+    }
+  }
+
   .composer-send {
     position: relative;
     display: inline-flex;

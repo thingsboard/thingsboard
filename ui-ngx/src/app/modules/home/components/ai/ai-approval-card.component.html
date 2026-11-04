@@ -18,6 +18,13 @@
         {{ data.approveLabel ?? ('ai-assistant.approve' | translate) }}
       </button>
     </div>
+    @if (denying) {
+      <input #denyInput class="deny-line" type="text" maxlength="2000"
+             [placeholder]="'ai-assistant.what-should-be-different' | translate"
+             [attr.aria-label]="'ai-assistant.what-should-be-different' | translate"
+             (keydown.enter)="$event.preventDefault(); sendDeny(denyInput.value)"
+             (keydown.escape)="$event.stopPropagation(); closeDeny()">
+    }
     <button mat-button class="approve-all" (click)="approveAll()">
       <mat-icon>done_all</mat-icon>
       {{ 'ai-assistant.approve-all' | translate }}
