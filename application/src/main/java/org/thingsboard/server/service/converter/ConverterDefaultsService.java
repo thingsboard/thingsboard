@@ -13,4 +13,6 @@ public interface ConverterDefaultsService {
 
     Optional<String> getMetadata(IntegrationType integrationType, ConverterType converterType);
 
+    Optional<String> getIntegrationName(IntegrationType integrationType);
+
 }

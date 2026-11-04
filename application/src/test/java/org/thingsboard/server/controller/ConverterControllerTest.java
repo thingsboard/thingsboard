@@ -600,6 +600,51 @@ public class ConverterControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDefaultDebugIn() throws Exception {
+        String urlTemplate = "/api/converter/{converterId}/debugIn?integrationType={integrationType}&converterType={converterType}";
+
+        SoftAssertions softly = new SoftAssertions();
+        for (IntegrationType integrationType : IntegrationType.values()) {
+            String dir = integrationType.getDirectory();
+            if (dir == null) {
+                continue;
+            }
+            String integrationName = readResource("converters/" + dir + "/integration.json")
+                    .map(content -> JacksonUtil.toJsonNode(content).get("name").asText())
+                    .orElse("Test " + dir);
+
+            ObjectNode uplink = doGet(urlTemplate, ObjectNode.class, EntityId.NULL_UUID, integrationType.name(), ConverterType.UPLINK.name());
+            ObjectNode uplinkMetadata = JacksonUtil.fromString(uplink.get("inMetadata").asText(), ObjectNode.class);
+            softly.assertThat(uplinkMetadata.get("integrationName").asText()).as(dir + " uplink integrationName").isEqualTo(integrationName);
+            readResource("converters/" + dir + "/uplink/metadata.json")
+                    .map(content -> JacksonUtil.fromString(content, ObjectNode.class))
+                    .ifPresent(expected -> expected.properties().forEach(entry ->
+                            softly.assertThat(uplinkMetadata.get(entry.getKey())).as(dir + " uplink metadata " + entry.getKey()).isEqualTo(entry.getValue())));
+            Optional<String> payload = readResource("converters/" + dir + "/uplink/payload.json");
+            if (payload.isPresent()) {
+                softly.assertThat(uplink.get("inContent").asText()).as(dir + " uplink payload").isEqualTo(payload.get());
+            } else {
+                softly.assertThat(uplink.get("inContent").isNull()).as(dir + " uplink payload").isTrue();
+            }
+
+            String downlink = doGet(urlTemplate, EntityId.NULL_UUID, integrationType.name(), ConverterType.DOWNLINK.name())
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            Optional<String> downlinkMetadata = readResource("converters/" + dir + "/downlink/metadata.json");
+            if (downlinkMetadata.isPresent()) {
+                JsonNode downlinkNode = JacksonUtil.toJsonNode(downlink);
+                softly.assertThat(JacksonUtil.toJsonNode(downlinkNode.get("inMetadata").asText())).as(dir + " downlink metadata")
+                        .isEqualTo(JacksonUtil.toJsonNode(downlinkMetadata.get()));
+                softly.assertThat(JacksonUtil.toJsonNode(downlinkNode.get("inIntegrationMetadata").asText()).get("integrationName").asText())
+                        .as(dir + " downlink integrationName").isEqualTo(integrationName);
+            } else {
+                softly.assertThat(downlink).as(dir + " downlink").isEmpty();
+            }
+        }
+        softly.assertAll();
+    }
+
+    @Test
     public void givenUplinkPayloadWithUtf8Chars_testConverting() {
         String textPayload = "Привіт,Genève Hôpital Etterbeek-Ixelles,我们一起去玩吧。,اللغة العربية";
         String base64Payload = Base64.getEncoder().encodeToString(textPayload.getBytes(StandardCharsets.UTF_8));
@@ -677,17 +722,48 @@ public class ConverterControllerTest extends AbstractControllerTest {
             Converter converter = readResource(caseDir + "configuration.json")
                     .map(configuration -> createConverter(JacksonUtil.toJsonNode(configuration), integrationType, 2))
                     .orElse(null);
+            String metadata = readResource(uplinkDir + "metadata.json").orElse("{}");
 
             int decoders = 0;
             for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
                 Optional<String> decoder = readResource(uplinkDir + scriptLang.name().toLowerCase() + ".raw");
                 if (decoder.isPresent()) {
                     decoders++;
-                    String output = decodeUplink(decoder.get(), scriptLang, payload, converter);
+                    String output = decodeUplink(decoder.get(), scriptLang, payload, metadata, converter);
                     softly.assertThat(JacksonUtil.toJsonNode(output)).as(casePath + " [" + scriptLang + "]").isEqualTo(expected);
                 }
             }
             softly.assertThat(decoders).as(casePath + ": no decoder found").isPositive();
+        }
+        softly.assertAll();
+    }
+
+    @Test
+    public void testDefaultDownlinkConverters() throws Exception {
+        Resource[] expectedFiles = new PathMatchingResourcePatternResolver().getResources("classpath*:converters/*/downlink/test/*/expected.json");
+
+        SoftAssertions softly = new SoftAssertions();
+        for (Resource expectedFile : expectedFiles) {
+            String url = expectedFile.getURL().getPath();
+            String casePath = url.substring(url.lastIndexOf("/converters/") + 1);
+            String[] parts = casePath.split("/");
+            String downlinkDir = "converters/" + parts[1] + "/downlink/";
+            String caseDir = downlinkDir + "test/" + parts[4] + "/";
+
+            JsonNode expected = JacksonUtil.toJsonNode(readResource(casePath).orElseThrow());
+            String msg = readResource(caseDir + "payload.json").orElseThrow();
+            String metadata = readResource(downlinkDir + "metadata.json").orElse("{}");
+
+            int encoders = 0;
+            for (ScriptLanguage scriptLang : ScriptLanguage.values()) {
+                Optional<String> encoder = readResource(downlinkDir + scriptLang.name().toLowerCase() + ".raw");
+                if (encoder.isPresent()) {
+                    encoders++;
+                    String output = encodeDownlink(encoder.get(), scriptLang, msg, metadata);
+                    softly.assertThat(JacksonUtil.toJsonNode(output)).as(casePath + " [" + scriptLang + "]").isEqualTo(expected);
+                }
+            }
+            softly.assertThat(encoders).as(casePath + ": no encoder found").isPositive();
         }
         softly.assertAll();
     }
@@ -787,6 +863,19 @@ public class ConverterControllerTest extends AbstractControllerTest {
         return readResource("converters/" + integrationType.getDirectory() + "/uplink/payload.json").orElseThrow();
     }
 
+    private String encodeDownlink(String encoder, ScriptLanguage scriptLang, String msg, String metadata) {
+        ObjectNode inputParams = JacksonUtil.newObjectNode();
+        inputParams.put("encoder", encoder);
+        inputParams.put("msg", msg);
+        inputParams.put("msgType", "ATTRIBUTES_UPDATED");
+        inputParams.set("metadata", JacksonUtil.toJsonNode(metadata));
+        inputParams.set("integrationMetadata", JacksonUtil.newObjectNode());
+
+        JsonNode response = doPost("/api/converter/testDownLink?scriptLang=" + scriptLang, inputParams, JsonNode.class);
+        assertThat(response.get("error").asText()).isEmpty();
+        return response.get("output").asText();
+    }
+
     private Optional<String> readResource(String path) throws IOException {
         try (InputStream in = ConverterControllerTest.class.getClassLoader().getResourceAsStream(path)) {
             return in == null ? Optional.empty() : Optional.of(new String(in.readAllBytes(), StandardCharsets.UTF_8));
@@ -799,15 +888,15 @@ public class ConverterControllerTest extends AbstractControllerTest {
 
     public void testDecoder(String decoderFileName, String payloadExample, String expectedResult, Converter converter) throws IOException {
         byte[] bytes = IOUtils.toByteArray(ConverterControllerTest.class.getClassLoader().getResourceAsStream(decoderFileName));
-        assertThat(decodeUplink(new String(bytes), ScriptLanguage.TBEL, payloadExample, converter)).isEqualTo(expectedResult);
+        assertThat(decodeUplink(new String(bytes), ScriptLanguage.TBEL, payloadExample, "{}", converter)).isEqualTo(expectedResult);
     }
 
-    private String decodeUplink(String decoder, ScriptLanguage scriptLang, String payloadExample, Converter converter) {
+    private String decodeUplink(String decoder, ScriptLanguage scriptLang, String payloadExample, String metadata, Converter converter) {
         String base64Payload = Base64.getEncoder().encodeToString(payloadExample.getBytes(StandardCharsets.UTF_8));
 
         ObjectNode inputParams = JacksonUtil.newObjectNode();
         inputParams.set("decoder", new TextNode(decoder));
-        inputParams.set("metadata", JacksonUtil.newObjectNode());
+        inputParams.set("metadata", JacksonUtil.toJsonNode(metadata));
 
         if (converter != null && converter.isDedicated()) {
             inputParams.set("payload", JacksonUtil.toJsonNode(payloadExample));
