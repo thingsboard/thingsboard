@@ -115,7 +115,7 @@ export class EntityGroupsTableConfig extends EntityTableConfig<EntityGroupInfo> 
 
     this.saveEntity = (entityGroup, originalEntityGroup) => {
       entityGroup.type = this.groupType;
-      if (this.customerId) {
+      if (this.customerId && !entityGroup.id) {
         entityGroup.ownerId = {
           entityType: EntityType.CUSTOMER,
           id: this.customerId
