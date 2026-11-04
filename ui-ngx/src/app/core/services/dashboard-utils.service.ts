@@ -696,7 +696,8 @@ export class DashboardUtilsService {
       widgetLayout.col = column;
       if (this.hasWidgetCollision(widgetLayout.row, widgetLayout.col,
                                   widgetLayout.sizeX, widgetLayout.sizeY, Object.values(layout.widgets))) {
-        this.widgetPossiblePosition(widgetLayout, layout);
+        this.widgetPossiblePosition(widgetLayout, Object.values(layout.widgets),
+                                    layout.gridSettings.minColumns || layout.gridSettings.columns || 0);
       }
     } else {
       row = 0;
@@ -719,14 +720,12 @@ export class DashboardUtilsService {
     layout.widgets[widget.id] = widgetLayout;
   }
 
-  private widgetPossiblePosition(widgetLayout: WidgetLayout, layout: DashboardLayout) {
+  private widgetPossiblePosition(widgetLayout: WidgetLayout, widgetLayouts: WidgetLayout[], columns: number) {
     let bestRow = 0;
     let bestCol = 0;
 
-    let maxCol = layout.gridSettings.minColumns || layout.gridSettings.columns || 0;
+    let maxCol = columns;
     let maxRow = 0;
-
-    const widgetLayouts = Object.values(layout.widgets);
 
     widgetLayouts.forEach(widget => {
       maxCol = Math.max(maxCol, widget.col + widget.sizeX);
@@ -903,31 +902,10 @@ export class DashboardUtilsService {
     const placed: WidgetLayout[] = [];
     for (const widget of widgets) {
       if (this.hasWidgetCollision(widget.row, widget.col, widget.sizeX, widget.sizeY, placed)) {
-        this.findFreeWidgetPosition(widget, placed, columns);
+        this.widgetPossiblePosition(widget, placed, columns);
       }
       placed.push(widget);
     }
-  }
-
-  private findFreeWidgetPosition(widgetLayout: WidgetLayout, widgetLayouts: WidgetLayout[], columns: number) {
-    let maxCol = columns;
-    let maxRow = 0;
-    widgetLayouts.forEach(widget => {
-      maxCol = Math.max(maxCol, widget.col + widget.sizeX);
-      maxRow = Math.max(maxRow, widget.row + widget.sizeY);
-    });
-    for (let row = 0; row <= maxRow; row++) {
-      for (let col = 0; col + widgetLayout.sizeX <= maxCol; col++) {
-        if (!this.hasWidgetCollision(row, col, widgetLayout.sizeX, widgetLayout.sizeY, widgetLayouts)) {
-          widgetLayout.row = row;
-          widgetLayout.col = col;
-          return;
-        }
-      }
-    }
-    // Wider than the grid: park it on a fresh row.
-    widgetLayout.row = maxRow;
-    widgetLayout.col = 0;
   }
 
   public moveWidgets(layout: DashboardLayout, cols: number, rows: number) {
