@@ -1373,7 +1373,7 @@
     }
   },
   {
-    "name": "socketsync Heartbeat 0x50",
+    "name": "socketsync Registration 5.1 (built from DataSheet 1.5)",
     "uplink": {
       "end_device_ids": {
         "device_id": "lt-socket-sync-bluetooth-gateway",
@@ -1390,15 +1390,83 @@
       "received_at": "2026-11-02T10:32:54.523762899Z",
       "uplink_message": {
         "f_port": 1,
-        "frm_payload": "IWQ+Az4AbFA=",
+        "frm_payload": "RiCCFABaEAr/Onw=",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "socket-sync-bluetooth-gateway",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-socket-sync-bluetooth-gateway",
+      "attributes": {
+        "adr": "OFF",
+        "mode": "EU868",
+        "loraWanFrequencyBand": "EU868",
+        "loraTxPower": 16,
+        "continuousBleReceiving": "Continuous Bluetooth receiving is enabled",
+        "powerDownFlag": "Normal status",
+        "dataRate": "DR1",
+        "gatewayType": "Plug gateway",
+        "rssiSortingMethod": "Sort by average",
+        "positionReportInterval": 450,
+        "bluetoothReceivingDuration": 16,
+        "heartbeatInterval": 300,
+        "beaconQuantityLimit": 510
+      }
+    }
+  },
+  {
+    "name": "socketsync Heartbeat 5.2, SNR -5.00, Charging (built from DataSheet 1.5)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-socket-sync-bluetooth-gateway",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0004",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX3DFWNQE3WSG9JNFTAG7B",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:ec26c3c1-e861-4d65-b6e7-1206e538a5c7"
+      ],
+      "received_at": "2026-11-02T10:32:54.523762899Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "IVA+/gwbUDp8",
         "decoded_payload": {
           "bytes": {
-            "chgstate": "Not charging",
-            "rssi": "-62dBm",
-            "snr": "8.3dB",
             "type": "Heartbeat",
-            "ver": "VER108",
-            "vol": "100%"
+            "vol": "80%",
+            "rssi": "-62dBm",
+            "snr": "650.36dB",
+            "ver": "VER6992",
+            "chgstate": 10
           }
         },
         "rx_metadata": [
@@ -1434,10 +1502,216 @@
     "decoded": {
       "profile": "lansitec-socket-sync-bluetooth-gateway",
       "telemetry": {
-        "loraRssi": -62.0,
-        "loraSnr": 8.3,
-        "ver": "VER108",
-        "vol": 100.0
+        "vol": 80,
+        "loraRssi": -62,
+        "loraSnr": -5.0,
+        "deviceFirmwareVersion": "1B",
+        "chargeState": "Charging"
+      }
+    }
+  },
+  {
+    "name": "socketsync Beacon 5.3 (built from DataSheet 1.5)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-socket-sync-bluetooth-gateway",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0004",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX3DFWNQE3WSG9JNFTAG7B",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:ec26c3c1-e861-4d65-b6e7-1206e538a5c7"
+      ],
+      "received_at": "2026-11-02T10:32:54.523762899Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "YlYAAQACqlcAAwAEsA==",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "socket-sync-bluetooth-gateway",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-socket-sync-bluetooth-gateway",
+      "telemetry": {
+        "beacons": [
+          {
+            "uuid": "5C38DBDE567C4CCAB1DA40A8AD465656",
+            "major": 1,
+            "minor": 2,
+            "rssi": -86
+          },
+          {
+            "uuid": "5C38DBDE567C4CCAB1DA40A8AD465657",
+            "major": 3,
+            "minor": 4,
+            "rssi": -80
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "socketsync Alarm Beacon List 5.4 (built from DataSheet 1.5)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-socket-sync-bluetooth-gateway",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0004",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX3DFWNQE3WSG9JNFTAG7B",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:ec26c3c1-e861-4d65-b6e7-1206e538a5c7"
+      ],
+      "received_at": "2026-11-02T10:32:54.523762899Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "4VgACgALtQ==",
+        "decoded_payload": {
+          "bytes": {
+            "type": "Multi-Device Type Message",
+            "number": 1,
+            "Device1ID": 0,
+            "Device1data": "000A000B",
+            "Device1rssi": "-75dBm"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "socket-sync-bluetooth-gateway",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-socket-sync-bluetooth-gateway",
+      "telemetry": {
+        "alarmBeacons": [
+          {
+            "uuid": "5C38DBDE567C4CCAB1DA40A8AD465658",
+            "major": 10,
+            "minor": 11,
+            "rssi": -75
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "socketsync Acknowledgment 5.5 (built from DataSheet 1.5)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-socket-sync-bluetooth-gateway",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0004",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6DX3DFWNQE3WSG9JNFTAG7B",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:ec26c3c1-e861-4d65-b6e7-1206e538a5c7"
+      ],
+      "received_at": "2026-11-02T10:32:54.523762899Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "8AU=",
+        "decoded_payload": {
+          "bytes": {
+            "type": "Acknowledgment",
+            "result": "downlink success",
+            "msgid": "5"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "socket-sync-bluetooth-gateway",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-socket-sync-bluetooth-gateway",
+      "telemetry": {
+        "result": "Success",
+        "msgid": 5
       }
     }
   },
@@ -1517,75 +1791,6 @@
             "rssi": -76
           }
         ]
-      }
-    }
-  },
-  {
-    "name": "socketsync Heartbeat SNR -5.00 (built)",
-    "uplink": {
-      "end_device_ids": {
-        "device_id": "lt-socket-sync-bluetooth-gateway",
-        "application_ids": {
-          "application_id": "ansitec-test"
-        },
-        "dev_eui": "70B3D57ED01A0004",
-        "join_eui": "0000000000000000"
-      },
-      "correlation_ids": [
-        "as:up:01M6E9MXMXMTGXT2EQG0C1KR2H",
-        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:f011a6e8-29c0-40e0-97a6-3a4c763b6a07"
-      ],
-      "received_at": "2026-11-02T14:12:11.036297935Z",
-      "uplink_message": {
-        "f_port": 1,
-        "frm_payload": "IWQ+/gwAbFA=",
-        "decoded_payload": {
-          "bytes": {
-            "chgstate": "Not charging",
-            "rssi": "-62dBm",
-            "snr": "650.36dB",
-            "type": "Heartbeat",
-            "ver": "VER108",
-            "vol": "100%"
-          }
-        },
-        "rx_metadata": [
-          {
-            "gateway_ids": {
-              "gateway_id": "test"
-            },
-            "rssi": -42,
-            "channel_rssi": -42,
-            "snr": 4.2
-          }
-        ],
-        "settings": {
-          "data_rate": {
-            "lora": {
-              "bandwidth": 125000,
-              "spreading_factor": 7,
-              "coding_rate": "4/5"
-            }
-          },
-          "frequency": "868100000"
-        },
-        "version_ids": {
-          "brand_id": "lansitec",
-          "model_id": "socket-sync-bluetooth-gateway",
-          "hardware_version": "1.0",
-          "firmware_version": "1.0",
-          "band_id": "EU_863_870"
-        }
-      },
-      "simulated": true
-    },
-    "decoded": {
-      "profile": "lansitec-socket-sync-bluetooth-gateway",
-      "telemetry": {
-        "loraRssi": -62,
-        "loraSnr": -5.0,
-        "ver": "VER108",
-        "vol": 100
       }
     }
   },

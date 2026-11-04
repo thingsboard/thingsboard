@@ -41,6 +41,7 @@ import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -781,7 +782,7 @@ public class ConverterControllerTest extends AbstractControllerTest {
             return actual == expected;
         }
         try {
-            return new java.math.BigDecimal(actual.asText()).compareTo(new java.math.BigDecimal(expected.asText())) == 0;
+            return new BigDecimal(actual.asText()).compareTo(new BigDecimal(expected.asText())) == 0;
         } catch (NumberFormatException e) {
             return actual.asText().equals(expected.asText());
         }

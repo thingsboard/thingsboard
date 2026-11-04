@@ -5,7 +5,8 @@
 
 // Lansitec: the LoRaWAN Device Repository codecs wrap everything in "bytes", write numbers as strings with units
 // ("85%", "-67dBm") and get some fields wrong. Key names follow the Lansitec datasheets where there are any:
-// Bluetooth Gateway DataSheet 2.27, Badge Tracker DataSheet v5.30, Temperature Humidity Sensor DataSheet 1.26.
+// Bluetooth Gateway DataSheet 2.27, Badge Tracker DataSheet v5.30, Temperature Humidity Sensor DataSheet 1.26,
+// Plug Bluetooth Gateway DataSheet 1.5 (SocketSync gateway).
 // The wrong fields are decoded from the raw bytes (metadata.data). Remove a fix when the Repository fixes the codec.
 var LANSITEC_UNITS = ['dBm', 'dB', '%', 'V', 'sec', 'min', 's', '℃', 'level', ' meter'];
 
@@ -53,9 +54,9 @@ var LANSITEC_TEMPERATURE_HUMIDITY_KEYS = {
 };
 
 // Without a datasheet only these keys are renamed: the integration writes rssi, snr and firmwareVersion itself.
-// chgstate: the SocketSync gateway has the compact gateway codec byte for byte, which reads CHGSTAT 0x50 as
-// "Not charging" (Bluetooth Gateway DataSheet 2.27, 4.4.2), so it is dropped. number is its count of reported
-// devices: the beacons list has them.
+// chgstate: the tracking label and the contact tracing badge have the gateway codec byte for byte, which reads
+// CHGSTAT 0x50 as "Not charging" (Bluetooth Gateway DataSheet 2.27, 4.4.2), so it is dropped. number is the count
+// of reported devices: the beacons list has them.
 var LANSITEC_CLASH_KEYS = {
     rssi: 'loraRssi', RSSI: 'loraRssi', snr: 'loraSnr', SNR: 'loraSnr',
     firmwareVersion: 'deviceFirmwareVersion', 'Firmware version': 'deviceFirmwareVersion',
@@ -205,7 +206,7 @@ function lansitecBeaconList(beacons) {
     }
     // The gateway codec reads the data of every device after the first at a 5-byte step, so it is right only
     // for 4-byte data (DataSheet 4.4.4 examples): with longer data only the first device is kept. The gateways
-    // with a datasheet get their beacons from the raw bytes instead; this is for the SocketSync gateway.
+    // with a datasheet get their beacons from the raw bytes instead; this is for the models with the gateway codec.
     if (list.length > 1 && list[0].data != null && list[0].data.length != 8) {
         return [list[0]];
     }
@@ -224,9 +225,6 @@ function lansitecRawValues(values, b, model) {
         lansitecBadgeRawValues(values, b, type);
     } else if (model == 'temperature-humidity-sensor' && type == 2) {
         lansitecTemperatureHumidityRawValues(values, b);
-    } else if (model == 'socket-sync-bluetooth-gateway' && type == 2 && b.length >= 8) {
-        // No datasheet: the codec reads the heartbeat as the compact gateway's (4.4.2), SNR in bytes 3-4 unsigned.
-        values.loraSnr = lansitecSnr(b, 3);
     }
 }
 
@@ -416,10 +414,100 @@ function lansitecTemperatureHumidityRawValues(values, b) {
     values.humidity = b[offset + 2];
 }
 
+// Plug Bluetooth Gateway DataSheet 1.5 (990-01203), the SocketSync gateway. Its codec is the compact gateway's, but
+// the messages are not: the codec gives nothing for the Registration (0x4) and the Beacon message (0x6), so The
+// Things Stack sends them without decoded_payload, and it reads the Heartbeat and the Alarm Beacon List (0xE) with
+// the compact gateway's layout. So every message is decoded from the raw bytes, with or without decoded_payload.
+var LANSITEC_SOCKET_SYNC = 'socket-sync-bluetooth-gateway';
+// 5.1 Type bits 2-0 (MODE) and SMODE: the LoRa frequency plan.
+var LANSITEC_SOCKET_SYNC_MODES = ['', 'AU915', '', 'CN470', 'AS923', 'EU433', 'EU868', 'US915'];
+var LANSITEC_SOCKET_SYNC_BANDS = { 1: 'AU915', 4: 'CN470', 8: 'AS923', 16: 'EU433', 32: 'EU868', 64: 'US915' };
+// 5.1 CFG bits 3-1: the gateway type.
+var LANSITEC_SOCKET_SYNC_TYPES = ['Outdoor gateway', 'Indoor gateway', 'Plug gateway'];
+// Table 7: UUID List. A beacon gives the last byte of its UUID, the other bytes are the same for all of them.
+var LANSITEC_SOCKET_SYNC_UUID = '5C38DBDE567C4CCAB1DA40A8AD4656';
+
+function lansitecSocketSyncValues(b) {
+    var values = {};
+    if (b.length == 0) {
+        return values;
+    }
+    var type = (b[0] >> 4) & 0x0F;
+    if (type == 0x4 && b.length >= 10) {
+        // 5.1 Registration: Type (ADR, MODE), SMODE, POWER, CFG, POS (2), BLE Receiving Duration, HB, Beacon_QTY, CRC (2).
+        values.adr = (b[0] & 0x08) != 0 ? 'ON' : 'OFF';
+        if (LANSITEC_SOCKET_SYNC_MODES[b[0] & 0x07] != '') {
+            values.mode = LANSITEC_SOCKET_SYNC_MODES[b[0] & 0x07];
+        }
+        if (LANSITEC_SOCKET_SYNC_BANDS[b[1]] != null) {
+            values.loraWanFrequencyBand = LANSITEC_SOCKET_SYNC_BANDS[b[1]];
+        }
+        values.loraTxPower = (b[2] >> 3) & 0x1F;
+        values.continuousBleReceiving = (b[2] & 0x02) != 0 ? 'Continuous Bluetooth receiving is enabled' : 'Continuous Bluetooth receiving is disabled';
+        values.powerDownFlag = (b[2] & 0x01) != 0 ? 'Automatic shutdown status' : 'Normal status';
+        values.dataRate = 'DR' + ((b[3] >> 4) & 0x0F);
+        if (LANSITEC_SOCKET_SYNC_TYPES[(b[3] >> 1) & 0x07] != null) {
+            values.gatewayType = LANSITEC_SOCKET_SYNC_TYPES[(b[3] >> 1) & 0x07];
+        }
+        values.rssiSortingMethod = (b[3] & 0x01) != 0 ? 'Sort by the maximum value' : 'Sort by average';
+        // POS unit 5 s, 0 means off. HB unit 30 s. Beacon_QTY is half of the limit.
+        values.positionReportInterval = lansitecUint(b, 4, 2) * 5;
+        values.bluetoothReceivingDuration = b[6];
+        values.heartbeatInterval = b[7] * 30;
+        values.beaconQuantityLimit = b[8] * 2;
+    } else if (type == 0x2 && b.length >= 7) {
+        // 5.2 Heartbeat: Type, VOL (battery level, %), RSSI (unit -1 dBm), SNR (2, signed, 0.01 dB), REV (firmware,
+        // hex), CHGSTAT, CRC (2). The codec reads REV and CHGSTAT as the compact gateway's 2-byte version, and the
+        // first CRC byte as CHGSTAT. VOL keeps its name: the dashboard of the IoT Hub package reads it.
+        values.vol = b[1];
+        values.loraRssi = -b[2];
+        values.loraSnr = lansitecSnr(b, 3);
+        values.deviceFirmwareVersion = lansitecHex(b, 5, 6);
+        if (b[6] == 0x00) {
+            values.chargeState = 'Not charging';
+        } else if (b[6] == 0x50) {
+            values.chargeState = 'Charging';
+        } else if (b[6] == 0x60) {
+            values.chargeState = 'Charging completed';
+        }
+    } else if (type == 0x6 || type == 0xE) {
+        // 5.3 Beacon and 5.4 Alarm Beacon List: Type (bits 3-0: number of beacons), then UUID tail number, Major (2),
+        // Minor (2) and RSSI (value - 256, dBm) of each beacon. The alarm list holds the beacons that trigger the alarm.
+        var count = b[0] & 0x0F;
+        if (count > 0 && b.length >= 1 + count * 6) {
+            var list = [];
+            for (var i = 0; i < count; i++) {
+                var start = 1 + i * 6;
+                list.push({
+                    uuid: LANSITEC_SOCKET_SYNC_UUID + lansitecHex(b, start, start + 1),
+                    major: lansitecUint(b, start + 1, 2),
+                    minor: lansitecUint(b, start + 3, 2),
+                    rssi: b[start + 5] - 256
+                });
+            }
+            values[type == 0x6 ? 'beacons' : 'alarmBeacons'] = list;
+        }
+    } else if (type == 0xF && b.length >= 2) {
+        // 5.5 Acknowledgment: Type bits 3-0 the result, then the MSGID of the downlink.
+        values.result = (b[0] & 0x0F) == 0 ? 'Success' : 'Failure';
+        values.msgid = b[1];
+    }
+    return values;
+}
+
 var values = {};
 var attributes = {};
 var history = [];
-if (metadata.payloadFormat == 'JSON') {
+if (metadata.brandId == 'lansitec' && metadata.modelId == LANSITEC_SOCKET_SYNC && metadata.data != null) {
+    // The SocketSync gateway: decoded from the raw bytes only, see lansitecSocketSyncValues.
+    var socketSyncBytes = lansitecBase64ToBytes(metadata.data);
+    values = lansitecSocketSyncValues(socketSyncBytes);
+    // Registration (0x4) holds the device settings: attributes, not telemetry.
+    if (socketSyncBytes.length > 0 && ((socketSyncBytes[0] >> 4) & 0x0F) == 0x4) {
+        attributes = values;
+        values = {};
+    }
+} else if (metadata.payloadFormat == 'JSON') {
     values = decodeToJson(payload);
     if (metadata.brandId == 'lansitec' && values.bytes != null && typeof values.bytes === 'object' && !Array.isArray(values.bytes)) {
         // The Lansitec codecs put everything in "bytes" and get some fields wrong: see the Lansitec block above.
