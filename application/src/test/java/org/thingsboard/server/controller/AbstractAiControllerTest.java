@@ -127,6 +127,13 @@ public abstract class AbstractAiControllerTest extends AbstractControllerTest {
                 .put("content", content);
     }
 
+    protected MockHttpServletRequestBuilder resumeRequest(UUID chatId) {
+        MockHttpServletRequestBuilder request = post("/api/ai/chats/" + chatId + "/resume")
+                .accept(MediaType.TEXT_EVENT_STREAM);
+        setJwtToken(request);
+        return request;
+    }
+
     protected MockHttpServletRequestBuilder sendMessageRequest(UUID chatId, JsonNode body, String acceptLanguage) {
         MockHttpServletRequestBuilder request = post("/api/ai/chats/" + chatId + "/messages")
                 .contentType(MediaType.APPLICATION_JSON)

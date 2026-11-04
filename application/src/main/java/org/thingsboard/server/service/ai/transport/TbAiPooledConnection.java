@@ -53,6 +53,7 @@ final class TbAiPooledConnection implements ChannelFrameListener {
 
     private volatile ChannelSession session;
     private volatile int maxFrameBytes = TbAiChannelClient.DEFAULT_MAX_FRAME_BYTES;
+    private volatile List<String> serverCapabilities = List.of();
 
     /**
      * Created with one reservation for the caller that opens it, so callers waiting on the same handshake cannot
@@ -106,6 +107,14 @@ final class TbAiPooledConnection implements ChannelFrameListener {
 
     CompletableFuture<TbAiPooledConnection> ready() {
         return ready;
+    }
+
+    /**
+     * Whether TB AI listed {@code capability} in its hello. Frames a capability adds must not be sent without it: an
+     * older TB AI closes the connection on a frame type it does not know.
+     */
+    boolean supports(String capability) {
+        return serverCapabilities.contains(capability);
     }
 
     /**
@@ -292,6 +301,9 @@ final class TbAiPooledConnection implements ChannelFrameListener {
                     ChannelHello hello = codec.fromPayload(frame.payload(), ChannelHello.class);
                     if (hello.maxFrameBytes() != null && hello.maxFrameBytes() > 0 && hello.maxFrameBytes() < Integer.MAX_VALUE) {
                         maxFrameBytes = hello.maxFrameBytes().intValue();
+                    }
+                    if (hello.capabilities() != null) {
+                        serverCapabilities = List.copyOf(hello.capabilities());
                     }
                     ready.complete(this);
                 }
