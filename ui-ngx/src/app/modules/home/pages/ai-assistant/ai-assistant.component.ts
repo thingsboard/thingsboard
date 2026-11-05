@@ -13,6 +13,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
@@ -96,15 +97,25 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
+  private browsing = false;
+
   private urlEffect = effect(() => {
     const chatId = this.chatId() ?? null;
     if (this.route.snapshot.queryParamMap.get('chatId') !== chatId && this.aiChats.loaded()) {
+      const browsing = this.browsing;
+      this.browsing = false;
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: {chatId},
         queryParamsHandling: 'merge',
-        replaceUrl: true
+        replaceUrl: !browsing
       });
+    }
+  });
+
+  private urlSubscription = this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+    if (this.aiChats.loaded()) {
+      this.openFromUrl(params.get('chatId'));
     }
   });
 
@@ -121,10 +132,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.aiChats.load().subscribe({
       next: chats => {
-        const chatId = this.route.snapshot.queryParamMap.get('chatId');
-        if (chatId && chats.some(chat => chat.id === chatId)) {
-          this.chatId.set(chatId);
-        }
+        this.openFromUrl(this.route.snapshot.queryParamMap.get('chatId'), chats);
       },
       error: err => this.showErrorMessage(err)
     });
@@ -166,12 +174,14 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   newChat(): void {
     this.settleRail();
+    this.browsing = !!this.chatId();
     this.chatId.set(undefined);
     setTimeout(() => this.chat?.focus());
   }
 
   selectChat(chat: ChatInfo): void {
     this.settleRail();
+    this.browsing = chat.id !== this.chatId();
     this.chatId.set(chat.id);
   }
 
@@ -213,6 +223,14 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   deleteChat(chat: ChatInfo): void {
     this.aiChats.confirmAndDelete(chat).subscribe({error: err => this.showErrorMessage(err)});
+  }
+
+  private openFromUrl(chatId: string | null, chats = this.aiChats.chats()): void {
+    const known = !!chatId && chats.some(chat => chat.id === chatId);
+    const next = known ? chatId : undefined;
+    if (next !== this.chatId()) {
+      this.chatId.set(next);
+    }
   }
 
   private setRailOpen(open: boolean): void {
