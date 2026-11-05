@@ -727,8 +727,9 @@ public class DefaultIotHubService implements IotHubService {
         }
         checkSameItem(installedItem, UUID.fromString(itemId));
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        Map<EntityId, String> failed = deleteDevicePackageEntities(tenantId, descriptor.getCreatedEntityIds(), user);
-        // An entity that could not be removed stays tracked, so that Retry, a later update or Delete removes it.
+        Map<EntityId, String> failed = deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(descriptor), user);
+        // An entity that could not be removed stays tracked, so that Retry, a later update or Delete removes it. The ones
+        // the user chose to use as they were are neither removed nor tracked any more.
         descriptor.setCreatedEntityIds(failed.isEmpty() ? null : new ArrayList<>(failed.keySet()));
         if (descriptor.getDashboardId() != null && !failed.containsKey(descriptor.getDashboardId())) {
             descriptor.setDashboardId(null);
@@ -792,6 +793,28 @@ public class DefaultIotHubService implements IotHubService {
         if (!"DEVICE".equals(installedItem.getItemType()) || !(installedItem.getDescriptor() instanceof DeviceInstalledItemDescriptor)) {
             throw new IllegalArgumentException("Installed item is not a device package");
         }
+    }
+
+    /**
+     * The entities the package created: the tracked ones without those the user chose, on a name conflict, to use as they
+     * were (the install state keeps that choice). The default device profile, for example, is never the package's.
+     */
+    private static List<EntityId> packageOwnedEntityIds(DeviceInstalledItemDescriptor descriptor) {
+        List<EntityId> tracked = descriptor.getCreatedEntityIds();
+        if (tracked == null || descriptor.getInstallState() == null) {
+            return tracked;
+        }
+        Set<String> usedExisting = new HashSet<>();
+        descriptor.getInstallState().values().forEach(state -> {
+            if (state != null && "use-existing".equals(optText(state, "resolution"))) {
+                JsonNode output = state.get("entityOutput");
+                String id = output != null ? optText(output, "id") : null;
+                if (id != null) {
+                    usedExisting.add(id);
+                }
+            }
+        });
+        return tracked.stream().filter(id -> !usedExisting.contains(id.getId().toString())).toList();
     }
 
     /** Removes the entities in reverse order of creation. Returns the ones that failed, in order of creation, with the reason. */
@@ -898,7 +921,7 @@ public class DefaultIotHubService implements IotHubService {
                 }
             }
         } else if (descriptor instanceof DeviceInstalledItemDescriptor dd) {
-            deleteDevicePackageEntities(tenantId, dd.getCreatedEntityIds(), user);
+            deleteDevicePackageEntities(tenantId, packageOwnedEntityIds(dd), user);
         } else if (descriptor instanceof SolutionTemplateInstalledItemDescriptor st) {
             try {
                 solutionService.deleteSolution(tenantId, st, user);

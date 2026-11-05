@@ -17,6 +17,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.IotHubInstalledItemId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.iot_hub.DeviceInstalledItemDescriptor;
 import org.thingsboard.server.common.data.iot_hub.IotHubInstalledItem;
 import org.thingsboard.server.common.data.iot_hub.RuleChainInstalledItemDescriptor;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.iot_hub.IotHubInstalledItemService;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
@@ -62,6 +64,8 @@ class DefaultIotHubServiceTest {
     private IotHubInstalledItemService iotHubInstalledItemService;
     @Mock
     private DeviceService deviceService;
+    @Mock
+    private DeviceProfileService deviceProfileService;
     @Mock
     private TbDeviceService tbDeviceService;
     @Mock
@@ -687,6 +691,54 @@ class DefaultIotHubServiceTest {
         assertThat(descriptor.getCreatedEntityIds()).containsExactly(dashboard.getId());
         assertThat(descriptor.getDashboardId()).isEqualTo(dashboard.getId());
         assertThat(item.getVersion()).isEqualTo("1.0.1");
+    }
+
+    @Test
+    void removeDevicePackageEntities_entityUsedAsItWas_neitherRemovedNorTracked() throws Exception {
+        mockTenant();
+        Device device = new Device(new DeviceId(UUID.randomUUID()));
+        device.setTenantId(tenantId);
+        DeviceProfileId defaultProfileId = new DeviceProfileId(UUID.randomUUID());
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(defaultProfileId, device.getId()));
+        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
+                "default", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"" + defaultProfileId.getId() + "\"},\"resolution\":\"use-existing\"}"),
+                "Gateway", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"" + device.getId().getId() + "\"},\"resolution\":\"created\"}"))));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setItemId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        String newVersionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(newVersionId))
+                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
+        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
+
+        service.removeDevicePackageEntities(user, item.getId(), newVersionId);
+
+        // The profile the user chose to use as it was (here the default one, which cannot be removed) is the user's.
+        verify(tbDeviceService).delete(device, user);
+        verify(deviceProfileService, never()).findDeviceProfileById(any(), any());
+        assertThat(descriptor.getCreatedEntityIds()).isNull();
+    }
+
+    @Test
+    void deleteInstalledItem_devicePackage_keepsEntityUsedAsItWas() {
+        mockTenant();
+        DeviceProfileId usersProfileId = new DeviceProfileId(UUID.randomUUID());
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(usersProfileId));
+        descriptor.setInstallState(new LinkedHashMap<>(Map.of(
+                "Profile", JacksonUtil.toJsonNode("{\"entityOutput\":{\"id\":\"" + usersProfileId.getId() + "\"},\"resolution\":\"use-existing\"}"))));
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+
+        service.deleteInstalledItem(user, item.getId());
+
+        verify(deviceProfileService, never()).findDeviceProfileById(any(), any());
+        verify(iotHubInstalledItemService).deleteById(tenantId, item.getId());
     }
 
     @Test
