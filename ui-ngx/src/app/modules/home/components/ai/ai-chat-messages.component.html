@@ -8,7 +8,8 @@
   @if (msg.from === 'USER') {
     <div class="user">
       @if (msg.resources?.length) {
-        <tb-ai-attachments class="user-attachments" [resources]="msg.resources"></tb-ai-attachments>
+        <tb-ai-attachments class="user-attachments" [resources]="msg.resources"
+                           (resourceError)="resourceError.emit($event)"></tb-ai-attachments>
       }
       @if (msg.content) {
         <div class="msg">{{ msg.content }}</div>

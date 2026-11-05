@@ -57,7 +57,8 @@
                 <tb-ai-chat-messages
                   [messages]="messages()"
                   [loading]="loading()"
-                  [loadingLongTime]="loadingLongTime()">
+                  [loadingLongTime]="loadingLongTime()"
+                  (resourceError)="showErrorMessage($event)">
                   <div loadingLongTime class="long-wait flex w-full flex-col items-center gap-6 rounded-xl">
                     <img [src]="loadingImage" alt="Loading">
                     <div class="flex flex-col items-center gap-1">

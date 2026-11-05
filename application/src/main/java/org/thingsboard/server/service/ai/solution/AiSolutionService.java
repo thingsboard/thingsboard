@@ -17,8 +17,6 @@ public interface AiSolutionService {
 
     JsonNode getSolutions(SecurityUser user);
 
-    JsonNode chat(UUID solutionId, SolutionStep step, String message, SecurityUser user);
-
     JsonNode chat(UUID solutionId, SolutionStep step, String message, List<UUID> resources, SecurityUser user);
 
     JsonNode createSolution(UUID solutionId, SecurityUser user);

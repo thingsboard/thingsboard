@@ -25,7 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { guid, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import { AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
+import { AI_IMAGE_MEDIA_TYPES, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
 import {
   aiAttachmentKind,
   fitAiImage,
@@ -48,7 +48,6 @@ interface PendingAttachment {
   upload?: Subscription;
 }
 
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const FLY_DURATION = 520;
 
 @Component({
@@ -105,6 +104,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   private dragDepth = 0;
   private unlisten: Array<() => void> = [];
   private flyTimer: ReturnType<typeof setTimeout>;
+  private destroyed = false;
 
   get canSend(): boolean {
     const ready = this.attachments().some(attachment => attachment.status === 'ready');
@@ -125,6 +125,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     clearTimeout(this.flyTimer);
     this.stopListening();
     this.clearAttachments(true);
@@ -202,8 +203,9 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
   }
 
   onPaste(event: ClipboardEvent): void {
-    const files = Array.from(event.clipboardData?.files ?? []);
-    if (files.length && this.attachEnabled()) {
+    const clipboard = event.clipboardData;
+    const files = Array.from(clipboard?.files ?? []);
+    if (files.length && !clipboard.types.includes('text/plain') && this.attachEnabled()) {
       event.preventDefault();
       this.addFiles(files.map(namePastedImage));
     }
@@ -224,27 +226,20 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     return `${this.translate.instant(attachment.kind)} · ${formatAiFileSize(attachment.size)}`;
   }
 
-  async addFiles(files: File[]): Promise<void> {
+  addFiles(files: File[]): void {
     const config = this.config();
     if (!config || !files.length) {
       return;
     }
-    for (const original of files) {
+    for (const file of files) {
       const accepted = this.attachments().filter(attachment => attachment.status !== 'error').length;
       if (accepted >= config.maxPerMessage) {
-        this.refuse(original, this.translate.instant('ai-assistant.attachment-over-limit', {count: config.maxPerMessage}));
-        continue;
+        this.refuse(file, this.translate.instant('ai-assistant.attachment-over-limit', {count: config.maxPerMessage}));
+      } else if (!isAiAttachmentAccepted(file, config.extensions)) {
+        this.refuse(file, this.translate.instant('ai-assistant.attachment-unsupported'));
+      } else {
+        this.prepare(file, config);
       }
-      if (!isAiAttachmentAccepted(original, config.extensions)) {
-        this.refuse(original, this.translate.instant('ai-assistant.attachment-unsupported'));
-        continue;
-      }
-      const file = await fitAiImage(original, config.maxSize);
-      if (file.size > config.maxSize) {
-        this.refuse(original, this.translate.instant('ai-assistant.attachment-larger-than', {size: formatAiFileSize(config.maxSize)}));
-        continue;
-      }
-      this.startUpload(file, config);
     }
   }
 
@@ -262,29 +257,49 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     return {key: guid(), name: file.name, size: file.size, icon: kind.icon, kind: kind.label};
   }
 
-  private startUpload(file: File, config: AiResourceConfig): void {
-    const previewUrl = IMAGE_TYPES.includes(file.type) ? URL.createObjectURL(file) : undefined;
+  private async prepare(original: File, config: AiResourceConfig): Promise<void> {
     const attachment: PendingAttachment = {
-      ...this.describe(file, file.type || config.mediaTypes[0]),
-      previewUrl,
+      ...this.describe(original, original.type || config.mediaTypes[0]),
       status: 'uploading',
       progress: 0
     };
     this.attachments.update(list => [...list, attachment]);
+    let file: File;
+    try {
+      file = await fitAiImage(original, config.maxSize);
+    } catch {
+      file = original;
+    }
+    if (this.destroyed || !this.attachments().some(candidate => candidate.key === attachment.key)) {
+      return;
+    }
+    if (file.size > config.maxSize) {
+      this.patch(attachment.key, {
+        status: 'error',
+        reason: this.translate.instant('ai-assistant.attachment-larger-than', {size: formatAiFileSize(config.maxSize)})
+      });
+      return;
+    }
+    this.startUpload(attachment.key, file, config);
+  }
+
+  private startUpload(key: string, file: File, config: AiResourceConfig): void {
+    const previewUrl = AI_IMAGE_MEDIA_TYPES.includes(file.type) ? URL.createObjectURL(file) : undefined;
+    this.patch(key, {...this.describe(file, file.type || config.mediaTypes[0]), key, previewUrl});
     const upload = this.aiResourceService.upload(file).subscribe({
       next: event => {
         if (event.type === 'progress') {
-          this.patch(attachment.key, {progress: event.progress});
+          this.patch(key, {progress: event.progress});
         } else {
           if (previewUrl) {
-            this.aiResourceService.rememberUrl(event.resource.id, previewUrl);
+            this.aiResourceService.rememberUrl(event.resource.id, previewUrl, file.size);
           }
-          this.patch(attachment.key, {status: 'ready', resource: event.resource, progress: 100});
+          this.patch(key, {status: 'ready', resource: event.resource, progress: 100});
         }
       },
-      error: error => this.patch(attachment.key, {status: 'error', reason: this.errorMessage(error)})
+      error: error => this.patch(key, {status: 'error', reason: this.errorMessage(error)})
     });
-    this.patch(attachment.key, {upload});
+    this.patch(key, {upload});
   }
 
   private patch(key: string, changes: Partial<PendingAttachment>): void {

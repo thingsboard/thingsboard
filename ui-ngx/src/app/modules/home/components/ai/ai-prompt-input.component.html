@@ -52,8 +52,7 @@
                 [class.fly]="flying()"
                 [disabled]="!canSend"
                 [attr.aria-label]="'ai-assistant.send' | translate"
-                [tbAiTip]="sendTip"
-                tipClass="tip-mini"
+                tb-popover [tbAiTip]="sendTip"
                 (click)="send()">
           <span class="return-glyph" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M20 4v7a4 4 0 0 1-4 4H4" pathLength="1"/><polyline points="9 10 4 15 9 20" pathLength="1"/></svg>
@@ -65,7 +64,7 @@
       @if (attachEnabled()) {
         <button type="button" class="composer-tool composer-add"
                 [attr.aria-label]="'ai-assistant.add-files' | translate"
-                [tbAiTip]="addTip"
+                tb-popover [tbAiTip]="addTip"
                 (click)="openFilePicker()">
           <mat-icon class="tb-mat-18">attach_file</mat-icon>
         </button>
@@ -73,8 +72,7 @@
       <span class="composer-spacer"></span>
       <button type="button" class="composer-tool"
               [attr.aria-label]="'ai-assistant.shortcuts' | translate"
-              [tbAiTip]="keysTip"
-              tipClass="tip-keys"
+              tb-popover [tbAiTip]="keysTip"
               [tipToggle]="true">
         <mat-icon class="tb-mat-18">keyboard</mat-icon>
       </button>
@@ -83,30 +81,36 @@
 </div>
 
 <ng-template #sendTip>
-  <div class="tip-keyrow">
-    <span>{{ 'ai-assistant.send' | translate }}</span>
-    <span class="tip-caps"><kbd>Enter</kbd></span>
+  <div class="tb-ai-tip-body tip-mini">
+    <div class="tip-keyrow">
+      <span>{{ 'ai-assistant.send' | translate }}</span>
+      <span class="tip-caps"><kbd>Enter</kbd></span>
+    </div>
   </div>
 </ng-template>
 
 <ng-template #addTip>
-  <div class="tip-head"><b>{{ 'ai-assistant.add-files' | translate }}</b></div>
-  <p>{{ 'ai-assistant.add-files-text' | translate }}</p>
-  <p class="tip-sub">{{ 'ai-assistant.add-files-hint' | translate: {count: maxPerMessage(), size: maxSize()} }}</p>
+  <div class="tb-ai-tip-body">
+    <div class="tip-head"><b>{{ 'ai-assistant.add-files' | translate }}</b></div>
+    <p>{{ 'ai-assistant.add-files-text' | translate }}</p>
+    <p class="tip-sub">{{ 'ai-assistant.add-files-hint' | translate: {count: maxPerMessage(), size: maxSize()} }}</p>
+  </div>
 </ng-template>
 
 <ng-template #keysTip>
-  <div class="tip-head"><b>{{ 'ai-assistant.shortcuts' | translate }}</b></div>
-  <div class="tip-keyrow">
-    <span>{{ 'ai-assistant.send' | translate }}</span>
-    <span class="tip-caps"><kbd>Enter</kbd></span>
-  </div>
-  <div class="tip-keyrow">
-    <span>{{ 'ai-assistant.new-line' | translate }}</span>
-    <span class="tip-caps"><kbd>Shift</kbd><kbd>Enter</kbd></span>
-  </div>
-  <div class="tip-keyrow">
-    <span>{{ 'ai-assistant.focus-composer' | translate }}</span>
-    <span class="tip-caps"><kbd>/</kbd></span>
+  <div class="tb-ai-tip-body tip-keys">
+    <div class="tip-head"><b>{{ 'ai-assistant.shortcuts' | translate }}</b></div>
+    <div class="tip-keyrow">
+      <span>{{ 'ai-assistant.send' | translate }}</span>
+      <span class="tip-caps"><kbd>Enter</kbd></span>
+    </div>
+    <div class="tip-keyrow">
+      <span>{{ 'ai-assistant.new-line' | translate }}</span>
+      <span class="tip-caps"><kbd>Shift</kbd><kbd>Enter</kbd></span>
+    </div>
+    <div class="tip-keyrow">
+      <span>{{ 'ai-assistant.focus-composer' | translate }}</span>
+      <span class="tip-caps"><kbd>/</kbd></span>
+    </div>
   </div>
 </ng-template>

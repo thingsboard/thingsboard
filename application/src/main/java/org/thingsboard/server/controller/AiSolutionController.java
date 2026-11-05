@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.ai.common.data.solution.SolutionStep;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.permission.Resource;
@@ -64,14 +63,13 @@ public class AiSolutionController extends BaseController {
         return aiSolutionService.getSolutions(user);
     }
 
+    @Deprecated(forRemoval = true)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping("/{solutionId}/{step}/chat")
     public JsonNode chat(@PathVariable UUID solutionId,
                          @PathVariable SolutionStep step,
                          @RequestBody String message) throws ThingsboardException {
-        SecurityUser user = getCurrentUser();
-        accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        return aiSolutionService.chat(solutionId, step, message, user);
+        return sendMessage(solutionId, step, new SolutionChatMessage(message, null));
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -81,11 +79,7 @@ public class AiSolutionController extends BaseController {
                                 @RequestBody SolutionChatMessage request) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         accessControlService.checkPermission(user, Resource.AI, Operation.WRITE);
-        String message = request.message() != null ? request.message() : "";
-        if (message.isBlank() && (request.resources() == null || request.resources().isEmpty())) {
-            throw new ThingsboardException("Message cannot be blank", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-        return aiSolutionService.chat(solutionId, step, message, request.resources(), user);
+        return aiSolutionService.chat(solutionId, step, request.message(), request.resources(), user);
     }
 
     record SolutionChatMessage(String message, List<UUID> resources) {}

@@ -1,39 +1,8 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Observable } from 'rxjs';
-import { AiResourceInfo } from '@shared/models/ai-chat.models';
-
-export interface AiAttachmentItem {
-  key: string;
-  name: string;
-  mediaType: string;
-  size: number;
-  image: boolean;
-  url$?: Observable<string>;
-  resource?: AiResourceInfo;
-  status?: 'uploading' | 'ready' | 'error';
-  progress?: number;
-}
+import { AI_IMAGE_MEDIA_TYPES } from '@shared/models/ai-chat.models';
 
 const MAX_IMAGE_SIDE = 2560;
-const RESIZABLE_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
-
-export const aiAttachmentIcon = (mediaType: string, name: string): string => {
-  const extension = name.split('.').pop()?.toLowerCase();
-  if (mediaType === 'application/pdf' || extension === 'pdf') {
-    return 'picture_as_pdf';
-  }
-  if (extension === 'xlsx' || extension === 'csv') {
-    return 'table_chart';
-  }
-  if (extension === 'pptx') {
-    return 'slideshow';
-  }
-  if (['json', 'xml', 'yaml', 'yml', 'html', 'htm'].includes(extension)) {
-    return 'code';
-  }
-  return 'description';
-};
 
 export interface AiAttachmentKind {
   icon: string;
@@ -81,7 +50,7 @@ export const isAiAttachmentAccepted = (file: File, extensions: string[]): boolea
 };
 
 export const namePastedImage = (file: File): File => {
-  if (!RESIZABLE_IMAGE_TYPES.includes(file.type) || (file.name && file.name !== 'image.png')) {
+  if (!AI_IMAGE_MEDIA_TYPES.includes(file.type) || (file.name && file.name !== 'image.png')) {
     return file;
   }
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').substring(0, 15);
@@ -107,7 +76,7 @@ const encode = (canvas: HTMLCanvasElement, type: string, quality?: number): Prom
   canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Image could not be encoded')), type, quality));
 
 export const fitAiImage = async (file: File, maxSize: number): Promise<File> => {
-  if (!RESIZABLE_IMAGE_TYPES.includes(file.type)) {
+  if (!AI_IMAGE_MEDIA_TYPES.includes(file.type)) {
     return file;
   }
   let image: HTMLImageElement;

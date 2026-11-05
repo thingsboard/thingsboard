@@ -346,6 +346,117 @@ pre.tb-highlight {
   }
 }
 
+.tb-popover.tb-ai-tip {
+  $tip-bg: #1f2a31;
+
+  .tb-popover-inner {
+    border-radius: 8px;
+    background-color: $tip-bg;
+    box-shadow: 0 6px 20px rgba(16, 24, 40, 0.22);
+  }
+
+  .tb-popover-inner-content {
+    padding: 0;
+    overflow: visible;
+  }
+
+  &[class*='tb-popover-placement-top'] > .tb-popover-content > .tb-popover-arrow {
+    border-right-color: $tip-bg;
+    border-bottom-color: $tip-bg;
+    box-shadow: none;
+  }
+
+  &[class*='tb-popover-placement-bottom'] > .tb-popover-content > .tb-popover-arrow {
+    border-top-color: $tip-bg;
+    border-left-color: $tip-bg;
+    box-shadow: none;
+  }
+
+  .tb-ai-tip-body {
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(248px, calc(100vw - 16px));
+    padding: 9px 12px 10px;
+    color: #d5dde2;
+    font: 400 12px/17px Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    letter-spacing: .1px;
+
+    b {
+      display: block;
+      margin: 0;
+      font-size: 13px;
+      line-height: 18px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    p {
+      margin: 0;
+      font: inherit;
+      letter-spacing: inherit;
+    }
+
+    p + p {
+      margin-top: 3px;
+    }
+
+    .tip-sub {
+      color: #9fadb7;
+    }
+
+    .tip-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 3px;
+    }
+
+    .tip-keyrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 22px;
+    }
+
+    .tip-caps {
+      display: inline-flex;
+      gap: 3px;
+    }
+
+    kbd {
+      min-width: 16px;
+      height: 17px;
+      box-sizing: border-box;
+      padding: 0 4px;
+      border: 0;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font: 500 10.5px/17px Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      text-align: center;
+    }
+
+    &.tip-keys {
+      min-width: 208px;
+
+      .tip-head {
+        margin-bottom: 2px;
+      }
+    }
+
+    &.tip-mini {
+      padding: 5px 8px 6px;
+
+      .tip-keyrow {
+        gap: 10px;
+        min-height: 18px;
+      }
+    }
+  }
+}
+
 .tb-autocomplete {
   .mat-mdc-option {
     border-bottom: 1px solid #eee;

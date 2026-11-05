@@ -597,7 +597,7 @@ export class SolutionCreatorComponent extends PageComponent implements OnInit, O
     }
   }
 
-  private showErrorMessage(error: any): void {
+  showErrorMessage(error: any): void {
     const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
     const message = parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message;
     const showOnTop = this.creatorStep() === 'result' || this.isInitialEmpty();

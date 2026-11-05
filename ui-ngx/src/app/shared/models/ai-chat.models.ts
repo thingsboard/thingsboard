@@ -160,8 +160,10 @@ export interface AiPromptMessage {
   resources: AiResourceInfo[];
 }
 
+export const AI_IMAGE_MEDIA_TYPES: readonly string[] = ['image/png', 'image/jpeg', 'image/webp'];
+
 export const isAiImageResource = (resource: Pick<AiResourceInfo, 'mediaType'>): boolean =>
-  ['image/png', 'image/jpeg', 'image/webp'].includes(resource.mediaType);
+  AI_IMAGE_MEDIA_TYPES.includes(resource.mediaType);
 
 export interface AiAssistantViewConfig {
   listView: AiAssistantViewType;

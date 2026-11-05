@@ -186,7 +186,9 @@ export class AiAssistantPanelComponent implements OnInit {
     this.loadChat$.pipe(
       switchMap(id => this.aiChat.getChatMessages(id, {ignoreLoading: true, ignoreErrors: true}).pipe(
         catchError(err => {
-          this.showErrorMessage(err);
+          this.messages.set([]);
+          this.completedExecutions.set({});
+          setTimeout(() => this.showErrorMessage(err), 0);
           return EMPTY;
         })
       )),
@@ -535,7 +537,7 @@ export class AiAssistantPanelComponent implements OnInit {
     this.loading.set(false);
   }
 
-  private showErrorMessage(error: any): void {
+  showErrorMessage(error: any): void {
     const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
     const message = parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message;
     this.showErrorToast(message);
