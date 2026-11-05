@@ -5,12 +5,24 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<tb-resource-type-filter [types]="jsResourceSubTypes"
-                         [typeTranslations]="resourceSubTypesTranslationMap"
-                         typeTitle="javascript.script-type"
-                         allTypesTitle="javascript.all-types"
-                         resourceFilterTitle="javascript.javascript-library-filter-title"
-                         filterTitle="javascript.filter-title"
-                         [ngModel]="entitiesTableConfig.componentsData.resourceSubType"
-                         (ngModelChange)="jsResourceSubTypeChanged($event)">
-</tb-resource-type-filter>
+<tb-filter-button emptyLabel="javascript.javascript-library-filter-title"
+                  emptyValue=""
+                  [valueLabel]="jsResourceSubTypeLabel"
+                  [ngModel]="entitiesTableConfig.componentsData.resourceSubType"
+                  (ngModelChange)="jsResourceSubTypeChanged($event)">
+  <ng-template let-control>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>javascript.script-type</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select [formControl]="control">
+          <mat-option value="">{{ 'javascript.all-types' | translate }}</mat-option>
+          @for (jsResourceSubType of jsResourceSubTypes; track jsResourceSubType) {
+            <mat-option [value]="jsResourceSubType">
+              {{ resourceSubTypesTranslationMap.get(jsResourceSubType) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-template>
+</tb-filter-button>

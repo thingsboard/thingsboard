@@ -231,8 +231,6 @@ import { ManageOwnerAndGroupsDialogComponent } from '@home/components/group/mana
 import { OwnerAndGroupsComponent } from '@home/components/group/owner-and-groups.component';
 import { AlarmAssigneeSelectPanelComponent } from '@home/components/alarm/alarm-assignee-select-panel.component';
 import { DeviceInfoFilterComponent } from '@home/components/device/device-info-filter.component';
-import { AssetInfoFilterComponent } from '@home/components/asset/asset-info-filter.component';
-import { EntitySubtypeFilterComponent } from '@home/components/entity/entity-subtype-filter.component';
 import { WidgetPreviewComponent } from '@home/components/widget/widget-preview.component';
 import {
   ManageWidgetActionsDialogComponent
@@ -390,8 +388,6 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
       DeviceProfileDialogComponent,
       AddDeviceProfileDialogComponent,
       DeviceInfoFilterComponent,
-      AssetInfoFilterComponent,
-      EntitySubtypeFilterComponent,
       AssetProfileComponent,
       AssetProfileDialogComponent,
       AssetProfileAutocompleteComponent,
@@ -586,8 +582,6 @@ import { RequestPePackComponent } from '@home/components/pe-pack/request-pe-pack
     DeviceProfileDialogComponent,
     AddDeviceProfileDialogComponent,
     DeviceInfoFilterComponent,
-    AssetInfoFilterComponent,
-    EntitySubtypeFilterComponent,
     RuleChainAutocompleteComponent,
     DeviceWizardDialogComponent,
     AssetProfileComponent,

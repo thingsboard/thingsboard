@@ -5,25 +5,17 @@
 
 -->
 <button color="primary"
-        matTooltip="{{ buttonDisplayValue }}"
+        matTooltip="{{ buttonDisplayValue() }}"
         matTooltipPosition="above"
         mat-stroked-button
-        [disabled]="disabled"
-        (click)="toggleEntitySubtypeFilterPanel($event)">
-  <mat-icon>filter_list</mat-icon>{{ buttonDisplayValue }}
+        [disabled]="disabled()"
+        (click)="openPanel($event)">
+  <mat-icon>filter_list</mat-icon>{{ buttonDisplayValue() }}
 </button>
-<ng-template #entitySubtypeFilterPanel>
+<ng-template #filterPanel>
   <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
-    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border" [formGroup]="entitySubtypeFilterForm">
-      <div class="tb-form-row column-xs">
-        <div class="fixed-title-width">{{ translations.subtypeTitle | translate }}</div>
-        <tb-entity-subtype-select
-          class="flex-1"
-          formControlName="subType"
-          [inlineField]="true"
-          [entityType]="entityType">
-        </tb-entity-subtype-select>
-      </div>
+    <div class="tb-filter-button-panel-content tb-form-panel no-padding no-border">
+      <ng-container *ngTemplateOutlet="panelContent(); context: {$implicit: filterControl}"></ng-container>
     </div>
     <div class="tb-panel-actions flex flex-row items-center justify-end">
       <button type="button"
@@ -41,7 +33,7 @@
       <button type="submit"
               mat-raised-button
               color="primary"
-              [disabled]="entitySubtypeFilterForm.invalid || !entitySubtypeFilterForm.dirty">
+              [disabled]="filterControl.invalid || !filterControl.dirty">
         {{ 'action.update' | translate }}
       </button>
     </div>

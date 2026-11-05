@@ -6,9 +6,24 @@
 
 -->
 <div class="flex flex-row items-center justify-start">
-  <tb-asset-info-filter [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
-                        (ngModelChange)="assetProfileChanged($event)">
-  </tb-asset-info-filter>
+  <tb-filter-button emptyLabel="asset.asset-filter-title"
+                    [valueLabel]="assetProfileLabel"
+                    [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
+                    (ngModelChange)="assetProfileChanged($event)">
+    <ng-template let-control>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>asset-profile.asset-profile</div>
+        <tb-asset-profile-autocomplete
+          class="flex-1"
+          [formControl]="control"
+          [inlineField]="true"
+          [displayAllOnEmpty]="true"
+          [editProfileEnabled]="false"
+          [addNewProfile]="false">
+        </tb-asset-profile-autocomplete>
+      </div>
+    </ng-template>
+  </tb-filter-button>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"

@@ -1714,7 +1714,7 @@
     {
       "path": "ui-ngx/src/scss/filter-button.scss",
       "header": "ce-modified",
-      "reason": "Shared filter button styles extracted from the CE device filter component; the rules are the CE implementation with the panel class renamed. Reviewed against CE ui-ngx/src/app/modules/home/components/device/device-info-filter.component.scss at 269bc8dc73a4892e93cf61db6a8a41ea377c8636 (blob 4a79c6c9ce599e85209d5a6ee9062b6f713ac0f1).",
+      "reason": "Shared filter button styles extracted from the CE device filter component, which now uses this file instead of its own copy; the rules are the CE implementation with the panel class renamed. Reviewed against CE ui-ngx/src/app/modules/home/components/device/device-info-filter.component.scss at 269bc8dc73a4892e93cf61db6a8a41ea377c8636 (blob 4a79c6c9ce599e85209d5a6ee9062b6f713ac0f1).",
       "contentHash": "sha256:3b19b678564aa147c087269d91d7996a5c2a58d7ff058afbe6610c5cda56cc0e"
     }
   ]

@@ -5,10 +5,24 @@
     SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 
 -->
-<tb-resource-type-filter [types]="resourceTypes"
-                         [typeTranslations]="resourceTypesTranslationMap"
-                         typeTitle="resource.resource-type"
-                         allTypesTitle="resource.all-types"
-                         [ngModel]="entitiesTableConfig.componentsData.resourceType"
-                         (ngModelChange)="resourceTypeChanged($event)">
-</tb-resource-type-filter>
+<tb-filter-button emptyLabel="resource.resource-filter-title"
+                  emptyValue=""
+                  [valueLabel]="resourceTypeLabel"
+                  [ngModel]="entitiesTableConfig.componentsData.resourceType"
+                  (ngModelChange)="resourceTypeChanged($event)">
+  <ng-template let-control>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>resource.resource-type</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-select [formControl]="control">
+          <mat-option value="">{{ 'resource.all-types' | translate }}</mat-option>
+          @for (resourceType of resourceTypes; track resourceType) {
+            <mat-option [value]="resourceType">
+              {{ resourceTypesTranslationMap.get(resourceType) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-template>
+</tb-filter-button>

@@ -6,10 +6,22 @@
 
 -->
 <div class="flex flex-row items-center justify-start">
-  <tb-entity-subtype-filter [entityType]="entityType.ENTITY_VIEW"
-                            [ngModel]="entitiesTableConfig.componentsData.entityViewType"
-                            (ngModelChange)="entityViewTypeChanged($event)">
-  </tb-entity-subtype-filter>
+  <tb-filter-button emptyLabel="entity-view.entity-view-filter-title"
+                    emptyValue=""
+                    [ngModel]="entitiesTableConfig.componentsData.entityViewType"
+                    (ngModelChange)="entityViewTypeChanged($event)">
+    <ng-template let-control>
+      <div class="tb-form-row column-xs">
+        <div class="fixed-title-width" translate>entity-view.entity-view-type</div>
+        <tb-entity-subtype-select
+          class="flex-1"
+          [formControl]="control"
+          [inlineField]="true"
+          [entityType]="entityType.ENTITY_VIEW">
+        </tb-entity-subtype-select>
+      </div>
+    </ng-template>
+  </tb-filter-button>
   <mat-slide-toggle
     style="margin-left: 32px;"
     [ngModel]="entitiesTableConfig.componentsData.includeCustomers"
