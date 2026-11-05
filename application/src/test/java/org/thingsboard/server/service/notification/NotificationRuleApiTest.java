@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestInfo;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RateLimitsNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.ResourcesShortageNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.EscalatedNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
@@ -122,7 +123,9 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
         "notification_system.rules.deduplication_durations=RATE_LIMITS:10000",
-        "edges.enabled=true"
+        "edges.enabled=true",
+        // the real system info job reports resource shortages only once, at startup
+        "metrics.system_info.persist_frequency=3600"
 })
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
@@ -813,29 +816,31 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .build();
         createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", sysadmins.getId());
 
-        assertThat(getMyNotifications(false, 100)).size().isZero();
+        // the real system info job reports RAM under this node's service id, so count only this test's
+        String serviceId = "test-service-" + UUID.randomUUID();
         for (int i = 0; i < 10; i++) {
             notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                     .resource(Resource.RAM)
                     .usage(15L)
                     .serviceType("serviceType")
-                    .serviceId("serviceId")
+                    .serviceId(serviceId)
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
-        Notification notification = getMyNotifications(false, 100).get(0);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(getResourcesShortageNotifications(serviceId)).hasSize(1));
+        Notification notification = getResourcesShortageNotifications(serviceId).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
 
-        // deduplication is 1 minute, no new message is exp
+        // deduplication is 1 hour, no new message is expected
         notificationRuleProcessor.process(ResourcesShortageTrigger.builder()
                 .resource(Resource.RAM)
                 .usage(5L)
                 .serviceType("serviceType")
-                .serviceId("serviceId")
+                .serviceId(serviceId)
                 .build());
-        await("").atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
+        await("").atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getResourcesShortageNotifications(serviceId)).size().isOne());
     }
 
     @Test
@@ -850,16 +855,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", sysadmins.getId());
 
         // Mock SystemUtil to return 15% usages (not exceeds 99% threshold)
-        Method method;
-        try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
-            mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(15));
-            mockedSystemUtil.when(SystemUtil::getCpuUsage).thenReturn(Optional.of(15));
-            mockedSystemUtil.when(SystemUtil::getDiscSpaceUsage).thenReturn(Optional.of(15));
-
-            method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
-            method.setAccessible(true);
-            method.invoke(systemInfoService);
-        }
+        saveMonolithSystemInfo(15);
 
         TimeUnit.SECONDS.sleep(5);
         assertThat(getMyNotifications(false, 100)).size().isZero();
@@ -871,8 +867,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .build();
         rule.setTriggerConfig(triggerConfig);
         saveNotificationRule(rule);
+        // otherwise evicted asynchronously, and the old 99% thresholds could still apply
+        notificationRulesCache.evict(TenantId.SYS_TENANT_ID);
 
-        method.invoke(systemInfoService);
+        saveMonolithSystemInfo(15);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
@@ -934,6 +932,25 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 throw new Exception(e);
             }
         }, (notification, r) -> check.accept(notification));
+    }
+
+    private void saveMonolithSystemInfo(int usagePercent) throws Exception {
+        try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
+            mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(usagePercent));
+            mockedSystemUtil.when(SystemUtil::getCpuUsage).thenReturn(Optional.of(usagePercent));
+            mockedSystemUtil.when(SystemUtil::getDiscSpaceUsage).thenReturn(Optional.of(usagePercent));
+
+            Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+            method.setAccessible(true);
+            method.invoke(systemInfoService);
+        }
+    }
+
+    private List<Notification> getResourcesShortageNotifications(String serviceId) throws Exception {
+        return getMyNotifications(false, 100).stream()
+                .filter(notification -> notification.getInfo() instanceof ResourcesShortageNotificationInfo info
+                        && serviceId.equals(info.getServiceId()))
+                .toList();
     }
 
     private PageData<NotificationRequestInfo> findNotificationRequests(EntityType originatorType) {
