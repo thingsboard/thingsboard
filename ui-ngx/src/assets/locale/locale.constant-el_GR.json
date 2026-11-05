@@ -6295,8 +6295,7 @@
     "type-rule-chain": "Αλυσίδα κανόνων",
     "type-rule-chain-plural": "Αλυσίδες κανόνων",
     "type-device": "Συσκευή",
-    "type-device-plural": "Συσκευές",
-    "selected": "Επιλέχθηκε"
+    "type-device-plural": "Συσκευές"
   },
   "iot-hub": {
     "iot-hub": "IoT Hub",
@@ -8007,7 +8006,6 @@
     "endpoint-url-pattern": "Μοτίβο URL τελικού σημείου",
     "endpoint-url-pattern-required": "Απαιτείται μοτίβο URL τελικού σημείου",
     "request-method": "Μέθοδος αιτήματος",
-    "use-simple-client-http-factory": "Χρήση απλού HTTP client factory",
     "ignore-request-body": "Χωρίς σώμα αιτήματος",
     "request-body-template": "Πρότυπο σώματος αιτήματος",
     "request-body-template-hint": "Χρησιμοποιήστε <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> για μεταδεδομένα και <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> για τιμές του μηνύματος. Αν είναι κενό, το φορτίο του μηνύματος χρησιμοποιείται ως σώμα του αιτήματος. Για φορτίο που δεν είναι JSON, ενεργοποιήστε το 'Μετατροπή σε απλό κείμενο'. <br/><br/> Μπορείτε να εισαγάγετε ένα μυστικό με το placeholder <code><span style=\"color: #000;\">$&#123;</span>secret:name;type:TYPE<span style=\"color: #000;\">&#125;</span></code>, όπου 'name' είναι το αναγνωριστικό του μυστικού και 'type' είναι είτε TEXT είτε TEXT_FILE. Αυτό είναι χρήσιμο στα πεδία διαμόρφωσης κόμβων κανόνα που δεν υποστηρίζουν απευθείας το 'Χρήση μυστικού'. Παράδειγμα: <code><span style=\"color: #000;\">$&#123;</span>secret:tenant password;type:TEXT<span style=\"color: #000;\">&#125;</span></code>.",
@@ -8183,7 +8181,6 @@
     "proxy-port-range": "Η θύρα μεσολάβησης πρέπει να είναι από 1 έως 65535.",
     "proxy-user": "Χρήστης proxy",
     "proxy-password": "Κωδικός proxy",
-    "proxy-scheme": "Σχήμα proxy",
     "numbers-to-template": "Πρότυπο αριθμών τηλεφώνου παραληπτών",
     "numbers-to-template-required": "Απαιτείται πρότυπο αριθμών τηλεφώνου παραληπτών",
     "numbers-to-template-hint": "Αριθμοί τηλεφώνου χωρισμένοι με κόμμα, χρησιμοποιήστε <code><span style=\"color: #000;\">$&#123;</span>metadataKey<span style=\"color: #000;\">&#125;</span></code> για τιμή από τα μεταδεδομένα, <code><span style=\"color: #000;\">$[</span>messageKey<span style=\"color: #000;\">]</span></code> για τιμή από το σώμα του μηνύματος",
@@ -8968,8 +8965,6 @@
     "single-entity": "Μεμονωμένη οντότητα",
     "group-entities": "Ομάδα οντοτήτων",
     "entities-group-owner": "Ιδιοκτήτης ομάδας οντοτήτων",
-    "single-device": "Μονάδα συσκευή",
-    "group-of-devices": "Ομάδα συσκευών",
     "devices-group-owner": "Ιδιοκτήτης ομάδας συσκευών",
     "message-body": "Σώμα μηνύματος",
     "target": "Στόχος",
@@ -11381,22 +11376,6 @@
     "ai-credits-usage": "Πιστώσεις AI: χρησιμοποιήθηκαν {{ used }} από {{ max }}",
     "ai-credits-description": "Έχετε χρησιμοποιήσει <strong>{{ used }}</strong> από τις <strong>{{ max }}</strong> πιστώσεις AI σας αυτόν τον μήνα. Το όριο μηδενίζεται στις {{ date }}. Για να αυξήσετε το διαθέσιμο όριο πιστώσεων AI, επικοινωνήστε με τον διαχειριστή του συστήματός σας."
   },
-  "solution-template": {
-    "solution-template": "Πρότυπο λύσης",
-    "solution-templates": "Πρότυπα λύσεων",
-    "management": "Διαχείριση προτύπων λύσεων",
-    "details": "Λεπτομέρειες",
-    "install": "Εγκατάσταση",
-    "level": "Επίπεδο",
-    "install-title": "Το πρότυπο λύσης εγκαταστάθηκε με επιτυχία",
-    "install-failed-title": "Η εγκατάσταση του προτύπου λύσης απέτυχε",
-    "instructions": "Οδηγίες",
-    "goto-main-dashboard": "Μετάβαση στον κύριο πίνακα ελέγχου",
-    "delete": "Διαγραφή",
-    "delete-solution-title": "Είστε σίγουροι ότι θέλετε να διαγράψετε τη λύση '{{solutionTitle}}';",
-    "delete-solution-text": "Προσοχή, μετά την επιβεβαίωση η λύση και όλα τα σχετικά δεδομένα θα διαγραφούν οριστικά.",
-    "installing": "Γίνεται εγκατάσταση του προτύπου λύσης..."
-  },
   "markdown": {
     "edit": "Επεξεργασία",
     "preview": "Προεπισκόπηση",
@@ -11413,20 +11392,8 @@
     "app-title": "Τίτλος εφαρμογής",
     "favicon": "Εικονίδιο ιστότοπου",
     "favicon-desc": "Εικονίδιο στην καρτέλα του προγράμματος περιήγησης και στους σελιδοδείκτες. PNG ή ICO, συνιστάται 32×32 px",
-    "favicon-description": "Εικόνα *.ico, *.gif ή *.png με μέγιστο μέγεθος {{kbSize}} KB.",
-    "favicon-size-error": "Η εικόνα του ιστότοπου είναι πολύ μεγάλη. Μέγιστο επιτρεπόμενο μέγεθος {{kbSize}} KB.",
-    "favicon-type-error": "Μη έγκυρη μορφή εικόνας ιστότοπου. Επιτρέπονται μόνο εικόνες τύπου ICO, GIF ή PNG.",
-    "drop-favicon-image": "Ρίξτε ένα εικονίδιο ιστότοπου ή κάντε κλικ για να επιλέξετε αρχείο για μεταφόρτωση.",
-    "drop-favicon-image-or": "Σύρετε και αποθέστε ένα εικονίδιο ιστότοπου ή",
-    "no-favicon-image": "Δεν έχει επιλεγεί εικονίδιο",
     "logo": "Λογότυπο",
     "logo-desc": "SVG ή PNG, ύψος τουλάχιστον 96px, έως 200 KB",
-    "logo-description": "Οποιαδήποτε εικόνα με μέγιστο μέγεθος {{kbSize}} KB.",
-    "logo-size-error": "Η εικόνα λογοτύπου είναι πολύ μεγάλη. Μέγιστο επιτρεπόμενο μέγεθος λογοτύπου {{kbSize}} KB.",
-    "logo-type-error": "Μη έγκυρη μορφή αρχείου λογοτύπου. Επιτρέπονται μόνο εικόνες.",
-    "drop-logo-image": "Ρίξτε μια εικόνα λογοτύπου ή κάντε κλικ για να επιλέξετε αρχείο για μεταφόρτωση.",
-    "drop-logo-image-or": "Σύρετε και αποθέστε μια εικόνα λογοτύπου ή",
-    "no-logo-image": "Δεν έχει επιλεγεί λογότυπο",
     "logo-height": "Ύψος λογοτύπου",
     "logo-height-desc": "Κλιμακώνει το λογότυπο αναλογικά και το κεντράρει. Αυξήστε το ύψος (έως 200px) για ψηλά λογότυπα",
     "collapsed-logo": "Λογότυπο συμπτυγμένης πλευρικής γραμμής",
@@ -11470,11 +11437,9 @@
     "error-verification-url": "Το όνομα τομέα δεν πρέπει να περιέχει τα σύμβολα '/' και ':'. Παράδειγμα: thingsboard.io",
     "show-connectivity-dialog": "Εμφάνιση διαλόγου συνδεσιμότητας",
     "show-connectivity-dialog-desc": "Εμφανίζει τον διάλογο συνδεσιμότητας συσκευής με οδηγίες σύνδεσης μετά τη δημιουργία μιας συσκευής",
-    "hide-connectivity-dialog": "Απόκρυψη διαλόγου συνδεσιμότητας",
     "override-trendz-add-on-name": "Παράκαμψη ονόματος πρόσθετου Trendz Analytics",
     "override-trendz-add-on-name-desc": "Μετονομάζει το πρόσθετο «Trendz» σε «Προηγμένη ανάλυση» σε όλη την πλατφόρμα",
     "show-platform-name-version-bottom-left-corner": "Εμφάνιση ονόματος και έκδοσης της πλατφόρμας στην κάτω αριστερή γωνία",
-    "override-trendz-add-on-name-hint": "Όταν είναι ενεργοποιημένο, το 'Trendz analytics' θα εμφανίζεται ως 'Advanced analytics' σε ολόκληρη την πλατφόρμα.",
     "show-platform-name-version": "Εμφάνιση ονόματος και έκδοσης πλατφόρμας",
     "platform-name": "Όνομα πλατφόρμας",
     "platform-version": "Έκδοση πλατφόρμας",
@@ -12700,9 +12665,7 @@
             "hot": "HOT",
             "esri-street": "WorldStreetMap",
             "esri-topo": "WorldTopoMap",
-            "esri-imagery": "WorldImagery",
-            "cartodb-positron": "Positron",
-            "cartodb-dark-matter": "DarkMatter"
+            "esri-imagery": "WorldImagery"
           },
           "carto": {
             "title": "CARTO",
@@ -13039,10 +13002,7 @@
       "here-map-hybrid-day": "HERE.hybridDay",
       "here-map-terrain-day": "HERE.terrainDay",
       "credentials": "Διαπιστευτήρια",
-      "here-app-id": "HERE app id",
-      "here-app-code": "HERE app code",
       "here-api-key": "Κλειδί API HERE",
-      "here-use-new-version-api-3": "Χρήση API έκδοσης 3",
       "tencent-maps-api-key": "Κλειδί API Tencent Maps",
       "tencent-map-type-roadmap": "Οδικός χάρτης",
       "tencent-map-type-satelite": "Δορυφορικός",
@@ -13939,7 +13899,6 @@
       "roles-and-permissions": "Ρόλοι & Δικαιώματα",
       "groups": "Ομάδες",
       "integrations": "Ενσωματώσεις",
-      "solution-templates": "Πρότυπα λύσεων",
       "scheduler": "Χρονοπρογραμματιστής",
       "white-labeling": "White labeling"
     },
@@ -13953,11 +13912,6 @@
       "critical": "Κρίσιμοι",
       "assigned-to-me": "Ανατέθηκε σε εμένα",
       "total": "Σύνολο"
-    },
-    "solution-templates": {
-      "title": "Πρότυπα λύσεων",
-      "prototype-plan": "Σχέδιο πρωτοτύπου",
-      "startup-plan": "Σχέδιο νεοφυούς επιχείρησης"
     },
     "getting-started": {
       "get-started": "Ξεκινήστε",
