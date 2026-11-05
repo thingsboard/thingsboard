@@ -148,8 +148,17 @@
     }
   }
 
+  .ai.action + .ai.action {
+    margin-top: calc(6px - var(--chat-turn-gap));
+  }
+
   .generating {
     gap: 10px;
+
+    .work {
+      flex: 1;
+      min-width: 0;
+    }
 
     .tb-ai-mark {
       --m: var(--chat-mark);

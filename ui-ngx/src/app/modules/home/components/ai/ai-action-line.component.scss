@@ -1,0 +1,124 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: block;
+  font-family: var(--tb-font);
+  letter-spacing: var(--chat-text-ls);
+}
+
+.out {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+  color: var(--tb-ink-76);
+
+  .mark {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    margin-block: calc((var(--chat-line-lh) - 16px) / 2);
+    color: var(--tb-ok);
+  }
+
+  .say {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dur {
+    margin-left: auto;
+    padding-left: 12px;
+    font-family: var(--tb-mono);
+    font-size: var(--chat-meta);
+    color: var(--k-faint);
+    white-space: nowrap;
+  }
+}
+
+:host(.fail) .out .mark {
+  color: var(--tb-crit);
+}
+
+:host(.stopped) .out {
+  color: var(--tb-text-secondary);
+
+  .mark {
+    color: var(--tb-ink-38);
+  }
+}
+
+.disc {
+  margin: 2px 0 0 24px;
+
+  > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    cursor: pointer;
+    font-size: var(--chat-meta);
+    line-height: var(--chat-meta-lh);
+    color: var(--tb-ink-60, var(--tb-text-secondary));
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: 'chevron_right';
+      flex: none;
+      width: 18px;
+      height: 18px;
+      font: 18px/18px 'Material Icons';
+      color: var(--tb-ink-38);
+      transition: transform .15s ease;
+    }
+
+    &:hover, &:hover::before {
+      color: var(--tb-ink);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ai-focus);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(90deg);
+  }
+
+  .part {
+    margin: 8px 0 4px;
+    font-size: var(--chat-meta);
+    line-height: var(--chat-meta-lh);
+    font-weight: 500;
+    color: var(--tb-text-secondary);
+  }
+
+  pre {
+    margin: 0;
+    max-height: 240px;
+    overflow: auto;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--tb-line-soft);
+    font-family: var(--tb-mono);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--tb-ink-76);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    > summary::before {
+      transition: none;
+    }
+  }
+}

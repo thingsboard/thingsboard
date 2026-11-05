@@ -36,9 +36,13 @@ import {
   ApprovalResult,
   ChatEvent,
   SendChatMessageRequest,
+  AiAction,
   ToolExecutionRequestedEvent,
-  ToolExecutionResult
+  ToolExecutionResult,
+  ToolFinished,
+  ToolStarted
 } from '@shared/models/ai-chat.models';
+import { AiWorkMoment, AiWorkState, isHiddenAiAction } from '@home/components/ai/ai-action.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
@@ -105,6 +109,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
   denyReasons = signal<Record<string, string>>({});
 
   stopping = signal<boolean>(false);
+
+  work = signal<AiWorkState | undefined>(undefined);
 
   private answeredApprovals = signal<ReadonlySet<string>>(new Set());
 
@@ -294,6 +300,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       this.panelService.setAutoApprove(chatId, true);
     }
     this.answeredApprovals.update(set => new Set(set).add(event.executionId));
+    this.setWork(event.approved ? 'applying-change' : event.reason ? 'reading-what-to-change' : 'going-through-results');
     if (event.reason) {
       this.denyReasons.update(reasons => ({...reasons, [event.executionId]: event.reason}));
     }
@@ -446,6 +453,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
           this.affectedEntities.push(...event.data.affectedEntities);
         }
         break;
+      case 'toolStarted':
+        this.startAction(event.data);
+        break;
+      case 'toolFinished':
+        this.finishAction(event.data);
+        break;
       case 'turnStopped':
         this.messages.update(list => [...list, {from: 'AI', content: this.translate.instant('ai-assistant.stopped'), status: 'INCOMPLETE', time: Date.now()}]);
         break;
@@ -460,6 +473,47 @@ export class AiChatComponent implements OnInit, OnDestroy {
         }
     }
     return of(event);
+  }
+
+  private startAction(started: ToolStarted): void {
+    if (isHiddenAiAction(started.tool) || this.isApprovalExecution(started.executionId)) {
+      return;
+    }
+    const action: AiAction = {
+      executionId: started.executionId,
+      tool: started.tool,
+      arguments: started.arguments,
+      status: 'RUNNING',
+      startedAt: Date.now()
+    };
+    this.messages.update(list => [...list, {from: 'ACTION', data: action}]);
+  }
+
+  private finishAction(finished: ToolFinished): void {
+    this.messages.update(list => list.map(message => message.from === 'ACTION' && message.data.executionId === finished.executionId
+      ? {from: 'ACTION', data: {...message.data, status: finished.status, durationMs: finished.durationMs, result: finished.result}}
+      : message));
+    if (!this.messages().some(message => message.from === 'ACTION' && message.data.status === 'RUNNING')) {
+      this.setWork('going-through-results', true);
+    }
+  }
+
+  private isApprovalExecution(executionId: string): boolean {
+    return this.messages().some(message => message.from === 'APPROVAL' && message.data.executionId === executionId);
+  }
+
+  private stopRunningActions(): void {
+    if (this.messages().some(message => message.from === 'ACTION' && message.data.status === 'RUNNING')) {
+      this.messages.update(list => list.map(message => message.from === 'ACTION' && message.data.status === 'RUNNING'
+        ? {from: 'ACTION', data: {...message.data, status: 'STOPPED', durationMs: Date.now() - message.data.startedAt}}
+        : message));
+    }
+  }
+
+  private setWork(moment: AiWorkMoment, restart = false): void {
+    if (restart || this.work()?.moment !== moment) {
+      this.work.set({moment, since: Date.now()});
+    }
   }
 
   private handleToolApproval(event: ToolExecutionRequestedEvent): void {
@@ -496,6 +550,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private startLoading(): void {
     this.loading.set(true);
+    this.setWork('reading-request');
     this.chats.setReplying(this.replyingChatId, false);
     this.replyingChatId = this.chatId();
     this.chats.setReplying(this.replyingChatId, true);
@@ -507,6 +562,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
     }
     this.loading.set(false);
     this.stopping.set(false);
+    this.work.set(undefined);
+    this.stopRunningActions();
     if (this.affectedEntities.length) {
       this.panelService.emitUpdatedData(this.affectedEntities);
       this.affectedEntities = [];

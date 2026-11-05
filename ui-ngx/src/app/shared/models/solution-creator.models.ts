@@ -7,7 +7,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldType } from '@shared/models/calculated-field.models';
 import { AlarmSeverity } from '@shared/models/alarm.models';
-import { ToolExecutionRequested, ToolExecutionResult, AiResourceInfo } from '@shared/models/ai-chat.models';
+import { AiAction, ToolExecutionRequested, ToolExecutionResult, AiResourceInfo } from '@shared/models/ai-chat.models';
 
 export interface SolutionInfo {
   id: string;
@@ -172,7 +172,7 @@ export interface SolutionStepState {
   skipInterviewAllowed?: boolean;
 }
 
-export type ChatMessage = GeneralChatMessage | ApprovalChatMessage;
+export type ChatMessage = GeneralChatMessage | ApprovalChatMessage | ActionChatMessage;
 
 export interface GeneralChatMessage {
   from: 'USER' | 'AI' | 'SYSTEM' | 'GENERATE';
@@ -180,6 +180,11 @@ export interface GeneralChatMessage {
   status?: 'INCOMPLETE';
   resources?: AiResourceInfo[];
   time?: number;
+}
+
+export interface ActionChatMessage {
+  from: 'ACTION';
+  data: AiAction;
 }
 
 export interface ApprovalChatMessage {

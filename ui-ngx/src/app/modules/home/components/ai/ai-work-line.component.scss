@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+// SPDX-License-Identifier: BUSL-1.1
+:host {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
+  color: var(--tb-text-secondary);
+
+  tb-ai-spin {
+    margin-block: calc((var(--chat-line-lh) - 16px) / 2);
+  }
+}
+
+.say {
+  min-width: 0;
+}
+
+.clock {
+  margin-left: auto;
+  padding-left: 12px;
+  font-family: var(--tb-mono);
+  font-size: var(--chat-meta);
+  color: var(--k-faint);
+  white-space: nowrap;
+}

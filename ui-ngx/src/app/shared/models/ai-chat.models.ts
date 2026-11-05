@@ -107,6 +107,39 @@ export interface TurnStoppedEvent extends BaseChatEvent {
   data: Record<string, never>;
 }
 
+export interface ToolStarted extends BaseChatToolEventData {
+  tool: string;
+  arguments?: unknown;
+}
+
+export interface ToolStartedEvent extends BaseChatEvent {
+  event: 'toolStarted';
+  data: ToolStarted;
+}
+
+export interface ToolFinished extends BaseChatToolEventData {
+  status: 'SUCCESS' | 'FAILURE';
+  durationMs: number;
+  result?: string;
+}
+
+export interface ToolFinishedEvent extends BaseChatEvent {
+  event: 'toolFinished';
+  data: ToolFinished;
+}
+
+export type AiActionStatus = 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'STOPPED';
+
+export interface AiAction {
+  executionId: string;
+  tool: string;
+  arguments?: unknown;
+  status: AiActionStatus;
+  startedAt: number;
+  durationMs?: number;
+  result?: string;
+}
+
 export interface ApprovalResult {
   executionId: string;
   approved: boolean;
@@ -121,7 +154,7 @@ export enum ToolApprovalResult {
 }
 
 export type ChatEvent = AssistantChatEvent | ToolExecutionRequestedEvent | ToolExecutionResultEvent | ErrorEvent | ChatTitleGeneratedEvent
-  | TurnResumedEvent | TurnStoppedEvent;
+  | TurnResumedEvent | TurnStoppedEvent | ToolStartedEvent | ToolFinishedEvent;
 
 export enum AiAssistantViewType {
   DASHBOARD = 'DASHBOARD',

@@ -731,6 +731,252 @@
         "attachment-larger-than": "Larger than {{size}}",
         "attachment-svg-failed": "This SVG can't be converted to an image",
         "attachment-over-limit": "More than {{count}} files",
+        "action": {
+            "search-devices": {
+                "run": "Looking up devices",
+                "done": "Looked up devices"
+            },
+            "search-assets": {
+                "run": "Looking up assets",
+                "done": "Looked up assets"
+            },
+            "search-dashboards": {
+                "run": "Looking up dashboards",
+                "done": "Looked up dashboards"
+            },
+            "search-customers": {
+                "run": "Looking up customers",
+                "done": "Looked up customers"
+            },
+            "search-users": {
+                "run": "Looking up users",
+                "done": "Looked up users"
+            },
+            "search-tenant": {
+                "run": "Searching the tenant",
+                "done": "Searched the tenant"
+            },
+            "read-entity": {
+                "run": "Reading the record",
+                "done": "Read the record"
+            },
+            "read-latest-values": {
+                "run": "Reading the latest values",
+                "done": "Read the latest values"
+            },
+            "read-history": {
+                "run": "Reading the history",
+                "done": "Read the history"
+            },
+            "read-telemetry-keys": {
+                "run": "Reading the telemetry keys",
+                "done": "Read the telemetry keys"
+            },
+            "read-attributes": {
+                "run": "Reading attributes",
+                "done": "Read attributes"
+            },
+            "save-attributes": {
+                "run": "Updating the attributes",
+                "done": "Updated the attributes"
+            },
+            "delete-attributes": {
+                "run": "Deleting the attributes",
+                "done": "Deleted the attributes"
+            },
+            "read-relations": {
+                "run": "Following relations",
+                "done": "Followed relations"
+            },
+            "read-credentials": {
+                "run": "Reading the device credentials",
+                "done": "Read the device credentials"
+            },
+            "save-device": {
+                "run": "Saving the device",
+                "done": "Saved the device"
+            },
+            "save-calculated-field": {
+                "run": "Saving the calculated field",
+                "done": "Saved the calculated field"
+            },
+            "recalculate-history": {
+                "run": "Recalculating history",
+                "done": "Recalculated history"
+            },
+            "save-alarm-rule": {
+                "run": "Saving the alarm rule",
+                "done": "Saved the alarm rule"
+            },
+            "create-dashboard": {
+                "run": "Creating the dashboard",
+                "done": "Created the dashboard"
+            },
+            "update-dashboard": {
+                "run": "Updating the dashboard",
+                "done": "Updated the dashboard"
+            },
+            "add-dashboard-state": {
+                "run": "Adding a dashboard state",
+                "done": "Added a dashboard state"
+            },
+            "update-dashboard-state": {
+                "run": "Updating the dashboard state",
+                "done": "Updated the dashboard state"
+            },
+            "add-entity-alias": {
+                "run": "Adding an entity alias",
+                "done": "Added an entity alias"
+            },
+            "update-entity-alias": {
+                "run": "Updating the entity alias",
+                "done": "Updated the entity alias"
+            },
+            "read-entity-alias": {
+                "run": "Reading the entity alias",
+                "done": "Read the entity alias"
+            },
+            "add-dashboard-filter": {
+                "run": "Adding a dashboard filter",
+                "done": "Added a dashboard filter"
+            },
+            "update-dashboard-filter": {
+                "run": "Updating the dashboard filter",
+                "done": "Updated the dashboard filter"
+            },
+            "read-dashboard-filter": {
+                "run": "Reading the dashboard filter",
+                "done": "Read the dashboard filter"
+            },
+            "read-dashboard": {
+                "run": "Reading the dashboard",
+                "done": "Read the dashboard"
+            },
+            "add-widgets": {
+                "run": "Adding widgets",
+                "done": "Added widgets"
+            },
+            "update-widget": {
+                "run": "Updating the widget",
+                "done": "Updated the widget"
+            },
+            "place-widgets": {
+                "run": "Placing the widgets",
+                "done": "Placed the widgets"
+            },
+            "read-widget": {
+                "run": "Reading the widget",
+                "done": "Read the widget"
+            },
+            "lay-out-dashboard": {
+                "run": "Laying out the dashboard",
+                "done": "Laid out the dashboard"
+            },
+            "read-dashboard-page": {
+                "run": "Reading the dashboard page",
+                "done": "Read the dashboard page"
+            },
+            "save-notification-target": {
+                "run": "Saving the notification recipients",
+                "done": "Saved the notification recipients"
+            },
+            "save-notification-template": {
+                "run": "Saving the notification template",
+                "done": "Saved the notification template"
+            },
+            "save-notification-rule": {
+                "run": "Saving the notification rule",
+                "done": "Saved the notification rule"
+            },
+            "search-iot-hub": {
+                "run": "Searching IoT Hub",
+                "done": "Searched IoT Hub"
+            },
+            "read-connection-settings": {
+                "run": "Looking up the connection settings",
+                "done": "Looked up the connection settings"
+            },
+            "research-device": {
+                "run": "Researching the device",
+                "done": "Researched the device"
+            },
+            "search-web": {
+                "run": "Searching the web",
+                "done": "Searched the web"
+            },
+            "read-page": {
+                "run": "Reading the page",
+                "done": "Read the page"
+            },
+            "read-site": {
+                "run": "Reading {{site}}",
+                "done": "Read {{site}}"
+            },
+            "delete-calculated-field": {
+                "run": "Deleting the calculated field",
+                "done": "Deleted the calculated field"
+            },
+            "delete-alarm-rule": {
+                "run": "Deleting the alarm rule",
+                "done": "Deleted the alarm rule"
+            },
+            "delete-notification-rule": {
+                "run": "Deleting the notification rule",
+                "done": "Deleted the notification rule"
+            },
+            "delete-notification-target": {
+                "run": "Deleting the notification recipients",
+                "done": "Deleted the notification recipients"
+            },
+            "delete-notification-template": {
+                "run": "Deleting the notification template",
+                "done": "Deleted the notification template"
+            },
+            "delete-dashboard": {
+                "run": "Deleting the dashboard",
+                "done": "Deleted the dashboard"
+            },
+            "delete-widget": {
+                "run": "Deleting the widget",
+                "done": "Deleted the widget"
+            },
+            "delete-dashboard-state": {
+                "run": "Deleting the dashboard state",
+                "done": "Deleted the dashboard state"
+            },
+            "delete-entity-alias": {
+                "run": "Deleting the entity alias",
+                "done": "Deleted the entity alias"
+            },
+            "delete-dashboard-filter": {
+                "run": "Deleting the dashboard filter",
+                "done": "Deleted the dashboard filter"
+            },
+            "delete-device": {
+                "run": "Deleting the device",
+                "done": "Deleted the device"
+            },
+            "delete-other": {
+                "run": "Deleting",
+                "done": "Deleted"
+            },
+            "other": {
+                "run": "Working on a step",
+                "done": "Finished a step"
+            },
+            "failed": "Failed while {{words}}",
+            "details": "Details",
+            "request": "Request",
+            "result": "Result"
+        },
+        "work": {
+            "reading-request": "Reading the request",
+            "going-through-results": "Going through the results",
+            "applying-change": "Applying the change",
+            "reading-what-to-change": "Reading what to change",
+            "still": "Still {{words}}",
+            "stopped": "Stopped while {{words}}"
+        },
         "file-kind": {
             "image": "Image",
             "pdf": "PDF",

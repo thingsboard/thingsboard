@@ -16,6 +16,9 @@ import { AiNoTelemetryModalComponent } from '@home/components/ai/ai-no-telemetry
 import { AiAttachmentsComponent } from '@home/components/ai/ai-attachments.component';
 import { AiAttachmentPreviewDialogComponent } from '@home/components/ai/ai-attachment-preview-dialog.component';
 import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
+import { AiSpinComponent } from '@home/components/ai/ai-spin.component';
+import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component';
+import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +34,10 @@ import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
     AiNoTelemetryModalComponent,
     AiAttachmentsComponent,
     AiAttachmentPreviewDialogComponent,
-    AiTipDirective
+    AiTipDirective,
+    AiSpinComponent,
+    AiWorkLineComponent,
+    AiActionLineComponent
   ],
   imports: [
     CommonModule,

@@ -72,7 +72,7 @@ class ChannelTbAiTransportTest {
         assertThat(second).hasSize(3);
         assertThat(server.connections.get()).isEqualTo(1);
         ChannelHello hello = server.codec.fromPayload(server.received(ChannelProtocol.HELLO).getFirst().payload(), ChannelHello.class);
-        assertThat(hello).isEqualTo(new ChannelHello(1, TbAiPooledConnection.CLIENT_CAPABILITIES, "https://tb.example.com", null));
+        assertThat(hello).isEqualTo(new ChannelHello(1, List.of("chat.kit"), "https://tb.example.com", null));
         ChannelFrame send = server.received(ChannelProtocol.CHAT_SEND).getFirst();
         ChatTurnRequest turnRequest = server.codec.fromPayload(send.payload(), ChatTurnRequest.class);
         assertThat(turnRequest.request()).isEqualTo(request);

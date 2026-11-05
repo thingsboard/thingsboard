@@ -59,6 +59,7 @@
       [scrollContainer]="chatArea"
       initialScroll="bottom"
       [denyReasons]="denyReasons()"
+      [work]="work()"
       (approvalAction)="onApprovalAction($event)">
     </tb-ai-chat-messages>
   } @else if (!chatId()) {

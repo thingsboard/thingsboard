@@ -4,6 +4,7 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Outpu
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
 import { ClipboardService } from 'ngx-clipboard';
 import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
+import { AiWorkState } from '@home/components/ai/ai-action.models';
 
 @Component({
   selector: 'tb-ai-chat-messages',
@@ -22,10 +23,13 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() scrollContainer: HTMLElement;
   @Input() initialScroll: 'lastUserMessage' | 'bottom' = 'lastUserMessage';
   @Input() denyReasons: Record<string, string> = {};
+  @Input() work: AiWorkState | undefined;
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
   @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
+
+  actionRunning = false;
 
   private static readonly PIN_TO_BOTTOM_MS = 1500;
   private static readonly COPIED_MS = 1200;
@@ -70,6 +74,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
     if (changes.messages) {
       this.lastAnswerIndex = this.findLastAnswerIndex();
+      this.actionRunning = this.messages.some(message => message.from === 'ACTION' && message.data.status === 'RUNNING');
       if (changes.messages.firstChange) {
         if (this.initialScroll === 'bottom') {
           this.pinToBottom();
@@ -96,6 +101,10 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
           setTimeout(() => this.scrollToLastUserMessage(), 0);
         } else if (wasNearBottom) {
           setTimeout(() => this.scrollToLastAiMessage(), 0);
+        }
+      } else if (lastMsg?.from === 'ACTION') {
+        if (wasNearBottom) {
+          setTimeout(() => this.scrollToBottom('smooth'), 0);
         }
       } else if (lastMsg?.from === 'APPROVAL') {
         if (prevLastMsg?.from === 'USER') {

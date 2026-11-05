@@ -1,0 +1,30 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (action().status === 'RUNNING') {
+  <tb-ai-work-line [words]="running()" [kind]="words().kind" [since]="action().startedAt"></tb-ai-work-line>
+} @else {
+  <div class="out">
+    <mat-icon class="mark" aria-hidden="true">{{ icon() }}</mat-icon>
+    <span class="say">{{ outcome() }}</span>
+    @if (duration()) {
+      <span class="dur">{{ duration() }}</span>
+    }
+  </div>
+  @if (hasDetails()) {
+    <details class="disc">
+      <summary>{{ 'ai-assistant.action.details' | translate }}</summary>
+      @if (request()) {
+        <div class="part">{{ 'ai-assistant.action.request' | translate }}</div>
+        <pre>{{ request() }}</pre>
+      }
+      @if (result()) {
+        <div class="part">{{ 'ai-assistant.action.result' | translate }}</div>
+        <pre>{{ result() }}</pre>
+      }
+    </details>
+  }
+}

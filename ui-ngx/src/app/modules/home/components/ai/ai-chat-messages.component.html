@@ -20,6 +20,10 @@
         </div>
       }
     </div>
+  } @else if (msg.from === 'ACTION') {
+    <div class="ai action">
+      <tb-ai-action-line [action]="msg.data"></tb-ai-action-line>
+    </div>
   } @else {
     <div class="ai">
       @if (msg.from === 'APPROVAL') {
@@ -63,10 +67,12 @@
     }
   }
 }
-@if (loading && !waitApproval) {
+@if (loading && !waitApproval && !actionRunning) {
   <div class="generating flex items-center">
     @if (loadingLongTime) {
       <ng-content select="[loadingLongTime]"></ng-content>
+    } @else if (work) {
+      <tb-ai-work-line class="work" [words]="'ai-assistant.work.' + work.moment | translate" [since]="work.since"></tb-ai-work-line>
     } @else {
       <span class="tb-ai-mark" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
       <div class="glow-container">
