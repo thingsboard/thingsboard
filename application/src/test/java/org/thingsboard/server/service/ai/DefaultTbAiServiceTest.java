@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -166,6 +167,22 @@ class DefaultTbAiServiceTest {
         then(call).should(never()).apply(any());
         then(apiUsageStateService).shouldHaveNoInteractions();
         then(apiUsageReportClient).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"400, BAD_REQUEST_PARAMS", "413, BAD_REQUEST_PARAMS", "403, PERMISSION_DENIED", "404, ITEM_NOT_FOUND",
+            "409, VERSION_CONFLICT", "429, TOO_MANY_REQUESTS", "401, GENERAL", "500, GENERAL", "0, GENERAL"})
+    void shouldKeepTheStatusOfTheAiService_whenProcessAndResponseIsFailure(int status, ThingsboardErrorCode errorCode) {
+        // GIVEN
+        given(apiUsageStateService.getApiUsageState(tenantId)).willReturn(enabledApiUsageState());
+        given(call.apply(any())).willReturn(TbAiResponse.builder().success(false).status(status).error("The file is not UTF-8 text: notes.txt").build());
+
+        // WHEN
+        Throwable thrown = catchThrowable(() -> service.process(call, user, true));
+
+        // THEN
+        assertThat(thrown).isInstanceOf(ThingsboardRuntimeException.class).hasMessage("The file is not UTF-8 text: notes.txt");
+        assertThat(((ThingsboardRuntimeException) thrown).getErrorCode()).isEqualTo(errorCode);
     }
 
     @Test

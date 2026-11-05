@@ -104,6 +104,24 @@ public class AiResourceControllerTest extends AbstractAiControllerTest {
     }
 
     @Test
+    public void shouldKeepTheAiServiceStatus_whenAResourceIsMissingOrInvalid() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        UUID resourceId = UUID.randomUUID();
+        givenOperation(ChannelProtocol.RESOURCE_GET, new ResourceOperationRequest(resourceId), failure(404, "Resource not found"));
+        givenOperation(ChannelProtocol.RESOURCE_DELETE, new ResourceOperationRequest(resourceId), failure(404, "Resource not found or already sent"));
+
+        // WHEN
+        MvcResult download = doGet("/api/ai/resources/" + resourceId).andReturn();
+        MvcResult delete = doDelete("/api/ai/resources/" + resourceId).andReturn();
+
+        // THEN
+        assertThat(download.getResponse().getStatus()).isEqualTo(404);
+        assertThat(delete.getResponse().getStatus()).isEqualTo(404);
+        assertThat(delete.getResponse().getContentAsString()).contains("Resource not found or already sent");
+    }
+
+    @Test
     public void shouldReturnTheAcceptedFiles_whenGettingTheConfig() throws Exception {
         // GIVEN
         loginTenantAdmin();
