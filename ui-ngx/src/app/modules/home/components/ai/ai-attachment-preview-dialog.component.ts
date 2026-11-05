@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, SecurityContext } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -11,7 +11,8 @@ import { catchError, map } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+
+import { aiServerMessage } from '@home/components/ai/ai-attachment.models';
 import { AiResourceService } from '@core/http/ai-resource.service';
 import { AiResourceInfo } from '@shared/models/ai-chat.models';
 
@@ -65,10 +66,9 @@ export class AiAttachmentPreviewDialogComponent extends DialogComponent<AiAttach
     this.dialogRef.close();
   }
 
-  private errorMessage(error: any): string {
-    const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
-    const message = error ? parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message : null;
-    return message || this.translate.instant('ai-assistant.attachment-load-failed');
+  private errorMessage(error: unknown): string {
+    const message = aiServerMessage(error);
+    return message ? this.sanitizer.sanitize(SecurityContext.HTML, message) ?? message : this.translate.instant('ai-assistant.attachment-load-failed');
   }
 
 }

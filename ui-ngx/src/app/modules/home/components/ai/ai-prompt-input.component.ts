@@ -16,14 +16,15 @@ import {
   signal,
   SimpleChanges,
   untracked,
-  ViewChild
+  ViewChild,
+  SecurityContext
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { guid, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
+import { guid } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
 import { AI_IMAGE_MEDIA_TYPES, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
 import {
@@ -34,7 +35,8 @@ import {
   isAiAttachmentAccepted,
   isAiSvg,
   namePastedImage,
-  svgToAiImage
+  svgToAiImage,
+  aiServerMessage
 } from '@home/components/ai/ai-attachment.models';
 
 interface PendingAttachment {
@@ -368,10 +370,9 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     }
   }
 
-  private errorMessage(error: any): string {
-    const responseType = isNotEmptyStr(error?.error) ? 'text' : undefined;
-    const message = error ? parseHttpErrorMessage(error, this.translate, responseType, this.sanitizer).message : null;
-    return message || this.translate.instant('ai-assistant.attachment-failed');
+  private errorMessage(error: unknown): string {
+    const message = aiServerMessage(error);
+    return message ? this.sanitizer.sanitize(SecurityContext.HTML, message) ?? message : this.translate.instant('ai-assistant.attachment-failed');
   }
 
   private listenForDrops(target: HTMLElement): void {

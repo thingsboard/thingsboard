@@ -173,7 +173,6 @@ class DefaultTbAiService implements TbAiService {
     static ThingsboardErrorCode toErrorCode(int status) {
         return switch (status) {
             case 400, 413, 415, 422 -> ThingsboardErrorCode.BAD_REQUEST_PARAMS;
-            case 403 -> ThingsboardErrorCode.PERMISSION_DENIED;
             case 404 -> ThingsboardErrorCode.ITEM_NOT_FOUND;
             case 409 -> ThingsboardErrorCode.VERSION_CONFLICT;
             case 429 -> ThingsboardErrorCode.TOO_MANY_REQUESTS;

@@ -170,7 +170,7 @@ class DefaultTbAiServiceTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"400, BAD_REQUEST_PARAMS", "413, BAD_REQUEST_PARAMS", "403, PERMISSION_DENIED", "404, ITEM_NOT_FOUND",
+    @CsvSource({"400, BAD_REQUEST_PARAMS", "413, BAD_REQUEST_PARAMS", "403, GENERAL", "404, ITEM_NOT_FOUND",
             "409, VERSION_CONFLICT", "429, TOO_MANY_REQUESTS", "401, GENERAL", "500, GENERAL", "0, GENERAL"})
     void shouldKeepTheStatusOfTheAiService_whenProcessAndResponseIsFailure(int status, ThingsboardErrorCode errorCode) {
         // GIVEN
