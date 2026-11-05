@@ -152,7 +152,7 @@
       <ng-template matStepLabel>{{ "integration.connection" | translate }}</ng-template>
       <form [formGroup]="integrationConfigurationForm" tb-toast toastTarget="integrationRoot">
         @if (isEdgeTemplate) {
-          <div class="tb-form-hint tb-primary-fill tb-hint-edge">
+          <div class="tb-form-hint tb-primary-fill mb-2">
             <mat-icon>info_outline</mat-icon>
             <span translate>integration.edge-placeholder-hint</span>
           </div>

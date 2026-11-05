@@ -128,24 +128,6 @@
 @mixin wizard-step-basics {
   .hint { font-size: 13px; color: $agent-text-secondary; margin: 0 0 16px; }
 
-  .tb-app-compose-hint {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 16px;
-    padding: 6px 10px;
-    border-radius: 4px;
-    background: $agent-warning-surface;
-    color: $agent-warning-text;
-    font-size: 12px;
-    .tb-app-compose-hint-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: $agent-warning-icon;
-    }
-  }
-
   .loading-state, .error-state {
     display: flex; align-items: center; gap: 12px; padding: 12px; color: $agent-text-secondary;
   }
@@ -161,27 +143,6 @@
 
   .config-toggle {
     display: flex; justify-content: center; margin-bottom: 16px;
-  }
-
-  .tb-agent-deploy-note {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin: 0 0 16px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--tb-primary-500) 6%, transparent);
-    font-size: 13px;
-    line-height: 1.5;
-    color: $agent-ink-76;
-
-    mat-icon {
-      flex-shrink: 0;
-      color: var(--tb-primary-500);
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
   }
 }
 
@@ -495,11 +456,5 @@
 
   .tb-type-badge {
     @include agent-type-badge;
-  }
-
-  .info-box {
-    @include agent-info-box;
-    @include agent-info-box-tone;
-    margin-bottom: 16px;
   }
 }

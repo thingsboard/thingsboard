@@ -3327,6 +3327,7 @@
             "bootstrap-server": "Bootstrap Server",
             "lwm2m-server": "LwM2M Server",
             "include-bootstrap-server": "Include Bootstrap Server updates",
+            "transport-run-without-bootstrap-server": "LwM2M transport was run without bootstrap server",
             "bootstrap-update-title": "You already have configured Bootstrap Server. Are you sure you want to exclude the updates?",
             "bootstrap-update-text": "Be careful, after the confirmation the Bootstrap Server configuration data will become unrecoverable.",
             "server-host": "Host",

@@ -32,7 +32,7 @@
 <form [formGroup]="entityForm" class="mat-padding" tb-toast toastTarget="integrationRoot">
   <fieldset [disabled]="(isLoading$ | async)">
     @if (isEdgeTemplate) {
-      <div class="tb-form-hint tb-primary-fill tb-hint-edge">
+      <div class="tb-form-hint tb-primary-fill mb-2">
         <mat-icon>info_outline</mat-icon>
         <span translate>integration.edge-placeholder-hint</span>
       </div>

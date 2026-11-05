@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+@import "../../../../../scss/constants";
+
 :host {
   display: block;
   border: 1px solid rgba(0, 0, 0, 0.12);
@@ -21,8 +23,8 @@
   }
 
   &.error {
-    color: #D12730;
-    background-color: rgba(209, 39, 48, 0.08);
+    color: $tb-error-color;
+    background-color: rgba($tb-error-color, 0.08);
   }
 
   .approval-title {

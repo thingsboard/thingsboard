@@ -222,8 +222,9 @@ export class TbIotHubMarkdownComponent implements OnInit, OnChanges {
       if (calloutMatch) {
         const type = calloutMatch[1];
         const text = calloutMatch[2];
-        const icons: Record<string, string> = { note: 'info_outline', warn: 'warning_amber', error: 'error_outline' };
-        return `<div class="tb-callout tb-callout-${type}"><i class="material-icons tb-callout-icon">${icons[type]}</i><span class="tb-callout-text">${text}</span></div>`;
+        const icons: Record<string, string> = { note: 'info_outline', warn: 'warning', error: 'error_outline' };
+        const modifiers: Record<string, string> = { note: '', warn: ' tb-form-hint-warning', error: ' tb-form-hint-error' };
+        return `<div class="tb-form-hint tb-primary-fill${modifiers[type]} my-3"><i class="mat-icon material-icons notranslate">${icons[type]}</i><span>${text}</span></div>`;
       }
 
       // Special variables

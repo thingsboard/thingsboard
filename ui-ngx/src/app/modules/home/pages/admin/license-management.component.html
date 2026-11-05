@@ -14,13 +14,13 @@
   @if (max >= 0) {
     @if (itemType === UsageItemType.DEVICES) {
       @if (itemLimitCritical(count, max)) {
-        <div class="item-panel item-panel-crit">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-error item-panel mb-3 mt-0.5">
+          <mat-icon>error_outline</mat-icon>
           <span>{{ 'subscription.device-limit-critical' | translate }}</span>
         </div>
       } @else if (itemLimitWarn(count, max)) {
-        <div class="item-panel item-panel-warn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"></path></svg>
+        <div class="tb-form-hint tb-primary-fill tb-form-hint-warning item-panel mb-3 mt-0.5">
+          <mat-icon>warning</mat-icon>
           <span [innerHTML]="('subscription.device-limit-warn' | translate: {percent: (count / max) | percent}) | safe: 'html'"></span>
         </div>
       }

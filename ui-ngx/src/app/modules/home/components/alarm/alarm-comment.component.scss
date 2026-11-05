@@ -225,7 +225,7 @@ $border: 1px solid mat.m2-get-color-from-palette($tb-primary);
     }
 
     .red-button {
-      color: #D12730;
+      color: $tb-error-color;
     }
 
     .mat-form-field {

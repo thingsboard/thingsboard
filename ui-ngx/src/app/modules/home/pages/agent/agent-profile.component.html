@@ -62,15 +62,15 @@
         </mat-select>
       </mat-form-field>
     </fieldset>
-    <div class="tb-agent-profile-strategy-hint">
-      <mat-icon class="hint-icon">help_outline</mat-icon>
+    <div class="tb-form-hint tb-primary-fill mb-3">
+      <mat-icon>info_outline</mat-icon>
       <div>
-        <div class="hint-title">
+        <div class="font-medium">
           {{ 'agent.provisioning-strategy-label' | translate: {
           strategy: agentProvisionTypeTranslationMap.get(entityForm.get('provisionType').value) | translate
           } }}
         </div>
-        <div class="hint-body">
+        <div>
           {{ agentProvisionTypeDescriptionMap.get(entityForm.get('provisionType').value) | translate }}
         </div>
       </div>
@@ -89,11 +89,11 @@
         </button>
         <pre>{{ dockerCommand }}</pre>
       </div>
-      <div class="tb-hint-note info">
+      <div class="tb-form-hint tb-primary-fill mb-2">
         <mat-icon>info_outline</mat-icon>
         <div>
           <div>{{ 'agent.agent-profile-created-hint' | translate }}</div>
-          <ol>
+          <ol class="mb-0 mt-1.5 pl-5">
             <li>{{ 'agent.agent-profile-created-step-1' | translate }}</li>
             <li>{{ 'agent.agent-profile-created-step-2' | translate }}</li>
             @if (autoInstallEnabled) {

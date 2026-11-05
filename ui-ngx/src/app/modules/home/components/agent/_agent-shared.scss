@@ -8,7 +8,6 @@ $agent-text-hint: rgba(0, 0, 0, 0.38);
 $agent-divider: rgba(0, 0, 0, 0.12);
 $agent-divider-light: rgba(0, 0, 0, 0.08);
 
-$agent-ink-76: rgba(0, 0, 0, 0.76);
 $agent-ink-60: rgba(0, 0, 0, 0.6);
 $agent-ink-42: rgba(0, 0, 0, 0.42);
 $agent-ink-24: rgba(0, 0, 0, 0.24);
@@ -33,9 +32,7 @@ $agent-error-surface: #fdecea;
 $agent-error-surface-light: #ffebee;
 $agent-info-surface: #e3f2fd;
 $agent-warning-surface: #fff8e1;
-$agent-warning-text: #6d4c00;
 $agent-warning-border: #ffe082;
-$agent-warning-icon: #c79100;
 $agent-code-bg: #1e1e1e;
 $agent-code-fg: #d4d4d4;
 $agent-editor-fg: #1f2328;
@@ -64,27 +61,6 @@ $agent-type-generic-fg: #6a1b9a;
   background: $agent-surface-neutral;
   color: $agent-color-neutral;
   @include agent-type-palette;
-}
-
-@mixin agent-info-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 4px;
-  font-size: 13px;
-  line-height: 1.5;
-  mat-icon {
-    flex-shrink: 0;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-  }
-}
-
-@mixin agent-info-box-tone {
-  background: $agent-info-surface;
-  color: $agent-color-info;
 }
 
 @mixin agent-command-block {

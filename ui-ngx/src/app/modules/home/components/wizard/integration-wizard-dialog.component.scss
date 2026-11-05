@@ -74,11 +74,7 @@
   }
 
   .error {
-    color: #D12730;
-  }
-
-  .tb-hint-edge {
-    margin-bottom: 8px;
+    color: $tb-error-color;
   }
 
   .tb-form-panel.tb-converter-panel {

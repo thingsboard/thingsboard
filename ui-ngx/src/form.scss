@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Modifications Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: Apache-2.0 AND BUSL-1.1
 @import './scss/constants';
+@import './scss/mixins';
 
 @mixin form-row-column() {
   flex-direction: column;
@@ -186,16 +187,13 @@
     color: rgba(0, 0, 0, 0.6);
     white-space: normal;
     border-radius: 6px;
-    &.tb-primary-fill {
+    &.tb-primary-fill:has(> .mat-icon) {
       display: flex;
       align-items: flex-start;
       gap: 8px;
       > .mat-icon {
         flex-shrink: 0;
-        width: 20px;
-        height: 20px;
-        font-size: 20px;
-        line-height: 20px;
+        @include tb-mat-icon-size(20);
         color: var(--tb-primary-500);
         + * {
           flex: 1;
@@ -203,10 +201,10 @@
         }
       }
       &.tb-form-hint-warning > .mat-icon {
-        color: #FAA405;
+        color: $tb-warning-color;
       }
       &.tb-form-hint-error > .mat-icon {
-        color: #D12730;
+        color: $tb-error-color;
       }
     }
   }

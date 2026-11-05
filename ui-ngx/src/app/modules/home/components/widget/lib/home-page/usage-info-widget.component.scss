@@ -39,8 +39,8 @@
     }
     .mat-mdc-progress-bar {
       &.critical {
-        --mat-progress-bar-track-color: rgba(209, 39, 48, 0.06);
-        --mat-progress-bar-active-indicator-color: #D12730;
+        --mat-progress-bar-track-color: #{rgba($tb-error-color, 0.06)};
+        --mat-progress-bar-active-indicator-color: #{$tb-error-color};
       }
     }
     .mdc-linear-progress {
@@ -75,7 +75,7 @@
       line-height: 16px;
     }
     &.critical {
-      color: #D12730;
+      color: $tb-error-color;
     }
   }
 
