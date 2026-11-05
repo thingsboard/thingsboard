@@ -449,7 +449,7 @@ class DefaultIotHubServiceTest {
 
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getErrorMessage()).contains("install wizard");
-        verify(tbDeviceService, never()).delete(any(), any());
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
         verify(iotHubInstalledItemService, never()).deleteById(any(), any());
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
@@ -652,7 +652,7 @@ class DefaultIotHubServiceTest {
 
         service.removeDevicePackageEntities(user, item.getId(), newVersionId);
 
-        verify(tbDeviceService, never()).delete(any(), any());
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
     }
 
     @Test
@@ -672,7 +672,7 @@ class DefaultIotHubServiceTest {
         // The registration of that version would be refused: nothing may be removed for it.
         assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), otherVersionId))
                 .isInstanceOf(IllegalArgumentException.class);
-        verify(tbDeviceService, never()).delete(any(), any());
+        verify(tbDeviceService, never()).delete(any(Device.class), any());
         verify(iotHubInstalledItemService, never()).save(any(), any());
     }
 }
