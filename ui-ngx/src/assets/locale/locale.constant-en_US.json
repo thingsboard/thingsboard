@@ -998,6 +998,34 @@
             "result": "Result"
         },
         "go-to-end": "Go to the end",
+        "start-a-task": "Start a task",
+        "code": {
+            "script": "Script",
+            "lines": "{ count, plural, =1 {1 line} other {# lines} }",
+            "wrap-lines": "Wrap lines",
+            "one-line-each": "One line each",
+            "wrap-long-lines": "Wrap long lines"
+        },
+        "task": {
+            "connect-device": {
+                "title": "Connect a device",
+                "hint": "A sensor, a gateway or a cloud integration",
+                "prompt": "Connect "
+            },
+            "build-dashboard": {
+                "title": "Build a dashboard",
+                "hint": "From the keys a device sends",
+                "prompt": "Build a dashboard for "
+            },
+            "set-up-alarm": {
+                "title": "Set up an alarm",
+                "hint": "A rule on a value, and who is told",
+                "prompt": "Alert me when "
+            }
+        },
+        "copy": "Copy",
+        "edit-message": "Edit: the words back in the composer",
+        "show-all": "Show all",
         "rename-save": "Save (Enter)",
         "rename-discard": "Discard (Esc)",
         "review": {

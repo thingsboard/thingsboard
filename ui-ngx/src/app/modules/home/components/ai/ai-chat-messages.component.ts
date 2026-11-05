@@ -3,9 +3,11 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
 import { ClipboardService } from 'ngx-clipboard';
+import { TranslateService } from '@ngx-translate/core';
 import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
 import { AiWorkState } from '@home/components/ai/ai-action.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { decorateCodeBlocks } from '@home/components/ai/ai-code-block';
 
 @Component({
   selector: 'tb-ai-chat-messages',
@@ -27,6 +29,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() work: AiWorkState | undefined;
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
   @Output() askAgain = new EventEmitter<void>();
+  @Output() editMessage = new EventEmitter<string>();
   @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
@@ -39,8 +42,16 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   summaries: Record<number, EntityId[]> = {};
 
+  dayLines: Record<number, string> = {};
+
+  private unfolded = new Set<number>();
+
+  private dayTimer: ReturnType<typeof setTimeout>;
+
   private static readonly PIN_TO_BOTTOM_MS = 1500;
   private static readonly COPIED_MS = 1200;
+  private static readonly FOLD_LINES = 6;
+  private static readonly FOLD_CHARS = 600;
 
   private releaseBottom: () => void;
 
@@ -51,7 +62,28 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   private copiedTimeout: ReturnType<typeof setTimeout>;
 
   constructor(private elementRef: ElementRef<HTMLElement>,
-              private clipboard: ClipboardService) {}
+              private clipboard: ClipboardService,
+              private translate: TranslateService) {}
+
+  copyText(text: string, index: number): void {
+    if (this.clipboard.copyFromContent(text)) {
+      this.copiedIndex = index;
+      clearTimeout(this.copiedTimeout);
+      this.copiedTimeout = setTimeout(() => this.copiedIndex = -1, AiChatMessagesComponent.COPIED_MS);
+    }
+  }
+
+  decorateCode(answer: HTMLElement): void {
+    decorateCodeBlocks(answer, this.translate, text => this.clipboard.copyFromContent(text));
+  }
+
+  isFolded(index: number, content: string): boolean {
+    return !this.unfolded.has(index) && (content.split('\n').length > AiChatMessagesComponent.FOLD_LINES || content.length > AiChatMessagesComponent.FOLD_CHARS);
+  }
+
+  unfold(index: number): void {
+    this.unfolded.add(index);
+  }
 
   copyAnswer(answer: HTMLElement, index: number): void {
     const text = (answer.querySelector<HTMLElement>('tb-markdown') ?? answer).innerText.trim();
@@ -87,6 +119,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       if (this.isNearBottom()) {
         setTimeout(() => this.scrollToBottom('smooth'), 0);
       }
+    }
+    if (changes.messages) {
+      this.refreshDayLines();
     }
     if (changes.messages || changes.completedExecutions || changes.loading) {
       this.summaries = this.findSummaries();
@@ -144,6 +179,48 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     this.approvalAction.emit($event);
   }
 
+  private refreshDayLines(): void {
+    const lines: Record<number, string> = {};
+    let previous: string | undefined;
+    let first = true;
+    this.messages.forEach((message, index) => {
+      const time = (message as {time?: number}).time;
+      if (!time) {
+        return;
+      }
+      const day = new Date(time).toDateString();
+      if (!first && day !== previous) {
+        lines[index] = this.dayLabel(time);
+      }
+      previous = day;
+      first = false;
+    });
+    this.dayLines = lines;
+    clearTimeout(this.dayTimer);
+    const midnight = new Date();
+    midnight.setHours(24, 0, 1, 0);
+    this.dayTimer = setTimeout(() => this.refreshDayLines(), midnight.getTime() - Date.now());
+  }
+
+  private dayLabel(time: number): string {
+    const date = new Date(time);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const day = new Date(date);
+    day.setHours(0, 0, 0, 0);
+    const days = Math.round((today.getTime() - day.getTime()) / 86_400_000);
+    if (days === 0) {
+      return this.translate.instant('ai-assistant.today');
+    }
+    if (days === 1) {
+      return this.translate.instant('ai-assistant.yesterday');
+    }
+    const options: Intl.DateTimeFormatOptions = days > 1 && days <= 6
+      ? {weekday: 'long', day: 'numeric', month: 'long'}
+      : date.getFullYear() === today.getFullYear() ? {day: 'numeric', month: 'long'} : {day: 'numeric', month: 'long', year: 'numeric'};
+    return new Intl.DateTimeFormat(this.translate.currentLang?.replace('_', '-') || undefined, options).format(date).replace(',', '');
+  }
+
   private findSummaries(): Record<number, EntityId[]> {
     const summaries: Record<number, EntityId[]> = {};
     let entities: EntityId[] = [];
@@ -196,6 +273,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.copiedTimeout);
+    clearTimeout(this.dayTimer);
     this.releaseBottom?.();
   }
 

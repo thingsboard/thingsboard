@@ -44,6 +44,18 @@
   --ai-hue: 180;
   --ai-light-mint: oklch(0.87 0.06 calc(var(--ai-hue) - 20));
   --ai-light-teal: oklch(0.86 0.08 calc(var(--ai-hue) - 5));
+  --ai-mark-fill:
+    radial-gradient(80% 80% at 16% 10%, oklch(0.995 0.008 calc(var(--ai-hue) + 5) / 0.7), transparent 62%),
+    radial-gradient(55% 55% at 0% 100%, color-mix(in oklab, var(--ai-light-mint) 45%, transparent), transparent 70%),
+    linear-gradient(135deg in oklab, oklch(0.91 0.055 calc(var(--ai-hue) - 8)) 0%, oklch(0.935 0.045 calc(var(--ai-hue) + 25)) 38%, oklch(0.915 0.04 295) 70%, oklch(0.94 0.028 70) 100%);
+  --ai-mark-edge:
+    inset -1px -1px 1px 0 oklch(1 0 0 / 0.75),
+    inset 0 0 0 1px oklch(0.62 0.08 var(--ai-hue) / 0.14);
+  --ai-mark-ink: var(--tb-ink);
+  --ai-mark-ink-a: oklch(0.46 0.065 calc(var(--ai-hue) - 5));
+  --ai-mark-ink-b: oklch(0.27 0.025 calc(var(--ai-hue) + 25));
+  --ai-mark-ink-c: oklch(0.19 0.015 295);
+  --ai-mark-ink-fill: linear-gradient(135deg in oklab, var(--ai-mark-ink-a) 0%, var(--ai-mark-ink-b) 50%, var(--ai-mark-ink-c) 100%);
   --ai-light-aqua: oklch(0.88 0.07 calc(var(--ai-hue) + 25));
   --ai-light-lilac: oklch(0.84 0.06 295);
   --ai-light-peach: oklch(0.88 0.06 45);
@@ -222,14 +234,9 @@
   --tb-primary-contrast-500: #ffffff;
 }
 
-@property --ai-h {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 172;
-}
-
 .tb-ai-mark {
   --m: 28px;
+  --ai-spark: .66;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -237,25 +244,44 @@
   width: var(--m);
   height: var(--m);
   border-radius: 38%;
-  background: var(--ai-icon);
+  background: var(--ai-mark-fill);
   background-size: 240% 240%;
-  animation: tb-ai-icon-flow 8s ease-in-out infinite alternate, tb-ai-mark-hue 6s ease-in-out infinite alternate;
+  box-shadow: var(--ai-mark-edge);
+  animation: tb-ai-icon-flow 8s ease-in-out infinite alternate;
 
-  .mat-icon {
-    font-size: calc(var(--m) * .57);
-    width: calc(var(--m) * .57);
-    height: calc(var(--m) * .57);
+  > .mat-icon {
+    font-family: 'Material Icons Round';
+    font-size: calc(var(--m) * var(--ai-spark));
+    width: calc(var(--m) * var(--ai-spark));
+    height: calc(var(--m) * var(--ai-spark));
     line-height: 1;
-    color: oklch(0.32 0.07 var(--ai-h)) !important;
+    color: var(--ai-mark-ink) !important;
+    background: var(--ai-mark-ink-fill);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  > .ai-spark-svg {
+    display: block;
+    flex: none;
+    width: calc(var(--m) * var(--ai-spark));
+    height: calc(var(--m) * var(--ai-spark));
+
+    svg {
+      display: block;
+      overflow: visible;
+    }
   }
 
   &.m24 { --m: 24px; }
+  &.m28 { --m: 28px; }
   &.m32 { --m: 32px; }
-  &.m44 { --m: 44px; }
-  &.m64 { --m: 64px; }
+  &.m44 { --m: 44px; --ai-spark: .74; }
+  &.m64 { --m: 64px; --ai-spark: .74; }
 
   &.m44, &.m64 {
-    box-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px color-mix(in oklab, var(--ai-light-teal) 26%, transparent);
+    box-shadow: var(--ai-mark-edge), 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px color-mix(in oklab, var(--ai-light-teal) 26%, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -263,15 +289,14 @@
   }
 }
 
+.ai-spark-svg stop:nth-child(1) { stop-color: var(--ai-mark-ink-a); }
+.ai-spark-svg stop:nth-child(2) { stop-color: var(--ai-mark-ink-b); }
+.ai-spark-svg stop:nth-child(3) { stop-color: var(--ai-mark-ink-c); }
+
 @keyframes tb-ai-icon-flow {
   0% { background-position: 0% 0%; }
   50% { background-position: 100% 60%; }
   100% { background-position: 40% 100%; }
-}
-
-@keyframes tb-ai-mark-hue {
-  from { --ai-h: calc(var(--ai-hue) - 8); }
-  to { --ai-h: calc(var(--ai-hue) + 120); }
 }
 
 .tb-ai-status-mark {

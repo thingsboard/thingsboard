@@ -112,6 +112,8 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   work = signal<AiWorkState | undefined>(undefined);
 
+  readonly tasks = ['connect-device', 'build-dashboard', 'set-up-alarm'];
+
   scrolled = signal(false);
 
   private atEnd = signal(true);
@@ -340,6 +342,10 @@ export class AiChatComponent implements OnInit, OnDestroy {
       result.reason = event.reason;
     }
     this.aiChat.resolveToolApproval(result, {ignoreLoading: true, ignoreErrors: true}).subscribe();
+  }
+
+  startTask(task: string): void {
+    this.promptInput?.setValue(this.translate.instant('ai-assistant.task.' + task + '.prompt'));
   }
 
   onAskAgain(): void {

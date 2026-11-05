@@ -254,8 +254,9 @@
   container: k-chat / inline-size;
 
   &.empty {
-    justify-content: center;
-    padding-bottom: 12vh;
+    justify-content: flex-start;
+    padding-top: 64px;
+    padding-bottom: 24px;
   }
 }
 
@@ -283,7 +284,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   text-align: center;
 }
 
@@ -399,6 +400,109 @@
 @media (prefers-reduced-motion: reduce) {
   .k-pill:not(.new)::after {
     animation: none;
+  }
+}
+
+.ai-sec {
+  width: 100%;
+  max-width: 680px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.ai-sec-head h2 {
+  margin: 0;
+  font: 500 14px/20px var(--tb-font);
+  letter-spacing: normal;
+  color: var(--tb-text-secondary);
+}
+
+.ai-tasks {
+  margin-top: 8px;
+  border-radius: 12px;
+  background: var(--tb-surface);
+  box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.03), 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 10px rgba(16, 24, 40, 0.06);
+}
+
+.ai-task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px 0 16px;
+  border: 0;
+  background: none;
+  font: 400 14px/20px var(--tb-font);
+  letter-spacing: normal;
+  text-align: left;
+  color: var(--tb-ink);
+  cursor: pointer;
+  transition: background-color .12s ease;
+
+  & + .ai-task {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  &:first-child {
+    border-radius: 12px 12px 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 12px 12px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.03);
+
+    .mat-icon {
+      color: var(--tb-ink);
+      transform: translateX(2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: inset 0 0 0 2px var(--ai-focus);
+  }
+
+  b {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    max-width: 280px;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 18px;
+    color: var(--tb-ink-76);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (max-width: 599px) {
+      display: none;
+    }
+  }
+
+  .mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    color: var(--tb-ink-38);
+    transition: transform .15s ease, color .15s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    .mat-icon {
+      transition: none;
+    }
   }
 }
 

@@ -81,13 +81,12 @@
       [denyReasons]="denyReasons()"
       [work]="work()"
       (approvalAction)="onApprovalAction($event)"
-      (askAgain)="onAskAgain()">
+      (askAgain)="onAskAgain()"
+      (editMessage)="promptInput?.setValue($event)">
     </tb-ai-chat-messages>
   } @else if (!chatId()) {
     <div class="ai-chat-start">
-      <span class="tb-ai-mark" [class.m64]="variant() === 'page'" [class.m44]="variant() === 'panel'" aria-hidden="true">
-        <mat-icon>auto_awesome</mat-icon>
-      </span>
+      <span class="tb-ai-mark" [class.m64]="variant() === 'page'" [class.m44]="variant() === 'panel'" aria-hidden="true"><tb-ai-spark></tb-ai-spark></span>
       <h1 class="ai-chat-start-title">{{ 'ai-assistant.what-to-work-on' | translate }}</h1>
     </div>
   }
@@ -118,6 +117,20 @@
       (messageSent)="sendMsgFromUser($event)">
     </tb-ai-prompt-input>
   </div>
+  @if (!chatId() && !messages().length && !loading()) {
+    <section class="ai-sec" aria-labelledby="ai-sec-tasks">
+      <div class="ai-sec-head"><h2 id="ai-sec-tasks">{{ 'ai-assistant.start-a-task' | translate }}</h2></div>
+      <div class="ai-tasks">
+        @for (task of tasks; track task) {
+          <button type="button" class="ai-task" (click)="startTask(task)">
+            <b>{{ ('ai-assistant.task.' + task + '.title') | translate }}</b>
+            <small>{{ ('ai-assistant.task.' + task + '.hint') | translate }}</small>
+            <mat-icon fontSet="material-icons-round" aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        }
+      </div>
+    </section>
+  }
 </div>
 
 <mat-menu #chatMenu="matMenu" xPosition="before" class="tb-ai-chat-menu">

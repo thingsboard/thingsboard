@@ -21,6 +21,7 @@ import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component'
 import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
 import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.component';
 import { AiRecordComponent } from '@home/components/ai/ai-record.component';
+import { AiSparkComponent } from '@home/components/ai/ai-spark.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { AiRecordComponent } from '@home/components/ai/ai-record.component';
     AiWorkLineComponent,
     AiActionLineComponent,
     AiRunSummaryComponent,
-    AiRecordComponent
+    AiRecordComponent,
+    AiSparkComponent
   ],
   imports: [
     CommonModule,

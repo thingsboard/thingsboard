@@ -4,7 +4,8 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: var(--chat-line);
+  font-family: var(--tb-mono);
+  font-size: 15px;
   line-height: var(--chat-line-lh);
   color: var(--tb-ink);
 
@@ -16,6 +17,8 @@
 .say {
   display: inline-block;
   min-width: 0;
+  font-family: var(--tb-font);
+  font-size: var(--chat-line);
   background: linear-gradient(90deg, var(--tb-ink-54) 0%, var(--tb-ink) 42%, var(--tb-ink-54) 58%, var(--tb-ink-54) 100%);
   background-size: 260% 100%;
   -webkit-background-clip: text;
