@@ -878,11 +878,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     // All done — register install with created entity IDs. The step is done only then: until it is registered,
     // nothing tracks the entities, so the package could be neither updated nor removed from IoT Hub.
     try {
-      for (const id of this.collectCreatedEntityIds()) {
-        if (!this.packageEntityIds.some(known => known.id === id.id)) {
-          this.packageEntityIds.push(id);
-        }
-      }
       const createdEntityIds = [...this.packageEntityIds];
       const dashboardId = this.findCreatedDashboardId();
       const result = await firstValueFrom(
@@ -1213,23 +1208,6 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
       }
     }
     return state;
-  }
-
-  private collectCreatedEntityIds(): { entityType: string; id: string }[] {
-    const ids: { entityType: string; id: string }[] = [];
-    for (const ws of this.wizardSteps) {
-      if (ws.type === 'progress' && ws.entitySteps) {
-        for (const ep of ws.entitySteps) {
-          if (ep.status === 'success' && ep.entityOutput) {
-            const entityType = this.stepTypeToEntityType(ep.step.type);
-            if (entityType) {
-              ids.push({ entityType, id: ep.entityOutput.id });
-            }
-          }
-        }
-      }
-    }
-    return ids;
   }
 
   private findCreatedDashboardId(): { entityType: string; id: string } | undefined {

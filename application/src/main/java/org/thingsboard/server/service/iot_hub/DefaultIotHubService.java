@@ -631,7 +631,11 @@ public class DefaultIotHubService implements IotHubService {
         if (versionInfo == null) {
             throw new IllegalArgumentException("Failed to get version info from IoT Hub");
         }
-        checkSameItem(installedItem, UUID.fromString(versionInfo.get(FIELD_ITEM_ID).asText()));
+        String itemId = optText(versionInfo, FIELD_ITEM_ID);
+        if (itemId == null) {
+            throw new IllegalArgumentException("IoT Hub returned the version without its item");
+        }
+        checkSameItem(installedItem, UUID.fromString(itemId));
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
         deleteDevicePackageEntities(tenantId, descriptor.getCreatedEntityIds(), user);
         descriptor.setCreatedEntityIds(null);
