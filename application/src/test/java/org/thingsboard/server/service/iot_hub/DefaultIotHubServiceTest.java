@@ -656,6 +656,40 @@ class DefaultIotHubServiceTest {
     }
 
     @Test
+    void removeDevicePackageEntities_entityNotRemoved_staysTrackedAndFails() throws Exception {
+        mockTenant();
+        Device device = new Device(new DeviceId(UUID.randomUUID()));
+        device.setTenantId(tenantId);
+        Dashboard dashboard = new Dashboard(new DashboardId(UUID.randomUUID()));
+        dashboard.setTenantId(tenantId);
+        DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
+        descriptor.setCreatedEntityIds(List.<EntityId>of(device.getId(), dashboard.getId()));
+        descriptor.setDashboardId(dashboard.getId());
+        IotHubInstalledItem item = installedItem(UUID.randomUUID());
+        item.setItemType("DEVICE");
+        item.setVersion("1.0.1");
+        item.setItemId(UUID.randomUUID());
+        item.setDescriptor(descriptor);
+        when(iotHubInstalledItemService.findById(tenantId, item.getId())).thenReturn(item);
+        String newVersionId = UUID.randomUUID().toString();
+        when(iotHubRestClient.getVersionInfo(newVersionId))
+                .thenReturn(version(newVersionId, item.getItemId().toString(), "DEVICE", "Gateway", "1.0.2"));
+        when(deviceService.findDeviceById(tenantId, device.getId())).thenReturn(device);
+        when(dashboardService.findDashboardById(tenantId, dashboard.getId())).thenReturn(dashboard);
+        doThrow(new RuntimeException("dashboard is in use")).when(tbDashboardService).delete(dashboard, user);
+
+        assertThatThrownBy(() -> service.removeDevicePackageEntities(user, item.getId(), newVersionId))
+                .hasMessage("not removed: DASHBOARD (dashboard is in use)");
+
+        // The rest is removed; the one left stays tracked, so Retry, a later update or Delete removes it.
+        verify(tbDeviceService).delete(device, user);
+        verify(iotHubInstalledItemService).save(tenantId, item);
+        assertThat(descriptor.getCreatedEntityIds()).containsExactly(dashboard.getId());
+        assertThat(descriptor.getDashboardId()).isEqualTo(dashboard.getId());
+        assertThat(item.getVersion()).isEqualTo("1.0.1");
+    }
+
+    @Test
     void removeDevicePackageEntities_versionOfAnotherItem_refusedBeforeRemoving() {
         mockTenant();
         DeviceInstalledItemDescriptor descriptor = new DeviceInstalledItemDescriptor();
