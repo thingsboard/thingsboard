@@ -183,14 +183,12 @@ export class IotHubApiService {
     replaceInstalledItemId?: string,
     config?: IotHubRequestConfig
   ): Observable<InstallItemVersionResult> {
-    let params = this.buildParams(config);
-    if (replaceInstalledItemId) {
-      params = params.set('replaceInstalledItemId', replaceInstalledItemId);
-    }
+    // In the URL: HttpParams.set() would drop the interceptor config (ignoreLoading, ignoreErrors) of buildParams.
+    const replace = replaceInstalledItemId ? `&replaceInstalledItemId=${replaceInstalledItemId}` : '';
     return this.http.post<InstallItemVersionResult>(
-      `/api/iot-hub/device/register?versionId=${versionId}`,
+      `/api/iot-hub/device/register?versionId=${versionId}${replace}`,
       { type: 'DEVICE', ...descriptor },
-      { params }
+      { params: this.buildParams(config) }
     );
   }
 
