@@ -64,6 +64,11 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
    * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
    * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
    */
+  /** A device package is reinstalled: its entities and their data are removed, as on Remove. */
+  get reinstalls(): boolean {
+    return this.data?.itemType === ItemType.DEVICE;
+  }
+
   get updateDescKey(): string {
     switch (this.data?.itemType) {
       case ItemType.SOLUTION_TEMPLATE:

@@ -4479,6 +4479,7 @@
         "update-item-title": "Update Item",
         "update-confirm": "Update '{{name}}' to version {{version}}?",
         "update-confirm-title": "Update '{{name}}'?",
+        "update-anyway": "Update anyway",
         "update-desc": "Updating this will replace the current version with the latest and reconfigure the associated resources within your tenant",
         "device-update-removing": "Removing the entities of the installed version…",
         "device-update-close-text": "The update has already removed entities of the installed version, and the new version is not installed yet. If you close the wizard now, the package stays at its installed version without them; Update installs it again.",
