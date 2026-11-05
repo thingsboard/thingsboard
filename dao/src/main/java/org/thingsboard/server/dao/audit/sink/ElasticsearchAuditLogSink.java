@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -110,6 +111,14 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private void destroy() {
         if (executor != null) {
             executor.shutdownNow();
+        }
+        // I/O reactor threads are non-daemon and would keep the JVM alive, e.g. after the install finishes
+        if (restClient != null) {
+            try {
+                restClient.close();
+            } catch (IOException e) {
+                log.warn("Failed to close Elasticsearch rest client", e);
+            }
         }
     }
 

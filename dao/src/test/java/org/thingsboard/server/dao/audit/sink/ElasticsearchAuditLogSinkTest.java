@@ -31,11 +31,16 @@ import org.thingsboard.server.common.data.id.UserId;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.atLeastOnce;
@@ -138,14 +143,27 @@ public class ElasticsearchAuditLogSinkTest {
     }
 
     @Test
+    public void givenRealRestClient_whenDestroy_thenIoThreadsStop() {
+        Set<Thread> existing = restClientThreads();
+        ElasticsearchAuditLogSink realSink = newSink("auto");
+        Set<Thread> started = restClientThreads();
+        started.removeAll(existing);
+        assertThat(started).isNotEmpty().noneMatch(Thread::isDaemon);
+
+        ReflectionTestUtils.invokeMethod(realSink, "destroy");
+
+        await().atMost(10, TimeUnit.SECONDS).until(() -> started.stream().noneMatch(Thread::isAlive));
+    }
+
+    @Test
     public void givenInvalidMode_whenInit_thenFail() {
         sink = new ElasticsearchAuditLogSink();
         ReflectionTestUtils.setField(sink, "indexApi", "invalid");
         assertThatThrownBy(sink::init).isInstanceOf(IllegalArgumentException.class);
     }
 
-    private void initSink(String indexApi) {
-        sink = new ElasticsearchAuditLogSink();
+    private static ElasticsearchAuditLogSink newSink(String indexApi) {
+        ElasticsearchAuditLogSink sink = new ElasticsearchAuditLogSink();
         ReflectionTestUtils.setField(sink, "indexPattern", INDEX);
         ReflectionTestUtils.setField(sink, "dateFormat", "yyyy.MM.dd");
         ReflectionTestUtils.setField(sink, "schemeName", "http");
@@ -153,6 +171,11 @@ public class ElasticsearchAuditLogSinkTest {
         ReflectionTestUtils.setField(sink, "port", 9200);
         ReflectionTestUtils.setField(sink, "indexApi", indexApi);
         sink.init();
+        return sink;
+    }
+
+    private void initSink(String indexApi) {
+        sink = newSink(indexApi);
         try {
             ((RestClient) ReflectionTestUtils.getField(sink, "restClient")).close();
         } catch (IOException ignored) {
@@ -160,6 +183,12 @@ public class ElasticsearchAuditLogSinkTest {
         restClient = mock(RestClient.class);
         ReflectionTestUtils.setField(sink, "restClient", restClient);
         ReflectionTestUtils.setField(sink, "executor", MoreExecutors.newDirectExecutorService());
+    }
+
+    private static Set<Thread> restClientThreads() {
+        return Thread.getAllStackTraces().keySet().stream()
+                .filter(t -> t.getName().startsWith("elasticsearch-rest-client"))
+                .collect(Collectors.toCollection(HashSet::new));
     }
 
     private void mockServerVersion(String distribution, String version) throws IOException {
