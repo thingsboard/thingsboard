@@ -44,10 +44,9 @@
           }
         }
         @if (userEmail$ | async; as email) {
-          <div #emailTooltip="matTooltip" class="tb-user-email" [matTooltip]="email.full"
-               (mouseenter)="emailTooltip.disabled = emailLocal.textContent === email.local && emailDomain.scrollWidth <= emailDomain.clientWidth">
-            <span #emailLocal class="tb-email-local">{{ email.local }}</span>
-            <span #emailDomain class="tb-email-domain">{{ email.domain }}</span>
+          <div class="tb-user-email">
+            <span class="tb-email-local" [tbTruncateWithTooltip]="email.full">{{ email.local }}</span>
+            <span class="tb-email-domain" [tbTruncateWithTooltip]="email.full">{{ email.domain }}</span>
           </div>
         }
       </div>

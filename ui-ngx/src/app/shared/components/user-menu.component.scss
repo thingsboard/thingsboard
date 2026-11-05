@@ -106,22 +106,30 @@ tb-user-menu {
   }
   .tb-user-email {
     display: flex;
-    min-width: 0;
     font-size: 13px;
     line-height: 16px;
     color: rgba(0,0,0,0.6);
     .tb-email-local {
       min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+    @supports (container-type: scroll-state) {
+      .tb-email-local {
+        container-type: scroll-state;
+        text-overflow: clip !important;
+      }
+      @container scroll-state(scrollable: inline-end) {
+        .tb-email-local::after {
+          content: "…";
+          position: sticky;
+          right: 0;
+          padding-left: 0.6em;
+          background: linear-gradient(to right, transparent, #fff 0.6em);
+        }
+      }
     }
     .tb-email-domain {
       flex-shrink: 0;
       max-width: 60%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
   }
   .mat-mdc-button {
