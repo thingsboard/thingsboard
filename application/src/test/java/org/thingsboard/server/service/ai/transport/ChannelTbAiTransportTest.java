@@ -118,7 +118,7 @@ class ChannelTbAiTransportTest {
         AtomicBoolean heartbeat = new AtomicBoolean();
 
         // WHEN
-        Disposable subscription = transport.sendChatMessage(UUID.randomUUID(), request, context).subscribe(event -> heartbeat.set(true));
+        Disposable subscription = transport.sendChatMessage(UUID.randomUUID(), request, context, null).subscribe(event -> heartbeat.set(true));
         await().atMost(Duration.ofSeconds(5)).untilTrue(heartbeat);
         subscription.dispose();
 
@@ -127,6 +127,97 @@ class ChannelTbAiTransportTest {
         ChannelFrame cancel = server.received(ChannelProtocol.CANCEL).getFirst();
         assertThat(cancel.op()).isEqualTo(server.received(ChannelProtocol.CHAT_SEND).getFirst().id());
         assertThat(server.openConnections.get()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldDetachButKeepListening_whenBrowserLeavesAndServerCanResumeTurns() {
+        // GIVEN
+        server = FakeTbAiServer.start(List.of(ChannelProtocol.TURN_RESUME_CAPABILITY), (connection, frame) -> {
+            if (ChannelProtocol.CHAT_SEND.equals(frame.type())) {
+                connection.sendFor(frame, ChannelProtocol.CHAT_EVENT, new ChatEventPayload("heartbeat", null));
+            }
+        });
+        pool = pool();
+        var transport = new ChannelTbAiTransport(pool, requestExecutor);
+        var link = new TbAiTurnLink();
+        AtomicBoolean heartbeat = new AtomicBoolean();
+        transport.sendChatMessage(UUID.randomUUID(), request, context, link).subscribe(event -> heartbeat.set(true));
+        await().atMost(Duration.ofSeconds(5)).untilTrue(heartbeat);
+
+        // WHEN
+        link.clientLeft();
+
+        // THEN
+        await().atMost(Duration.ofSeconds(5)).until(() -> !server.received(ChannelProtocol.CHAT_DETACH).isEmpty());
+        assertThat(server.received(ChannelProtocol.CHAT_DETACH).getFirst().op())
+                .isEqualTo(server.received(ChannelProtocol.CHAT_SEND).getFirst().id());
+        assertThat(server.received(ChannelProtocol.CANCEL)).isEmpty();
+    }
+
+    @Test
+    void shouldNotSendDetach_whenServerCannotResumeTurns() {
+        // GIVEN
+        server = FakeTbAiServer.start((connection, frame) -> {
+            if (ChannelProtocol.CHAT_SEND.equals(frame.type())) {
+                connection.sendFor(frame, ChannelProtocol.CHAT_EVENT, new ChatEventPayload("heartbeat", null));
+            }
+        });
+        pool = pool();
+        var transport = new ChannelTbAiTransport(pool, requestExecutor);
+        var link = new TbAiTurnLink();
+        AtomicBoolean heartbeat = new AtomicBoolean();
+        transport.sendChatMessage(UUID.randomUUID(), request, context, link).subscribe(event -> heartbeat.set(true));
+        await().atMost(Duration.ofSeconds(5)).untilTrue(heartbeat);
+
+        // WHEN
+        link.clientLeft();
+        transport.sendChatMessage(UUID.randomUUID(), request, context, null).subscribe();
+
+        // THEN
+        await().atMost(Duration.ofSeconds(5)).until(() -> server.received(ChannelProtocol.CHAT_SEND).size() == 2);
+        assertThat(server.received(ChannelProtocol.CHAT_DETACH)).isEmpty();
+        assertThat(server.openConnections.get()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldRelayTheResumedTurn_whenServerCanResumeTurns() {
+        // GIVEN
+        UUID chatId = UUID.randomUUID();
+        server = FakeTbAiServer.start(List.of(ChannelProtocol.TURN_RESUME_CAPABILITY), (connection, frame) -> {
+            if (ChannelProtocol.CHAT_RESUME.equals(frame.type())) {
+                connection.sendFor(frame, ChannelProtocol.CHAT_EVENT, new ChatEventPayload("turnResumed", JacksonUtil.newObjectNode()));
+                connection.sendFor(frame, ChannelProtocol.CHAT_EVENT, new ChatEventPayload("assistantMessage",
+                        JacksonUtil.newObjectNode().put("message", "Done.")));
+                connection.sendFor(frame, ChannelProtocol.TURN_END, new TurnEnd(TurnEnd.Status.COMPLETED));
+            }
+        });
+        pool = pool();
+
+        // WHEN
+        List<ServerSentEvent<String>> events = new ChannelTbAiTransport(pool, requestExecutor)
+                .resumeChat(chatId, context, new TbAiTurnLink())
+                .collectList().block(Duration.ofSeconds(10));
+
+        // THEN
+        assertThat(events).extracting(ServerSentEvent::event).containsExactly("turnResumed", "assistantMessage");
+        ChatTurnRequest resume = server.codec.fromPayload(server.received(ChannelProtocol.CHAT_RESUME).getFirst().payload(), ChatTurnRequest.class);
+        assertThat(resume).isEqualTo(new ChatTurnRequest(chatId, null, context.acceptLanguage()));
+    }
+
+    @Test
+    void shouldEndAtOnceWithoutAsking_whenServerCannotResumeTurns() {
+        // GIVEN
+        server = FakeTbAiServer.start((connection, frame) -> {});
+        pool = pool();
+
+        // WHEN
+        List<ServerSentEvent<String>> events = new ChannelTbAiTransport(pool, requestExecutor)
+                .resumeChat(UUID.randomUUID(), context, new TbAiTurnLink())
+                .collectList().block(Duration.ofSeconds(10));
+
+        // THEN
+        assertThat(events).isEmpty();
+        assertThat(server.received(ChannelProtocol.CHAT_RESUME)).isEmpty();
     }
 
     @Test
@@ -159,7 +250,7 @@ class ChannelTbAiTransportTest {
         TbAiTurnContext turnContext = new TbAiTurnContext(context.tenantId(), context.userId(), context.user(), "Bearer user-jwt",
                 "de-DE", context.tokenProvider(), "https://tb.example.com");
         return new ChannelTbAiTransport(pool, requestExecutor)
-                .sendChatMessage(UUID.randomUUID(), request, turnContext)
+                .sendChatMessage(UUID.randomUUID(), request, turnContext, null)
                 .collectList()
                 .block(Duration.ofSeconds(10));
     }

@@ -90,7 +90,6 @@ export class ParticleIntegrationFormComponent extends IntegrationForm implements
     ).subscribe(() => {
       this.updateModels(this.particleIntegrationConfigForm.getRawValue());
     });
-    this.particleIntegrationConfigForm.removeControl('replaceNoContentToOk', {emitEvent: false});
   }
 
   writeValue(value: ParticleIntegration) {
