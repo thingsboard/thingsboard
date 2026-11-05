@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package org.thingsboard.server.dao.audit.sink;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -16,6 +17,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.ResponseListener;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -31,8 +33,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @ConditionalOnProperty(prefix = "audit-log.sink", value = "type", havingValue = "elasticsearch")
@@ -41,7 +45,9 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
 
     private static final String TENANT_PLACEHOLDER = "@{TENANT}";
     private static final String DATE_PLACEHOLDER = "@{DATE}";
-    private static final String INDEX_TYPE = "audit_log";
+    static final String LEGACY_DOCUMENT_TYPE = "audit_log";
+    static final String TYPELESS_DOCUMENT_TYPE = "_doc";
+    static final long DISCOVERY_RETRY_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
 
     @Value("${audit-log.sink.index_pattern}")
     private String indexPattern;
@@ -57,12 +63,26 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private String password;
     @Value("${audit-log.sink.date_format}")
     private String dateFormat;
+    @Value("${audit-log.sink.index_api:auto}")
+    private String indexApi;
 
     private RestClient restClient;
     private ExecutorService executor;
 
+    private boolean autoDetectDocumentType;
+    // null until resolved; reset on server error so cluster upgrades are picked up
+    private volatile String documentType;
+    private long lastDiscoveryTs;
+
     @PostConstruct
     public void init() {
+        switch (StringUtils.isBlank(indexApi) ? "auto" : indexApi.trim().toLowerCase(Locale.ROOT)) {
+            case "auto" -> autoDetectDocumentType = true;
+            case "typed" -> documentType = LEGACY_DOCUMENT_TYPE;
+            case "typeless" -> documentType = TYPELESS_DOCUMENT_TYPE;
+            default -> throw new IllegalArgumentException("Unsupported audit-log.sink.index_api value: " + indexApi +
+                    ". Possible options: auto, typed, typeless");
+        }
         try {
             log.trace("Adding elastic rest endpoint... host [{}], port [{}], scheme name [{}]",
                     host, port, schemeName);
@@ -111,7 +131,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
                 jsonContent,
                 ContentType.APPLICATION_JSON);
 
-        Request request = new Request(HttpMethod.POST.name(),String.format("/%s/%s", getIndexName(auditLogEntry.getTenantId()), INDEX_TYPE));
+        Request request = new Request(HttpMethod.POST.name(), String.format("/%s/%s", getIndexName(auditLogEntry.getTenantId()), getDocumentType()));
         request.setEntity(entity);
 
         restClient.performRequestAsync(request, responseListener);
@@ -148,8 +168,57 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
         @Override
         public void onFailure(Exception exception) {
             log.warn("Elasticsearch sink log action method failed!", exception);
+            if (autoDetectDocumentType && exception instanceof ResponseException) {
+                documentType = null;
+            }
         }
     };
+
+    private String getDocumentType() {
+        String type = documentType;
+        if (type == null) {
+            long now = System.currentTimeMillis();
+            if (now - lastDiscoveryTs >= DISCOVERY_RETRY_INTERVAL_MS) {
+                lastDiscoveryTs = now;
+                type = discoverDocumentType();
+                documentType = type;
+            }
+        }
+        return type != null ? type : TYPELESS_DOCUMENT_TYPE;
+    }
+
+    /*
+     * Custom mapping types ("/{index}/audit_log") were removed in Elasticsearch 8 and OpenSearch 2.
+     * The legacy endpoint is kept where it is still supported, so existing indices stay unchanged.
+     */
+    private String discoverDocumentType() {
+        JsonNode info;
+        try {
+            Response response = restClient.performRequest(new Request(HttpMethod.GET.name(), "/"));
+            info = JacksonUtil.toJsonNode(response.getEntity().getContent());
+        } catch (Exception e) {
+            log.warn("Failed to detect audit log sink server version, using typeless index API. Will retry in {} ms",
+                    DISCOVERY_RETRY_INTERVAL_MS, e);
+            return null;
+        }
+        // OpenSearch in compatibility mode reports version 7.10.2 without "distribution", but keeps its tagline
+        boolean openSearch = "opensearch".equalsIgnoreCase(info.path("version").path("distribution").asText()) ||
+                info.path("tagline").asText().toLowerCase(Locale.ROOT).contains("opensearch");
+        String number = info.path("version").path("number").asText();
+        int major = parseMajorVersion(number);
+        boolean legacy = openSearch ? major == 1 : major > 0 && major < 8;
+        String type = legacy ? LEGACY_DOCUMENT_TYPE : TYPELESS_DOCUMENT_TYPE;
+        log.info("Detected audit log sink server: {} {}, using document type [{}]", openSearch ? "OpenSearch" : "Elasticsearch", number, type);
+        return type;
+    }
+
+    private static int parseMajorVersion(String version) {
+        try {
+            return Integer.parseInt(version.substring(0, version.indexOf('.')));
+        } catch (Exception e) {
+            return -1;
+        }
+    }
 
     private String getIndexName(TenantId tenantId) {
         String indexName = indexPattern;
