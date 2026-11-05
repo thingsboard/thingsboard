@@ -3,6 +3,11 @@
 import { AI_IMAGE_MEDIA_TYPES } from '@shared/models/ai-chat.models';
 
 const MAX_IMAGE_SIDE = 2560;
+const MIN_SVG_SIDE = 1024;
+const SVG_MEDIA_TYPE = 'image/svg+xml';
+const SVG_UNITS: Record<string, number> = {'': 1, px: 1, pt: 4 / 3, pc: 16, in: 96, cm: 96 / 2.54, mm: 96 / 25.4};
+
+export const AI_SVG_EXTENSION = '.svg';
 
 export interface AiAttachmentKind {
   icon: string;
@@ -44,9 +49,11 @@ export const aiAttachmentExtension = (name: string): string => {
   return dot > 0 ? name.substring(dot + 1).toUpperCase() : '';
 };
 
+export const isAiSvg = (file: File): boolean => file.type === SVG_MEDIA_TYPE || file.name.toLowerCase().endsWith(AI_SVG_EXTENSION);
+
 export const isAiAttachmentAccepted = (file: File, extensions: string[]): boolean => {
   const name = file.name.toLowerCase();
-  return extensions.some(extension => name.endsWith(extension.toLowerCase()));
+  return isAiSvg(file) || extensions.some(extension => name.endsWith(extension.toLowerCase()));
 };
 
 export const namePastedImage = (file: File): File => {
@@ -113,4 +120,49 @@ export const fitAiImage = async (file: File, maxSize: number): Promise<File> => 
   const base = file.name.replace(/\.[^.]+$/, '');
   const name = type === file.type ? file.name : `${base}.jpg`;
   return new File([blob], name, {type, lastModified: file.lastModified});
+};
+
+const svgLength = (value: string | null): number | null => {
+  const match = value?.trim().match(/^([0-9]*\.?[0-9]+(?:e[-+]?[0-9]+)?)\s*(px|pt|pc|in|cm|mm)?$/i);
+  const length = match ? parseFloat(match[1]) * SVG_UNITS[(match[2] ?? '').toLowerCase()] : NaN;
+  return length > 0 ? length : null;
+};
+
+export const svgToAiImage = async (file: File, maxSize: number): Promise<File> => {
+  const document = new DOMParser().parseFromString(await file.text(), SVG_MEDIA_TYPE);
+  const svg = document.documentElement;
+  if (svg.localName !== 'svg' || document.getElementsByTagName('parsererror').length) {
+    throw new Error('Not an SVG image');
+  }
+  Array.from(document.getElementsByTagNameNS('*', 'foreignObject')).forEach(node => node.remove());
+  const viewBox = (svg.getAttribute('viewBox') ?? '').trim().split(/[\s,]+/).map(Number);
+  const hasViewBox = viewBox.length === 4 && viewBox[2] > 0 && viewBox[3] > 0;
+  let width = svgLength(svg.getAttribute('width')) ?? (hasViewBox ? viewBox[2] : null);
+  let height = svgLength(svg.getAttribute('height')) ?? (hasViewBox ? viewBox[3] : null);
+  if (!width || !height) {
+    width = width ?? height ?? MIN_SVG_SIDE;
+    height = height ?? width;
+  }
+  if (!hasViewBox) {
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  }
+  const scale = Math.min(MAX_IMAGE_SIDE / Math.max(width, height), Math.max(1, MIN_SVG_SIDE / Math.max(width, height)));
+  const canvas = window.document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  svg.setAttribute('width', String(canvas.width));
+  svg.setAttribute('height', String(canvas.height));
+  const image = await loadImage(new File([new XMLSerializer().serializeToString(document)], file.name, {type: SVG_MEDIA_TYPE}));
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  let blob = await encode(canvas, 'image/png');
+  let type = 'image/png';
+  if (blob.size > maxSize) {
+    blob = await encode(canvas, 'image/jpeg', 0.85);
+    type = 'image/jpeg';
+  }
+  const base = file.name.replace(/\.[^.]+$/, '');
+  return new File([blob], `${base}.${type === 'image/png' ? 'png' : 'jpg'}`, {type, lastModified: file.lastModified});
 };

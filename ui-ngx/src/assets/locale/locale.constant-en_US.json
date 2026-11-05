@@ -728,6 +728,7 @@
         "attachment-uploading": "Uploading · {{progress}} %",
         "attachment-unsupported": "Not supported: a PDF, spreadsheet, image or text",
         "attachment-larger-than": "Larger than {{size}}",
+        "attachment-svg-failed": "This SVG can't be converted to an image",
         "attachment-over-limit": "More than {{count}} files",
         "file-kind": {
             "image": "Image",

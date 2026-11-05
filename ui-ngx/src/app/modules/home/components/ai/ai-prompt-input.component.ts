@@ -27,11 +27,14 @@ import { guid, isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
 import { AiResourceService } from '@core/http/ai-resource.service';
 import { AI_IMAGE_MEDIA_TYPES, AiPromptMessage, AiResourceConfig, AiResourceInfo } from '@shared/models/ai-chat.models';
 import {
+  AI_SVG_EXTENSION,
   aiAttachmentKind,
   fitAiImage,
   formatAiFileSize,
   isAiAttachmentAccepted,
-  namePastedImage
+  isAiSvg,
+  namePastedImage,
+  svgToAiImage
 } from '@home/components/ai/ai-attachment.models';
 
 interface PendingAttachment {
@@ -86,7 +89,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   attachEnabled = computed(() => !!this.config());
 
-  accept = computed(() => this.config()?.extensions.join(',') ?? '');
+  accept = computed(() => this.config() ? [...this.config().extensions, AI_SVG_EXTENSION].join(',') : '');
 
   maxPerMessage = computed(() => this.config()?.maxPerMessage ?? 0);
 
@@ -265,12 +268,25 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     };
     this.attachments.update(list => [...list, attachment]);
     let file: File;
-    try {
-      file = await fitAiImage(original, config.maxSize);
-    } catch {
-      file = original;
+    let failure: string;
+    if (isAiSvg(original)) {
+      try {
+        file = await svgToAiImage(original, config.maxSize);
+      } catch {
+        failure = this.translate.instant('ai-assistant.attachment-svg-failed');
+      }
+    } else {
+      try {
+        file = await fitAiImage(original, config.maxSize);
+      } catch {
+        file = original;
+      }
     }
     if (this.destroyed || !this.attachments().some(candidate => candidate.key === attachment.key)) {
+      return;
+    }
+    if (failure) {
+      this.patch(attachment.key, {status: 'error', reason: failure});
       return;
     }
     if (file.size > config.maxSize) {
