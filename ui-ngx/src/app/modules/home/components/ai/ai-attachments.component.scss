@@ -20,13 +20,10 @@
     background: var(--tb-surface);
     overflow: hidden;
     flex: none;
+    cursor: pointer;
 
-    &.clickable {
-      cursor: pointer;
-
-      &:hover {
-        border-color: var(--ai-focus);
-      }
+    &:hover {
+      border-color: var(--ai-focus);
     }
 
     &.image {
@@ -50,7 +47,7 @@
       gap: 8px;
       height: 48px;
       max-width: 220px;
-      padding: 0 28px 0 8px;
+      padding: 0 12px 0 8px;
 
       .file-icon {
         display: flex;
@@ -91,57 +88,6 @@
           white-space: nowrap;
         }
       }
-    }
-
-    &.failed {
-      border-color: color-mix(in srgb, var(--tb-crit) 60%, transparent);
-    }
-
-    .state {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: color-mix(in srgb, var(--tb-surface) 70%, transparent);
-
-      .error-icon {
-        color: var(--tb-crit);
-      }
-    }
-
-    .remove {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 20px;
-      height: 20px;
-      padding: 0;
-      border: none;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--ai-on-dark);
-      background: color-mix(in srgb, var(--ai-dark) 80%, transparent);
-      opacity: 0.9;
-
-      &:hover {
-        opacity: 1;
-        background: var(--ai-dark);
-      }
-
-      mat-icon {
-        font-size: 14px;
-        width: 14px;
-        height: 14px;
-      }
-    }
-
-    &.file .remove {
-      top: 50%;
-      transform: translateY(-50%);
     }
   }
 }

@@ -724,11 +724,12 @@
         "add-files-text": "PDFs, spreadsheets, images or text.",
         "add-files-hint": "Up to {{count}}, {{size}} each. Or drop them here.",
         "remove-file": "Remove {{name}}",
-        "remove-attachment": "Remove attachment",
         "attachment-failed": "Upload failed",
+        "attachment-load-failed": "The file couldn't be loaded",
         "attachment-uploading": "Uploading · {{progress}} %",
         "attachment-unsupported": "Not supported: a PDF, spreadsheet, image or text",
         "attachment-larger-than": "Larger than {{size}}",
+        "attachment-svg-failed": "This SVG can't be converted to an image",
         "attachment-over-limit": "More than {{count}} files",
         "file-kind": {
             "image": "Image",

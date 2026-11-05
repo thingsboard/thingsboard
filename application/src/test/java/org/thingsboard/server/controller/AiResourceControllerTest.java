@@ -28,6 +28,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,6 +47,7 @@ public class AiResourceControllerTest extends AbstractAiControllerTest {
         UUID resourceId = UUID.randomUUID();
         ObjectNode info = resourceInfo(resourceId, "chart.png", "image/png", PNG.length);
         var request = new ResourceUploadRequest("chart.png", "image/png", Base64.getEncoder().encodeToString(PNG));
+        givenOperation(ChannelProtocol.RESOURCE_CONFIG, null, success(limits(5 * 1024 * 1024)));
         givenOperation(ChannelProtocol.RESOURCE_UPLOAD, request, success(info));
 
         // WHEN
@@ -55,17 +60,23 @@ public class AiResourceControllerTest extends AbstractAiControllerTest {
     }
 
     @Test
-    public void shouldRejectAFileOverTheUploadLimit_withoutCallingTheAiService() throws Exception {
+    public void shouldRejectAFileOverTheAiServiceLimit_withoutUploadingIt() throws Exception {
         // GIVEN
         loginTenantAdmin();
+        givenOperation(ChannelProtocol.RESOURCE_CONFIG, null, success(limits(1024)));
 
         // WHEN
-        upload("huge.png", "image/png", new byte[7 * 1024 * 1024 + 1])
+        upload("huge.png", "image/png", new byte[1025])
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(equalTo("The file is too large: huge.png")));
 
         // THEN
-        verifyNoAiCalls();
+        verify(tbAiOperations, never()).execute(argThat(operation -> operation != null && ChannelProtocol.RESOURCE_UPLOAD.equals(operation.type())),
+                any(TbAiTurnContext.class));
+    }
+
+    static JsonNode limits(long maxSize) {
+        return JacksonUtil.newObjectNode().put("maxSize", maxSize).put("maxPerMessage", 5);
     }
 
     @Test
@@ -101,6 +112,24 @@ public class AiResourceControllerTest extends AbstractAiControllerTest {
 
         // THEN
         verifyOperation(ChannelProtocol.RESOURCE_DELETE, new ResourceOperationRequest(resourceId));
+    }
+
+    @Test
+    public void shouldKeepTheAiServiceStatus_whenAResourceIsMissingOrInvalid() throws Exception {
+        // GIVEN
+        loginTenantAdmin();
+        UUID resourceId = UUID.randomUUID();
+        givenOperation(ChannelProtocol.RESOURCE_GET, new ResourceOperationRequest(resourceId), failure(404, "Resource not found"));
+        givenOperation(ChannelProtocol.RESOURCE_DELETE, new ResourceOperationRequest(resourceId), failure(404, "Resource not found or already sent"));
+
+        // WHEN
+        MvcResult download = doGet("/api/ai/resources/" + resourceId).andReturn();
+        MvcResult delete = doDelete("/api/ai/resources/" + resourceId).andReturn();
+
+        // THEN
+        assertThat(download.getResponse().getStatus()).isEqualTo(404);
+        assertThat(delete.getResponse().getStatus()).isEqualTo(404);
+        assertThat(delete.getResponse().getContentAsString()).contains("Resource not found or already sent");
     }
 
     @Test

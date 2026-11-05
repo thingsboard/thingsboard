@@ -17,7 +17,11 @@ import org.thingsboard.server.service.ai.transport.TbAiOperation;
 import org.thingsboard.server.service.ai.transport.TbAiOperations;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -25,8 +29,6 @@ import java.util.UUID;
 @TbCoreComponent
 @RequiredArgsConstructor
 class DefaultAiResourceService implements AiResourceService {
-
-    static final long MAX_UPLOAD_BYTES = 7L * 1024 * 1024;
 
     private final TbAiService tbAiService;
     private final TbAiOperations operations;
@@ -42,18 +44,27 @@ class DefaultAiResourceService implements AiResourceService {
         if (file == null || file.isEmpty()) {
             throw new ThingsboardException("The file is empty", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        if (file.getSize() > MAX_UPLOAD_BYTES) {
+        long maxSize = getConfig(user).path("maxSize").asLong(0);
+        if (maxSize > 0 && file.getSize() > maxSize) {
             throw new ThingsboardException("The file is too large: " + file.getOriginalFilename(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         String data;
         try {
-            data = Base64.getEncoder().encodeToString(file.getBytes());
+            data = base64(file);
         } catch (IOException e) {
             throw new ThingsboardException("Failed to read the file", e, ThingsboardErrorCode.GENERAL);
         }
         var request = new ResourceUploadRequest(file.getOriginalFilename(), file.getContentType(), data);
         return tbAiService.process(tokenProvider -> operations.execute(
                 new TbAiOperation(ChannelProtocol.RESOURCE_UPLOAD, request), user, tokenProvider), user, false);
+    }
+
+    private static String base64(MultipartFile file) throws IOException {
+        var encoded = new ByteArrayOutputStream((int) Math.min(Integer.MAX_VALUE - 8, (file.getSize() + 2) / 3 * 4));
+        try (InputStream in = file.getInputStream(); OutputStream encoder = Base64.getEncoder().wrap(encoded)) {
+            in.transferTo(encoder);
+        }
+        return encoded.toString(StandardCharsets.ISO_8859_1);
     }
 
     @Override

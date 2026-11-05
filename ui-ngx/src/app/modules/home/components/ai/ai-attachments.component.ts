@@ -2,17 +2,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AiResourceInfo, isAiImageResource } from '@shared/models/ai-chat.models';
 import { AiResourceService } from '@core/http/ai-resource.service';
-import {
-  aiAttachmentExtension,
-  aiAttachmentIcon,
-  AiAttachmentItem
-} from '@home/components/ai/ai-attachment.models';
+import { aiAttachmentExtension, aiAttachmentKind } from '@home/components/ai/ai-attachment.models';
 import {
   AiAttachmentPreviewDialogComponent,
   AiAttachmentPreviewDialogData
 } from '@home/components/ai/ai-attachment-preview-dialog.component';
+
+interface AiAttachmentItem {
+  resource: AiResourceInfo;
+  image: boolean;
+  icon: string;
+  extension: string;
+  url$?: Observable<string | null>;
+}
 
 @Component({
   selector: 'tb-ai-attachments',
@@ -24,55 +30,41 @@ export class AiAttachmentsComponent implements OnChanges {
 
   @Input() resources: AiResourceInfo[];
 
-  @Input() items: AiAttachmentItem[];
-
-  @Input() removable = false;
-
-  @Output() removed = new EventEmitter<AiAttachmentItem>();
+  @Output() resourceError = new EventEmitter<any>();
 
   shown: AiAttachmentItem[] = [];
-
-  readonly icon = aiAttachmentIcon;
-
-  readonly extension = aiAttachmentExtension;
 
   constructor(private aiResourceService: AiResourceService,
               private dialog: MatDialog) {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.items || changes.resources) {
-      this.shown = this.items ?? (this.resources ?? []).map(resource => ({
-        key: resource.id,
-        name: resource.name,
-        mediaType: resource.mediaType,
-        size: resource.size,
-        image: isAiImageResource(resource),
-        url$: isAiImageResource(resource) ? this.aiResourceService.getUrl(resource.id) : undefined,
-        resource,
-        status: 'ready'
-      }));
+    if (changes.resources) {
+      this.shown = (this.resources ?? []).map(resource => {
+        const image = isAiImageResource(resource);
+        return {
+          resource,
+          image,
+          icon: aiAttachmentKind(resource.mediaType, resource.name).icon,
+          extension: aiAttachmentExtension(resource.name),
+          url$: image ? this.aiResourceService.getUrl(resource.id).pipe(catchError(() => [null])) : undefined
+        };
+      });
     }
   }
 
   open(item: AiAttachmentItem): void {
-    if (item.status === 'uploading' || item.status === 'error') {
-      return;
-    }
-    if (item.image && item.url$) {
+    if (item.image) {
       this.dialog.open<AiAttachmentPreviewDialogComponent, AiAttachmentPreviewDialogData>(AiAttachmentPreviewDialogComponent, {
         panelClass: ['tb-dialog', 'tb-ai-attachment-preview-dialog'],
         maxWidth: '92vw',
-        data: {item}
+        data: {resource: item.resource}
       });
-    } else if (item.resource) {
-      this.aiResourceService.download(item.resource).subscribe({error: () => {}});
+    } else {
+      this.aiResourceService.download(item.resource).subscribe({
+        error: error => this.resourceError.emit(error)
+      });
     }
-  }
-
-  remove(event: Event, item: AiAttachmentItem): void {
-    event.stopPropagation();
-    this.removed.emit(item);
   }
 
 }

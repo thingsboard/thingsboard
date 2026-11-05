@@ -23,6 +23,7 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() initialScroll: 'lastUserMessage' | 'bottom' = 'lastUserMessage';
   @Input() denyReasons: Record<string, string> = {};
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
+  @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
 
