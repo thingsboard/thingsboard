@@ -15,6 +15,10 @@ import { TbIotHubAddItemDialogComponent, IotHubAddItemDialogData, IotHubAddItemD
 import { TbIotHubItemDetailDialogComponent, IotHubItemDetailDialogData, IotHubItemDetailDialogMode } from './iot-hub-item-detail-dialog.component';
 import { TbIotHubInstallDialogComponent, IotHubInstallDialogData } from './iot-hub-install-dialog.component';
 import { TbIotHubUpdateDialogComponent, IotHubUpdateDialogData } from './iot-hub-update-dialog.component';
+import {
+  IotHubDeviceUpdateDialogData,
+  TbIotHubDeviceUpdateDialogComponent
+} from './iot-hub-device-update-dialog.component';
 import { TbIotHubDeleteDialogComponent, IotHubDeleteDialogData } from './iot-hub-delete-dialog.component';
 import { TbDeviceInstallDialogComponent, DeviceInstallDialogData } from './device-install-dialog/device-install-dialog.component';
 import { TbIotHubInstalledItemsDialogComponent, IotHubInstalledItemsDialogData } from './iot-hub-installed-items-dialog.component';
@@ -150,6 +154,18 @@ export class IotHubActionsService {
     if (!installedItem) {
       return of(false);
     }
+    if (installedItem.itemType === ItemType.DEVICE) {
+      // This version can only reinstall a device package: the dialog leads to the upgrade first.
+      return this.dialog.open<TbIotHubDeviceUpdateDialogComponent, IotHubDeviceUpdateDialogData, string | boolean>(
+        TbIotHubDeviceUpdateDialogComponent, {
+          panelClass: ['tb-dialog'],
+          disableClose: true,
+          autoFocus: false,
+          data: { itemName: installedItem.itemName }
+        }).afterClosed().pipe(
+        switchMap(result => result === 'reinstall' ? this.reinstallDevice(installedItem, versionId) : of(result))
+      );
+    }
     return this.dialog.open<TbIotHubUpdateDialogComponent, IotHubUpdateDialogData, string | boolean>(TbIotHubUpdateDialogComponent, {
       panelClass: ['tb-dialog'],
       disableClose: true,
@@ -161,9 +177,7 @@ export class IotHubActionsService {
         version,
         versionId
       }
-    }).afterClosed().pipe(
-      switchMap(result => result === 'reinstall' ? this.reinstallDevice(installedItem, versionId) : of(result))
-    );
+    }).afterClosed();
   }
 
   /**

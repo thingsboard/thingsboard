@@ -8,11 +8,11 @@
   @switch (state) {
     @case ('confirm') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-confirm-title' | translate:{ name: data.itemName } }}</h2>
-      <p class="tb-iot-hub-install-desc" [innerHTML]="updateDescKey | translate"></p>
+      <p class="tb-iot-hub-install-desc">{{ updateDescKey | translate }}</p>
     }
     @case ('updating') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-confirm-title' | translate:{ name: data.itemName } }}</h2>
-      <p class="tb-iot-hub-install-desc" [innerHTML]="updateDescKey | translate"></p>
+      <p class="tb-iot-hub-install-desc">{{ updateDescKey | translate }}</p>
     }
     @case ('success') {
       <h2 class="tb-iot-hub-install-title">{{ 'iot-hub.update-success-title' | translate }}</h2>
@@ -35,9 +35,7 @@
   @switch (state) {
     @case ('confirm') {
       <button mat-button (click)="cancel()">{{ 'action.cancel' | translate }}</button>
-      <button mat-flat-button [color]="reinstalls ? 'warn' : 'primary'" (click)="update()">
-        {{ (reinstalls ? 'iot-hub.update-anyway' : 'iot-hub.update') | translate }}
-      </button>
+      <button mat-flat-button color="primary" (click)="update()">{{ 'iot-hub.update' | translate }}</button>
     }
     @case ('updating') {
       <button mat-button disabled>{{ 'action.cancel' | translate }}</button>
