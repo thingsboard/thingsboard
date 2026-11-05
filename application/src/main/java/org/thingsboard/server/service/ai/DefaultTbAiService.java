@@ -166,8 +166,18 @@ class DefaultTbAiService implements TbAiService {
         if (response.isSuccess()) {
             return response.getValue();
         } else {
-            throw new ThingsboardRuntimeException(response.getError(), ThingsboardErrorCode.GENERAL);
+            throw new ThingsboardRuntimeException(response.getError(), toErrorCode(response.getStatus()));
         }
+    }
+
+    static ThingsboardErrorCode toErrorCode(int status) {
+        return switch (status) {
+            case 400, 413, 415, 422 -> ThingsboardErrorCode.BAD_REQUEST_PARAMS;
+            case 404 -> ThingsboardErrorCode.ITEM_NOT_FOUND;
+            case 409 -> ThingsboardErrorCode.VERSION_CONFLICT;
+            case 429 -> ThingsboardErrorCode.TOO_MANY_REQUESTS;
+            default -> ThingsboardErrorCode.GENERAL;
+        };
     }
 
     private void checkApiUsage(SecurityUser user) {

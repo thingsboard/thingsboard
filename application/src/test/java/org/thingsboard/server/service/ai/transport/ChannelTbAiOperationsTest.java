@@ -224,6 +224,7 @@ class ChannelTbAiOperationsTest {
 
         // THEN
         assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getStatus()).isEqualTo(404);
         assertThat(response.getError()).isEqualTo("Solution not found");
     }
 
