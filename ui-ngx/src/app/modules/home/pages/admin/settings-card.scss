@@ -5,13 +5,6 @@
 
 :host {
  .mat-mdc-card.settings-card {
-   margin: 8px;
-
-   @media #{$mat-gt-sm} {
-     width: 700px;
-     margin: 16px auto;
-   }
-
    mat-card-header.mat-mdc-card-header {
      align-items: center;
    }
