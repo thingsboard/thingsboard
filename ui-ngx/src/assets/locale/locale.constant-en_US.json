@@ -998,6 +998,7 @@
             "result": "Result"
         },
         "go-to-end": "Go to the end",
+        "new-count": "{{ count }} new",
         "start-a-task": "Start a task",
         "code": {
             "script": "Script",

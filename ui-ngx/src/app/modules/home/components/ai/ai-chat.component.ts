@@ -66,6 +66,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
   private static readonly RESUME_ATTEMPTS = 4;
   private static readonly RESUME_DELAY_MS = 2000;
+  private static readonly END_IN_VIEW = 160;
 
   @ViewChild(AiPromptInputComponent) promptInput: AiPromptInputComponent;
 
@@ -137,7 +138,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       return {mode: 'work', kind: 'think', label: work ? this.translate.instant('ai-assistant.work.' + work.moment) : '', count: 0};
     }
     const count = this.newTurns();
-    return count ? {mode: 'new', kind: 'think', label: this.translate.instant('ai-assistant.go-to-end'), count} : null;
+    return count ? {mode: 'new', kind: 'think', label: this.translate.instant('ai-assistant.new-count', {count}), count} : null;
   });
 
   private answeredApprovals = signal<ReadonlySet<string>>(new Set());
@@ -386,6 +387,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.cancelActiveMessage();
     this.renaming.set(false);
     this.shownChatId = chatId;
+    this.resetLogPosition(0);
     this.messages.set([]);
     this.completedExecutions.set({});
     this.denyReasons.set({});
@@ -524,7 +526,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (scrolled !== this.scrolled()) {
       this.scrolled.set(scrolled);
     }
-    const atEnd = area.scrollHeight - area.scrollTop - area.clientHeight <= 40;
+    const atEnd = area.scrollHeight - area.scrollTop - area.clientHeight < AiChatComponent.END_IN_VIEW;
     if (atEnd !== this.atEnd()) {
       this.atEnd.set(atEnd);
     }
@@ -545,7 +547,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
       this.seenMessages = total;
       return;
     }
-    const added = this.messages().slice(this.seenMessages).filter(message => message.from === 'AI').length;
+    const added = total - this.seenMessages;
     this.seenMessages = total;
     if (added) {
       this.newTurns.update(count => count + added);
@@ -612,7 +614,15 @@ export class AiChatComponent implements OnInit, OnDestroy {
       }
     }
     this.completedExecutions.set(completed);
+    this.resetLogPosition(messages.length);
     this.messages.set(messages);
+  }
+
+  private resetLogPosition(seen: number): void {
+    this.atEnd.set(true);
+    this.scrolled.set(false);
+    this.newTurns.set(0);
+    this.seenMessages = seen;
   }
 
   private dropRunningReply(): void {

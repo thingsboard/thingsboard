@@ -93,7 +93,7 @@
   <div class="ai-chat-composer">
     @if (pill(); as current) {
       <button type="button" class="k-pill" [class.new]="current.mode === 'new'"
-              [matTooltip]="current.label" matTooltipPosition="above" [attr.aria-label]="current.label"
+              [matTooltip]="current.label" matTooltipPosition="above" [attr.aria-label]="'ai-assistant.go-to-end' | translate"
               (click)="goToEnd(chatArea)">
         @if (current.mode === 'new') {
           <mat-icon class="tb-mat-18">arrow_downward</mat-icon>{{ current.count }}
