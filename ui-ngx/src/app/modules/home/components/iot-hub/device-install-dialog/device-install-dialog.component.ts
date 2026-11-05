@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { MpItemVersionView } from '@shared/models/iot-hub/iot-hub-version.models';
 import { IotHubApiService } from '@core/http/iot-hub-api.service';
+import { DialogService } from '@core/services/dialog.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -164,7 +165,8 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     private converterService: ConverterService,
     private integrationService: IntegrationService,
     private aiDashboardGenerationService: AiDashboardGenerationService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private dialogService: DialogService
   ) {
     super(store, router, dialogRef);
   }
@@ -427,10 +429,21 @@ export class TbDeviceInstallDialogComponent extends DialogComponent<TbDeviceInst
     return this.wizardSteps.some(ws => ws.removingReplaced);
   }
 
-  cancel(): void {
+  async cancel(): Promise<void> {
     if (this.removingReplaced) {
       // The removal is irreversible and already running: closing now would leave the outcome unknown.
       return;
+    }
+    if (this.replaceStarted && !this.installRegistered) {
+      // The installed version may already be gone while the new one is not installed: the user has to know before leaving.
+      const close = await firstValueFrom(this.dialogService.confirm(
+        this.translate.instant('iot-hub.device-update-close-title'),
+        this.translate.instant('iot-hub.device-update-close-text'),
+        this.translate.instant('action.cancel'),
+        this.translate.instant('action.close')));
+      if (!close) {
+        return;
+      }
     }
     this.closed = true;
     // Once the replaced version's entities may be gone, the caller has to reload its installed items as well.

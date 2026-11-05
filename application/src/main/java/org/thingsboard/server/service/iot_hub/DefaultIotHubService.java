@@ -727,15 +727,22 @@ public class DefaultIotHubService implements IotHubService {
         }
         checkSameItem(installedItem, UUID.fromString(itemId));
         DeviceInstalledItemDescriptor descriptor = (DeviceInstalledItemDescriptor) installedItem.getDescriptor();
-        deleteDevicePackageEntities(tenantId, descriptor.getCreatedEntityIds(), user);
-        descriptor.setCreatedEntityIds(null);
-        descriptor.setDashboardId(null);
+        Map<EntityId, String> failed = deleteDevicePackageEntities(tenantId, descriptor.getCreatedEntityIds(), user);
+        // An entity that could not be removed stays tracked, so that Retry, a later update or Delete removes it.
+        descriptor.setCreatedEntityIds(failed.isEmpty() ? null : new ArrayList<>(failed.keySet()));
+        if (descriptor.getDashboardId() != null && !failed.containsKey(descriptor.getDashboardId())) {
+            descriptor.setDashboardId(null);
+        }
         // Keep what the user entered in the forms (the wizard of the new version starts from it), drop the outputs of
         // the removed entities: their ids, links and tokens no longer exist.
         if (descriptor.getInstallState() != null) {
             descriptor.setInstallState(stripEntityOutputs(descriptor.getInstallState()));
         }
         iotHubInstalledItemService.save(tenantId, installedItem);
+        if (!failed.isEmpty()) {
+            // The wizard must not create the new version's entities next to the ones left: it shows this and Retry.
+            throw new IllegalStateException("not removed: " + String.join(", ", failed.values()));
+        }
         log.info("[{}] Removed the entities of device package {} for its update", tenantId, installedItem.getItemName());
     }
 
@@ -787,9 +794,11 @@ public class DefaultIotHubService implements IotHubService {
         }
     }
 
-    private void deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
+    /** Removes the entities in reverse order of creation. Returns the ones that failed, in order of creation, with the reason. */
+    private Map<EntityId, String> deleteDevicePackageEntities(TenantId tenantId, List<EntityId> createdEntityIds, SecurityUser user) {
+        Map<EntityId, String> failed = new LinkedHashMap<>();
         if (createdEntityIds == null || createdEntityIds.isEmpty()) {
-            return;
+            return failed;
         }
         List<EntityId> reversed = new ArrayList<>(createdEntityIds);
         Collections.reverse(reversed);
@@ -798,8 +807,12 @@ public class DefaultIotHubService implements IotHubService {
                 deleteDevicePackageEntity(tenantId, entityId, user);
             } catch (Exception e) {
                 log.error("[{}] Failed to delete device package entity: {}", tenantId, entityId, e);
+                failed.put(entityId, entityId.getEntityType() + " (" + e.getMessage() + ")");
             }
         }
+        Map<EntityId, String> inCreationOrder = new LinkedHashMap<>();
+        createdEntityIds.stream().filter(failed::containsKey).forEach(id -> inCreationOrder.put(id, failed.get(id)));
+        return inCreationOrder;
     }
 
     /** The ids come from what the client registered: never delete an entity of another tenant. */
