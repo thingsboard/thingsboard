@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
 // SPDX-License-Identifier: BUSL-1.1
+import { HttpErrorResponse } from '@angular/common/http';
 import { AI_IMAGE_MEDIA_TYPES } from '@shared/models/ai-chat.models';
 
 const MAX_IMAGE_SIDE = 2560;
@@ -166,3 +167,23 @@ export const svgToAiImage = async (file: File, maxSize: number): Promise<File> =
   const base = file.name.replace(/\.[^.]+$/, '');
   return new File([blob], `${base}.${type === 'image/png' ? 'png' : 'jpg'}`, {type, lastModified: file.lastModified});
 };
+
+export function aiServerMessage(error: unknown): string | undefined {
+  if (!(error instanceof HttpErrorResponse)) {
+    return undefined;
+  }
+  let body: unknown = error.error;
+  if (typeof body === 'string') {
+    const text = body.trim();
+    if (!text || text.startsWith('<')) {
+      return undefined;
+    }
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+  const message = body && typeof body === 'object' ? (body as {message?: unknown}).message : undefined;
+  return typeof message === 'string' && message.trim() ? message.trim() : undefined;
+}
