@@ -59,33 +59,18 @@ export class TbIotHubUpdateDialogComponent extends DialogComponent<TbIotHubUpdat
     return key ? this.translate.instant(key) : '';
   }
 
-  /** A device package is reinstalled: its entities and their data are removed, as on Remove. */
-  get reinstalls(): boolean {
-    return this.data?.itemType === ItemType.DEVICE;
-  }
-
   /**
    * Updating a solution template is a delete + reinstall of every entity it created, and unlike the other item
    * types it is not stopped by the modified-entity check, so the tenant's own edits to those dashboards, devices
    * and rule chains are lost. Say that instead of the generic "replace the current version" wording.
    */
   get updateDescKey(): string {
-    switch (this.data?.itemType) {
-      case ItemType.SOLUTION_TEMPLATE:
-        return 'iot-hub.update-desc-solution-template';
-      case ItemType.DEVICE:
-        return 'iot-hub.update-desc-device';
-      default:
-        return 'iot-hub.update-desc';
-    }
+    return this.data?.itemType === ItemType.SOLUTION_TEMPLATE
+      ? 'iot-hub.update-desc-solution-template'
+      : 'iot-hub.update-desc';
   }
 
   update(force = false): void {
-    if (this.data.itemType === ItemType.DEVICE) {
-      // The install wizard of the new version does the update: it needs the user's input.
-      this.dialogRef.close('reinstall');
-      return;
-    }
     this.state = 'updating';
     this.iotHubApiService.updateItemVersion(this.data.installedItemId, this.data.versionId, { ignoreLoading: true }, force).subscribe({
       next: (result) => {
