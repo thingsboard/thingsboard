@@ -19,6 +19,7 @@ import { AiTipDirective } from '@home/components/ai/ai-tip.directive';
 import { AiSpinComponent } from '@home/components/ai/ai-spin.component';
 import { AiWorkLineComponent } from '@home/components/ai/ai-work-line.component';
 import { AiActionLineComponent } from '@home/components/ai/ai-action-line.component';
+import { AiRunSummaryComponent } from '@home/components/ai/ai-run-summary.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { AiActionLineComponent } from '@home/components/ai/ai-action-line.compon
     AiTipDirective,
     AiSpinComponent,
     AiWorkLineComponent,
-    AiActionLineComponent
+    AiActionLineComponent,
+    AiRunSummaryComponent
   ],
   imports: [
     CommonModule,

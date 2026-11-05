@@ -121,6 +121,7 @@ export interface ToolFinished extends BaseChatToolEventData {
   status: 'SUCCESS' | 'FAILURE';
   durationMs: number;
   result?: string;
+  affectedEntities?: Array<EntityId>;
 }
 
 export interface ToolFinishedEvent extends BaseChatEvent {
@@ -138,6 +139,7 @@ export interface AiAction {
   startedAt: number;
   durationMs?: number;
   result?: string;
+  affectedEntities?: Array<EntityId>;
 }
 
 export interface ApprovalResult {

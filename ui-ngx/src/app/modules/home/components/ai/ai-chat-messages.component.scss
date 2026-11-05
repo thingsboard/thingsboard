@@ -148,6 +148,14 @@
     }
   }
 
+  .ai .summary {
+    margin-left: calc(var(--chat-mark) + 10px);
+  }
+
+  .ai .incomplete + .summary {
+    margin-left: 0;
+  }
+
   .ai.action + .ai.action {
     margin-top: calc(6px - var(--chat-turn-gap));
   }

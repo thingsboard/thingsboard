@@ -969,6 +969,11 @@
             "request": "Request",
             "result": "Result"
         },
+        "summary": {
+            "made": "What this run made or changed",
+            "alarm-rule": "Alarm rule",
+            "calculated-field": "Calculated field"
+        },
         "work": {
             "reading-request": "Reading the request",
             "going-through-results": "Going through the results",

@@ -490,8 +490,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
   }
 
   private finishAction(finished: ToolFinished): void {
+    if (finished.affectedEntities?.length) {
+      this.affectedEntities.push(...finished.affectedEntities);
+    }
     this.messages.update(list => list.map(message => message.from === 'ACTION' && message.data.executionId === finished.executionId
-      ? {from: 'ACTION', data: {...message.data, status: finished.status, durationMs: finished.durationMs, result: finished.result}}
+      ? {from: 'ACTION', data: {...message.data, status: finished.status, durationMs: finished.durationMs, result: finished.result,
+          affectedEntities: finished.affectedEntities}}
       : message));
     if (!this.messages().some(message => message.from === 'ACTION' && message.data.status === 'RUNNING')) {
       this.setWork('going-through-results', true);

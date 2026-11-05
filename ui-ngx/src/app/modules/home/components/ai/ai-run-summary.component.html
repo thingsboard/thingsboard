@@ -1,0 +1,31 @@
+<!--
+
+    SPDX-FileCopyrightText: Copyright ThingsBoard, Inc.
+    SPDX-License-Identifier: BUSL-1.1
+
+-->
+@if (rows().length) {
+  <ul class="rows" [attr.aria-label]="'ai-assistant.summary.made' | translate">
+    @for (row of rows(); track row.key) {
+      <li>
+        @if (row.url) {
+          <a class="row" [routerLink]="row.url">
+            <ng-container *ngTemplateOutlet="content; context: {$implicit: row}"></ng-container>
+          </a>
+        } @else {
+          <span class="row">
+            <ng-container *ngTemplateOutlet="content; context: {$implicit: row}"></ng-container>
+          </span>
+        }
+      </li>
+    }
+  </ul>
+}
+
+<ng-template #content let-row>
+  <span class="icon" aria-hidden="true"><mat-icon>{{ row.icon }}</mat-icon></span>
+  <span class="text">
+    <span class="name">{{ row.name }}</span>
+    <span class="meta">{{ row.meta }}</span>
+  </span>
+</ng-template>

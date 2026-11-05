@@ -5,6 +5,7 @@ import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creato
 import { ClipboardService } from 'ngx-clipboard';
 import { ApprovalResult, ToolExecutionRequested, ToolExecutionResult } from '@shared/models/ai-chat.models';
 import { AiWorkState } from '@home/components/ai/ai-action.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 @Component({
   selector: 'tb-ai-chat-messages',
@@ -30,6 +31,8 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   waitApproval = false;
 
   actionRunning = false;
+
+  summaries: Record<number, EntityId[]> = {};
 
   private static readonly PIN_TO_BOTTOM_MS = 1500;
   private static readonly COPIED_MS = 1200;
@@ -71,6 +74,9 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
       if (this.isNearBottom()) {
         setTimeout(() => this.scrollToBottom('smooth'), 0);
       }
+    }
+    if (changes.messages || changes.completedExecutions || changes.loading) {
+      this.summaries = this.findSummaries();
     }
     if (changes.messages) {
       this.lastAnswerIndex = this.findLastAnswerIndex();
@@ -119,6 +125,46 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   approval($event: ApprovalResult) {
     this.waitApproval = false;
     this.approvalAction.emit($event);
+  }
+
+  private findSummaries(): Record<number, EntityId[]> {
+    const summaries: Record<number, EntityId[]> = {};
+    let entities: EntityId[] = [];
+    let seen = new Set<string>();
+    let lastAi = -1;
+    const close = (finished: boolean) => {
+      if (finished && lastAi >= 0 && entities.length) {
+        summaries[lastAi] = entities;
+      }
+      entities = [];
+      seen = new Set<string>();
+      lastAi = -1;
+    };
+    const add = (ids?: EntityId[]) => (ids ?? []).forEach(id => {
+      const key = `${id.entityType}:${id.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        entities.push(id);
+      }
+    });
+    this.messages.forEach((message, index) => {
+      switch (message.from) {
+        case 'USER':
+          close(true);
+          break;
+        case 'APPROVAL':
+          add((this.completedExecutions[message.data.executionId] ?? message.result)?.affectedEntities);
+          break;
+        case 'ACTION':
+          add(message.data.affectedEntities);
+          break;
+        case 'AI':
+          lastAi = index;
+          break;
+      }
+    });
+    close(!this.loading);
+    return summaries;
   }
 
   private findLastAnswerIndex(): number {
