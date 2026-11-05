@@ -4485,7 +4485,7 @@
         "device-update-close-title": "Close the installation wizard?",
         "device-update-remove-error": "Removing the entities of the installed version failed: {{error}}. Retry removes them again",
         "device-install-register-error": "The package is not recorded as installed: {{error}}. Retry records it again",
-        "update-desc-device": "Updating re-installs the package through the installation wizard of the new version. When the wizard starts the installation, the entities the current version created (devices, gateways, profiles, rule chains, dashboard) are removed together with their data, including device telemetry. The new devices get new access tokens: set up your physical devices and gateways again with the new credentials, and update anything outside the package that refers to the old devices",
+        "update-desc-device": "Device packages can't be updated without reinstalling on this ThingsBoard version. Updating removes the installed entities and their data and installs the new version from scratch",
         "update-desc-solution-template": "Updating this solution template will delete and recreate all entities it created, including dashboards, rule chains, devices, and other associated resources within your tenant. Any changes you made to them will be lost",
         "update-success-desc": "'{{name}}' has been updated successfully",
         "updating": "Updating...",
