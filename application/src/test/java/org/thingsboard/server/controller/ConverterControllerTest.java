@@ -792,15 +792,23 @@ public class ConverterControllerTest extends AbstractControllerTest {
     @Test
     public void testThingsStackDefaultConvertersKeepMalformedLansitecUplinks() throws IOException {
         JsonNode temperatureHumidity = null;
+        JsonNode contactBadge = null;
         for (JsonNode testCase : JacksonUtil.toJsonNode(readResource(THINGS_STACK_LANSITEC_UPLINKS))) {
             if (testCase.get("name").asText().startsWith("temp-hum VER1")) {
                 temperatureHumidity = testCase.get("uplink");
+            } else if (testCase.get("name").asText().startsWith("contact badge 80s Periodic Report 4.5.5 example 1")) {
+                contactBadge = testCase.get("uplink");
             }
         }
         ObjectNode shortFrame = temperatureHumidity.deepCopy();
         ((ObjectNode) shortFrame.get("uplink_message")).put("frm_payload", "IQ==");
         ObjectNode bytesList = temperatureHumidity.deepCopy();
         ((ObjectNode) bytesList.get("uplink_message").get("decoded_payload")).set("bytes", JacksonUtil.toJsonNode("[33, 100]"));
+        // Periodic Report with 2 badges, cut in the middle of the first one, and Instant Report with 3 beacons and 1 byte
+        ObjectNode shortPeriodicReport = contactBadge.deepCopy();
+        ((ObjectNode) shortPeriodicReport.get("uplink_message")).put("frm_payload", "wtAR");
+        ObjectNode shortInstantReport = contactBadge.deepCopy();
+        ((ObjectNode) shortInstantReport.get("uplink_message")).put("frm_payload", "g9M=");
 
         forEachThingsStackDefaultConverter((description, decoder) -> {
             JsonNode result = decoder.apply(shortFrame);
@@ -811,6 +819,13 @@ public class ConverterControllerTest extends AbstractControllerTest {
             assertThat(result.get("profile").asText()).as(description + " bytes list").isEqualTo("lansitec-temperature-humidity-sensor");
             assertThat(numbersByValue(telemetryValues(result).get("bytes"))).as(description + " bytes list")
                     .isEqualTo(numbersByValue(JacksonUtil.toJsonNode("[33, 100]")));
+
+            for (ObjectNode shortReport : List.of(shortPeriodicReport, shortInstantReport)) {
+                result = decoder.apply(shortReport);
+                String reportDescription = description + " short report " + shortReport.get("uplink_message").get("frm_payload").asText();
+                assertThat(result.get("profile").asText()).as(reportDescription).isEqualTo("lansitec-contact-tracing-badge");
+                assertThat(withoutKeys(telemetryValues(result), THINGS_STACK_UPLINK_KEYS).isEmpty()).as(reportDescription).isTrue();
+            }
         });
     }
 

@@ -6,7 +6,8 @@
 // Lansitec: the LoRaWAN Device Repository codecs wrap everything in "bytes", write numbers as strings with units
 // ("85%", "-67dBm") and get some fields wrong. Key names follow the Lansitec datasheets where there are any:
 // Bluetooth Gateway DataSheet 2.27, Badge Tracker DataSheet v5.30, Temperature Humidity Sensor DataSheet 1.26,
-// Plug Bluetooth Gateway DataSheet 1.5 (SocketSync gateway).
+// Plug Bluetooth Gateway DataSheet 1.5 (SocketSync gateway),
+// LoRaWAN Bluetooth Badge DataSheet 2.78 (contact tracing badge).
 // The wrong fields are decoded from the raw bytes (metadata.data). Remove a fix when the Repository fixes the codec.
 var LANSITEC_UNITS = ["dBm", "dB", "%", "V", "sec", "min", "s", "℃", "level", " meter"];
 
@@ -54,8 +55,8 @@ var LANSITEC_TEMPERATURE_HUMIDITY_KEYS = {
 };
 
 // Without a datasheet only these keys are renamed: the integration writes rssi, snr and firmwareVersion itself.
-// chgstate: the tracking label and the contact tracing badge have the gateway codec byte for byte, which reads
-// CHGSTAT 0x50 as "Not charging" (Bluetooth Gateway DataSheet 2.27, 4.4.2), so it is dropped. number is the count
+// chgstate: the tracking label has the gateway codec byte for byte, which reads CHGSTAT 0x50 as "Not charging"
+// (Bluetooth Gateway DataSheet 2.27, 4.4.2), so it is dropped. number is the count
 // of reported devices: the beacons list has them.
 var LANSITEC_CLASH_KEYS = {
     rssi: "loraRssi", RSSI: "loraRssi", snr: "loraSnr", SNR: "loraSnr",
@@ -461,15 +462,190 @@ function lansitecSocketSyncValues(b) {
     return values;
 }
 
+// LoRaWAN Bluetooth Badge DataSheet 2.78 (990-01242), the contact tracing badge: it reports the badges and the
+// Bluetooth beacons near it, it has no GNSS. Its codec is the Bluetooth gateway's, which reads these messages with
+// the gateway layout, so every message is decoded from the raw bytes, as for the SocketSync gateway.
+// Major and Minor are hex: a badge's are the last 4 bytes of its DevEUI (4.4).
+var LANSITEC_CONTACT_BADGE = "contact-tracing-badge";
+// 4.5.1 Type bits 2-0 (Mode) and SMODE: the LoRa frequency plan.
+var LANSITEC_CONTACT_BADGE_MODES = ["", "AU915", "IN865", "CN470", "AS923", "EU433", "EU868", "US915"];
+var LANSITEC_CONTACT_BADGE_SMODES = [1, 2, 4, 8, 16, 32, 64];
+var LANSITEC_CONTACT_BADGE_BANDS = ["AU915", "IN865", "CN470", "AS923", "EU433", "EU868", "US915"];
+// 4.5.1 BT bits 10-8 and 4.5.2 BTSTATUS bits 6-4: the Bluetooth transmitting power, dBm. 0 is not a power.
+var LANSITEC_CONTACT_BADGE_BT_POWERS = [0, 4, 0, -4, -8, -12, -16, -20];
+// 4.5.2 BTSTATUS bits 11-8: the vibrator and buzzer.
+var LANSITEC_CONTACT_BADGE_BUZZER = ["No action", "Vibrator disabled, buzzer muted (restore)",
+    "Vibrator disabled, buzzer half sound level", "Vibrator disabled, buzzer full sound level",
+    "Vibrator enabled, buzzer muted", "Vibrator enabled, buzzer half sound level",
+    "Vibrator enabled, buzzer full sound level", "Vibrator disabled, buzzer muted (no restore)",
+    "Beacon-in-tracker and proximity detection disabled"];
+
+// 4.5.5 TimeMark: bit n set means seen n * 10 to n * 10 + 9 seconds before the message. Seen time is 10 s per bit.
+function lansitecContactBadgeSeen(item, mark) {
+    item.timeMark = mark;
+    var bits = 0;
+    for (var i = 0; i < 8; i++) {
+        if (((mark >> i) & 1) == 1) {
+            bits = bits + 1;
+        }
+    }
+    item.seenTime = bits * 10;
+}
+
+function lansitecContactBadgeValues(b) {
+    var values = {};
+    if (b.length == 0) {
+        return values;
+    }
+    var type = (b[0] >> 4) & 0x0F;
+    var hex = bytesToHex(b);
+    if (type == 0x1 && b.length >= 9) {
+        // 4.5.1 Register: Type (ADR, Mode), SMODE, Power, CFG, POS (2), HB, BT (2), CRC (2).
+        values.adr = (b[0] & 0x08) != 0 ? "ON" : "OFF";
+        var mode = b[0] & 0x07;
+        if (LANSITEC_CONTACT_BADGE_MODES[mode] != "") {
+            values.mode = LANSITEC_CONTACT_BADGE_MODES[mode];
+        }
+        var band = LANSITEC_CONTACT_BADGE_SMODES.indexOf(b[1] & 0xFF);
+        if (band >= 0) {
+            values.loraWanFrequencyBand = LANSITEC_CONTACT_BADGE_BANDS[band];
+        }
+        values.loraTxPower = (b[2] >> 3) & 0x1F;
+        values.dataRate = "DR" + ((b[3] >> 4) & 0x0F);
+        // POS unit 5 s, 0 means off. HB unit 30 s.
+        values.positionReportInterval = parseBytesToInt(b, 4, 2, true) * 5;
+        values.heartbeatInterval = (b[6] & 0xFF) * 30;
+        var bt = parseBytesToInt(b, 7, 2, true);
+        values.buzzerAndVibrator = ((bt >> 11) & 1) == 1 ? "ON" : "OFF";
+        var power = (bt >> 8) & 0x07;
+        if (power > 0) {
+            values.bluetoothTxPower = LANSITEC_CONTACT_BADGE_BT_POWERS[power];
+        }
+        values.proximityDetection = ((bt >> 7) & 1) == 1 ? "ON" : "OFF";
+        // 0x0-57, the datasheet gives no unit.
+        values.bluetoothReceivingThresholdSetting = bt & 0x7F;
+    } else if (type == 0x2 && b.length >= 7) {
+        // 4.5.2 Heartbeat: Type, VOL (battery level, %), RSSI (unit -1 dBm), SNR (2, signed, 0.01 dB), REV (software
+        // revision), CHGSTAT, CRC (2), BTSTATUS (2), then the friend badges.
+        values.batteryLevel = b[1] & 0xFF;
+        values.loraRssi = 0 - (b[2] & 0xFF);
+        values.loraSnr = lansitecSnr(b, 3);
+        values.deviceFirmwareVersion = hex.substring(10, 12);
+        var charge = b[6] & 0xFF;
+        if (charge == 0x0) {
+            values.chargeState = "Not charging";
+        } else if (charge == 0x5) {
+            values.chargeState = "Charging";
+        } else if (charge == 0x6) {
+            values.chargeState = "Charging completed";
+        }
+        if (b.length >= 11) {
+            var status = parseBytesToInt(b, 9, 2, true);
+            var buzzer = (status >> 8) & 0x0F;
+            if (buzzer < LANSITEC_CONTACT_BADGE_BUZZER.size()) {
+                values.vibratorBuzzerStatus = LANSITEC_CONTACT_BADGE_BUZZER[buzzer];
+            }
+            // 0 means not changed. The receiving threshold table is for range bit 7 = 0: -73 to -87 dBm.
+            var statusPower = (status >> 4) & 0x07;
+            if (statusPower > 0) {
+                values.bluetoothTxPower = LANSITEC_CONTACT_BADGE_BT_POWERS[statusPower];
+            }
+            var threshold = status & 0x0F;
+            if (threshold > 0 && ((status >> 7) & 1) == 0) {
+                values.bluetoothReceivingThreshold = -72 - threshold;
+            }
+        }
+        // Friend field: Type 0xC with the number of friend badges (1-6), then Major (2) and Minor (2) of each.
+        if (b.length >= 12 && ((b[11] >> 4) & 0x0F) == 0xC) {
+            var friendCount = b[11] & 0x0F;
+            if (b.length >= 12 + friendCount * 4) {
+                var friends = [];
+                for (var f = 0; f < friendCount; f++) {
+                    var friendStart = 12 + f * 4;
+                    friends.add({ major: hex.substring(2 * friendStart, 2 * friendStart + 4),
+                        minor: hex.substring(2 * friendStart + 4, 2 * friendStart + 8) });
+                }
+                values.friends = friends;
+            }
+        }
+    } else if (type == 0x8) {
+        // 4.5.3 10s Instant Report: Type (bits 3-0: number of beacons M), Major (2), Minor (2) and RSSI of each, then
+        // TOFF: (M + 1) / 2 bytes, 4 bits per beacon, the first beacon in the high bits: seconds before the message.
+        // RSSI bit 7: 1 a Bluetooth beacon, 0 a badge (beacon-in-tracker); bits 6-0 - 128 is the RSSI, dBm.
+        var count = b[0] & 0x0F;
+        if (count > 0 && b.length >= 1 + count * 5) {
+            var hasOffsets = b.length >= 1 + count * 5 + (count + 1) / 2;
+            var list = [];
+            for (var i = 0; i < count; i++) {
+                var start = 1 + i * 5;
+                var item = {};
+                item.major = hex.substring(2 * start, 2 * start + 4);
+                item.minor = hex.substring(2 * start + 4, 2 * start + 8);
+                var rssi = b[start + 4] & 0xFF;
+                item.type = (rssi & 0x80) != 0 ? "Bluetooth beacon" : "Badge";
+                item.rssi = (rssi & 0x7F) - 128;
+                if (hasOffsets) {
+                    var offsetByte = b[1 + count * 5 + (i / 2).intValue()] & 0xFF;
+                    item.timeOffset = i % 2 == 0 ? (offsetByte >> 4) & 0x0F : offsetByte & 0x0F;
+                }
+                list.add(item);
+            }
+            values.beacons = list;
+        }
+    } else if (type == 0xC) {
+        // 4.5.5 80s Periodic Report: Type (bits 3-0: number of badges and beacons), badges as Major (2), Minor (2),
+        // TimeMark, then the marker 0xFFFF and beacons as Minor (2), TimeMark. A beacon's Major is always FFFF.
+        var badges = [];
+        var periodBeacons = [];
+        var pos = 1;
+        var inBeacons = false;
+        while (pos < b.length) {
+            if (!inBeacons && pos + 2 <= b.length && (b[pos] & 0xFF) == 0xFF && (b[pos + 1] & 0xFF) == 0xFF) {
+                inBeacons = true;
+                pos = pos + 2;
+            } else if (!inBeacons && pos + 5 <= b.length) {
+                var badge = { major: hex.substring(2 * pos, 2 * pos + 4), minor: hex.substring(2 * pos + 4, 2 * pos + 8) };
+                lansitecContactBadgeSeen(badge, b[pos + 4] & 0xFF);
+                badges.add(badge);
+                pos = pos + 5;
+            } else if (inBeacons && pos + 3 <= b.length) {
+                var beacon = { minor: hex.substring(2 * pos, 2 * pos + 4) };
+                lansitecContactBadgeSeen(beacon, b[pos + 2] & 0xFF);
+                periodBeacons.add(beacon);
+                pos = pos + 3;
+            } else {
+                return values;
+            }
+        }
+        if (badges.size() + periodBeacons.size() == (b[0] & 0x0F)) {
+            values.badges = badges;
+            values.beacons = periodBeacons;
+        }
+    } else if (type == 0xF && b.length >= 2) {
+        // 4.5.4 Acknowledge: Type bits 3-0 the result, then the MSGID of the downlink.
+        values.result = (b[0] & 0x0F) == 0 ? "Success" : "Failure";
+        values.msgid = b[1] & 0xFF;
+    }
+    return values;
+}
+
 var values = {};
 var attributes = {};
 var history = [];
-if (metadata.brandId == "lansitec" && metadata.modelId == LANSITEC_SOCKET_SYNC && metadata.data != null) {
-    // The SocketSync gateway: decoded from the raw bytes only, see lansitecSocketSyncValues.
-    var socketSyncBytes = base64ToBytes(metadata.data);
-    values = lansitecSocketSyncValues(socketSyncBytes);
-    // Registration (0x4) holds the device settings: attributes, not telemetry.
-    if (socketSyncBytes.length > 0 && ((socketSyncBytes[0] >> 4) & 0x0F) == 0x4) {
+if (metadata.brandId == "lansitec" && (metadata.modelId == LANSITEC_SOCKET_SYNC || metadata.modelId == LANSITEC_CONTACT_BADGE)
+        && metadata.data != null) {
+    // The SocketSync gateway and the contact tracing badge: decoded from the raw bytes only, see
+    // lansitecSocketSyncValues and lansitecContactBadgeValues.
+    var lansitecBytes = base64ToBytes(metadata.data);
+    var registerType = 0x1;
+    if (metadata.modelId == LANSITEC_SOCKET_SYNC) {
+        values = lansitecSocketSyncValues(lansitecBytes);
+        registerType = 0x4;
+    } else {
+        values = lansitecContactBadgeValues(lansitecBytes);
+    }
+    // Registration holds the device settings: attributes, not telemetry.
+    if (lansitecBytes.length > 0 && ((lansitecBytes[0] >> 4) & 0x0F) == registerType) {
         attributes = values;
         values = {};
     }

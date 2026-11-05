@@ -1855,5 +1855,519 @@
       "profile": "lansitec-badge-tracker",
       "telemetry": {}
     }
+  },
+  {
+    "name": "contact badge Register 4.5.1 (built from DataSheet 2.78)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ57PNWP8AGXCJQD7R9BDW",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:1987636f-fbc5-417b-b6c5-43dfebb304f2"
+      ],
+      "received_at": "2026-11-05T09:55:35.252740417Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "FiBwIAACCgqKEjQ=",
+        "decoded_payload": {
+          "bytes": {
+            "BLEReceivingDuration": "10sec",
+            "ContinuousReceive": "Continuous Bluetooth receiving is disabled",
+            "LoRaTxpower": "14dBm",
+            "LoRaWANband": "EU868",
+            "adr": "OFF",
+            "dr": "DR2",
+            "hb": "300sec",
+            "mode": "EU868",
+            "pos": "10sec",
+            "type": "Register"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "attributes": {
+        "adr": "OFF",
+        "mode": "EU868",
+        "loraWanFrequencyBand": "EU868",
+        "loraTxPower": 14,
+        "dataRate": "DR2",
+        "positionReportInterval": 10,
+        "heartbeatInterval": 300,
+        "buzzerAndVibrator": "ON",
+        "bluetoothTxPower": 0,
+        "proximityDetection": "ON",
+        "bluetoothReceivingThresholdSetting": 10
+      }
+    }
+  },
+  {
+    "name": "contact badge Heartbeat 4.5.2, SNR -5.00, Charging, 2 friend badges (built from DataSheet 2.78)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5BCG6BN1FHSSGF67YE24",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:5168cd93-1983-479d-a3d2-cc30d548ea44"
+      ],
+      "received_at": "2026-11-05T09:55:39.023582872Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "IWQ+/gwFBRI0AADC0BEALtARAC0=",
+        "decoded_payload": {
+          "bytes": {
+            "chgstate": 2,
+            "rssi": "-62dBm",
+            "snr": "650.36dB",
+            "type": "Heartbeat",
+            "ver": "VER1285",
+            "vol": "100%"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "batteryLevel": 100,
+        "loraRssi": -62,
+        "loraSnr": -5,
+        "deviceFirmwareVersion": "05",
+        "chargeState": "Charging",
+        "vibratorBuzzerStatus": "No action",
+        "friends": [
+          {
+            "major": "D011",
+            "minor": "002E"
+          },
+          {
+            "major": "D011",
+            "minor": "002D"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "contact badge Heartbeat 4.5.2, BTSTATUS (built from DataSheet 2.78)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5D0MNH1S774XX07286BJ",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:8c866e78-af36-4e03-8059-c9161c9f0fe8"
+      ],
+      "received_at": "2026-11-05T09:55:40.691881636Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "IWQ+/gwAABI0BiU=",
+        "decoded_payload": {
+          "bytes": {
+            "chgstate": 2,
+            "rssi": "-62dBm",
+            "snr": "650.36dB",
+            "type": "Heartbeat",
+            "ver": "VER0",
+            "vol": "100%"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "batteryLevel": 100,
+        "loraRssi": -62,
+        "loraSnr": -5,
+        "deviceFirmwareVersion": "00",
+        "chargeState": "Not charging",
+        "vibratorBuzzerStatus": "Vibrator enabled, buzzer full sound level",
+        "bluetoothTxPower": 0,
+        "bluetoothReceivingThreshold": -77
+      }
+    }
+  },
+  {
+    "name": "contact badge 10s Instant Report 4.5.3, RSSI and TOFF examples (built from DataSheet 2.78)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5EMKTH1Q7R7AD5WA4HB6",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:e9a53f5b-bd3b-478b-8ff9-4c3424e1337f"
+      ],
+      "received_at": "2026-11-05T09:55:42.353804675Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "g9MQAj4r0BEALqsAAQACtSQQ",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "beacons": [
+          {
+            "major": "D310",
+            "minor": "023E",
+            "type": "Badge",
+            "rssi": -85,
+            "timeOffset": 2
+          },
+          {
+            "major": "D011",
+            "minor": "002E",
+            "type": "Bluetooth beacon",
+            "rssi": -85,
+            "timeOffset": 4
+          },
+          {
+            "major": "0001",
+            "minor": "0002",
+            "type": "Bluetooth beacon",
+            "rssi": -75,
+            "timeOffset": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "contact badge 80s Periodic Report 4.5.5 example 1",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5G8KP87MTGDZW5HZ8FK2",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:18969a7b-1571-4754-b58f-ca2faa9b417f"
+      ],
+      "received_at": "2026-11-05T09:55:44.017827879Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "wtARAC750BEALY8=",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "badges": [
+          {
+            "major": "D011",
+            "minor": "002E",
+            "timeMark": 249,
+            "seenTime": 60
+          },
+          {
+            "major": "D011",
+            "minor": "002D",
+            "timeMark": 143,
+            "seenTime": 50
+          }
+        ],
+        "beacons": []
+      }
+    }
+  },
+  {
+    "name": "contact badge 80s Periodic Report 4.5.5 example 2",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5HWK1Q3VDZS5HH0DX9ST",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:2eb35d1f-4ebc-45eb-a898-447be7a6e488"
+      ],
+      "received_at": "2026-11-05T09:55:45.681914168Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "wv//AZvfAPAg",
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "badges": [],
+        "beacons": [
+          {
+            "minor": "019B",
+            "timeMark": 223,
+            "seenTime": 70
+          },
+          {
+            "minor": "00F0",
+            "timeMark": 32,
+            "seenTime": 10
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "contact badge Acknowledge 4.5.4 (built from DataSheet 2.78)",
+    "uplink": {
+      "end_device_ids": {
+        "device_id": "lt-contact-tracing-badge",
+        "application_ids": {
+          "application_id": "ansitec-test"
+        },
+        "dev_eui": "70B3D57ED01A0005",
+        "join_eui": "0000000000000000"
+      },
+      "correlation_ids": [
+        "as:up:01M6NJ5KGJ7QJ2B7AS9Q0VCATN",
+        "rpc:/ttn.lorawan.v3.AppAs/SimulateUplink:0aba77e7-1257-4147-9e31-31b369cc2cbe"
+      ],
+      "received_at": "2026-11-05T09:55:47.345699317Z",
+      "uplink_message": {
+        "f_port": 1,
+        "frm_payload": "8Ac=",
+        "decoded_payload": {
+          "bytes": {
+            "msgid": "7",
+            "result": "downlink success",
+            "type": "Acknowledgment"
+          }
+        },
+        "rx_metadata": [
+          {
+            "gateway_ids": {
+              "gateway_id": "test"
+            },
+            "rssi": -42,
+            "channel_rssi": -42,
+            "snr": 4.2
+          }
+        ],
+        "settings": {
+          "data_rate": {
+            "lora": {
+              "bandwidth": 125000,
+              "spreading_factor": 7,
+              "coding_rate": "4/5"
+            }
+          },
+          "frequency": "868100000"
+        },
+        "version_ids": {
+          "brand_id": "lansitec",
+          "model_id": "contact-tracing-badge",
+          "hardware_version": "1.0",
+          "firmware_version": "1.0",
+          "band_id": "EU_863_870"
+        }
+      },
+      "simulated": true
+    },
+    "decoded": {
+      "profile": "lansitec-contact-tracing-badge",
+      "telemetry": {
+        "result": "Success",
+        "msgid": 7
+      }
+    }
   }
 ]
