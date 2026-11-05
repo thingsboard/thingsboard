@@ -2,108 +2,33 @@
 // SPDX-License-Identifier: BUSL-1.1
 :host {
   display: block;
-  border: 1px solid var(--k-stroke);
-  border-radius: 12px;
-  padding: var(--chat-card-pad);
-  background: var(--tb-surface);
+}
+
+.k-out {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
   font-family: var(--tb-font);
-  letter-spacing: var(--chat-text-ls);
+  font-size: var(--chat-line);
+  line-height: var(--chat-line-lh);
   color: var(--tb-ink);
 
-  &.executing {
-    color: var(--k-grey);
+  .k-out-mark {
+    flex: none;
+    width: 20px;
+    height: 22px;
+    font-size: 22px;
+    line-height: 22px;
+    color: var(--tb-ok);
   }
 
-  &.approved {
-    color: var(--tb-ok-text);
-    background-color: var(--tb-ok-tint);
-  }
-
-  &.denied {
-    color: var(--tb-text-secondary);
-    background-color: var(--tb-line-soft);
-  }
-
-  &.error {
+  &.fail .k-out-mark {
     color: var(--tb-crit);
-    background-color: var(--tb-crit-tint);
   }
 
-  .approval-title {
-    margin-bottom: 8px;
-    font-weight: 500;
-    font-size: var(--chat-head);
-    line-height: var(--chat-head-lh);
-  }
-
-  .approval-content {
-    margin-bottom: 16px;
-    font-size: var(--chat-line);
-    line-height: var(--chat-line-lh);
-    color: var(--tb-text-secondary);
-  }
-
-  .approval-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-
-    .approved {
-      flex: 1;
-      --mat-button-filled-label-text-color: var(--ai-on-action);
-      --mat-button-filled-container-color: var(--ai-action);
-    }
-
-    .danger {
-      flex: 1;
-      --mat-button-filled-label-text-color: var(--ai-on-action);
-      --mat-button-filled-container-color: var(--tb-crit);
-    }
-
-    .denied {
-      flex: 1;
-      --mat-button-outlined-label-text-color: var(--tb-ink);
-      --mat-button-outlined-outline-color: var(--k-stroke-hover);
-    }
-  }
-
-  .deny-line {
-    display: block;
-    width: 100%;
-    height: 36px;
-    box-sizing: border-box;
-    margin-top: 8px;
-    padding: 0 12px;
-    border: 0;
-    border-radius: 8px;
-    outline: 0;
-    background: var(--tb-surface);
-    box-shadow: inset 0 0 0 1px var(--k-stroke-hover);
-    font: 400 var(--chat-line)/var(--chat-line-lh) var(--tb-font);
-    color: var(--tb-ink);
-
-    &:focus {
-      box-shadow: inset 0 0 0 1.5px var(--ai-focus), 0 0 0 3px var(--ai-focus-shadow);
-    }
-
-    &::placeholder {
-      color: var(--tb-text-secondary);
-    }
-  }
-
-  .approve-all {
-    width: 100%;
-    margin-top: 8px;
-    --mat-button-text-label-text-color: var(--tb-text-secondary);
-    --mat-button-text-container-height: var(--chat-control);
-  }
-
-  .approval-result {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--chat-line);
-    font-weight: 500;
-    line-height: var(--chat-line-lh);
+  .k-out-say {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }

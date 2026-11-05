@@ -29,30 +29,21 @@ export class AiActionLineComponent {
 
   words = computed(() => aiActionWords(this.action().tool, this.action().arguments));
 
-  running = computed(() => this.translate.instant(this.words().key + '.run', this.words().params));
+  more = input(0);
+
+  private runWords = computed(() => this.translate.instant(this.words().key + '.run', this.words().params));
+
+  running = computed(() => this.more() > 0
+    ? this.translate.instant('ai-assistant.work.more', {words: this.runWords(), count: this.more()})
+    : this.runWords());
 
   outcome = computed(() => {
     const action = this.action();
     const words = this.words();
-    switch (action.status) {
-      case 'SUCCESS':
-        return this.translate.instant(words.key + '.done', words.params);
-      case 'FAILURE':
-        return this.translate.instant('ai-assistant.action.failed', {words: this.lowerFirst(this.running())});
-      default:
-        return this.translate.instant('ai-assistant.work.stopped', {words: this.lowerFirst(this.running())});
+    if (action.status === 'FAILURE') {
+      return this.reason(action.result) ?? this.translate.instant('ai-assistant.action.failed', {words: this.lowerFirst(this.runWords())});
     }
-  });
-
-  icon = computed(() => {
-    switch (this.action().status) {
-      case 'SUCCESS':
-        return 'check';
-      case 'FAILURE':
-        return 'error_outline';
-      default:
-        return 'block';
-    }
+    return this.translate.instant(words.key + '.done', words.params);
   });
 
   duration = computed(() => this.action().durationMs !== undefined ? aiActionDuration(this.action().durationMs) : '');
@@ -62,6 +53,15 @@ export class AiActionLineComponent {
   result = computed(() => aiActionDetail(this.action().result));
 
   hasDetails = computed(() => !!this.request() || !!this.result());
+
+  private reason(result?: string): string | undefined {
+    const text = result?.trim();
+    if (!text || text.startsWith('{') || text.startsWith('[')) {
+      return undefined;
+    }
+    const line = text.split('\n')[0].trim();
+    return line.length > 300 ? line.slice(0, 300) + '…' : line;
+  }
 
   private lowerFirst(words: string): string {
     return words ? words.charAt(0).toLocaleLowerCase() + words.slice(1) : words;

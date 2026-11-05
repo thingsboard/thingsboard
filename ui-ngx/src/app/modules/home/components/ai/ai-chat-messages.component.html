@@ -16,14 +16,16 @@
       }
       @if (msg.time) {
         <div class="msg-foot">
-          <time [matTooltip]="msg.time | date:'medium'" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
+          <time [matTooltip]="fullTime(msg.time)" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
         </div>
       }
     </div>
   } @else if (msg.from === 'ACTION') {
-    <div class="ai action">
-      <tb-ai-action-line [action]="msg.data"></tb-ai-action-line>
-    </div>
+    @if (msg.data.status !== 'RUNNING' || $index === runningLead) {
+      <div class="ai action">
+        <tb-ai-action-line [action]="msg.data" [more]="$index === runningLead ? runningCount - 1 : 0"></tb-ai-action-line>
+      </div>
+    }
   } @else {
     <div class="ai">
       @if (msg.from === 'APPROVAL') {
@@ -32,10 +34,11 @@
           [completedExecution]="getCompletedExecution(msg)"
           [autoApprove]="autoApprove"
           [answered]="!!denyReasons[getApprovalData(msg).executionId]"
-          (approvalAction)="approval($event)">
+          (approvalAction)="approval($event)"
+          (askAgain)="askAgain.emit()">
         </tb-ai-approval-card>
       } @else if (msg.status === 'INCOMPLETE') {
-        <div class="incomplete flex items-start gap-2">
+        <div class="incomplete flex" role="status">
           <mat-icon class="incomplete-icon">warning_amber</mat-icon>
           <span>{{ msg.content }}</span>
         </div>
@@ -44,15 +47,16 @@
         }
       } @else {
         <div class="agent" #answer>
-          <span class="tb-ai-mark" aria-hidden="true"><mat-icon>auto_awesome</mat-icon></span>
-          <tb-markdown class="agent-body" usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+          <div class="agent-body">
+            <tb-markdown usePlainMarkdown [additionalStyles]="additionalStyles" [data]="parseResult(msg.content)"></tb-markdown>
+            @if (summaries[$index]; as entities) {
+              <tb-ai-run-summary [entities]="entities"></tb-ai-run-summary>
+            }
+          </div>
         </div>
-        @if (summaries[$index]; as entities) {
-          <tb-ai-run-summary class="summary" [entities]="entities"></tb-ai-run-summary>
-        }
         <div class="msg-foot agent-foot">
           @if (msg.time) {
-            <time [matTooltip]="msg.time | date:'medium'" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
+            <time [matTooltip]="fullTime(msg.time)" matTooltipPosition="above">{{ msg.time | date:'HH:mm' }}</time>
           }
           <span class="foot-tools" [class.show]="$index === lastAnswerIndex">
             <button type="button" class="foot-tool" [class.done]="copiedIndex === $index"

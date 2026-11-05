@@ -4,7 +4,7 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-<header class="ai-chat-head" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
+<header class="ai-chat-head" [class.scrolled]="scrolled()" tb-fullscreen [fullscreenElement]="hostElement" [fullscreen]="fullscreen()"
         (fullscreenChanged)="onFullscreenChanged($event)">
   <ng-content select="[aiChatLead]"></ng-content>
   @if (variant() === 'panel') {
@@ -12,13 +12,33 @@
   }
   @if (chat(); as chat) {
     @if (renaming()) {
-      <input #titleInput class="ai-chat-rename" [value]="chat.title"
-             [attr.aria-label]="'ai-assistant.chat-title' | translate"
-             (keydown)="onRenameKeydown($event)" (blur)="finishRename(titleInput.value)">
+      <span class="ai-chat-renaming">
+        <input #titleInput class="ai-chat-rename" [value]="chat.title"
+               [attr.aria-label]="'ai-assistant.chat-title' | translate"
+               (keydown)="onRenameKeydown($event)" (blur)="finishRename(titleInput.value)">
+        <button type="button" class="ai-ib" [attr.aria-label]="'ai-assistant.rename-save' | translate"
+                [matTooltip]="'ai-assistant.rename-save' | translate" matTooltipPosition="above"
+                (mousedown)="$event.preventDefault()" (click)="finishRename(titleInput.value)">
+          <mat-icon>check</mat-icon>
+        </button>
+        <button type="button" class="ai-ib" [attr.aria-label]="'ai-assistant.rename-discard' | translate"
+                [matTooltip]="'ai-assistant.rename-discard' | translate" matTooltipPosition="above"
+                (mousedown)="$event.preventDefault()" (click)="renaming.set(false)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </span>
     } @else {
-      <span #chatName class="ai-chat-name" [matTooltip]="nameClipped() ? chat.title : ('ai-assistant.double-click-to-rename' | translate)"
-            matTooltipPosition="after" matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
-            (mouseenter)="nameClipped.set(chatName.scrollWidth > chatName.clientWidth + 1)" (dblclick)="startRename()">{{ chat.title }}</span>
+      <span class="ai-chat-name-wrap">
+        <button #chatName type="button" class="ai-chat-name" [class.clipped]="nameClipped()"
+                [matTooltip]="nameClipped() ? chat.title : ('ai-assistant.double-click-to-rename' | translate)"
+                matTooltipPosition="after" matTooltipPositionAtOrigin matTooltipClass="tb-ai-cursor-tooltip" matTooltipShowDelay="500"
+                (mouseenter)="nameClipped.set(chatName.scrollWidth > chatName.clientWidth + 1)"
+                (keydown.enter)="startRename()" (keydown.f2)="startRename()" (dblclick)="startRename()">{{ chat.title }}</button>
+        <button type="button" class="ai-chat-name-pen" [attr.aria-label]="'action.rename' | translate"
+                [matTooltip]="'action.rename' | translate" matTooltipPosition="above" (click)="startRename()">
+          <mat-icon fontSet="material-icons-round">edit</mat-icon>
+        </button>
+      </span>
       @if (level(); as level) {
         <span class="ai-chat-status" [class]="'ai-chat-status ' + level">
           <span class="tb-ai-status-mark" [class]="'tb-ai-status-mark ' + level"></span>
@@ -38,7 +58,7 @@
       </button>
     }
     @if (chat() && !renaming()) {
-      <button type="button" class="ai-ib" [matMenuTriggerFor]="chatMenu"
+      <button type="button" class="ai-ib more" [matMenuTriggerFor]="chatMenu"
               [matTooltip]="'action.more' | translate" matTooltipPosition="above" [attr.aria-label]="'action.more' | translate">
         <mat-icon>more_vert</mat-icon>
       </button>
@@ -47,7 +67,7 @@
   </div>
 </header>
 <div tb-toast [toastTarget]="toastTarget()" class="pointer-events-none absolute inset-0"></div>
-<div #chatArea class="ai-chat-body" [class.empty]="!messages().length && !loading()">
+<div #chatArea class="ai-chat-body" [class.empty]="!messages().length && !loading()" (scroll)="onLogScroll(chatArea)">
   @if (messages().length || loading()) {
     <tb-ai-chat-messages
       class="ai-chat-log"
@@ -60,7 +80,8 @@
       initialScroll="bottom"
       [denyReasons]="denyReasons()"
       [work]="work()"
-      (approvalAction)="onApprovalAction($event)">
+      (approvalAction)="onApprovalAction($event)"
+      (askAgain)="onAskAgain()">
     </tb-ai-chat-messages>
   } @else if (!chatId()) {
     <div class="ai-chat-start">
@@ -71,10 +92,22 @@
     </div>
   }
   <div class="ai-chat-composer">
+    @if (pill(); as current) {
+      <button type="button" class="k-pill" [class.new]="current.mode === 'new'"
+              [matTooltip]="current.label" matTooltipPosition="above" [attr.aria-label]="current.label"
+              (click)="goToEnd(chatArea)">
+        @if (current.mode === 'new') {
+          <mat-icon class="tb-mat-18">arrow_downward</mat-icon>{{ current.count }}
+        } @else {
+          <tb-ai-spin [kind]="current.kind"></tb-ai-spin>
+        }
+      </button>
+    }
     <tb-ai-prompt-input
       [placeholder]="placeholder()"
       [loading]="loading() && !waitingApproval()"
       [dropZone]="chatArea"
+      [pinned]="!!messages().length || loading()"
       [showAutoApprove]="true"
       [autoApprove]="autoApprove()"
       [autoApproveInChat]="!!chatId()"

@@ -4,35 +4,30 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin, Observable, of, Subscription } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { NotificationService } from '@core/http/notification.service';
+import { DeviceService } from '@core/http/device.service';
+import { DashboardService } from '@core/http/dashboard.service';
 import { CalculatedFieldType } from '@shared/models/calculated-field.models';
 import { getEntityDetailsPageURL } from '@core/utils';
 import { RequestConfig } from '@core/http/http-utils';
+import { AiRecordState } from '@home/components/ai/ai-record.component';
 
 interface AiSummaryRow {
   key: string;
-  icon: string;
+  entityType: string;
+  alarmRule: boolean;
   name: string;
   meta: string;
   url?: string;
+  state?: AiRecordState;
 }
 
 const CONFIG: RequestConfig = {ignoreLoading: true, ignoreErrors: true};
-
-const ICONS: Partial<Record<EntityType, string>> = {
-  [EntityType.DEVICE]: 'memory',
-  [EntityType.ASSET]: 'domain',
-  [EntityType.DASHBOARD]: 'dashboard',
-  [EntityType.CALCULATED_FIELD]: 'functions',
-  [EntityType.NOTIFICATION_RULE]: 'notifications_active',
-  [EntityType.NOTIFICATION_TEMPLATE]: 'description',
-  [EntityType.NOTIFICATION_TARGET]: 'group'
-};
 
 const NOTIFICATION_PAGES: Partial<Record<EntityType, string>> = {
   [EntityType.NOTIFICATION_RULE]: '/notification/rules',
@@ -40,10 +35,20 @@ const NOTIFICATION_PAGES: Partial<Record<EntityType, string>> = {
   [EntityType.NOTIFICATION_TARGET]: '/notification/recipients'
 };
 
+const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]);
+
 @Component({
   selector: 'tb-ai-run-summary',
-  templateUrl: './ai-run-summary.component.html',
-  styleUrls: ['./ai-run-summary.component.scss'],
+  template: `
+    @if (rows().length) {
+      <div class="k-recs" role="list" [attr.aria-label]="'ai-assistant.summary.made' | translate">
+        @for (row of rows(); track row.key) {
+          <tb-ai-record role="listitem" [entityType]="row.entityType" [alarmRule]="row.alarmRule" [name]="row.name"
+                        [meta]="row.meta" [url]="row.url" [state]="row.state"></tb-ai-record>
+        }
+      </div>
+    }
+  `,
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -58,6 +63,8 @@ export class AiRunSummaryComponent {
   private entityService = inject(EntityService);
   private calculatedFieldsService = inject(CalculatedFieldsService);
   private notificationService = inject(NotificationService);
+  private deviceService = inject(DeviceService);
+  private dashboardService = inject(DashboardService);
   private translate = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
 
@@ -77,49 +84,74 @@ export class AiRunSummaryComponent {
   private row(entity: EntityId): Observable<AiSummaryRow | null> {
     const entityType = entity.entityType as EntityType;
     const key = `${entityType}:${entity.id}`;
-    const icon = ICONS[entityType] ?? 'category';
+    const url = getEntityDetailsPageURL(entity.id, entityType) || undefined;
     switch (entityType) {
-      case EntityType.CALCULATED_FIELD:
-        return this.calculatedFieldsService.getCalculatedFieldById(entity.id, CONFIG).pipe(map(field => {
-          const alarmRule = field.type === CalculatedFieldType.ALARM;
+      case EntityType.DEVICE:
+        return this.deviceService.getDeviceInfo(entity.id, CONFIG).pipe(map(device => ({
+          key, entityType, alarmRule: false, name: device.name, url,
+          meta: this.meta(this.typeLabel(entityType), device.type),
+          state: {
+            tone: device.active ? 'ok' : 'off',
+            label: this.translate.instant(device.active ? 'ai-assistant.record.active' : 'ai-assistant.record.inactive')
+          }
+        })));
+      case EntityType.DASHBOARD:
+        return this.dashboardService.getDashboard(entity.id, CONFIG).pipe(map(dashboard => {
+          const widgets = Object.keys(dashboard.configuration?.widgets ?? {}).length;
           return {
-            key,
-            icon: alarmRule ? 'rule' : icon,
-            name: field.name,
-            meta: this.translate.instant(alarmRule ? 'ai-assistant.summary.alarm-rule' : 'ai-assistant.summary.calculated-field'),
-            url: alarmRule ? `/alarms/alarm-rules/${entity.id}` : `/calculatedFields/${entity.id}`
+            key, entityType, alarmRule: false, name: dashboard.title, url,
+            meta: this.meta(this.typeLabel(entityType), widgets ? this.translate.instant('ai-assistant.record.widgets', {count: widgets}) : null)
           };
+        }));
+      case EntityType.CALCULATED_FIELD:
+        return this.calculatedFieldsService.getCalculatedFieldById(entity.id, CONFIG).pipe(switchMap(field => {
+          const alarmRule = field.type === CalculatedFieldType.ALARM;
+          const type = this.translate.instant(alarmRule ? 'ai-assistant.review.type.ALARM_RULE' : 'entity.type-calculated-field');
+          const row = (target?: string): AiSummaryRow => ({
+            key, entityType, alarmRule, name: field.name, meta: this.meta(type, target),
+            url: alarmRule ? `/alarms/alarm-rules/${entity.id}` : `/calculatedFields/${entity.id}`
+          });
+          const owner = field.entityId;
+          if (!owner?.id) {
+            return of(row());
+          }
+          return this.entityService.getEntity(owner.entityType as EntityType, owner.id, CONFIG).pipe(
+            map(found => row(found?.name ? this.onTarget(owner.entityType, found.name) : undefined)),
+            catchError(() => of(row()))
+          );
         }));
       case EntityType.NOTIFICATION_RULE:
         return this.notificationService.getNotificationRuleById(entity.id, CONFIG)
-          .pipe(map(rule => this.simpleRow(key, icon, rule.name, entityType, NOTIFICATION_PAGES[entityType])));
+          .pipe(map(rule => this.simpleRow(key, entityType, rule.name, NOTIFICATION_PAGES[entityType])));
       case EntityType.NOTIFICATION_TEMPLATE:
         return this.notificationService.getNotificationTemplateById(entity.id, CONFIG)
-          .pipe(map(template => this.simpleRow(key, icon, template.name, entityType, NOTIFICATION_PAGES[entityType])));
+          .pipe(map(template => this.simpleRow(key, entityType, template.name, NOTIFICATION_PAGES[entityType])));
       default:
         return this.entityService.getEntity(entityType, entity.id, CONFIG).pipe(map(found => {
-          const row = this.simpleRow(key, icon, found?.name, entityType,
-            NOTIFICATION_PAGES[entityType] ?? (getEntityDetailsPageURL(entity.id, entityType) || undefined));
+          const row = this.simpleRow(key, entityType, found?.name, NOTIFICATION_PAGES[entityType] ?? url);
           const subtype = (found as {type?: string})?.type;
-          if (subtype && (entityType === EntityType.DEVICE || entityType === EntityType.ASSET)) {
-            row.meta = `${row.meta} · ${subtype}`;
+          if (row && subtype && entityType === EntityType.ASSET) {
+            row.meta = this.meta(row.meta, subtype);
           }
           return row;
         }));
     }
   }
 
-  private simpleRow(key: string, icon: string, name: string, entityType: EntityType, url?: string): AiSummaryRow | null {
-    if (!name) {
-      return null;
-    }
+  private simpleRow(key: string, entityType: EntityType, name: string, url?: string): AiSummaryRow | null {
+    return name ? {key, entityType, alarmRule: false, name, meta: this.typeLabel(entityType), url} : null;
+  }
+
+  private onTarget(entityType: string, name: string): string {
+    return this.translate.instant(PROFILE_TYPES.has(entityType) ? 'ai-assistant.record.on-profile' : 'ai-assistant.record.on', {name});
+  }
+
+  private meta(...parts: Array<string | null | undefined>): string {
+    return parts.filter(part => !!part).join(' · ');
+  }
+
+  private typeLabel(entityType: EntityType): string {
     const translation = entityTypeTranslations.get(entityType)?.type;
-    return {
-      key,
-      icon,
-      name,
-      meta: translation ? this.translate.instant(translation) : entityType,
-      url
-    };
+    return translation ? this.translate.instant(translation) : entityType;
   }
 }

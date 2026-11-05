@@ -52,7 +52,7 @@
                          (keydown)="onRenameKeydown($event)" (blur)="finishRename(chat, rowTitle.value)">
                 </div>
               } @else {
-                <div class="ai-row" role="link" tabindex="0" [class.active]="chat.id === chatId()"
+                <div class="ai-row" role="link" tabindex="0" [class.active]="chat.id === chatId()" [class.attn]="aiChats.levelOf(chat) === 'needs'"
                      [attr.aria-current]="chat.id === chatId() ? 'page' : null"
                      (click)="selectChat(chat)" (keydown.enter)="selectChat(chat)">
                   <span class="ai-row-title" [matTooltip]="'ai-assistant.double-click-to-rename' | translate" matTooltipPosition="after"

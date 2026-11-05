@@ -29,7 +29,7 @@ import { AiChatsService } from '@core/services/ai-chats.service';
 import { AiAssistantPanelService } from '@core/services/ai-assistant-panel.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isNotEmptyStr, parseHttpErrorMessage } from '@core/utils';
-import { ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
+import { ActionChatMessage, ApprovalChatMessage, ChatMessage } from '@shared/models/solution-creator.models';
 import {
   AiChatClientContext,
   AiPromptMessage,
@@ -42,7 +42,7 @@ import {
   ToolFinished,
   ToolStarted
 } from '@shared/models/ai-chat.models';
-import { AiWorkMoment, AiWorkState, isHiddenAiAction } from '@home/components/ai/ai-action.models';
+import { aiActionWords, AiSpinKind, AiWorkMoment, AiWorkState, isHiddenAiAction } from '@home/components/ai/ai-action.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AiPromptInputComponent } from '@home/components/ai/ai-prompt-input.component';
 
@@ -84,7 +84,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
   readonly markdownStyles = [
     '.tb-markdown-view p, .tb-markdown-view h2, .tb-markdown-view h3, .tb-markdown-view h4, .tb-markdown-view h5, ' +
     '.tb-markdown-view h6, .tb-markdown-view div.code-wrapper {padding-left: 0 !important;} ' +
-    '.tb-markdown-view ol {padding-inline-start: 30px;} .tb-markdown-view ul {padding-left: 28px; padding-right: 0;}'
+    '.tb-markdown-view ol, .tb-markdown-view ul {padding-left: 24px; padding-inline-start: 24px; padding-right: 0;}'
   ];
 
   messages = signal<ChatMessage[]>([]);
@@ -111,6 +111,32 @@ export class AiChatComponent implements OnInit, OnDestroy {
   stopping = signal<boolean>(false);
 
   work = signal<AiWorkState | undefined>(undefined);
+
+  scrolled = signal(false);
+
+  private atEnd = signal(true);
+
+  private newTurns = signal(0);
+
+  private seenMessages = 0;
+
+  pill = computed<{mode: 'work' | 'new'; kind: AiSpinKind; label: string; count: number} | null>(() => {
+    if (this.atEnd()) {
+      return null;
+    }
+    if (this.loading() && !this.waitingApproval()) {
+      const running = this.messages().filter((message): message is ActionChatMessage =>
+        message.from === 'ACTION' && message.data.status === 'RUNNING');
+      if (running.length) {
+        const words = aiActionWords(running[0].data.tool, running[0].data.arguments);
+        return {mode: 'work', kind: words.kind, label: this.translate.instant(words.key + '.run', words.params), count: 0};
+      }
+      const work = this.work();
+      return {mode: 'work', kind: 'think', label: work ? this.translate.instant('ai-assistant.work.' + work.moment) : '', count: 0};
+    }
+    const count = this.newTurns();
+    return count ? {mode: 'new', kind: 'think', label: this.translate.instant('ai-assistant.go-to-end'), count} : null;
+  });
 
   private answeredApprovals = signal<ReadonlySet<string>>(new Set());
 
@@ -149,6 +175,11 @@ export class AiChatComponent implements OnInit, OnDestroy {
   private replyingChatId: string | undefined;
   private affectedEntities: EntityId[] = [];
   private logScrollBottom: number | undefined;
+
+  private newTurnsEffect = effect(() => {
+    this.messages();
+    untracked(() => this.countNewTurns());
+  });
 
   private chatIdEffect = effect(() => {
     const chatId = this.chatId();
@@ -311,6 +342,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
     this.aiChat.resolveToolApproval(result, {ignoreLoading: true, ignoreErrors: true}).subscribe();
   }
 
+  onAskAgain(): void {
+    if (!this.loading()) {
+      this.sendMsgFromUser({message: this.translate.instant('ai-assistant.review.ask-again-message'), resources: []});
+    }
+  }
+
   sendMsgFromUser(prompt: AiPromptMessage): void {
     const waiting = this.waitingApproval();
     if (waiting) {
@@ -374,6 +411,7 @@ export class AiChatComponent implements OnInit, OnDestroy {
     if (this.clientContext()) {
       request.clientContext = this.clientContext();
     }
+    this.setWork('reading-request', true);
     this.loading.set(true);
     return startOrContinue$.pipe(
       tap(() => this.startLoading()),
@@ -473,6 +511,39 @@ export class AiChatComponent implements OnInit, OnDestroy {
         }
     }
     return of(event);
+  }
+
+  onLogScroll(area: HTMLElement): void {
+    const scrolled = area.scrollTop > 0;
+    if (scrolled !== this.scrolled()) {
+      this.scrolled.set(scrolled);
+    }
+    const atEnd = area.scrollHeight - area.scrollTop - area.clientHeight <= 40;
+    if (atEnd !== this.atEnd()) {
+      this.atEnd.set(atEnd);
+    }
+    if (atEnd) {
+      this.newTurns.set(0);
+      this.seenMessages = this.messages().length;
+    }
+  }
+
+  goToEnd(area: HTMLElement): void {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    area.scrollTo({top: area.scrollHeight, behavior: reduce ? 'auto' : 'smooth'});
+  }
+
+  private countNewTurns(): void {
+    const total = this.messages().length;
+    if (this.atEnd() || total <= this.seenMessages) {
+      this.seenMessages = total;
+      return;
+    }
+    const added = this.messages().slice(this.seenMessages).filter(message => message.from === 'AI').length;
+    this.seenMessages = total;
+    if (added) {
+      this.newTurns.update(count => count + added);
+    }
   }
 
   private startAction(started: ToolStarted): void {

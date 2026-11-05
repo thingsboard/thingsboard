@@ -6,14 +6,17 @@ import { AiSpinKind, aiWorkClock } from '@home/components/ai/ai-action.models';
 
 const CLOCK_AFTER_MS = 10_000;
 const STILL_AFTER_MS = 30_000;
+const LONGER_AFTER_MS = 90_000;
 
 @Component({
   selector: 'tb-ai-work-line',
   template: `
     <tb-ai-spin [kind]="kind()"></tb-ai-spin>
-    <span class="say">{{ say() }}</span>
-    @if (clock(); as time) {
-      <span class="clock">{{ time }}</span>
+    @for (words of [say()]; track words) {
+      <span class="say" [class.still]="kind() === 'stop'">{{ words }}</span>
+    }
+    @if (tail(); as text) {
+      <span class="clock" aria-hidden="true">{{ text }}</span>
     }
   `,
   styleUrls: ['./ai-work-line.component.scss'],
@@ -21,7 +24,7 @@ const STILL_AFTER_MS = 30_000;
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     'role': 'status',
-    '[attr.aria-label]': 'words()'
+    '[attr.aria-label]': 'say()'
   }
 })
 export class AiWorkLineComponent implements OnInit {
@@ -32,19 +35,34 @@ export class AiWorkLineComponent implements OnInit {
 
   since = input<number>(Date.now());
 
+  held = input(false);
+
   private now = signal(Date.now());
 
   private elapsed = computed(() => Math.max(0, this.now() - this.since()));
 
   say = computed(() => {
     const words = this.words();
-    if (this.elapsed() < STILL_AFTER_MS || !words) {
+    if (this.held() || this.elapsed() < STILL_AFTER_MS || !words) {
       return words;
     }
     return this.translate.instant('ai-assistant.work.still', {words: words.charAt(0).toLocaleLowerCase() + words.slice(1)});
   });
 
-  clock = computed(() => this.elapsed() >= CLOCK_AFTER_MS ? aiWorkClock(this.elapsed()) : undefined);
+  tail = computed(() => {
+    if (this.held()) {
+      return undefined;
+    }
+    const elapsed = this.elapsed();
+    const parts: string[] = [];
+    if (this.kind() === 'gen') {
+      parts.push(this.translate.instant(elapsed < LONGER_AFTER_MS ? 'ai-assistant.work.estimate-minute' : 'ai-assistant.work.taking-longer'));
+    }
+    if (elapsed >= CLOCK_AFTER_MS) {
+      parts.push(aiWorkClock(elapsed));
+    }
+    return parts.join(' · ') || undefined;
+  });
 
   private translate = inject(TranslateService);
   private zone = inject(NgZone);

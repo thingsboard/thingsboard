@@ -73,6 +73,8 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
 
   @Input() docked = false;
 
+  @Input() pinned = false;
+
   @Input() dropZone: HTMLElement;
 
   @Input() showAutoApprove = false;
@@ -370,7 +372,7 @@ export class AiPromptInputComponent implements OnChanges, AfterViewInit, OnDestr
     if (!field) {
       return;
     }
-    const cap = this.docked ? Math.min(160, Math.round(innerHeight * 0.3)) : Math.min(220, Math.round(innerHeight * 0.4));
+    const cap = this.docked ? Math.min(160, Math.round(innerHeight * 0.3)) : Math.min(this.pinned ? 240 : 220, Math.round(innerHeight * 0.4));
     field.style.height = 'auto';
     field.style.height = Math.min(field.scrollHeight, cap) + 'px';
   }

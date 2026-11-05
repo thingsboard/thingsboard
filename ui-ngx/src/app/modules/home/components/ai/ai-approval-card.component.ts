@@ -5,7 +5,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostBinding,
   inject,
   Input,
   OnChanges,
@@ -13,14 +12,41 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import {
+  AiApprovalReview,
+  AiReviewField,
   ApprovalResult,
   ToolApprovalResult,
   ToolExecutionRequested,
   ToolExecutionResult
 } from '@shared/models/ai-chat.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 
-export type ApprovalCardState = 'pending' | 'executing' | 'approved' | 'denied' | 'error';
+export type ApprovalCardState = 'pending' | 'approved' | 'auto' | 'denied' | 'expired';
+
+export interface AiReviewRow {
+  label: string;
+  labelCode: boolean;
+  valueCode: boolean;
+  current?: string;
+  value: string;
+}
+
+const MAX_FIELDS = 5;
+
+const DETAIL_TOKENS = new Set(['server-attributes', 'shared-attributes']);
+
+const VALUE_TOKENS: Record<string, string[]> = {
+  undo: ['none'],
+  clears: ['yes', 'no']
+};
+
+const CODE_FIELDS = new Set(['arguments', 'expression', 'output']);
+
+const OWN_TYPE_LABELS = new Set(['DASHBOARD_WIDGET', 'DASHBOARD_STATE', 'DASHBOARD_ENTITY_ALIAS', 'DASHBOARD_FILTER']);
+
+const PROFILE_TYPES = new Set<string>([EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE]);
 
 @Component({
   selector: 'tb-ai-approval-card',
@@ -40,63 +66,119 @@ export class AiApprovalCardComponent implements OnChanges {
 
   @ViewChild('denyInput') denyInput: ElementRef<HTMLInputElement>;
 
-  denying = false;
-
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
 
-  @HostBinding('class') state: ApprovalCardState = 'pending';
+  @Output() askAgain = new EventEmitter<void>();
+
+  denying = false;
+
+  showUnchanged = false;
+
+  state: ApprovalCardState = 'pending';
+
+  private autoApproved = false;
 
   private readonly cd = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (this.autoApprove && this.state === 'pending' && !this.completedExecution) {
+      this.autoApproved = true;
       this.approve();
     }
     if (this.answered && this.state === 'pending' && !this.completedExecution) {
       this.denying = false;
-      this.state = 'executing';
+      this.state = 'denied';
     }
     if (changes.completedExecution && this.completedExecution?.executionId === this.data.executionId) {
       const result = this.completedExecution;
-      if (result.approvalStatus === ToolApprovalResult.DENIED || result.approvalStatus === ToolApprovalResult.TIMEOUT) {
+      if (result.approvalStatus === ToolApprovalResult.TIMEOUT) {
+        this.state = 'expired';
+      } else if (result.approvalStatus === ToolApprovalResult.DENIED) {
         this.state = 'denied';
-      } else if (result.approvalStatus === ToolApprovalResult.APPROVED && result.executionStatus === 'SUCCESS') {
-        this.state = 'approved';
       } else {
-        this.state = 'error';
+        this.state = this.autoApproved ? 'auto' : 'approved';
       }
       this.cd.detectChanges();
     }
+  }
+
+  get review(): AiApprovalReview | undefined {
+    return this.data.review;
   }
 
   get isDestructive(): boolean {
     return this.data.destructive;
   }
 
-  get approveIcon(): string {
-    return this.data.icon || (this.isDestructive ? 'delete' : 'check');
-  }
-
-  get resultIcon(): string {
-    if (this.completedExecution?.icon) {
-      return this.completedExecution.icon;
-    }
+  get headIcon(): string {
     switch (this.state) {
       case 'approved':
-        return this.approveIcon;
+        return 'check_circle';
+      case 'auto':
+        return 'bolt';
       case 'denied':
         return 'block';
+      case 'expired':
+        return 'timer_off';
       default:
-        return 'error_outline';
+        return 'rate_review';
     }
+  }
+
+  get headText(): string {
+    return this.translate.instant('ai-assistant.review.head.' + this.state);
+  }
+
+  get outcome(): {failed: boolean; text: string} | null {
+    const result = this.completedExecution;
+    if (!result || result.approvalStatus !== ToolApprovalResult.APPROVED) {
+      return null;
+    }
+    const failed = result.executionStatus !== 'SUCCESS';
+    return {failed, text: result.message || this.translate.instant(failed ? 'ai-assistant.error' : 'ai-assistant.approved')};
+  }
+
+  get alarmRule(): boolean {
+    return this.review?.detail === 'alarm-rule';
+  }
+
+  get meta(): string {
+    const review = this.review;
+    if (!review) {
+      return '';
+    }
+    const parts = [this.alarmRule ? this.translate.instant('ai-assistant.review.type.ALARM_RULE') : this.typeLabel(review.entityType)];
+    if (review.detail && !this.alarmRule) {
+      parts.push(DETAIL_TOKENS.has(review.detail) ? this.translate.instant('ai-assistant.review.detail.' + review.detail) : review.detail);
+    }
+    if (review.target) {
+      parts.push(this.translate.instant(PROFILE_TYPES.has(review.entityType) ? 'ai-assistant.record.on-profile' : 'ai-assistant.record.on',
+        {name: review.target}));
+    }
+    return parts.join(' · ');
+  }
+
+  get facts(): AiReviewRow[] {
+    return this.rows('FACT').slice(0, MAX_FIELDS);
+  }
+
+  get changes(): AiReviewRow[] {
+    return this.rows('CHANGE');
+  }
+
+  get unchanged(): AiReviewRow[] {
+    return this.rows('UNCHANGED');
+  }
+
+  get recordClosed(): boolean {
+    return this.state === 'pending' || this.state === 'denied' || this.state === 'expired';
   }
 
   approve(): void {
-    this.emitApproval();
-  }
-
-  approveAll(): void {
-    this.emitApproval(true);
+    this.state = this.autoApproved ? 'auto' : 'approved';
+    this.denying = false;
+    this.approvalAction.emit({executionId: this.data.executionId, approved: true});
   }
 
   deny(): void {
@@ -111,7 +193,7 @@ export class AiApprovalCardComponent implements OnChanges {
   sendDeny(words: string): void {
     const reason = words.trim();
     this.denying = false;
-    this.state = 'executing';
+    this.state = 'denied';
     this.approvalAction.emit(reason
       ? {executionId: this.data.executionId, approved: false, reason}
       : {executionId: this.data.executionId, approved: false});
@@ -121,8 +203,31 @@ export class AiApprovalCardComponent implements OnChanges {
     this.denying = false;
   }
 
-  private emitApproval(autoApprove = false): void {
-    this.state = 'executing';
-    this.approvalAction.emit({executionId: this.data.executionId, approved: true, autoApprove});
+  private rows(kind: AiReviewField['kind']): AiReviewRow[] {
+    return (this.review?.fields ?? []).filter(field => field.kind === kind).map(field => ({
+      label: field.name ?? this.translate.instant('ai-assistant.review.field.' + field.id),
+      labelCode: !!field.name,
+      valueCode: CODE_FIELDS.has(field.id) && field.value !== undefined && field.value !== null,
+      current: kind === 'CHANGE' ? this.value(field, field.current) : undefined,
+      value: this.value(field, field.value)
+    }));
+  }
+
+  private value(field: AiReviewField, value: string | undefined): string {
+    if (value === undefined || value === null) {
+      return this.translate.instant('ai-assistant.review.not-set');
+    }
+    if (field.id && VALUE_TOKENS[field.id]?.includes(value)) {
+      return this.translate.instant(`ai-assistant.review.value.${field.id}-${value}`);
+    }
+    return value;
+  }
+
+  private typeLabel(entityType: string): string {
+    if (OWN_TYPE_LABELS.has(entityType)) {
+      return this.translate.instant('ai-assistant.review.type.' + entityType);
+    }
+    const translation = entityTypeTranslations.get(entityType as EntityType)?.type;
+    return translation ? this.translate.instant(translation) : entityType;
   }
 }

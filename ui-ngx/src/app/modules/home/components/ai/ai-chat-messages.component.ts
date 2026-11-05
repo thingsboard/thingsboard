@@ -26,11 +26,16 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
   @Input() denyReasons: Record<string, string> = {};
   @Input() work: AiWorkState | undefined;
   @Output() approvalAction = new EventEmitter<ApprovalResult>();
+  @Output() askAgain = new EventEmitter<void>();
   @Output() resourceError = new EventEmitter<any>();
 
   waitApproval = false;
 
   actionRunning = false;
+
+  runningLead = -1;
+
+  runningCount = 0;
 
   summaries: Record<number, EntityId[]> = {};
 
@@ -49,12 +54,20 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
               private clipboard: ClipboardService) {}
 
   copyAnswer(answer: HTMLElement, index: number): void {
-    const text = (answer.querySelector<HTMLElement>('.agent-body') ?? answer).innerText.trim();
+    const text = (answer.querySelector<HTMLElement>('tb-markdown') ?? answer).innerText.trim();
     if (this.clipboard.copyFromContent(text)) {
       this.copiedIndex = index;
       clearTimeout(this.copiedTimeout);
       this.copiedTimeout = setTimeout(() => this.copiedIndex = -1, AiChatMessagesComponent.COPIED_MS);
     }
+  }
+
+  fullTime(time: number): string {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const text = new Intl.DateTimeFormat(undefined, {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(time);
+    return zone ? `${text} (${zone})` : text;
   }
 
   getApprovalData(msg: ApprovalChatMessage): ToolExecutionRequested {
@@ -80,7 +93,11 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     }
     if (changes.messages) {
       this.lastAnswerIndex = this.findLastAnswerIndex();
-      this.actionRunning = this.messages.some(message => message.from === 'ACTION' && message.data.status === 'RUNNING');
+      const running = this.messages.map((message, index) => message.from === 'ACTION' && message.data.status === 'RUNNING' ? index : -1)
+        .filter(index => index >= 0);
+      this.actionRunning = running.length > 0;
+      this.runningLead = running.length ? running[0] : -1;
+      this.runningCount = running.length;
       if (changes.messages.firstChange) {
         if (this.initialScroll === 'bottom') {
           this.pinToBottom();
@@ -205,20 +222,20 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
 
   scrollToBottom(behavior: ScrollBehavior = 'smooth'): void {
     const el = this.scroller;
-    el.scrollTo({top: el.scrollHeight, behavior});
+    el.scrollTo({top: el.scrollHeight, behavior: this.motion(behavior)});
   }
 
   scrollToLastUserMessage(): void {
     const userMessages = this.elementRef.nativeElement.querySelectorAll('.user');
     if (userMessages.length) {
-      userMessages[userMessages.length - 1].scrollIntoView({block: 'start', behavior: 'smooth'});
+      userMessages[userMessages.length - 1].scrollIntoView({block: 'start', behavior: this.motion('smooth')});
     }
   }
 
   private scrollToLastAiMessage(): void {
     const aiMessages = this.elementRef.nativeElement.querySelectorAll('.ai');
     if (aiMessages.length) {
-      aiMessages[aiMessages.length - 1].scrollIntoView({block: 'start', behavior: 'smooth'});
+      aiMessages[aiMessages.length - 1].scrollIntoView({block: 'start', behavior: this.motion('smooth')});
     }
   }
 
@@ -242,6 +259,10 @@ export class AiChatMessagesComponent implements OnChanges, OnDestroy {
     } else {
       return msg;
     }
+  }
+
+  private motion(behavior: ScrollBehavior): ScrollBehavior {
+    return behavior === 'smooth' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : behavior;
   }
 
   private get scroller(): HTMLElement {

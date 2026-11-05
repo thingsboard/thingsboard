@@ -693,7 +693,7 @@
     "ai-assistant": {
         "ai-assistant": "AI Assistant",
         "configure-with-ai": "Configure with AI",
-        "follow-up-prompt-placeholder": "Reply...",
+        "follow-up-prompt-placeholder": "Add something, or ask what happened…",
         "sub-title": "I can help you set up and manage your Devices, Dashboards, Calculated Fields, Alarm Rules, and Notifications — just describe what you need, and I'll handle the rest.",
         "new-chat": "New chat",
         "no-chats": "No chats yet",
@@ -792,21 +792,9 @@
                 "run": "Reading the device credentials",
                 "done": "Read the device credentials"
             },
-            "save-device": {
-                "run": "Saving the device",
-                "done": "Saved the device"
-            },
-            "save-calculated-field": {
-                "run": "Saving the calculated field",
-                "done": "Saved the calculated field"
-            },
             "recalculate-history": {
                 "run": "Recalculating history",
                 "done": "Recalculated history"
-            },
-            "save-alarm-rule": {
-                "run": "Saving the alarm rule",
-                "done": "Saved the alarm rule"
             },
             "create-dashboard": {
                 "run": "Creating the dashboard",
@@ -852,6 +840,58 @@
                 "run": "Reading the dashboard",
                 "done": "Read the dashboard"
             },
+            "create-device": {
+                "run": "Creating the device",
+                "done": "Created the device"
+            },
+            "update-device": {
+                "run": "Updating the device",
+                "done": "Updated the device"
+            },
+            "create-calculated-field": {
+                "run": "Creating the calculated field",
+                "done": "Created the calculated field"
+            },
+            "update-calculated-field": {
+                "run": "Updating the calculated field",
+                "done": "Updated the calculated field"
+            },
+            "create-alarm-rule": {
+                "run": "Creating the alarm rule",
+                "done": "Created the alarm rule"
+            },
+            "update-alarm-rule": {
+                "run": "Updating the alarm rule",
+                "done": "Updated the alarm rule"
+            },
+            "create-notification-target": {
+                "run": "Creating the notification recipients",
+                "done": "Created the notification recipients"
+            },
+            "update-notification-target": {
+                "run": "Updating the notification recipients",
+                "done": "Updated the notification recipients"
+            },
+            "create-notification-template": {
+                "run": "Creating the notification template",
+                "done": "Created the notification template"
+            },
+            "update-notification-template": {
+                "run": "Updating the notification template",
+                "done": "Updated the notification template"
+            },
+            "create-notification-rule": {
+                "run": "Creating the notification rule",
+                "done": "Created the notification rule"
+            },
+            "update-notification-rule": {
+                "run": "Updating the notification rule",
+                "done": "Updated the notification rule"
+            },
+            "add-widget": {
+                "run": "Adding a widget",
+                "done": "Added a widget"
+            },
             "add-widgets": {
                 "run": "Adding widgets",
                 "done": "Added widgets"
@@ -875,18 +915,6 @@
             "read-dashboard-page": {
                 "run": "Reading the dashboard page",
                 "done": "Read the dashboard page"
-            },
-            "save-notification-target": {
-                "run": "Saving the notification recipients",
-                "done": "Saved the notification recipients"
-            },
-            "save-notification-template": {
-                "run": "Saving the notification template",
-                "done": "Saved the notification template"
-            },
-            "save-notification-rule": {
-                "run": "Saving the notification rule",
-                "done": "Saved the notification rule"
             },
             "search-iot-hub": {
                 "run": "Searching IoT Hub",
@@ -969,6 +997,62 @@
             "request": "Request",
             "result": "Result"
         },
+        "go-to-end": "Go to the end",
+        "rename-save": "Save (Enter)",
+        "rename-discard": "Discard (Esc)",
+        "review": {
+            "head": {
+                "pending": "Needs your review",
+                "approved": "Approved",
+                "auto": "Auto-approved",
+                "denied": "Denied",
+                "expired": "No answer in time"
+            },
+            "current": "Current",
+            "new": "New",
+            "unchanged": "{{count}} unchanged",
+            "hide-unchanged": "Hide unchanged",
+            "not-set": "not set",
+            "delete": "Delete",
+            "denied-text": "Nothing was made.",
+            "expired-text": "Nothing was made. The run waits here.",
+            "ask-again": "Ask again",
+            "ask-again-message": "Ask me again for the same change.",
+            "field": {
+                "name": "Name",
+                "label": "Label",
+                "profile": "Profile",
+                "arguments": "Arguments",
+                "expression": "Expression",
+                "output": "Output",
+                "severities": "Severities",
+                "clears": "Clears",
+                "undo": "Undo"
+            },
+            "value": {
+                "undo-none": "none: it cannot be restored",
+                "clears-yes": "when its clear condition holds",
+                "clears-no": "only by hand"
+            },
+            "detail": {
+                "server-attributes": "server attributes",
+                "shared-attributes": "shared attributes"
+            },
+            "type": {
+                "ALARM_RULE": "Alarm rule",
+                "DASHBOARD_WIDGET": "Widget",
+                "DASHBOARD_STATE": "Dashboard state",
+                "DASHBOARD_ENTITY_ALIAS": "Entity alias",
+                "DASHBOARD_FILTER": "Dashboard filter"
+            }
+        },
+        "record": {
+            "on": "on {{name}}",
+            "on-profile": "on profile {{name}}",
+            "active": "Active",
+            "inactive": "Inactive",
+            "widgets": "{ count, plural, =1 {1 widget} other {# widgets} }"
+        },
         "summary": {
             "made": "What this run made or changed",
             "alarm-rule": "Alarm rule",
@@ -979,6 +1063,9 @@
             "going-through-results": "Going through the results",
             "applying-change": "Applying the change",
             "reading-what-to-change": "Reading what to change",
+            "estimate-minute": "about a minute",
+            "taking-longer": "taking longer than usual",
+            "more": "{{words}}, and {{count}} more",
             "still": "Still {{words}}",
             "stopped": "Stopped while {{words}}"
         },

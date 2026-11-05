@@ -4,54 +4,106 @@
     SPDX-License-Identifier: BUSL-1.1
 
 -->
-@switch (state) {
-  @case ('pending') {
-    <div class="approval-title">{{ data.title ?? ('ai-assistant.action-approval-required' | translate) }}</div>
-    <div class="approval-content">{{ data.message }}</div>
-    <div class="approval-actions">
-      <button mat-stroked-button class="denied" (click)="deny()">
-        <mat-icon>block</mat-icon>
-        {{ data.denyLabel ?? ('ai-assistant.deny' | translate) }}
-      </button>
-      <button mat-flat-button [class.approved]="!isDestructive" [class.danger]="isDestructive" (click)="approve()">
-        <mat-icon>{{ approveIcon }}</mat-icon>
-        {{ data.approveLabel ?? ('ai-assistant.approve' | translate) }}
-      </button>
-    </div>
-    @if (denying) {
-      <input #denyInput class="deny-line" type="text" maxlength="2000"
-             [placeholder]="'ai-assistant.what-should-be-different' | translate"
-             [attr.aria-label]="'ai-assistant.what-should-be-different' | translate"
-             (keydown.enter)="$event.preventDefault(); sendDeny(denyInput.value)"
-             (keydown.escape)="$event.stopPropagation(); closeDeny()">
+<div class="k-review"
+     [class.done]="state === 'approved'"
+     [class.auto]="state === 'auto'"
+     [class.denied]="state === 'denied'"
+     [class.expired]="state === 'expired'"
+     [class.danger]="isDestructive">
+  <div class="k-head"><mat-icon aria-hidden="true">{{ headIcon }}</mat-icon>{{ headText }}</div>
+  @if (review) {
+    <tb-ai-record [entityType]="review.entityType" [alarmRule]="alarmRule" [name]="review.name" [meta]="meta"
+                  [class.closed]="recordClosed"></tb-ai-record>
+  }
+  @switch (state) {
+    @case ('pending') {
+      @if (!review) {
+        <p class="k-review-p">{{ data.message }}</p>
+      }
+      @if (facts.length) {
+        <dl class="k-fields">
+          @for (fact of facts; track $index) {
+            <dt>@if (fact.labelCode) { <code>{{ fact.label }}</code> } @else { {{ fact.label }} }</dt>
+            <dd>@if (fact.valueCode) { <code>{{ fact.value }}</code> } @else { {{ fact.value }} }</dd>
+          }
+        </dl>
+      }
+      @if (changes.length) {
+        <table class="k-diff">
+          <thead>
+            <tr>
+              <td></td>
+              <th scope="col">{{ 'ai-assistant.review.current' | translate }}</th>
+              <th scope="col">{{ 'ai-assistant.review.new' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (change of changes; track $index) {
+              <tr>
+                <th scope="row">@if (change.labelCode) { <code>{{ change.label }}</code> } @else { {{ change.label }} }</th>
+                <td class="k-diff-was">{{ change.current }}</td>
+                <td class="k-diff-now"><span>{{ change.value }}</span></td>
+              </tr>
+            }
+          </tbody>
+          @if (unchanged.length && showUnchanged) {
+            <tbody class="k-diff-same">
+              @for (same of unchanged; track $index) {
+                <tr>
+                  <th scope="row">@if (same.labelCode) { <code>{{ same.label }}</code> } @else { {{ same.label }} }</th>
+                  <td colspan="2">{{ same.value }}</td>
+                </tr>
+              }
+            </tbody>
+          }
+        </table>
+        @if (unchanged.length) {
+          <button type="button" class="tb-more" [attr.aria-expanded]="showUnchanged" (click)="showUnchanged = !showUnchanged">
+            <mat-icon aria-hidden="true">{{ showUnchanged ? 'expand_less' : 'expand_more' }}</mat-icon>
+            {{ (showUnchanged ? 'ai-assistant.review.hide-unchanged' : 'ai-assistant.review.unchanged') | translate: {count: unchanged.length} }}
+          </button>
+        }
+      }
+      <div class="k-actions">
+        <button mat-flat-button type="button" [class.warn]="isDestructive" (click)="approve()">
+          <mat-icon>{{ isDestructive ? 'delete' : 'check' }}</mat-icon>
+          {{ (isDestructive ? 'ai-assistant.review.delete' : 'ai-assistant.approve') | translate }}
+        </button>
+        <button mat-button type="button" (click)="deny()">
+          <mat-icon>close</mat-icon>
+          {{ 'ai-assistant.deny' | translate }}
+        </button>
+      </div>
+      @if (denying) {
+        <div class="k-deny">
+          <input #denyInput class="k-deny-in" type="text" maxlength="2000" spellcheck="false"
+                 [placeholder]="'ai-assistant.what-should-be-different' | translate"
+                 [attr.aria-label]="'ai-assistant.what-should-be-different' | translate"
+                 (keydown.enter)="$event.preventDefault(); sendDeny(denyInput.value)"
+                 (keydown.escape)="$event.stopPropagation(); closeDeny()">
+        </div>
+      }
     }
-    <button mat-button class="approve-all" (click)="approveAll()">
-      <mat-icon>done_all</mat-icon>
-      {{ 'ai-assistant.approve-all' | translate }}
-    </button>
+    @case ('denied') {
+      <p class="k-review-p">{{ 'ai-assistant.review.denied-text' | translate }}</p>
+    }
+    @case ('expired') {
+      <p class="k-review-p">{{ 'ai-assistant.review.expired-text' | translate }}</p>
+      <div class="k-actions">
+        <button mat-stroked-button type="button" (click)="askAgain.emit()">
+          <mat-icon>refresh</mat-icon>
+          {{ 'ai-assistant.review.ask-again' | translate }}
+        </button>
+      </div>
+    }
   }
-  @case ('executing') {
-    <div class="approval-result">
-      <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
-      <span class="flex-1">{{ data.executing ?? ('ai-assistant.processing' | translate) }}</span>
-    </div>
+  @if (data.time) {
+    <time class="k-time" [attr.datetime]="data.time | date:'yyyy-MM-ddTHH:mm:ss'">{{ data.time | date:'HH:mm' }}</time>
   }
-  @case ('approved') {
-    <div class="approval-result">
-      <mat-icon>{{ resultIcon }}</mat-icon>
-      <span class="flex-1">{{ completedExecution?.message || ('ai-assistant.approved' | translate) }}</span>
-    </div>
-  }
-  @case ('denied') {
-    <div class="approval-result">
-      <mat-icon>{{ resultIcon }}</mat-icon>
-      <span class="flex-1">{{ completedExecution?.message || ('ai-assistant.denied' | translate) }}</span>
-    </div>
-  }
-  @case ('error') {
-    <div class="approval-result">
-      <mat-icon>{{ resultIcon }}</mat-icon>
-      <span class="flex-1">{{ completedExecution?.message || ('ai-assistant.error' | translate) }}</span>
-    </div>
-  }
+</div>
+@if (outcome; as result) {
+  <div class="k-out" [class.fail]="result.failed">
+    <mat-icon class="k-out-mark" aria-hidden="true">{{ result.failed ? 'error_outline' : 'check' }}</mat-icon>
+    <span class="k-out-say">{{ result.text }}</span>
+  </div>
 }

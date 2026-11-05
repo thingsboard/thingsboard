@@ -55,8 +55,8 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     border: 1px solid var(--tb-line);
     border-radius: 8px;
     background: var(--tb-surface);
-    font-size: var(--chat-line);
-    line-height: var(--chat-line-lh);
+    font-size: 13.5px;
+    line-height: 20px;
     animation: composer-file-in .12s ease-out;
 
     .mat-icon {
@@ -82,7 +82,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       b {
         max-width: 240px;
         overflow: hidden;
-        font-size: var(--chat-line);
+        font-size: 13.5px;
         font-weight: 500;
         line-height: 18px;
         color: var(--tb-ink);
@@ -102,7 +102,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
       left: 0;
       bottom: 0;
       height: 2px;
-      background: var(--ai-action);
+      background: var(--ai-teal-500);
       transition: width .15s linear;
     }
 
@@ -156,7 +156,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     align-items: center;
     height: 24px;
     margin: 4px 0 0 -2px;
-    color: var(--ai-action);
+    color: var(--ai-teal-500);
     transition: color .18s ease;
 
     &::before {
@@ -182,7 +182,7 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     font-family: var(--tb-font);
     font-size: var(--chat-text);
     line-height: var(--chat-text-lh);
-    letter-spacing: normal;
+    letter-spacing: inherit;
     color: var(--tb-ink);
     caret-color: var(--ai-action);
     tab-size: 2;
@@ -200,17 +200,64 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     display: inline-flex;
   }
 
-  .composer-stop {
+  .composer-stop.composer-stop {
+    background: none;
+    isolation: isolate;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      background: var(--ai-action);
+      transition: background-color .2s ease;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -9px;
+      z-index: -2;
+      border-radius: 50%;
+      background: var(--ai-glow);
+      filter: blur(9px);
+      pointer-events: none;
+      --ai-glow-peak: .85;
+      opacity: .55;
+      animation: composer-glow-breathe 2.4s ease-in-out infinite, composer-glow-turn 6s linear infinite;
+      transition: opacity .2s ease;
+    }
+
+    &:hover:not(:disabled) {
+      background: none;
+
+      &::before {
+        background: var(--tb-crit);
+      }
+
+      &::after {
+        opacity: 0;
+        animation: none;
+      }
+    }
+
     &:disabled {
       opacity: .6;
       cursor: default;
     }
 
-    .stop-glyph {
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-      background: var(--ai-on-action);
+    .mat-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+      animation: composer-pop .28s cubic-bezier(.2, 0, 0, 1.4);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &::after, .mat-icon {
+        animation: none;
+      }
     }
   }
 
@@ -289,8 +336,8 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     padding: 2px 8px 6px 16px;
     border-top: 1px solid var(--tb-line-soft);
     border-radius: 0 0 14px 14px;
-    font-size: var(--chat-meta);
-    line-height: var(--chat-meta-lh);
+    font-size: 13px;
+    line-height: 18px;
     color: var(--tb-text-secondary);
   }
 
@@ -548,5 +595,33 @@ $chevron: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox=
     &.docked, .file-bar {
       transition: none;
     }
+  }
+}
+
+@keyframes composer-glow-breathe {
+  0%, 100% {
+    opacity: calc(var(--ai-glow-peak, .85) * .35);
+    scale: .94;
+  }
+  50% {
+    opacity: var(--ai-glow-peak, .85);
+    scale: 1.06;
+  }
+}
+
+@keyframes composer-glow-turn {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@keyframes composer-pop {
+  from {
+    transform: scale(.4) rotate(-20deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
   }
 }

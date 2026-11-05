@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 :host {
   display: block;
-  font-family: var(--tb-font);
+  font-family: var(--tb-mono);
+  font-size: 15px;
   letter-spacing: var(--chat-text-ls);
 }
 
@@ -10,16 +11,20 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  margin-top: 2px;
+  font-family: var(--tb-font);
   font-size: var(--chat-line);
   line-height: var(--chat-line-lh);
-  color: var(--tb-ink-76);
+  color: var(--tb-ink);
 
   .mark {
     flex: none;
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-    margin-block: calc((var(--chat-line-lh) - 16px) / 2);
+    display: flex;
+    width: 20px;
+    height: 22px;
+    font-size: 22px;
+    line-height: 22px;
+    margin-top: 0;
     color: var(--tb-ok);
   }
 
@@ -29,10 +34,11 @@
   }
 
   .dur {
+    flex: none;
     margin-left: auto;
-    padding-left: 12px;
     font-family: var(--tb-mono);
-    font-size: var(--chat-meta);
+    font-size: 12px;
+    line-height: var(--chat-line-lh);
     color: var(--k-faint);
     white-space: nowrap;
   }
@@ -42,55 +48,11 @@
   color: var(--tb-crit);
 }
 
-:host(.stopped) .out {
-  color: var(--tb-text-secondary);
-
-  .mark {
-    color: var(--tb-ink-38);
-  }
-}
-
-.disc {
-  margin: 2px 0 0 24px;
+.tb-disc.tb-disc-details {
+  margin: 4px 0 0 28px;
 
   > summary {
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    width: fit-content;
-    cursor: pointer;
-    font-size: var(--chat-meta);
-    line-height: var(--chat-meta-lh);
-    color: var(--tb-ink-60, var(--tb-text-secondary));
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-
-    &::before {
-      content: 'chevron_right';
-      flex: none;
-      width: 18px;
-      height: 18px;
-      font: 18px/18px 'Material Icons';
-      color: var(--tb-ink-38);
-      transition: transform .15s ease;
-    }
-
-    &:hover, &:hover::before {
-      color: var(--tb-ink);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--ai-focus);
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-  }
-
-  &[open] > summary::before {
-    transform: rotate(90deg);
+    color: var(--tb-ink-76);
   }
 
   .part {
@@ -114,11 +76,5 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     color: var(--tb-ink-76);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    > summary::before {
-      transition: none;
-    }
   }
 }

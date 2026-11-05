@@ -47,6 +47,26 @@ export interface ToolExecutionRequested extends BaseChatToolEventData {
   denyLabel?: string;
   executing?: string;
   icon?: string;
+  review?: AiApprovalReview;
+  time?: number;
+}
+
+export type AiReviewFieldKind = 'FACT' | 'CHANGE' | 'UNCHANGED';
+
+export interface AiReviewField {
+  kind: AiReviewFieldKind;
+  id?: string;
+  name?: string;
+  current?: string;
+  value?: string;
+}
+
+export interface AiApprovalReview {
+  entityType: string;
+  name: string;
+  detail?: string;
+  target?: string;
+  fields: AiReviewField[];
 }
 
 export interface AiAssistantPromptExample {

@@ -34,13 +34,13 @@
     }
 
     .msg {
-      max-width: 80%;
+      max-width: 85%;
       padding: 12px 16px;
       border-radius: 16px 16px 4px 16px;
       background: var(--ai-person);
       overflow: hidden;
       white-space: pre-line;
-      word-break: break-word;
+      overflow-wrap: anywhere;
       color: var(--tb-ink);
     }
   }
@@ -50,7 +50,7 @@
     align-items: center;
     gap: 2px;
     min-height: 24px;
-    margin-top: -2px;
+    margin-top: 0;
     font-size: var(--chat-caption);
     line-height: var(--chat-caption-lh);
     color: var(--k-faint);
@@ -58,7 +58,6 @@
 
     &.agent-foot {
       margin-top: 4px;
-      padding-left: calc(var(--chat-mark) + 10px);
     }
 
     time {
@@ -87,6 +86,7 @@
   }
 
   .foot-tool {
+    font-size: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -115,45 +115,30 @@
   }
 
   .agent {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-
-    .tb-ai-mark {
-      --m: var(--chat-mark);
-      margin-top: 2px;
-    }
+    display: block;
 
     .agent-body {
-      flex: 1;
       min-width: 0;
-      padding-top: 2px;
     }
   }
 
   .incomplete {
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: var(--chat-line);
-    line-height: var(--chat-line-lh);
-    color: var(--tb-ink);
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px 8px 12px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 19px;
+    color: var(--tb-ink-76);
     background: var(--tb-caution-tint);
 
     .incomplete-icon {
       flex: none;
       color: var(--tb-caution);
-      font-size: var(--chat-icon);
-      width: var(--chat-icon);
-      height: var(--chat-icon);
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
-  }
-
-  .ai .summary {
-    margin-left: calc(var(--chat-mark) + 10px);
-  }
-
-  .ai .incomplete + .summary {
-    margin-left: 0;
   }
 
   .ai.action + .ai.action {
@@ -222,40 +207,169 @@
 
   }
 
-  &::ng-deep {
-    .tb-markdown-view {
-      font-family: var(--tb-font);
-      font-size: var(--chat-text);
-      line-height: var(--chat-text-lh);
-      color: var(--tb-ink);
+  &::ng-deep .ai .agent-body .tb-markdown-view {
+    font-family: var(--tb-font);
+    font-size: var(--chat-text);
+    line-height: var(--chat-text-lh);
+    letter-spacing: var(--chat-text-ls);
+    color: var(--tb-ink);
 
-      h2 {
-        font-size: var(--chat-title);
-        line-height: var(--chat-title-lh);
+    [class*="tb-markdown-view-"] {
+      > p, > div, > ul, > ol, > table, > pre, > h1, > h2, > h3, > h4, > h5, > h6, > div.code-wrapper {
+        padding-left: 0;
+        padding-right: 0;
+        margin-left: 0;
       }
 
-      h3 {
-        font-size: 20px;
-        line-height: 28px;
+      p, div, li {
+        font-size: var(--chat-text);
+        line-height: var(--chat-text-lh);
+        letter-spacing: var(--chat-text-ls);
+        color: var(--tb-ink);
       }
 
-      h4, h5, h6 {
-        font-size: var(--chat-head);
-        line-height: var(--chat-head-lh);
+      p {
+        margin: 0;
       }
 
-      code {
+      > * + * {
+        margin-top: 14px;
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        padding: 0;
+        font-size: var(--chat-text);
+        line-height: var(--chat-text-lh);
+        font-weight: 500;
+        color: var(--tb-ink);
+      }
+
+      ul, ol {
+        margin: 0;
+        padding-left: 24px;
+        padding-right: 0;
+        color: var(--tb-ink);
+      }
+
+      > p + ul, > p + ol {
+        margin-top: 6px;
+      }
+
+      li {
+        padding-bottom: 0;
+
+        & + li {
+          margin-top: 4px;
+        }
+
+        &::marker {
+          color: var(--tb-text-muted);
+        }
+      }
+
+      strong, b {
+        font-weight: 500;
+      }
+
+      code:not([class*=language-]) {
+        padding: 2px 7px;
+        border-radius: 5px;
+        background: rgba(0, 0, 0, 0.06);
         font-family: var(--tb-mono);
-        font-size: var(--chat-code);
+        font-size: 14px;
+        line-height: 18px;
+        color: var(--tb-ink);
       }
 
       a {
+        font-weight: 400;
         color: var(--ai-link);
-        text-decoration-color: var(--ai-link-line);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        word-break: break-word;
+
+        &:hover {
+          color: var(--ai-link-strong);
+          text-decoration: none;
+          border-bottom-color: currentColor;
+        }
       }
 
-      a {
-        word-break: break-word;
+      > table {
+        display: block;
+        width: auto;
+        max-width: 100%;
+        overflow-x: auto;
+        margin: 14px 0 0;
+        border: 0;
+        border-radius: 0;
+        border-collapse: collapse;
+        table-layout: auto;
+        font-size: 14px;
+        line-height: 20px;
+        font-variant-numeric: tabular-nums;
+
+        > thead {
+          background: none;
+
+          > tr > th {
+            padding: 0 20px 6px 0;
+            font-size: 12.5px;
+            line-height: 16px;
+            font-weight: 500;
+            color: var(--tb-text-secondary);
+            border-bottom: 1px solid var(--tb-line);
+            white-space: nowrap;
+          }
+        }
+
+        > tbody > tr > td {
+          padding: 7px 20px 7px 0;
+          font-size: 14px;
+          line-height: 20px;
+          color: var(--tb-ink);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          vertical-align: top;
+          white-space: nowrap;
+        }
+
+        > tbody > tr:last-child > td {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        th:last-child, td:last-child {
+          padding-right: 0;
+        }
+      }
+
+      div.code-wrapper {
+        margin-top: 14px;
+      }
+
+      pre, pre[class*=language-] {
+        margin: 0;
+        padding: 12px 16px 14px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--tb-code-bg, #1d2830);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        font-family: var(--tb-mono);
+        font-size: 13px;
+        line-height: 20px;
+        color: #dfe7ec;
+        white-space: pre-wrap;
+
+        code, code[class*=language-] {
+          white-space: pre-wrap;
+          padding: 0;
+          background: none;
+          font-family: var(--tb-mono);
+          font-size: 13px;
+          line-height: 20px;
+          color: #dfe7ec;
+          text-shadow: none;
+        }
       }
     }
   }

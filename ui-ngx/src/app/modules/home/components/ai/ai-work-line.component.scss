@@ -6,22 +6,65 @@
   gap: 8px;
   font-size: var(--chat-line);
   line-height: var(--chat-line-lh);
-  color: var(--tb-text-secondary);
+  color: var(--tb-ink);
 
   tb-ai-spin {
-    margin-block: calc((var(--chat-line-lh) - 16px) / 2);
+    margin-block: calc((var(--chat-line-lh) - 24px) / 2);
   }
 }
 
 .say {
+  display: inline-block;
   min-width: 0;
+  background: linear-gradient(90deg, var(--tb-ink-54) 0%, var(--tb-ink) 42%, var(--tb-ink-54) 58%, var(--tb-ink-54) 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: k-shimmer 5s linear infinite, k-swap .2s ease-out;
+
+  &.still {
+    animation: none;
+    background: none;
+    color: var(--k-faint);
+  }
 }
 
 .clock {
   margin-left: auto;
   padding-left: 12px;
-  font-family: var(--tb-mono);
-  font-size: var(--chat-meta);
-  color: var(--k-faint);
   white-space: nowrap;
+  font-family: var(--tb-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--chat-meta);
+  line-height: var(--chat-line-lh);
+  color: var(--k-faint);
+}
+
+@keyframes k-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -130% 0;
+  }
+}
+
+@keyframes k-swap {
+  from {
+    transform: translateY(6px);
+    opacity: .25;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .say {
+    animation: none;
+    background: none;
+    color: var(--tb-ink-76);
+  }
 }

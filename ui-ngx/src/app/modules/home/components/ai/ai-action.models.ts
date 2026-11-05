@@ -28,9 +28,6 @@ const TOOL_WORDS: Record<string, string> = {
   delete_attributes: 'delete-attributes',
   read_entity_relations: 'read-relations',
   read_device_credentials: 'read-credentials',
-  save_device: 'save-device',
-  save_calculated_field: 'save-calculated-field',
-  save_alarm_rule: 'save-alarm-rule',
   create_dashboard: 'create-dashboard',
   update_dashboard: 'update-dashboard',
   add_dashboard_state: 'add-dashboard-state',
@@ -42,14 +39,10 @@ const TOOL_WORDS: Record<string, string> = {
   update_dashboard_filter: 'update-dashboard-filter',
   read_dashboard_filter: 'read-dashboard-filter',
   read_dashboard_overview: 'read-dashboard',
-  add_dashboard_widgets: 'add-widgets',
   update_dashboard_widget: 'update-widget',
   place_dashboard_widgets: 'place-widgets',
   read_dashboard_widget: 'read-widget',
   read_dashboard_html_page: 'read-dashboard-page',
-  save_notification_target: 'save-notification-target',
-  save_notification_template: 'save-notification-template',
-  save_notification_rule: 'save-notification-rule',
   search_iot_hub_devices: 'search-iot-hub',
   read_transport_endpoints: 'read-connection-settings',
   read_device_connect_commands: 'read-connection-settings',
@@ -60,6 +53,15 @@ const GENERATING_TOOLS: Record<string, string> = {
   set_dashboard_html_page: 'lay-out-dashboard',
   reprocess_calculated_field: 'recalculate-history',
   research_device_connectivity: 'research-device'
+};
+
+const SAVED_KINDS: Record<string, [string, string]> = {
+  save_device: ['device', ''],
+  save_calculated_field: ['calculated-field', ''],
+  save_alarm_rule: ['alarm-rule', 'alarmRule'],
+  save_notification_target: ['notification-target', 'target'],
+  save_notification_template: ['notification-template', 'template'],
+  save_notification_rule: ['notification-rule', 'rule']
 };
 
 const SEARCHED_TYPES: Record<string, string> = {
@@ -93,7 +95,13 @@ export function aiActionWords(tool: string, args: unknown): AiActionWords {
   if (GENERATING_TOOLS[tool]) {
     return {key: ACTION_PREFIX + GENERATING_TOOLS[tool], kind: 'gen'};
   }
+  if (SAVED_KINDS[tool]) {
+    const [kind, nested] = SAVED_KINDS[tool];
+    return {key: ACTION_PREFIX + (hasId(nested ? values[nested] : values) ? 'update-' : 'create-') + kind, kind: 'think'};
+  }
   switch (tool) {
+    case 'add_dashboard_widgets':
+      return {key: ACTION_PREFIX + (Array.isArray(values.widgets) && values.widgets.length === 1 ? 'add-widget' : 'add-widgets'), kind: 'think'};
     case 'search_entities':
       return {key: ACTION_PREFIX + searchedWords(values), kind: 'think'};
     case 'read_timeseries':
@@ -121,7 +129,7 @@ export function aiActionDuration(ms: number): string {
 }
 
 export function aiWorkClock(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
+  const seconds = Math.round(ms / 1000);
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
@@ -138,6 +146,19 @@ export function aiActionDetail(value: unknown): string {
     }
   }
   return JSON.stringify(value, null, 2);
+}
+
+function hasId(value: unknown): boolean {
+  let object = value;
+  if (typeof value === 'string') {
+    try {
+      object = JSON.parse(value);
+    } catch {
+      return false;
+    }
+  }
+  const id = (object as {id?: unknown})?.id;
+  return !!id && (typeof id === 'string' || typeof (id as {id?: unknown}).id === 'string');
 }
 
 function searchedWords(values: Record<string, any>): string {
@@ -179,4 +200,44 @@ function siteOf(url: unknown): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+export type AiEntityPalette = 'device' | 'path' | 'chain' | 'rule' | 'view' | 'people' | 'solution';
+
+export interface AiEntityKind {
+  icon: string;
+  palette: AiEntityPalette;
+}
+
+const ENTITY_KINDS: Record<string, AiEntityKind> = {
+  DEVICE: {icon: 'memory', palette: 'device'},
+  DEVICE_PROFILE: {icon: 'category', palette: 'device'},
+  ASSET: {icon: 'domain', palette: 'device'},
+  ASSET_PROFILE: {icon: 'category', palette: 'device'},
+  INTEGRATION: {icon: 'input', palette: 'path'},
+  CONVERTER: {icon: 'transform', palette: 'path'},
+  CALCULATED_FIELD: {icon: 'functions', palette: 'path'},
+  RULE_CHAIN: {icon: 'account_tree', palette: 'chain'},
+  ALARM_RULE: {icon: 'rule', palette: 'rule'},
+  ALARM: {icon: 'notification_important', palette: 'rule'},
+  NOTIFICATION_RULE: {icon: 'notifications_active', palette: 'rule'},
+  NOTIFICATION_TEMPLATE: {icon: 'description', palette: 'path'},
+  NOTIFICATION_TARGET: {icon: 'group', palette: 'people'},
+  DASHBOARD: {icon: 'dashboard', palette: 'view'},
+  DASHBOARD_WIDGET: {icon: 'widgets', palette: 'view'},
+  DASHBOARD_STATE: {icon: 'tab', palette: 'view'},
+  DASHBOARD_ENTITY_ALIAS: {icon: 'label', palette: 'view'},
+  DASHBOARD_FILTER: {icon: 'filter_list', palette: 'view'},
+  WIDGET_TYPE: {icon: 'widgets', palette: 'view'},
+  CUSTOMER: {icon: 'supervisor_account', palette: 'people'},
+  USER: {icon: 'account_circle', palette: 'people'},
+  TENANT: {icon: 'business', palette: 'people'}
+};
+
+export function aiEntityKind(entityType: string, alarmRule = false): AiEntityKind {
+  return ENTITY_KINDS[alarmRule ? 'ALARM_RULE' : entityType] ?? {icon: 'category', palette: 'solution'};
+}
+
+export function aiEntityIcon(entityType: string, alarmRule = false): string {
+  return aiEntityKind(entityType, alarmRule).icon;
 }
